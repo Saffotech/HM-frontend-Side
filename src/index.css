@@ -1,0 +1,6 @@
+@import './shared/styles/variables.css';
+@import './shared/styles/base.css';
+@import './shared/styles/ui-patterns.css';
+@import './shared/styles/animations.css';
+@import './shared/styles/money.css';
+@import './shared/styles/responsive.css';

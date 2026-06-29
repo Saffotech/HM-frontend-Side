@@ -1,0 +1,280 @@
+.book-appointment-page {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.book-appointment-page.page-stack {
+  gap: 0.375rem;
+}
+
+.book-appointment-page__toolbar {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.book-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.form-hint {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin: 0 0 0.25rem;
+}
+
+.patient-context-panel {
+  background: var(--color-surface-hover);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: 0.875rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.patient-identity-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.patient-identity-col {
+  min-width: 0;
+}
+
+.patient-identity-col__label {
+  display: block;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.patient-identity-col__value {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+  word-break: break-word;
+}
+
+.patient-identity-col__value.id-badge {
+  display: inline-block;
+  font-weight: 500;
+}
+
+.revisit-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.patient-context-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.context-item {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.context-item--wide {
+  grid-column: 1 / -1;
+  flex-direction: column;
+}
+
+.context-item label {
+  display: block;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.1rem;
+}
+
+.context-item span {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.revisit-banner {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  border: 1px solid;
+  align-items: flex-start;
+}
+
+.revisit-banner p {
+  margin: 0;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.revisit-banner--ok {
+  background: var(--color-success-bg);
+  border-color: #a9dfbf;
+  color: #1e8449;
+}
+
+.revisit-banner--warn {
+  background: var(--color-warning-bg);
+  border-color: #f9e79f;
+  color: #9a7b0a;
+}
+
+.slot-section {
+  background: #f7fafc;
+  padding: 0.875rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.slot-section--compact {
+  padding: 0.625rem 0.75rem;
+}
+
+.slot-section--compact .time-slot-grid--compact {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.3rem;
+}
+
+.slot-section--compact .time-slot-grid--compact .time-slot {
+  min-height: 30px;
+  padding: 0.2rem 0.15rem;
+  font-size: 0.6875rem;
+  border-radius: var(--radius-sm);
+}
+
+@media (max-width: 768px) {
+  .slot-section--compact .time-slot-grid--compact {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .slot-section--compact .time-slot-grid--compact {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.book-form__payment {
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: 0.875rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: #fafbfc;
+}
+
+.book-form__pay-later {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.book-form__pay-later input {
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+}
+
+.book-form__mode-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.book-form__mode-btn {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.book-form__mode-btn--active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.fee-box {
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-primary-border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  font-size: 0.8125rem;
+  word-break: break-word;
+}
+
+.fee-box__total {
+  font-weight: 700;
+  margin-top: 0.35rem;
+  color: var(--color-primary);
+}
+
+.book-form__date-reason .field {
+  min-width: 0;
+}
+
+.book-appointment-page .searchable-select {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .book-appointment-page .card__body {
+    padding: 1rem;
+  }
+
+  .patient-context-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-identity-grid {
+    grid-template-columns: 1fr;
+    gap: 0.625rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .book-appointment-page .page-title {
+    font-size: 1.125rem;
+  }
+
+  .revisit-banner {
+    flex-direction: column;
+  }
+
+  .badge-pill {
+    font-size: 0.7rem;
+  }
+}

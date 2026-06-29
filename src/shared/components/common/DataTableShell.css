@@ -1,0 +1,59 @@
+.data-table-shell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.data-table-shell__scroll {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.data-table-shell__scroll .data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--color-surface-hover);
+  box-shadow: 0 1px 0 var(--color-border-light);
+}
+
+.data-table-shell__scroll .data-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.data-table-shell__scroll .data-table th.sortable:hover {
+  background: #f1f5f9;
+}
+
+.data-table-shell__scroll .data-table th .sort-icon {
+  margin-left: 0.25rem;
+  opacity: 0.4;
+  font-size: 0.65rem;
+}
+
+.data-table-shell__scroll .data-table th.sorted .sort-icon {
+  opacity: 1;
+  color: var(--color-primary);
+}
+
+/* Subtle row reveal when table loads inside shell */
+.data-table-shell .data-table tbody tr {
+  animation: hms-row-in var(--duration-normal, 0.28s) var(--ease-out, ease) both;
+}
+
+.data-table-shell .data-table tbody tr:nth-child(1) { animation-delay: 0.02s; }
+.data-table-shell .data-table tbody tr:nth-child(2) { animation-delay: 0.04s; }
+.data-table-shell .data-table tbody tr:nth-child(3) { animation-delay: 0.06s; }
+.data-table-shell .data-table tbody tr:nth-child(4) { animation-delay: 0.08s; }
+.data-table-shell .data-table tbody tr:nth-child(5) { animation-delay: 0.10s; }
+.data-table-shell .data-table tbody tr:nth-child(6) { animation-delay: 0.12s; }
+.data-table-shell .data-table tbody tr:nth-child(7) { animation-delay: 0.14s; }
+.data-table-shell .data-table tbody tr:nth-child(8) { animation-delay: 0.16s; }
+
+@media (max-width: 768px) {
+  .data-table-shell .data-table tbody tr {
+    animation: none;
+  }
+}

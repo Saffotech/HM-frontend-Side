@@ -1,0 +1,92 @@
+# =============================================================================
+# HMS Frontend — production repo .gitignore
+# PUSH: src/, public/, index.html, package.json, package-lock.json,
+#       vite.config.js, .env.example, .eslintrc.cjs, docs/, scripts/, e2e/
+# DO NOT PUSH: node_modules, dist, .env, test output, IDE/OS junk (below)
+# =============================================================================
+
+# Dependencies (install on CI/server with: npm ci)
+node_modules/
+
+# Build output (rebuild with: npm run build)
+dist/
+dist-ssr/
+build/
+out/
+
+# Environment & secrets — NEVER commit (use .env.example + hosting env vars)
+.env
+.env.*
+!.env.example
+
+# Local Vite / tooling overrides
+*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Test & coverage artifacts (sources in e2e/ are OK to commit)
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+.playwright/
+playwright/.auth/
+
+# Lint / bundler cache
+.eslintcache
+.stylelintcache
+.cache/
+.vite/
+.turbo/
+.parcel-cache/
+
+# Editor & IDE (personal — not for the repo)
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.cursor/
+*.swp
+*.swo
+*~
+
+# OS junk
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Credentials & keys
+*.pem
+*.key
+*.p12
+*.crt
+credentials.json
+secrets.json
+.secrets/
+*.env.backup
+
+# Deploy platform local state
+.vercel/
+.netlify/
+
+# Accidental archives / dumps
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+
+# Local scratch at repo root
+/_*.js

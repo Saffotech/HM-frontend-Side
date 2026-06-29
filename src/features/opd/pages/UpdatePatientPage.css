@@ -1,0 +1,48 @@
+.update-patient-page {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.update-patient-page__header {
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.update-patient-page__id {
+  flex-shrink: 0;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.form-actions .btn {
+  flex: 1;
+  min-width: 8rem;
+}
+
+@media (max-width: 768px) {
+  .update-patient-page__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .update-patient-page .card__body {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+    flex: none;
+  }
+}

@@ -1,0 +1,58 @@
+.availability-page {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.availability-page__card {
+  min-width: 0;
+}
+
+.availability-page .form-grid {
+  gap: 1rem;
+}
+
+.availability-result {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border-light);
+  min-width: 0;
+}
+
+.availability-result h3 {
+  color: var(--color-primary);
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  word-break: break-word;
+}
+
+.availability-result .text-muted {
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.empty-hint {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 2rem 1rem;
+}
+
+@media (max-width: 768px) {
+  .availability-page__card {
+    padding: 1rem;
+  }
+
+  .availability-result {
+    margin-top: 1rem;
+    padding-top: 1rem;
+  }
+
+  .empty-hint {
+    padding: 1.5rem 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .availability-page .page-title {
+    font-size: 1.125rem;
+  }
+}

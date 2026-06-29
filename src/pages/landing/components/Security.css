@@ -1,0 +1,51 @@
+.landing-security {
+  background: linear-gradient(180deg, #fff, rgba(29, 111, 164, 0.06));
+  padding: 5rem 0;
+}
+
+.landing-security__header {
+  max-width: 42rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.landing-security__grid {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 3rem;
+}
+
+.landing-security__card {
+  padding: 1.5rem;
+  border-radius: 1rem;
+}
+
+.landing-security__icon {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  background: rgba(29, 111, 164, 0.1);
+  color: var(--color-primary);
+}
+
+.landing-security__card h3 {
+  margin: 1rem 0 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.landing-security__card p {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+@media (min-width: 640px) {
+  .landing-security__grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 1024px) {
+  .landing-security__grid { grid-template-columns: repeat(3, 1fr); }
+}

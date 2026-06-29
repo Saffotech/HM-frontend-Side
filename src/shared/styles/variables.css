@@ -1,0 +1,56 @@
+:root {
+  /* SaffoCare logo palette */
+  --color-brand-green: #1a5c34;
+  --color-brand-green-dark: #143d24;
+  --color-brand-green-light: #e6f4ec;
+  --color-brand-gold: #e8b923;
+  --color-brand-gold-dark: #c99a12;
+
+  --color-primary: var(--color-brand-green);
+  --color-primary-dark: var(--color-brand-green-dark);
+  --color-primary-light: var(--color-brand-green-light);
+  --color-primary-border: #a7d4b8;
+
+  --color-success: #27ae60;
+  --color-success-bg: #eafaf1;
+  --color-danger: #e74c3c;
+  --color-danger-bg: #fdedec;
+  --color-warning: #e67e22;
+  --color-warning-bg: #fef9e7;
+
+  /* Accent-only — never use on large surfaces, wide buttons, or card backgrounds */
+  --color-teal: #16a085; /* bill stripes, small action badges */
+  --color-purple: #8e44ad; /* note badges, secondary labels only */
+
+  --color-bg: #f0f4f8;
+  --color-surface: #ffffff;
+  --color-border: #e2e8f0;
+  --color-border-light: #f0f4f8;
+  --color-border-hover: #cbd5e0;
+  --color-surface-hover: #f8fafc;
+  --color-table-header: #f9fafb;
+
+  --color-text: #1a202c;
+  --color-text-muted: #718096;
+  --color-text-light: #64748b;
+  --color-text-lighter: #9ca3af;
+  --color-text-label: #4b5563;
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --sidebar-width: 15rem;
+
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 0.75rem;
+  --space-lg: 1rem;
+  --space-xl: 1.25rem;
+
+  --dropdown-max-height: 16rem;
+  --dropdown-z-index: 1100;
+}

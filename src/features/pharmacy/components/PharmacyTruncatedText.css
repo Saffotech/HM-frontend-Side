@@ -1,0 +1,36 @@
+.pharmacy-truncated-text {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.pharmacy-truncated-text:not(.is-expanded) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pharmacy-truncated-text.is-expanded {
+  white-space: normal;
+  word-break: break-word;
+  cursor: pointer;
+}
+
+.pharmacy-truncated-text:hover:not(.is-expanded) {
+  color: var(--color-primary, #0d9488);
+}
+
+.pharmacy-truncated-text:focus-visible {
+  outline: 2px solid var(--color-primary, #0d9488);
+  outline-offset: 2px;
+  border-radius: 2px;
+}

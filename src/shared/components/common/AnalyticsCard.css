@@ -1,0 +1,132 @@
+.analytics-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  text-align: left;
+  width: 100%;
+  cursor: default;
+  transition:
+    border-color var(--duration-fast, 0.2s) var(--ease-standard, ease),
+    box-shadow var(--duration-fast, 0.2s) var(--ease-standard, ease),
+    transform var(--duration-fast, 0.2s) var(--ease-standard, ease);
+}
+
+button.analytics-card {
+  cursor: pointer;
+}
+
+button.analytics-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+button.analytics-card:active {
+  transform: scale(0.99);
+}
+
+.analytics-card--active {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(29, 111, 164, 0.15);
+}
+
+.analytics-card__icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.analytics-card--blue .analytics-card__icon {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.analytics-card--green .analytics-card__icon {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.analytics-card--purple .analytics-card__icon {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+
+.analytics-card--amber .analytics-card__icon,
+.analytics-card--orange .analytics-card__icon {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
+.analytics-card__label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.analytics-card__value {
+  display: block;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.2;
+  margin-top: 0.1rem;
+}
+
+.analytics-card__value--money {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.analytics-card__value--money .money-amount {
+  display: block;
+  width: 100%;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.analytics-card--blue.analytics-card--active .analytics-card__value {
+  color: var(--color-primary);
+}
+
+.analytics-card--green .analytics-card__value {
+  color: var(--color-success);
+}
+
+.analytics-card--purple .analytics-card__value {
+  color: #7c3aed;
+}
+
+.analytics-card__sub {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  margin-top: 0.15rem;
+}
+
+@media (max-width: 480px) {
+  .analytics-card {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .analytics-card__value {
+    font-size: 1rem;
+  }
+
+  .analytics-card__icon {
+    width: 2rem;
+    height: 2rem;
+  }
+}

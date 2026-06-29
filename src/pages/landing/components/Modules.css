@@ -1,0 +1,109 @@
+.landing-modules {
+  padding: 5rem 0;
+}
+
+.landing-modules__header {
+  max-width: 42rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.landing-badge--success {
+  background: var(--landing-success-bg);
+  color: var(--landing-success);
+  border-color: transparent;
+}
+
+.landing-modules__grid {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 3rem;
+}
+
+.landing-modules__card {
+  display: block;
+  padding: 1.75rem;
+  border-radius: 1.5rem;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.landing-modules__card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(29, 111, 164, 0.4);
+  box-shadow: var(--landing-shadow-glow);
+}
+
+.landing-modules__card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.landing-modules__icon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, var(--color-brand-green), rgba(26, 92, 52, 0.6));
+  color: #fff;
+}
+
+.landing-modules__card h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.landing-modules__card ul {
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.landing-modules__card li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.landing-modules__card li::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  margin-top: 0.45rem;
+  border-radius: 50%;
+  background: var(--landing-success);
+  flex-shrink: 0;
+}
+
+.landing-modules__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.landing-modules__card:hover .landing-modules__cta svg {
+  transform: translateX(4px);
+}
+
+.landing-modules__cta svg {
+  transition: transform 0.2s;
+}
+
+@media (min-width: 768px) {
+  .landing-modules__grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 1024px) {
+  .landing-modules__grid { grid-template-columns: repeat(3, 1fr); }
+}

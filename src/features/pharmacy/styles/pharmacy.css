@@ -1,0 +1,187 @@
+/* Pharmacy module — extends shared OPD layout tokens */
+
+.layout-content--compact {
+  padding-top: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .layout-content--compact {
+    padding-top: 0.875rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+.pharmacy-role-label {
+  margin: 0 1rem 0.5rem;
+  padding: 0 0.125rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.pharmacy-allergy-banner {
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  color: var(--color-danger);
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: var(--space-md);
+}
+
+.pharmacy-allergy-tag {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.125rem 0.4375rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.pharmacy-table__patient-id {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pharmacy-detail-cards {
+  display: grid;
+  gap: var(--space-md);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 900px) {
+  .pharmacy-detail-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .pharmacy-detail-cards .card {
+    height: 100%;
+  }
+}
+
+.pharmacy-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.pharmacy-detail-grid__item--full {
+  grid-column: 1 / -1;
+}
+
+.pharmacy-detail-label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.pharmacy-detail-value {
+  font-size: 0.875rem;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.pharmacy-view-list-btn {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.pharmacy-view-list-btn:hover {
+  color: var(--color-primary-dark);
+}
+
+.pharmacy-detail-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pharmacy-detail-list__item {
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-hover);
+}
+
+.pharmacy-detail-list__title {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.pharmacy-detail-list__meta {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.pharmacy-detail-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.pharmacy-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.pharmacy-dispense-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.pharmacy-form-error {
+  margin: 0 0 var(--space-sm);
+  font-size: 0.8125rem;
+  color: var(--color-danger);
+}
+
+.data-table__row--clickable {
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .pharmacy-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pharmacy-detail-grid__item--full {
+    grid-column: auto;
+  }
+}
+
+.pharmacy-dispense-history-meds {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  margin-top: 0.125rem;
+}

@@ -1,0 +1,6 @@
+.skeleton-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.25rem 0;
+}

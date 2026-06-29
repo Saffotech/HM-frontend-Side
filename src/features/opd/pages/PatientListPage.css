@@ -1,0 +1,227 @@
+.patients-page {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.patients-page__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.patients-page__register-link {
+  text-decoration: none;
+}
+
+.patients-page__register-link:hover {
+  text-decoration: none;
+}
+
+.patients-page__card {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.patients-page__toolbar {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.patients-page__toolbar .patients-page__register-link {
+  margin-left: auto;
+}
+
+.patients-page__search.search-bar--wide {
+  max-width: none;
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.patients-page__date-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.patients-page__date-filter {
+  border: 1px solid var(--color-border);
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.patients-page__date-filter:hover {
+  border-color: #94a3b8;
+}
+
+.patients-page__date-filter--active {
+  background: #0d9488;
+  border-color: #0d9488;
+  color: #fff;
+}
+
+.patients-page__custom-date {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-family: inherit;
+}
+
+.patient-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.patient-cell__meta {
+  min-width: 0;
+}
+
+.patient-cell__meta strong {
+  display: block;
+  word-break: break-word;
+}
+
+.patient-cell .id-badge {
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.patient-cell__phone,
+.patient-cell__gender {
+  display: none;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 0.15rem;
+}
+
+.blood-badge {
+  background: #fef2f2;
+  color: #b91c1c;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.result-count {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  align-self: center;
+}
+
+.patients-table {
+  min-width: 20rem;
+}
+
+/* Headers and cells start from the left (same as default header alignment) */
+.patients-page .patients-table th,
+.patients-page .patients-table td {
+  text-align: left;
+  vertical-align: middle;
+}
+
+.patients-page .patients-table th {
+  text-align: left;
+}
+
+.patients-page .patients-table__actions-head {
+  text-align: left;
+}
+
+.patients-page .patients-table .actions-cell {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.patients-page .patients-table .profile-link-btn .btn {
+  justify-content: center;
+}
+
+.patients-page .data-table-shell {
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .patients-page__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .patients-page__header-actions {
+    width: 100%;
+  }
+
+  .patients-page__register-link {
+    display: block;
+    width: 100%;
+  }
+
+  .patients-page__register-link .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .patients-page__toolbar .result-count {
+    align-self: flex-start;
+    white-space: normal;
+  }
+
+  .patients-table {
+    min-width: 16rem;
+  }
+
+  .patients-table__actions,
+  .patients-table .actions-cell {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 0.35rem;
+  }
+
+  .patients-table .profile-link-btn {
+    flex: 1 1 calc(50% - 0.2rem);
+    min-width: 0;
+  }
+
+  .patients-table .profile-link-btn .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .patient-cell__phone,
+  .patient-cell__gender {
+    display: block;
+  }
+
+  .patients-table__actions,
+  .patients-table .actions-cell {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .patients-table .profile-link-btn {
+    flex: none;
+    width: 100%;
+  }
+
+  .patients-table .actions-cell > .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

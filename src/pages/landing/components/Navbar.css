@@ -1,0 +1,120 @@
+.landing-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+}
+
+.landing-nav__inner {
+  display: flex;
+  height: 4rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.landing-nav__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.landing-nav__title {
+  font-family: var(--landing-font-display);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.landing-nav__desktop {
+  display: none;
+  align-items: center;
+  gap: 1.75rem;
+}
+
+.landing-nav__link {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.landing-nav__link:hover {
+  color: var(--color-text);
+}
+
+.landing-nav__actions {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.landing-btn--sm {
+  padding: 0.45rem 1rem;
+  font-size: 0.8125rem;
+}
+
+.landing-nav__menu-btn {
+  display: flex;
+  padding: 0.5rem;
+  border: none;
+  background: transparent;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.landing-nav__mobile {
+  border-top: 1px solid var(--color-border);
+  background: #fff;
+}
+
+.landing-nav__mobile-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem 0;
+}
+
+.landing-nav__mobile-link {
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.landing-nav__mobile-link:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.landing-nav__mobile-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.landing-nav__mobile-btns .landing-btn {
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .landing-nav__desktop,
+  .landing-nav__actions {
+    display: flex;
+  }
+
+  .landing-nav__menu-btn {
+    display: none;
+  }
+
+  .landing-nav__mobile {
+    display: none;
+  }
+}

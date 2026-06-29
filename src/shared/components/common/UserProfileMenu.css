@@ -1,0 +1,104 @@
+.user-profile-menu {
+  position: relative;
+}
+
+.user-profile-menu__trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--color-text);
+  transition: background 0.15s;
+}
+
+.user-profile-menu__trigger:hover {
+  background: var(--color-bg);
+}
+
+.user-profile-menu__trigger--compact {
+  padding: 0.15rem;
+}
+
+.user-profile-menu__name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-profile-menu__chev {
+  color: var(--color-text-muted);
+  transition: transform 0.15s;
+}
+
+.user-profile-menu__chev--open {
+  transform: rotate(180deg);
+}
+
+.user-profile-menu__dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  z-index: 60;
+  min-width: 16rem;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.12);
+  overflow: hidden;
+}
+
+.user-profile-menu__info {
+  padding: 1rem 1rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.user-profile-menu__info-name {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.user-profile-menu__info-email {
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  word-break: break-all;
+}
+
+.user-profile-menu__info-role {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-primary);
+}
+
+.user-profile-menu__logout {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-danger, #dc2626);
+  cursor: pointer;
+  text-align: left;
+}
+
+.user-profile-menu__logout:hover {
+  background: #fef2f2;
+}

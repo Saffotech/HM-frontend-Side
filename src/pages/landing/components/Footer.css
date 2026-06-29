@@ -1,0 +1,117 @@
+.landing-footer {
+  border-top: 1px solid var(--color-border);
+  background: #fff;
+  padding: 3.5rem 0 1.5rem;
+}
+
+.landing-footer__grid {
+  display: grid;
+  gap: 2.5rem;
+}
+
+.landing-footer__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.landing-footer__title {
+  font-family: var(--landing-font-display);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.landing-footer__desc {
+  margin: 1rem 0 0;
+  max-width: 20rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.landing-footer__social {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.landing-footer__social-link {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.landing-footer__social-link:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.landing-footer__grid h4 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.landing-footer__grid ul {
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.landing-footer__grid li {
+  margin-bottom: 0.5rem;
+}
+
+.landing-footer__grid a {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.landing-footer__grid a:hover {
+  color: var(--color-text);
+}
+
+.landing-footer__bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.landing-footer__legal {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.landing-footer__legal a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.landing-footer__legal a:hover {
+  color: var(--color-text);
+}
+
+@media (min-width: 1024px) {
+  .landing-footer__grid {
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+  }
+
+  .landing-footer__bottom {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}

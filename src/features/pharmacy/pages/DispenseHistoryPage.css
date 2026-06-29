@@ -1,0 +1,292 @@
+.pharmacy-history-page {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* ── Card ───────────────────────────────────────────── */
+.pharmacy-history-card {
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+}
+
+.pharmacy-history-card--empty .empty-state {
+  padding: 1.25rem 1rem 1.75rem;
+}
+
+/* ── Toolbar (matches prescriptions page) ─────────── */
+.pharmacy-history-card__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.625rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-border-light);
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+}
+
+.pharmacy-history-toolbar-strip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  padding: 0.2rem;
+  background: linear-gradient(145deg, #eef2f7 0%, #f8fafc 100%);
+  border: 1px solid #dde4ed;
+  border-radius: 0.625rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.pharmacy-history-toolbar-strip__divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 1.35rem;
+  margin: 0 0.3rem;
+  background: linear-gradient(180deg, transparent, #cbd5e1 20%, #cbd5e1 80%, transparent);
+}
+
+.pharmacy-history-card__search {
+  flex: 0 0 auto;
+  width: 15rem;
+  min-width: 11rem;
+  max-width: 15rem;
+}
+
+.pharmacy-history-card__search.search-bar .search-bar__input {
+  height: 2rem;
+  padding: 0 1.75rem 0 1.85rem;
+  font-size: 0.8125rem;
+  border: none;
+  border-radius: 0.45rem;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.pharmacy-history-card__search.search-bar .search-bar__input:focus {
+  box-shadow:
+    0 0 0 2px rgba(26, 92, 52, 0.15),
+    0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.pharmacy-history-card__search .search-bar__icon {
+  left: 0.55rem;
+}
+
+/* Per-page control */
+.pharmacy-history-pagesize {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0 0.35rem 0 0.25rem;
+  flex-shrink: 0;
+}
+
+.pharmacy-history-pagesize__icon {
+  flex-shrink: 0;
+  color: var(--color-primary);
+  opacity: 0.85;
+}
+
+.pharmacy-history-pagesize__label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.pharmacy-history-pagesize__select {
+  height: 2rem;
+  min-width: 0;
+  padding: 0 1.25rem 0 0.1rem;
+  border: none;
+  border-radius: 0.45rem;
+  background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 0.05rem center;
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  appearance: none;
+  transition: color 0.15s ease;
+}
+
+.pharmacy-history-pagesize__select:hover,
+.pharmacy-history-pagesize__select:focus {
+  outline: none;
+  color: var(--color-primary);
+}
+
+.pharmacy-history-card__meta {
+  flex-shrink: 0;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+}
+
+.pharmacy-history-card__meta strong {
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.pharmacy-history-card__meta-note {
+  font-weight: 500;
+}
+
+.pharmacy-history-page .query-feedback--loading {
+  min-height: 8rem;
+}
+
+/* ── Compact table ──────────────────────────────────── */
+.pharmacy-history-page .data-table-shell {
+  padding: 0 0.35rem 0.5rem;
+}
+
+.pharmacy-history-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.pharmacy-history-page .data-table-shell__scroll .data-table.pharmacy-history-table thead th {
+  background: #fff;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.45rem 0.65rem;
+  white-space: nowrap;
+}
+
+.pharmacy-history-page .pharmacy-history-table th,
+.pharmacy-history-page .pharmacy-history-table td {
+  padding: 0.4rem 0.65rem;
+  vertical-align: middle;
+  text-align: left;
+  line-height: 1.3;
+  font-size: 0.8125rem;
+}
+
+.pharmacy-history-page .pharmacy-history-table tbody td {
+  border-bottom: 1px solid #eef2f7;
+}
+
+.pharmacy-history-table__col-qty,
+.pharmacy-history-table__qty {
+  width: 3.25rem;
+  text-align: center;
+}
+
+.pharmacy-history-table__row {
+  transition: background 0.15s ease;
+}
+
+.pharmacy-history-page .pharmacy-history-table tbody tr:nth-child(even) {
+  background: #fafbfc;
+}
+
+.pharmacy-history-table__row:hover {
+  background: rgba(26, 92, 52, 0.05) !important;
+}
+
+.pharmacy-history-table__row:last-child td {
+  border-bottom: none;
+}
+
+.pharmacy-history-table__id {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-primary-border);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.pharmacy-history-table__patient-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pharmacy-history-table__patient {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.pharmacy-history-table__meds {
+  color: var(--color-text);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pharmacy-history-table__qty {
+  font-weight: 700;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.pharmacy-history-table__status {
+  white-space: nowrap;
+}
+
+.pharmacy-history-table__date {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── Responsive ───────────────────────────────────── */
+@media (max-width: 768px) {
+  .pharmacy-history-card__toolbar {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.45rem 0.65rem;
+  }
+
+  .pharmacy-history-toolbar-strip {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+
+  .pharmacy-history-card__search {
+    flex: 1 1 auto;
+    width: auto;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .pharmacy-history-pagesize__select {
+    flex: 1;
+  }
+
+  .pharmacy-history-card__meta {
+    margin-left: auto;
+  }
+
+  .pharmacy-history-page .data-table-shell__scroll {
+    overflow-x: auto;
+  }
+
+  .pharmacy-history-table {
+    min-width: 36rem;
+  }
+}

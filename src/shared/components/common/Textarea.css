@@ -1,0 +1,25 @@
+.textarea-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.textarea-field__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.textarea-field__input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  resize: vertical;
+  min-height: 80px;
+}
+
+.textarea-field__input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(29, 111, 164, 0.15);
+}

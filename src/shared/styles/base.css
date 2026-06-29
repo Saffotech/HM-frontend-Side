@@ -1,0 +1,250 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Auth bootstrap / route guards — was unstyled (easy to mistake for a blank page) */
+.loading {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.page-title {
+  font-size: clamp(1.125rem, 2.5vw, 1.25rem);
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.page-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.page-container--wide {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition:
+    transform var(--duration-fast, 0.2s) var(--ease-standard, ease),
+    box-shadow var(--duration-fast, 0.2s) var(--ease-standard, ease);
+}
+
+.card--hover,
+.card.ui-interactive {
+  cursor: default;
+}
+
+.card--hover:hover,
+.card.ui-interactive:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.card__header {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--color-border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 3rem;
+}
+
+.card__header h3 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.card__header a {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-primary);
+}
+
+.card__header a:hover {
+  text-decoration: underline;
+}
+
+.card__body {
+  padding: 1rem;
+}
+
+.card--flat {
+  box-shadow: none;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.data-table th {
+  padding: 0.625rem 0.875rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  background: var(--color-surface-hover);
+  border-bottom: 1px solid var(--color-border-light);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 0.625rem 0.875rem;
+  border-bottom: 1px solid var(--color-border-light);
+  font-size: 0.8125rem;
+  vertical-align: middle;
+}
+
+@media (max-width: 480px) {
+  .data-table th,
+  .data-table td {
+    font-size: 13px;
+  }
+
+  .col-optional {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  button,
+  a.btn,
+  .layout-nav__link,
+  .layout-menu-btn,
+  .doctor-shell__nav-btn,
+  .doctor-shell__menu-btn,
+  .clickable,
+  .ward-tab,
+  .searchable-select__trigger {
+    min-height: 44px;
+  }
+
+  .btn {
+    min-height: 44px;
+  }
+}
+
+.data-table tbody tr:hover {
+  background: var(--color-surface-hover);
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.form-section-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0.5rem 0 0.25rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-grid--full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 16mm;
+  }
+
+  aside,
+  .layout-header,
+  .layout-mobile-bar,
+  .layout-overlay,
+  .doctor-shell__header,
+  .doctor-shell__sidebar,
+  .doctor-shell__mobile-bar,
+  .no-print {
+    display: none !important;
+  }
+
+  .layout-main {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+
+  .page-container {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .bill-print-zone {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+}

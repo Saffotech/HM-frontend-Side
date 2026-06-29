@@ -1,0 +1,309 @@
+﻿.nurse-notes-registry {
+  gap: 1rem;
+}
+
+.nurse-notes-registry__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  padding: 1rem 1.25rem;
+}
+
+.nurse-notes-registry__toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.nurse-notes-registry__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ede9fe 0%, #f3e8ff 100%);
+  color: #7c3aed;
+  flex-shrink: 0;
+}
+
+.nurse-notes-registry__count {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.nurse-notes-registry__hint {
+  margin: 0.15rem 0 0;
+  font-size: 0.8125rem;
+  color: #94a3b8;
+}
+
+.nurse-notes-registry__search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: min(100%, 18rem);
+  max-width: 22rem;
+}
+
+.nurse-notes-registry__search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.nurse-notes-registry__search {
+  width: 100%;
+  padding-left: 2.5rem;
+}
+
+.nurse-notes-registry__table .nurse-card {
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+.nurse-notes-registry__table .nurse-table th {
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.6875rem;
+  letter-spacing: 0.05em;
+  padding: 0.875rem 1.125rem;
+}
+
+.nurse-notes-registry__table .nurse-table td {
+  padding: 1rem 1.125rem;
+  vertical-align: middle;
+}
+
+.nurse-notes-registry__table .nurse-table tbody tr {
+  transition: background 0.12s;
+}
+
+.nurse-notes-registry__table .nurse-table tbody tr.nurse-row--clickable:hover td {
+  background: #f5f3ff;
+}
+
+.nurse-notes-registry__id {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+}
+
+.nurse-notes-registry__name {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.nurse-notes-registry__bed {
+  display: inline-flex;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+  background: #f1f5f9;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.nurse-notes-registry__symptoms {
+  display: inline-block;
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  color: #475569;
+}
+
+.nurse-notes-registry__time {
+  font-size: 0.8125rem;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+}
+
+.nurse-note-detail {
+  gap: 0.625rem;
+}
+
+.nurse-note-detail .nurse-notes-snapshot {
+  gap: 0.625rem;
+}
+
+.nurse-note-detail .nurse-vital-detail__top {
+  gap: 0.625rem;
+}
+
+.nurse-note-detail .nurse-vital-detail__identity {
+  gap: 0.75rem;
+}
+
+.nurse-note-detail .nurse-card--padded {
+  padding: 0.75rem 1rem;
+}
+
+.nurse-note-detail .nurse-vital-detail__info-bar {
+  gap: 0.75rem;
+}
+
+.nurse-note-detail .nurse-vital-detail__info-item {
+  gap: 0.5rem;
+}
+
+.nurse-note-detail .nurse-vital-detail__section {
+  gap: 0.5rem;
+}
+
+.nurse-note-detail .nurse-vital-detail__section-title {
+  font-size: 0.9375rem;
+}
+
+.nurse-note-detail__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ede9fe 0%, #f3e8ff 100%);
+  color: #7c3aed;
+  flex-shrink: 0;
+}
+
+.nurse-note-detail__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.nurse-note-detail__card {
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.nurse-note-detail__card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.nurse-note-detail__card-header h3 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.nurse-note-detail__card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.nurse-note-detail__card-icon--rose { background: #ffe4e6; color: #e11d48; }
+.nurse-note-detail__card-icon--blue { background: #dbeafe; color: #2563eb; }
+.nurse-note-detail__card-icon--purple { background: #ede9fe; color: #7c3aed; }
+
+.nurse-note-detail__card p {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #334155;
+  white-space: pre-wrap;
+}
+
+.nurse-note-edit__field-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.nurse-note-edit__clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s, border-color 0.12s;
+}
+
+.nurse-note-edit__clear:hover:not(:disabled) {
+  color: #dc2626;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.nurse-note-edit__clear:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.nurse-note-edit__form {
+  padding: 1rem;
+}
+
+.nurse-note-edit__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.nurse-note-edit__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fafbfc;
+}
+
+.nurse-note-edit__field--rose { border-left: 3px solid #f43f5e; }
+.nurse-note-edit__field--blue { border-left: 3px solid #2563eb; }
+.nurse-note-edit__field--purple { border-left: 3px solid #7c3aed; }
+
+.nurse-note-edit__field-label {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.nurse-note-edit__field-label label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0;
+}
+
+.nurse-note-edit__textarea {
+  min-height: 5rem;
+  background: #fff;
+  border-color: #e2e8f0;
+  line-height: 1.5;
+}
+
+.nurse-note-edit__textarea:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+}

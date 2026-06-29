@@ -1,0 +1,7 @@
+.landing-page main {
+  scroll-margin-top: 4rem;
+}
+
+.landing-page html {
+  scroll-behavior: smooth;
+}

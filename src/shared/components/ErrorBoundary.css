@@ -1,0 +1,66 @@
+.error-boundary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  padding: 2rem;
+  text-align: center;
+}
+
+.error-boundary__title {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+  color: var(--color-text, #1e293b);
+}
+
+.error-boundary__message {
+  margin: 0 0 1.25rem;
+  max-width: 28rem;
+  color: var(--color-text-light);
+  font-size: 0.9375rem;
+}
+
+.error-boundary__retry {
+  padding: 0.625rem 1.25rem;
+  border: none;
+  border-radius: var(--radius-md, 8px);
+  background: var(--color-primary, #1d6fa4);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.error-boundary__retry:hover {
+  opacity: 0.9;
+}
+
+.app-error-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  text-align: center;
+}
+
+.app-error-fallback h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+}
+
+.app-error-fallback p {
+  margin: 0 0 1.25rem;
+  color: var(--color-text-light);
+}
+
+.app-error-fallback button {
+  padding: 0.625rem 1.25rem;
+  border: none;
+  border-radius: var(--radius-md, 8px);
+  background: var(--color-primary, #1d6fa4);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}

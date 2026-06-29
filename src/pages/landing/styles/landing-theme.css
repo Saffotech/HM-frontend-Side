@@ -1,0 +1,161 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap');
+
+.landing-page {
+  --landing-font-sans: 'Inter', system-ui, sans-serif;
+  --landing-font-display: 'Poppins', 'Inter', system-ui, sans-serif;
+  --landing-shadow-glow: 0 20px 60px -20px rgba(26, 92, 52, 0.35);
+  --landing-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -12px rgba(15, 23, 42, 0.08);
+  --landing-success: #10b981;
+  --landing-success-bg: #ecfdf5;
+  min-height: 100vh;
+  background: #fff;
+  color: var(--color-text);
+  font-family: var(--landing-font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.landing-page h1,
+.landing-page h2,
+.landing-page h3,
+.landing-page h4 {
+  font-family: var(--landing-font-display);
+  letter-spacing: -0.02em;
+}
+
+.landing-container {
+  width: 100%;
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .landing-container { padding-left: 1.5rem; padding-right: 1.5rem; }
+}
+
+@media (min-width: 1024px) {
+  .landing-container { padding-left: 2rem; padding-right: 2rem; }
+}
+
+.landing-bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(29, 111, 164, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(29, 111, 164, 0.08) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.landing-bg-hero {
+  background:
+    radial-gradient(60% 50% at 80% 0%, rgba(29, 111, 164, 0.18), transparent 70%),
+    radial-gradient(40% 40% at 0% 100%, rgba(16, 185, 129, 0.14), transparent 70%),
+    linear-gradient(180deg, rgba(29, 111, 164, 0.04), #fff);
+}
+
+.landing-text-gradient {
+  background: linear-gradient(90deg, var(--color-primary), #3b82f6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.landing-glass-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(29, 111, 164, 0.12);
+  box-shadow: var(--landing-shadow-card);
+  border-radius: 1rem;
+}
+
+.landing-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(29, 111, 164, 0.2);
+  background: rgba(29, 111, 164, 0.05);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.landing-section-title {
+  margin: 1rem 0 0.75rem;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 700;
+}
+
+.landing-section-sub {
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.landing-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s, border-color 0.15s;
+  font-family: inherit;
+}
+
+.landing-btn--primary {
+  background: var(--color-primary);
+  color: #fff;
+  padding: 0.65rem 1.5rem;
+  box-shadow: var(--landing-shadow-glow);
+}
+
+.landing-btn--primary:hover { background: var(--color-primary-dark); }
+
+.landing-btn--outline {
+  background: #fff;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  padding: 0.65rem 1.5rem;
+}
+
+.landing-btn--outline:hover { border-color: var(--color-primary-border); }
+
+.landing-btn--ghost {
+  background: transparent;
+  color: var(--color-text);
+  padding: 0.65rem 1.25rem;
+}
+
+.landing-btn--ghost:hover { color: var(--color-primary); }
+
+.landing-btn--lg { padding: 0.75rem 1.5rem; font-size: 1rem; }
+
+.landing-btn--success {
+  background: var(--landing-success);
+  color: #fff;
+}
+
+.landing-btn--success:hover { opacity: 0.9; }
+
+.landing-card {
+  border: 1px solid var(--color-border);
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: var(--landing-shadow-card);
+}
+
+.landing-animate-float {
+  animation: landing-float 6s ease-in-out infinite;
+}
+
+@keyframes landing-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}

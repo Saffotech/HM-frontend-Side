@@ -1,0 +1,57 @@
+.patient-bills-print-sheet {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.patient-bills-print-sheet__cover {
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--color-border-light);
+}
+
+.patient-bills-print-sheet__cover h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.125rem;
+}
+
+.patient-bills-print-sheet__cover p {
+  margin: 0.15rem 0;
+  font-size: 0.875rem;
+}
+
+.patient-bills-print-sheet__bill + .patient-bills-print-sheet__bill {
+  margin-top: 1.5rem;
+}
+
+@media print {
+  body.billing-print-active * {
+    visibility: hidden;
+  }
+
+  body.billing-print-active .patient-bills-print-sheet,
+  body.billing-print-active .patient-bills-print-sheet * {
+    visibility: visible;
+  }
+
+  body.billing-print-active .patient-bills-print-sheet {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .patient-bills-print-sheet__bill {
+    page-break-inside: avoid;
+  }
+
+  .patient-bills-print-sheet__bill + .patient-bills-print-sheet__bill {
+    page-break-before: always;
+  }
+}

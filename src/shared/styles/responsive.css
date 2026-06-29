@@ -1,0 +1,477 @@
+/**
+ * Global responsive utilities — SaffoCare
+ * Breakpoints: 480px (phone), 768px (tablet), 1024px (laptop), 1280px (desktop)
+ */
+
+/* Prevent horizontal page scroll from wide tables/grids */
+html {
+  overflow-x: clip;
+}
+
+body {
+  overflow-x: clip;
+  min-width: 0;
+}
+
+#root {
+  min-width: 0;
+  overflow-x: clip;
+}
+
+/* Fluid typography */
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 1.125rem;
+  }
+
+  .layout-header__title {
+    font-size: 1.0625rem;
+  }
+
+  .dashboard-banner__title {
+    font-size: 1.125rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .page-container {
+    max-width: min(1100px, 100%);
+  }
+
+  .page-container--wide {
+    max-width: min(1280px, 100%);
+  }
+}
+
+/* Page headers & toolbars */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-header__actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .page-header__actions .btn,
+  .page-header__actions a.btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .page-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1rem;
+  }
+
+  .filters-inline {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .filters-inline .field,
+  .filters-inline .searchable-select,
+  .filters-inline .search-bar {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .layout-content {
+    padding: 0.75rem;
+  }
+
+  .layout-header__date {
+    display: none;
+  }
+
+  .layout-header {
+    padding: 0 1rem;
+  }
+
+  .card__header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .patient-profile__title-row {
+    flex-wrap: wrap;
+  }
+
+  .profile-section__head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-header__actions {
+    flex-direction: column;
+  }
+
+  .page-header__actions .btn {
+    width: 100%;
+  }
+
+  .actions-cell {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actions-cell .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .result-count {
+    white-space: normal;
+  }
+
+  .table-pagination {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .table-pagination__controls {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .modal__footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .modal__footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Stat grids */
+@media (max-width: 768px) {
+  .stat-grid--3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .stat-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Tables */
+.data-table-shell,
+.table-wrap {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.data-table-shell__scroll {
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .data-table {
+    min-width: 36rem;
+  }
+
+  /* Dashboard tables — narrower min-width; scroll stays in .table-wrap */
+  .dashboard-table-wrap .data-table,
+  .doc-apt-table-wrap .data-table {
+    min-width: 0;
+  }
+
+  .layout-main,
+  .doctor-shell__main {
+    overflow-x: clip;
+  }
+}
+
+/* Doctor module */
+@media (max-width: 768px) {
+  .doc-week-grid {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 0.5rem;
+    padding-bottom: 0.25rem;
+  }
+
+  .doc-week-day {
+    flex: 0 0 4.5rem;
+    min-width: 4.5rem;
+  }
+
+  .doc-page {
+    gap: 1rem;
+  }
+
+  .doc-card__head {
+    flex-wrap: wrap;
+  }
+}
+
+/* Auth pages */
+@media (max-width: 768px) {
+  .staff-login-page__inner {
+    padding: 1.5rem 1rem;
+    align-items: flex-start;
+  }
+
+  .staff-login-page__card {
+    padding: 1.25rem;
+  }
+
+  .login-form {
+    width: 100%;
+  }
+}
+
+/* View bill / print layout on screen */
+@media (max-width: 768px) {
+  .view-bill__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .view-bill__actions-left,
+  .view-bill__actions-right {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .view-bill__actions-right {
+    width: 100%;
+  }
+
+  .view-bill__actions-right .btn {
+    flex: 1 1 auto;
+  }
+
+  .bill-letterhead {
+    flex-direction: column;
+    padding: 1rem 1.25rem;
+  }
+
+  .bill-letterhead__meta {
+    text-align: left;
+  }
+
+  .bill-meta-row,
+  .bill-items-section,
+  .bill-footer-grid {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .bill-totals-box {
+    width: 100%;
+    max-width: none;
+  }
+
+  .bill-signatures {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .bill-invoice-footer {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+
+  .bill-items-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Beds / patients — scroll contained in .bed-table-wrap (see page CSS) */
+@media (max-width: 768px) {
+  .bed-table-wrap .data-table,
+  .beds-table,
+  .ward-beds-table,
+  .patients-table,
+  .profile-bills-table,
+  .profile-admission-table,
+  .appointment-table {
+    min-width: 0;
+  }
+
+  .patients-page .data-table-shell__scroll,
+  .appointments-page .data-table-shell__scroll {
+    max-width: 100%;
+  }
+}
+
+/* Profile */
+@media (max-width: 640px) {
+  .detail-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .profile-medical-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 400px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* OPD bill items table */
+@media (max-width: 768px) {
+  .items-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .opd-form .items-table {
+    min-width: 32rem;
+  }
+}
+
+/* Searchable select dropdown on small screens */
+@media (max-width: 480px) {
+  .searchable-select__dropdown,
+  .searchable-select__dropdown--portal {
+    max-width: calc(100vw - 2rem);
+  }
+}
+
+/* Empty state */
+@media (max-width: 480px) {
+  .empty-state-block {
+    padding: 1.5rem 1rem;
+  }
+
+  .empty-state-block__title {
+    font-size: 1rem;
+  }
+}
+
+/* Billing filters */
+@media (max-width: 768px) {
+  .filters-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters-bar .field,
+  .filters-bar .search-input-wrap,
+  .filters-bar .searchable-select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .billing-today-toggle {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* User menu */
+@media (max-width: 640px) {
+  .user-profile-menu__name {
+    display: none;
+  }
+
+  .user-profile-menu__trigger {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .user-profile-menu__dropdown {
+    right: 0;
+    left: auto;
+    max-width: min(18rem, calc(100vw - 1.5rem));
+  }
+}
+
+/* Forms */
+@media (max-width: 480px) {
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .patient-info-card {
+    flex-direction: column;
+    max-width: none;
+  }
+
+  .patient-info-card__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .collect-payment__summary {
+    grid-template-columns: 1fr;
+  }
+
+  .tabs__item {
+    min-height: 44px;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+
+/* Dashboard recent patients — narrow phones */
+@media (max-width: 400px) {
+  .recent-patient {
+    flex-wrap: wrap;
+  }
+
+  .recent-patient__meta {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+  }
+
+  .bed-legend {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+}
+
+/* Post-login dashboards — tablet */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .dashboard-banner__chips {
+    gap: 0.5rem;
+  }
+
+  .quick-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .doctor-shell__header,
+  .layout-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-height: 4rem;
+    height: auto;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+}
+
+/* Large desktop — comfortable reading width */
+@media (min-width: 1440px) {
+  .layout-content,
+  .doctor-shell__content {
+    padding: 1.5rem 2rem;
+  }
+}

@@ -1,0 +1,36 @@
+.landing-stats {
+  padding: 4rem 0;
+}
+
+.landing-stats__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  padding: 2rem;
+  border-radius: 1.5rem;
+}
+
+.landing-stats__item {
+  text-align: center;
+}
+
+.landing-stats__value {
+  font-family: var(--landing-font-display);
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  margin: 0;
+}
+
+.landing-stats__label {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+@media (min-width: 640px) {
+  .landing-stats__grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+}

@@ -1,0 +1,274 @@
+.ward-status-page {
+  min-width: 0;
+  max-width: 100%;
+  gap: 1.25rem;
+}
+
+.ward-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.125rem 1.25rem;
+  background: linear-gradient(135deg, #ebf5fb 0%, #f8fafc 60%, #fff 100%);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 12px rgba(29, 111, 164, 0.08);
+}
+
+.ward-banner__back {
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.ward-banner__back:hover {
+  text-decoration: none;
+}
+
+.ward-banner__main {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ward-banner__icon {
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: var(--radius-md);
+}
+
+.ward-banner__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.25;
+}
+
+.ward-banner__subtitle {
+  margin: 0.2rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.ward-banner__chip {
+  margin-left: auto;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: #fff;
+  border: 1px solid var(--color-primary-border, #bfdbfe);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.ward-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.ward-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1rem 1.125rem;
+  background: #fff;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+  min-width: 0;
+}
+
+.ward-stat-card__icon {
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+}
+
+.ward-stat-card__label {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.ward-stat-card__value {
+  margin: 0.1rem 0 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.ward-stat-card--total .ward-stat-card__icon {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.ward-stat-card--total .ward-stat-card__value {
+  color: var(--color-primary);
+}
+
+.ward-stat-card--free .ward-stat-card__icon {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.ward-stat-card--free .ward-stat-card__value {
+  color: var(--color-success);
+}
+
+.ward-stat-card--occ .ward-stat-card__icon {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.ward-stat-card--occ .ward-stat-card__value {
+  color: var(--color-danger);
+}
+
+.ward-status-page__table-card {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0;
+}
+
+.ward-table-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border-light);
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+}
+
+.ward-table-card__title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.ward-table-card__meta {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.ward-bed-cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.5rem;
+}
+
+.bed-no-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-primary-border, #bfdbfe);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.bed-no-badge--sm {
+  padding: 0.2rem 0.45rem;
+  font-size: 0.75rem;
+}
+
+.ward-beds-table {
+  min-width: 18rem;
+}
+
+.ward-status-page .ward-beds-table th,
+.ward-status-page .ward-beds-table td {
+  text-align: left;
+  vertical-align: middle;
+}
+
+.ward-beds-table__row--free {
+  background: rgba(39, 174, 96, 0.04);
+}
+
+.ward-beds-table__link {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.ward-beds-table__patient {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+}
+
+.ward-beds-table__patient-id {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.ward-beds-table__link:hover {
+  text-decoration: underline;
+}
+
+.ward-beds-table__vacant {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-success);
+}
+
+@media (max-width: 768px) {
+  .ward-banner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ward-banner__chip {
+    margin-left: 0;
+    align-self: flex-start;
+  }
+
+  .ward-banner__back .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ward-stats {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .ward-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .ward-bed-cell {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

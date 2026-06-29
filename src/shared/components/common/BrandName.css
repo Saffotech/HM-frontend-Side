@@ -1,0 +1,25 @@
+.brand-name {
+  display: inline;
+  font-weight: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  font-family: inherit;
+}
+
+.brand-name__lead {
+  color: var(--color-brand-green);
+}
+
+.brand-name__trail {
+  color: var(--color-brand-gold);
+}
+
+/* Light text on dark / colored panels (login hero, lab sidebar, bill header) */
+.brand-name--on-dark .brand-name__lead {
+  color: #fff;
+}
+
+.brand-name--on-dark .brand-name__trail {
+  color: var(--color-brand-gold);
+}

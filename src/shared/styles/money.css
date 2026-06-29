@@ -1,0 +1,234 @@
+/* Currency amounts — prevent layout break on large values */
+
+.money-amount {
+  display: inline-block;
+  max-width: 100%;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+  line-height: 1.25;
+}
+
+.money-amount--sm {
+  font-size: 0.8125rem;
+}
+
+.money-amount--xs {
+  font-size: 0.75rem;
+  letter-spacing: -0.01em;
+}
+
+/* Stat cards — prevent grid blow-out on large totals */
+.stat-card {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.stat-card__value {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.stat-card .money-amount {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  font-size: clamp(0.8125rem, 2.2vw, 1.25rem);
+  font-weight: 700;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stat-card .money-amount--sm {
+  font-size: clamp(0.75rem, 2vw, 1rem);
+}
+
+.stat-card .money-amount--xs {
+  font-size: clamp(0.6875rem, 1.8vw, 0.875rem);
+}
+
+/* Billing page stat row — extra room for money cards */
+.billing-list-page .stat-grid--4 {
+  gap: 0.625rem;
+}
+
+.billing-list-page .stat-card {
+  padding: 0.75rem 0.875rem;
+}
+
+.billing-list-page .stat-card__label {
+  line-height: 1.3;
+}
+
+.billing-list-page .stat-card .money-amount {
+  font-size: clamp(0.875rem, 1.6vw, 1.125rem);
+  letter-spacing: -0.02em;
+}
+
+/* Summary rows (OPD bill, collect payment) */
+.bill-summary-row,
+.collect-payment__summary > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.bill-summary-row > span:first-child,
+.collect-payment__summary > div > span:first-child {
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.bill-summary-row .money-amount,
+.collect-payment__summary .money-amount {
+  flex-shrink: 0;
+  text-align: right;
+  max-width: 62%;
+}
+
+.bill-summary-row--total .money-amount {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/* Table money columns */
+.col-money,
+.data-table .col-money,
+.bill-items-table .col-money {
+  text-align: right;
+  white-space: nowrap;
+  width: 1%;
+  min-width: 5.5rem;
+  max-width: 10rem;
+}
+
+.data-table .col-money .money-amount,
+.bill-items-table .col-money .money-amount {
+  max-width: 9.5rem;
+}
+
+/* OPD bill items table (legacy text-right cells) */
+.opd-form .data-table td:nth-child(4),
+.opd-form .data-table td:nth-child(5) {
+  text-align: right;
+  white-space: nowrap;
+  width: 1%;
+  min-width: 5rem;
+  max-width: 9rem;
+}
+
+/* View bill footer tables */
+.bill-footer-table .money-amount {
+  max-width: none;
+}
+
+.bill-footer-grid {
+  align-items: flex-start;
+}
+
+/* Collect payment modal */
+.collect-payment__summary strong,
+.collect-payment__summary .money-amount {
+  display: block;
+  text-align: right;
+  max-width: 100%;
+}
+
+.collect-payment__due .money-amount {
+  font-size: 1.125rem;
+}
+
+.collect-payment__due .money-amount--sm {
+  font-size: 1rem;
+}
+
+.collect-payment__due .money-amount--xs {
+  font-size: 0.875rem;
+}
+
+/* Billing list actions column — don't squeeze money cols */
+.billing-list-page .data-table th.col-money,
+.billing-list-page .data-table td.col-money {
+  min-width: 6rem;
+  max-width: 11rem;
+}
+
+@media (max-width: 768px) {
+  .bill-totals-box,
+  .bill-footer-summary {
+    width: 100%;
+    max-width: none;
+  }
+
+  .col-money,
+  .data-table .col-money {
+    min-width: 5rem;
+    max-width: 8rem;
+  }
+}
+
+/* Print: show K / L / Cr instead of ellipsis — full amount on screen, compact on paper */
+.money-amount--print {
+  display: none !important;
+}
+
+@media print {
+  .bill-print-zone .money-amount,
+  .bill-print-zone .money-amount--screen,
+  .bill-print-zone .money-amount--print {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    max-width: none !important;
+    white-space: nowrap !important;
+  }
+
+  .bill-print-zone .money-amount--screen {
+    display: none !important;
+  }
+
+  .bill-print-zone .money-amount--print {
+    display: inline !important;
+    font-weight: inherit;
+  }
+
+  .bill-print-zone .bill-items-table .col-money,
+  .bill-print-zone .bill-items-table td.text-right,
+  .bill-print-zone .bill-items-table th.text-right {
+    max-width: none !important;
+    width: auto !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Footer: payment history on top, summary below */
+  .bill-print-zone .bill-footer-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    align-items: stretch !important;
+    width: 100% !important;
+  }
+
+  .bill-print-zone .bill-footer-payments,
+  .bill-print-zone .bill-footer-summary {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    overflow: hidden !important;
+  }
+
+  .bill-print-zone .bill-footer-table .money-amount {
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+}

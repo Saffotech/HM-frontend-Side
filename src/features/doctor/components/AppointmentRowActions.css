@@ -1,0 +1,105 @@
+.doc-appt-actions {
+  position: relative;
+  min-width: 0;
+}
+
+.doc-appt-actions--compact {
+  width: auto;
+  flex-shrink: 0;
+}
+
+.doc-appt-actions__bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  flex-wrap: nowrap;
+}
+
+.doc-appt-actions__anchor {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.doc-appt-actions__menu {
+  position: absolute;
+  top: 50%;
+  z-index: var(--dropdown-z-index, 1100);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0.3rem;
+  padding: 0.25rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md, 0 6px 20px rgba(15, 23, 42, 0.1));
+  transform: translateY(-50%);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+  animation: hms-dropdown-in var(--duration-fast, 150ms) var(--ease-out, ease-out) both;
+}
+
+/* Opens to the left of ⋯ (inside row when space allows) */
+.doc-appt-actions__menu--left {
+  right: calc(100% + 0.35rem);
+  left: auto;
+}
+
+/* Opens to the right of ⋯ when left side is tight */
+.doc-appt-actions__menu--right {
+  left: calc(100% + 0.35rem);
+  right: auto;
+}
+
+.doc-appt-actions__menu-btn {
+  flex-shrink: 0;
+  min-width: 2rem;
+  padding-left: 0.45rem;
+  padding-right: 0.45rem;
+}
+
+.doc-appt-actions__menu-btn--active {
+  background: var(--color-surface-hover);
+  border-color: var(--color-brand-green-dark, #0f766e);
+  color: var(--color-brand-green-dark, #0f766e);
+}
+
+.doc-appt-actions__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.doc-appt-actions__item:hover:not(:disabled) {
+  background: var(--color-surface);
+  border-color: var(--color-brand-green-dark, #0f766e);
+  color: var(--color-brand-green-dark, #0f766e);
+}
+
+.doc-appt-actions__item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.doc-appt-actions__item svg {
+  flex-shrink: 0;
+  color: currentColor;
+}

@@ -1,0 +1,31 @@
+.select-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.select-field__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.select-field__select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #fff;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.select-field__select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(29, 111, 164, 0.15);
+}
+
+.select-field__select:disabled {
+  background: #f7fafc;
+  cursor: not-allowed;
+}

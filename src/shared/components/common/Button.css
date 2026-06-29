@@ -1,0 +1,120 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--duration-fast, 0.2s) var(--ease-standard, ease),
+    color var(--duration-fast, 0.2s) var(--ease-standard, ease),
+    border-color var(--duration-fast, 0.2s) var(--ease-standard, ease),
+    transform var(--duration-fast, 0.2s) var(--ease-standard, ease),
+    box-shadow var(--duration-fast, 0.2s) var(--ease-standard, ease),
+    filter var(--duration-fast, 0.2s) var(--ease-standard, ease);
+  white-space: nowrap;
+}
+
+.btn:hover:not(:disabled) {
+  filter: brightness(1.03);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn--sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.btn--md {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.btn--lg {
+  padding: 0.75rem 1.25rem;
+  font-size: 1rem;
+}
+
+.btn--primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+}
+
+.btn--success {
+  background: var(--color-success);
+  color: #fff;
+}
+
+.btn--success:hover:not(:disabled) {
+  background: #219a52;
+}
+
+.btn--danger {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: #c0392b;
+}
+
+.btn--outline {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.btn--outline:hover:not(:disabled) {
+  background: #f7fafc;
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--color-text-muted);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background: #f7fafc;
+}
+
+.btn--warning {
+  background: var(--color-warning);
+  color: #fff;
+}
+
+.btn--warning:hover:not(:disabled) {
+  background: #d35400;
+}
+
+.btn--purple {
+  background: var(--color-purple);
+  color: #fff;
+}
+
+.btn--teal {
+  background: var(--color-teal);
+  color: #fff;
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn--icon {
+  padding: 0.375rem;
+  min-width: 2rem;
+}

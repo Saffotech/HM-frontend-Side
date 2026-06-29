@@ -1,0 +1,267 @@
+/* HMS animation utilities — subtle, enterprise-grade */
+
+:root {
+  --ease-standard: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 0.2s;
+  --duration-normal: 0.28s;
+  --duration-slow: 0.35s;
+}
+
+/* ── Page transition wrapper ── */
+.page-transition {
+  width: 100%;
+  min-width: 0;
+}
+
+/* ── Interactive surfaces ── */
+.ui-interactive {
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+
+.card.ui-interactive:hover,
+.card--hover:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-card.ui-interactive:hover,
+.analytics-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ── Table rows ── */
+.data-table tbody tr {
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.data-table--animated tbody tr {
+  animation: hms-row-in var(--duration-normal) var(--ease-out) both;
+}
+
+.data-table--animated tbody tr:nth-child(1) { animation-delay: 0.02s; }
+.data-table--animated tbody tr:nth-child(2) { animation-delay: 0.04s; }
+.data-table--animated tbody tr:nth-child(3) { animation-delay: 0.06s; }
+.data-table--animated tbody tr:nth-child(4) { animation-delay: 0.08s; }
+.data-table--animated tbody tr:nth-child(5) { animation-delay: 0.10s; }
+.data-table--animated tbody tr:nth-child(6) { animation-delay: 0.12s; }
+.data-table--animated tbody tr:nth-child(7) { animation-delay: 0.14s; }
+.data-table--animated tbody tr:nth-child(8) { animation-delay: 0.16s; }
+
+@keyframes hms-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Form validation ── */
+.field__error {
+  animation: hms-fade-in var(--duration-fast) var(--ease-out) both;
+}
+
+.field__input--error {
+  animation: hms-shake-subtle 0.32s var(--ease-standard);
+}
+
+@keyframes hms-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hms-shake-subtle {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+/* ── Stagger reveal (dashboard sections) ── */
+.stagger-reveal > * {
+  animation: hms-fade-up var(--duration-normal) var(--ease-out) both;
+}
+
+.stagger-reveal > *:nth-child(1) { animation-delay: 0.03s; }
+.stagger-reveal > *:nth-child(2) { animation-delay: 0.06s; }
+.stagger-reveal > *:nth-child(3) { animation-delay: 0.09s; }
+.stagger-reveal > *:nth-child(4) { animation-delay: 0.12s; }
+.stagger-reveal > *:nth-child(5) { animation-delay: 0.15s; }
+.stagger-reveal > *:nth-child(6) { animation-delay: 0.18s; }
+
+@keyframes hms-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Shimmer skeleton ── */
+.skeleton {
+  display: block;
+  width: 100%;
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    90deg,
+    #edf2f7 0%,
+    #f7fafc 45%,
+    #edf2f7 90%
+  );
+  background-size: 200% 100%;
+  animation: hms-shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton--circle {
+  border-radius: 50%;
+}
+
+.skeleton-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.skeleton-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.skeleton-grid--4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 1024px) {
+  .skeleton-grid--4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .skeleton-grid--4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@keyframes hms-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Dropdown / filter panel ── */
+.searchable-select__dropdown--portal {
+  animation: hms-dropdown-in var(--duration-fast) var(--ease-out) both;
+  transform-origin: top center;
+}
+
+.searchable-select__dropdown--portal.searchable-select__dropdown--up {
+  transform-origin: bottom center;
+  animation-name: hms-dropdown-in-up;
+}
+
+@keyframes hms-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes hms-dropdown-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.filters-panel {
+  overflow: hidden;
+  transition:
+    max-height var(--duration-normal) var(--ease-standard),
+    opacity var(--duration-fast) var(--ease-standard);
+}
+
+/* ── Sidebar overlay ── */
+.layout-overlay,
+.doctor-shell__overlay {
+  animation: hms-overlay-in var(--duration-fast) var(--ease-out) both;
+}
+
+@keyframes hms-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.layout-nav__link--active {
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
+}
+
+.layout-nav__link:active,
+.doctor-shell__nav-btn:active {
+  transform: scale(0.98);
+}
+
+/* ── Mobile: lighter motion ── */
+@media (max-width: 768px) {
+  .stagger-reveal > * {
+    animation-duration: var(--duration-fast);
+  }
+
+  .data-table--animated tbody tr {
+    animation: none;
+  }
+
+  .card.ui-interactive:hover,
+  .card--hover:hover,
+  .stat-card.ui-interactive:hover,
+  .analytics-card:hover {
+    transform: none;
+  }
+}
+
+/* ── Accessibility ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .page-transition,
+  .stagger-reveal > *,
+  .data-table--animated tbody tr,
+  .searchable-select__dropdown--portal {
+    animation: none !important;
+    transform: none !important;
+  }
+}
