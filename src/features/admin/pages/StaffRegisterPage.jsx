@@ -7,7 +7,7 @@ import {
   useAdminRolesQuery,
   useRegisterStaffMutation,
 } from '@/shared/hooks/queries/useAdminQuery';
-import { Button, Input, Label, Select } from '@/shared/components/common';
+import { Button, Input, Label, QueryFeedback, Select } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 
@@ -21,16 +21,30 @@ const EMPTY_FORM = {
 };
 
 function formatRoleLabel(name) {
+  if (!name) return '—';
   if (name === 'opd_billing') return 'OPD Billing';
-  return name || '—';
+  if (name === 'lab_technician') return 'Lab Technician';
+  return name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export default function StaffRegisterPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState(EMPTY_FORM);
 
-  const { data: roles } = useAdminRolesQuery();
-  const { data: departments } = useAdminDepartmentsQuery();
+  const {
+    data: roles,
+    isLoading: rolesLoading,
+    isError: rolesError,
+    error: rolesQueryError,
+    refetch: refetchRoles,
+  } = useAdminRolesQuery();
+  const {
+    data: departments,
+    isLoading: departmentsLoading,
+    isError: departmentsError,
+    error: departmentsQueryError,
+    refetch: refetchDepartments,
+  } = useAdminDepartmentsQuery();
   const registerMutation = useRegisterStaffMutation();
 
   const selectedRole = roles?.find((r) => String(r.id) === String(form.role_id));
@@ -83,11 +97,16 @@ export default function StaffRegisterPage() {
     };
 
     try {
-      await registerMutation.mutateAsync({ data: payload });
-      toast.success('Staff registered successfully');
+      const result = await registerMutation.mutateAsync({ data: payload });
+      toast.success(result?.message || 'Staff registered successfully');
+      setForm(EMPTY_FORM);
       navigate(ROUTES.ADMIN_STAFF);
     } catch (err) {
-      toast.error(err?.message || 'Failed to register staff');
+      const message =
+        err?.status === 409
+          ? 'Email already registered'
+          : err?.message || 'Failed to register staff';
+      toast.error(message);
     }
   };
 
@@ -110,6 +129,13 @@ export default function StaffRegisterPage() {
             </p>
           </div>
           <div className="admin-card__body">
+            {rolesError ? (
+              <QueryFeedback
+                isError
+                error={rolesQueryError}
+                onRetry={refetchRoles}
+              />
+            ) : (
             <form onSubmit={handleSubmit} className="admin-form-grid">
               <div className="admin-form-grid admin-form-grid--2">
                 <div>
@@ -161,26 +187,56 @@ export default function StaffRegisterPage() {
                   value={form.role_id}
                   onChange={(value) => setForm((prev) => ({ ...prev, role_id: value }))}
                   options={roleOptions}
+                  placeholder={rolesLoading ? 'Loading roles…' : 'Select role'}
+                  disabled={rolesLoading || rolesError}
                 />
                 {needsDepartment && (
-                  <Select
-                    label="Department"
-                    value={form.department_id}
-                    onChange={(value) =>
-                      setForm((prev) => ({ ...prev, department_id: value }))
-                    }
-                    options={departmentOptions}
-                  />
+                  <div>
+                    {departmentsError && (
+                      <p className="field__error" role="alert">
+                        {departmentsQueryError?.message || 'Could not load departments'}{' '}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => refetchDepartments()}
+                        >
+                          Retry
+                        </Button>
+                      </p>
+                    )}
+                    <Select
+                      label="Department"
+                      value={form.department_id}
+                      onChange={(value) =>
+                        setForm((prev) => ({ ...prev, department_id: value }))
+                      }
+                      options={departmentOptions}
+                      placeholder={
+                        departmentsLoading ? 'Loading departments…' : 'Select department'
+                      }
+                      disabled={departmentsLoading || departmentsError}
+                    />
+                  </div>
                 )}
               </div>
 
               <div className="admin-form-actions">
-                <Button type="submit" disabled={registerMutation.isPending}>
+                <Button
+                  type="submit"
+                  disabled={
+                    registerMutation.isPending ||
+                    rolesLoading ||
+                    rolesError ||
+                    !roleOptions.length
+                  }
+                >
                   {registerMutation.isPending ? 'Registering…' : 'Register staff member'}
                   <UserPlus size={16} aria-hidden />
                 </Button>
               </div>
             </form>
+            )}
           </div>
         </div>
       </div>

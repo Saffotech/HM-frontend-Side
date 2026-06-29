@@ -129,10 +129,12 @@ function SearchableSelect({
   }, [selected, search, clearOnEmptyBlur, onChange]);
 
   const openDropdown = useCallback(() => {
-    if (disabled) return;
+    if (disabled || open) return;
+    const selectedIdx = value ? options.findIndex((o) => o.value === value) : 0;
     setOpen(true);
-    setSearch(selected ? selected.label : '');
-  }, [disabled, selected]);
+    setSearch('');
+    setHighlightIdx(selectedIdx >= 0 ? selectedIdx : 0);
+  }, [disabled, open, value, options]);
 
   const selectOption = useCallback(
     (option) => {
@@ -146,8 +148,10 @@ function SearchableSelect({
   const handleKeyDown = (e) => {
     if (!open) {
       if (e.key === 'ArrowDown' || e.key === 'Enter') {
+        const selectedIdx = value ? options.findIndex((o) => o.value === value) : 0;
         setOpen(true);
-        setSearch(selected ? selected.label : '');
+        setSearch('');
+        setHighlightIdx(selectedIdx >= 0 ? selectedIdx : 0);
         e.preventDefault();
       }
       return;
@@ -215,7 +219,6 @@ function SearchableSelect({
             e.stopPropagation();
             if (open) {
               setOpen(false);
-              setSearch(selected ? selected.label : '');
             } else {
               openDropdown();
             }

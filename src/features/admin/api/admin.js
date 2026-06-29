@@ -1,9 +1,10 @@
 /**
- * Admin API — dummy/mock layer for UI development.
- * Backend contract: GET /admin/dashboard, GET /users/, etc.
- * Swap implementations to apiClient when connecting live backend.
+ * Admin API — staff register, roles, and departments use live backend;
+ * other endpoints remain mock until wired.
  */
 
+import { apiClient } from '@/shared/api/client';
+import { register as authRegister } from '@/shared/api/auth';
 import {
   MOCK_ROLES,
   MOCK_DEPARTMENTS,
@@ -157,56 +158,18 @@ export async function deleteStaff(userId, actorId) {
 
 /** POST /auth/register */
 export async function registerStaff(body) {
-  await delay(500);
-  const store = getMockStaffStore();
-  if (store.some((s) => s.email.toLowerCase() === body.email.toLowerCase())) {
-    const err = new Error('Email already registered');
-    err.status = 409;
-    throw err;
-  }
-
-  const role = roleById(body.role_id);
-  if (!role) {
-    const err = new Error(`Role with id ${body.role_id} not found`);
-    err.status = 404;
-    throw err;
-  }
-
-  const nextId = Math.max(0, ...store.map((s) => s.id)) + 1;
-  const dept = body.department_id ? departmentById(body.department_id) : null;
-  const created = enrichStaff({
-    id: nextId,
-    first_name: body.first_name,
-    last_name: body.last_name ?? null,
-    email: body.email,
-    role_id: body.role_id,
-    role_name: role.name,
-    department_id: dept?.id ?? null,
-    department_name: dept?.name ?? null,
-    is_active: true,
-    last_login: null,
-    created_at: new Date().toISOString(),
-    phone: null,
-    login_count: 0,
-  });
-
-  setMockStaffStore([created, ...store]);
-  return {
-    message: 'Staff registered successfully',
-    user_id: created.id,
-    email: created.email,
-    role: role.name,
-  };
+  return authRegister(body);
 }
 
 /** GET /roles/ */
 export async function listRoles() {
-  await delay(200);
-  return MOCK_ROLES;
+  const data = await apiClient('/roles/');
+  return Array.isArray(data) ? data : [];
 }
 
-/** GET /opd/departments */
+/** GET /departments/ */
 export async function listDepartments() {
-  await delay(200);
-  return MOCK_DEPARTMENTS;
+  const data = await apiClient('/departments/');
+  const rows = data?.departments ?? data;
+  return Array.isArray(rows) ? rows : [];
 }
