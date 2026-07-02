@@ -1,0 +1,49 @@
+.receptionist-role-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #2563eb;
+  margin: 0 1rem 0.85rem;
+}
+
+.receptionist-dashboard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  padding: 1.5rem;
+}
+
+.receptionist-dashboard__card {
+  max-width: 32rem;
+  width: 100%;
+  padding: 2rem 1.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  text-align: center;
+}
+
+.receptionist-dashboard__eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #2563eb;
+}
+
+.receptionist-dashboard__title {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.receptionist-dashboard__text {
+  margin: 0.75rem 0 0;
+  color: #64748b;
+  line-height: 1.55;
+}

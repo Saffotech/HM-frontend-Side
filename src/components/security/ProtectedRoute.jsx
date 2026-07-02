@@ -3,7 +3,7 @@ import { useAuth } from '@/shared/hooks/useAuth';
 import { ROUTES, ROLES } from '@/shared/constants';
 import PageSpinner from '@/shared/components/PageSpinner';
 
-export default function ProtectedRoute({ allowedRoles }) {
+export default function ProtectedRoute({ allowedRoles, loginPath = ROUTES.LOGIN }) {
   const { isAuthenticated, user, loading, authReady } = useAuth();
 
   if (!authReady || loading) {
@@ -11,7 +11,7 @@ export default function ProtectedRoute({ allowedRoles }) {
   }
 
   if (!isAuthenticated || !user) {
-    return <Navigate to={ROUTES.LOGIN} replace />;
+    return <Navigate to={loginPath} replace />;
   }
 
   if (allowedRoles?.length && (!user.role || !allowedRoles.includes(user.role))) {

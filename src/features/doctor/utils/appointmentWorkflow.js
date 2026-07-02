@@ -2,7 +2,19 @@ import { compareAppointmentsByDateTime } from './doctorDates';
 
 /** Primary workflow status (API → UI mapped `status` field). */
 export function getAppointmentStatus(appt) {
-  return appt?.status || 'Waiting';
+  return appt?.status || 'Scheduled';
+}
+
+/** Doctor dashboard display — hides waiting / in-progress states. */
+export function getDoctorDisplayStatus(apptOrStatus) {
+  const s = typeof apptOrStatus === 'string' ? apptOrStatus : getAppointmentStatus(apptOrStatus);
+  if (s === 'Waiting' || s === 'In Progress') return 'Scheduled';
+  return s;
+}
+
+export function isPendingConsultation(appt) {
+  const s = getAppointmentStatus(appt);
+  return s === 'Scheduled' || s === 'Waiting' || s === 'In Progress';
 }
 
 /** @deprecated Use getAppointmentStatus */
@@ -62,29 +74,9 @@ export function canCallPatient(appt) {
   return isInWaitingQueue(appt);
 }
 
-/** Allowed PUT /appointments/{id}/status actions for current UI status (backend transitions). */
+/** Allowed manual status actions in appointment detail (doctor uses Consult modal to complete). */
 export function getAppointmentStatusActions(uiStatus) {
-  const normalized = String(uiStatus ?? '')
-    .toLowerCase()
-    .replace(/\s+/g, '_');
-
-  if (normalized === 'scheduled') {
-    return [
-      { label: 'Mark as Waiting', status: 'Waiting' },
-      { label: 'Cancel Appointment', status: 'Cancelled', variant: 'danger' },
-    ];
-  }
-  if (normalized === 'waiting') {
-    return [
-      { label: 'Start Consultation', status: 'In Progress' },
-      { label: 'Cancel Appointment', status: 'Cancelled', variant: 'danger' },
-    ];
-  }
-  if (normalized === 'in_progress') {
-    return [
-      { label: 'Complete Appointment', status: 'Completed' },
-      { label: 'Cancel Appointment', status: 'Cancelled', variant: 'danger' },
-    ];
-  }
-  return [];
+  const display = getDoctorDisplayStatus(uiStatus);
+  if (display === 'Completed' || display === 'Cancelled') return [];
+  return [{ label: 'Cancel Appointment', status: 'Cancelled', variant: 'danger' }];
 }

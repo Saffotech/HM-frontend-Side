@@ -2,15 +2,9 @@ import { useMemo, useState, memo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
-
   Check,
-
   Clock,
-
-  Activity,
-
   XCircle,
-
 } from 'lucide-react';
 
 import {
@@ -20,15 +14,8 @@ import {
 } from '@/features/doctor/hooks/useDoctorAppointmentQuery';
 
 import {
-
   useDoctorDashboardTodayQueueQuery,
-
-  useAddToQueueMutation,
-
-  useStartConsultationMutation,
-
   useRequestNextPatientMutation,
-
 } from '@/features/doctor/hooks/useDoctorQueueQuery';
 
 import {
@@ -47,15 +34,10 @@ import {
   isConsultCompleted,
   isConsultCancelled,
   compareQueueOrder,
+  isPendingConsultation,
 } from '@/features/doctor/utils/appointmentWorkflow';
 
-import {
-  isQueueInConsultation,
-  isQueueTerminal,
-
-  findQueueRowForAppointment,
-
-} from '@/features/doctor/utils/queueWorkflow';
+import { findQueueRowForAppointment } from '@/features/doctor/utils/queueWorkflow';
 
 import { Button, Avatar } from '@/shared/components/common';
 import Skeleton from '@/shared/components/common/Skeleton';
@@ -75,7 +57,7 @@ import AppointmentDetailModal from './AppointmentDetailModal';
 import PatientHistoryProfile from './PatientHistoryProfile';
 
 import { appointmentToPatientSummary } from '@/shared/api/mappers/doctorPatientMapper';
-import { doctorQueueApi } from '@/shared/api/services';
+import { doctorAppointmentsApi } from '@/shared/api/services';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { prefetchPatientProfileData } from '@/features/doctor/utils/doctorPatientProfileCache';
@@ -87,15 +69,9 @@ import './DashboardSection.css';
 
 
 const DASHBOARD_FILTER = {
-
-  WAITING: 'waiting',
-
+  SCHEDULED: 'scheduled',
   COMPLETED: 'completed',
-
-  IN_PROGRESS: 'in-progress',
-
   CANCELLED: 'cancelled',
-
 };
 
 function comparePatientQueueDashboard(a, b, queueMetaByAppointmentId) {
@@ -103,10 +79,6 @@ function comparePatientQueueDashboard(a, b, queueMetaByAppointmentId) {
   const bMeta = queueMetaByAppointmentId.get(b.dbId);
   const aInQueue = Boolean(aMeta);
   const bInQueue = Boolean(bMeta);
-
-  const aInProgress = a.status === 'In Progress';
-  const bInProgress = b.status === 'In Progress';
-  if (aInProgress !== bInProgress) return aInProgress ? -1 : 1;
 
   if (aInQueue && bInQueue) {
     return (bMeta.tokenNumber ?? 0) - (aMeta.tokenNumber ?? 0);
@@ -147,10 +119,6 @@ function DashboardSection({ onViewAllPatients }) {
 
   const isDashboardInitialLoad = isTodayPending || isQueuePending;
 
-  const addToQueueMut = useAddToQueueMutation();
-
-  const startConsultMut = useStartConsultationMutation();
-
   const requestNextMut = useRequestNextPatientMutation();
 
   const [consultFor, setConsultFor] = useState(null);
@@ -167,7 +135,7 @@ function DashboardSection({ onViewAllPatients }) {
 
   const [startingConsult, setStartingConsult] = useState(false);
 
-  const [activeFilter, setActiveFilter] = useState(DASHBOARD_FILTER.WAITING);
+  const [activeFilter, setActiveFilter] = useState(DASHBOARD_FILTER.SCHEDULED);
 
 
 
@@ -204,31 +172,22 @@ function DashboardSection({ onViewAllPatients }) {
 
   const nextQueueCandidate = useMemo(() => {
     return (
-      queuePanelList.find(
-        (item) =>
-          item.appointment?.status === 'Scheduled' ||
-          item.appointment?.status === 'Waiting'
-      ) ?? null
+      queuePanelList.find((item) => isPendingConsultation(item.appointment)) ?? null
     );
   }, [queuePanelList]);
 
-
-
-  const patientsInQueue = useMemo(
-    () => todaysActive.filter((a) => a.status !== 'In Progress'),
+  const pendingConsultations = useMemo(
+    () => todaysActive.filter(isPendingConsultation),
     [todaysActive]
   );
 
-  const { completed, inProgressLocal, cancelledLocal } = useMemo(() => {
+  const { completed, cancelledLocal } = useMemo(() => {
     const completedList = [];
-    let inProgress = 0;
     let cancelled = 0;
 
     for (const appointment of todaysAll) {
       if (isConsultCompleted(appointment)) {
         completedList.push(appointment);
-      } else if (appointment.status === 'In Progress') {
-        inProgress += 1;
       } else if (appointment.status === 'Cancelled') {
         cancelled += 1;
       }
@@ -236,7 +195,6 @@ function DashboardSection({ onViewAllPatients }) {
 
     return {
       completed: completedList,
-      inProgressLocal: inProgress,
       cancelledLocal: cancelled,
     };
   }, [todaysAll]);
@@ -247,37 +205,32 @@ function DashboardSection({ onViewAllPatients }) {
       case DASHBOARD_FILTER.COMPLETED:
         list = dedupeAppointmentsByPatient(completed);
         break;
-      case DASHBOARD_FILTER.IN_PROGRESS:
-        list = todaysAll.filter((a) => a.status === 'In Progress');
-        break;
       case DASHBOARD_FILTER.CANCELLED:
         list = todaysAll.filter(isConsultCancelled);
         break;
-      case DASHBOARD_FILTER.WAITING:
+      case DASHBOARD_FILTER.SCHEDULED:
       default:
-        list = patientsInQueue;
+        list = pendingConsultations;
         break;
     }
     const sorted = [...list];
-    if (activeFilter === DASHBOARD_FILTER.WAITING) {
+    if (activeFilter === DASHBOARD_FILTER.SCHEDULED) {
       sorted.sort((a, b) => comparePatientQueueDashboard(a, b, queueMetaByAppointmentId));
     } else {
       sorted.sort(compareAppointmentsByDateTime);
     }
     return sorted;
-  }, [activeFilter, completed, patientsInQueue, todaysAll, queueMetaByAppointmentId]);
+  }, [activeFilter, completed, pendingConsultations, todaysAll, queueMetaByAppointmentId]);
 
   const queueTableTitle = useMemo(() => {
     switch (activeFilter) {
       case DASHBOARD_FILTER.COMPLETED:
         return 'Completed Consultations';
-      case DASHBOARD_FILTER.IN_PROGRESS:
-        return 'In Progress';
       case DASHBOARD_FILTER.CANCELLED:
         return 'Cancelled Appointments';
-      case DASHBOARD_FILTER.WAITING:
+      case DASHBOARD_FILTER.SCHEDULED:
       default:
-        return 'Patient Queue';
+        return "Today's Appointments";
     }
   }, [activeFilter]);
 
@@ -285,13 +238,11 @@ function DashboardSection({ onViewAllPatients }) {
     switch (activeFilter) {
       case DASHBOARD_FILTER.COMPLETED:
         return 'No completed consultations today.';
-      case DASHBOARD_FILTER.IN_PROGRESS:
-        return 'No consultations in progress right now.';
       case DASHBOARD_FILTER.CANCELLED:
         return 'No cancelled appointments today.';
-      case DASHBOARD_FILTER.WAITING:
+      case DASHBOARD_FILTER.SCHEDULED:
       default:
-        return 'No patients waiting right now.';
+        return 'No scheduled appointments for today.';
     }
   }, [activeFilter]);
 
@@ -311,9 +262,9 @@ function DashboardSection({ onViewAllPatients }) {
   const summary = useMemo(
     () => [
       {
-        filter: DASHBOARD_FILTER.WAITING,
-        label: 'Patients in Queue',
-        value: patientsInQueue.length,
+        filter: DASHBOARD_FILTER.SCHEDULED,
+        label: 'Scheduled Today',
+        value: pendingConsultations.length,
         icon: Clock,
         tint: 'doc-stat-icon--amber',
       },
@@ -325,13 +276,6 @@ function DashboardSection({ onViewAllPatients }) {
         tint: 'doc-stat-icon--green',
       },
       {
-        filter: DASHBOARD_FILTER.IN_PROGRESS,
-        label: 'In Progress',
-        value: inProgressLocal,
-        icon: Activity,
-        tint: 'doc-stat-icon--red',
-      },
-      {
         filter: DASHBOARD_FILTER.CANCELLED,
         label: 'Cancelled',
         value: cancelledLocal,
@@ -339,12 +283,7 @@ function DashboardSection({ onViewAllPatients }) {
         tint: 'doc-stat-icon--violet',
       },
     ],
-    [
-      patientsInQueue.length,
-      completed.length,
-      inProgressLocal,
-      cancelledLocal,
-    ],
+    [pendingConsultations.length, completed.length, cancelledLocal]
   );
 
 
@@ -360,89 +299,40 @@ function DashboardSection({ onViewAllPatients }) {
   );
 
   const beginConsultation = useCallback(async (appt) => {
-
     if (appt.dbId == null) {
-
-      toast.error('Appointment id missing — cannot join queue');
-
+      toast.error('Appointment id missing — cannot open consultation');
       return;
-
     }
 
     setStartingConsult(true);
-
     try {
+      const patientUid = appt.patientUid ?? appt.patientId;
+      const patientDbId = appt.patientDbId ?? appt.patientId;
 
-      let queueRow = findQueueRowForAppointment(todayQueue, appt.dbId);
+      await Promise.all([
+        prefetchPatientProfileData(queryClient, token, {
+          patientUid,
+          patientId: patientDbId,
+        }),
+        queryClient.prefetchQuery({
+          queryKey: queryKeys.doctor.appointments.detail(appt.dbId),
+          queryFn: () => doctorAppointmentsApi.fetchAppointmentById(appt.dbId, token),
+        }),
+      ]);
 
-      if (queueRow && isQueueTerminal(queueRow)) {
-        queueRow = null;
-      }
-
-      const canJoinQueue =
-        appt.status === 'Scheduled'
-        || appt.status === 'Waiting'
-        || appt.status === 'In Progress';
-
-      if (!queueRow && canJoinQueue) {
-        queueRow = await addToQueueMut.mutateAsync(appt.dbId);
-      }
-
-      if (!queueRow?.queueId && appt.status === 'In Progress') {
-        const current = await queryClient.fetchQuery({
-          queryKey: queryKeys.doctor.queue.current,
-          queryFn: () => doctorQueueApi.fetchCurrentQueue(token),
-        });
-        if (current?.appointmentId === appt.dbId) {
-          queueRow = current;
-        }
-      }
-
-      if (!queueRow?.queueId) {
-
-        toast.error('No active queue session for this patient. Please try again.');
-
-        return;
-
-      }
-
-      let activeRow = queueRow;
-
-      if (!isQueueInConsultation(queueRow)) {
-
-        activeRow = await startConsultMut.mutateAsync(queueRow.queueId);
-
-      }
+      const queueRow = findQueueRowForAppointment(todayQueue, appt.dbId);
 
       setConsultFor({
-
         ...appt,
-
-        queueId: activeRow.queueId,
-
-        queueRow: activeRow,
-
-        status: 'In Progress',
-
+        queueId: queueRow?.queueId ?? null,
+        queueRow: queueRow ?? null,
       });
-
     } catch (err) {
-
-      toast.error(err?.message ?? 'Failed to start consultation');
-
+      toast.error(err?.message ?? 'Could not open consultation');
     } finally {
-
       setStartingConsult(false);
-
     }
-
-  }, [
-    todayQueue,
-    addToQueueMut,
-    queryClient,
-    token,
-    startConsultMut,
-  ]);
+  }, [todayQueue, queryClient, token]);
 
 
 
@@ -491,23 +381,21 @@ function DashboardSection({ onViewAllPatients }) {
     const category =
       activeFilter === DASHBOARD_FILTER.COMPLETED
         ? PATIENT_CATEGORY_FILTER.COMPLETED
-        : activeFilter === DASHBOARD_FILTER.IN_PROGRESS
-          ? PATIENT_CATEGORY_FILTER.IN_PROGRESS
-          : activeFilter === DASHBOARD_FILTER.CANCELLED
-            ? PATIENT_CATEGORY_FILTER.CANCELLED
-            : PATIENT_CATEGORY_FILTER.ALL;
+        : activeFilter === DASHBOARD_FILTER.CANCELLED
+          ? PATIENT_CATEGORY_FILTER.CANCELLED
+          : PATIENT_CATEGORY_FILTER.QUEUE;
     onViewAllPatients?.(category);
   }, [activeFilter, onViewAllPatients]);
 
   const queueHeaderActions = useMemo(() => {
-    if (activeFilter === DASHBOARD_FILTER.WAITING) {
+    if (activeFilter === DASHBOARD_FILTER.SCHEDULED) {
       return (
         <>
-          <span className="doc-pill doc-pill--waiting">
+          <span className="doc-pill doc-pill--muted">
             {isDashboardInitialLoad ? (
               <Skeleton width={72} height={18} />
             ) : (
-              `${patientsInQueue.length} in queue`
+              `${pendingConsultations.length} scheduled`
             )}
           </span>
           <Button
@@ -540,7 +428,7 @@ function DashboardSection({ onViewAllPatients }) {
     );
   }, [
     activeFilter,
-    patientsInQueue.length,
+    pendingConsultations.length,
     isDashboardInitialLoad,
     nextQueueCandidate,
     requestNextMut.isPending,
@@ -597,16 +485,8 @@ function DashboardSection({ onViewAllPatients }) {
 
             isLoading={isDashboardInitialLoad}
 
-            showActions={
-              activeFilter === DASHBOARD_FILTER.WAITING
-              || activeFilter === DASHBOARD_FILTER.IN_PROGRESS
-            }
-
-            actionMode={
-              activeFilter === DASHBOARD_FILTER.WAITING
-                ? 'waiting'
-                : 'in_progress'
-            }
+            showActions={activeFilter === DASHBOARD_FILTER.SCHEDULED}
+            actionMode="consult"
 
             startingConsult={startingConsult}
 
@@ -706,6 +586,7 @@ function DashboardSection({ onViewAllPatients }) {
 
       <DashboardModals
         consultFor={consultFor}
+        todayQueue={todayQueue}
         onCloseConsult={() => setConsultFor(null)}
         rxFor={rxFor}
 

@@ -10,6 +10,7 @@ import {
   uploadActionLabel,
 } from '@/features/lab/utils/labOrderStatus';
 import { ROUTES } from '@/shared/constants';
+import { DateInput } from '@/shared/components/common';
 import '../styles/lab.css';
 
 const labUploadPath = (id) => `/lab/orders/${id}/upload`;
@@ -183,8 +184,12 @@ export default function LabOrderListPage() {
             </select>
           </div>
           <div className="lab-filter-group">
-            <label htmlFor="lab-orders-date">Date</label>
-            <input id="lab-orders-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            <DateInput
+              id="lab-orders-date"
+              label="Date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
           </div>
           {hasExtraFilters && (
             <button type="button" className="lab-filter-reset" onClick={resetExtraFilters}>

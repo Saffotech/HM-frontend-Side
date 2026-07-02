@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, UserPlus } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 import AdminLayout from '@/features/admin/components/AdminLayout';
+import AdminBackBar from '@/features/admin/components/AdminBackBar';
+import AdminPageHeader from '@/features/admin/components/AdminPageHeader';
 import {
   useAdminDepartmentsQuery,
   useAdminRolesQuery,
@@ -113,15 +115,14 @@ export default function StaffRegisterPage() {
   return (
     <AdminLayout pageTitle="Register Staff">
       <div className="admin-page">
-        <div className="admin-back-row">
-          <Button variant="ghost" onClick={() => navigate(ROUTES.ADMIN_STAFF)}>
-            <ArrowLeft size={16} aria-hidden />
-            Back
-          </Button>
-          <h1 className="admin-page__title">Register new staff</h1>
-        </div>
+        <AdminBackBar onBack={() => navigate(ROUTES.ADMIN_STAFF)} />
 
-        <div className="admin-card" style={{ maxWidth: '48rem' }}>
+        <AdminPageHeader
+          title="Register new staff"
+          subtitle="Create a staff account with role and optional department assignment."
+        />
+
+        <div className="admin-card admin-card--narrow">
           <div className="admin-card__header">
             <h2 className="admin-card__title">Account details</h2>
             <p className="admin-card__desc">
@@ -137,88 +138,98 @@ export default function StaffRegisterPage() {
               />
             ) : (
             <form onSubmit={handleSubmit} className="admin-form-grid">
-              <div className="admin-form-grid admin-form-grid--2">
-                <div>
-                  <Label htmlFor="first_name">First name *</Label>
-                  <Input
-                    id="first_name"
-                    value={form.first_name}
-                    onChange={handleChange('first_name')}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="last_name">Last name</Label>
-                  <Input
-                    id="last_name"
-                    value={form.last_name}
-                    onChange={handleChange('last_name')}
-                  />
-                </div>
-              </div>
-
-              <div className="admin-form-grid admin-form-grid--2">
-                <div>
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={form.email}
-                    onChange={handleChange('email')}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="password">Temporary password *</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={form.password}
-                    onChange={handleChange('password')}
-                    minLength={8}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="admin-form-grid admin-form-grid--2">
-                <Select
-                  label="Role *"
-                  value={form.role_id}
-                  onChange={(value) => setForm((prev) => ({ ...prev, role_id: value }))}
-                  options={roleOptions}
-                  placeholder={rolesLoading ? 'Loading roles…' : 'Select role'}
-                  disabled={rolesLoading || rolesError}
-                />
-                {needsDepartment && (
+              <div className="admin-form-section">
+                <h3 className="admin-form-section__title">Personal details</h3>
+                <div className="admin-form-grid admin-form-grid--2">
                   <div>
-                    {departmentsError && (
-                      <p className="field__error" role="alert">
-                        {departmentsQueryError?.message || 'Could not load departments'}{' '}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => refetchDepartments()}
-                        >
-                          Retry
-                        </Button>
-                      </p>
-                    )}
-                    <Select
-                      label="Department"
-                      value={form.department_id}
-                      onChange={(value) =>
-                        setForm((prev) => ({ ...prev, department_id: value }))
-                      }
-                      options={departmentOptions}
-                      placeholder={
-                        departmentsLoading ? 'Loading departments…' : 'Select department'
-                      }
-                      disabled={departmentsLoading || departmentsError}
+                    <Label htmlFor="first_name">First name *</Label>
+                    <Input
+                      id="first_name"
+                      value={form.first_name}
+                      onChange={handleChange('first_name')}
+                      required
                     />
                   </div>
-                )}
+                  <div>
+                    <Label htmlFor="last_name">Last name</Label>
+                    <Input
+                      id="last_name"
+                      value={form.last_name}
+                      onChange={handleChange('last_name')}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="admin-form-section">
+                <h3 className="admin-form-section__title">Account credentials</h3>
+                <div className="admin-form-grid admin-form-grid--2">
+                  <div>
+                    <Label htmlFor="email">Email *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={form.email}
+                      onChange={handleChange('email')}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="password">Temporary password *</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={form.password}
+                      onChange={handleChange('password')}
+                      minLength={8}
+                      required
+                    />
+                    <p className="admin-help-text">Minimum 8 characters.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="admin-form-section">
+                <h3 className="admin-form-section__title">Role assignment</h3>
+                <div className="admin-form-grid admin-form-grid--2">
+                  <Select
+                    label="Role *"
+                    value={form.role_id}
+                    onChange={(value) => setForm((prev) => ({ ...prev, role_id: value }))}
+                    options={roleOptions}
+                    placeholder={rolesLoading ? 'Loading roles…' : 'Select role'}
+                    disabled={rolesLoading || rolesError}
+                  />
+                  {needsDepartment && (
+                    <div>
+                      {departmentsError && (
+                        <p className="field__error" role="alert">
+                          {departmentsQueryError?.message || 'Could not load departments'}{' '}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => refetchDepartments()}
+                          >
+                            Retry
+                          </Button>
+                        </p>
+                      )}
+                      <Select
+                        label="Department"
+                        value={form.department_id}
+                        onChange={(value) =>
+                          setForm((prev) => ({ ...prev, department_id: value }))
+                        }
+                        options={departmentOptions}
+                        placeholder={
+                          departmentsLoading ? 'Loading departments…' : 'Select department'
+                        }
+                        disabled={departmentsLoading || departmentsError}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="admin-form-actions">

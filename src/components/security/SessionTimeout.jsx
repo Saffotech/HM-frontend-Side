@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { Modal, Button } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import { useAuth } from '@/shared/hooks/useAuth';
+import { isDemoReceptionistSession } from '@/features/receptionist/utils/receptionistPortal';
 
 const IDLE_MS = 30 * 60 * 1000;
 const WARNING_MS = 60 * 1000;
 
 export default function SessionTimeout() {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, user } = useAuth();
   const navigate = useNavigate();
   const [warningOpen, setWarningOpen] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(60);
@@ -26,11 +27,12 @@ export default function SessionTimeout() {
   }, []);
 
   const forceLogout = useCallback(() => {
+    const returnToReceptionLogin = isDemoReceptionistSession(user);
     clearTimers();
     setWarningOpen(false);
     logout();
-    navigate(ROUTES.LOGIN, { replace: true });
-  }, [clearTimers, logout, navigate]);
+    navigate(returnToReceptionLogin ? ROUTES.RECEPTIONIST_LOGIN : ROUTES.LOGIN, { replace: true });
+  }, [clearTimers, logout, navigate, user]);
 
   const startWarningCountdown = useCallback(() => {
     setSecondsLeft(60);

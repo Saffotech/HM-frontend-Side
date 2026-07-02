@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NursePageHeader from '@/features/nurse/components/NursePageHeader';
 import { useCreateHandoverMutation } from '@/shared/hooks/queries/useNurseQuery';
+import { Input } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
 
 const INITIAL = {
@@ -60,11 +61,10 @@ export default function NurseHandoverCreatePage() {
             />
           </div>
           <div className="nurse-field">
-            <label htmlFor="shift_date">Shift Date</label>
-            <input
+            <Input
               id="shift_date"
               type="date"
-              className="nurse-input"
+              label="Shift Date"
               value={form.shift_date}
               onChange={(e) => set('shift_date', e.target.value)}
             />

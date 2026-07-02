@@ -1,14 +1,20 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useCreatePrescriptionMutation } from '@/features/doctor/hooks/useDoctorPrescriptionQuery';
 import { useCreateLabTestMutation } from '@/features/doctor/hooks/useDoctorLabQuery';
-import { useCompleteConsultationMutation } from '@/features/doctor/hooks/useDoctorQueueQuery';
+import { useSaveConsultationWorkflowMutation } from '@/features/doctor/hooks/useDoctorQueueQuery';
 import {
   DEFAULT_MEDICINE,
   LAB_TEST_OPTIONS,
   LAB_CATEGORIES,
   LAB_PRIORITIES,
 } from '@/features/doctor/constants';
-import { Modal, Button, Input, Label, Textarea, Select } from '@/shared/components/common';
+import { DOCTOR_PATIENT_HISTORY_QUERY_OPTIONS } from '@/features/doctor/utils/doctorPatientProfileCache';
+import { getDoctorDisplayStatus } from '@/features/doctor/utils/appointmentWorkflow';
+import { Modal, Button, Input, Label, Textarea, Select, QueryFeedback } from '@/shared/components/common';
+import { doctorAppointmentsApi, doctorPatientsApi } from '@/shared/api/services';
+import { queryKeys } from '@/shared/api/queryKeys';
+import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { toast } from '@/shared/utils/toast';
 import '../styles/doctor-ui.css';
 
@@ -23,10 +29,17 @@ function emptyMedicineRow() {
   return { ...DEFAULT_MEDICINE, durationValue: '', durationUnit: 'Days' };
 }
 
-export default function ConsultationModal({ appointment, open, onClose, onDone }) {
+export default function ConsultationModal({
+  appointment,
+  todayQueue = [],
+  open,
+  onClose,
+  onDone,
+}) {
+  const token = useQueryToken();
+  const saveConsultation = useSaveConsultationWorkflowMutation();
   const createPrescription = useCreatePrescriptionMutation();
   const createLabTest = useCreateLabTestMutation();
-  const completeConsultation = useCompleteConsultationMutation();
   const [tab, setTab] = useState('clinical');
   const [symptoms, setSymptoms] = useState('');
   const [diagnosis, setDiagnosis] = useState('');
@@ -40,8 +53,21 @@ export default function ConsultationModal({ appointment, open, onClose, onDone }
   const [fieldErrors, setFieldErrors] = useState({});
 
   const appointmentId = appointment?.id;
-  const queueId = appointment?.queueId;
   const appointmentDbId = appointment?.dbId;
+  const patientUid = appointment?.patientUid ?? appointment?.patientId;
+
+  const appointmentDetailQuery = useQuery({
+    queryKey: queryKeys.doctor.appointments.detail(appointmentDbId),
+    queryFn: () => doctorAppointmentsApi.fetchAppointmentById(appointmentDbId, token),
+    enabled: open && appointmentDbId != null && Boolean(token),
+  });
+
+  const patientHistoryQuery = useQuery({
+    queryKey: queryKeys.doctor.patients.history(patientUid),
+    queryFn: () => doctorPatientsApi.fetchPatientHistory(patientUid, token),
+    enabled: open && Boolean(patientUid) && Boolean(token),
+    ...DOCTOR_PATIENT_HISTORY_QUERY_OPTIONS,
+  });
 
   useEffect(() => {
     if (!open || !appointmentId) return;
@@ -59,15 +85,26 @@ export default function ConsultationModal({ appointment, open, onClose, onDone }
   }, [open, appointmentId]);
 
   useEffect(() => {
+    if (!open) return;
+    const detail = appointmentDetailQuery.data;
+    if (!detail) return;
+    if (!symptoms && detail.reason) setSymptoms(detail.reason);
+    if (!notes && detail.notes) setNotes(detail.notes);
+  }, [open, appointmentDetailQuery.data, symptoms, notes]);
+
+  useEffect(() => {
     if (labTest) setLabCategory(defaultLabCategory(labTest));
   }, [labTest]);
 
   if (!appointment) return null;
 
   const saving =
-    completeConsultation.isPending ||
+    saveConsultation.isPending ||
     createPrescription.isPending ||
     createLabTest.isPending;
+
+  const displayStatus = getDoctorDisplayStatus(appointmentDetailQuery.data ?? appointment);
+  const recentVisits = (patientHistoryQuery.data?.visits ?? []).slice(0, 3);
 
   const save = async () => {
     const errs = {};
@@ -84,12 +121,8 @@ export default function ConsultationModal({ appointment, open, onClose, onDone }
     setFieldErrors(errs);
     if (Object.keys(errs).length) return;
 
-    if (queueId == null) {
-      toast.error('Queue session missing — start consultation from the dashboard first');
-      return;
-    }
     if (appointmentDbId == null) {
-      toast.error('Appointment id missing — cannot save consultation data');
+      toast.error('Appointment id missing — cannot save consultation');
       return;
     }
 
@@ -97,9 +130,10 @@ export default function ConsultationModal({ appointment, open, onClose, onDone }
       const patientDbId =
         appointment.patientDbId ?? appointment.queueRow?.patientId ?? null;
 
-      await completeConsultation.mutateAsync({
-        queueId,
-        patientUid: appointment.patientUid ?? appointment.patientId,
+      await saveConsultation.mutateAsync({
+        appointmentDbId,
+        todayQueue,
+        patientUid,
         patientId: patientDbId,
         clinical: {
           symptoms: symptoms.trim() || undefined,
@@ -122,7 +156,7 @@ export default function ConsultationModal({ appointment, open, onClose, onDone }
         await createPrescription.mutateAsync({
           appointmentDbId,
           patientId: patientDbId,
-          patientUid: appointment.patientUid ?? appointment.patientId,
+          patientUid,
           patientName: appointment.patientName,
           diagnosis,
           notes: prescriptionNotes,
@@ -138,7 +172,7 @@ export default function ConsultationModal({ appointment, open, onClose, onDone }
       if (labTest) {
         await createLabTest.mutateAsync({
           appointmentDbId,
-          patientUid: appointment.patientUid ?? appointment.patientId,
+          patientUid,
           patientName: appointment.patientName,
           testName: labTest,
           category: labCategory,
@@ -150,7 +184,7 @@ export default function ConsultationModal({ appointment, open, onClose, onDone }
       toast.success('Consultation saved');
       onDone();
     } catch {
-      // API mutation hooks already toast via mutationOnError
+      // mutation hooks toast via mutationOnError
     }
   };
 
@@ -164,17 +198,39 @@ export default function ConsultationModal({ appointment, open, onClose, onDone }
         <>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button disabled={saving} onClick={save}>
-            {saving ? 'Saving...' : 'Save & Complete'}
+            {saving ? 'Saving...' : 'Save Consultation'}
           </Button>
         </>
       }
     >
       <p className="text-muted" style={{ margin: '0 0 1rem', fontSize: '0.875rem' }}>
-        {appointment.patientUid ?? appointment.patientId}
-        {appointment.queueId != null && (
-          <span style={{ marginLeft: '0.5rem' }}>· Queue #{appointment.queueId}</span>
-        )}
+        {patientUid ?? '—'}
+        <span style={{ marginLeft: '0.75rem' }}>Status: {displayStatus}</span>
+        {appointment.time ? (
+          <span style={{ marginLeft: '0.75rem' }}>Visit: {appointment.time}</span>
+        ) : null}
       </p>
+
+      <QueryFeedback
+        isError={patientHistoryQuery.isError}
+        error={patientHistoryQuery.error}
+        onRetry={patientHistoryQuery.refetch}
+      >
+        {recentVisits.length > 0 && (
+          <div className="doc-consult-history" style={{ marginBottom: '1rem' }}>
+            <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.875rem' }}>Recent visits</h4>
+            <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.8125rem' }}>
+              {recentVisits.map((visit) => (
+                <li key={visit.id ?? visit.appointmentDbId}>
+                  {visit.dateTime ?? '—'}
+                  {visit.diagnosis && visit.diagnosis !== '—' ? ` — ${visit.diagnosis}` : ''}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </QueryFeedback>
+
       <div className="doc-modal-tabs">
         {['clinical', 'rx', 'lab'].map((t) => (
           <button
@@ -205,7 +261,7 @@ export default function ConsultationModal({ appointment, open, onClose, onDone }
       {tab === 'rx' && (
         <div>
           <p className="text-muted" style={{ fontSize: '0.8125rem', margin: '0 0 0.75rem' }}>
-            Prescription is submitted when you save, after the consultation is marked complete.
+            Prescription is saved when you click Save Consultation.
           </p>
           <Label>Medicines</Label>
           {meds.map((m, i) => (
@@ -273,7 +329,7 @@ export default function ConsultationModal({ appointment, open, onClose, onDone }
       {tab === 'lab' && (
         <div className="doc-page">
           <p className="text-muted" style={{ fontSize: '0.8125rem', margin: '0 0 0.75rem' }}>
-            Lab order is submitted after the consultation is marked complete.
+            Lab order is saved when you click Save Consultation.
           </p>
           <Select
             label="Order lab test"

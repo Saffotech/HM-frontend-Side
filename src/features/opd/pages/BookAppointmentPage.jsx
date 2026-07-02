@@ -1,8 +1,8 @@
 import { useMemo, useState, useCallback, useEffect } from 'react';
 
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
-import { ArrowLeft, CheckCircle2, AlertCircle, Clock, Stethoscope } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, AlertCircle, Clock, Stethoscope, User, Phone } from 'lucide-react';
 
 import {
   usePatientsQuery,
@@ -18,7 +18,7 @@ import {
   useDoctorsByDepartmentQuery,
 } from '@/shared/hooks/queries/useOpdReferenceQuery';
 
-import { REGISTRATION_FEE, REVISIT_DAYS, ROUTES, TAX_RATE, PAYMENT_MODES } from '@/shared/constants';
+import { REGISTRATION_FEE, ROUTES, TAX_RATE, PAYMENT_MODES } from '@/shared/constants';
 
 import { Button, Input, Label, SearchableSelect, TimeSlotGrid, QueryFeedback } from '@/shared/components/common';
 
@@ -49,7 +49,6 @@ import {
 import './BookAppointmentPage.css';
 
 export default function BookAppointmentPage() {
-
   const [patientSearch, setPatientSearch] = useState('');
   const [payLater, setPayLater] = useState(false);
   const [paymentMode, setPaymentMode] = useState('Cash');
@@ -87,14 +86,10 @@ export default function BookAppointmentPage() {
 
   const navigate = useNavigate();
 
-
-
   const { values, errors, handleChange, handleSubmit } = useFormValidation(
     BOOK_APPOINTMENT_INITIAL_VALUES,
-    validateAppointment
+    validateAppointment,
   );
-
-
 
   const { patientId, deptId, doctorId, dateStr, time, reason } = values;
 
@@ -130,7 +125,6 @@ export default function BookAppointmentPage() {
   const profileVisits = patientProfile?.visits ?? [];
 
   const selectedDept = departments.find((d) => String(d.id) === String(deptId));
-
   const selectedDoctor = doctors.find((d) => String(d.id) === String(doctorId));
 
   const {
@@ -146,19 +140,31 @@ export default function BookAppointmentPage() {
 
   const revisit = getRevisitInfoFromVisits(profileVisits);
 
+  const patientOptions = useMemo(() => {
+    const opts = bookablePatients.map((p) => ({
+      value: p.id,
+      label: p.name,
+      sublabel: p.phone,
+      badge: p.id,
+      searchText: `${p.id} ${p.name} ${p.phone}`.toLowerCase(),
+    }));
 
+    if (
+      patientId &&
+      !opts.some((o) => o.value === patientId) &&
+      selectedPatient
+    ) {
+      opts.unshift({
+        value: selectedPatient.id,
+        label: selectedPatient.name,
+        sublabel: selectedPatient.phone,
+        badge: selectedPatient.id,
+        searchText: `${selectedPatient.id} ${selectedPatient.name} ${selectedPatient.phone}`.toLowerCase(),
+      });
+    }
 
-  const patientOptions = useMemo(
-    () =>
-      bookablePatients.map((p) => ({
-        value: p.id,
-        label: p.name,
-        sublabel: p.phone,
-        badge: p.id,
-        searchText: `${p.id} ${p.name} ${p.phone}`.toLowerCase(),
-      })),
-    [bookablePatients],
-  );
+    return opts;
+  }, [bookablePatients, patientId, selectedPatient]);
 
   useEffect(() => {
     if (!patientId) return;
@@ -171,22 +177,15 @@ export default function BookAppointmentPage() {
     }
   }, [patientId, patients, patientDetail, bookedPatientKeys, handlePatientSelectChange]);
 
-
-
   const patientHistory = useMemo(() => {
     if (!patientId || !profileVisits.length) return null;
     const last = profileVisits[0];
-    const deptHistory = [...new Set(profileVisits.map((v) => v.department).filter(Boolean))];
     return {
       last: last
         ? { date: last.visitDate, deptName: last.department, doctorName: last.doctorName }
         : null,
-      deptHistory,
-      totalVisits: profileVisits.length,
     };
   }, [profileVisits, patientId]);
-
-
 
   const onSubmit = handleSubmit(async (rawValues) => {
     const trimmed = trimForm(rawValues);
@@ -280,8 +279,6 @@ export default function BookAppointmentPage() {
     }
   });
 
-
-
   const fee = selectedDoctor
     ? selectedDoctor.fee + (revisit.registrationFeeApplicable ? REGISTRATION_FEE : 0)
     : 0;
@@ -296,389 +293,298 @@ export default function BookAppointmentPage() {
     }
   }, [grandTotal, payLater]);
 
-
-
   const revisitStatus = !patientId
-
     ? null
-
     : !revisit.lastAppt
-
       ? 'new'
-
       : revisit.isRevisit
-
         ? 'valid'
-
         : 'expired';
 
-
+  const patientInitials = selectedPatient?.name
+    ? selectedPatient.name
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join('')
+        .toUpperCase()
+    : '';
 
   return (
-
     <QueryFeedback isLoading={isLoading || loadingScheduledAppts} isError={isError} error={error}>
-
       <div className="book-appointment book-appointment-page page-container page-stack">
-
-        <div className="book-appointment-page__toolbar">
+        <header className="book-appointment-page__header">
           <Button variant="outline" size="sm" type="button" onClick={() => navigate(ROUTES.APPOINTMENTS)}>
             <ArrowLeft size={16} aria-hidden /> Back
           </Button>
-        </div>
+          <h2 className="page-title book-appointment-page__title">Book Appointment</h2>
+        </header>
 
-        <div className="card card__body">
-
+        <div className="card book-appointment-page__card">
           <form onSubmit={onSubmit} className="book-form">
-
-            <div className="form-section">
-
-              <Label>Search Patient *</Label>
-
-              <p className="form-hint">
-                Search by Patient ID, name, or phone. Patients with an active appointment are hidden — use
-                {' '}
-                <Link to={ROUTES.APPOINTMENTS}>Appointments</Link>
-                {' '}
-                to reschedule.
-              </p>
-
-              <SearchableSelect
-                options={patientOptions}
-                value={patientId}
-                onSearchChange={setPatientSearch}
-                onChange={handlePatientSelectChange}
-                placeholder="Type ID, name or phone..."
-                clearOnEmptyBlur
-                error={errors.patientId}
-              />
-
-            </div>
-
-
-
-            {selectedPatient && (
-
-              <div className="patient-context-panel">
-
-                <div className="patient-identity-grid">
-                  <div className="patient-identity-col">
-                    <span className="patient-identity-col__label">Name</span>
-                    <strong className="patient-identity-col__value">{selectedPatient.name}</strong>
-                  </div>
-                  <div className="patient-identity-col">
-                    <span className="patient-identity-col__label">Patient ID</span>
-                    <span className="patient-identity-col__value id-badge">{selectedPatient.id}</span>
-                  </div>
-                  <div className="patient-identity-col">
-                    <span className="patient-identity-col__label">Phone Number</span>
-                    <span className="patient-identity-col__value">{selectedPatient.phone}</span>
-                  </div>
-                </div>
-
-
-
-                <div className="revisit-status-row">
-
-                  {revisitStatus === 'valid' && (
-
-                    <span className="badge-pill badge-pill--success">
-
-                      <CheckCircle2 size={12} /> Revisit valid — no registration fee
-
-                    </span>
-
-                  )}
-
-                  {revisitStatus === 'expired' && (
-
-                    <span className="badge-pill badge-pill--warning">
-
-                      <AlertCircle size={12} /> Registration fee applicable
-
-                    </span>
-
-                  )}
-
-                  {revisitStatus === 'new' && (
-
-                    <span className="badge-pill badge-pill--info">
-
-                      <AlertCircle size={12} /> First visit — registration fee applies
-
-                    </span>
-
-                  )}
-
-                </div>
-
-
-
-                <div className="patient-context-grid">
-
-                  <div className="context-item">
-
-                    <Clock size={14} />
-
-                    <div>
-
-                      <label>Last Visit</label>
-
-                      <span>
-
-                        {patientHistory?.last
-
-                          ? `${patientHistory.last.date} · ${patientHistory.last.deptName}`
-
-                          : 'No completed visits'}
-
-                      </span>
-
-                    </div>
-
-                  </div>
-
-                  <div className="context-item">
-
-                    <Stethoscope size={14} />
-
-                    <div>
-
-                      <label>Previous Doctor</label>
-
-                      <span>{patientHistory?.last?.doctorName || '—'}</span>
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-
-
-                {revisit.daysSince != null && (
-
-                  <div
-
-                    className={`revisit-banner ${
-
-                      revisit.isRevisit ? 'revisit-banner--ok' : 'revisit-banner--warn'
-
-                    }`}
-
-                  >
-
-                    {revisit.isRevisit ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-
-                    <p>
-
-                      {revisit.isRevisit
-
-                        ? `Within ${REVISIT_DAYS}-day revisit window (${revisit.daysSince} days since last visit).`
-
-                        : `Revisit window expired (${revisit.daysSince} days). Registration fee of ${formatCurrency(REGISTRATION_FEE)} will apply.`}
-
-                    </p>
-
-                  </div>
-
-                )}
-
-              </div>
-
-            )}
-
-
-
-            <div className="form-grid">
-
-              <div>
-
-                <Label>Department *</Label>
-
+            <section className="book-panel">
+              <header className="book-panel__head">
+                <span className="book-panel__icon book-panel__icon--patient" aria-hidden>
+                  <User size={15} />
+                </span>
+                <h3 className="book-panel__title">Patient</h3>
+              </header>
+              <div className="book-panel__body">
+                <Label>Search patient *</Label>
                 <SearchableSelect
-
-                  options={departments.map((d) => ({ value: d.id, label: d.name }))}
-
-                  value={deptId}
-
-                  onChange={handleDeptSelectChange}
-
-                  disabled={!patientId}
-
+                  options={patientOptions}
+                  value={patientId}
+                  onSearchChange={setPatientSearch}
+                  onChange={handlePatientSelectChange}
+                  placeholder="Type ID, name or phone..."
+                  clearOnEmptyBlur
+                  error={errors.patientId}
                 />
 
-              </div>
-
-              <div>
-
-                <Label>Doctor *</Label>
-
-                <SearchableSelect
-
-                  options={doctors
-
-                    .filter((d) => !deptId || d.deptId === deptId)
-
-                    .map((d) => ({
-
-                      value: d.id,
-
-                      label: `Dr. ${d.name}`,
-
-                      sublabel: `${d.specialization} — ${formatCurrency(d.fee)}`,
-
-                    }))}
-
-                  value={doctorId}
-
-                  onChange={handleDoctorSelectChange}
-
-                  disabled={!deptId}
-
-                  error={errors.doctorId}
-
-                />
-
-              </div>
-
-            </div>
-
-
-
-            {selectedDoctor && (
-
-              <div className="fee-box">
-
-                {revisit.registrationFeeApplicable && (
-
-                  <p>Registration: {formatCurrency(REGISTRATION_FEE)}</p>
-
-                )}
-
-                <p>Consultation: {formatCurrency(selectedDoctor.fee)}</p>
-
-                <p className="fee-box__total">
-                  Estimated: {formatCurrency(grandTotal)}
-                </p>
-              </div>
-            )}
-
-            {selectedDoctor && (
-              <div className="book-form__payment">
-                <label className="book-form__pay-later">
-                  <input
-                    type="checkbox"
-                    checked={payLater}
-                    onChange={(e) => setPayLater(e.target.checked)}
-                  />
-                  Pay later (appointment will show as Pending / Unpaid)
-                </label>
-
-                {!payLater && (
-                  <>
-                    <Label>Payment Mode</Label>
-                    <div className="book-form__mode-buttons">
-                      {PAYMENT_MODES.map((m) => (
-                        <button
-                          key={m}
-                          type="button"
-                          className={`book-form__mode-btn ${paymentMode === m ? 'book-form__mode-btn--active' : ''}`}
-                          onClick={() => {
-                            setPaymentMode(m);
-                            if (!requiresTransactionReference(m)) setPaymentRef('');
-                          }}
-                        >
-                          {m}
-                        </button>
-                      ))}
+                {selectedPatient && (
+                  <div className="book-patient-card" aria-label="Selected patient details">
+                    <div className="book-patient-card__top">
+                      <div className="book-patient-card__avatar" aria-hidden>
+                        {patientInitials || <User size={20} />}
+                      </div>
+                      <div className="book-patient-card__main">
+                        <h4 className="book-patient-card__name">{selectedPatient.name}</h4>
+                        <div className="book-patient-card__meta">
+                          <span className="book-patient-card__id">{selectedPatient.id}</span>
+                          {selectedPatient.phone && (
+                            <span className="book-patient-card__phone">
+                              <Phone size={12} aria-hidden />
+                              {selectedPatient.phone}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="book-patient-card__badge">
+                        {revisitStatus === 'valid' && (
+                          <span className="book-tag book-tag--success">
+                            <CheckCircle2 size={13} aria-hidden />
+                            Revisit eligible
+                          </span>
+                        )}
+                        {revisitStatus === 'expired' && (
+                          <span className="book-tag book-tag--warning">
+                            <AlertCircle size={13} aria-hidden />
+                            Reg. fee due
+                          </span>
+                        )}
+                        {revisitStatus === 'new' && (
+                          <span className="book-tag book-tag--info">
+                            First visit
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <Input
-                      label="Amount Received (₹)"
-                      type="number"
-                      min={0}
-                      max={grandTotal}
-                      step="0.01"
-                      value={amountReceived}
-                      onChange={(e) => setAmountReceived(e.target.value)}
+                    <div className="book-patient-card__history">
+                      <div className="book-patient-card__history-item">
+                        <Clock size={14} aria-hidden />
+                        <span>
+                          <em>Last visit</em>
+                          {patientHistory?.last
+                            ? `${patientHistory.last.date} · ${patientHistory.last.deptName}`
+                            : 'No completed visits'}
+                        </span>
+                      </div>
+                      <div className="book-patient-card__history-item">
+                        <Stethoscope size={14} aria-hidden />
+                        <span>
+                          <em>Previous doctor</em>
+                          {patientHistory?.last?.doctorName || '—'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <section className="book-panel">
+              <header className="book-panel__head">
+                <span className="book-panel__icon book-panel__icon--visit" aria-hidden>
+                  <Stethoscope size={15} />
+                </span>
+                <h3 className="book-panel__title">Appointment details</h3>
+              </header>
+              <div className="book-panel__body">
+                <div className="form-grid">
+                  <div>
+                    <Label>Department *</Label>
+                    <SearchableSelect
+                      options={departments.map((d) => ({ value: d.id, label: d.name }))}
+                      value={deptId}
+                      onChange={handleDeptSelectChange}
+                      disabled={!patientId}
                     />
-                    {requiresTransactionReference(paymentMode) && (
-                      <Input
-                        label="Transaction / Reference No"
-                        value={paymentRef}
-                        onChange={(e) => setPaymentRef(e.target.value)}
-                        placeholder="e.g. UPI ref or card auth code"
-                      />
-                    )}
-                  </>
-                )}
+                  </div>
+                  <div>
+                    <Label>Doctor *</Label>
+                    <SearchableSelect
+                      options={doctors
+                        .filter((d) => !deptId || d.deptId === deptId)
+                        .map((d) => ({
+                          value: d.id,
+                          label: d.name.startsWith('Dr.') ? d.name : `Dr. ${d.name}`,
+                          sublabel: `${d.specialization} — ${formatCurrency(d.fee)}`,
+                        }))}
+                      value={doctorId}
+                      onChange={handleDoctorSelectChange}
+                      disabled={!deptId}
+                      error={errors.doctorId}
+                    />
+                  </div>
+                </div>
+                <div className="form-grid">
+                  <Input
+                    type="date"
+                    label="Date *"
+                    value={dateStr}
+                    disabled={!doctorId}
+                    onChange={(e) => {
+                      set('dateStr', e.target.value);
+                      set('time', '');
+                    }}
+                    min={new Date().toISOString().split('T')[0]}
+                    error={errors.dateStr}
+                  />
+                  <Input
+                    label="Reason for visit"
+                    value={reason}
+                    placeholder="Brief reason (optional)"
+                    onChange={(e) => set('reason', e.target.value)}
+                  />
+                </div>
               </div>
-            )}
-
-            <div className="form-grid book-form__date-reason">
-              <Input
-                type="date"
-                label="Date *"
-                value={dateStr}
-                disabled={!doctorId}
-                onChange={(e) => {
-                  set('dateStr', e.target.value);
-                  set('time', '');
-                }}
-                min={new Date().toISOString().split('T')[0]}
-                error={errors.dateStr}
-              />
-              <Input
-                label="Reason for Visit"
-                value={reason}
-                placeholder="Brief reason (optional)"
-                onChange={(e) => set('reason', e.target.value)}
-              />
-            </div>
+            </section>
 
             {dateStr && doctorId && (
-              <div className="slot-section slot-section--compact">
-                <Label>Time Slot *</Label>
-                <TimeSlotGrid
-                  className="time-slot-grid--compact"
-                  date={new Date(dateStr)}
-                  doctorId={doctorId}
-                  departmentId={deptId}
-                  selectedTime={time}
-                  onSelectTime={(t) => set('time', t)}
-                  apiSlots={apiSlots}
-                  useApiSlots
-                  slotsLoading={slotsLoading}
-                  slotsError={slotsError}
-                />
-              </div>
+              <section className="book-panel">
+                <header className="book-panel__head">
+                  <span className="book-panel__icon book-panel__icon--time" aria-hidden>
+                    <Clock size={15} />
+                  </span>
+                  <h3 className="book-panel__title">Time slot</h3>
+                </header>
+                <div className="book-panel__body book-panel__body--slots">
+                  <TimeSlotGrid
+                    className="time-slot-grid--compact"
+                    date={new Date(dateStr)}
+                    doctorId={doctorId}
+                    departmentId={deptId}
+                    selectedTime={time}
+                    onSelectTime={(t) => set('time', t)}
+                    apiSlots={apiSlots}
+                    useApiSlots
+                    slotsLoading={slotsLoading}
+                    slotsError={slotsError}
+                  />
+                </div>
+              </section>
             )}
 
-            <Button
-              type="submit"
-              className="btn--block"
-              size="lg"
-              disabled={
-                !time
-                || isSaving
-                || (!payLater && grandTotal > 0 && (Number(amountReceived) || 0) < grandTotal)
-              }
-            >
-              {isSaving
-                ? 'Saving...'
-                : payLater
-                  ? 'Confirm Booking (Pay Later)'
-                  : 'Pay & Confirm Booking'}
-            </Button>
+            {selectedDoctor && (
+              <section className="book-panel book-panel--payment">
+                <header className="book-panel__head">
+                  <span className="book-panel__icon book-panel__icon--pay" aria-hidden>
+                    <CheckCircle2 size={15} />
+                  </span>
+                  <h3 className="book-panel__title">Payment</h3>
+                </header>
+                <div className="book-panel__body book-payment">
+                  <div className="book-fee-box">
+                    {revisit.registrationFeeApplicable && (
+                      <div className="book-fee-box__row">
+                        <span>Registration fee</span>
+                        <span>{formatCurrency(REGISTRATION_FEE)}</span>
+                      </div>
+                    )}
+                    <div className="book-fee-box__row">
+                      <span>Consultation fee</span>
+                      <span>{formatCurrency(selectedDoctor.fee)}</span>
+                    </div>
+                    <div className="book-fee-box__row book-fee-box__row--total">
+                      <span>Estimated total</span>
+                      <strong>{formatCurrency(grandTotal)}</strong>
+                    </div>
+                  </div>
 
+                  <div className="book-payment__controls">
+                    <label className="book-payment__pay-later">
+                      <input
+                        type="checkbox"
+                        checked={payLater}
+                        onChange={(e) => setPayLater(e.target.checked)}
+                      />
+                      Pay later
+                    </label>
+
+                    {!payLater && (
+                      <>
+                        <Label>Payment mode</Label>
+                        <div className="book-payment__modes">
+                          {PAYMENT_MODES.map((m) => (
+                            <button
+                              key={m}
+                              type="button"
+                              className={`book-payment__mode-btn ${paymentMode === m ? 'book-payment__mode-btn--active' : ''}`}
+                              onClick={() => {
+                                setPaymentMode(m);
+                                if (!requiresTransactionReference(m)) setPaymentRef('');
+                              }}
+                            >
+                              {m}
+                            </button>
+                          ))}
+                        </div>
+                        <Input
+                          label="Amount received (₹)"
+                          type="number"
+                          min={0}
+                          max={grandTotal}
+                          step="0.01"
+                          value={amountReceived}
+                          onChange={(e) => setAmountReceived(e.target.value)}
+                        />
+                        {requiresTransactionReference(paymentMode) && (
+                          <Input
+                            label="Transaction / reference no."
+                            value={paymentRef}
+                            onChange={(e) => setPaymentRef(e.target.value)}
+                            placeholder="e.g. UPI ref or card auth code"
+                          />
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </section>
+            )}
+
+            <footer className="book-form__footer">
+              <Button
+                type="submit"
+                className="btn--block book-form__submit"
+                size="lg"
+                disabled={
+                  !time
+                  || isSaving
+                  || (!payLater && grandTotal > 0 && (Number(amountReceived) || 0) < grandTotal)
+                }
+              >
+                {isSaving
+                  ? 'Saving...'
+                  : payLater
+                    ? 'Confirm booking'
+                    : 'Pay & confirm booking'}
+              </Button>
+            </footer>
           </form>
-
         </div>
-
       </div>
-
     </QueryFeedback>
-
   );
-
 }
-

@@ -10,7 +10,7 @@ import {
   REGISTRATION_DATE_FILTER_OPTIONS,
   matchesRegistrationDateFilter,
 } from '@/features/opd/utils/patientRegisteredDateFilter';
-import { Avatar, Button, SearchBar, DataTableShell, QueryFeedback, ConfirmDialog, EmptyState } from '@/shared/components/common';
+import { Avatar, Button, DateInput, SearchBar, DataTableShell, QueryFeedback, ConfirmDialog, EmptyState } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 import './PatientListPage.css';
@@ -111,8 +111,7 @@ export default function PatientListPage() {
               </button>
             ))}
             {dateFilter === 'custom' && (
-              <input
-                type="date"
+              <DateInput
                 className="patients-page__custom-date"
                 value={customDate}
                 onChange={(e) => setCustomDate(e.target.value)}

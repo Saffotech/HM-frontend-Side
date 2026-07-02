@@ -56,7 +56,7 @@ import '../styles/doctor-ui.css';
 const CATEGORY_HINTS = {
   [PATIENT_CATEGORY_FILTER.COMPLETED]: 'Open visit history',
   [PATIENT_CATEGORY_FILTER.QUEUE]: 'Patients waiting now',
-  [PATIENT_CATEGORY_FILTER.IN_PROGRESS]: 'Consultations underway',
+  [PATIENT_CATEGORY_FILTER.IN_PROGRESS]: 'Scheduled today',
   [PATIENT_CATEGORY_FILTER.CANCELLED]: 'Cancelled today',
   [PATIENT_CATEGORY_FILTER.ALL]: 'All records combined',
 };

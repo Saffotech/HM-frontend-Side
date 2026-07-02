@@ -7,7 +7,7 @@ import { useAuthStore } from '@/shared/store/useAuthStore';
 import { isStaffModuleLive } from '@/shared/constants/moduleAvailability';
 import { trimCredentials, hasCredentials } from '@/shared/utils/credentials';
 import { toast } from '@/shared/utils/toast';
-import '@/pages/landing/LoginPage.css';
+import '@/features/admin/styles/admin-login.css';
 
 export default function AdminLoginPage() {
   const { login, logout, error, isAuthenticated, user, authReady } = useAuthStore();
@@ -73,25 +73,25 @@ export default function AdminLoginPage() {
   const displayError = formError || error;
 
   return (
-    <div className="staff-login-page">
-      <div className="staff-login-page__frame">
-        <aside className="staff-login-page__hero" aria-label="SaffoCare admin portal">
-          <Link to={ROUTES.HOME} className="staff-login-page__back">
+    <div className="admin-login-page">
+      <div className="admin-login-page__frame">
+        <aside className="admin-login-page__hero" aria-label="SaffoCare admin portal">
+          <Link to={ROUTES.HOME} className="admin-login-page__back">
             <ArrowLeft size={16} aria-hidden />
             Back
           </Link>
 
-          <div className="staff-login-page__hero-body">
-            <BrandLogo size={48} className="staff-login-page__hero-icon" />
-            <h1 className="staff-login-page__hero-title">
-              <BrandName variant="on-dark" /> admin
+          <div className="admin-login-page__hero-body">
+            <BrandLogo size={48} />
+            <h1 className="admin-login-page__hero-title">
+              <BrandName variant="on-dark" /> Admin
             </h1>
-            <p className="staff-login-page__hero-lead">
-              Manage staff accounts, roles, and hospital access from one console.
+            <p className="admin-login-page__hero-lead">
+              Enterprise console for staff lifecycle, departments, roles, and hospital reports.
             </p>
           </div>
 
-          <div className="staff-login-page__hero-foot">
+          <div className="admin-login-page__hero-foot">
             <span>
               <ShieldCheck size={14} aria-hidden />
               Role-based permissions
@@ -103,22 +103,22 @@ export default function AdminLoginPage() {
           </div>
         </aside>
 
-        <section className="staff-login-page__form-panel" aria-labelledby="admin-sign-in-title">
-          <Link to={ROUTES.HOME} className="staff-login-page__back staff-login-page__back--mobile">
+        <section className="admin-login-page__form-panel" aria-labelledby="admin-sign-in-title">
+          <Link to={ROUTES.HOME} className="admin-login-page__back admin-login-page__back--mobile">
             <ArrowLeft size={16} aria-hidden />
             Back
           </Link>
 
-          <div className="staff-login-page__form-panel-inner">
-            <header className="staff-login-page__form-head">
+          <div className="admin-login-page__form-panel-inner">
+            <header className="admin-login-page__form-head">
               <h2 id="admin-sign-in-title">Admin sign in</h2>
               <p>Use an account with the <strong>admin</strong> role from the hospital system.</p>
             </header>
 
-            <form className="staff-login-page__form" onSubmit={handleSubmit}>
-              <div className="staff-login-page__field">
+            <form className="admin-login-page__form" onSubmit={handleSubmit}>
+              <div className="admin-login-page__field">
                 <label htmlFor="admin-email">Work email</label>
-                <div className="staff-login-page__input">
+                <div className="admin-login-page__input">
                   <Mail size={18} aria-hidden />
                   <input
                     id="admin-email"
@@ -131,9 +131,9 @@ export default function AdminLoginPage() {
                 </div>
               </div>
 
-              <div className="staff-login-page__field">
+              <div className="admin-login-page__field">
                 <label htmlFor="admin-password">Password</label>
-                <div className="staff-login-page__input">
+                <div className="admin-login-page__input">
                   <Lock size={18} aria-hidden />
                   <input
                     id="admin-password"
@@ -147,14 +147,14 @@ export default function AdminLoginPage() {
               </div>
 
               {displayError ? (
-                <p className="staff-login-page__error" role="alert">
+                <p className="admin-login-page__error" role="alert">
                   {displayError}
                 </p>
               ) : null}
 
               <button
                 type="submit"
-                className="staff-login-page__submit"
+                className="admin-login-page__submit"
                 disabled={submitting}
               >
                 {submitting ? 'Signing in…' : 'Sign in'}
@@ -162,7 +162,7 @@ export default function AdminLoginPage() {
               </button>
             </form>
 
-            <p className="staff-login-page__hint" style={{ marginTop: '1rem', fontSize: '0.85rem' }}>
+            <p className="admin-login-page__hint">
               First time? Register an admin via POST /auth/register (role_id=1), then sign in here.
             </p>
           </div>

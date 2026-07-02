@@ -30,6 +30,10 @@ export function getAppEntryForRole(role) {
 
   }
 
+  if (role === ROLES.RECEPTIONIST) {
+    return ROUTES.RECEPTIONIST_DASHBOARD;
+  }
+
   if (role === ROLES.ADMIN) {
 
     return ROUTES.ADMIN_DASHBOARD;
@@ -37,13 +41,8 @@ export function getAppEntryForRole(role) {
   }
 
   if (
-
-    role === ROLES.RECEPTIONIST ||
-
     role === ROLES.BILLING ||
-
     role === ROLES.OPD
-
   ) {
 
     return ROUTES.APP_ENTRY;
@@ -58,8 +57,6 @@ export function getAppEntryForRole(role) {
 
 /** Roles allowed on the OPD / staff layout shell (admin has its own module). */
 export const OPD_SHELL_ROLES = [
-
-  ROLES.RECEPTIONIST,
 
   ROLES.BILLING,
 

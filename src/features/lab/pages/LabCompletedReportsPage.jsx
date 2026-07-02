@@ -3,6 +3,7 @@ import LabLayout from '@/features/lab/components/LabLayout';
 import LabReportDetailModal from '@/features/lab/components/LabReportDetailModal';
 import { useLabReports } from '@/features/lab/hooks/useLabStore';
 import { downloadReportsCsv, printLabReport } from '@/features/lab/utils/labReportUtils';
+import { DateInput } from '@/shared/components/common';
 import '../styles/lab.css';
 
 export default function LabCompletedReportsPage() {
@@ -96,8 +97,12 @@ export default function LabCompletedReportsPage() {
             </select>
           </div>
           <div className="lab-filter-group">
-            <label htmlFor="reports-date">Upload date</label>
-            <input id="reports-date" type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
+            <DateInput
+              id="reports-date"
+              label="Upload date"
+              value={filterDate}
+              onChange={(e) => setFilterDate(e.target.value)}
+            />
           </div>
           {hasFilters && (
             <button type="button" className="lab-filter-reset" onClick={resetFilters}>

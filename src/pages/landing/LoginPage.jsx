@@ -14,6 +14,10 @@ import { getAppEntryForRole } from '@/shared/utils/authRedirect';
 import { trimCredentials, hasCredentials } from '@/shared/utils/credentials';
 import { toast } from '@/shared/utils/toast';
 import { isStaffModuleLive } from '@/shared/constants/moduleAvailability';
+import {
+  authenticateDemoReceptionist,
+  setReceptionistPortalScope,
+} from '@/features/receptionist/utils/receptionistPortal';
 import './LoginPage.css';
 
 const STATS = [
@@ -26,7 +30,7 @@ const STATS = [
 const STAFF_LOGIN_BG_VIDEO = '/videos/Login_Animetion.mp4?v=1';
 
 export default function LoginPage() {
-  const { login, logout, error, isAuthenticated, user, authReady } = useAuthStore();
+  const { login, loginDemoReceptionist, logout, error, isAuthenticated, user, authReady } = useAuthStore();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
@@ -60,6 +64,14 @@ export default function LoginPage() {
 
     setSubmitting(true);
     try {
+      if (authenticateDemoReceptionist(trimmed)) {
+        const me = await loginDemoReceptionist(trimmed);
+        toast.success(`Welcome, ${me.full_name}`);
+        navigate(ROUTES.RECEPTIONIST_DASHBOARD, { replace: true });
+        return;
+      }
+
+      setReceptionistPortalScope(false);
       const me = await login(trimmed);
       if (!isStaffModuleLive(me.department, me.role)) {
         logout();

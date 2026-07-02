@@ -112,12 +112,12 @@ export default function AppointmentRowActions({
   const showConsult =
     canConsult
     && canStartConsult
-    && (mode === 'full' || mode === 'waiting' || mode === 'in_progress');
+    && (mode === 'full' || mode === 'consult' || mode === 'waiting' || mode === 'in_progress');
   const showEmr = canEmr && mode === 'full';
   const showPrescribe = canPrescribe && mode === 'full';
-  const showNotes = canNotes && (mode === 'full' || mode === 'in_progress');
+  const showNotes = canNotes && mode === 'full';
 
-  if (mode === 'waiting' || mode === 'in_progress') {
+  if (mode === 'consult' || mode === 'waiting' || mode === 'in_progress') {
     return (
       <div className="doc-appt-actions doc-appt-actions--compact">
         <div className="doc-appt-actions__bar">

@@ -3,6 +3,7 @@ import { doctorQueueApi } from '@/shared/api/services';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { mutationOnError } from '@/shared/utils/mutationErrors';
+import { finalizeConsultationOnSave } from '@/features/doctor/utils/consultationSaveWorkflow';
 import {
   DOCTOR_DASHBOARD_QUERY_OPTIONS,
   invalidateDoctorDashboardCore,
@@ -54,6 +55,27 @@ export function useStartConsultationMutation() {
   return useMutation({
     mutationFn: (queueId) => doctorQueueApi.beginQueueConsultation(queueId, token),
     onSuccess: () => invalidateDoctorDashboardCore(queryClient),
+    onError: mutationOnError,
+  });
+}
+
+export function useSaveConsultationWorkflowMutation() {
+  const token = useQueryToken();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ appointmentDbId, todayQueue, clinical }) =>
+      finalizeConsultationOnSave({
+        appointmentDbId,
+        todayQueue,
+        token,
+        clinical,
+      }),
+    onSuccess: (_data, variables) => {
+      invalidateDoctorDashboardAfterComplete(queryClient, {
+        patientUid: variables?.patientUid,
+        patientId: variables?.patientId,
+      });
+    },
     onError: mutationOnError,
   });
 }

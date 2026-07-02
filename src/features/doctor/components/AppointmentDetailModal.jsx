@@ -3,7 +3,7 @@ import {
   useUpdateDoctorAppointmentStatusMutation,
 } from '@/features/doctor/hooks/useDoctorAppointmentQuery';
 import { formatAppointmentTimeDisplay } from '@/features/doctor/utils/doctorDates';
-import { getAppointmentStatusActions } from '@/features/doctor/utils/appointmentWorkflow';
+import { getAppointmentStatusActions, getDoctorDisplayStatus } from '@/features/doctor/utils/appointmentWorkflow';
 import { Modal, Button } from '@/shared/components/common';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { ACTIONS, canAccessAction } from '@/hooks/permissions';
@@ -29,7 +29,7 @@ function AppointmentDetailView({ detail, doctorLabel }) {
         </div>
         <div>
           <dt>Status</dt>
-          <dd>{detail.status ? <StatusPill status={detail.status} /> : '—'}</dd>
+          <dd>{detail.status ? <StatusPill status={getDoctorDisplayStatus(detail.status)} /> : '—'}</dd>
         </div>
         <div>
           <dt>Date</dt>

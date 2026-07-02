@@ -1,159 +1,64 @@
 /**
- * Admin API — staff register, roles, and departments use live backend;
- * other endpoints remain mock until wired.
+ * Admin API — all endpoints call the live backend via apiClient.
  */
 
 import { apiClient } from '@/shared/api/client';
 import { register as authRegister } from '@/shared/api/auth';
-import {
-  MOCK_ROLES,
-  MOCK_DEPARTMENTS,
-  buildMockDashboard,
-  getMockStaffStore,
-  setMockStaffStore,
-} from '@/features/admin/data/mockAdminData';
 
-const MOCK_DELAY_MS = 350;
-
-function delay(ms = MOCK_DELAY_MS) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
+function buildQuery(params = {}) {
+  const qs = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return;
+    qs.set(key, String(value));
   });
-}
-
-function roleById(roleId) {
-  return MOCK_ROLES.find((r) => r.id === roleId) ?? null;
-}
-
-function departmentById(deptId) {
-  return MOCK_DEPARTMENTS.find((d) => d.id === deptId) ?? null;
-}
-
-function enrichStaff(user) {
-  const role = roleById(user.role_id);
-  const dept = departmentById(user.department_id);
-  return {
-    ...user,
-    role_name: role?.name ?? user.role_name ?? null,
-    department_name: dept?.name ?? user.department_name ?? null,
-  };
+  const query = qs.toString();
+  return query ? `?${query}` : '';
 }
 
 /** GET /admin/dashboard */
 export async function getAdminDashboard() {
-  await delay();
-  return buildMockDashboard(getMockStaffStore());
+  return apiClient('/admin/dashboard');
 }
 
 /** GET /users/ */
 export async function listStaff(params = {}) {
-  await delay();
-  const {
-    search,
+  const { search, role_id: roleId, is_active: isActive, page, limit } = params;
+  const query = buildQuery({
+    search: search?.trim() || undefined,
     role_id: roleId,
-    is_active: isActive,
-    page = 1,
-    limit = 20,
-  } = params;
-
-  let rows = [...getMockStaffStore()];
-
-  if (search) {
-    const term = search.trim().toLowerCase();
-    rows = rows.filter(
-      (s) =>
-        s.first_name.toLowerCase().includes(term) ||
-        (s.last_name || '').toLowerCase().includes(term) ||
-        s.email.toLowerCase().includes(term)
-    );
-  }
-
-  if (roleId != null) {
-    rows = rows.filter((s) => s.role_id === Number(roleId));
-  }
-
-  if (isActive === true || isActive === false) {
-    rows = rows.filter((s) => s.is_active === isActive);
-  } else if (isActive === 'true') {
-    rows = rows.filter((s) => s.is_active);
-  } else if (isActive === 'false') {
-    rows = rows.filter((s) => !s.is_active);
-  }
-
-  const total = rows.length;
-  const offset = (page - 1) * limit;
-  const staff = rows.slice(offset, offset + limit).map(enrichStaff);
-
-  return { total, page, limit, staff };
+    is_active: isActive === true || isActive === false ? isActive : undefined,
+    page,
+    limit,
+  });
+  return apiClient(`/users/${query}`);
 }
 
 /** GET /users/{id} */
 export async function getStaffById(userId) {
-  await delay();
-  const found = getMockStaffStore().find((s) => s.id === Number(userId));
-  if (!found) {
-    const err = new Error('Staff member not found');
-    err.status = 404;
-    throw err;
-  }
-  return enrichStaff(found);
+  return apiClient(`/users/${userId}`);
 }
 
 /** PATCH /users/{id} */
 export async function updateStaff(userId, body) {
-  await delay();
-  const store = getMockStaffStore();
-  const index = store.findIndex((s) => s.id === Number(userId));
-  if (index < 0) {
-    const err = new Error('Staff member not found');
-    err.status = 404;
-    throw err;
-  }
-
-  const updates = { ...body };
-  if (updates.department_id === null) {
-    updates.department_name = null;
-  } else if (updates.department_id != null) {
-    updates.department_name = departmentById(updates.department_id)?.name ?? null;
-  }
-  if (updates.role_id != null) {
-    updates.role_name = roleById(updates.role_id)?.name ?? null;
-  }
-
-  const next = enrichStaff({ ...store[index], ...updates });
-  const copy = [...store];
-  copy[index] = next;
-  setMockStaffStore(copy);
-  return next;
+  return apiClient(`/users/${userId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  });
 }
 
 /** PATCH /users/{id}/activate */
-export async function activateStaff(userId, isActive, actorId) {
-  await delay();
-  if (!isActive && Number(actorId) === Number(userId)) {
-    const err = new Error('You cannot deactivate your own account');
-    err.status = 400;
-    throw err;
-  }
-  return updateStaff(userId, { is_active: isActive });
+export async function activateStaff(userId, isActive) {
+  return apiClient(`/users/${userId}/activate`, {
+    method: 'PATCH',
+    body: JSON.stringify({ is_active: isActive }),
+  });
 }
 
 /** DELETE /users/{id} */
-export async function deleteStaff(userId, actorId) {
-  await delay();
-  if (Number(actorId) === Number(userId)) {
-    const err = new Error('You cannot delete your own account');
-    err.status = 400;
-    throw err;
-  }
-  const copy = getMockStaffStore().filter((s) => s.id !== Number(userId));
-  if (copy.length === getMockStaffStore().length) {
-    const err = new Error('Staff member not found');
-    err.status = 404;
-    throw err;
-  }
-  setMockStaffStore(copy);
-  return { message: 'Staff deleted successfully', user_id: Number(userId) };
+export async function deleteStaff(userId) {
+  return apiClient(`/users/${userId}`, {
+    method: 'DELETE',
+  });
 }
 
 /** POST /auth/register */
@@ -168,8 +73,80 @@ export async function listRoles() {
 }
 
 /** GET /departments/ */
-export async function listDepartments() {
-  const data = await apiClient('/departments/');
+export async function listDepartments(params = {}) {
+  const query = buildQuery({
+    is_active:
+      params.is_active === true || params.is_active === false
+        ? params.is_active
+        : undefined,
+  });
+  const data = await apiClient(`/departments/${query}`);
   const rows = data?.departments ?? data;
   return Array.isArray(rows) ? rows : [];
+}
+
+/** GET /departments/{id} */
+export async function getDepartmentById(departmentId) {
+  return apiClient(`/departments/${departmentId}`);
+}
+
+/** POST /departments/ */
+export async function createDepartment(body) {
+  return apiClient('/departments/', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+/** PATCH /departments/{id} */
+export async function updateDepartment(departmentId, body) {
+  return apiClient(`/departments/${departmentId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  });
+}
+
+/** GET /admin/reports/overview */
+export async function getReportsOverview(params = {}) {
+  const query = buildQuery({
+    from_date: params.from_date,
+    to_date: params.to_date,
+  });
+  return apiClient(`/admin/reports/overview${query}`);
+}
+
+/** GET /admin/reports/visits */
+export async function getReportsVisits(params = {}) {
+  const query = buildQuery({
+    from_date: params.from_date,
+    to_date: params.to_date,
+    department_id: params.department_id,
+    page: params.page,
+    limit: params.limit,
+  });
+  return apiClient(`/admin/reports/visits${query}`);
+}
+
+/** POST /roles/ */
+export async function createRole(body) {
+  return apiClient('/roles/', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+/** POST /roles/permissions */
+export async function createPermission(body) {
+  return apiClient('/roles/permissions', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+/** POST /roles/{role_id}/permissions */
+export async function assignRolePermissions(roleId, permissionIds) {
+  return apiClient(`/roles/${roleId}/permissions`, {
+    method: 'POST',
+    body: JSON.stringify({ permission_ids: permissionIds }),
+  });
 }

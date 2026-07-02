@@ -18,12 +18,12 @@ export const STAFF_MODULE_AVAILABILITY = {
   Administration: MODULE_STATUS.LIVE,
   Pharmacy: MODULE_STATUS.LIVE,
   Nursing: MODULE_STATUS.LIVE,
-  Reception: MODULE_STATUS.COMING_SOON,
+  Reception: MODULE_STATUS.LIVE,
   Billing: MODULE_STATUS.COMING_SOON,
 };
 
 /** Roles that always pass the post-login module gate (admin uses OPD shell). */
-const ALWAYS_LIVE_ROLES = new Set([ROLES.ADMIN, ROLES.OPD, ROLES.DOCTOR]);
+const ALWAYS_LIVE_ROLES = new Set([ROLES.ADMIN, ROLES.OPD, ROLES.DOCTOR, ROLES.RECEPTIONIST]);
 
 export function getStaffModuleStatus(department) {
   return STAFF_MODULE_AVAILABILITY[department] ?? MODULE_STATUS.COMING_SOON;

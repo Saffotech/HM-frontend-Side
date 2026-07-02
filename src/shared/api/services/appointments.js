@@ -29,6 +29,7 @@ function mapAppointmentPage(raw) {
     page,
     limit,
     totalPages: totalPagesFrom(total, limit),
+    counts: raw?.counts ?? null,
   };
 }
 
@@ -88,6 +89,21 @@ export async function cancelAppointmentById(id, token) {
 export function uiFilterStatusToApi(status) {
   if (!status || status === 'All') return undefined;
   return uiStatusToApiStatus(status);
+}
+
+/** Map OPD appointment list pills to GET /opd/appointments status param. */
+export function resolveOpdAppointmentListApiStatus(filterStatus) {
+  if (filterStatus === 'Completed') return 'completed';
+  if (filterStatus === 'Cancelled') return 'cancelled';
+  if (
+    !filterStatus ||
+    filterStatus === 'All' ||
+    filterStatus === 'Scheduled' ||
+    filterStatus === 'Pending'
+  ) {
+    return 'scheduled';
+  }
+  return uiFilterStatusToApi(filterStatus);
 }
 
 function matchesPatientAppointment(appt, patientUid, patientDbId) {

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, memo, useId } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, ChevronDown } from 'lucide-react';
+import { Search, ChevronDown, X } from 'lucide-react';
 import { highlightMatch } from '@/shared/utils/highlightMatch';
 import './SearchableSelect.css';
 
@@ -32,8 +32,10 @@ function SearchableSelect({
   label,
   error,
   clearOnEmptyBlur = false,
+  clearable,
   onSearchChange,
 }) {
+  const showClear = Boolean(value) && !disabled && (clearable ?? clearOnEmptyBlur);
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);
   const [highlightIdx, setHighlightIdx] = useState(0);
@@ -117,16 +119,20 @@ function SearchableSelect({
       const inField = containerRef.current?.contains(e.target);
       const inList = listRef.current?.contains(e.target);
       if (!inField && !inList) {
-        if (clearOnEmptyBlur && selected && search.trim() === '') {
+        const shouldClear = clearOnEmptyBlur && value && search.trim() === '';
+        if (shouldClear) {
           onChange('');
+          setSearch('');
+        } else {
+          const current = options.find((o) => o.value === value);
+          setSearch(current ? current.label : '');
         }
         setOpen(false);
-        setSearch(selected ? selected.label : '');
       }
     };
     document.addEventListener('mousedown', handleOutside);
     return () => document.removeEventListener('mousedown', handleOutside);
-  }, [selected, search, clearOnEmptyBlur, onChange]);
+  }, [value, search, clearOnEmptyBlur, onChange, options]);
 
   const openDropdown = useCallback(() => {
     if (disabled || open) return;
@@ -167,7 +173,8 @@ function SearchableSelect({
       selectOption(filtered[highlightIdx]);
     } else if (e.key === 'Escape') {
       setOpen(false);
-      setSearch(selected ? selected.label : '');
+      const current = options.find((o) => o.value === value);
+      setSearch(current ? current.label : '');
     }
   };
 
@@ -183,7 +190,10 @@ function SearchableSelect({
           {label}
         </label>
       )}
-      <div className="searchable-select__input-wrap" ref={inputWrapRef}>
+      <div
+        className={`searchable-select__input-wrap${showClear ? ' searchable-select__input-wrap--has-clear' : ''}`}
+        ref={inputWrapRef}
+      >
         <Search className="searchable-select__icon" size={15} aria-hidden />
         <input
           id={inputId}
@@ -208,6 +218,23 @@ function SearchableSelect({
           onFocus={openDropdown}
           onClick={openDropdown}
         />
+        {showClear && (
+          <button
+            type="button"
+            className="searchable-select__clear-btn"
+            tabIndex={-1}
+            aria-label="Clear selection"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onChange('');
+              setSearch('');
+              setOpen(false);
+            }}
+          >
+            <X size={14} aria-hidden />
+          </button>
+        )}
         <button
           type="button"
           className="searchable-select__chevron-btn"

@@ -103,7 +103,11 @@ export const queryKeys = {
     staff: (filters) => ['admin', 'staff', filters],
     staffDetail: (id) => ['admin', 'staff', id],
     roles: ['admin', 'roles'],
-    departments: ['admin', 'departments'],
+    departments: (filters) => ['admin', 'departments', filters],
+    departmentDetail: (id) => ['admin', 'departments', id],
+    reportsOverview: (filters) => ['admin', 'reports', 'overview', filters],
+    reportsVisits: (filters) => ['admin', 'reports', 'visits', filters],
+    permissionCatalog: ['admin', 'permission-catalog'],
   },
 
   doctor: {

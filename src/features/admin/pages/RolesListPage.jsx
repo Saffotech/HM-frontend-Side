@@ -1,47 +1,68 @@
+import { useNavigate } from 'react-router-dom';
+import { KeyRound, Link2, ShieldPlus } from 'lucide-react';
 import AdminLayout from '@/features/admin/components/AdminLayout';
+import AdminEmptyState from '@/features/admin/components/AdminEmptyState';
+import AdminPageHeader from '@/features/admin/components/AdminPageHeader';
 import { useAdminRolesQuery } from '@/shared/hooks/queries/useAdminQuery';
-import { QueryFeedback } from '@/shared/components/common';
+import { Button, QueryFeedback } from '@/shared/components/common';
+import { ROUTES } from '@/shared/constants';
 
-function formatRoleLabel(name) {
-  if (name === 'opd_billing') return 'OPD Billing';
-  return name || '—';
-}
+import AdminRoleBadge from '@/features/admin/components/AdminRoleBadge';
 
 export default function RolesListPage() {
+  const navigate = useNavigate();
   const { data: roles, isLoading, isError, error } = useAdminRolesQuery();
 
   return (
     <AdminLayout pageTitle="Roles">
       <div className="admin-page">
-        <header className="admin-page__head">
-          <h1 className="admin-page__title">System roles</h1>
-          <p className="admin-page__subtitle">
-            View roles and permission strings (read-only; matches GET /roles/).
-          </p>
-        </header>
+        <AdminPageHeader
+          eyebrow="Access control"
+          title="System roles"
+          subtitle="View roles, create new roles, and manage permissions."
+          actions={(
+            <>
+              <Button variant="outline" onClick={() => navigate(ROUTES.ADMIN_PERMISSIONS_NEW)}>
+                <KeyRound size={16} aria-hidden />
+                Create permission
+              </Button>
+              <Button variant="outline" onClick={() => navigate(ROUTES.ADMIN_ROLES_ASSIGN)}>
+                <Link2 size={16} aria-hidden />
+                Assign permissions
+              </Button>
+              <Button onClick={() => navigate(ROUTES.ADMIN_ROLES_NEW)}>
+                <ShieldPlus size={16} aria-hidden />
+                Create role
+              </Button>
+            </>
+          )}
+        />
 
-        <div className="admin-card">
-          <div className="admin-card__header">
-            <h2 className="admin-card__title">Role permissions</h2>
-            <p className="admin-card__desc">Permissions are assigned per role in the backend seed.</p>
-          </div>
-          <div className="admin-card__body">
+        <div className="admin-card admin-card--flat admin-datatable">
+          <div className="admin-datatable__body admin-datatable__body--flush">
             <QueryFeedback isLoading={isLoading} isError={isError} error={error}>
               {!roles?.length ? (
-                <div className="admin-empty">No roles found in the system.</div>
+                <AdminEmptyState
+                  icon={<ShieldPlus size={22} />}
+                  title="No roles found"
+                  description="Create a role to begin assigning permissions to staff."
+                />
               ) : (
                 <div className="admin-table-wrap">
                   <table className="admin-table">
                     <thead>
                       <tr>
-                        <th style={{ width: '14rem' }}>Role name</th>
+                        <th className="admin-table__col--md">Role name</th>
                         <th>Permissions</th>
+                        <th className="admin-table__actions">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {roles.map((role) => (
                         <tr key={role.id}>
-                          <td className="admin-role-name">{formatRoleLabel(role.name)}</td>
+                          <td>
+                            <AdminRoleBadge roleName={role.name} />
+                          </td>
                           <td>
                             {role.permissions?.length ? (
                               role.permissions.map((perm) => (
@@ -50,10 +71,20 @@ export default function RolesListPage() {
                                 </span>
                               ))
                             ) : (
-                              <span style={{ color: '#64748b', fontStyle: 'italic' }}>
-                                No permissions
-                              </span>
+                              <span className="admin-help-text">No permissions</span>
                             )}
+                          </td>
+                          <td className="admin-table__actions">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                navigate(`${ROUTES.ADMIN_ROLES_ASSIGN}?role_id=${role.id}`)
+                              }
+                            >
+                              <Link2 size={14} aria-hidden />
+                              Assign
+                            </Button>
                           </td>
                         </tr>
                       ))}

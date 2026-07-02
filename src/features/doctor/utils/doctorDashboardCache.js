@@ -1,8 +1,7 @@
 import { keepPreviousData } from '@tanstack/react-query';
 
 import { doctorAppointmentsApi, doctorQueueApi } from '@/shared/api/services';
-import { queryKeys } from '@/shared/api/queryKeys';
-import { todayOpdDate } from '@/features/doctor/utils/doctorDates';
+import { queryKeys } from '@/shared/api/queryKeys';import { todayOpdDate } from '@/features/doctor/utils/doctorDates';
 
 /** Shared React Query options for doctor dashboard data sources. */
 export const DOCTOR_DASHBOARD_QUERY_OPTIONS = {
@@ -49,6 +48,10 @@ export function invalidateDoctorDashboardAfterComplete(
       queryKey: queryKeys.doctor.patients.prescriptions(patientId),
     });
   }
+  queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+  queryClient.invalidateQueries({ queryKey: queryKeys.opd.dashboard });
+  queryClient.invalidateQueries({ queryKey: queryKeys.nurse.all });
+  queryClient.invalidateQueries({ queryKey: queryKeys.pharmacy.all });
 }
 
 /** Appointment status updates from the appointments API. */

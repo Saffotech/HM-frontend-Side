@@ -7,16 +7,23 @@ function DataTableShell({
   pagination,
   className = '',
   maxHeight,
+  fillHeight = false,
 }) {
   return (
-    <div className={`data-table-shell ${className}`}>
+    <div
+      className={`data-table-shell${fillHeight ? ' data-table-shell--fill' : ''} ${className}`.trim()}
+    >
       <div
         className="data-table-shell__scroll"
         style={maxHeight ? { maxHeight } : undefined}
       >
         {children}
       </div>
-      {pagination && <TablePagination {...pagination} />}
+      {pagination && (
+        <div className="data-table-shell__footer">
+          <TablePagination {...pagination} />
+        </div>
+      )}
     </div>
   );
 }

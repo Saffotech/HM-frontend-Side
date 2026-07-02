@@ -7,7 +7,7 @@ import NursePagination from '@/features/nurse/components/NursePagination';
 import NurseQueueStatusBadge from '@/features/nurse/components/NurseQueueStatusBadge';
 import NurseSeverityBadge from '@/features/nurse/components/NurseSeverityBadge';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
-import { QueryFeedback } from '@/shared/components/common';
+import { QueryFeedback, DateInput } from '@/shared/components/common';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import {
   useNurseAlertsQuery,
@@ -269,14 +269,10 @@ export default function NurseAlertsPage() {
               />
             </div>
 
-            <div className="nurse-field">
-              <label htmlFor="nurse-alerts-from" className="nurse-alerts-filters__sr-label">
-                From date
-              </label>
-              <input
+            <div className="nurse-field nurse-alerts-filters__date">
+              <DateInput
                 id="nurse-alerts-from"
-                type="date"
-                className="nurse-input nurse-alerts-filters__control"
+                label="From date"
                 value={fromDate}
                 onChange={(e) => {
                   setFromDate(e.target.value);
@@ -286,14 +282,10 @@ export default function NurseAlertsPage() {
               />
             </div>
 
-            <div className="nurse-field">
-              <label htmlFor="nurse-alerts-to" className="nurse-alerts-filters__sr-label">
-                To date
-              </label>
-              <input
+            <div className="nurse-field nurse-alerts-filters__date">
+              <DateInput
                 id="nurse-alerts-to"
-                type="date"
-                className="nurse-input nurse-alerts-filters__control"
+                label="To date"
                 value={toDate}
                 onChange={(e) => {
                   setToDate(e.target.value);

@@ -17,6 +17,11 @@ import {
 import { decodeJwt, isTokenExpired, getTokenExpiresInMs } from '@/shared/utils/jwtHelper';
 
 import { normalizeRole, DEPARTMENT_BY_ROLE } from '@/shared/utils/roleUtils';
+import {
+  authenticateDemoReceptionist,
+  isDemoReceptionistSession,
+  setReceptionistPortalScope,
+} from '@/features/receptionist/utils/receptionistPortal';
 
 
 
@@ -170,6 +175,8 @@ export function AuthProvider({ children }) {
 
     clearAuthSession();
 
+    setReceptionistPortalScope(false);
+
     setUser(null);
 
     setToken(null);
@@ -256,6 +263,26 @@ export function AuthProvider({ children }) {
 
 
 
+  const loginDemoReceptionist = useCallback(async (credentials) => {
+    setError(null);
+
+    const session = authenticateDemoReceptionist(credentials);
+    if (!session) {
+      const message = 'Invalid email or password';
+      setError(message);
+      throw Object.assign(new Error(message), { status: 401 });
+    }
+
+    const { user: profile, accessToken, refreshToken } = session;
+
+    setReceptionistPortalScope(true);
+    setUser(profile);
+    setToken(accessToken);
+    saveAuthSession(accessToken, profile, refreshToken);
+
+    return profile;
+  }, []);
+
   const login = useCallback(async (credentials) => {
 
     setError(null);
@@ -277,6 +304,8 @@ export function AuthProvider({ children }) {
       const me = await getCurrentUser(accessToken);
 
       const profile = buildUserProfile(me, data, accessToken);
+
+      setReceptionistPortalScope(false);
 
       setUser(profile);
 
@@ -324,7 +353,20 @@ export function AuthProvider({ children }) {
 
       }
 
-
+      if (isDemoReceptionistSession(session.user)) {
+        if (!isTokenExpired(session.token)) {
+          setReceptionistPortalScope(true);
+          if (!cancelled) {
+            setToken(session.token);
+            setUser(session.user);
+          }
+        } else {
+          clearAuthSession();
+          setReceptionistPortalScope(false);
+        }
+        if (!cancelled) setAuthReady(true);
+        return;
+      }
 
       let accessToken = session.token;
 
@@ -376,7 +418,7 @@ export function AuthProvider({ children }) {
 
         const me = await getCurrentUser(accessToken);
 
-        const profile = buildUserProfile(me, { permissions: session.user?.permissions }, accessToken);
+        let profile = buildUserProfile(me, { permissions: session.user?.permissions }, accessToken);
 
         if (!cancelled) {
 
@@ -450,6 +492,9 @@ export function AuthProvider({ children }) {
 
     if (!token || isTokenExpired(token)) return undefined;
 
+    const session = loadAuthSession();
+    if (isDemoReceptionistSession(session?.user)) return undefined;
+
 
 
     const expiresIn = getTokenExpiresInMs(token);
@@ -500,6 +545,8 @@ export function AuthProvider({ children }) {
 
       login,
 
+      loginDemoReceptionist,
+
       logout,
 
       updateUser,
@@ -510,7 +557,20 @@ export function AuthProvider({ children }) {
 
     }),
 
-    [user, token, loading, error, isAuthenticated, authReady, login, logout, updateUser, refreshSession, applyTokens]
+    [
+      user,
+      token,
+      loading,
+      error,
+      isAuthenticated,
+      authReady,
+      login,
+      loginDemoReceptionist,
+      logout,
+      updateUser,
+      refreshSession,
+      applyTokens,
+    ]
 
   );
 

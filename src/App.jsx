@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ToastContainer } from '@/shared/components/common';
 import ProtectedRoute from '@/components/security/ProtectedRoute';
 import GuestRoute from '@/components/security/GuestRoute';
@@ -13,12 +13,16 @@ import { labRoutes } from '@/routes/labRoutes';
 import { pharmacyRoutes } from '@/routes/pharmacyRoutes';
 import { nurseRoutes } from '@/routes/nurseRoutes';
 import { opdRoutes } from '@/routes/opdRoutes';
+import { receptionistRoutes } from '@/routes/receptionistRoutes';
 import { adminRoutes } from '@/routes/adminRoutes';
 
 const LandingPage = lazy(() => import('@/pages/landing/LandingPage'));
 const LoginPage = lazy(() => import('@/pages/landing/LoginPage'));
 const PatientLoginPage = lazy(() => import('@/pages/landing/PatientLoginPage'));
 const PharmacyLoginPage = lazy(() => import('@/features/pharmacy/pages/PharmacyLoginPage'));
+const ReceptionistLoginPage = lazy(
+  () => import('@/features/receptionist/pages/ReceptionistLoginPage')
+);
 const AdminLoginPage = lazy(() => import('@/features/admin/pages/AdminLoginPage'));
 const UnauthorizedPage = lazy(() => import('@/pages/UnauthorizedPage'));
 
@@ -70,6 +74,22 @@ export default function App() {
         />
 
         <Route
+          path={ROUTES.RECEPTIONIST_LOGIN}
+          element={
+            <LazyRoute>
+              <GuestRoute>
+                <ReceptionistLoginPage />
+              </GuestRoute>
+            </LazyRoute>
+          }
+        />
+
+        <Route
+          path={ROUTES.RECEPTIONIST_REGISTER}
+          element={<Navigate to={ROUTES.RECEPTIONIST_LOGIN} replace />}
+        />
+
+        <Route
           path={ROUTES.ADMIN_LOGIN}
           element={
             <LazyRoute>
@@ -94,6 +114,7 @@ export default function App() {
           {renderRoutes(labRoutes)}
           {renderRoutes(pharmacyRoutes)}
           {renderRoutes(nurseRoutes)}
+          {renderRoutes(receptionistRoutes)}
           {renderRoutes(opdRoutes)}
           {renderRoutes(adminRoutes)}
         </Route>

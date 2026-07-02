@@ -1,0 +1,223 @@
+/* Admin login — scoped to admin module only */
+.admin-login-page {
+  --login-primary: #0f766e;
+  --login-primary-dark: #115e59;
+  --login-hero-bg: linear-gradient(145deg, #0f766e 0%, #134e4a 55%, #0f172a 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: radial-gradient(circle at top right, rgba(13, 148, 136, 0.08), transparent 45%),
+    #f4f7fb;
+}
+
+.admin-login-page__frame {
+  display: grid;
+  width: 100%;
+  max-width: 56rem;
+  min-height: min(36rem, calc(100vh - 2.5rem));
+  border-radius: 1.25rem;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.14);
+  background: #fff;
+}
+
+.admin-login-page__hero {
+  display: flex;
+  flex-direction: column;
+  padding: 1.75rem 2rem;
+  color: #fff;
+  background: var(--login-hero-bg);
+}
+
+.admin-login-page__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: fit-content;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #fff;
+  text-decoration: none;
+}
+
+.admin-login-page__back--mobile {
+  display: none;
+}
+
+.admin-login-page__hero-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1.5rem 0 1rem;
+}
+
+.admin-login-page__hero-title {
+  margin: 1rem 0 0.5rem;
+  font-size: clamp(1.6rem, 3vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.admin-login-page__hero-lead {
+  margin: 0;
+  max-width: 22rem;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.55;
+}
+
+.admin-login-page__hero-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.admin-login-page__hero-foot span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.admin-login-page__form-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 1.75rem 2rem;
+  background: #fff;
+}
+
+.admin-login-page__form-panel-inner {
+  margin: auto 0;
+  width: 100%;
+  max-width: 24rem;
+}
+
+.admin-login-page__form-head h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.admin-login-page__form-head p {
+  margin: 0.5rem 0 0;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.admin-login-page__form {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.35rem;
+}
+
+.admin-login-page__field label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.admin-login-page__input {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0 0.85rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.admin-login-page__input:focus-within {
+  border-color: #5eead4;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+  background: #fff;
+}
+
+.admin-login-page__input input {
+  flex: 1;
+  height: 2.75rem;
+  border: none;
+  background: transparent;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.admin-login-page__error {
+  margin: 0;
+  padding: 0.7rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.88rem;
+}
+
+.admin-login-page__submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  height: 2.75rem;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #0d9488 0%, #0f766e 100%);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.admin-login-page__submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(13, 148, 136, 0.28);
+}
+
+.admin-login-page__submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.admin-login-page__hint {
+  margin: 1rem 0 0;
+  font-size: 0.82rem;
+  color: #94a3b8;
+  line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+  .admin-login-page__frame {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .admin-login-page__hero {
+    display: none;
+  }
+
+  .admin-login-page__back--mobile {
+    display: inline-flex;
+    margin-bottom: 1rem;
+    color: #334155;
+    background: #f8fafc;
+    border-color: #e2e8f0;
+  }
+}
+
+@media (min-width: 901px) {
+  .admin-login-page__frame {
+    grid-template-columns: 1fr 1fr;
+  }
+}

@@ -8,7 +8,7 @@ function DashboardFilterBar({ summary, activeFilter, onFilterChange, isLoading =
 
   return (
 
-    <div className="doc-stat-grid doc-stat-grid--4" role="tablist" aria-label="Filter appointments">
+    <div className="doc-stat-grid" role="tablist" aria-label="Filter appointments">
 
       {summary.map((s) => {
 

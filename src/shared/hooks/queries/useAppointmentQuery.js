@@ -8,8 +8,14 @@ import { getTodayRangeIso } from '@/shared/utils/opdDates';
 const DEFAULT_PAGE_SIZE = 20;
 
 export function useAppointmentsQuery(options = {}) {
-  const { fetchAll = true, page, limit = DEFAULT_PAGE_SIZE, status, date_from, date_to } =
-    options;
+  const {
+    fetchAll = false,
+    page = 1,
+    limit = DEFAULT_PAGE_SIZE,
+    status,
+    date_from,
+    date_to,
+  } = options;
   const token = useQueryToken();
   const filters = { fetchAll, page, limit, status, date_from, date_to };
 

@@ -8,7 +8,8 @@ import {
   useDoctorSlotsQuery,
 } from '@/shared/hooks/queries/useAppointmentQuery';
 import { useBillsQuery } from '@/shared/hooks/queries/useBillingQuery';
-import { asAppointmentList, asBillList } from '@/shared/hooks/queries/listDataUtils';
+import { asAppointmentList, asBillList, asAppointmentPageMeta } from '@/shared/hooks/queries/listDataUtils';
+import { resolveOpdAppointmentListApiStatus } from '@/shared/api/services/appointments';
 import { getLocalDayRangeIso } from '@/shared/utils/opdDates';
 import {
   enrichAppointmentsWithPayment,
@@ -20,11 +21,11 @@ import {
   showsAppointmentPaymentActions,
 } from '@/features/opd/utils/appointmentPaymentUtils';
 import { useDepartmentsQuery, useDoctorsByDepartmentQuery } from '@/shared/hooks/queries/useOpdReferenceQuery';
-import { usePagination } from '@/shared/hooks/usePagination';
 import { useTableSort } from '@/shared/hooks/useTableSort';
 import {
   Button,
   Input,
+  DateInput,
   StatusBadge,
   Modal,
   Textarea,
@@ -49,22 +50,33 @@ const STATUS_PILLS = [
   { key: 'Cancelled', label: 'Cancelled', className: 'appointments-pill--cancelled' },
 ];
 
+const APPOINTMENT_LIST_PAGE_SIZE = 10;
+
 export default function AppointmentListPage() {
   const navigate = useNavigate();
   const [apiDateFrom, setApiDateFrom] = useState(undefined);
   const [apiDateTo, setApiDateTo] = useState(undefined);
   const [search, setSearch] = useState('');
   const [filterDate, setFilterDate] = useState('');
-  const [dateInputActive, setDateInputActive] = useState(false);
   const [filterDept, setFilterDept] = useState('All');
   const [filterDoc, setFilterDoc] = useState('All');
   const [filterStatus, setFilterStatus] = useState('All');
+  const [page, setPage] = useState(1);
+
+  const apiStatus = useMemo(
+    () => resolveOpdAppointmentListApiStatus(filterStatus),
+    [filterStatus]
+  );
 
   const { data, isLoading, isError, error } = useAppointmentsQuery({
-    fetchAll: true,
+    fetchAll: false,
+    page,
+    limit: APPOINTMENT_LIST_PAGE_SIZE,
+    status: apiStatus,
     date_from: apiDateFrom,
     date_to: apiDateTo,
   });
+  const pageMeta = asAppointmentPageMeta(data);
   const { data: billsData } = useBillsQuery({ fetchAll: true });
   const bills = asBillList(billsData);
   const appointments = useMemo(
@@ -142,42 +154,74 @@ export default function AppointmentListPage() {
       if (!searchOk) return false;
       if (filterDept !== 'All' && String(a.deptId) !== String(filterDept)) return false;
       if (filterDoc !== 'All' && String(a.doctorId) !== String(filterDoc)) return false;
-      if (filterDate) {
-        const picked = formatFilterDate(filterDate);
-        if (picked && a.date !== picked) return false;
-      }
       return true;
     });
-  }, [visibleAppointments, search, filterDept, filterDoc, filterDate]);
+  }, [visibleAppointments, search, filterDept, filterDoc]);
 
-  const filtered = useMemo(
-    () =>
-      toolbarFiltered.filter((a) =>
-        matchesAppointmentStatusFilter(a, filterStatus, a.payment),
-      ),
-    [toolbarFiltered, filterStatus],
-  );
+  const filtered = useMemo(() => {
+    if (filterStatus === 'Completed' || filterStatus === 'Cancelled') {
+      return toolbarFiltered;
+    }
+    return toolbarFiltered.filter((a) =>
+      matchesAppointmentStatusFilter(a, filterStatus, a.payment),
+    );
+  }, [toolbarFiltered, filterStatus]);
 
   const { sorted, sortKey, sortDir, toggleSort } = useTableSort(filtered, 'date', 'desc');
-  const { paginatedItems, page, totalPages, goToPage, resetPage, totalItems, pageSize } =
-    usePagination(sorted, 10);
 
   useEffect(() => {
-    resetPage();
-  }, [search, filterDate, filterDept, filterDoc, filterStatus, resetPage]);
+    setPage(1);
+  }, [search, filterDate, filterDept, filterDoc, filterStatus, apiDateFrom, apiDateTo]);
 
-  const statusCounts = useMemo(
-    () =>
-      STATUS_PILLS.reduce((acc, pill) => {
-        acc[pill.key] = toolbarFiltered.filter((a) =>
-          matchesAppointmentStatusFilter(a, pill.key, a.payment),
-        ).length;
-        return acc;
-      }, {}),
-    [toolbarFiltered],
-  );
+  const hasLocalToolbarFilter =
+    Boolean(search.trim()) || filterDept !== 'All' || filterDoc !== 'All';
+
+  const statusCounts = useMemo(() => {
+    const counts = pageMeta.counts;
+    if (counts && !hasLocalToolbarFilter && !filterDate) {
+      const scheduled = counts.scheduled ?? 0;
+      return {
+        All: scheduled,
+        Scheduled: scheduled,
+        Pending: toolbarFiltered.filter((a) => isAppointmentPending(a, a.payment)).length,
+        Completed: counts.completed ?? 0,
+        Cancelled: counts.cancelled ?? 0,
+      };
+    }
+
+    return STATUS_PILLS.reduce((acc, pill) => {
+      acc[pill.key] = toolbarFiltered.filter((a) =>
+        matchesAppointmentStatusFilter(a, pill.key, a.payment),
+      ).length;
+      return acc;
+    }, {});
+  }, [pageMeta.counts, hasLocalToolbarFilter, filterDate, toolbarFiltered]);
+
+  const showAppointmentTable = pageMeta.total > 0 || isLoading;
 
   const showPaymentActions = showsAppointmentPaymentActions(filterStatus);
+
+  const paginationTotalItems = useMemo(() => {
+    const counts = pageMeta.counts;
+    if (filterStatus === 'Completed' && counts?.completed != null) {
+      return Math.max(pageMeta.total, counts.completed);
+    }
+    if (filterStatus === 'Cancelled' && counts?.cancelled != null) {
+      return Math.max(pageMeta.total, counts.cancelled);
+    }
+    if (
+      (!filterStatus || filterStatus === 'All' || filterStatus === 'Scheduled') &&
+      counts?.scheduled != null
+    ) {
+      return Math.max(pageMeta.total, counts.scheduled);
+    }
+    return pageMeta.total;
+  }, [filterStatus, pageMeta.total, pageMeta.counts]);
+
+  const paginationTotalPages = Math.max(
+    1,
+    Math.ceil(paginationTotalItems / APPOINTMENT_LIST_PAGE_SIZE),
+  );
 
   const openCollectPayment = (appt) => {
     const payment = appt.payment ?? resolveAppointmentPayment(appt, bills);
@@ -238,7 +282,7 @@ export default function AppointmentListPage() {
       <div className="page-header appointments-page__header">
         <div className="appointments-page__title-wrap">
           <h2 className="page-title">Appointments</h2>
-          {visibleAppointments.length > 0 && (
+          {showAppointmentTable && (
             <div className="appointments-page__summary-pills" aria-label="Appointment status summary">
               {STATUS_PILLS.map((pill) => (
                 <button
@@ -266,35 +310,18 @@ export default function AppointmentListPage() {
       </div>
 
       <div className="card appointments-page__card">
-        {visibleAppointments.length === 0 ? (
-          <EmptyState
-            icon={Calendar}
-            title="No appointments"
-            description="No appointments scheduled for this period"
-          />
-        ) : (
+        {showAppointmentTable ? (
         <>
         <div className="page-toolbar appointment-toolbar">
           <SearchBar value={search} onChange={setSearch} placeholder="Search patient, ID, doctor..." />
-          <div className="field appointment-date-filter">
-            <label className="field__label" htmlFor="appointments-date-filter">
-              Date
-            </label>
-            <input
-              id="appointments-date-filter"
-              className={`field__input appointment-date-filter__input ${
-                filterDate ? 'appointment-date-filter__input--has-value' : ''
-              }`}
-              type={dateInputActive || filterDate ? 'date' : 'text'}
-              placeholder="Select date"
-              value={filterDate}
-              onFocus={() => setDateInputActive(true)}
-              onBlur={() => {
-                if (!filterDate) setDateInputActive(false);
-              }}
-              onChange={(e) => setFilterDate(e.target.value)}
-            />
-          </div>
+          <DateInput
+            id="appointments-date-filter"
+            className="appointment-date-filter"
+            label="Date"
+            value={filterDate}
+            onChange={(e) => setFilterDate(e.target.value)}
+            placeholder="Select date"
+          />
           <div className="field appointment-toolbar__filter">
             <label className="field__label" htmlFor="appointments-dept-filter">
               Department
@@ -338,13 +365,14 @@ export default function AppointmentListPage() {
         </div>
 
         <DataTableShell
-          maxHeight="420px"
+          className="appointments-page__table-shell"
           pagination={{
             page,
-            totalPages,
-            totalItems,
-            pageSize,
-            onPageChange: goToPage,
+            totalPages: paginationTotalPages,
+            totalItems: paginationTotalItems,
+            pageSize: APPOINTMENT_LIST_PAGE_SIZE,
+            onPageChange: setPage,
+            itemLabel: 'Appointments',
           }}
         >
           <table className="data-table appointment-table">
@@ -359,7 +387,7 @@ export default function AppointmentListPage() {
               </tr>
             </thead>
             <tbody>
-              {paginatedItems.map((appt) => (
+              {sorted.map((appt) => (
                 <tr
                   key={appt.id}
                   style={{ cursor: 'pointer' }}
@@ -437,7 +465,7 @@ export default function AppointmentListPage() {
                   )}
                 </tr>
               ))}
-              {!paginatedItems.length && (
+              {!sorted.length && (
                 <tr>
                   <td colSpan={showPaymentActions ? 6 : 4} className="empty-row">No appointments found</td>
                 </tr>
@@ -446,6 +474,12 @@ export default function AppointmentListPage() {
           </table>
         </DataTableShell>
         </>
+        ) : (
+          <EmptyState
+            icon={Calendar}
+            title="No appointments"
+            description="No appointments scheduled for this period"
+          />
         )}
       </div>
 

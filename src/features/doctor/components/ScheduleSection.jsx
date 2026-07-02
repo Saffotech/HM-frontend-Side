@@ -13,7 +13,7 @@ import {
 } from '@/features/doctor/utils/doctorDates';
 import { isCalendarVisible } from '@/features/doctor/utils/appointmentWorkflow';
 import { appointmentToPatientSummary } from '@/shared/api/mappers/doctorPatientMapper';
-import { Button } from '@/shared/components/common';
+import { Button, DateInput } from '@/shared/components/common';
 import AppointmentDetailModal from './AppointmentDetailModal';
 import PatientHistoryProfile from './PatientHistoryProfile';
 import StatusPill from './StatusPill';
@@ -119,18 +119,16 @@ export default function ScheduleSection() {
                 })}
               </div>
             )}
-            <label className="doc-week-date-picker">
+            <div className="doc-week-date-picker">
               <CalendarDays size={14} aria-hidden className="doc-week-date-picker__icon" />
               <span className="doc-week-date-picker__label">Pick date</span>
-              <input
-                type="date"
-                className="doc-week-date-picker__input"
+              <DateInput
+                className="doc-week-date-picker__date"
                 value={uiDateToIsoInput(selectedDay)}
                 onChange={(e) => handleCustomDateChange(e.target.value)}
-                onInput={(e) => handleCustomDateChange(e.currentTarget.value)}
-                aria-label="Pick a custom date"
+                placeholder="Date"
               />
-            </label>
+            </div>
           </div>
         </div>
       </div>

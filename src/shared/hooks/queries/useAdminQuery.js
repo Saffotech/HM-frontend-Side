@@ -1,17 +1,25 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   activateStaff,
+  assignRolePermissions,
+  createDepartment,
+  createPermission,
+  createRole,
   deleteStaff,
   getAdminDashboard,
+  getDepartmentById,
+  getReportsOverview,
+  getReportsVisits,
   getStaffById,
   listDepartments,
   listRoles,
   listStaff,
   registerStaff,
+  updateDepartment,
   updateStaff,
 } from '@/features/admin/api/admin';
+import { loadPermissionCatalog } from '@/features/admin/utils/permissionCatalog';
 import { queryKeys } from '@/shared/api/queryKeys';
-import { useAuth } from '@/shared/hooks/useAuth';
 
 export function useAdminDashboardQuery(options = {}) {
   const { enabled = true } = options;
@@ -49,12 +57,105 @@ export function useAdminRolesQuery(options = {}) {
   });
 }
 
-export function useAdminDepartmentsQuery(options = {}) {
+export function useAdminDepartmentsQuery(filters = {}, options = {}) {
   const { enabled = true } = options;
   return useQuery({
-    queryKey: queryKeys.admin.departments,
+    queryKey: queryKeys.admin.departments(filters),
     enabled,
-    queryFn: () => listDepartments(),
+    queryFn: () => listDepartments(filters),
+  });
+}
+
+export function useAdminDepartmentDetailQuery(departmentId, options = {}) {
+  const { enabled = true } = options;
+  return useQuery({
+    queryKey: queryKeys.admin.departmentDetail(departmentId),
+    enabled: enabled && Boolean(departmentId),
+    queryFn: () => getDepartmentById(departmentId),
+  });
+}
+
+export function useAdminReportsOverviewQuery(filters = {}, options = {}) {
+  const { enabled = true } = options;
+  return useQuery({
+    queryKey: queryKeys.admin.reportsOverview(filters),
+    enabled,
+    queryFn: () => getReportsOverview(filters),
+  });
+}
+
+export function useAdminReportsVisitsQuery(filters = {}, options = {}) {
+  const { enabled = true } = options;
+  return useQuery({
+    queryKey: queryKeys.admin.reportsVisits(filters),
+    enabled,
+    queryFn: () => getReportsVisits(filters),
+  });
+}
+
+export function usePermissionCatalogQuery(options = {}) {
+  const { enabled = true } = options;
+  return useQuery({
+    queryKey: queryKeys.admin.permissionCatalog,
+    enabled,
+    queryFn: () => loadPermissionCatalog(),
+    staleTime: 0,
+  });
+}
+
+export function useCreateDepartmentMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data) => createDepartment(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
+    },
+  });
+}
+
+export function useUpdateDepartmentMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }) => updateDepartment(id, data),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
+      if (variables?.id) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.admin.departmentDetail(variables.id),
+        });
+      }
+    },
+  });
+}
+
+export function useCreateRoleMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data) => createRole(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.roles });
+    },
+  });
+}
+
+export function useCreatePermissionMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data) => createPermission(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.permissionCatalog });
+    },
+  });
+}
+
+export function useAssignRolePermissionsMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ roleId, permissionIds }) =>
+      assignRolePermissions(roleId, permissionIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.roles });
+    },
   });
 }
 
@@ -74,11 +175,9 @@ export function useUpdateStaffMutation() {
 }
 
 export function useActivateStaffMutation() {
-  const { user } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, is_active: isActive }) =>
-      activateStaff(id, isActive, user?.user_id ?? user?.id),
+    mutationFn: ({ id, is_active: isActive }) => activateStaff(id, isActive),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
     },
@@ -86,10 +185,9 @@ export function useActivateStaffMutation() {
 }
 
 export function useDeleteStaffMutation() {
-  const { user } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id }) => deleteStaff(id, user?.user_id ?? user?.id),
+    mutationFn: ({ id }) => deleteStaff(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
     },

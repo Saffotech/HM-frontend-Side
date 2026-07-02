@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { formatAppointmentTimeDisplay } from '@/features/doctor/utils/doctorDates';
-import { getAppointmentStatus } from '@/features/doctor/utils/appointmentWorkflow';
+import { getDoctorDisplayStatus } from '@/features/doctor/utils/appointmentWorkflow';
 import { appointmentToPatientSummary } from '@/shared/api/mappers/doctorPatientMapper';
 import Skeleton from '@/shared/components/common/Skeleton';
 import StatusPill from './StatusPill';
@@ -103,7 +103,7 @@ function DashboardAppointmentsTable({
                 </tr>
               ) : (
                 filteredAppointments.map((a) => {
-                  const statusLabel = getAppointmentStatus(a);
+                  const statusLabel = getDoctorDisplayStatus(a);
                   const patient = appointmentToPatientSummary(a);
                   return (
                     <tr

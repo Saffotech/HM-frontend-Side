@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import DateInput from './DateInput';
 import './Input.css';
 
 export default function Input({
@@ -17,6 +18,23 @@ export default function Input({
   step,
   readOnly = false,
 }) {
+  if (type === 'date') {
+    return (
+      <DateInput
+        label={label}
+        id={id}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        required={required}
+        disabled={disabled}
+        error={error}
+        className={className}
+        min={min}
+        max={max}
+      />
+    );
+  }
   const autoId = useId();
   const inputId =
     id ||
@@ -33,7 +51,7 @@ export default function Input({
       <input
         id={inputId}
         type={type}
-        className={`field__input ${error ? 'field__input--error' : ''}`}
+        className={`field__input${error ? ' field__input--error' : ''}`}
         value={value}
         onChange={onChange}
         placeholder={placeholder}

@@ -18,8 +18,7 @@ export const PATIENT_CATEGORY_FILTER = {
 
 export const PATIENT_CATEGORY_OPTIONS = [
   { value: PATIENT_CATEGORY_FILTER.COMPLETED, label: 'Completed' },
-  { value: PATIENT_CATEGORY_FILTER.QUEUE, label: 'Patient in Queue' },
-  { value: PATIENT_CATEGORY_FILTER.IN_PROGRESS, label: 'In Progress' },
+  { value: PATIENT_CATEGORY_FILTER.QUEUE, label: 'Scheduled Today' },
   { value: PATIENT_CATEGORY_FILTER.CANCELLED, label: 'Cancelled' },
   { value: PATIENT_CATEGORY_FILTER.ALL, label: 'All' },
 ];
@@ -125,7 +124,9 @@ export function buildPatientListByCategory({
   const queueRows = todayRows.filter(
     (row) => !isConsultCompleted(row) && !isConsultCancelled(row)
   );
-  const inProgressRows = todayRows.filter((row) => getAppointmentStatus(row) === 'In Progress');
+  const inProgressRows = todayRows.filter(
+    (row) => getAppointmentStatus(row) === 'In Progress' || getAppointmentStatus(row) === 'Waiting'
+  );
   const cancelledRows = todayRows.filter((row) => getAppointmentStatus(row) === 'Cancelled');
 
   switch (category) {
@@ -150,9 +151,9 @@ export function buildPatientListByCategory({
 export function categoryEmptyMessage(category) {
   switch (category) {
     case PATIENT_CATEGORY_FILTER.QUEUE:
-      return 'No patients in the queue right now.';
+      return 'No scheduled appointments for today.';
     case PATIENT_CATEGORY_FILTER.IN_PROGRESS:
-      return 'No consultations in progress right now.';
+      return 'No scheduled appointments for today.';
     case PATIENT_CATEGORY_FILTER.CANCELLED:
       return 'No cancelled appointments today.';
     case PATIENT_CATEGORY_FILTER.ALL:

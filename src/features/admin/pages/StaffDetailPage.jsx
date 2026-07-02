@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Calendar, Pencil, Save, User, X } from 'lucide-react';
+import { Activity, Calendar, Pencil, Save, User, X } from 'lucide-react';
 import AdminLayout from '@/features/admin/components/AdminLayout';
+import AdminBackBar from '@/features/admin/components/AdminBackBar';
 import AdminStaffStatusBadge from '@/features/admin/components/AdminStaffStatusBadge';
 import {
   useAdminDepartmentsQuery,
@@ -125,11 +126,7 @@ export default function StaffDetailPage() {
       pageTitle={staff ? `${staff.first_name} ${staff.last_name || ''}`.trim() : 'Staff Details'}
     >
       <div className="admin-page">
-        <div className="admin-back-row">
-          <Button variant="ghost" onClick={() => navigate(ROUTES.ADMIN_STAFF)}>
-            <ArrowLeft size={16} aria-hidden />
-            Back
-          </Button>
+        <AdminBackBar onBack={() => navigate(ROUTES.ADMIN_STAFF)}>
           {!isLoading && staff && !isEditing && (
             <Button onClick={() => setIsEditing(true)}>
               <Pencil size={16} aria-hidden />
@@ -156,19 +153,22 @@ export default function StaffDetailPage() {
               Cancel
             </Button>
           )}
-        </div>
+        </AdminBackBar>
 
         <QueryFeedback isLoading={isLoading} isError={isError} error={error}>
           {staff && (
             <div className="admin-detail-grid">
-              <div className="admin-card">
+              <div className="admin-card admin-card--flat">
                 <div className="admin-card__header">
                   <h2 className="admin-card__title">Profile information</h2>
+                  <p className="admin-card__desc">Personal details and role assignment.</p>
                 </div>
                 <div className="admin-card__body">
                   {isEditing ? (
                     <form onSubmit={handleSubmit} className="admin-form-grid">
-                      <div className="admin-form-grid admin-form-grid--2">
+                      <div className="admin-form-section">
+                        <h3 className="admin-form-section__title">Personal details</h3>
+                        <div className="admin-form-grid admin-form-grid--2">
                         <div>
                           <Label htmlFor="first_name">First name</Label>
                           <Input
@@ -186,36 +186,37 @@ export default function StaffDetailPage() {
                             onChange={handleChange('last_name')}
                           />
                         </div>
-                      </div>
-
-                      <div className="admin-form-grid admin-form-grid--2">
-                        <div>
-                          <Label htmlFor="email">Email (read-only)</Label>
-                          <Input id="email" value={staff.email} disabled />
-                        </div>
-                        <div>
-                          <Label htmlFor="phone">Phone</Label>
-                          <Input id="phone" value={form.phone} onChange={handleChange('phone')} />
                         </div>
                       </div>
 
-                      <div className="admin-form-grid admin-form-grid--2">
-                        <Select
-                          label="Role"
-                          value={form.role_id}
-                          onChange={(value) => setForm((prev) => ({ ...prev, role_id: value }))}
-                          options={roleOptions}
-                        />
-                        {needsDepartment && (
+                      <div className="admin-form-section">
+                        <h3 className="admin-form-section__title">Role & department</h3>
+                        <div className="admin-form-grid admin-form-grid--2">
+                          <div>
+                            <Label htmlFor="email">Email (read-only)</Label>
+                            <Input id="email" value={staff.email} disabled />
+                          </div>
+                          <div>
+                            <Label htmlFor="phone">Phone</Label>
+                            <Input id="phone" value={form.phone} onChange={handleChange('phone')} />
+                          </div>
                           <Select
-                            label="Department"
-                            value={form.department_id}
-                            onChange={(value) =>
-                              setForm((prev) => ({ ...prev, department_id: value }))
-                            }
-                            options={departmentOptions}
+                            label="Role"
+                            value={form.role_id}
+                            onChange={(value) => setForm((prev) => ({ ...prev, role_id: value }))}
+                            options={roleOptions}
                           />
-                        )}
+                          {needsDepartment && (
+                            <Select
+                              label="Department"
+                              value={form.department_id}
+                              onChange={(value) =>
+                                setForm((prev) => ({ ...prev, department_id: value }))
+                              }
+                              options={departmentOptions}
+                            />
+                          )}
+                        </div>
                       </div>
 
                       <div className="admin-form-actions">
@@ -226,33 +227,31 @@ export default function StaffDetailPage() {
                       </div>
                     </form>
                   ) : (
-                    <div className="admin-meta-list">
-                      <div className="admin-form-grid admin-form-grid--2">
-                        <div>
-                          <div className="admin-meta-list__label">Full name</div>
-                          <div className="admin-meta-list__value">
-                            {staff.first_name} {staff.last_name}
-                          </div>
+                    <div className="admin-form-grid admin-form-grid--2">
+                      <div className="admin-meta-item">
+                        <div className="admin-meta-list__label">Full name</div>
+                        <div className="admin-meta-list__value">
+                          {staff.first_name} {staff.last_name}
                         </div>
-                        <div>
-                          <div className="admin-meta-list__label">Email</div>
-                          <div className="admin-meta-list__value">{staff.email}</div>
+                      </div>
+                      <div className="admin-meta-item">
+                        <div className="admin-meta-list__label">Email</div>
+                        <div className="admin-meta-list__value">{staff.email}</div>
+                      </div>
+                      <div className="admin-meta-item">
+                        <div className="admin-meta-list__label">Phone</div>
+                        <div className="admin-meta-list__value">{staff.phone || 'Not provided'}</div>
+                      </div>
+                      <div className="admin-meta-item">
+                        <div className="admin-meta-list__label">Role</div>
+                        <div className="admin-meta-list__value admin-role-name">
+                          {formatRoleLabel(staff.role_name)}
                         </div>
-                        <div>
-                          <div className="admin-meta-list__label">Phone</div>
-                          <div className="admin-meta-list__value">{staff.phone || 'Not provided'}</div>
-                        </div>
-                        <div>
-                          <div className="admin-meta-list__label">Role</div>
-                          <div className="admin-meta-list__value admin-role-name">
-                            {formatRoleLabel(staff.role_name)}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="admin-meta-list__label">Department</div>
-                          <div className="admin-meta-list__value">
-                            {staff.department_name || 'N/A'}
-                          </div>
+                      </div>
+                      <div className="admin-meta-item">
+                        <div className="admin-meta-list__label">Department</div>
+                        <div className="admin-meta-list__value">
+                          {staff.department_name || 'N/A'}
                         </div>
                       </div>
                     </div>
@@ -260,32 +259,33 @@ export default function StaffDetailPage() {
                 </div>
               </div>
 
-              <div className="admin-card">
+              <div className="admin-card admin-card--flat">
                 <div className="admin-card__header">
                   <h2 className="admin-card__title">Account status</h2>
+                  <p className="admin-card__desc">Activity and access information.</p>
                 </div>
                 <div className="admin-card__body admin-meta-list">
-                  <div className="admin-meta-list__row" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div className="admin-meta-list__row">
                     <span className="admin-meta-list__label">Status</span>
                     <AdminStaffStatusBadge isActive={staff.is_active} />
                   </div>
-                  <div className="admin-meta-list__row" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span className="admin-meta-list__label">
-                      <ActivityIcon />
+                  <div className="admin-meta-list__row">
+                    <span className="admin-meta-list__label admin-meta-list__label--inline">
+                      <Activity size={14} aria-hidden />
                       Logins
                     </span>
                     <span className="admin-meta-list__value">{staff.login_count ?? 0}</span>
                   </div>
-                  <div className="admin-meta-list__row" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span className="admin-meta-list__label">
-                      <Calendar size={14} style={{ marginRight: 4 }} aria-hidden />
+                  <div className="admin-meta-list__row">
+                    <span className="admin-meta-list__label admin-meta-list__label--inline">
+                      <Calendar size={14} aria-hidden />
                       Created
                     </span>
                     <span className="admin-meta-list__value">{formatDate(staff.created_at)}</span>
                   </div>
-                  <div className="admin-meta-list__row" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span className="admin-meta-list__label">
-                      <User size={14} style={{ marginRight: 4 }} aria-hidden />
+                  <div className="admin-meta-list__row">
+                    <span className="admin-meta-list__label admin-meta-list__label--inline">
+                      <User size={14} aria-hidden />
                       Last login
                     </span>
                     <span className="admin-meta-list__value">
@@ -300,8 +300,4 @@ export default function StaffDetailPage() {
       </div>
     </AdminLayout>
   );
-}
-
-function ActivityIcon() {
-  return <span style={{ marginRight: 4 }} aria-hidden>↻</span>;
 }

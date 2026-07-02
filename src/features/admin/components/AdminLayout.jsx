@@ -1,4 +1,4 @@
-import { LayoutDashboard, UserCog, Users } from 'lucide-react';
+import { BarChart3, Building2, LayoutDashboard, UserCog, Users } from 'lucide-react';
 import { ROUTES } from '@/shared/constants';
 import RoleLayout from '@/shared/components/layout/RoleLayout';
 import '../styles/admin.css';
@@ -6,11 +6,15 @@ import '../styles/admin.css';
 const NAV_LINKS = [
   { href: ROUTES.ADMIN_DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
   { href: ROUTES.ADMIN_STAFF, label: 'Staff', icon: Users },
+  { href: ROUTES.ADMIN_DEPARTMENTS, label: 'Departments', icon: Building2 },
+  { href: ROUTES.ADMIN_REPORTS, label: 'Reports', icon: BarChart3 },
   { href: ROUTES.ADMIN_ROLES, label: 'Roles', icon: UserCog },
 ];
 
 const PAGE_TITLES = [
   { prefix: ROUTES.ADMIN_STAFF, title: 'Staff' },
+  { prefix: ROUTES.ADMIN_DEPARTMENTS, title: 'Departments' },
+  { prefix: ROUTES.ADMIN_REPORTS, title: 'Reports' },
   { prefix: ROUTES.ADMIN_ROLES, title: 'Roles' },
   { prefix: ROUTES.ADMIN_DASHBOARD, title: 'Dashboard' },
 ];
@@ -22,6 +26,24 @@ function resolveTitle(pathname, pageTitleOverride) {
   if (pathname === ROUTES.ADMIN_STAFF_NEW) {
     return 'Register Staff';
   }
+  if (pathname === ROUTES.ADMIN_DEPARTMENTS_NEW) {
+    return 'New Department';
+  }
+  if (pathname.startsWith(`${ROUTES.ADMIN_DEPARTMENTS}/`) && pathname !== ROUTES.ADMIN_DEPARTMENTS_NEW) {
+    return pageTitleOverride || 'Department Details';
+  }
+  if (pathname === ROUTES.ADMIN_ROLES_NEW) {
+    return 'Create Role';
+  }
+  if (pathname === ROUTES.ADMIN_PERMISSIONS_NEW) {
+    return 'Create Permission';
+  }
+  if (pathname === ROUTES.ADMIN_ROLES_ASSIGN) {
+    return 'Assign Permissions';
+  }
+  if (pathname.startsWith(ROUTES.ADMIN_REPORTS)) {
+    return pageTitleOverride || 'Reports';
+  }
   const match = PAGE_TITLES.find((p) => pathname.startsWith(p.prefix));
   return pageTitleOverride || match?.title || 'Admin';
 }
@@ -30,9 +52,34 @@ function isStaffActive(pathname) {
   return pathname === ROUTES.ADMIN_STAFF || pathname.startsWith('/admin/staff/');
 }
 
+function isDepartmentsActive(pathname) {
+  return pathname === ROUTES.ADMIN_DEPARTMENTS || pathname.startsWith('/admin/departments/');
+}
+
+function isReportsActive(pathname) {
+  return pathname.startsWith(ROUTES.ADMIN_REPORTS);
+}
+
+function isRolesActive(pathname) {
+  return (
+    pathname === ROUTES.ADMIN_ROLES
+    || pathname.startsWith('/admin/roles/')
+    || pathname.startsWith('/admin/permissions/')
+  );
+}
+
 function isNavLinkActive(pathname, link) {
   if (link.href === ROUTES.ADMIN_STAFF) {
     return isStaffActive(pathname);
+  }
+  if (link.href === ROUTES.ADMIN_DEPARTMENTS) {
+    return isDepartmentsActive(pathname);
+  }
+  if (link.href === ROUTES.ADMIN_REPORTS) {
+    return isReportsActive(pathname);
+  }
+  if (link.href === ROUTES.ADMIN_ROLES) {
+    return isRolesActive(pathname);
   }
   return pathname === link.href || pathname.startsWith(link.href);
 }
@@ -51,7 +98,7 @@ export default function AdminLayout({ children, pageTitle, compact = false }) {
       isNavLinkActive={isNavLinkActive}
       showBell={false}
     >
-      {children}
+      <div className="admin-shell">{children}</div>
     </RoleLayout>
   );
 }

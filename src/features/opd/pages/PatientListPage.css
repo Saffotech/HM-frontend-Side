@@ -69,12 +69,16 @@
   color: #fff;
 }
 
-.patients-page__custom-date {
+.patients-page__custom-date .date-input__text {
   padding: 0.35rem 0.5rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  height: auto;
+  min-height: 2rem;
   font-size: 0.8125rem;
-  font-family: inherit;
+}
+
+.patients-page__custom-date .date-input__calendar-btn {
+  min-height: 2rem;
+  width: 2rem;
 }
 
 .patient-cell {
