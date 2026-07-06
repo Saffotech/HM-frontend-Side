@@ -29,16 +29,29 @@ export async function fetchPrescriptionById(id, token) {
 }
 
 export async function submitDispense(prescriptionId, body, token) {
-  const payload = {
-    items: (body?.items ?? []).map(({ prescription_item_id, quantity_dispensed }) => ({
-      prescription_item_id,
-      quantity_dispensed,
-    })),
-  };
+  const items = (body?.items ?? [])
+    .map(({ prescription_item_id, quantity_dispensed }) => {
+      const itemId = Number(prescription_item_id);
+      const qty = Number(quantity_dispensed);
+      if (!Number.isInteger(itemId) || itemId <= 0) return null;
+      if (!Number.isInteger(qty) || qty <= 0) return null;
+      return {
+        prescription_item_id: itemId,
+        quantity_dispensed: qty,
+      };
+    })
+    .filter(Boolean);
+
+  if (!items.length) {
+    throw new Error('Enter a dispense quantity for at least one medicine.');
+  }
+
+  const payload = { items };
   if (body?.remarks?.trim()) {
     payload.remarks = body.remarks.trim();
   }
-  return dispenseMedicine(prescriptionId, payload, token);
+
+  return dispenseMedicine(Number(prescriptionId), payload, token);
 }
 
 export async function fetchPrescriptionDispenseHistory(prescriptionId, token) {

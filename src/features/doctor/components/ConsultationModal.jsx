@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useCreatePrescriptionMutation } from '@/features/doctor/hooks/useDoctorPrescriptionQuery';
 import { useCreateLabTestMutation } from '@/features/doctor/hooks/useDoctorLabQuery';
-import { useSaveConsultationWorkflowMutation } from '@/features/doctor/hooks/useDoctorQueueQuery';
+import { useSaveConsultationWorkflowMutation, useConsultationContextQuery } from '@/features/doctor/hooks/useDoctorQueueQuery';
 import {
   DEFAULT_MEDICINE,
   LAB_TEST_OPTIONS,
@@ -11,8 +11,9 @@ import {
 } from '@/features/doctor/constants';
 import { DOCTOR_PATIENT_HISTORY_QUERY_OPTIONS } from '@/features/doctor/utils/doctorPatientProfileCache';
 import { getDoctorDisplayStatus } from '@/features/doctor/utils/appointmentWorkflow';
+import { stripInternalAppointmentMarkers } from '@/features/opd/utils/appointmentPaymentUtils';
 import { Modal, Button, Input, Label, Textarea, Select, QueryFeedback } from '@/shared/components/common';
-import { doctorAppointmentsApi, doctorPatientsApi } from '@/shared/api/services';
+import { doctorPatientsApi } from '@/shared/api/services';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { toast } from '@/shared/utils/toast';
@@ -31,7 +32,6 @@ function emptyMedicineRow() {
 
 export default function ConsultationModal({
   appointment,
-  todayQueue = [],
   open,
   onClose,
   onDone,
@@ -56,10 +56,8 @@ export default function ConsultationModal({
   const appointmentDbId = appointment?.dbId;
   const patientUid = appointment?.patientUid ?? appointment?.patientId;
 
-  const appointmentDetailQuery = useQuery({
-    queryKey: queryKeys.doctor.appointments.detail(appointmentDbId),
-    queryFn: () => doctorAppointmentsApi.fetchAppointmentById(appointmentDbId, token),
-    enabled: open && appointmentDbId != null && Boolean(token),
+  const consultationContextQuery = useConsultationContextQuery(appointmentDbId, {
+    enabled: open && appointmentDbId != null,
   });
 
   const patientHistoryQuery = useQuery({
@@ -86,11 +84,15 @@ export default function ConsultationModal({
 
   useEffect(() => {
     if (!open) return;
-    const detail = appointmentDetailQuery.data;
+    const detail = consultationContextQuery.data?.appointment;
     if (!detail) return;
-    if (!symptoms && detail.reason) setSymptoms(detail.reason);
-    if (!notes && detail.notes) setNotes(detail.notes);
-  }, [open, appointmentDetailQuery.data, symptoms, notes]);
+    if (!symptoms) setSymptoms(detail.symptoms ?? detail.reason ?? '');
+    if (!diagnosis && detail.diagnosis) setDiagnosis(detail.diagnosis);
+    if (!notes && detail.notes) {
+      setNotes(stripInternalAppointmentMarkers(detail.notes));
+    }
+    if (!followUp && detail.followUpDate) setFollowUp(detail.followUpDate);
+  }, [open, consultationContextQuery.data, symptoms, diagnosis, notes, followUp]);
 
   useEffect(() => {
     if (labTest) setLabCategory(defaultLabCategory(labTest));
@@ -103,7 +105,9 @@ export default function ConsultationModal({
     createPrescription.isPending ||
     createLabTest.isPending;
 
-  const displayStatus = getDoctorDisplayStatus(appointmentDetailQuery.data ?? appointment);
+  const displayStatus = getDoctorDisplayStatus(
+    consultationContextQuery.data?.appointment ?? appointment
+  );
   const recentVisits = (patientHistoryQuery.data?.visits ?? []).slice(0, 3);
 
   const save = async () => {
@@ -132,7 +136,6 @@ export default function ConsultationModal({
 
       await saveConsultation.mutateAsync({
         appointmentDbId,
-        todayQueue,
         patientUid,
         patientId: patientDbId,
         clinical: {
@@ -170,15 +173,22 @@ export default function ConsultationModal({
       }
 
       if (labTest) {
-        await createLabTest.mutateAsync({
-          appointmentDbId,
-          patientUid,
-          patientName: appointment.patientName,
-          testName: labTest,
-          category: labCategory,
-          priority: labPriority,
-          clinicalNotes: labClinicalNotes,
-        });
+        try {
+          await createLabTest.mutateAsync({
+            appointmentDbId,
+            patientUid,
+            patientName: appointment.patientName,
+            testName: labTest,
+            category: labCategory,
+            priority: labPriority,
+            clinicalNotes: labClinicalNotes,
+          });
+        } catch (labErr) {
+          const msg = String(labErr?.message ?? '');
+          if (!/already been ordered/i.test(msg)) {
+            throw labErr;
+          }
+        }
       }
 
       toast.success('Consultation saved');
@@ -212,10 +222,15 @@ export default function ConsultationModal({
       </p>
 
       <QueryFeedback
-        isError={patientHistoryQuery.isError}
-        error={patientHistoryQuery.error}
-        onRetry={patientHistoryQuery.refetch}
+        isError={consultationContextQuery.isError}
+        error={consultationContextQuery.error}
+        onRetry={() => consultationContextQuery.refetch()}
       >
+        {patientHistoryQuery.isError && (
+          <p className="text-muted" style={{ fontSize: '0.8125rem', margin: '0 0 1rem' }}>
+            Recent visit history could not be loaded.
+          </p>
+        )}
         {recentVisits.length > 0 && (
           <div className="doc-consult-history" style={{ marginBottom: '1rem' }}>
             <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.875rem' }}>Recent visits</h4>

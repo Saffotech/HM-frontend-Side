@@ -6,6 +6,12 @@
 import { formatHumanInstructions } from '@/features/pharmacy/utils/prescriptionQuantity';
 import { resolveItemQuantities } from '@/features/pharmacy/utils/prescriptionQuantities';
 
+export function getPrescriptionItemDbId(item) {
+  const raw = item?.prescription_item_id ?? item?.prescriptionItemId ?? item?.id;
+  const id = Number(raw);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
 export function parseDispenseQuantityInput(raw) {
   const trimmed = String(raw ?? '').trim();
   if (!trimmed) return 0;
@@ -81,10 +87,11 @@ export function buildDispenseSummary(enrichedItems, quantitiesByItemId) {
 export function buildDispensePayload(enrichedItems, quantitiesByItemId, remarks) {
   const items = enrichedItems
     .map((item) => {
+      const itemDbId = getPrescriptionItemDbId(item);
       const qty = parseDispenseQuantityInput(quantitiesByItemId[item.id]) ?? 0;
-      if (qty <= 0) return null;
+      if (!itemDbId || qty <= 0) return null;
       return {
-        prescription_item_id: item.id,
+        prescription_item_id: itemDbId,
         quantity_dispensed: qty,
       };
     })

@@ -2,14 +2,24 @@
 
 import { apiClient } from '@/shared/api/client';
 import { buildQueryString } from '@/shared/utils/buildQueryString';
+import { normalizeAppointmentListParams } from '@/shared/api/utils/opdAppointmentParams';
 
 export async function getAppointments(token, params = {}) {
+  const p = normalizeAppointmentListParams(params);
   const query = buildQueryString({
-    status: params.status,
-    date_from: params.date_from,
-    date_to: params.date_to,
-    page: params.page,
-    limit: params.limit,
+    patient_id: p.patient_id,
+    doctor_id: p.doctor_id,
+    department_id: p.department_id,
+    search: p.search,
+    date: p.date,
+    date_from: p.date_from,
+    date_to: p.date_to,
+    status: p.status,
+    list_filter: p.list_filter,
+    sort: p.sort,
+    order: p.order,
+    page: p.page,
+    limit: p.limit,
   });
   return apiClient(`/opd/appointments${query}`, { token });
 }

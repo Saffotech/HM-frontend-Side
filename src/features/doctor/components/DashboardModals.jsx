@@ -5,7 +5,6 @@ import QuickNotesModal from './QuickNotesModal';
 
 function DashboardModals({
   consultFor,
-  todayQueue = [],
   onCloseConsult,
   rxFor,
   rxAppointment,
@@ -17,7 +16,6 @@ function DashboardModals({
     <>
       <ConsultationModal
         appointment={consultFor}
-        todayQueue={todayQueue}
         open={!!consultFor}
         onClose={onCloseConsult}
         onDone={onCloseConsult}

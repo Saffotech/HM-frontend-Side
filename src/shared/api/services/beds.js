@@ -28,8 +28,8 @@ async function enrichBedsWithPatientDepartment(beds, token) {
   }));
 }
 
-export async function listBeds(token) {
-  const r = await getBeds(token);
+export async function listBeds(token, params = {}) {
+  const r = await getBeds(token, params);
   let beds = (r.beds ?? []).map(apiBedToUi);
   beds = await enrichBedsWithPatientDepartment(beds, token);
   return {

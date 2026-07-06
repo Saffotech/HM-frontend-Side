@@ -2,6 +2,7 @@ import {
   isConsultCancelled,
   isConsultCompleted,
   getAppointmentStatus,
+  isDoctorSchedulableAppointment,
 } from '@/features/doctor/utils/appointmentWorkflow';
 import { appointmentToVisitRow } from '@/shared/api/mappers/doctorPatientMapper';
 
@@ -120,7 +121,10 @@ export function buildPatientListByCategory({
   completedVisits = [],
   todayAppointments = [],
 }) {
-  const todayRows = todayAppointments.map(appointmentToVisitRow).filter(Boolean);
+  const todayRows = todayAppointments
+    .filter(isDoctorSchedulableAppointment)
+    .map(appointmentToVisitRow)
+    .filter(Boolean);
   const queueRows = todayRows.filter(
     (row) => !isConsultCompleted(row) && !isConsultCancelled(row)
   );

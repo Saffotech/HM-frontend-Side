@@ -1,18 +1,52 @@
 import { compareAppointmentsByDateTime } from './doctorDates';
+import {
+  buildPaymentFromApiFields,
+  getAppointmentDisplayStatus,
+  isAppointmentPending,
+} from '@/features/opd/utils/appointmentPaymentUtils';
 
 /** Primary workflow status (API → UI mapped `status` field). */
 export function getAppointmentStatus(appt) {
   return appt?.status || 'Scheduled';
 }
 
-/** Doctor dashboard display — hides waiting / in-progress states. */
+/** OPD unpaid scheduled — hidden from doctor lists until payment is collected. */
+export function isOpdPendingUnpaid(appt) {
+  if (!appt) return false;
+  if (appt.displayStatus === 'Pending') return true;
+  const payment = appt.payment ?? buildPaymentFromApiFields(appt);
+  return isAppointmentPending(appt, payment);
+}
+
+/** Doctor may consult — excludes OPD-pending unpaid appointments. */
+export function isDoctorSchedulableAppointment(appt) {
+  return Boolean(appt) && !isOpdPendingUnpaid(appt);
+}
+
+function mapQueueStatusForDoctorDisplay(status) {
+  if (status === 'Waiting' || status === 'In Progress') return 'Scheduled';
+  return status;
+}
+
+/** Doctor dashboard display — OPD unpaid scheduled visits show as Pending. */
 export function getDoctorDisplayStatus(apptOrStatus) {
-  const s = typeof apptOrStatus === 'string' ? apptOrStatus : getAppointmentStatus(apptOrStatus);
-  if (s === 'Waiting' || s === 'In Progress') return 'Scheduled';
-  return s;
+  if (typeof apptOrStatus === 'string') {
+    return mapQueueStatusForDoctorDisplay(apptOrStatus);
+  }
+
+  const appt = apptOrStatus;
+  if (!appt) return 'Scheduled';
+
+  if (appt.displayStatus) {
+    return mapQueueStatusForDoctorDisplay(appt.displayStatus);
+  }
+
+  const payment = appt.payment ?? buildPaymentFromApiFields(appt);
+  return mapQueueStatusForDoctorDisplay(getAppointmentDisplayStatus(appt, payment));
 }
 
 export function isPendingConsultation(appt) {
+  if (!isDoctorSchedulableAppointment(appt)) return false;
   const s = getAppointmentStatus(appt);
   return s === 'Scheduled' || s === 'Waiting' || s === 'In Progress';
 }
@@ -42,12 +76,14 @@ export function isCalendarVisible(appt) {
 
 /** Future / open visits for the Upcoming section. */
 export function isUpcomingAppointment(appt) {
+  if (!isDoctorSchedulableAppointment(appt)) return false;
   const s = getAppointmentStatus(appt);
   return s === 'Scheduled' || s === 'Waiting' || s === 'In Progress';
 }
 
 /** Waiting to be called — includes emergency triage while still waiting. */
 export function isInWaitingQueue(appt) {
+  if (!isDoctorSchedulableAppointment(appt)) return false;
   const s = getAppointmentStatus(appt);
   if (s === 'In Progress' || s === 'Completed' || s === 'Cancelled') return false;
   return s === 'Waiting' || s === 'Scheduled' || appt?.type === 'Emergency';

@@ -17,6 +17,7 @@ import { Button, DateInput } from '@/shared/components/common';
 import AppointmentDetailModal from './AppointmentDetailModal';
 import PatientHistoryProfile from './PatientHistoryProfile';
 import StatusPill from './StatusPill';
+import { getDoctorDisplayStatus } from '@/features/doctor/utils/appointmentWorkflow';
 import '../styles/doctor-ui.css';
 
 function dedupeAppointments(items) {
@@ -204,7 +205,7 @@ function ApptTable({ items, loading, onOpenPatient, onView }) {
               </td>
               <td>{a.reason || a.notes || '—'}</td>
               <td>
-                <StatusPill status={a.status} />
+                <StatusPill status={getDoctorDisplayStatus(a)} />
               </td>
               <td className="doc-schedule-table__actions" onClick={(e) => e.stopPropagation()}>
                 <Button

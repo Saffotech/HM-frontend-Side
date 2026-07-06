@@ -15,6 +15,12 @@ import {
 } from '@/shared/api/mappers/appointmentMapper';
 import { fetchAllPages, totalPagesFrom } from '@/shared/utils/fetchAllPages';
 import { getTodayRangeIso } from '@/shared/utils/opdDates';
+import {
+  normalizeAppointmentListParams,
+  simplifyAppointmentListParams,
+  minimalAppointmentListParams,
+} from '@/shared/api/utils/opdAppointmentParams';
+import { isSameOpdCalendarDay } from '@/shared/utils/opdDates';
 
 function mapAppointmentPage(raw) {
   const appointments = asList(raw)
@@ -30,7 +36,25 @@ function mapAppointmentPage(raw) {
     limit,
     totalPages: totalPagesFrom(total, limit),
     counts: raw?.counts ?? null,
+    list_counts: raw?.list_counts ?? null,
   };
+}
+
+const EMPTY_APPOINTMENT_PAGE = {
+  appointments: [],
+  total: 0,
+  page: 1,
+  limit: 50,
+  totalPages: 0,
+  counts: null,
+  list_counts: null,
+};
+
+function filterAppointmentsByDate(appointments, dateKey) {
+  if (!dateKey) return appointments;
+  return appointments.filter((appt) =>
+    isSameOpdCalendarDay(appt.scheduledAt ?? appt.date, dateKey)
+  );
 }
 
 async function fetchAppointmentsPage(token, params) {
@@ -45,9 +69,39 @@ async function fetchAppointmentsPage(token, params) {
   };
 }
 
-export async function listAppointmentsPage(token, params = {}) {
-  const raw = await getAppointments(token, params);
-  return mapAppointmentPage(raw);
+export async function listAppointmentsPage(token, params = {}, options = {}) {
+  const { softFail = false } = options;
+  const normalized = normalizeAppointmentListParams(params);
+  const dateKey = normalized.date;
+  const tiers = [
+    normalized,
+    simplifyAppointmentListParams(normalized),
+    minimalAppointmentListParams(normalized),
+  ];
+
+  let lastError;
+  for (const tier of tiers) {
+    try {
+      const raw = await getAppointments(token, tier);
+      const mapped = mapAppointmentPage(raw);
+      if (dateKey && !tier.date) {
+        const filtered = filterAppointmentsByDate(mapped.appointments, dateKey);
+        return {
+          ...mapped,
+          appointments: filtered,
+          total: filtered.length,
+          totalPages: Math.max(1, Math.ceil(filtered.length / (mapped.limit || 50))),
+        };
+      }
+      return mapped;
+    } catch (err) {
+      lastError = err;
+      if (err?.status !== 500) throw err;
+    }
+  }
+
+  if (softFail) return { ...EMPTY_APPOINTMENT_PAGE, limit: normalized.limit ?? 50, page: normalized.page ?? 1 };
+  throw lastError;
 }
 
 export async function listAppointmentsAll(token, params = {}) {
@@ -57,15 +111,16 @@ export async function listAppointmentsAll(token, params = {}) {
   );
 }
 
-/** Appointments scheduled for the current calendar day (API date range). */
+/** Appointments scheduled for the current calendar day (API date param). */
 export async function listTodayAppointments(token, params = {}) {
-  const { dateFrom, dateTo } = getTodayRangeIso();
+  const { dateKey } = getTodayRangeIso();
   return listAppointmentsPage(token, {
     ...params,
-    date_from: dateFrom,
-    date_to: dateTo,
+    date: dateKey,
     limit: params.limit ?? 50,
     page: 1,
+    sort: 'scheduled_at',
+    order: 'asc',
   }).then((r) => r.appointments);
 }
 
@@ -91,19 +146,16 @@ export function uiFilterStatusToApi(status) {
   return uiStatusToApiStatus(status);
 }
 
-/** Map OPD appointment list pills to GET /opd/appointments status param. */
-export function resolveOpdAppointmentListApiStatus(filterStatus) {
-  if (filterStatus === 'Completed') return 'completed';
-  if (filterStatus === 'Cancelled') return 'cancelled';
-  if (
-    !filterStatus ||
-    filterStatus === 'All' ||
-    filterStatus === 'Scheduled' ||
-    filterStatus === 'Pending'
-  ) {
-    return 'scheduled';
-  }
-  return uiFilterStatusToApi(filterStatus);
+/** Map OPD appointment list pills to GET /opd/appointments list_filter param. */
+export function resolveOpdAppointmentListFilter(filterStatus) {
+  const map = {
+    All: 'all',
+    Scheduled: 'scheduled',
+    Pending: 'pending',
+    Completed: 'completed',
+    Cancelled: 'cancelled',
+  };
+  return map[filterStatus] ?? 'all';
 }
 
 function matchesPatientAppointment(appt, patientUid, patientDbId) {

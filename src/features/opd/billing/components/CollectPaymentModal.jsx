@@ -12,7 +12,6 @@ import { trimForm } from '@/shared/utils/trimForm';
 import { validatePaymentTransactionRef, requiresTransactionReference } from '@/shared/utils/validators';
 import { useFormValidation } from '@/shared/hooks/useFormValidation';
 import { toast } from '@/shared/utils/toast';
-import { PAYMENT_MODES } from '@/shared/constants';
 import {
   Modal,
   Button,
@@ -22,9 +21,67 @@ import {
 } from '@/shared/components/common';
 import './CollectPaymentModal.css';
 
-function validatePayment(values, maxAmount) {
+const COLLECT_PAYMENT_MODES = ['Cash', 'Card', 'UPI', 'Online'];
+
+function normalizePaymentMode(mode) {
+  if (String(mode).toLowerCase() === 'online') return 'Card';
+  return mode;
+}
+
+function billPatientKeys(bill) {
+  return [bill?.patientId, bill?.patientUid, bill?.patientDbId]
+    .filter((v) => v != null && v !== '')
+    .map(String);
+}
+
+function billMatchesPatient(bill, patientUid, patientDbId) {
+  const keys = billPatientKeys(bill);
+  if (patientUid && keys.includes(String(patientUid))) return true;
+  if (patientDbId != null && keys.includes(String(patientDbId))) return true;
+  return false;
+}
+
+function normalizeBillDay(value) {
+  if (!value) return '';
+  const parsed = new Date(value);
+  if (!Number.isNaN(parsed.getTime())) return parsed.toDateString();
+  return String(value).trim().toLowerCase();
+}
+
+function pickPatientBill(candidates = [], { appointmentDate } = {}) {
+  const unpaid = candidates.filter(
+    (b) => b.status !== 'Paid' && Number(b.balance ?? 0) > 0.01
+  );
+  const pool = unpaid.length ? unpaid : candidates.filter((b) => b.status !== 'Paid');
+  if (!pool.length) return null;
+
+  if (appointmentDate) {
+    const targetDay = normalizeBillDay(appointmentDate);
+    const dateMatch = pool.find((b) => normalizeBillDay(b.date ?? b.dateIso) === targetDay);
+    if (dateMatch) return dateMatch;
+  }
+
+  return [...pool].sort((a, b) => Number(b.balance ?? 0) - Number(a.balance ?? 0))[0];
+}
+
+function uniqueBills(...groups) {
+  const seen = new Set();
+  const out = [];
+  for (const group of groups) {
+    for (const bill of group) {
+      if (!bill) continue;
+      const key = bill.visitId ?? bill.id;
+      if (key == null || seen.has(key)) continue;
+      seen.add(key);
+      out.push(bill);
+    }
+  }
+  return out;
+}
+
+function validatePayment(values, maxAmount, hasResolvedBill) {
   const errors = {};
-  if (!values.selectedBillId) errors.selectedBillId = 'Bill is required';
+  if (!hasResolvedBill && !values.selectedBillId) errors.selectedBillId = 'Bill is required';
   const amount = Number(values.amount);
   if (!values.amount || isNaN(amount) || amount <= 0) {
     errors.amount = 'Amount must be greater than 0';
@@ -39,10 +96,28 @@ function validatePayment(values, maxAmount) {
   return errors;
 }
 
-export default function CollectPaymentModal({ open, onClose, defaultBillId }) {
-  const { data: billsData } = useBillsQuery({
+export default function CollectPaymentModal({
+  open,
+  onClose,
+  defaultBillId,
+  defaultVisitId,
+  prefillBill,
+  patientUid,
+  patientDbId,
+  appointmentDate,
+  onCollected,
+}) {
+  const { data: billsData, isLoading: allBillsLoading } = useBillsQuery({
     fetchAll: true,
     enabled: open,
+  });
+  const patientSearch = patientUid ?? (patientDbId != null ? String(patientDbId) : undefined);
+  const { data: patientBillsData, isLoading: patientBillsLoading } = useBillsQuery({
+    fetchAll: false,
+    search: patientSearch,
+    page: 1,
+    limit: BILLS_PAGE_SIZE,
+    enabled: open && Boolean(patientSearch),
   });
   const { data: defaultBillData } = useBillsQuery({
     fetchAll: false,
@@ -53,8 +128,46 @@ export default function CollectPaymentModal({ open, onClose, defaultBillId }) {
   });
 
   const bills = asBillList(billsData);
+  const patientBills = asBillList(patientBillsData);
   const defaultBills = asBillList(defaultBillData);
   const unpaidBills = bills.filter((b) => b.status !== 'Paid');
+  const billsLoading = allBillsLoading || patientBillsLoading;
+
+  const bill = useMemo(() => {
+    if (prefillBill?.visitId) return prefillBill;
+
+    const candidates = uniqueBills(bills, defaultBills, patientBills);
+    const fromList =
+      candidates.find(
+        (b) =>
+          (defaultBillId && b.id === defaultBillId) ||
+          (defaultVisitId != null && b.visitId === defaultVisitId)
+      ) ?? null;
+    if (fromList) return fromList;
+
+    if (prefillBill) return prefillBill;
+
+    if (patientUid || patientDbId != null) {
+      const matched = candidates.filter((b) =>
+        billMatchesPatient(b, patientUid, patientDbId)
+      );
+      const picked = pickPatientBill(matched, { appointmentDate });
+      if (picked) return picked;
+    }
+
+    return null;
+  }, [
+    bills,
+    defaultBills,
+    patientBills,
+    defaultBillId,
+    defaultVisitId,
+    patientUid,
+    patientDbId,
+    appointmentDate,
+    prefillBill,
+  ]);
+
   const collectPayment = useCollectPaymentMutation();
   const [formState, setFormState] = useState({
     selectedBillId: defaultBillId || '',
@@ -62,10 +175,6 @@ export default function CollectPaymentModal({ open, onClose, defaultBillId }) {
     mode: 'Cash',
     refNo: '',
   });
-
-  const bill =
-    bills.find((b) => b.id === formState.selectedBillId) ??
-    defaultBills.find((b) => b.id === formState.selectedBillId);
 
   const { data: invoiceBill, isLoading: invoiceLoading } = useBillInvoiceQuery(
     bill?.visitId,
@@ -82,23 +191,26 @@ export default function CollectPaymentModal({ open, onClose, defaultBillId }) {
 
   const { values, errors, handleChange, handleSubmit, setValues } = useFormValidation(
     formState,
-    (v) => validatePayment(v, bill?.balance)
+    (v) => validatePayment(v, bill?.balance, Boolean(bill?.visitId))
   );
 
   useEffect(() => {
+    const resolvedBillId = bill?.id ?? defaultBillId ?? '';
+    const defaultAmount =
+      bill?.balance != null && bill.balance > 0 ? String(bill.balance) : '';
     setValues({
-      selectedBillId: defaultBillId || '',
-      amount: '',
+      selectedBillId: resolvedBillId,
+      amount: defaultAmount,
       mode: 'Cash',
       refNo: '',
     });
     setFormState({
-      selectedBillId: defaultBillId || '',
-      amount: '',
+      selectedBillId: resolvedBillId,
+      amount: defaultAmount,
       mode: 'Cash',
       refNo: '',
     });
-  }, [defaultBillId, open, setValues]);
+  }, [defaultBillId, open, setValues, bill?.id, bill?.balance]);
 
   const set = (key, val) => {
     handleChange(key, val);
@@ -108,10 +220,10 @@ export default function CollectPaymentModal({ open, onClose, defaultBillId }) {
   const onSubmit = handleSubmit((rawValues) => {
     const trimmed = trimForm(rawValues);
     const selectedBill =
+      bill ??
       bills.find((b) => b.id === trimmed.selectedBillId) ??
       defaultBills.find((b) => b.id === trimmed.selectedBillId);
-    if (!selectedBill) return;
-    if (!selectedBill.visitId) {
+    if (!selectedBill?.visitId) {
       toast.error('Missing visit for this bill. Refresh and try again.');
       return;
     }
@@ -126,18 +238,22 @@ export default function CollectPaymentModal({ open, onClose, defaultBillId }) {
             year: 'numeric',
           }),
           amount: numAmount,
-          mode: trimmed.mode,
+          mode: normalizePaymentMode(trimmed.mode),
           ref: trimmed.refNo || undefined,
         },
       },
       {
         onSuccess: () => {
           toast.success(`Payment of ${formatCurrency(numAmount)} collected successfully`);
+          onCollected?.();
           onClose();
         },
       }
     );
   });
+
+  const showBillPicker =
+    !patientUid && patientDbId == null && !defaultBillId && !prefillBill?.visitId;
 
   return (
     <Modal
@@ -155,11 +271,15 @@ export default function CollectPaymentModal({ open, onClose, defaultBillId }) {
               {collectPayment.isPending ? 'Saving...' : 'Collect & Update'}
             </Button>
           </>
-        ) : null
+        ) : (
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        )
       }
     >
       <form onSubmit={onSubmit} className="collect-payment">
-        {!defaultBillId && (
+        {showBillPicker && (
           <>
             <Select
               label="Select Bill (Unpaid/Partial)"
@@ -177,7 +297,9 @@ export default function CollectPaymentModal({ open, onClose, defaultBillId }) {
           </>
         )}
 
-        {bill && (
+        {billsLoading && !bill ? (
+          <p className="collect-payment__muted">Loading bill details…</p>
+        ) : bill ? (
           <>
             <div className="collect-payment__detail">
               <dl className="collect-payment__meta">
@@ -276,7 +398,7 @@ export default function CollectPaymentModal({ open, onClose, defaultBillId }) {
                     if (!requiresTransactionReference(mode)) set('refNo', '');
                   }}
                 >
-                  {PAYMENT_MODES.map((m) => (
+                  {COLLECT_PAYMENT_MODES.map((m) => (
                     <option key={m} value={m}>
                       {m}
                     </option>
@@ -295,6 +417,10 @@ export default function CollectPaymentModal({ open, onClose, defaultBillId }) {
               />
             )}
           </>
+        ) : (
+          <p className="collect-payment__muted">
+            No unpaid bill found for this appointment. Create a bill from Billing first.
+          </p>
         )}
       </form>
     </Modal>

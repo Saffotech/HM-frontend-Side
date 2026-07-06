@@ -52,6 +52,8 @@ export const queryKeys = {
 
     all: ['beds'],
 
+    list: (filters) => ['beds', 'list', filters],
+
     wards: ['beds', 'wards'],
 
     ward: (name) => ['beds', 'ward', name],
@@ -120,6 +122,8 @@ export const queryKeys = {
 
     labs: ['doctor', 'labs'],
 
+    labReport: (testId) => ['doctor', 'labs', 'report', testId],
+
     notifications: ['doctor', 'notifications'],
 
     appointments: {
@@ -148,6 +152,12 @@ export const queryKeys = {
 
     },
 
+    consultations: {
+
+      context: (appointmentId) => ['doctor', 'consultations', 'context', appointmentId],
+
+    },
+
     patients: {
 
       visits: ['doctor', 'patients', 'visits'],
@@ -158,6 +168,15 @@ export const queryKeys = {
 
     },
 
+  },
+
+  lab: {
+    all: ['lab'],
+    dashboard: ['lab', 'dashboard'],
+    orders: (filters) => ['lab', 'orders', filters],
+    order: (id) => ['lab', 'order', id],
+    reports: (filters) => ['lab', 'reports', filters],
+    report: (id) => ['lab', 'report', id],
   },
 
 };

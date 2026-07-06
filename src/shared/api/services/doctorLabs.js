@@ -3,9 +3,12 @@ import {
   createLabTest,
   updateLabTest,
   cancelLabTest,
+  getLabTestReport,
+  fetchLabTestReportFileBlob,
 } from '@/features/doctor/api/labs';
 import {
   apiToUiLabTest,
+  apiToUiDoctorLabReport,
   uiToApiLabTestCreate,
   uiToApiLabTestUpdate,
   mapLabTestList,
@@ -13,6 +16,14 @@ import {
 
 export async function fetchLabTests(token, params = {}) {
   return mapLabTestList(await getLabTests(token, params));
+}
+
+export async function fetchLabTestReport(testId, token) {
+  return apiToUiDoctorLabReport(await getLabTestReport(testId, token));
+}
+
+export async function downloadLabTestReportFile(testId, token) {
+  return fetchLabTestReportFileBlob(testId, token);
 }
 
 export async function addLabTest(payload, token) {

@@ -48,8 +48,11 @@ export function apiToUiPharmacyListItem(row) {
 export function apiToUiPharmacyPrescriptionItem(item) {
   if (!item) return null;
   const duration = Number(item.duration) || 0;
+  const itemDbId = Number(item.id ?? item.prescription_item_id ?? item.prescriptionItemId);
   const mapped = {
-    id: item.id,
+    id: Number.isInteger(itemDbId) && itemDbId > 0 ? itemDbId : null,
+    prescription_item_id:
+      Number.isInteger(itemDbId) && itemDbId > 0 ? itemDbId : null,
     medicine_name: item.medicine_name ?? '',
     dosage: item.dosage ?? '',
     instructions: item.instructions ?? null,
@@ -83,7 +86,7 @@ export function apiToUiPharmacyPrescriptionDetail(raw) {
 
   const prescriptionItems = (raw.items ?? raw.prescription_items ?? [])
     .map(apiToUiPharmacyPrescriptionItem)
-    .filter(Boolean);
+    .filter((item) => item && item.id != null);
 
   return {
     id: raw.id,

@@ -1,28 +1,25 @@
 import { useMemo, useState } from 'react';
 import { Search, X, Printer } from 'lucide-react';
+import { useLabReportsQuery } from '@/shared/hooks/queries/useLabQuery';
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { printLabReport } from '@/features/lab/utils/labReportUtils';
 
 /**
- * Dashboard-only live search — does not use the archive page.
+ * Dashboard-only live search — uses GET /lab/reports?search=
  */
-export default function LabDashboardReportFinder({ reports, onClose }) {
+export default function LabDashboardReportFinder({ onClose }) {
   const [query, setQuery] = useState('');
   const [pickedId, setPickedId] = useState(null);
+  const debouncedQuery = useDebouncedValue(query, 300);
 
-  const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-    return reports.filter(
-      (r) =>
-        r.patientName.toLowerCase().includes(q) ||
-        r.reportId.toLowerCase().includes(q) ||
-        r.patientId.toLowerCase().includes(q) ||
-        r.testName.toLowerCase().includes(q) ||
-        r.doctorName.toLowerCase().includes(q)
-    );
-  }, [reports, query]);
+  const reportsQuery = useLabReportsQuery(
+    { search: debouncedQuery, pageSize: 20 },
+    { enabled: debouncedQuery.trim().length > 0 }
+  );
 
-  const picked = pickedId ? reports.find((r) => r.reportId === pickedId) : null;
+  const results = reportsQuery.data?.data ?? [];
+
+  const picked = pickedId ? results.find((r) => r.reportId === pickedId) : null;
 
   return (
     <section className="lab-dash-finder">
@@ -50,7 +47,11 @@ export default function LabDashboardReportFinder({ reports, onClose }) {
         />
       </div>
 
-      {query.trim() && results.length === 0 && (
+      {query.trim() && reportsQuery.isLoading && (
+        <p className="lab-dash-finder__empty">Searching...</p>
+      )}
+
+      {query.trim() && !reportsQuery.isLoading && results.length === 0 && (
         <p className="lab-dash-finder__empty">No report matches &ldquo;{query}&rdquo;</p>
       )}
 

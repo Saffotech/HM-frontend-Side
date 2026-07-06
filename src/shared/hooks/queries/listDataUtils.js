@@ -36,6 +36,7 @@ export function asAppointmentPageMeta(data) {
     totalPages: data.totalPages ?? 1,
     limit: data.limit ?? 20,
     counts: data.counts ?? null,
+    list_counts: data.list_counts ?? null,
   };
 }
 

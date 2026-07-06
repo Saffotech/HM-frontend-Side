@@ -1,11 +1,22 @@
 /**
- * Derive appointment payment state on the frontend by matching OPD bills to appointments.
- * Appointments API does not return payment fields — bills are matched by patient + date.
- * Pay-later bookings are tagged in appointment notes as `[pay-later]`.
+ * Appointment payment helpers for OPD.
+ * Appointments list uses payment fields from GET /opd/appointments.
+ * Bill matching fallback remains for pages that still load bills separately.
  */
 
 export const APPT_PAY_LATER_NOTE = '[pay-later]';
 const REGISTRATION_BOOKING_MARKERS = ['booked during registration', 'new patient registration'];
+
+/** Remove internal OPD booking markers before showing notes in clinical UI. */
+export function stripInternalAppointmentMarkers(text) {
+  if (text == null || text === '') return '';
+  let out = String(text);
+  out = out.split(APPT_PAY_LATER_NOTE).join('');
+  for (const marker of REGISTRATION_BOOKING_MARKERS) {
+    out = out.replace(new RegExp(marker, 'gi'), '');
+  }
+  return out.replace(/\s{2,}/g, ' ').trim();
+}
 
 function normalizeDateKey(dateStr) {
   if (!dateStr) return '';
@@ -51,6 +62,64 @@ export function isAppointmentFromRegistration(appt) {
   if (!appt || isAppointmentMarkedPayLater(appt)) return false;
   const text = `${appt.notes ?? ''} ${appt.reason ?? ''}`.toLowerCase();
   return REGISTRATION_BOOKING_MARKERS.some((marker) => text.includes(marker));
+}
+
+/** Build payment state from API fields on GET /opd/appointments rows. */
+export function buildPaymentFromApiFields(appt) {
+  if (!appt) return { isPaid: false, bill: null, label: 'Unpaid', apiStatus: 'no_bill' };
+
+  const apiStatus = String(appt.paymentStatus ?? appt.payment_status ?? 'no_bill').toLowerCase();
+  // Backend bill_id is the OPD visit id; bill_number is the human-readable bill id.
+  const visitId = appt.visitId ?? appt.visit_id ?? appt.billId ?? appt.bill_id ?? null;
+  const billNumber = appt.billNumber ?? appt.bill_number ?? null;
+  const total = Number(appt.totalAmount ?? appt.total_amount ?? 0);
+  const paid = Number(appt.paidAmount ?? appt.paid_amount ?? 0);
+  const balance = Number(
+    appt.balanceAmount ?? appt.balance_amount ?? Math.max(total - paid, 0),
+  );
+
+  const bill =
+    visitId || billNumber
+      ? {
+          id: billNumber ?? String(visitId),
+          visitId,
+          billNumber,
+          total,
+          paid,
+          balance,
+          patientName: appt.patientName,
+          patientId: appt.patientUid ?? appt.patientId,
+          status:
+            apiStatus === 'paid'
+              ? 'Paid'
+              : apiStatus === 'partial'
+                ? 'Partial'
+                : 'Unpaid',
+        }
+      : null;
+
+  const isPaid =
+    apiStatus === 'paid' ||
+    (total > 0 && balance <= 0.01) ||
+    (apiStatus === 'partial' && balance <= 0.01);
+
+  return {
+    isPaid,
+    bill,
+    label: isPaid ? 'Paid' : apiStatus === 'partial' ? 'Partial' : 'Unpaid',
+    apiStatus,
+  };
+}
+
+export function enrichAppointmentsWithApiPayment(appointments) {
+  return appointments.map((appt) => {
+    const payment = buildPaymentFromApiFields(appt);
+    return {
+      ...appt,
+      payment,
+      displayStatus: getAppointmentDisplayStatus(appt, payment),
+    };
+  });
 }
 
 /** @returns {{ isPaid: boolean, bill: object|null, label: 'Paid'|'Unpaid' }} */

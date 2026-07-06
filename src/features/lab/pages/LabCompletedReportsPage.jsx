@@ -1,37 +1,40 @@
 import { useState, useMemo } from 'react';
 import LabLayout from '@/features/lab/components/LabLayout';
 import LabReportDetailModal from '@/features/lab/components/LabReportDetailModal';
-import { useLabReports } from '@/features/lab/hooks/useLabStore';
+import { useLabReportsQuery } from '@/shared/hooks/queries/useLabQuery';
 import { downloadReportsCsv, printLabReport } from '@/features/lab/utils/labReportUtils';
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
+import { QueryFeedback } from '@/shared/components/common';
 import { DateInput } from '@/shared/components/common';
 import '../styles/lab.css';
 
 export default function LabCompletedReportsPage() {
-  const { reports } = useLabReports();
-
   const [search, setSearch] = useState('');
   const [filterDate, setFilterDate] = useState('');
-  const [filterDoctor, setFilterDoctor] = useState('all');
   const [selectedReport, setSelectedReport] = useState(null);
 
+  const debouncedSearch = useDebouncedValue(search, 300);
+
+  const reportsQuery = useLabReportsQuery({
+    search: debouncedSearch,
+    date: filterDate || undefined,
+    pageSize: 100,
+  });
+
+  const reports = reportsQuery.data?.data ?? [];
+  const total = reportsQuery.data?.total ?? reports.length;
+
   const doctors = useMemo(
-    () => [...new Set(reports.map((r) => r.doctorName))].sort(),
+    () => [...new Set(reports.map((r) => r.doctorName).filter((d) => d && d !== '—'))].sort(),
     [reports]
   );
 
+  const [filterDoctor, setFilterDoctor] = useState('all');
+
   const filtered = useMemo(() => {
-    return reports.filter((r) => {
-      if (filterDoctor !== 'all' && r.doctorName !== filterDoctor) return false;
-      if (filterDate && !r.uploadedDate.startsWith(filterDate)) return false;
-      if (!search.trim()) return true;
-      const q = search.toLowerCase();
-      return (
-        r.patientName.toLowerCase().includes(q) ||
-        r.reportId.toLowerCase().includes(q) ||
-        r.testName.toLowerCase().includes(q)
-      );
-    });
-  }, [reports, search, filterDate, filterDoctor]);
+    if (filterDoctor === 'all') return reports;
+    return reports.filter((r) => r.doctorName === filterDoctor);
+  }, [reports, filterDoctor]);
 
   const hasFilters = search || filterDate || filterDoctor !== 'all';
   const resetFilters = () => {
@@ -42,19 +45,6 @@ export default function LabCompletedReportsPage() {
 
   return (
     <LabLayout pageTitle="Completed Reports">
-      <div className="lab-page-header">
-        <div className="lab-breadcrumb">
-          <span>Lab Portal</span>
-          <span className="sep">›</span>
-          <span className="current">Completed Reports</span>
-        </div>
-        <h1>Report Archive</h1>
-        <p>
-          Full history with filters and export — use the dashboard for quick preview, search, and print
-          summary.
-        </p>
-      </div>
-
       <div className="lab-archive-toolbar no-print">
         <button
           type="button"
@@ -111,69 +101,76 @@ export default function LabCompletedReportsPage() {
           )}
         </div>
 
-        <div className="lab-result-count">
-          Showing <strong>{filtered.length}</strong> of <strong>{reports.length}</strong> reports
-        </div>
+        <QueryFeedback
+          isLoading={reportsQuery.isLoading}
+          isError={reportsQuery.isError}
+          error={reportsQuery.error}
+          onRetry={reportsQuery.refetch}
+        >
+          <div className="lab-result-count">
+            Showing <strong>{filtered.length}</strong> of <strong>{total}</strong> reports
+          </div>
 
-        {filtered.length === 0 ? (
-          <div className="lab-empty">
-            <div className="lab-empty-icon">📋</div>
-            <h3>No Reports Found</h3>
-            <p>No completed reports match your filters.</p>
-          </div>
-        ) : (
-          <div className="lab-table-wrap">
-            <table className="lab-table">
-              <thead>
-                <tr>
-                  <th>Report ID</th>
-                  <th>Patient Name</th>
-                  <th>Patient ID</th>
-                  <th>Test Name</th>
-                  <th>Doctor</th>
-                  <th>Uploaded Date</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((report) => (
-                  <tr key={report.reportId}>
-                    <td>
-                      <strong>{report.reportId}</strong>
-                    </td>
-                    <td>{report.patientName}</td>
-                    <td style={{ color: '#6b7f99', fontFamily: 'monospace', fontSize: '12.5px' }}>{report.patientId}</td>
-                    <td>{report.testName}</td>
-                    <td>{report.doctorName}</td>
-                    <td style={{ whiteSpace: 'nowrap', color: '#6b7f99' }}>{report.uploadedDate}</td>
-                    <td>
-                      <span className="lab-badge completed">✓ Completed</span>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        <button
-                          type="button"
-                          className="lab-btn lab-btn-primary lab-btn-sm"
-                          onClick={() => setSelectedReport(report)}
-                        >
-                          View
-                        </button>
-                        <button
-                          type="button"
-                          className="lab-btn lab-btn-secondary lab-btn-sm"
-                          onClick={() => printLabReport(report)}
-                        >
-                          Print
-                        </button>
-                      </div>
-                    </td>
+          {filtered.length === 0 ? (
+            <div className="lab-empty">
+              <div className="lab-empty-icon">📋</div>
+              <h3>No Reports Found</h3>
+              <p>No completed reports match your filters.</p>
+            </div>
+          ) : (
+            <div className="lab-table-wrap">
+              <table className="lab-table">
+                <thead>
+                  <tr>
+                    <th>Report ID</th>
+                    <th>Patient Name</th>
+                    <th>Patient ID</th>
+                    <th>Test Name</th>
+                    <th>Doctor</th>
+                    <th>Uploaded Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody>
+                  {filtered.map((report) => (
+                    <tr key={report.reportDbId ?? report.reportId}>
+                      <td>
+                        <strong>{report.reportId}</strong>
+                      </td>
+                      <td>{report.patientName}</td>
+                      <td style={{ color: '#6b7f99', fontFamily: 'monospace', fontSize: '12.5px' }}>{report.patientId}</td>
+                      <td>{report.testName}</td>
+                      <td>{report.doctorName}</td>
+                      <td style={{ whiteSpace: 'nowrap', color: '#6b7f99' }}>{report.uploadedDate}</td>
+                      <td>
+                        <span className="lab-badge completed">✓ Completed</span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            className="lab-btn lab-btn-primary lab-btn-sm"
+                            onClick={() => setSelectedReport(report)}
+                          >
+                            View
+                          </button>
+                          <button
+                            type="button"
+                            className="lab-btn lab-btn-secondary lab-btn-sm"
+                            onClick={() => printLabReport(report)}
+                          >
+                            Print
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </QueryFeedback>
       </div>
     </LabLayout>
   );

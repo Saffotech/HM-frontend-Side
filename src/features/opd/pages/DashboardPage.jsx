@@ -1,37 +1,12 @@
 import { Link } from 'react-router-dom';
-import { useMemo } from 'react';
 import { UserPlus, CalendarPlus, BedDouble, Receipt, Clock } from 'lucide-react';
 import { usePatientsQuery, PATIENTS_PAGE_SIZE } from '@/shared/hooks/queries/usePatientQuery';
 import { useTodayAppointmentsQuery } from '@/shared/hooks/queries/useAppointmentQuery';
-import { useBedsQuery } from '@/shared/hooks/queries/useBedsQuery';
 import { useOpdDashboardQuery } from '@/shared/hooks/queries/useOpdDashboardQuery';
+import { enrichAppointmentsWithApiPayment } from '@/features/opd/utils/appointmentPaymentUtils';
 import { Avatar, StatusBadge, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import './DashboardPage.css';
-
-function normalizeBedStatus(status) {
-  const s = String(status ?? '').toLowerCase();
-  if (s === 'occupied') return 'Occupied';
-  if (s === 'available') return 'Available';
-  return status;
-}
-
-const BED_STATUS_WARDS = ['General', 'ICU', 'Private'];
-
-function computeWardBedStats(beds) {
-  return BED_STATUS_WARDS.map((wardName) => {
-    const wardBeds = beds.filter(
-      (bed) => String(bed.ward ?? '').toLowerCase() === wardName.toLowerCase(),
-    );
-    const occupied = wardBeds.filter(
-      (bed) => normalizeBedStatus(bed.status) === 'Occupied',
-    ).length;
-    const total = wardBeds.length;
-    const available = Math.max(0, total - occupied);
-    const percent = total ? Math.round((occupied / total) * 100) : 0;
-    return { ward: wardName, occupied, available, total, percent };
-  });
-}
 
 export default function DashboardPage() {
   const { data: dashboard, isLoading: ld, isError: ed, error: errD } = useOpdDashboardQuery();
@@ -41,21 +16,23 @@ export default function DashboardPage() {
     isError: ea,
     error: errA,
   } = useTodayAppointmentsQuery();
-  const { data: bedData, isLoading: lb, isError: eb, error: errB } = useBedsQuery();
   const {
     data: recentPage,
     isLoading: lp,
     isError: ep,
     error: errP,
   } = usePatientsQuery({ fetchAll: false, page: 1, limit: PATIENTS_PAGE_SIZE });
-  const beds = bedData?.beds ?? [];
-  const bedStats = bedData?.stats;
-  const todaysAppts = todayApptPage?.appointments ?? [];
-  const recentPatients = recentPage?.patients ?? [];
 
-  const isLoading = ld || la || lb || lp;
-  const isError = ed || ea || eb || ep;
-  const error = errD || errA || errB || errP;
+  const todaysAppts = enrichAppointmentsWithApiPayment(todayApptPage?.appointments ?? []);
+  const recentPatients = recentPage?.patients ?? [];
+  const wardBedStats = dashboard?.wardBedStats ?? [];
+
+  const hasShellData = Boolean(dashboard || recentPage || todayApptPage);
+  const isInitialLoading = !hasShellData && (ld || lp);
+  const showPartialWarning = (ed || ea || ep) && hasShellData;
+  const showFatalError =
+    !isInitialLoading && !hasShellData && (ed || ea || ep);
+  const error = errD || errA || errP;
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
@@ -66,11 +43,7 @@ export default function DashboardPage() {
     year: 'numeric',
   });
 
-  const occupiedBeds =
-    bedStats?.occupied ?? beds.filter((b) => normalizeBedStatus(b.status) === 'Occupied').length;
-  const availableBeds =
-    dashboard?.bedsFree ?? bedStats?.available ?? beds.length - occupiedBeds;
-  const wardBedStats = useMemo(() => computeWardBedStats(beds), [beds]);
+  const availableBeds = dashboard?.bedsFree ?? 0;
 
   const stats = {
     patients: dashboard?.patientsTotal ?? recentPage?.total ?? recentPatients.length,
@@ -79,9 +52,22 @@ export default function DashboardPage() {
     bedsFree: availableBeds,
   };
 
+  if (isInitialLoading) {
+    return <QueryFeedback isLoading />;
+  }
+
+  if (showFatalError) {
+    return <QueryFeedback isError error={error} />;
+  }
+
   return (
-    <QueryFeedback isLoading={isLoading} isError={isError} error={error}>
-      <div className="dashboard stagger-reveal">
+    <div className="dashboard stagger-reveal">
+        {showPartialWarning && (
+          <p className="dashboard-partial-warning" role="status">
+            Some dashboard data could not be refreshed. Showing the latest available
+            information.
+          </p>
+        )}
         <section className="dashboard-banner">
           <div>
             <h2 className="dashboard-banner__title">{greeting}, Billing Counter</h2>
@@ -162,7 +148,13 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {todaysAppts.length === 0 ? (
+                    {la ? (
+                      <tr>
+                        <td colSpan={5} className="dashboard-empty-row">
+                          Loading appointments…
+                        </td>
+                      </tr>
+                    ) : todaysAppts.length === 0 ? (
                       <tr>
                         <td colSpan={5} className="dashboard-empty-row">
                           No appointments scheduled for today.
@@ -193,7 +185,7 @@ export default function DashboardPage() {
                             </span>
                           </td>
                           <td>
-                            <StatusBadge status={appt.status} />
+                            <StatusBadge status={appt.displayStatus ?? appt.status} />
                           </td>
                         </tr>
                       ))
@@ -244,7 +236,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-    </QueryFeedback>
   );
 }
 

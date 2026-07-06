@@ -43,7 +43,20 @@ export async function completeConsultation(queueId, token, clinical = null) {
     body: clinical ? JSON.stringify(clinical) : undefined,
     token,
   });
-  return extractQueue(response);
+  return response?.queue ?? response;
+}
+
+/** Atomic save by appointment_id — same as POST /consultations/save */
+export async function completeConsultationByAppointment(appointmentId, clinical, token) {
+  const response = await apiClient('/queue/complete', {
+    method: 'PUT',
+    body: JSON.stringify({
+      appointment_id: appointmentId,
+      clinical: clinical ?? {},
+    }),
+    token,
+  });
+  return response;
 }
 
 export async function requestNextPatient(appointmentId, token) {

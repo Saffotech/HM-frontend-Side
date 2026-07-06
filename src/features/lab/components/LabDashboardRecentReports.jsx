@@ -23,7 +23,6 @@ export default function LabDashboardRecentReports({ reports }) {
       <div className="lab-dash-reports__head">
         <div>
           <h2>Recently Completed Reports</h2>
-          <p>Expand a row here to read details or print — stays on dashboard</p>
         </div>
         {hiddenCount > 0 && (
           <button

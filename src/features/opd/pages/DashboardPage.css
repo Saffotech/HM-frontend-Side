@@ -4,6 +4,16 @@
   gap: var(--space-lg);
 }
 
+.dashboard-partial-warning {
+  margin: 0;
+  padding: 0.625rem 0.875rem;
+  border-radius: var(--radius-md);
+  background: #fff8e6;
+  border: 1px solid #f0d78c;
+  color: #7a5b00;
+  font-size: 0.875rem;
+}
+
 /* Welcome banner */
 .dashboard-banner {
   background: linear-gradient(135deg, #ebf5fb 0%, #fdfefe 100%);

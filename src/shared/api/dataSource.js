@@ -32,6 +32,8 @@ export function asList(payload) {
 
   if (payload?.lab_tests) return payload.lab_tests;
 
+  if (payload?.items) return payload.items;
+
   return [];
 
 }

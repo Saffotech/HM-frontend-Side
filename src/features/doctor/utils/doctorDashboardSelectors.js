@@ -20,6 +20,10 @@ export function toDashboardAppointment(appt) {
     date: appt.date,
     scheduledAt: appt.scheduledAt,
     status: appt.status,
+    displayStatus: appt.displayStatus,
+    payment: appt.payment,
+    paymentStatus: appt.paymentStatus,
+    notes: appt.notes,
     type: appt.type,
     reason: appt.reason,
   };

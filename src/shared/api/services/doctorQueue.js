@@ -4,6 +4,7 @@ import {
   getCurrentQueue,
   startConsultation,
   completeConsultation,
+  completeConsultationByAppointment,
   requestNextPatient,
 } from '@/features/doctor/api/queue';
 import { apiToUiQueueRow, mapQueueList } from '@/shared/api/mappers/queueMapper';
@@ -26,7 +27,16 @@ export async function beginQueueConsultation(queueId, token) {
 }
 
 export async function finishQueueConsultation(queueId, token, clinical = null) {
-  return apiToUiQueueRow(await completeConsultation(queueId, token, clinical));
+  const response = await completeConsultation(queueId, token, clinical);
+  return apiToUiQueueRow(response?.queue ?? response);
+}
+
+export async function finishConsultationByAppointment(appointmentId, token, clinical = null) {
+  const response = await completeConsultationByAppointment(appointmentId, token, clinical);
+  return {
+    appointment: response?.appointment ?? null,
+    queue: apiToUiQueueRow(response?.queue),
+  };
 }
 
 export async function notifyNextPatient(appointmentId, token) {

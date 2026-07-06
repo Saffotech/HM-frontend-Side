@@ -1,10 +1,16 @@
 /** Bed / ward API — used by features/opd/beds */
 
 import { apiClient } from '@/shared/api/client';
+import { buildQueryString } from '@/shared/utils/buildQueryString';
 import { formatOpdDisplayDateTime } from '@/shared/utils/opdDates';
 
-export async function getBeds(token) {
-  const response = await apiClient('/opd/beds', { token });
+export async function getBeds(token, params = {}) {
+  const query = buildQueryString({
+    ward: params.ward,
+    status: params.status,
+    search: params.search,
+  });
+  const response = await apiClient(`/opd/beds${query}`, { token });
   return {
     beds: (response.beds ?? response).map(apiBedToUi),
     stats: response.stats ?? null,

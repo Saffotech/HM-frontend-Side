@@ -180,7 +180,17 @@ export function apiToUiAppointment(apiAppt) {
     type: apiAppt.appointment_type ?? apiAppt.type,
     reason: apiAppt.reason ?? apiAppt.notes,
     notes: apiAppt.notes,
+    symptoms: apiAppt.symptoms ?? null,
+    diagnosis: apiAppt.diagnosis ?? null,
+    followUpDate: apiAppt.follow_up_date ?? apiAppt.followUpDate ?? null,
     createdAt: apiAppt.created_at ?? apiAppt.createdAt ?? null,
+    paymentStatus: apiAppt.payment_status ?? apiAppt.paymentStatus ?? null,
+    visitId: apiAppt.visit_id ?? apiAppt.visitId ?? apiAppt.bill_id ?? apiAppt.billId ?? null,
+    billId: apiAppt.bill_id ?? apiAppt.billId ?? apiAppt.visit_id ?? apiAppt.visitId ?? null,
+    billNumber: apiAppt.bill_number ?? apiAppt.billNumber ?? null,
+    totalAmount: apiAppt.total_amount ?? apiAppt.totalAmount ?? 0,
+    paidAmount: apiAppt.paid_amount ?? apiAppt.paidAmount ?? 0,
+    balanceAmount: apiAppt.balance_amount ?? apiAppt.balanceAmount ?? 0,
   };
 }
 

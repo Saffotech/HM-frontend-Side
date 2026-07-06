@@ -57,7 +57,7 @@ import AppointmentDetailModal from './AppointmentDetailModal';
 import PatientHistoryProfile from './PatientHistoryProfile';
 
 import { appointmentToPatientSummary } from '@/shared/api/mappers/doctorPatientMapper';
-import { doctorAppointmentsApi } from '@/shared/api/services';
+import { doctorConsultationsApi } from '@/shared/api/services';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { prefetchPatientProfileData } from '@/features/doctor/utils/doctorPatientProfileCache';
@@ -315,15 +315,20 @@ function DashboardSection({ onViewAllPatients }) {
           patientId: patientDbId,
         }),
         queryClient.prefetchQuery({
-          queryKey: queryKeys.doctor.appointments.detail(appt.dbId),
-          queryFn: () => doctorAppointmentsApi.fetchAppointmentById(appt.dbId, token),
+          queryKey: queryKeys.doctor.consultations.context(appt.dbId),
+          queryFn: () => doctorConsultationsApi.fetchConsultationContext(appt.dbId, token),
         }),
       ]);
 
-      const queueRow = findQueueRowForAppointment(todayQueue, appt.dbId);
+      const context = queryClient.getQueryData(
+        queryKeys.doctor.consultations.context(appt.dbId)
+      );
+      const queueRow =
+        context?.queue ?? findQueueRowForAppointment(todayQueue, appt.dbId);
 
       setConsultFor({
         ...appt,
+        ...(context?.appointment ?? {}),
         queueId: queueRow?.queueId ?? null,
         queueRow: queueRow ?? null,
       });
@@ -586,7 +591,6 @@ function DashboardSection({ onViewAllPatients }) {
 
       <DashboardModals
         consultFor={consultFor}
-        todayQueue={todayQueue}
         onCloseConsult={() => setConsultFor(null)}
         rxFor={rxFor}
 

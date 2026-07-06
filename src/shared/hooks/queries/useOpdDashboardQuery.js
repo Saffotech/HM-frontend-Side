@@ -8,5 +8,7 @@ export function useOpdDashboardQuery() {
   return useQuery({
     queryKey: queryKeys.opd.dashboard,
     queryFn: () => opdDashboardApi.fetchOpdDashboard(token),
+    retry: 1,
+    staleTime: 30_000,
   });
 }

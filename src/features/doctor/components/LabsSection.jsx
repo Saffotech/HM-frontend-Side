@@ -17,6 +17,7 @@ import { resolveDoctorPatient } from '@/features/doctor/utils/patientHistory';
 import { Button, Input, Label, Select, Modal } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
 import StatusPill from './StatusPill';
+import DoctorLabReportModal from './DoctorLabReportModal';
 import '../styles/doctor-ui.css';
 
 function CategoryCell({ category }) {
@@ -79,7 +80,7 @@ function LabEditModal({ test, open, onClose, onSave, saving }) {
   );
 }
 
-function LabTestsList({ tests, filter, onFilterChange, onRowClick, onEdit, onCancel }) {
+function LabTestsList({ tests, filter, onFilterChange, onRowClick, onEdit, onCancel, onViewReport }) {
   const counts = useMemo(() => countDoctorLabFilters(tests), [tests]);
   const filtered = useMemo(
     () => filterDoctorLabTests(tests, filter),
@@ -175,10 +176,15 @@ function LabTestsList({ tests, filter, onFilterChange, onRowClick, onEdit, onCan
                         </div>
                       )}
                       {t.reportAvailable && (
-                        <span className="doc-labs-view-btn doc-labs-view-btn--inline">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="doc-labs-view-btn"
+                          onClick={() => onViewReport?.(t)}
+                        >
                           <Eye size={14} aria-hidden />
-                          Report
-                        </span>
+                          View report
+                        </Button>
                       )}
                       {!t.reportAvailable && !t.canCancel && !t.canUpdate && (
                         <span className="doc-labs-awaiting">Awaiting lab</span>
@@ -204,6 +210,7 @@ export default function LabsSection() {
   const [filter, setFilter] = useState('all');
   const [profilePatient, setProfilePatient] = useState(null);
   const [editTest, setEditTest] = useState(null);
+  const [reportTest, setReportTest] = useState(null);
 
   const handleCancel = async (test) => {
     if (!window.confirm(`Cancel lab order "${test.testName}"?`)) return;
@@ -248,6 +255,7 @@ export default function LabsSection() {
         }
         onEdit={setEditTest}
         onCancel={handleCancel}
+        onViewReport={setReportTest}
       />
       <LabEditModal
         test={editTest}
@@ -255,6 +263,11 @@ export default function LabsSection() {
         onClose={() => setEditTest(null)}
         onSave={handleSaveEdit}
         saving={updateLab.isPending}
+      />
+      <DoctorLabReportModal
+        test={reportTest}
+        open={reportTest != null}
+        onClose={() => setReportTest(null)}
       />
     </div>
   );

@@ -20,6 +20,8 @@ import {
 import { useDeletePrescriptionMutation } from '@/features/doctor/hooks/useDoctorPrescriptionQuery';
 import PrescriptionDetailModal from './PrescriptionDetailModal';
 import { useDoctorLabTestsQuery } from '@/features/doctor/hooks/useDoctorLabQuery';
+import { matchesLabTestPatient } from '@/features/doctor/utils/labPatientMatch';
+import DoctorLabReportModal from './DoctorLabReportModal';
 import { mergeVisitTimelineWithPrescriptions } from '@/features/doctor/utils/patientHistory';
 import { patientsApi } from '@/shared/api/services';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
@@ -65,10 +67,13 @@ export default function PatientHistoryProfile({
   const deletePrescription = useDeletePrescriptionMutation();
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [viewPrescriptionId, setViewPrescriptionId] = useState(null);
+  const [viewLabTest, setViewLabTest] = useState(null);
+
+  const canLoadLabs = Boolean(patientUid || resolvedPatientId);
 
   const { data: allLabTests = [] } = useDoctorLabTestsQuery(
     {},
-    { enabled: Boolean(patientUid) && !historyPending },
+    { enabled: canLoadLabs && !historyPending },
   );
 
   const { data: opdProfile } = useQuery({
@@ -107,12 +112,14 @@ export default function PatientHistoryProfile({
 
   const patientLabs = useMemo(
     () =>
-      allLabTests.filter(
-        (t) =>
-          t.patientId === patientUid ||
-          (patientId != null && t.patientId === String(patientId))
+      allLabTests.filter((test) =>
+        matchesLabTestPatient(test, {
+          patientUid,
+          patientId,
+          name: profile.name !== '—' ? profile.name : patient?.name,
+        })
       ),
-    [allLabTests, patientUid, patientId]
+    [allLabTests, patientUid, patientId, profile.name, patient?.name]
   );
 
   if (!patient) return null;
@@ -279,12 +286,18 @@ export default function PatientHistoryProfile({
           ) : (
             <ul className="doc-profile-lab-list">
               {patientLabs.map((t) => (
-                <li key={t.id} className="doc-profile-lab-item">
-                  <div>
-                    <strong>{t.testName}</strong>
-                    <span className="text-muted">{t.orderedDisplay}</span>
-                  </div>
-                  <StatusPill status={t.doctorStatus} />
+                <li key={t.id}>
+                  <button
+                    type="button"
+                    className="doc-profile-lab-item doc-profile-lab-item--clickable"
+                    onClick={() => setViewLabTest(t)}
+                  >
+                    <div>
+                      <strong>{t.testName}</strong>
+                      <span className="text-muted">{t.orderedDisplay}</span>
+                    </div>
+                    <StatusPill status={t.doctorStatus} />
+                  </button>
                 </li>
               ))}
             </ul>
@@ -308,6 +321,12 @@ export default function PatientHistoryProfile({
         patientId={patientId}
         patientUid={patientUid}
         patientName={profile.name !== '—' ? profile.name : undefined}
+      />
+
+      <DoctorLabReportModal
+        test={viewLabTest}
+        open={viewLabTest != null}
+        onClose={() => setViewLabTest(null)}
       />
     </div>
   );

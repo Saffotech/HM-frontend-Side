@@ -1,82 +1,103 @@
-/** Lab test request lifecycle — single source of truth for status meaning */
+/** Lab test request lifecycle — backend status values */
 
 export const LAB_ORDER_STATUS = {
-  PENDING: 'pending',
-  IN_PROGRESS: 'in_progress',
+  ORDERED: 'ordered',
+  SAMPLE_COLLECTED: 'sample_collected',
+  PROCESSING: 'processing',
   COMPLETED: 'completed',
+  CANCELLED: 'cancelled',
 };
 
 /** Human-readable stage info shown in UI */
 export const LAB_STATUS_META = {
-  pending: {
+  ordered: {
     label: 'Waiting',
-    shortLabel: 'Pending',
-    description: 'Doctor ordered the test. Lab has not started yet.',
-    nextStep: 'Collect sample or open upload form and save as In Progress.',
+    shortLabel: 'Ordered',
+    description: 'Doctor ordered the test. Sample not collected yet.',
+    nextStep: 'Collect sample, then save report details.',
     badgeClass: 'pending',
     isOpen: true,
   },
-  in_progress: {
-    label: 'In Progress',
-    shortLabel: 'In Progress',
-    description: 'Sample collected or test is running. Report not uploaded yet.',
-    nextStep: 'Finish the test and upload the report as Completed.',
+  sample_collected: {
+    label: 'Sample Collected',
+    shortLabel: 'Sample Collected',
+    description: 'Sample collected — ready for processing.',
+    nextStep: 'Mark processing and enter report parameters.',
+    badgeClass: 'in-progress',
+    isOpen: true,
+  },
+  processing: {
+    label: 'Processing',
+    shortLabel: 'Processing',
+    description: 'Test is running. Report not finalized yet.',
+    nextStep: 'Save report and complete the test.',
     badgeClass: 'in-progress',
     isOpen: true,
   },
   completed: {
     label: 'Completed',
     shortLabel: 'Completed',
-    description: 'Report uploaded. Test leaves the open worklist.',
+    description: 'Test completed. View in report archive.',
     nextStep: 'View in Completed Reports archive.',
     badgeClass: 'completed',
+    isOpen: false,
+  },
+  cancelled: {
+    label: 'Cancelled',
+    shortLabel: 'Cancelled',
+    description: 'Order was cancelled by the doctor.',
+    nextStep: 'No action required.',
+    badgeClass: 'cancelled',
     isOpen: false,
   },
 };
 
 export function isOpenStatus(status) {
-  return status === LAB_ORDER_STATUS.PENDING || status === LAB_ORDER_STATUS.IN_PROGRESS;
+  return (
+    status === LAB_ORDER_STATUS.ORDERED ||
+    status === LAB_ORDER_STATUS.SAMPLE_COLLECTED ||
+    status === LAB_ORDER_STATUS.PROCESSING
+  );
 }
 
 export function statusLabel(status) {
   return LAB_STATUS_META[status]?.shortLabel ?? status;
 }
 
-/** Dashboard / list views */
-export function filterOrdersByView(orders, view) {
+/** Map dashboard / URL view keys to a single backend status filter (undefined = all). */
+export function viewToApiStatus(view) {
   switch (view) {
-    case 'open':
-      return orders.filter((o) => isOpenStatus(o.status));
+    case 'ordered':
     case 'pending':
-      return orders.filter((o) => o.status === LAB_ORDER_STATUS.PENDING);
+      return LAB_ORDER_STATUS.ORDERED;
+    case 'sample_collected':
+      return LAB_ORDER_STATUS.SAMPLE_COLLECTED;
+    case 'processing':
     case 'in_progress':
-      return orders.filter((o) => o.status === LAB_ORDER_STATUS.IN_PROGRESS);
+      return LAB_ORDER_STATUS.PROCESSING;
     case 'completed':
-      return orders.filter((o) => o.status === LAB_ORDER_STATUS.COMPLETED);
+      return LAB_ORDER_STATUS.COMPLETED;
+    case 'cancelled':
+      return LAB_ORDER_STATUS.CANCELLED;
     default:
-      return orders;
+      return undefined;
   }
 }
 
-export function countByStatus(orders) {
-  return orders.reduce(
-    (acc, o) => {
-      acc[o.status] = (acc[o.status] ?? 0) + 1;
-      acc.all += 1;
-      if (isOpenStatus(o.status)) acc.open += 1;
-      return acc;
-    },
-    { all: 0, open: 0, pending: 0, in_progress: 0, completed: 0 }
-  );
-}
-
-/** Action button on orders table — depends on current status */
+/** Action button on orders table */
 export function uploadActionLabel(status) {
-  if (status === LAB_ORDER_STATUS.PENDING) return 'Start / Upload';
-  if (status === LAB_ORDER_STATUS.IN_PROGRESS) return 'Continue Upload';
-  return 'View Report';
+  if (status === LAB_ORDER_STATUS.COMPLETED) return 'View Report';
+  if (status === LAB_ORDER_STATUS.PROCESSING) return 'Complete Report';
+  if (status === LAB_ORDER_STATUS.SAMPLE_COLLECTED) return 'Continue';
+  return 'Start / Upload';
 }
 
 export function uploadActionVariant(status) {
   return status === LAB_ORDER_STATUS.COMPLETED ? 'secondary' : 'primary';
+}
+
+/** Badge class for CSS — maps backend status to existing lab.css classes */
+export function statusBadgeClass(status) {
+  const meta = LAB_STATUS_META[status];
+  return meta?.badgeClass ?? status?.replace(/_/g, '-');
 }

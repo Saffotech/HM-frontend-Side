@@ -82,12 +82,16 @@ export function useCollectPaymentMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ billId, payment }) => billsApi.collectBillPayment(billId, payment, token),
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.bills.all });
       queryClient.invalidateQueries({ queryKey: ['bills', 'list'] });
       queryClient.invalidateQueries({ queryKey: ['bills', 'invoice'] });
       queryClient.invalidateQueries({ queryKey: ['bills', 'payment-history'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.opd.dashboard });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+      queryClient.invalidateQueries({ queryKey: ['appointments', 'list'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointments.today });
+      await queryClient.refetchQueries({ queryKey: ['appointments', 'list'], type: 'active' });
     },
     onError: mutationOnError,
   });

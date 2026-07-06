@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Bell, FlaskConical } from 'lucide-react';
+import { Menu, X, Bell } from 'lucide-react';
 import { BrandLogo, BrandName, UserProfileMenu } from '@/shared/components/common';
 import '@/shared/components/common/Layout.css';
 
@@ -134,97 +134,6 @@ function StandardRoleLayout({
   );
 }
 
-function LabRoleLayout({
-  navLinks,
-  resolveTitle,
-  homeRoute,
-  roleLabel,
-  children,
-  pageTitleOverride,
-  isNavLinkActive,
-}) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { pathname } = useLocation();
-  const pageTitle = resolveTitle(pathname, pageTitleOverride);
-
-  const closeSidebar = () => setSidebarOpen(false);
-
-  const getLinkActive = (link) =>
-    isNavLinkActive
-      ? isNavLinkActive(pathname, link)
-      : defaultIsNavLinkActive(pathname, link, homeRoute);
-
-  return (
-    <div className="lab-shell">
-      <div className="lab-topbar no-print">
-        <button
-          type="button"
-          className="lab-menu-btn"
-          onClick={() => setSidebarOpen((o) => !o)}
-          aria-label="Toggle sidebar"
-        >
-          <Menu size={18} />
-        </button>
-        <span className="lab-topbar-title">
-          <FlaskConical size={16} aria-hidden /> {pageTitle}
-        </span>
-      </div>
-
-      {sidebarOpen && (
-        <div className="lab-overlay open" onClick={closeSidebar} role="presentation" />
-      )}
-
-      <aside className={`lab-sidebar no-print ${sidebarOpen ? 'open' : ''}`}>
-        <div className="lab-sidebar-brand">
-          <BrandLogo size={32} className="lab-sidebar-brand__logo" />
-          <div className="brand-text">
-            <h2>
-              <BrandName variant="on-dark" />
-            </h2>
-            {roleLabel && <span>{roleLabel}</span>}
-          </div>
-          <button
-            type="button"
-            className="lab-menu-btn"
-            onClick={closeSidebar}
-            aria-label="Close menu"
-            style={{ marginLeft: 'auto' }}
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        <nav>
-          <ul className="lab-nav">
-            <li className="lab-nav-section">Navigation</li>
-            {navLinks.map((item) => {
-              const Icon = item.icon;
-              return (
-                <li key={item.href}>
-                  <Link
-                    to={item.href}
-                    className={`lab-nav-item ${getLinkActive(item) ? 'active' : ''}`}
-                    onClick={closeSidebar}
-                  >
-                    <Icon className="nav-icon" size={18} aria-hidden />
-                    {item.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-
-        <div className="lab-sidebar-footer">
-          <UserProfileMenu className="user-profile-menu--sidebar" />
-        </div>
-      </aside>
-
-      <main className="lab-main">{children}</main>
-    </div>
-  );
-}
-
 export default function RoleLayout({
   navLinks,
   resolveTitle,
@@ -237,23 +146,7 @@ export default function RoleLayout({
   defaultTitle = '',
   isNavLinkActive,
   showBell = true,
-  variant = 'standard',
 }) {
-  if (variant === 'lab') {
-    return (
-      <LabRoleLayout
-        navLinks={navLinks}
-        resolveTitle={resolveTitle}
-        homeRoute={homeRoute}
-        roleLabel={roleLabel}
-        pageTitleOverride={pageTitleOverride}
-        isNavLinkActive={isNavLinkActive}
-      >
-        {children}
-      </LabRoleLayout>
-    );
-  }
-
   return (
     <StandardRoleLayout
       navLinks={navLinks}

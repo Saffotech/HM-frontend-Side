@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BedDouble, UserPlus, Building2, CheckCircle2, UserRound } from 'lucide-react';
 import { useBedsQuery, useReleaseBedMutation } from '@/shared/hooks/queries/useBedsQuery';
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import {
   Button,
   Input,
@@ -29,10 +30,21 @@ function applyStatusFilter(list, statusFilter) {
 
 export default function BedOverviewPage() {
   const navigate = useNavigate();
-  const { data: bedData, isLoading, isError, error } = useBedsQuery();
-  const beds = bedData?.beds ?? [];
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignDefaultBed, setAssignDefaultBed] = useState(null);
+  const [wardFilter, setWardFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebouncedValue(searchTerm.trim(), 300);
+
+  const { data: allBedData } = useBedsQuery();
+  const { data: bedData, isLoading, isError, error } = useBedsQuery({
+    ward: wardFilter,
+    status: statusFilter,
+    search: debouncedSearch || undefined,
+  });
+  const beds = bedData?.beds ?? [];
+  const allBeds = allBedData?.beds ?? [];
 
   const openAssignModal = (bed = null) => {
     setAssignDefaultBed(bed ? { ward: bed.ward, bedNo: bed.bedNo } : null);
@@ -47,6 +59,27 @@ export default function BedOverviewPage() {
   const releaseBed = useReleaseBedMutation();
   const [releaseTarget, setReleaseTarget] = useState(null);
 
+  const occupied = allBeds.filter((b) => b.status === 'Occupied').length;
+  const available = allBeds.length - occupied;
+
+  const wardCounts = useMemo(() => {
+    const scoped = applyStatusFilter(allBeds, statusFilter);
+    const counts = { All: scoped.length };
+    WARDS.forEach((w) => {
+      counts[w] = scoped.filter((b) => b.ward === w).length;
+    });
+    return counts;
+  }, [allBeds, statusFilter]);
+
+  const statusCounts = useMemo(() => {
+    const byWard = wardFilter === 'All' ? allBeds : allBeds.filter((b) => b.ward === wardFilter);
+    return {
+      All: byWard.length,
+      Available: byWard.filter((b) => b.status === 'Available').length,
+      Occupied: byWard.filter((b) => b.status === 'Occupied').length,
+    };
+  }, [allBeds, wardFilter]);
+
   const handleReleaseConfirm = () => {
     if (!releaseTarget?.dbId) return;
     releaseBed.mutate(releaseTarget.dbId, {
@@ -56,42 +89,6 @@ export default function BedOverviewPage() {
       },
     });
   };
-  const [wardFilter, setWardFilter] = useState('All');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const occupied = beds.filter((b) => b.status === 'Occupied').length;
-  const available = beds.length - occupied;
-
-  const filtered = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase();
-    const byWard = wardFilter === 'All' ? beds : beds.filter((b) => b.ward === wardFilter);
-    const byStatus = applyStatusFilter(byWard, statusFilter);
-    if (!q) return byStatus;
-    return byStatus.filter((b) => {
-      const name = String(b.patientName || '').toLowerCase();
-      const id = String(b.patientId || '').toLowerCase();
-      return name.includes(q) || id.includes(q);
-    });
-  }, [beds, wardFilter, statusFilter, searchTerm]);
-
-  const wardCounts = useMemo(() => {
-    const scoped = applyStatusFilter(beds, statusFilter);
-    const counts = { All: scoped.length };
-    WARDS.forEach((w) => {
-      counts[w] = scoped.filter((b) => b.ward === w).length;
-    });
-    return counts;
-  }, [beds, statusFilter]);
-
-  const statusCounts = useMemo(() => {
-    const byWard = wardFilter === 'All' ? beds : beds.filter((b) => b.ward === wardFilter);
-    return {
-      All: byWard.length,
-      Available: byWard.filter((b) => b.status === 'Available').length,
-      Occupied: byWard.filter((b) => b.status === 'Occupied').length,
-    };
-  }, [beds, wardFilter]);
 
   return (
     <QueryFeedback isLoading={isLoading} isError={isError} error={error}>
@@ -121,7 +118,7 @@ export default function BedOverviewPage() {
             </span>
             <div className="bed-stat-card__body">
               <p className="bed-stat-card__label">Total Beds</p>
-              <p className="bed-stat-card__value">{beds.length}</p>
+              <p className="bed-stat-card__value">{allBeds.length}</p>
             </div>
           </div>
           <div className="bed-stat-card bed-stat-card--free">
@@ -203,7 +200,7 @@ export default function BedOverviewPage() {
           <div className="beds-table-card__head">
             <h2 className="beds-table-card__title">Bed directory</h2>
             <span className="beds-table-card__meta">
-              {filtered.length} {filtered.length === 1 ? 'bed' : 'beds'}
+              {beds.length} {beds.length === 1 ? 'bed' : 'beds'}
               {wardFilter !== 'All' ? ` · ${wardFilter}` : ''}
               {statusFilter !== 'All' ? ` · ${statusFilter}` : ''}
             </span>
@@ -215,7 +212,7 @@ export default function BedOverviewPage() {
               title="No beds available"
               description="No bed records found"
             />
-          ) : filtered.length === 0 ? (
+          ) : beds.length === 0 ? (
             <EmptyState
               icon={BedDouble}
               title="No beds match filters"
@@ -235,7 +232,7 @@ export default function BedOverviewPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((bed) => (
+                  {beds.map((bed) => (
                     <tr
                       key={bed.bedNo}
                       className={bed.status === 'Available' ? 'beds-table__row--free' : 'beds-table__row--occ'}

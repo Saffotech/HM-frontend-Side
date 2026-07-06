@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { appointmentsApi } from '@/shared/api/services';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
@@ -13,24 +13,62 @@ export function useAppointmentsQuery(options = {}) {
     page = 1,
     limit = DEFAULT_PAGE_SIZE,
     status,
+    list_filter,
+    search,
+    patient_id,
+    doctor_id,
+    department_id,
+    date,
     date_from,
     date_to,
+    sort = 'scheduled_at',
+    order = 'desc',
+    enabled = true,
+    keepPrevious = true,
   } = options;
   const token = useQueryToken();
-  const filters = { fetchAll, page, limit, status, date_from, date_to };
+  const filters = {
+    fetchAll,
+    page,
+    limit,
+    status,
+    list_filter,
+    search,
+    patient_id,
+    doctor_id,
+    department_id,
+    date,
+    date_from,
+    date_to,
+    sort,
+    order,
+  };
 
   return useQuery({
     queryKey: queryKeys.appointments.list(filters),
+    enabled,
+    placeholderData: keepPrevious ? keepPreviousData : undefined,
     queryFn: async () => {
-      if (fetchAll) {
-        return appointmentsApi.listAppointmentsAll(token, { status, date_from, date_to });
-      }
-      return appointmentsApi.listAppointmentsPage(token, {
-        page,
-        limit,
+      const params = {
         status,
+        list_filter,
+        search,
+        patient_id,
+        doctor_id,
+        department_id,
+        date,
         date_from,
         date_to,
+        sort,
+        order,
+      };
+      if (fetchAll) {
+        return appointmentsApi.listAppointmentsAll(token, params);
+      }
+      return appointmentsApi.listAppointmentsPage(token, {
+        ...params,
+        page,
+        limit,
       });
     },
   });
@@ -56,16 +94,22 @@ export function usePatientAppointmentsQuery(
 
 export function useTodayAppointmentsQuery() {
   const token = useQueryToken();
-  const { dateFrom, dateTo } = getTodayRangeIso();
+  const { dateKey } = getTodayRangeIso();
   return useQuery({
-    queryKey: queryKeys.appointments.today,
+    queryKey: [...queryKeys.appointments.today, dateKey],
     queryFn: () =>
-      appointmentsApi.listAppointmentsPage(token, {
-        date_from: dateFrom,
-        date_to: dateTo,
-        limit: 50,
-        page: 1,
-      }),
+      appointmentsApi.listAppointmentsPage(
+        token,
+        {
+          date: dateKey,
+          limit: 50,
+          page: 1,
+          sort: 'scheduled_at',
+          order: 'asc',
+        },
+        { softFail: true }
+      ),
+    retry: 1,
   });
 }
 
@@ -95,6 +139,7 @@ export function useUpdateAppointmentMutation() {
       queryClient.invalidateQueries({ queryKey: queryKeys.appointments.today });
       queryClient.invalidateQueries({ queryKey: queryKeys.doctor.appointments.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.doctor.queue.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.opd.dashboard });
     },
     onError: mutationOnError,
   });
@@ -109,6 +154,7 @@ export function useCancelAppointmentMutation() {
       queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
       queryClient.invalidateQueries({ queryKey: ['appointments', 'list'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.appointments.today });
+      queryClient.invalidateQueries({ queryKey: queryKeys.opd.dashboard });
     },
     onError: mutationOnError,
   });

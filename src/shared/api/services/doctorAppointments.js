@@ -6,6 +6,7 @@ import {
   getAppointmentById,
   updateAppointmentStatus,
 } from '@/features/doctor/api/appointments';
+import { listAppointmentsAll } from '@/shared/api/services/appointments';
 import { unwrapDoctorResponse } from '@/shared/api/utils/doctorResponseUtils';
 import {
   apiToUiAppointment,
@@ -13,11 +14,35 @@ import {
   uiDateToApiDate,
   uiStatusToApiStatus,
 } from '@/shared/api/mappers/appointmentMapper';
+import { enrichDoctorAppointmentsWithOpdPayment } from '@/features/doctor/utils/doctorAppointmentPayment';
+import { getTodayRangeIso } from '@/shared/utils/opdDates';
 
 function mapAppointmentsList(raw) {
   return unwrapDoctorResponse(raw, 'appointments')
     .map(apiToUiAppointment)
     .filter(Boolean);
+}
+
+async function loadOpdAppointmentsForDate(token, uiDate) {
+  try {
+    const dateKey = uiDate ? uiDateToApiDate(uiDate) : getTodayRangeIso().dateKey;
+    return await listAppointmentsAll(token, {
+      date: dateKey,
+      list_filter: 'all',
+      sort: 'scheduled_at',
+      order: 'asc',
+    });
+  } catch {
+    return [];
+  }
+}
+
+async function fetchDoctorAppointmentsWithOpdPayment(fetchDoctorList, token, uiDate) {
+  const [doctorRaw, opdAppts] = await Promise.all([
+    fetchDoctorList(),
+    loadOpdAppointmentsForDate(token, uiDate),
+  ]);
+  return enrichDoctorAppointmentsWithOpdPayment(mapAppointmentsList(doctorRaw), opdAppts);
 }
 
 export async function fetchDashboardStats(token) {
@@ -26,12 +51,19 @@ export async function fetchDashboardStats(token) {
 }
 
 export async function fetchTodayAppointments(token) {
-  return getTodayAppointments(token).then(mapAppointmentsList);
+  return fetchDoctorAppointmentsWithOpdPayment(
+    () => getTodayAppointments(token),
+    token,
+  );
 }
 
 export async function fetchAppointmentsByDate(uiDate, token) {
   const apiDate = uiDateToApiDate(uiDate);
-  return getAppointmentsByDate(apiDate, token).then(mapAppointmentsList);
+  return fetchDoctorAppointmentsWithOpdPayment(
+    () => getAppointmentsByDate(apiDate, token),
+    token,
+    uiDate,
+  );
 }
 
 export async function fetchAppointmentsHistory(token) {

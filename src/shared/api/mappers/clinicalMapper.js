@@ -163,27 +163,67 @@ function formatLabOrderedAt(iso) {
 export function apiToUiLabTest(api) {
   if (!api) return null;
   const status = apiToUiLabStatus(api.status);
-  const hasReport =
-    status === 'Completed' &&
-    Boolean(api.result ?? api.report_url ?? api.report_available);
+  const apiStatus = String(api.status ?? '').toLowerCase();
+  const patientDbId = api.patient_id ?? api.patientDbId ?? null;
+  const patientUid =
+    api.patient_uid ?? api.patient_uhid ?? api.patientUid ?? null;
+  const displayPatientId =
+    patientUid ?? (patientDbId != null ? String(patientDbId) : null);
+  const reportAvailable = apiStatus === 'completed';
+
   return {
     id: api.id,
     appointmentId: api.appointment_id ?? api.appointmentId,
-    patientId: api.patient_uhid ?? api.patient_id ?? api.patientId,
+    patientId: displayPatientId,
+    patientUid,
+    patientDbId: patientDbId != null ? Number(patientDbId) : null,
     patientName: api.patient_name ?? api.patientName,
     testName: api.test_name ?? api.test,
     category: api.category ?? 'Other',
     priority: api.priority ?? 'Normal',
     clinicalNotes: api.clinical_notes ?? api.clinicalNotes ?? '',
     status,
-    apiStatus: String(api.status ?? '').toLowerCase(),
+    apiStatus,
     result: api.result,
     orderedAt: api.created_at ?? api.ordered_at ?? api.date,
     orderedDisplay: formatLabOrderedAt(api.created_at ?? api.ordered_at ?? api.date),
     doctorStatus: status,
-    reportAvailable: hasReport,
-    canUpdate: String(api.status ?? '').toLowerCase() === 'ordered',
-    canCancel: String(api.status ?? '').toLowerCase() === 'ordered',
+    reportAvailable,
+    canUpdate: apiStatus === 'ordered',
+    canCancel: apiStatus === 'ordered',
+  };
+}
+
+/** GET /lab-tests/{id}/report → doctor report detail modal */
+export function apiToUiDoctorLabReport(api) {
+  if (!api) return null;
+  return {
+    reportId: api.report_id ?? api.reportId,
+    orderId: api.order_id ?? api.orderId ?? api.id,
+    patientId: api.patient_uid ?? api.patient_uhid ?? api.patient_id,
+    patientDbId: api.patient_id ?? null,
+    patientName: api.patient_name ?? api.patientName ?? '—',
+    testName: api.test_name ?? api.testName ?? '—',
+    category: api.category ?? '—',
+    priority: api.priority ?? 'Normal',
+    orderStatus: api.order_status ?? api.status ?? '—',
+    source: api.source ?? '—',
+    sampleCollectedAt: api.sample_collected_at ?? null,
+    testPerformedAt: api.test_performed_at ?? null,
+    remarks: api.remarks ?? '',
+    fileName: api.file_name ?? null,
+    fileType: api.file_type ?? null,
+    fileSize: api.file_size ?? null,
+    uploadedByName: api.uploaded_by_name ?? '—',
+    uploadedAt: api.uploaded_at ?? api.created_at ?? null,
+    parameters: (api.parameters ?? []).map((p) => ({
+      id: p.id,
+      parameter_name: p.parameter_name ?? '',
+      value: p.value ?? '',
+      unit: p.unit ?? '',
+      normal_range: p.normal_range ?? '',
+      flag: p.flag ?? '',
+    })),
   };
 }
 
@@ -204,7 +244,8 @@ export function apiToUiLab(api) {
 }
 
 export function mapLabTestList(raw) {
-  return asList(raw).map(apiToUiLabTest).filter(Boolean);
+  const list = raw?.items ?? (Array.isArray(raw) ? raw : []);
+  return list.map(apiToUiLabTest).filter(Boolean);
 }
 
 export function apiToUiNotification(api) {

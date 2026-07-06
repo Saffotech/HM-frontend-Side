@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import PharmacyLayout from '@/features/pharmacy/components/PharmacyLayout';
 import PharmacyStatusBadge from '@/features/pharmacy/components/PharmacyStatusBadge';
 import AllergyBanner from '@/features/pharmacy/components/AllergyBanner';
@@ -11,12 +12,16 @@ import {
 import { ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 import { formatPharmacyPatientIdDisplay } from '@/shared/api/mappers/pharmacyMapper';
+import { fetchPrescriptionById } from '@/shared/api/services/pharmacy';
+import { queryKeys } from '@/shared/api/queryKeys';
+import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import {
   enrichPrescriptionItems,
   validateItemDispenseInputs,
   buildDispenseSummary,
   buildDispensePayload,
   parseDispenseQuantityInput,
+  getPrescriptionItemDbId,
 } from '@/features/pharmacy/utils/dispenseWorkflow';
 import {
   formatHumanInstructions,
@@ -26,9 +31,22 @@ import {
 } from '@/features/pharmacy/utils/prescriptionQuantity';
 import './DispensePage.css';
 
+function dispenseWasApplied(beforeItems, afterItems, quantitiesByItemId) {
+  return beforeItems.some((before) => {
+    const itemId = getPrescriptionItemDbId(before);
+    const after = afterItems.find((row) => getPrescriptionItemDbId(row) === itemId);
+    if (!after) return false;
+    const requested = parseDispenseQuantityInput(quantitiesByItemId[before.id]) ?? 0;
+    if (requested <= 0) return false;
+    return Number(after.quantity_dispensed) > Number(before.quantity_dispensed);
+  });
+}
+
 export default function DispensePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const token = useQueryToken();
   const { data: rx, isLoading, isError, error } = usePharmacyPrescriptionQuery(id);
   const dispenseMutation = useDispenseMutation();
 
@@ -76,12 +94,41 @@ export default function DispensePage() {
     setFormError(validation.formError);
     if (!validation.valid) return;
 
+    const missingLineIds = enrichedItems.filter((item) => !getPrescriptionItemDbId(item));
+    if (missingLineIds.length > 0) {
+      setFormError('Medicine line ids are missing. Refresh the page and try again.');
+      return;
+    }
+
+    const body = buildDispensePayload(enrichedItems, quantities, remarks);
+    if (!body.items?.length) {
+      setFormError('Enter a dispense quantity for at least one medicine.');
+      return;
+    }
+
     try {
-      const body = buildDispensePayload(enrichedItems, quantities, remarks);
       await dispenseMutation.mutateAsync({ prescriptionId: id, body });
       toast.success('Dispensed successfully');
       navigate(`/pharmacy/prescriptions/${id}`);
     } catch (err) {
+      if (err?.status >= 500 && token) {
+        try {
+          const refreshed = await fetchPrescriptionById(id, token);
+          const afterItems = enrichPrescriptionItems(refreshed);
+          if (
+            refreshed?.status !== rx?.status
+            || dispenseWasApplied(enrichedItems, afterItems, quantities)
+          ) {
+            queryClient.invalidateQueries({ queryKey: queryKeys.pharmacy.all });
+            toast.success('Dispense completed');
+            navigate(`/pharmacy/prescriptions/${id}`);
+            return;
+          }
+        } catch {
+          // fall through to error message
+        }
+      }
+
       const message = err?.message || 'Failed to dispense medicine.';
       setFormError(message);
       toast.error(message);

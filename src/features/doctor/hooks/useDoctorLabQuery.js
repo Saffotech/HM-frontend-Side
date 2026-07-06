@@ -52,3 +52,23 @@ export function useCancelLabTestMutation() {
     onError: mutationOnError,
   });
 }
+
+export function useDoctorLabReportQuery(testId, options = {}) {
+  const { enabled = true } = options;
+  const token = useQueryToken();
+  return useQuery({
+    queryKey: queryKeys.doctor.labReport(testId),
+    queryFn: () => doctorLabsApi.fetchLabTestReport(testId, token),
+    enabled: enabled && testId != null && Boolean(token),
+    staleTime: 1000 * 60 * 2,
+    retry: false,
+  });
+}
+
+export function useDownloadDoctorLabReportFileMutation() {
+  const token = useQueryToken();
+  return useMutation({
+    mutationFn: (testId) => doctorLabsApi.downloadLabTestReportFile(testId, token),
+    onError: mutationOnError,
+  });
+}
