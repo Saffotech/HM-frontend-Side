@@ -12,6 +12,7 @@ import {
 } from '@/shared/hooks/queries/useAdminQuery';
 import { Button, Input, Label, QueryFeedback, Select } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
+import { filterHospitalAdminRegisterRoles } from '@/features/admin/utils/hospitalAdminRoles';
 import { toast } from '@/shared/utils/toast';
 
 function formatDate(value) {
@@ -59,7 +60,7 @@ export default function StaffDetailPage() {
 
   const roleOptions = useMemo(
     () =>
-      roles?.map((role) => ({
+      filterHospitalAdminRegisterRoles(roles)?.map((role) => ({
         value: String(role.id),
         label: formatRoleLabel(role.name),
       })) ?? [],

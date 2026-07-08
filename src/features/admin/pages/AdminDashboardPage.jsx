@@ -5,7 +5,6 @@ import {
   Building2,
   Plus,
   Shield,
-  UserCog,
   UserCheck,
   Users,
   UserX,
@@ -173,20 +172,6 @@ export default function AdminDashboardPage() {
                         title="Register staff"
                         description="Create a new hospital account"
                         tone="success"
-                      />
-                      <AdminQuickAction
-                        to={ROUTES.ADMIN_DEPARTMENTS}
-                        icon={<Building2 size={18} />}
-                        title="Departments"
-                        description="Organize clinical units"
-                        tone="info"
-                      />
-                      <AdminQuickAction
-                        to={ROUTES.ADMIN_ROLES}
-                        icon={<UserCog size={18} />}
-                        title="Roles & permissions"
-                        description="Configure access control"
-                        tone="warning"
                       />
                       <AdminQuickAction
                         to={ROUTES.ADMIN_REPORTS}

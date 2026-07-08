@@ -10,14 +10,18 @@ import {
 import { ROUTES } from '@/shared/constants';
 import { BrandLogo, BrandName } from '@/shared/components/common';
 import { useAuthStore } from '@/shared/store/useAuthStore';
-import { getAppEntryForRole } from '@/shared/utils/authRedirect';
+import { getAppEntryForRole, getAppEntryForUser } from '@/shared/utils/authRedirect';
 import { trimCredentials, hasCredentials } from '@/shared/utils/credentials';
 import { toast } from '@/shared/utils/toast';
 import { isStaffModuleLive } from '@/shared/constants/moduleAvailability';
 import {
   authenticateDemoReceptionist,
+  DEMO_RECEPTIONIST_CREDENTIALS,
   setReceptionistPortalScope,
 } from '@/features/receptionist/utils/receptionistPortal';
+import {
+  DEMO_SUPER_ADMIN_CREDENTIALS,
+} from '@/features/super-admin/utils/superAdminPortal';
 import './LoginPage.css';
 
 const STATS = [
@@ -30,12 +34,13 @@ const STATS = [
 const STAFF_LOGIN_BG_VIDEO = '/videos/Login_Animetion.mp4?v=1';
 
 export default function LoginPage() {
-  const { login, loginDemoReceptionist, logout, error, isAuthenticated, user, authReady } = useAuthStore();
+  const { login, loginDemoReceptionist, loginDemoSuperAdmin, logout, error, isAuthenticated, user, authReady } = useAuthStore();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(null);
   const [formError, setFormError] = useState('');
   const [bgVideoOk, setBgVideoOk] = useState(true);
   const bgVideoRef = useRef(null);
@@ -49,7 +54,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!authReady || !isAuthenticated || !user) return;
-    navigate(getAppEntryForRole(user.role), { replace: true });
+    navigate(getAppEntryForUser(user), { replace: true });
   }, [authReady, isAuthenticated, user, navigate]);
 
   const handleSubmit = async (e) => {
@@ -91,6 +96,38 @@ export default function LoginPage() {
       toast.error(message);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleSuperAdminPortal = async () => {
+    setFormError('');
+    setPortalLoading('super-admin');
+    try {
+      const profile = await loginDemoSuperAdmin(DEMO_SUPER_ADMIN_CREDENTIALS);
+      toast.success(`Welcome, ${profile.full_name}`);
+      navigate(ROUTES.SUPER_ADMIN_DASHBOARD, { replace: true });
+    } catch (err) {
+      const message = err?.message || 'Unable to open Super Admin portal.';
+      setFormError(message);
+      toast.error(message);
+    } finally {
+      setPortalLoading(null);
+    }
+  };
+
+  const handleReceptionistPortal = async () => {
+    setFormError('');
+    setPortalLoading('receptionist');
+    try {
+      const profile = await loginDemoReceptionist(DEMO_RECEPTIONIST_CREDENTIALS);
+      toast.success(`Welcome, ${profile.full_name}`);
+      navigate(ROUTES.RECEPTIONIST_DASHBOARD, { replace: true });
+    } catch (err) {
+      const message = err?.message || 'Unable to open Receptionist portal.';
+      setFormError(message);
+      toast.error(message);
+    } finally {
+      setPortalLoading(null);
     }
   };
 
@@ -210,6 +247,25 @@ export default function LoginPage() {
                 <p>Welcome back. Enter your credentials to continue.</p>
               </header>
 
+              <div className="staff-login-page__portal-actions">
+                <button
+                  type="button"
+                  className="staff-login-page__portal-btn staff-login-page__portal-btn--super-admin"
+                  onClick={handleSuperAdminPortal}
+                  disabled={Boolean(portalLoading)}
+                >
+                  {portalLoading === 'super-admin' ? 'Opening…' : 'Super Admin'}
+                </button>
+                <button
+                  type="button"
+                  className="staff-login-page__portal-btn staff-login-page__portal-btn--receptionist"
+                  onClick={handleReceptionistPortal}
+                  disabled={Boolean(portalLoading)}
+                >
+                  {portalLoading === 'receptionist' ? 'Opening…' : 'Receptionist'}
+                </button>
+              </div>
+
               {isAuthenticated && user && (
                 <div className="staff-login-page__session" role="status">
                   <p>
@@ -220,7 +276,7 @@ export default function LoginPage() {
                       type="button"
                       className="staff-login-page__btn staff-login-page__btn--outline"
                       onClick={() =>
-                        navigate(getAppEntryForRole(user.role), { replace: true })
+                        navigate(getAppEntryForUser(user), { replace: true })
                       }
                     >
                       Continue

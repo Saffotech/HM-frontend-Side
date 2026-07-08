@@ -1,4 +1,4 @@
-import { BarChart3, Building2, LayoutDashboard, UserCog, Users } from 'lucide-react';
+import { BarChart3, LayoutDashboard, UserCog, Users } from 'lucide-react';
 import { ROUTES } from '@/shared/constants';
 import RoleLayout from '@/shared/components/layout/RoleLayout';
 import '../styles/admin.css';
@@ -6,14 +6,12 @@ import '../styles/admin.css';
 const NAV_LINKS = [
   { href: ROUTES.ADMIN_DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
   { href: ROUTES.ADMIN_STAFF, label: 'Staff', icon: Users },
-  { href: ROUTES.ADMIN_DEPARTMENTS, label: 'Departments', icon: Building2 },
   { href: ROUTES.ADMIN_REPORTS, label: 'Reports', icon: BarChart3 },
   { href: ROUTES.ADMIN_ROLES, label: 'Roles', icon: UserCog },
 ];
 
 const PAGE_TITLES = [
   { prefix: ROUTES.ADMIN_STAFF, title: 'Staff' },
-  { prefix: ROUTES.ADMIN_DEPARTMENTS, title: 'Departments' },
   { prefix: ROUTES.ADMIN_REPORTS, title: 'Reports' },
   { prefix: ROUTES.ADMIN_ROLES, title: 'Roles' },
   { prefix: ROUTES.ADMIN_DASHBOARD, title: 'Dashboard' },
@@ -26,21 +24,6 @@ function resolveTitle(pathname, pageTitleOverride) {
   if (pathname === ROUTES.ADMIN_STAFF_NEW) {
     return 'Register Staff';
   }
-  if (pathname === ROUTES.ADMIN_DEPARTMENTS_NEW) {
-    return 'New Department';
-  }
-  if (pathname.startsWith(`${ROUTES.ADMIN_DEPARTMENTS}/`) && pathname !== ROUTES.ADMIN_DEPARTMENTS_NEW) {
-    return pageTitleOverride || 'Department Details';
-  }
-  if (pathname === ROUTES.ADMIN_ROLES_NEW) {
-    return 'Create Role';
-  }
-  if (pathname === ROUTES.ADMIN_PERMISSIONS_NEW) {
-    return 'Create Permission';
-  }
-  if (pathname === ROUTES.ADMIN_ROLES_ASSIGN) {
-    return 'Assign Permissions';
-  }
   if (pathname.startsWith(ROUTES.ADMIN_REPORTS)) {
     return pageTitleOverride || 'Reports';
   }
@@ -52,28 +35,17 @@ function isStaffActive(pathname) {
   return pathname === ROUTES.ADMIN_STAFF || pathname.startsWith('/admin/staff/');
 }
 
-function isDepartmentsActive(pathname) {
-  return pathname === ROUTES.ADMIN_DEPARTMENTS || pathname.startsWith('/admin/departments/');
-}
-
 function isReportsActive(pathname) {
   return pathname.startsWith(ROUTES.ADMIN_REPORTS);
 }
 
 function isRolesActive(pathname) {
-  return (
-    pathname === ROUTES.ADMIN_ROLES
-    || pathname.startsWith('/admin/roles/')
-    || pathname.startsWith('/admin/permissions/')
-  );
+  return pathname === ROUTES.ADMIN_ROLES;
 }
 
 function isNavLinkActive(pathname, link) {
   if (link.href === ROUTES.ADMIN_STAFF) {
     return isStaffActive(pathname);
-  }
-  if (link.href === ROUTES.ADMIN_DEPARTMENTS) {
-    return isDepartmentsActive(pathname);
   }
   if (link.href === ROUTES.ADMIN_REPORTS) {
     return isReportsActive(pathname);

@@ -31,7 +31,7 @@ export default function DepartmentCreatePage() {
       if (id) {
         navigate(ROUTES.ADMIN_DEPARTMENT_DETAIL.replace(':id', id));
       } else {
-        navigate(ROUTES.ADMIN_DEPARTMENTS);
+        navigate('/admin/departments');
       }
     } catch (err) {
       toast.error(err?.message || 'Failed to create department');
@@ -41,7 +41,7 @@ export default function DepartmentCreatePage() {
   return (
     <AdminLayout pageTitle="New department">
       <div className="admin-page">
-        <AdminBackBar onBack={() => navigate(ROUTES.ADMIN_DEPARTMENTS)} />
+        <AdminBackBar onBack={() => navigate('/admin/departments')} />
 
         <div className="admin-card admin-card--narrow">
           <div className="admin-card__header">

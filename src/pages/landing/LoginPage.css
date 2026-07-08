@@ -437,6 +437,65 @@
   border: 1px solid rgba(231, 76, 60, 0.2);
 }
 
+.staff-login-page__portal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.staff-login-page__portal-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  text-decoration: none;
+  text-align: center;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s;
+}
+
+.staff-login-page__portal-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.staff-login-page__portal-btn--super-admin {
+  color: #3730a3;
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+
+.staff-login-page__portal-btn--super-admin:hover {
+  background: #e0e7ff;
+  border-color: #a5b4fc;
+  text-decoration: none;
+}
+
+.staff-login-page__portal-btn--receptionist {
+  color: #0f766e;
+  background: #ecfdf5;
+  border-color: #99f6e4;
+}
+
+.staff-login-page__portal-btn--receptionist:hover {
+  background: #d1fae5;
+  border-color: #5eead4;
+  text-decoration: none;
+}
+
+@media (max-width: 480px) {
+  .staff-login-page__portal-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Submit button */
 .staff-login-page__submit {
   display: inline-flex;

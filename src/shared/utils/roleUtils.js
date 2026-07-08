@@ -15,6 +15,7 @@ export function normalizeRole(role) {
 
 /** Display department for module gate (not sent to API). */
 export const DEPARTMENT_BY_ROLE = {
+  super_admin: 'Super Administration',
   admin: 'Administration',
   doctor: 'Doctor',
   opd: 'OPD',

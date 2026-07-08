@@ -15,6 +15,7 @@ import { nurseRoutes } from '@/routes/nurseRoutes';
 import { opdRoutes } from '@/routes/opdRoutes';
 import { receptionistRoutes } from '@/routes/receptionistRoutes';
 import { adminRoutes } from '@/routes/adminRoutes';
+import { superAdminRoutes } from '@/routes/superAdminRoutes';
 
 const LandingPage = lazy(() => import('@/pages/landing/LandingPage'));
 const LoginPage = lazy(() => import('@/pages/landing/LoginPage'));
@@ -24,6 +25,7 @@ const ReceptionistLoginPage = lazy(
   () => import('@/features/receptionist/pages/ReceptionistLoginPage')
 );
 const AdminLoginPage = lazy(() => import('@/features/admin/pages/AdminLoginPage'));
+const SuperAdminLoginPage = lazy(() => import('@/features/super-admin/pages/SuperAdminLoginPage'));
 const UnauthorizedPage = lazy(() => import('@/pages/UnauthorizedPage'));
 
 export default function App() {
@@ -100,6 +102,17 @@ export default function App() {
           }
         />
 
+        <Route
+          path={ROUTES.SUPER_ADMIN_LOGIN}
+          element={
+            <LazyRoute>
+              <GuestRoute>
+                <SuperAdminLoginPage />
+              </GuestRoute>
+            </LazyRoute>
+          }
+        />
+
         <Route element={<ProtectedRoute />}>
           <Route
             path={ROUTES.UNAUTHORIZED}
@@ -117,6 +130,7 @@ export default function App() {
           {renderRoutes(receptionistRoutes)}
           {renderRoutes(opdRoutes)}
           {renderRoutes(adminRoutes)}
+          {renderRoutes(superAdminRoutes)}
         </Route>
       </Routes>
 

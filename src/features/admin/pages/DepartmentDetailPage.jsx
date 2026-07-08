@@ -70,7 +70,7 @@ export default function DepartmentDetailPage() {
   return (
     <AdminLayout pageTitle={department?.name || 'Department'}>
       <div className="admin-page">
-        <AdminBackBar onBack={() => navigate(ROUTES.ADMIN_DEPARTMENTS)}>
+        <AdminBackBar onBack={() => navigate('/admin/departments')}>
           {!isLoading && department && !isEditing && (
             <Button onClick={() => setIsEditing(true)}>
               <Pencil size={16} aria-hidden />

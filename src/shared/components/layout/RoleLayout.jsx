@@ -23,6 +23,7 @@ function StandardRoleLayout({
   defaultTitle,
   isNavLinkActive,
   showBell = true,
+  layoutClassName = '',
 }) {
   const { pathname } = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -45,7 +46,7 @@ function StandardRoleLayout({
       : defaultIsNavLinkActive(pathname, link, homeRoute);
 
   return (
-    <div className="layout">
+    <div className={`layout${layoutClassName ? ` ${layoutClassName}` : ''}`}>
       <div className="layout-mobile-bar no-print">
         <Link to={homeRoute} className="layout-brand layout-mobile-bar__brand">
           <BrandLogo size={28} />
@@ -146,6 +147,7 @@ export default function RoleLayout({
   defaultTitle = '',
   isNavLinkActive,
   showBell = true,
+  layoutClassName = '',
 }) {
   return (
     <StandardRoleLayout
@@ -159,6 +161,7 @@ export default function RoleLayout({
       defaultTitle={defaultTitle}
       isNavLinkActive={isNavLinkActive}
       showBell={showBell}
+      layoutClassName={layoutClassName}
     >
       {children}
     </StandardRoleLayout>

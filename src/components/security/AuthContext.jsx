@@ -22,6 +22,13 @@ import {
   isDemoReceptionistSession,
   setReceptionistPortalScope,
 } from '@/features/receptionist/utils/receptionistPortal';
+import {
+  authenticateDemoSuperAdmin,
+  createDemoSuperAdminUser,
+  isDemoSuperAdminSession,
+  isDemoSuperAdminToken,
+  setSuperAdminPortalScope,
+} from '@/features/super-admin/utils/superAdminPortal';
 
 
 
@@ -176,6 +183,7 @@ export function AuthProvider({ children }) {
     clearAuthSession();
 
     setReceptionistPortalScope(false);
+    setSuperAdminPortalScope(false);
 
     setUser(null);
 
@@ -276,6 +284,28 @@ export function AuthProvider({ children }) {
     const { user: profile, accessToken, refreshToken } = session;
 
     setReceptionistPortalScope(true);
+    setSuperAdminPortalScope(false);
+    setUser(profile);
+    setToken(accessToken);
+    saveAuthSession(accessToken, profile, refreshToken);
+
+    return profile;
+  }, []);
+
+  const loginDemoSuperAdmin = useCallback(async (credentials) => {
+    setError(null);
+
+    const session = authenticateDemoSuperAdmin(credentials);
+    if (!session) {
+      const message = 'Invalid email or password';
+      setError(message);
+      throw Object.assign(new Error(message), { status: 401 });
+    }
+
+    const { user: profile, accessToken, refreshToken } = session;
+
+    setSuperAdminPortalScope(true);
+    setReceptionistPortalScope(false);
     setUser(profile);
     setToken(accessToken);
     saveAuthSession(accessToken, profile, refreshToken);
@@ -306,6 +336,7 @@ export function AuthProvider({ children }) {
       const profile = buildUserProfile(me, data, accessToken);
 
       setReceptionistPortalScope(false);
+      setSuperAdminPortalScope(false);
 
       setUser(profile);
 
@@ -363,6 +394,25 @@ export function AuthProvider({ children }) {
         } else {
           clearAuthSession();
           setReceptionistPortalScope(false);
+        }
+        if (!cancelled) setAuthReady(true);
+        return;
+      }
+
+      if (isDemoSuperAdminSession(session.user) || isDemoSuperAdminToken(session.token)) {
+        if (!isTokenExpired(session.token)) {
+          setSuperAdminPortalScope(true);
+          setReceptionistPortalScope(false);
+          const restoredUser = isDemoSuperAdminSession(session.user)
+            ? session.user
+            : { ...createDemoSuperAdminUser(), ...session.user };
+          if (!cancelled) {
+            setToken(session.token);
+            setUser(restoredUser ?? session.user);
+          }
+        } else {
+          clearAuthSession();
+          setSuperAdminPortalScope(false);
         }
         if (!cancelled) setAuthReady(true);
         return;
@@ -493,7 +543,9 @@ export function AuthProvider({ children }) {
     if (!token || isTokenExpired(token)) return undefined;
 
     const session = loadAuthSession();
-    if (isDemoReceptionistSession(session?.user)) return undefined;
+    if (isDemoReceptionistSession(session?.user) || isDemoSuperAdminSession(session?.user)) {
+      return undefined;
+    }
 
 
 
@@ -547,6 +599,8 @@ export function AuthProvider({ children }) {
 
       loginDemoReceptionist,
 
+      loginDemoSuperAdmin,
+
       logout,
 
       updateUser,
@@ -566,6 +620,7 @@ export function AuthProvider({ children }) {
       authReady,
       login,
       loginDemoReceptionist,
+      loginDemoSuperAdmin,
       logout,
       updateUser,
       refreshSession,

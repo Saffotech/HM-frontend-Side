@@ -7,6 +7,11 @@ import {
 import { refreshAccessToken } from '@/shared/api/auth';
 import { isTokenExpired } from '@/shared/utils/jwtHelper';
 import { isDemoReceptionistSession } from '@/features/receptionist/utils/receptionistPortal';
+import { isDemoSuperAdminSession } from '@/features/super-admin/utils/superAdminPortal';
+
+function isDemoSession(user) {
+  return isDemoReceptionistSession(user) || isDemoSuperAdminSession(user);
+}
 
 const DEFAULT_TIMEOUT_MS = 15000;
 const AUTH_LOGIN_TIMEOUT_MS = 8000;
@@ -28,7 +33,7 @@ function resolveAuthToken(explicitToken) {
 
 async function refreshSessionTokens() {
   const session = loadAuthSession();
-  if (isDemoReceptionistSession(session?.user)) return null;
+  if (isDemoSession(session?.user)) return null;
 
   const refreshToken = session?.refreshToken;
   if (!refreshToken || isTokenExpired(refreshToken)) return null;
@@ -142,9 +147,20 @@ export async function apiClient(endpoint, options = {}) {
     }
 
     if (!skipSessionLogout && authToken) {
+      const sessionUser = loadAuthSession()?.user;
+      if (isDemoSession(sessionUser)) {
+        const err = new Error('Demo session — backend API is not available for this portal.');
+        err.status = 401;
+        throw err;
+      }
       getAuthRef().logout();
-      if (typeof window !== 'undefined' && window.location.pathname !== ROUTES.LOGIN) {
-        window.location.assign(ROUTES.LOGIN);
+      const loginRoute = isDemoSuperAdminSession(sessionUser)
+        ? ROUTES.SUPER_ADMIN_LOGIN
+        : isDemoReceptionistSession(sessionUser)
+          ? ROUTES.RECEPTIONIST_LOGIN
+          : ROUTES.LOGIN;
+      if (typeof window !== 'undefined' && window.location.pathname !== loginRoute) {
+        window.location.assign(loginRoute);
       }
     }
 

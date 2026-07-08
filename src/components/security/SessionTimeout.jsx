@@ -4,6 +4,7 @@ import { Modal, Button } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { isDemoReceptionistSession } from '@/features/receptionist/utils/receptionistPortal';
+import { isDemoSuperAdminSession } from '@/features/super-admin/utils/superAdminPortal';
 
 const IDLE_MS = 30 * 60 * 1000;
 const WARNING_MS = 60 * 1000;
@@ -28,10 +29,16 @@ export default function SessionTimeout() {
 
   const forceLogout = useCallback(() => {
     const returnToReceptionLogin = isDemoReceptionistSession(user);
+    const returnToSuperAdminLogin = isDemoSuperAdminSession(user);
     clearTimers();
     setWarningOpen(false);
     logout();
-    navigate(returnToReceptionLogin ? ROUTES.RECEPTIONIST_LOGIN : ROUTES.LOGIN, { replace: true });
+    const target = returnToSuperAdminLogin
+      ? ROUTES.SUPER_ADMIN_LOGIN
+      : returnToReceptionLogin
+        ? ROUTES.RECEPTIONIST_LOGIN
+        : ROUTES.LOGIN;
+    navigate(target, { replace: true });
   }, [clearTimers, logout, navigate, user]);
 
   const startWarningCountdown = useCallback(() => {

@@ -1,8 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/shared/hooks/useAuth';
-import { getAppEntryForRole } from '@/shared/utils/authRedirect';
-import { isDemoReceptionistSession } from '@/features/receptionist/utils/receptionistPortal';
-import { ROUTES } from '@/shared/constants';
+import { getAppEntryForUser } from '@/shared/utils/authRedirect';
 
 /**
  * Public routes (landing, staff login). Authenticated users are sent to their
@@ -16,9 +14,7 @@ export default function GuestRoute({ children }) {
   }
 
   if (isAuthenticated && user) {
-    const target = isDemoReceptionistSession(user)
-      ? ROUTES.RECEPTIONIST_DASHBOARD
-      : getAppEntryForRole(user.role);
+    const target = getAppEntryForUser(user);
     return <Navigate to={target} replace />;
   }
 
