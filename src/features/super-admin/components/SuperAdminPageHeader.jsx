@@ -1,4 +1,4 @@
-import AdminPageHeader from '@/features/admin/components/AdminPageHeader';
+import { PageHeader, Badge } from '@/components/ui';
 
 export default function SuperAdminPageHeader({
   eyebrow,
@@ -8,16 +8,20 @@ export default function SuperAdminPageHeader({
   mockBadge,
   mockBadgeLabel = 'Demo preview',
 }) {
-  const badge = mockBadge ? <span className="sa-mock-badge">{mockBadgeLabel}</span> : null;
-  const mergedActions = actions || badge ? (
-    <div className="sa-page-header__actions">
-      {actions}
-      {badge}
-    </div>
+  const badge = mockBadge ? (
+    <Badge variant="info">{mockBadgeLabel}</Badge>
   ) : null;
 
+  const mergedActions =
+    actions || badge ? (
+      <>
+        {actions}
+        {badge}
+      </>
+    ) : null;
+
   return (
-    <AdminPageHeader
+    <PageHeader
       eyebrow={eyebrow}
       title={title}
       subtitle={subtitle}

@@ -272,11 +272,6 @@ body {
     padding-right: 1rem;
   }
 
-  .bill-totals-box {
-    width: 100%;
-    max-width: none;
-  }
-
   .bill-signatures {
     grid-template-columns: 1fr;
     gap: 1rem;
@@ -353,12 +348,12 @@ body {
 
 /* Empty state */
 @media (max-width: 480px) {
-  .empty-state-block {
+  .ui-empty-state {
     padding: 1.5rem 1rem;
   }
 
-  .empty-state-block__title {
-    font-size: 1rem;
+  .ui-empty-state__title {
+    font-size: var(--text-card-title);
   }
 }
 

@@ -25,7 +25,7 @@ import { QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import './LabDashboardPage.css';
 
-function Ring({ pct, size = 72, stroke = 7, color = '#0d9488' }) {
+function Ring({ pct, size = 72, stroke = 7, color = '#1A5C34' }) {
   const r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
   const dash = (pct / 100) * circ;
@@ -329,7 +329,7 @@ export default function LabDashboardPage() {
             <button
               type="button"
               className="lab-dash-action-tile"
-              onClick={() => navigate(`${ROUTES.LAB_ORDERS}?view=processing`)}
+              onClick={() => navigate(`${ROUTES.LAB_ORDERS}?view=ordered`)}
             >
               <span className="lab-dash-action-tile__icon">
                 <FlaskConical size={20} aria-hidden />

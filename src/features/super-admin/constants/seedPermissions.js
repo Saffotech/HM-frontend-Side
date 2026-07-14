@@ -1,0 +1,62 @@
+/**
+ * Permission names from HM-Backend seed.py — used only as a last-resort fallback
+ * when GET /roles/permissions is unavailable. IDs here may NOT match your database.
+ */
+export const SEED_PERMISSION_NAMES = [
+  'patients:view',
+  'patients:create',
+  'patients:update',
+  'patients:delete',
+  'users:list',
+  'users:create',
+  'users:delete',
+  'users:activate',
+  'roles:create',
+  'roles:view',
+  'billing:view',
+  'billing:create',
+  'billing:update',
+  'billing:delete',
+  'opd:create',
+  'opd:view',
+  'lab:view',
+  'lab:create',
+  'lab:update',
+  'lab:upload_report',
+  'prescriptions:create',
+  'prescriptions:view',
+  'prescriptions:update',
+  'prescriptions:delete',
+  'prescriptions:dispense',
+  'appointments:view',
+  'appointments:create',
+  'appointments:update',
+  'reports:view',
+  'settings:manage',
+  'audit:view',
+  'nurse_vitals:view',
+  'nurse_vitals:create',
+  'nurse_vitals:update',
+  'nurse_notes:view',
+  'nurse_notes:create',
+  'nurse_notes:update',
+  'nurse_medication:view',
+  'nurse_medication:create',
+  'nurse_medication:update',
+  'nurse_handover:view',
+  'nurse_handover:create',
+  'nurse_handover:update',
+  'nurse_handover:submit',
+  'emergency_alerts:view',
+  'emergency_alerts:create',
+  'emergency_alerts:update',
+  'emergency_alerts:escalate',
+  'receptionist:view_doctor_schedule',
+];
+
+export function buildSeedPermissionCatalog() {
+  return SEED_PERMISSION_NAMES.map((name, index) => ({
+    id: index + 1,
+    name,
+  }));
+}

@@ -17,18 +17,13 @@ import {
 import { decodeJwt, isTokenExpired, getTokenExpiresInMs } from '@/shared/utils/jwtHelper';
 
 import { normalizeRole, DEPARTMENT_BY_ROLE } from '@/shared/utils/roleUtils';
-import {
-  authenticateDemoReceptionist,
-  isDemoReceptionistSession,
-  setReceptionistPortalScope,
-} from '@/features/receptionist/utils/receptionistPortal';
-import {
-  authenticateDemoSuperAdmin,
-  createDemoSuperAdminUser,
-  isDemoSuperAdminSession,
-  isDemoSuperAdminToken,
-  setSuperAdminPortalScope,
-} from '@/features/super-admin/utils/superAdminPortal';
+
+function isLegacyDemoSuperAdminToken(token) {
+  if (!token) return false;
+  if (String(token).endsWith('.demo')) return true;
+  const payload = decodeJwt(token);
+  return Boolean(payload?.demo);
+}
 
 
 
@@ -182,9 +177,6 @@ export function AuthProvider({ children }) {
 
     clearAuthSession();
 
-    setReceptionistPortalScope(false);
-    setSuperAdminPortalScope(false);
-
     setUser(null);
 
     setToken(null);
@@ -271,48 +263,6 @@ export function AuthProvider({ children }) {
 
 
 
-  const loginDemoReceptionist = useCallback(async (credentials) => {
-    setError(null);
-
-    const session = authenticateDemoReceptionist(credentials);
-    if (!session) {
-      const message = 'Invalid email or password';
-      setError(message);
-      throw Object.assign(new Error(message), { status: 401 });
-    }
-
-    const { user: profile, accessToken, refreshToken } = session;
-
-    setReceptionistPortalScope(true);
-    setSuperAdminPortalScope(false);
-    setUser(profile);
-    setToken(accessToken);
-    saveAuthSession(accessToken, profile, refreshToken);
-
-    return profile;
-  }, []);
-
-  const loginDemoSuperAdmin = useCallback(async (credentials) => {
-    setError(null);
-
-    const session = authenticateDemoSuperAdmin(credentials);
-    if (!session) {
-      const message = 'Invalid email or password';
-      setError(message);
-      throw Object.assign(new Error(message), { status: 401 });
-    }
-
-    const { user: profile, accessToken, refreshToken } = session;
-
-    setSuperAdminPortalScope(true);
-    setReceptionistPortalScope(false);
-    setUser(profile);
-    setToken(accessToken);
-    saveAuthSession(accessToken, profile, refreshToken);
-
-    return profile;
-  }, []);
-
   const login = useCallback(async (credentials) => {
 
     setError(null);
@@ -334,9 +284,6 @@ export function AuthProvider({ children }) {
       const me = await getCurrentUser(accessToken);
 
       const profile = buildUserProfile(me, data, accessToken);
-
-      setReceptionistPortalScope(false);
-      setSuperAdminPortalScope(false);
 
       setUser(profile);
 
@@ -384,36 +331,8 @@ export function AuthProvider({ children }) {
 
       }
 
-      if (isDemoReceptionistSession(session.user)) {
-        if (!isTokenExpired(session.token)) {
-          setReceptionistPortalScope(true);
-          if (!cancelled) {
-            setToken(session.token);
-            setUser(session.user);
-          }
-        } else {
-          clearAuthSession();
-          setReceptionistPortalScope(false);
-        }
-        if (!cancelled) setAuthReady(true);
-        return;
-      }
-
-      if (isDemoSuperAdminSession(session.user) || isDemoSuperAdminToken(session.token)) {
-        if (!isTokenExpired(session.token)) {
-          setSuperAdminPortalScope(true);
-          setReceptionistPortalScope(false);
-          const restoredUser = isDemoSuperAdminSession(session.user)
-            ? session.user
-            : { ...createDemoSuperAdminUser(), ...session.user };
-          if (!cancelled) {
-            setToken(session.token);
-            setUser(restoredUser ?? session.user);
-          }
-        } else {
-          clearAuthSession();
-          setSuperAdminPortalScope(false);
-        }
+      if (isLegacyDemoSuperAdminToken(session.token) || session.user?.isDemoSession) {
+        clearAuthSession();
         if (!cancelled) setAuthReady(true);
         return;
       }
@@ -542,11 +461,6 @@ export function AuthProvider({ children }) {
 
     if (!token || isTokenExpired(token)) return undefined;
 
-    const session = loadAuthSession();
-    if (isDemoReceptionistSession(session?.user) || isDemoSuperAdminSession(session?.user)) {
-      return undefined;
-    }
-
 
 
     const expiresIn = getTokenExpiresInMs(token);
@@ -597,10 +511,6 @@ export function AuthProvider({ children }) {
 
       login,
 
-      loginDemoReceptionist,
-
-      loginDemoSuperAdmin,
-
       logout,
 
       updateUser,
@@ -619,8 +529,6 @@ export function AuthProvider({ children }) {
       isAuthenticated,
       authReady,
       login,
-      loginDemoReceptionist,
-      loginDemoSuperAdmin,
       logout,
       updateUser,
       refreshSession,

@@ -1,33 +1,27 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Lock, Mail, Shield, ShieldCheck } from 'lucide-react';
-import { ROUTES } from '@/shared/constants';
+import { ROUTES, ROLES } from '@/shared/constants';
 import { BrandLogo, BrandName } from '@/shared/components/common';
 import { useAuthStore } from '@/shared/store/useAuthStore';
 import { trimCredentials, hasCredentials } from '@/shared/utils/credentials';
 import { toast } from '@/shared/utils/toast';
-import {
-  DEMO_SUPER_ADMIN_CREDENTIALS,
-  isDemoSuperAdminSession,
-} from '@/features/super-admin/utils/superAdminPortal';
 import '@/features/super-admin/styles/super-admin-login.css';
 
 export default function SuperAdminLoginPage() {
-  const { loginDemoSuperAdmin, error, isAuthenticated, user, authReady } = useAuthStore();
+  const { login, logout, error, isAuthenticated, user, authReady } = useAuthStore();
   const navigate = useNavigate();
-  const [email, setEmail] = useState(DEMO_SUPER_ADMIN_CREDENTIALS.email);
-  const [password, setPassword] = useState(DEMO_SUPER_ADMIN_CREDENTIALS.password);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
 
   useEffect(() => {
     if (!authReady || !isAuthenticated || !user) return;
-
-    if (isDemoSuperAdminSession(user)) {
+    if (user.role === ROLES.SUPER_ADMIN) {
       navigate(ROUTES.SUPER_ADMIN_DASHBOARD, { replace: true });
       return;
     }
-
     navigate(ROUTES.LOGIN, { replace: true });
   }, [authReady, isAuthenticated, user, navigate]);
 
@@ -43,8 +37,17 @@ export default function SuperAdminLoginPage() {
 
     setSubmitting(true);
     try {
-      const profile = await loginDemoSuperAdmin(trimmed);
-      toast.success(`Welcome, ${profile.full_name}`);
+      const me = await login(trimmed);
+
+      if (me.role !== ROLES.SUPER_ADMIN) {
+        logout();
+        const blocked = 'This portal is for super administrator accounts only.';
+        setFormError(blocked);
+        toast.error(blocked);
+        return;
+      }
+
+      toast.success(`Welcome, ${me.full_name}`);
       navigate(ROUTES.SUPER_ADMIN_DASHBOARD, { replace: true });
     } catch (err) {
       const message =
@@ -75,19 +78,18 @@ export default function SuperAdminLoginPage() {
               <BrandName variant="on-dark" /> Super Admin
             </h1>
             <p className="admin-login-page__hero-lead">
-              Owner console demo portal. Sign in with the hardcoded credentials below — no backend
-              account required.
+              Owner console for roles, staff, settings, and hospital-wide configuration.
             </p>
           </div>
 
           <div className="admin-login-page__hero-foot">
             <span>
               <ShieldCheck size={14} aria-hidden />
-              Frontend demo access
+              Secure staff login
             </span>
             <span>
               <Shield size={14} aria-hidden />
-              Role & permission preview
+              Role & permission management
             </span>
           </div>
         </aside>
@@ -101,26 +103,8 @@ export default function SuperAdminLoginPage() {
           <div className="admin-login-page__form-panel-inner">
             <header className="admin-login-page__form-head">
               <h2 id="super-admin-sign-in-title">Super Admin sign in</h2>
-              <p>Use the demo credentials shown below.</p>
+              <p>Sign in with your super administrator account registered in the hospital system.</p>
             </header>
-
-            <div
-              className="admin-login-page__hint"
-              style={{
-                marginBottom: '1rem',
-                padding: '0.75rem 1rem',
-                background: 'var(--color-surface-muted, #f4f6f8)',
-                borderRadius: '8px',
-                color: 'inherit',
-              }}
-              role="note"
-            >
-              <strong>Demo login</strong>
-              <br />
-              Email: <code>{DEMO_SUPER_ADMIN_CREDENTIALS.email}</code>
-              <br />
-              Password: <code>{DEMO_SUPER_ADMIN_CREDENTIALS.password}</code>
-            </div>
 
             <form className="admin-login-page__form" onSubmit={handleSubmit}>
               <div className="admin-login-page__field">
@@ -133,7 +117,7 @@ export default function SuperAdminLoginPage() {
                     autoComplete="username"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="superadmin@saffocare.com"
+                    placeholder="you@saffocare.local"
                     required
                   />
                 </div>

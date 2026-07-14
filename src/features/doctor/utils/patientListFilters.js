@@ -88,7 +88,7 @@ function visitSortKey(row) {
 }
 
 /** One patient list row per patient — keeps the latest visit when duplicates exist. */
-export function dedupeVisitRowsByPatient(rows = []) {
+function dedupeVisitRowsByPatient(rows = []) {
   const byPatient = new Map();
   for (const row of rows) {
     const key = visitPatientKey(row);

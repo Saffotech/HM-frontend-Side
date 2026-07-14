@@ -18,19 +18,23 @@ import '../styles/lab.css';
 const labUploadPath = (id) => `/lab/orders/${id}/upload`;
 
 const VIEW_TABS = [
-  { id: 'ordered', label: 'Waiting', hint: 'Ordered — not started' },
-  { id: 'sample_collected', label: 'Sample Collected', hint: 'Sample taken' },
-  { id: 'processing', label: 'Processing', hint: 'Test running' },
-  { id: 'completed', label: 'Completed', hint: 'Test completed' },
   { id: 'all', label: 'All', hint: 'Every request' },
+  { id: 'ordered', label: 'Waiting', hint: 'Ordered — not started' },
+  { id: 'completed', label: 'Completed', hint: 'Test completed' },
 ];
+
+const LEGACY_VIEW_MAP = {
+  sample_collected: 'ordered',
+  processing: 'ordered',
+};
 
 export default function LabOrderListPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const initialView = searchParams.get('view') || searchParams.get('status') || 'ordered';
-  const normalizedView = VIEW_TABS.some((t) => t.id === initialView) ? initialView : 'ordered';
+  const mappedView = LEGACY_VIEW_MAP[initialView] ?? initialView;
+  const normalizedView = VIEW_TABS.some((t) => t.id === mappedView) ? mappedView : 'ordered';
 
   const [search, setSearch] = useState(searchParams.get('q') || '');
   const [view, setView] = useState(normalizedView);

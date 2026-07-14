@@ -1,0 +1,122 @@
+/**
+ * SaffoCare HMS — Typography utilities
+ * Use these classes instead of ad-hoc font-size / font-weight.
+ */
+
+.text-display,
+.dashboard-title {
+  font-family: var(--font-sans);
+  font-size: var(--text-display);
+  font-weight: var(--text-display-weight);
+  line-height: var(--text-display-leading);
+  letter-spacing: normal;
+  color: var(--color-text);
+}
+
+.text-page-title,
+.page-title {
+  font-family: var(--font-sans);
+  font-size: var(--text-page-title);
+  font-weight: var(--text-page-title-weight);
+  line-height: var(--text-page-title-leading);
+  letter-spacing: normal;
+  color: var(--color-text);
+  word-break: break-word;
+}
+
+.text-section-title,
+.section-title {
+  font-family: var(--font-sans);
+  font-size: var(--text-section-title);
+  font-weight: var(--text-section-title-weight);
+  line-height: var(--text-section-title-leading);
+  letter-spacing: normal;
+  color: var(--color-text);
+}
+
+.text-card-title,
+.card-title {
+  font-family: var(--font-sans);
+  font-size: var(--text-card-title);
+  font-weight: var(--text-card-title-weight);
+  line-height: var(--text-card-title-leading);
+  letter-spacing: normal;
+  color: var(--color-text);
+}
+
+.text-label,
+.form-label {
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  font-weight: var(--text-label-weight);
+  line-height: var(--text-label-leading);
+  letter-spacing: normal;
+  color: var(--color-text-label);
+}
+
+.text-body {
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  font-weight: var(--text-body-weight);
+  line-height: var(--text-body-leading);
+  letter-spacing: normal;
+  color: var(--color-text);
+}
+
+.text-small {
+  font-family: var(--font-sans);
+  font-size: var(--text-small);
+  font-weight: var(--text-small-weight);
+  line-height: var(--text-small-leading);
+  letter-spacing: normal;
+}
+
+.text-description {
+  font-family: var(--font-sans);
+  font-size: var(--text-description);
+  font-weight: var(--text-description-weight);
+  line-height: var(--text-description-leading);
+  letter-spacing: normal;
+  color: var(--color-text-muted);
+}
+
+.text-metric,
+.stat-value {
+  font-family: var(--font-sans);
+  font-size: var(--text-metric);
+  font-weight: var(--text-metric-weight);
+  line-height: var(--text-metric-leading);
+  letter-spacing: normal;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.text-helper {
+  font-family: var(--font-sans);
+  font-size: var(--text-small);
+  font-weight: var(--text-helper-weight);
+  line-height: var(--text-small-leading);
+  color: var(--color-text-muted);
+}
+
+.text-error {
+  font-family: var(--font-sans);
+  font-size: var(--text-small);
+  font-weight: var(--text-error-weight);
+  line-height: var(--text-small-leading);
+  color: var(--color-danger);
+}
+
+@media (max-width: 480px) {
+  .text-display,
+  .dashboard-title {
+    font-size: var(--text-page-title);
+    line-height: var(--text-page-title-leading);
+  }
+
+  .text-page-title,
+  .page-title {
+    font-size: var(--text-section-title);
+    line-height: var(--text-section-title-leading);
+  }
+}

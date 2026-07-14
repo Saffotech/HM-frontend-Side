@@ -91,7 +91,6 @@ function LabTestsList({ tests, filter, onFilterChange, onRowClick, onEdit, onCan
     <>
       <header className="doc-labs-header">
         <h2>Lab Tests</h2>
-        <p>Order tests from a completed consultation. Update or cancel only while status is Ordered.</p>
       </header>
 
       <div className="doc-labs-filters" role="tablist" aria-label="Filter lab tests">
@@ -164,12 +163,12 @@ function LabTestsList({ tests, filter, onFilterChange, onRowClick, onEdit, onCan
                       {(t.canUpdate || t.canCancel) && (
                         <div className="doc-labs-table__actions-btns">
                           {t.canUpdate && (
-                            <Button size="sm" variant="outline" onClick={() => onEdit(t)}>
+                            <Button size="sm" variant="outline" className="doc-labs-edit-btn" onClick={() => onEdit(t)}>
                               Edit
                             </Button>
                           )}
                           {t.canCancel && (
-                            <Button size="sm" variant="outline" onClick={() => onCancel(t)}>
+                            <Button size="sm" variant="outline" className="doc-labs-cancel-btn" onClick={() => onCancel(t)}>
                               Cancel
                             </Button>
                           )}

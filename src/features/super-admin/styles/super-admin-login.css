@@ -1,7 +1,7 @@
 @import '@/features/admin/styles/admin-login.css';
 
 .super-admin-login-page .admin-login-page__hero {
-  background: linear-gradient(145deg, #1e1b4b 0%, #312e81 45%, #4338ca 100%);
+  background: var(--color-primary);
 }
 
 .super-admin-login-page .admin-login-page__hero-title {
@@ -9,25 +9,25 @@
 }
 
 .super-admin-login-page .admin-login-page__hero-lead {
-  color: #c7d2fe;
+  color: rgba(255, 255, 255, 0.85);
   max-width: 22rem;
 }
 
 .super-admin-login-page .admin-login-page__hero-foot span {
-  color: #e0e7ff;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .super-admin-login-page .admin-login-page__submit {
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  background: var(--color-primary);
 }
 
 .super-admin-login-page .admin-login-page__submit:hover:not(:disabled) {
-  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
+  background: var(--color-primary-hover);
 }
 
 .super-admin-login-page .admin-login-page__hint code {
   font-size: 0.8125rem;
   padding: 0.1rem 0.35rem;
   border-radius: 4px;
-  background: rgba(79, 70, 229, 0.08);
+  background: var(--color-primary-muted);
 }

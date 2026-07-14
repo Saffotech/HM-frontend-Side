@@ -1,34 +1,25 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Lock, Mail, ShieldCheck, UserRound } from 'lucide-react';
-import { ROUTES } from '@/shared/constants';
+import { ROUTES, ROLES } from '@/shared/constants';
 import { BrandLogo, BrandName } from '@/shared/components/common';
 import { useAuthStore } from '@/shared/store/useAuthStore';
 import { getAppEntryForRole } from '@/shared/utils/authRedirect';
 import { trimCredentials, hasCredentials } from '@/shared/utils/credentials';
 import { toast } from '@/shared/utils/toast';
-import {
-  DEMO_RECEPTIONIST_CREDENTIALS,
-  isDemoReceptionistSession,
-} from '@/features/receptionist/utils/receptionistPortal';
+import { isStaffModuleLive } from '@/shared/constants/moduleAvailability';
 import '@/pages/landing/LoginPage.css';
 
 export default function ReceptionistLoginPage() {
-  const { loginDemoReceptionist, error, isAuthenticated, user, authReady } = useAuthStore();
+  const { login, logout, error, isAuthenticated, user, authReady } = useAuthStore();
   const navigate = useNavigate();
-  const [email, setEmail] = useState(DEMO_RECEPTIONIST_CREDENTIALS.email);
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
 
   useEffect(() => {
     if (!authReady || !isAuthenticated || !user) return;
-
-    if (isDemoReceptionistSession(user)) {
-      navigate(ROUTES.RECEPTIONIST_DASHBOARD, { replace: true });
-      return;
-    }
-
     navigate(getAppEntryForRole(user.role), { replace: true });
   }, [authReady, isAuthenticated, user, navigate]);
 
@@ -44,8 +35,25 @@ export default function ReceptionistLoginPage() {
 
     setSubmitting(true);
     try {
-      const profile = await loginDemoReceptionist(trimmed);
-      toast.success(`Welcome, ${profile.full_name}`);
+      const me = await login(trimmed);
+
+      if (me.role !== ROLES.RECEPTIONIST) {
+        logout();
+        const blocked = 'This portal is for receptionist accounts only.';
+        setFormError(blocked);
+        toast.error(blocked);
+        return;
+      }
+
+      if (!isStaffModuleLive(me.department, me.role)) {
+        logout();
+        const blocked = `${me.department || 'Reception'} is not available yet.`;
+        setFormError(blocked);
+        toast.error(blocked);
+        return;
+      }
+
+      toast.success(`Welcome, ${me.full_name}`);
       navigate(ROUTES.RECEPTIONIST_DASHBOARD, { replace: true });
     } catch (err) {
       const message =
@@ -76,15 +84,14 @@ export default function ReceptionistLoginPage() {
               <BrandName variant="on-dark" /> reception
             </h1>
             <p className="staff-login-page__hero-lead">
-              Front desk demo portal. Sign in with the hardcoded receptionist credentials below — no
-              backend account or admin registration required.
+              Monitor today&apos;s queue, doctor boards, and schedules from the front desk.
             </p>
           </div>
 
           <div className="staff-login-page__hero-foot">
             <span>
               <ShieldCheck size={14} aria-hidden />
-              Frontend demo access
+              Secure staff login
             </span>
             <span>
               <UserRound size={14} aria-hidden />
@@ -102,26 +109,8 @@ export default function ReceptionistLoginPage() {
           <div className="staff-login-page__form-panel-inner">
             <header className="staff-login-page__form-head">
               <h2 id="receptionist-sign-in-title">Reception sign in</h2>
-              <p>Use the demo credentials shown below.</p>
+              <p>Sign in with your receptionist account registered in the hospital system.</p>
             </header>
-
-            <div
-              className="staff-login-page__error"
-              style={{
-                marginBottom: '1rem',
-                padding: '0.75rem 1rem',
-                background: 'var(--color-surface-muted, #f4f6f8)',
-                borderRadius: '8px',
-                color: 'inherit',
-              }}
-              role="note"
-            >
-              <strong>Demo login</strong>
-              <br />
-              Email: <code>{DEMO_RECEPTIONIST_CREDENTIALS.email}</code>
-              <br />
-              Password: <code>{DEMO_RECEPTIONIST_CREDENTIALS.password}</code>
-            </div>
 
             <form className="staff-login-page__form" onSubmit={handleSubmit}>
               <div className="staff-login-page__field">
@@ -131,7 +120,7 @@ export default function ReceptionistLoginPage() {
                   <input
                     id="receptionist-email"
                     type="email"
-                    placeholder="receptionist@saffocare.com"
+                    placeholder="you@saffocare.local"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
@@ -172,6 +161,9 @@ export default function ReceptionistLoginPage() {
               </button>
             </form>
 
+            <p className="staff-login-page__patient-link">
+              Need an account? <Link to={ROUTES.RECEPTIONIST_REGISTER}>Register →</Link>
+            </p>
             <p className="staff-login-page__patient-link">
               Other staff? <Link to={ROUTES.LOGIN}>Staff login →</Link>
             </p>

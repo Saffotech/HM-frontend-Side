@@ -4,7 +4,7 @@
  */
 
 /** Fields required by dashboard table, stat cards, consult flow, and recent patients. */
-export function toDashboardAppointment(appt) {
+function toDashboardAppointment(appt) {
   if (!appt) return null;
   return {
     id: appt.id,

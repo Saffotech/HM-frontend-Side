@@ -94,7 +94,7 @@
 }
 .bill-stripe {
   height: 4px;
-  background: linear-gradient(90deg, var(--color-brand-green-dark), var(--color-brand-gold), var(--color-brand-green));
+  background: var(--color-primary);
 }
 .bill-meta-row {
   display: flex; gap: 2rem; padding: 1.5rem 2rem; border-bottom: 1px solid var(--color-border); flex-wrap: wrap;
@@ -132,7 +132,6 @@
 .bill-items-table td.col-money { text-align: right; max-width: none; min-width: 0; width: auto; }
 .bill-items-table .row-alt { background: #f7fafc; }
 .text-center { text-align: center; }
-.text-right { text-align: right; }
 .bill-footer-grid {
   display: flex;
   flex-direction: column;

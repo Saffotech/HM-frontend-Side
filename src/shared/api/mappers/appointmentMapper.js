@@ -44,19 +44,6 @@ export function uiDateToApiDate(uiDate) {
   return `${y}-${m}-${day}`;
 }
 
-export function apiToUiDashboardStats(api) {
-  if (!api) return null;
-  const stats = api?.stats ?? api?.data ?? api ?? {};
-  return {
-    todayAppointments: stats.today_appointments ?? stats.todayAppointments ?? 0,
-    patientsWaiting: stats.patients_waiting ?? stats.patientsWaiting ?? 0,
-    completedConsultations:
-      stats.completed_consultations ?? stats.completedConsultations ?? 0,
-    inProgress: stats.patients_in_progress ?? stats.in_progress ?? stats.inProgress ?? 0,
-    cancelled: stats.cancelled_appointments ?? stats.cancelled ?? stats.cancelledAppointments ?? 0,
-  };
-}
-
 function formatAppointmentDate(raw) {
   if (!raw) return null;
   const d = new Date(raw);
@@ -89,7 +76,7 @@ function resolveAppointmentIds(apiAppt) {
 }
 
 /** Combine UI date + time_slot into timezone-aware ISO for backend scheduled_at */
-function buildScheduledAt(appointmentDate, timeSlot) {
+export function buildScheduledAt(appointmentDate, timeSlot) {
   const dateStr = (appointmentDate ?? '').trim();
   const slot = (timeSlot ?? '').trim();
   if (!dateStr || !slot) return null;
@@ -182,7 +169,8 @@ export function apiToUiAppointment(apiAppt) {
     notes: apiAppt.notes,
     symptoms: apiAppt.symptoms ?? null,
     diagnosis: apiAppt.diagnosis ?? null,
-    followUpDate: apiAppt.follow_up_date ?? apiAppt.followUpDate ?? null,
+    followUpDate:
+      apiAppt.follow_up_date ?? apiAppt.follow_up ?? apiAppt.followUpDate ?? apiAppt.followUp ?? null,
     createdAt: apiAppt.created_at ?? apiAppt.createdAt ?? null,
     paymentStatus: apiAppt.payment_status ?? apiAppt.paymentStatus ?? null,
     visitId: apiAppt.visit_id ?? apiAppt.visitId ?? apiAppt.bill_id ?? apiAppt.billId ?? null,

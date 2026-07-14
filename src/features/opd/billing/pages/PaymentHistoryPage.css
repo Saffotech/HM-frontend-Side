@@ -64,7 +64,7 @@
 
 .mode-cash { background: var(--color-success-bg); color: var(--color-success); }
 .mode-card { background: var(--color-primary-light); color: var(--color-primary); }
-.mode-upi { background: #f3e8ff; color: #7c3aed; }
+.mode-upi { background: var(--color-primary-light); color: var(--color-primary); }
 .mode-insurance { background: #fff7ed; color: #c2410c; }
 
 .id-badge {

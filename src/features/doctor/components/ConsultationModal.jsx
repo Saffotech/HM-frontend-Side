@@ -30,6 +30,15 @@ function emptyMedicineRow() {
   return { ...DEFAULT_MEDICINE, durationValue: '', durationUnit: 'Days' };
 }
 
+/** Appointment reason defaults like "OPD walk-in" are not real clinical symptoms. */
+function symptomsPrefillFromAppointment(detail) {
+  const raw = detail?.symptoms ?? detail?.reason ?? '';
+  const text = String(raw).trim();
+  if (!text) return '';
+  if (/^opd\s*walk[-\s]?in$/i.test(text)) return '';
+  return text;
+}
+
 export default function ConsultationModal({
   appointment,
   open,
@@ -86,7 +95,7 @@ export default function ConsultationModal({
     if (!open) return;
     const detail = consultationContextQuery.data?.appointment;
     if (!detail) return;
-    if (!symptoms) setSymptoms(detail.symptoms ?? detail.reason ?? '');
+    if (!symptoms) setSymptoms(symptomsPrefillFromAppointment(detail));
     if (!diagnosis && detail.diagnosis) setDiagnosis(detail.diagnosis);
     if (!notes && detail.notes) {
       setNotes(stripInternalAppointmentMarkers(detail.notes));

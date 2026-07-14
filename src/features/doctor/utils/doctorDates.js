@@ -27,10 +27,6 @@ export function todayOpdDate() {
   return formatOpdDate();
 }
 
-export function isTodayAppointment(appt) {
-  return appt.date === todayOpdDate();
-}
-
 export function uid(prefix = '') {
   return prefix + Date.now().toString(36).slice(2, 7).toUpperCase();
 }
@@ -51,7 +47,7 @@ export function parseOpdDateString(dateStr) {
 }
 
 /** Parse time e.g. "9:00 AM", "08:30 AM", or API "10:30:00" */
-export function parseAppointmentTimeString(timeStr) {
+function parseAppointmentTimeString(timeStr) {
   const raw = String(timeStr || '').trim();
   const match12 = raw.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
   if (match12) {
@@ -73,7 +69,7 @@ export function parseAppointmentTimeString(timeStr) {
 }
 
 /** Combined appointment date + time for sorting */
-export function getAppointmentDateTime(appt) {
+function getAppointmentDateTime(appt) {
   if (appt?.scheduledAt) {
     const scheduled = new Date(appt.scheduledAt).getTime();
     if (!Number.isNaN(scheduled)) return scheduled;

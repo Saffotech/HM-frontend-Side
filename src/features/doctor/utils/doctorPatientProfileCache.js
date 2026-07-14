@@ -19,7 +19,7 @@ export const DOCTOR_PATIENT_PRESCRIPTIONS_QUERY_OPTIONS = {
 };
 
 /** Build visit-history shape from already-loaded patient visit list rows (instant placeholder). */
-export function visitRowsToHistoryPlaceholder(patientUid, visitRows) {
+function visitRowsToHistoryPlaceholder(patientUid, visitRows) {
   const rows = (visitRows ?? []).filter((row) => row.patientUid === patientUid);
   if (!rows.length) return undefined;
 
@@ -48,7 +48,7 @@ export function visitRowsToHistoryPlaceholder(patientUid, visitRows) {
 }
 
 /** Read cached patients list queries to show visit history immediately while detail API loads. */
-export function getPlaceholderPatientHistory(queryClient, patientUid) {
+function getPlaceholderPatientHistory(queryClient, patientUid) {
   const cachedQueries = queryClient.getQueriesData({
     queryKey: queryKeys.doctor.patients.visits,
   });

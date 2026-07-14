@@ -1,4 +1,7 @@
 @import './shared/styles/variables.css';
+@import './shared/styles/module-theme-bridge.css';
+@import './shared/styles/component-bridge.css';
+@import './shared/styles/typography.css';
 @import './shared/styles/base.css';
 @import './shared/styles/date-input.css';
 @import './shared/styles/ui-patterns.css';

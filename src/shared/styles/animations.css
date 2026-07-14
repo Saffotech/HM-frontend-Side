@@ -1,11 +1,11 @@
 /* HMS animation utilities — subtle, enterprise-grade */
 
 :root {
-  --ease-standard: cubic-bezier(0.25, 0.1, 0.25, 1);
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-standard: ease;
+  --ease-out: ease;
   --duration-fast: 0.2s;
-  --duration-normal: 0.28s;
-  --duration-slow: 0.35s;
+  --duration-normal: 0.2s;
+  --duration-slow: 0.2s;
 }
 
 /* ── Page transition wrapper ── */
@@ -195,13 +195,6 @@
     opacity: 1;
     transform: translateY(0) scale(1);
   }
-}
-
-.filters-panel {
-  overflow: hidden;
-  transition:
-    max-height var(--duration-normal) var(--ease-standard),
-    opacity var(--duration-fast) var(--ease-standard);
 }
 
 /* ── Sidebar overlay ── */

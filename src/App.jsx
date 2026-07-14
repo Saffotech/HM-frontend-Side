@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { ToastContainer } from '@/shared/components/common';
 import ProtectedRoute from '@/components/security/ProtectedRoute';
 import GuestRoute from '@/components/security/GuestRoute';
@@ -23,6 +23,9 @@ const PatientLoginPage = lazy(() => import('@/pages/landing/PatientLoginPage'));
 const PharmacyLoginPage = lazy(() => import('@/features/pharmacy/pages/PharmacyLoginPage'));
 const ReceptionistLoginPage = lazy(
   () => import('@/features/receptionist/pages/ReceptionistLoginPage')
+);
+const ReceptionistRegisterPage = lazy(
+  () => import('@/features/receptionist/pages/ReceptionistRegisterPage')
 );
 const AdminLoginPage = lazy(() => import('@/features/admin/pages/AdminLoginPage'));
 const SuperAdminLoginPage = lazy(() => import('@/features/super-admin/pages/SuperAdminLoginPage'));
@@ -88,7 +91,11 @@ export default function App() {
 
         <Route
           path={ROUTES.RECEPTIONIST_REGISTER}
-          element={<Navigate to={ROUTES.RECEPTIONIST_LOGIN} replace />}
+          element={
+            <LazyRoute>
+              <ReceptionistRegisterPage />
+            </LazyRoute>
+          }
         />
 
         <Route

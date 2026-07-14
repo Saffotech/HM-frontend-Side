@@ -1,38 +1,48 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: var(--gap-label);
 }
 
 .field__label {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--color-text);
+  font-size: var(--text-label);
+  font-weight: var(--text-label-weight);
+  line-height: var(--text-label-leading);
+  color: var(--color-text-label);
 }
 
 .field__input {
   width: 100%;
-  height: 2.375rem;
-  padding: 0 0.75rem;
-  border: 1px solid var(--color-border);
+  height: var(--control-height);
+  padding: var(--pad-input-y) var(--pad-input-x);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md);
-  background: #fff;
+  background: var(--color-surface);
   color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--text-input);
+  font-weight: var(--text-input-weight);
+  line-height: var(--text-body-leading);
   transition:
-    border-color var(--duration-fast, 0.2s) var(--ease-standard, ease),
-    box-shadow var(--duration-fast, 0.2s) var(--ease-standard, ease),
-    background-color var(--duration-fast, 0.2s) var(--ease-standard, ease);
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.field__input::placeholder {
+  font-size: var(--text-body);
+  font-weight: var(--text-placeholder-weight);
+  color: var(--color-text-lighter);
 }
 
 .field__input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(29, 111, 164, 0.15);
+  box-shadow: var(--shadow-focus);
 }
 
 .field__input:disabled,
 .field__input[readonly] {
-  background: #f7fafc;
+  background: var(--color-surface-hover);
   color: var(--color-text-muted);
 }
 
@@ -40,7 +50,16 @@
   border-color: var(--color-danger);
 }
 
+.field__helper {
+  font-size: var(--text-small);
+  font-weight: var(--text-helper-weight);
+  line-height: var(--text-small-leading);
+  color: var(--color-text-muted);
+}
+
 .field__error {
-  font-size: 0.75rem;
+  font-size: var(--text-small);
+  font-weight: var(--text-error-weight);
+  line-height: var(--text-small-leading);
   color: var(--color-danger);
 }

@@ -164,7 +164,7 @@
 
 .pharmacy-dispense-table__qty--remaining {
   font-weight: 600;
-  color: var(--color-primary, #0d9488);
+  color: var(--color-primary, var(--color-primary));
 }
 
 .pharmacy-dispense-table__input-col {
@@ -197,9 +197,9 @@
 }
 
 .pharmacy-dispense-qty-input:focus {
-  outline: 2px solid var(--color-primary, #0d9488);
+  outline: 2px solid var(--color-primary, var(--color-primary));
   outline-offset: 0;
-  border-color: var(--color-primary, #0d9488);
+  border-color: var(--color-primary, var(--color-primary));
 }
 
 .pharmacy-dispense-qty-input:disabled {
@@ -257,10 +257,11 @@
 }
 
 .pharmacy-dispense-stat__value {
-  font-size: 0.9375rem;
-  font-weight: 700;
+  /* Override theme bridge [class*='stat__value'] metric sizing — these are footer summaries, not KPI tiles. */
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
   font-variant-numeric: tabular-nums;
-  line-height: 1.3;
+  line-height: 1.3 !important;
   color: var(--color-text);
 }
 

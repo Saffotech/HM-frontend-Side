@@ -154,7 +154,7 @@
 }
 
 .bill-line-status--paid {
-  color: var(--color-success, #059669);
+  color: var(--color-success, var(--color-success));
   background: var(--color-success-bg, #ecfdf5);
   border: 1px solid #6ee7b7;
 }
@@ -260,30 +260,7 @@
   color: #92400e;
 }
 
-.opd-alert--info {
-  background: #eff6ff;
-  border: 1px solid #93c5fd;
-  color: #1e40af;
-}
-
-.opd-alert--success {
-  background: #ecfdf5;
-  border: 1px solid #6ee7b7;
-  color: #065f46;
-}
-
-.opd-visit-row {
-  display: grid;
-  grid-template-columns: 1fr 12rem;
-  gap: 0.625rem;
-  max-width: 48rem;
-}
-
 @media (max-width: 640px) {
-  .opd-visit-row {
-    grid-template-columns: 1fr;
-  }
-
   .opd-quick-add-row {
     flex-direction: column;
     align-items: stretch;
@@ -340,8 +317,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(145deg, #ecfdf5 0%, #d1fae5 100%);
-  color: var(--color-success, #059669);
+  background: var(--color-surface);
+  color: var(--color-success, var(--color-success));
   box-shadow: 0 4px 14px rgba(5, 150, 105, 0.18);
   animation: bill-success-pop 0.45s ease-out;
 }
@@ -363,7 +340,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-success, #059669);
+  color: var(--color-success, var(--color-success));
 }
 
 .bill-success-modal__title {
@@ -464,7 +441,7 @@
 
 .bill-success-modal__status--paid {
   background: var(--color-success-bg, #ecfdf5);
-  color: var(--color-success, #059669);
+  color: var(--color-success, var(--color-success));
 }
 
 .bill-success-modal__status--partial {

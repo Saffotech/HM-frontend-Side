@@ -34,7 +34,7 @@ export default function DoctorShell({ title, nav, active, onSelect, children }) 
         <div className="doctor-shell__sidebar-head">
           <Link to={ROUTES.DOCTOR_DASHBOARD} className="doctor-shell__brand">
             <BrandLogo size={32} />
-            <BrandName />
+            <BrandName className="brand-name--on-dark" />
           </Link>
           <button type="button" className="doctor-shell__close" onClick={() => setMobileOpen(false)} aria-label="Close">
             <X size={20} />

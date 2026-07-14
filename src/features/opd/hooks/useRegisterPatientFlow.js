@@ -7,6 +7,7 @@ import {
 import { useBookAppointmentMutation } from '@/shared/hooks/queries/useAppointmentQuery';
 import { patientsApi, billsApi } from '@/shared/api/services';
 import { uiToApiPatientRegister } from '@/shared/api/mappers/patientMapper';
+import { buildScheduledAt } from '@/shared/api/mappers/appointmentMapper';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { REGISTRATION_FEE, TAX_RATE } from '@/shared/constants';
 import { trimForm } from '@/shared/utils/trimForm';
@@ -130,7 +131,6 @@ export function useRegisterPatientFlow() {
     time: appointmentTime,
     status: 'Scheduled',
     type: 'New',
-    consultStatus: 'Waiting',
     reason: 'New patient registration',
     notes: 'Booked during registration',
   });
@@ -226,6 +226,8 @@ export function useRegisterPatientFlow() {
     }
     setPaymentRefError('');
 
+    const scheduledAt = buildScheduledAt(appointmentDateStr, appointmentTime);
+
     try {
       const visitPayload = {
         ...trimmed,
@@ -238,6 +240,7 @@ export function useRegisterPatientFlow() {
         amountReceived: paid,
         paymentRef: paymentRef.trim() || undefined,
         waiveRegistrationFee: billPreview.isRevisit,
+        scheduledAt,
       };
 
       const result = billPreview.isRevisit
@@ -251,20 +254,37 @@ export function useRegisterPatientFlow() {
             registrationFee: REGISTRATION_FEE,
           });
 
-      let appointmentSummary = billPreview.appointment;
+      // Backend creates/links one appointment during register/visit.
+      // Only fall back to book if older backend returns no appointment_id.
+      let appointmentSummary = {
+        ...billPreview.appointment,
+        id: result.appointmentUid ?? result.appointmentId ?? null,
+        scheduledAt: result.scheduledAt ?? scheduledAt,
+      };
 
-      try {
-        const patientDbId = await resolvePatientDbId(trimmed.phone);
-        if (patientDbId) {
-          const appt = await bookAppointment.mutateAsync(
-            buildAppointmentPayload(result.patientId, patientDbId, trimmed, selectedDoctor, selectedDept)
-          );
-          appointmentSummary = { ...billPreview.appointment, id: appt?.id };
-        } else {
-          toast.warning('Patient registered, but appointment could not be linked. Book manually.');
+      const autoAppointmentId = result.appointmentId ?? result.raw?.appointment_id ?? null;
+      if (!autoAppointmentId) {
+        try {
+          const patientDbId =
+            result.patientDbId
+            ?? (await resolvePatientDbId(trimmed.phone));
+          if (patientDbId) {
+            const appt = await bookAppointment.mutateAsync(
+              buildAppointmentPayload(
+                result.patientId,
+                patientDbId,
+                trimmed,
+                selectedDoctor,
+                selectedDept,
+              ),
+            );
+            appointmentSummary = { ...billPreview.appointment, id: appt?.id };
+          } else {
+            toast.warning('Patient registered, but appointment could not be linked. Book manually.');
+          }
+        } catch {
+          toast.warning('Patient registered, but appointment booking failed. Book from Appointments.');
         }
-      } catch {
-        toast.warning('Patient registered, but appointment booking failed. Book from Appointments.');
       }
 
       setSuccessData({

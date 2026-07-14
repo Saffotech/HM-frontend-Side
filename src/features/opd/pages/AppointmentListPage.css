@@ -71,7 +71,7 @@
 }
 
 .appointments-pill--scheduled {
-  color: #1d4ed8;
+  color: var(--color-info);
   background: #eff6ff;
   border-color: #bfdbfe;
 }
@@ -118,15 +118,7 @@
   }
 }
 
-/* Compact spacing between stat cards and main card */
-.appointments-page__stats {
-  gap: 0.5rem;
-  margin-bottom: 0.125rem;
-}
-
-.appointments-page__stats.stat-grid--3 {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
+/* Compact spacing between header and main card */
 
 .stat-card--info .stat-card__value {
   color: var(--color-primary);
@@ -157,7 +149,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0.5rem 0.85rem;
-  background: linear-gradient(165deg, #f8fbff 0%, #f7fafc 45%, #ffffff 100%);
+  background: var(--color-surface);
   border: none;
   border-bottom: 1px solid var(--color-border-light);
   border-radius: 0;
@@ -229,21 +221,11 @@
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
-/* Date field: cleaner "Select date" when empty */
+/* Date field styling */
 .appointments-page .appointment-toolbar .appointment-date-filter {
   position: relative;
 }
 
-.appointments-page .appointment-toolbar .appointment-date-filter__input {
-  font-weight: 600;
-}
-
-.appointments-page .appointment-toolbar .appointment-date-filter__input[type='text'] {
-  color: var(--color-text-muted);
-  cursor: pointer;
-}
-
-.appointments-page .appointment-toolbar .appointment-date-filter.date-input--has-value .date-input__wrap,
 .appointments-page .appointment-toolbar .appointment-date-filter .date-input__wrap--filled {
   border-radius: var(--radius-md);
 }
@@ -254,7 +236,7 @@
 
 .appointments-page .appointment-toolbar .appointment-date-filter .date-input__wrap--filled {
   border-color: var(--color-primary-border);
-  background: linear-gradient(180deg, rgba(230, 244, 236, 0.75) 0%, rgba(255, 255, 255, 0.85) 100%);
+  background: var(--color-surface);
   box-shadow: 0 1px 2px rgba(26, 92, 52, 0.08);
 }
 
@@ -273,67 +255,6 @@
   border-color: var(--color-border-light);
   color: var(--color-text-muted);
   cursor: not-allowed;
-}
-
-.appointments-page .appointment-toolbar > .searchable-select {
-  width: 100%;
-  min-width: 0;
-  max-width: none;
-}
-
-.appointments-page .appointment-toolbar .searchable-select__input {
-  height: 2rem;
-  padding: 0 1.85rem 0 1.85rem;
-  font-size: 0.8125rem;
-  border-radius: 0.5rem;
-  border-color: rgba(148, 163, 184, 0.45);
-  background: #fff;
-  color: var(--color-text);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-}
-
-.appointments-page .appointment-toolbar .searchable-select__input:hover:not(:disabled) {
-  border-color: rgba(29, 111, 164, 0.35);
-}
-
-.appointments-page .appointment-toolbar .searchable-select__input:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(26, 92, 52, 0.12);
-}
-
-.appointments-page .appointment-toolbar .searchable-select__icon {
-  left: 0.55rem;
-  width: 14px;
-  height: 14px;
-  color: var(--color-primary);
-  opacity: 1;
-}
-
-.appointments-page .appointment-toolbar .searchable-select__chevron-btn {
-  width: 1.65rem;
-  height: 1.65rem;
-  right: 0.2rem;
-  color: var(--color-text-muted);
-}
-
-.appointments-page .appointment-toolbar .searchable-select__chevron-btn:hover:not(:disabled) {
-  background: #f1f5f9;
-  color: var(--color-text);
-}
-
-.appointments-page .appointment-toolbar .searchable-select__input:disabled {
-  background: #f1f5f9;
-  border-color: var(--color-border-light);
-  color: var(--color-text-muted);
-  cursor: not-allowed;
-}
-
-/* Avoid showing selected filter tags/chips below the toolbar row */
-.appointments-page .appointment-toolbar .selected-chip,
-.appointments-page .appointment-toolbar .filter-chip,
-.appointments-page .appointment-toolbar .searchable-select__tag,
-.appointments-page .appointment-toolbar .searchable-select__tags {
-  display: none !important;
 }
 
 .appt-cell__meta-mobile {
@@ -414,11 +335,6 @@
     justify-content: center;
   }
 
-  .appointments-page__stats {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
-  }
-
   .appointments-page .appointment-toolbar.page-toolbar {
     grid-template-columns: 1fr;
     padding: 0.5rem 0.75rem;
@@ -454,12 +370,6 @@
     justify-content: center;
     padding-left: 0.5rem;
     padding-right: 0.5rem;
-  }
-}
-
-@media (min-width: 481px) and (max-width: 768px) {
-  .appointments-page__stats {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

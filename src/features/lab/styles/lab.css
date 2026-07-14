@@ -187,7 +187,7 @@
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 3px;
-  background: #1a9fd4;
+  background: var(--color-primary);
   border-radius: 14px 14px 0 0;
   opacity: 0;
   transition: opacity 0.2s;
@@ -201,7 +201,7 @@
 
 .lab-stat-card.urgent {
   border-color: #fca5a5;
-  background: linear-gradient(160deg, #fff8f8 0%, #fff 60%);
+  background: var(--color-surface);
 }
 .lab-stat-card.urgent::before { background: #dc2626; }
 
@@ -262,14 +262,14 @@
 }
 
 .lab-stat-card-clickable:focus-visible {
-  outline: 3px solid #1a9fd4;
+  outline: 3px solid var(--color-primary);
   outline-offset: 2px;
 }
 
 /* CTA hint at the bottom of each card */
 .lab-stat-card-cta {
   font-size: 11.5px;
-  color: #1a9fd4;
+  color: var(--color-primary);
   font-weight: 600;
   letter-spacing: 0.02em;
   display: flex;
@@ -301,7 +301,7 @@
 
 .lab-stat-card-clickable:hover .lab-stat-card-arrow,
 .lab-stat-card-clickable:focus-visible .lab-stat-card-arrow {
-  color: #1a9fd4;
+  color: var(--color-primary);
   transform: translateX(3px);
 }
 
@@ -327,7 +327,7 @@
   text-align: left;
 }
 .lab-bar-row-clickable:hover { background: #f0f7ff; }
-.lab-bar-row-clickable:hover .lab-bar-label span:first-child { color: #1a9fd4; }
+.lab-bar-row-clickable:hover .lab-bar-label span:first-child { color: var(--color-primary); }
 
 /* Active filter banner */
 .lab-filter-banner {
@@ -343,7 +343,7 @@
 
 .lab-filter-banner-text {
   font-size: 13px;
-  color: #1d4ed8;
+  color: var(--color-info);
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -423,12 +423,12 @@
 }
 
 .lab-status-flow__step.is-current span:first-child {
-  background: #1a9fd4;
+  background: var(--color-primary);
   color: #fff;
 }
 
 .lab-status-flow__step.is-done span:first-child {
-  background: #059669;
+  background: var(--color-success);
   color: #fff;
 }
 
@@ -511,12 +511,12 @@
 .lab-status-tab__count {
   font-size: 20px;
   font-weight: 900;
-  color: #1a9fd4;
+  color: var(--color-primary);
   line-height: 1.1;
 }
 
 .lab-status-tab.is-active .lab-status-tab__count {
-  color: #0f766e;
+  color: var(--color-primary-hover);
 }
 
 @media (max-width: 900px) {
@@ -563,7 +563,7 @@
 .skeleton-label,
 .skeleton-value,
 .skeleton-trend {
-  background: linear-gradient(90deg, #f0f4fb 25%, #e0eaf5 50%, #f0f4fb 75%);
+  background: var(--color-surface);
   background-size: 800px 100%;
   animation: shimmer 1.4s infinite linear;
   border-radius: 6px;
@@ -663,7 +663,7 @@
   text-transform: uppercase;
   margin-bottom: 5px;
 }
-.lic-tag.blue   { background: #dbeafe; color: #1d4ed8; }
+.lic-tag.blue   { background: #dbeafe; color: var(--color-info); }
 .lic-tag.red    { background: #fee2e2; color: #dc2626; }
 .lic-tag.orange { background: #fef3c7; color: #92400e; }
 .lic-tag.green  { background: #d1fae5; color: #065f46; }
@@ -713,8 +713,8 @@
   border-radius: 50%;
   flex-shrink: 0;
 }
-.lic-dot.green { background: #059669; }
-.lic-dot.blue  { background: #1a9fd4; }
+.lic-dot.green { background: var(--color-success); }
+.lic-dot.blue  { background: var(--color-primary); }
 .lic-dot.amber { background: #f59e0b; }
 
 /* ---------- Urgent badge (number circle) ---------- */
@@ -747,7 +747,7 @@
 .lic-patient-avatar {
   width: 36px; height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  background: var(--color-primary);
   display: flex; align-items: center; justify-content: center;
   font-size: 12px; font-weight: 700; color: #fff;
   flex-shrink: 0;
@@ -932,8 +932,8 @@
   font-family: inherit;
   margin-top: auto;
 }
-.lic-action-btn.blue { background: #1a9fd4; color: #fff; }
-.lic-action-btn.blue:hover { background: #1588b8; }
+.lic-action-btn.blue { background: var(--color-primary); color: #fff; }
+.lic-action-btn.blue:hover { background: var(--color-primary-hover); }
 .lic-action-btn.red  { background: #dc2626; color: #fff; }
 .lic-action-btn.red:hover { background: #b91c1c; }
 
@@ -946,7 +946,7 @@
   transition: color 0.14s;
   text-align: center;
 }
-.lic-text-btn:hover { color: #1a9fd4; }
+.lic-text-btn:hover { color: var(--color-primary); }
 
 /* ===== Responsive insight grid ===== */
 @media (max-width: 1100px) {
@@ -1060,7 +1060,7 @@
 
 .lab-filter-group select:focus,
 .lab-filter-group input:focus {
-  border-color: #1a9fd4;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(26,159,212,0.12);
 }
 
@@ -1084,8 +1084,8 @@
 }
 
 .lab-filter-reset:hover {
-  border-color: #1a9fd4;
-  color: #1a9fd4;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 /* ---------- Table ---------- */
@@ -1142,7 +1142,7 @@
 .lab-badge.urgent { background: #fee2e2; color: #dc2626; }
 .lab-badge.normal { background: #e0f2fe; color: #0369a1; }
 .lab-badge.pending { background: #fef9c3; color: #92400e; }
-.lab-badge.in-progress { background: #dbeafe; color: #1d4ed8; }
+.lab-badge.in-progress { background: #dbeafe; color: var(--color-info); }
 .lab-badge.completed { background: #d1fae5; color: #065f46; }
 .lab-badge.blood { background: #fee2e2; color: #9b1c1c; }
 .lab-badge.radiology { background: #ede9fe; color: #5b21b6; }
@@ -1169,13 +1169,13 @@
 .lab-btn:active { transform: scale(0.97); }
 
 .lab-btn-primary {
-  background: #1a9fd4;
+  background: var(--color-primary);
   color: #fff;
 }
-.lab-btn-primary:hover { background: #1588b8; box-shadow: 0 4px 12px rgba(26,159,212,0.3); }
+.lab-btn-primary:hover { background: var(--color-primary-hover); box-shadow: 0 4px 12px rgba(26,159,212,0.3); }
 
 .lab-btn-success {
-  background: #059669;
+  background: var(--color-success);
   color: #fff;
 }
 .lab-btn-success:hover { background: #047857; box-shadow: 0 4px 12px rgba(5,150,105,0.3); }
@@ -1268,7 +1268,7 @@
 .lab-field input:focus,
 .lab-field select:focus,
 .lab-field textarea:focus {
-  border-color: #1a9fd4;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(26,159,212,0.12);
 }
 
@@ -1296,7 +1296,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #1a9fd4;
+  color: var(--color-primary);
   margin-bottom: 14px;
   display: flex;
   align-items: center;
@@ -1391,7 +1391,7 @@
 
 .lab-params-table input:focus,
 .lab-params-table select:focus {
-  border-color: #1a9fd4;
+  border-color: var(--color-primary);
 }
 
 .lab-params-empty {
@@ -1473,7 +1473,7 @@
 .lab-spinner {
   width: 36px; height: 36px;
   border: 3px solid #dde6f2;
-  border-top-color: #1a9fd4;
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }

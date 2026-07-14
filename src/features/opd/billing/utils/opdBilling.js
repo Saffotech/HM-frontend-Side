@@ -1,6 +1,6 @@
 import { formatBillDate, getBillStatus } from '@/shared/utils/billHelpers';
 
-export function getTodayDateString() {
+function getTodayDateString() {
   return formatBillDate();
 }
 

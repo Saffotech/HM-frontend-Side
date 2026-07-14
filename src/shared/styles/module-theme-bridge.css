@@ -1,0 +1,361 @@
+/**
+ * Bridge: remap every module-local CSS variable → shared design tokens.
+ * Keeps existing class names working while forcing one visual language.
+ */
+:root {
+  /* Generic module aliases used by nurse/legacy sheets */
+  --primary: var(--color-primary);
+  --primary-hover: var(--color-primary-hover);
+  --text-primary: var(--color-text);
+  --text-muted: var(--color-text-muted);
+  --border-color: var(--color-border);
+  --bg-page: var(--color-bg);
+  --bg-surface: var(--color-surface);
+
+  /* Receptionist */
+  --rec-primary: var(--color-primary);
+  --rec-primary-light: var(--color-primary-muted);
+  --rec-accent: var(--color-accent);
+  --rec-bg: var(--color-bg);
+  --rec-surface: var(--color-surface);
+  --rec-border: var(--color-border);
+  --rec-border-light: var(--color-border-light);
+  --rec-text: var(--color-text);
+  --rec-text-muted: var(--color-text-muted);
+  --rec-teal: var(--color-info);
+  --rec-teal-bg: var(--color-info-bg);
+  --rec-green: var(--color-success);
+  --rec-green-bg: var(--color-success-bg);
+  --rec-red: var(--color-danger);
+  --rec-red-bg: var(--color-danger-bg);
+  --rec-radius: var(--radius-lg);
+  --rec-radius-sm: var(--radius-md);
+  --rec-shadow: var(--shadow-sm);
+  --rec-font: var(--font-sans);
+
+  /* Nurse (common custom props if present) */
+  --nurse-primary: var(--color-primary);
+  --nurse-bg: var(--color-bg);
+  --nurse-surface: var(--color-surface);
+  --nurse-border: var(--color-border);
+  --nurse-text: var(--color-text);
+  --nurse-muted: var(--color-text-muted);
+  --nurse-radius: var(--radius-lg);
+  --nurse-shadow: var(--shadow-sm);
+
+  /* Pharmacy */
+  --pharm-primary: var(--color-primary);
+  --pharm-bg: var(--color-bg);
+  --pharm-surface: var(--color-surface);
+  --pharm-border: var(--color-border);
+
+  /* Admin / Super Admin */
+  --admin-primary: var(--color-primary);
+  --sa-primary: var(--color-primary);
+
+  /* Doctor shell */
+  --doc-primary: var(--color-primary);
+  --doc-bg: var(--color-bg);
+  --doc-surface: var(--color-surface);
+  --doc-border: var(--color-border);
+  --doc-text: var(--color-text);
+  --doc-muted: var(--color-text-muted);
+}
+
+/* Unify role label styling across shells — high contrast on sidebar */
+.receptionist-role-label,
+.nurse-role-label,
+.admin-role-label,
+.pharmacy-role-label,
+.lab-role-label,
+.opd-role-label,
+.super-admin-role-label,
+.sa-role-label,
+[class$='-role-label'] {
+  margin: 0.5rem 1rem 0.35rem !important;
+  padding: 0 0.125rem;
+  font-family: var(--font-sidebar);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-sidebar-text-active) !important;
+}
+
+/* Flatten nurse gradients → enterprise surfaces */
+.nurse-kpi,
+.nurse-card,
+.nurse-queue-page__header,
+.nurse-dashboard-page__action-btn--vitals,
+.nurse-dashboard-page__action-btn--note {
+  background: var(--color-surface) !important;
+  background-image: none !important;
+}
+
+.nurse-dashboard-page__action-btn--vitals {
+  color: var(--color-info) !important;
+  border: 1px solid var(--color-border) !important;
+}
+
+.nurse-dashboard-page__action-btn--note {
+  color: var(--color-primary) !important;
+  border: 1px solid var(--color-border) !important;
+}
+
+.nurse-dashboard-page__action-btn--vitals:hover,
+.nurse-dashboard-page__action-btn--note:hover {
+  background: var(--color-surface-hover) !important;
+}
+
+/* Shared table look for module-specific tables */
+.rec-table th,
+.nurse-table th,
+.doc-table th,
+.pharmacy-table th,
+.admin-table th,
+.lab-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--pad-table-cell);
+  font-size: var(--text-table-header);
+  font-weight: var(--text-table-header-weight);
+  line-height: var(--text-table-header-leading);
+  color: var(--color-text-muted);
+  background: var(--color-table-header);
+  border-bottom: 1px solid var(--color-border);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.rec-table td,
+.nurse-table td,
+.doc-table td,
+.pharmacy-table td,
+.admin-table td,
+.lab-table td {
+  padding: var(--pad-table-cell);
+  font-size: var(--text-body);
+  font-weight: var(--text-body-weight);
+  line-height: var(--text-body-leading);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.rec-card,
+.nurse-card,
+.doc-card,
+.pharmacy-card {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.rec-input,
+.nurse-input,
+.rec-select,
+.nurse-select,
+.lab-input,
+.admin-input {
+  height: var(--control-height);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: var(--text-input);
+  font-weight: var(--text-input-weight);
+}
+
+.rec-input::placeholder,
+.nurse-input::placeholder,
+.lab-input::placeholder {
+  font-weight: var(--text-placeholder-weight);
+}
+
+.rec-input:focus,
+.nurse-input:focus,
+.rec-select:focus,
+.nurse-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+}
+
+.rec-btn,
+.nurse-btn,
+.doc-btn,
+.lab-btn,
+.pharmacy-btn,
+.admin-btn,
+button.btn {
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: var(--text-button);
+  font-weight: var(--text-button-weight);
+  text-transform: none;
+  letter-spacing: normal;
+  transition: background var(--duration-fast) var(--ease-standard);
+}
+
+/* ── Typography lock: one scale across all modules ── */
+html,
+body,
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-sans);
+}
+
+.admin-page__title,
+.sa-page-header__title,
+.rec-page__title,
+.nurse-page-header__title,
+.doc-page-title,
+.lab-page-title,
+.pharmacy-page-title,
+.opd-page-title,
+[class*='page__title'],
+[class*='page-header__title'],
+[class*='PageHeader'] h1 {
+  font-family: var(--font-sans) !important;
+  font-size: var(--text-page-title) !important;
+  font-weight: var(--text-page-title-weight) !important;
+  line-height: var(--text-page-title-leading) !important;
+  letter-spacing: normal !important;
+}
+
+.admin-page__eyebrow,
+.sa-page-header__eyebrow {
+  font-size: var(--text-label) !important;
+  font-weight: var(--text-label-weight) !important;
+  line-height: var(--text-label-leading) !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
+.admin-card__title,
+.sa-card__title,
+.rec-card__title,
+.nurse-card__title,
+.doc-card__title,
+.card__title,
+[class*='card__title'],
+[class*='card-title'] {
+  font-family: var(--font-sans) !important;
+  font-size: var(--text-card-title) !important;
+  font-weight: var(--text-card-title-weight) !important;
+  line-height: var(--text-card-title-leading) !important;
+}
+
+.admin-stat-card__value,
+.rec-stat-card__value,
+.nurse-kpi__value,
+.doc-stat__value,
+.lab-stat-card__value,
+.sa-dashboard-stat-btn .admin-stat-card__value,
+[class*='stat-card__value'],
+[class*='kpi__value'],
+[class*='stat__value'] {
+  font-family: var(--font-sans) !important;
+  font-size: var(--text-metric) !important;
+  font-weight: var(--text-metric-weight) !important;
+  line-height: var(--text-metric-leading) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-stat-card__label,
+.rec-stat-card__label,
+.nurse-kpi__label,
+.doc-stat__label,
+[class*='stat-card__label'],
+[class*='kpi__label'] {
+  font-size: var(--text-description) !important;
+  font-weight: var(--text-description-weight) !important;
+  line-height: var(--text-description-leading) !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
+label,
+.field__label,
+.searchable-select__label,
+[class*='__label']:not([class*='nav']):not([class*='role']) {
+  font-size: var(--text-label);
+  font-weight: var(--text-label-weight);
+  line-height: var(--text-label-leading);
+}
+
+/* Badge typography — avoid over-matching nav/icon badge classes */
+.status-badge,
+.rec-badge,
+.nurse-badge,
+.doc-badge,
+.admin-badge,
+.sa-badge {
+  font-size: var(--text-badge) !important;
+  font-weight: var(--text-badge-weight) !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
+/* Dark teal-charcoal sidebar brand */
+.layout-sidebar .layout-brand,
+.layout-sidebar .brand-name,
+.layout-sidebar .brand-name__lead,
+.doctor-shell__sidebar .brand-name,
+.doctor-shell__sidebar .brand-name__lead {
+  color: #fff;
+}
+
+.layout-sidebar .brand-name__trail,
+.doctor-shell__sidebar .brand-name__trail {
+  color: var(--color-brand-gold);
+}
+
+.layout-sidebar .layout-brand:hover,
+.doctor-shell__sidebar .brand-name:hover {
+  color: #fff;
+  text-decoration: none;
+}
+
+/* Unified table row hover */
+.rec-table tbody tr:hover,
+.nurse-table tbody tr:hover,
+.doc-table tbody tr:hover,
+.pharmacy-table tbody tr:hover,
+.admin-table tbody tr:hover,
+.lab-table tbody tr:hover,
+.data-table tbody tr:hover {
+  background: var(--color-surface-hover);
+}
+
+/* Module primary buttons → shared green */
+.rec-btn--primary,
+.nurse-btn--primary,
+.doc-btn--primary,
+.lab-btn--primary,
+.pharmacy-btn--primary,
+.admin-btn--primary {
+  background: var(--color-primary) !important;
+  color: #fff !important;
+  border-color: var(--color-primary) !important;
+}
+
+.rec-btn--primary:hover:not(:disabled),
+.nurse-btn--primary:hover:not(:disabled),
+.doc-btn--primary:hover:not(:disabled),
+.lab-btn--primary:hover:not(:disabled),
+.pharmacy-btn--primary:hover:not(:disabled),
+.admin-btn--primary:hover:not(:disabled) {
+  background: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+}
+
+/* Kill leftover decorative gradients on module shells */
+[class*='-hero'],
+[class*='-kpi'],
+[class*='stat-card'],
+.admin-card__head,
+.sa-card__head {
+  background-image: none;
+}

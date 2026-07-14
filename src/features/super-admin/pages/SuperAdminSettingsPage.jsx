@@ -9,40 +9,57 @@ import {
   WardRatesSettingsSection,
 } from '@/features/super-admin/components/SuperAdminSettingsSections';
 import SuperAdminLayout from '@/features/super-admin/components/SuperAdminLayout';
-import { getSettings, updateSettings } from '@/features/super-admin/mock/settingsMockService';
+import {
+  useSuperAdminSettingsQuery,
+  useUpdateSuperAdminSettingsMutation,
+} from '@/features/super-admin/hooks/useSuperAdminQuery';
 import { Button, QueryFeedback } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
+import {
+  Award,
+  Banknote,
+  BedDouble,
+  Building2,
+  CircleDollarSign,
+  Receipt,
+} from 'lucide-react';
 
 const SETTINGS_TABS = [
   {
     id: 'profile',
     label: 'Hospital profile',
-    description: 'Public hospital identity on bills, reports, and communications.',
+    description: 'Hospital identity, contact details, and legal information.',
+    icon: Building2,
   },
   {
     id: 'opd',
     label: 'OPD fees & tax',
-    description: 'Registration fee, consultation fee, GST, and revisit rules for OPD.',
+    description: 'Default registration fee, consultation fee, and GST for OPD billing.',
+    icon: CircleDollarSign,
   },
   {
     id: 'payment',
-    label: 'Payment methods',
-    description: 'Payment options on OPD billing, registration, and appointments.',
+    label: 'Currency & locale',
+    description: 'Currency and timezone used across hospital settings.',
+    icon: Banknote,
   },
   {
     id: 'operations',
     label: 'Operations & wards',
-    description: 'Working hours, bed capacity, and ward types across the hospital.',
+    description: 'Ward capacity and working hours (not yet supported by backend).',
+    icon: BedDouble,
   },
   {
     id: 'ward_rates',
     label: 'Ward daily charges',
-    description: 'Daily inpatient rates per ward type (preview — not live yet).',
+    description: 'Inpatient daily rates (not yet supported by backend).',
+    icon: Receipt,
   },
   {
     id: 'branding',
     label: 'Application branding',
-    description: 'Display name shown inside the hospital management app.',
+    description: 'App display settings (not yet supported by backend).',
+    icon: Award,
   },
 ];
 
@@ -56,10 +73,9 @@ const SECTION_RENDERERS = {
 };
 
 export default function SuperAdminSettingsPage() {
+  const settingsQuery = useSuperAdminSettingsQuery();
+  const updateMutation = useUpdateSuperAdminSettingsMutation();
   const [form, setForm] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState(SETTINGS_TABS[0].id);
 
   const activeSection = useMemo(
@@ -70,11 +86,10 @@ export default function SuperAdminSettingsPage() {
   const ActiveSection = SECTION_RENDERERS[activeTab];
 
   useEffect(() => {
-    getSettings()
-      .then(setForm)
-      .catch((e) => setError(e))
-      .finally(() => setLoading(false));
-  }, []);
+    if (settingsQuery.data) {
+      setForm(settingsQuery.data);
+    }
+  }, [settingsQuery.data]);
 
   const setField = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -85,98 +100,80 @@ export default function SuperAdminSettingsPage() {
     setField(key, raw === '' ? '' : Number(raw));
   };
 
-  const togglePaymentMode = (mode) => {
-    setForm((prev) => {
-      const current = prev.payment_modes ?? [];
-      const next = current.includes(mode)
-        ? current.filter((m) => m !== mode)
-        : [...current, mode];
-      return { ...prev, payment_modes: next };
-    });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSaving(true);
+    if (!form) return;
     try {
-      const payload = {
-        ...form,
-        founded_year: Number(form.founded_year) || 0,
-        bed_capacity: Number(form.bed_capacity) || 0,
-        registration_fee: Number(form.registration_fee) || 0,
-        default_consultation_fee: Number(form.default_consultation_fee) || 0,
-        gst_percent: Number(form.gst_percent) || 0,
-        revisit_window_days: Number(form.revisit_window_days) || 0,
-        ward_rate_general: Number(form.ward_rate_general) || 0,
-        ward_rate_icu: Number(form.ward_rate_icu) || 0,
-        ward_rate_private: Number(form.ward_rate_private) || 0,
-        ward_rate_pediatric: Number(form.ward_rate_pediatric) || 0,
-      };
-      const saved = await updateSettings(payload);
+      const saved = await updateMutation.mutateAsync(form);
       setForm(saved);
-      toast.success('Hospital settings saved (preview — not applied to live modules yet)');
+      toast.success('Hospital settings saved');
     } catch (err) {
       toast.error(err?.message || 'Save failed');
-    } finally {
-      setSaving(false);
     }
   };
 
-  if (!form) {
-    return (
-      <SuperAdminLayout pageTitle="Settings">
-        <QueryFeedback isLoading={loading} isError={Boolean(error)} error={error} />
-      </SuperAdminLayout>
-    );
-  }
-
-  const sectionProps = { form, setField, setNumberField, togglePaymentMode };
+  const sectionProps = { form, setField, setNumberField };
+  const isBackendTab = ['profile', 'opd', 'payment'].includes(activeTab);
 
   return (
     <SuperAdminLayout pageTitle="Settings">
       <div className="admin-page sa-settings-page">
-        <p className="sa-settings-note" role="note">
-          Preview only — values are saved in Super Admin demo until a live settings API is connected.
-        </p>
-
-        <QueryFeedback isLoading={loading} isError={Boolean(error)} error={error}>
-          <form onSubmit={handleSubmit} className="sa-settings-form">
-            <div className="admin-card sa-panel-card sa-settings-shell">
-              <div className="sa-settings-shell__toolbar">
-                <div>
-                  <h1 className="sa-settings-shell__title">Hospital settings</h1>
-                  <p className="sa-settings-shell__sub">Configure fees, payments, wards, and profile</p>
+        <QueryFeedback
+          isLoading={settingsQuery.isLoading}
+          isError={settingsQuery.isError}
+          error={settingsQuery.error}
+          onRetry={settingsQuery.refetch}
+        >
+          {form ? (
+            <form onSubmit={handleSubmit} className="sa-settings-form">
+              <div className="admin-card sa-panel-card sa-settings-shell">
+                <div className="sa-settings-shell__toolbar">
+                  <div>
+                    <h1 className="sa-settings-shell__title">Hospital settings</h1>
+                    <p className="sa-settings-shell__sub">Configure hospital profile and OPD defaults</p>
+                  </div>
+                  {isBackendTab ? (
+                    <Button type="submit" disabled={updateMutation.isPending}>
+                      <Save size={16} aria-hidden />
+                      {updateMutation.isPending ? 'Saving…' : 'Save changes'}
+                    </Button>
+                  ) : null}
                 </div>
-                <Button type="submit" disabled={saving}>
-                  <Save size={16} aria-hidden />
-                  {saving ? 'Saving…' : 'Save changes'}
-                </Button>
-              </div>
 
-              <nav className="sa-settings-tabs" aria-label="Settings sections">
-                {SETTINGS_TABS.map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    className={`sa-settings-tab sa-settings-tab--${tab.id}${
-                      activeTab === tab.id ? ' sa-settings-tab--active' : ''
-                    }`}
-                    onClick={() => setActiveTab(tab.id)}
-                    aria-current={activeTab === tab.id ? 'page' : undefined}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </nav>
+                <nav className="sa-settings-nav" aria-label="Settings sections">
+                  {SETTINGS_TABS.map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        className={`sa-settings-nav-card sa-settings-nav-card--${tab.id}${
+                          isActive ? ' sa-settings-nav-card--active' : ''
+                        }`}
+                        onClick={() => setActiveTab(tab.id)}
+                        aria-current={isActive ? 'page' : undefined}
+                      >
+                        <span className="sa-settings-nav-card__icon" aria-hidden>
+                          <Icon size={20} strokeWidth={2} />
+                        </span>
+                        <span className="sa-settings-nav-card__text">
+                          <span className="sa-settings-nav-card__label">{tab.label}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </nav>
 
-              <div className={`sa-settings-panel sa-settings-panel--${activeSection.id}`}>
-                <p className="sa-settings-panel__lead">{activeSection.description}</p>
-                <div className="sa-settings-panel__body">
-                  {ActiveSection ? <ActiveSection {...sectionProps} /> : null}
+                <div className={`sa-settings-panel sa-settings-panel--${activeSection.id}`}>
+                  <p className="sa-settings-panel__lead">{activeSection.description}</p>
+                  <div className="sa-settings-panel__body">
+                    {ActiveSection ? <ActiveSection {...sectionProps} /> : null}
+                  </div>
                 </div>
               </div>
-            </div>
-          </form>
+            </form>
+          ) : null}
         </QueryFeedback>
       </div>
     </SuperAdminLayout>

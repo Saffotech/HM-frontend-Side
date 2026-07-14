@@ -13,17 +13,16 @@ import SuperAdminLayout from '@/features/super-admin/components/SuperAdminLayout
 import AdminStatCard from '@/features/admin/components/AdminStatCard';
 import AdminRoleBadge from '@/features/admin/components/AdminRoleBadge';
 import AdminStaffStatusBadge from '@/features/admin/components/AdminStaffStatusBadge';
-import { useAdminDashboardQuery, useAdminRolesQuery, useAdminStaffListQuery } from '@/shared/hooks/queries/useAdminQuery';
-import { QueryFeedback, SearchBar } from '@/shared/components/common';
-import { ROUTES } from '@/shared/constants';
-import { useSuperAdminDemoMode } from '@/features/super-admin/hooks/useSuperAdminDemoMode';
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import {
-  getMockTodayAuditLogs,
-  MOCK_SUPER_ADMIN_DASHBOARD,
-  MOCK_SUPER_ADMIN_ROLES,
-  MOCK_SUPER_ADMIN_STAFF,
-} from '@/features/super-admin/mock/superAdminMockData';
-import { getAuditLogs } from '@/features/super-admin/mock/auditMockService';
+  useAdminDashboardQuery,
+  useAdminRolesQuery,
+  useAdminStaffListQuery,
+} from '@/shared/hooks/queries/useAdminQuery';
+import { useSuperAdminAuditQuery } from '@/features/super-admin/hooks/useSuperAdminQuery';
+import { QueryFeedback, SearchBar, TablePagination } from '@/shared/components/common';
+import { ROUTES } from '@/shared/constants';
+import { getAuditActionBadgeClass, formatAuditActionLabel } from '@/features/super-admin/utils/auditActionBadges';
 import {
   DASHBOARD_FILTERS,
   DASHBOARD_FILTER_META,
@@ -31,15 +30,7 @@ import {
   getDashboardTableRows,
 } from '@/features/super-admin/utils/superAdminDashboardFilters';
 
-const ACTION_BADGE = {
-  REGISTER_USER: 'admin-badge--info',
-  ACTIVATE_USER: 'admin-badge--success',
-  DEACTIVATE_USER: 'admin-badge--warn',
-  CREATE_ROLE: 'admin-badge--info',
-  ASSIGN_PERMISSIONS: 'admin-badge--info',
-  UPDATE_SETTINGS: 'admin-badge--warn',
-  UPDATE_USER: 'admin-badge--info',
-};
+const PAGE_SIZE = 20;
 
 const QUICK_ACTIONS = [
   {
@@ -74,67 +65,102 @@ const QUICK_ACTIONS = [
 
 function DashboardTableCell({ column, row }) {
   if (column.key === 'role') {
-    return <AdminRoleBadge role={row.role} />;
+    return <AdminRoleBadge roleName={row.role} />;
   }
   if (column.key === 'status') {
     return <AdminStaffStatusBadge isActive={row.isActive} />;
   }
   if (column.key === 'action') {
-    const badgeClass = ACTION_BADGE[row.actionKey] || 'admin-badge--info';
-    return <span className={`admin-badge ${badgeClass}`}>{row.action}</span>;
+    const badgeClass = getAuditActionBadgeClass(row.actionKey);
+    return (
+      <span className={`admin-badge ${badgeClass}`}>
+        {formatAuditActionLabel(row.actionKey)}
+      </span>
+    );
   }
   return row[column.key] ?? '—';
 }
 
 export default function SuperAdminDashboardPage() {
-  const isDemo = useSuperAdminDemoMode();
   const [activeFilter, setActiveFilter] = useState(DASHBOARD_FILTERS.TOTAL_STAFF);
   const [searchQuery, setSearchQuery] = useState('');
-  const [auditLogs, setAuditLogs] = useState([]);
-  const [auditLoading, setAuditLoading] = useState(true);
-
-  const apiQuery = useAdminDashboardQuery({ enabled: !isDemo });
-  const staffQuery = useAdminStaffListQuery({ page: 1, limit: 100 }, { enabled: !isDemo });
-  const rolesQuery = useAdminRolesQuery({ enabled: !isDemo });
-
-  const data = isDemo ? MOCK_SUPER_ADMIN_DASHBOARD : apiQuery.data;
-  const staff = isDemo ? MOCK_SUPER_ADMIN_STAFF : staffQuery.data?.staff ?? [];
-  const roles = isDemo ? MOCK_SUPER_ADMIN_ROLES : rolesQuery.data ?? [];
-
-  const isLoading = isDemo
-    ? false
-    : apiQuery.isLoading || staffQuery.isLoading || rolesQuery.isLoading;
-  const isError = isDemo ? false : apiQuery.isError || staffQuery.isError || rolesQuery.isError;
-  const error = apiQuery.error || staffQuery.error || rolesQuery.error;
+  const [page, setPage] = useState(1);
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
-  const fetchTodayAudit = useCallback(() => {
-    setAuditLoading(true);
-    if (isDemo) {
-      setAuditLogs(getMockTodayAuditLogs());
-      setAuditLoading(false);
-      return;
-    }
-    getAuditLogs({ dateFrom: today, dateTo: today })
-      .then(setAuditLogs)
-      .catch(() => setAuditLogs([]))
-      .finally(() => setAuditLoading(false));
-  }, [isDemo, today]);
+  const apiQuery = useAdminDashboardQuery();
+  const rolesQuery = useAdminRolesQuery();
 
-  const refetch = () => {
-    apiQuery.refetch();
-    staffQuery.refetch();
-    rolesQuery.refetch();
-    fetchTodayAudit();
-  };
+  const isStaffTab =
+    activeFilter === DASHBOARD_FILTERS.TOTAL_STAFF
+    || activeFilter === DASHBOARD_FILTERS.ACTIVE_STAFF;
+  const isAuditTab = activeFilter === DASHBOARD_FILTERS.TODAY_EVENTS;
+  const isRolesTab = activeFilter === DASHBOARD_FILTERS.TOTAL_ROLES;
 
   useEffect(() => {
-    fetchTodayAudit();
-  }, [fetchTodayAudit]);
+    setPage(1);
+  }, [activeFilter, debouncedSearch]);
+
+  const staffListParams = useMemo(() => {
+    if (!isStaffTab) return null;
+    const params = { page, limit: PAGE_SIZE };
+    if (debouncedSearch) params.search = debouncedSearch;
+    if (activeFilter === DASHBOARD_FILTERS.ACTIVE_STAFF) params.is_active = true;
+    return params;
+  }, [activeFilter, debouncedSearch, isStaffTab, page]);
+
+  const staffQuery = useAdminStaffListQuery(
+    staffListParams ?? { page: 1, limit: 1 },
+    { enabled: isStaffTab },
+  );
+
+  const auditListParams = useMemo(() => {
+    if (!isAuditTab) return null;
+    return {
+      dateFrom: today,
+      dateTo: today,
+      actor: debouncedSearch || undefined,
+      page,
+      limit: PAGE_SIZE,
+    };
+  }, [debouncedSearch, isAuditTab, page, today]);
+
+  const auditQuery = useSuperAdminAuditQuery(
+    auditListParams ?? { page: 1, limit: 1 },
+    { enabled: isAuditTab },
+  );
+
+  const todayAuditCountQuery = useSuperAdminAuditQuery(
+    { dateFrom: today, dateTo: today, page: 1, limit: 1 },
+    { enabled: true },
+  );
+
+  const data = apiQuery.data;
+  const staff = staffQuery.data?.staff ?? [];
+  const staffTotal = staffQuery.data?.total ?? 0;
+  const staffTotalPages = Math.max(1, Math.ceil(staffTotal / PAGE_SIZE));
+  const roles = rolesQuery.data ?? [];
+  const auditLogs = auditQuery.data?.entries ?? [];
+  const auditTotal = auditQuery.data?.total ?? 0;
+  const auditTotalPages = Math.max(1, Math.ceil(auditTotal / PAGE_SIZE));
+  const todayEventsTotal = todayAuditCountQuery.data?.total ?? 0;
+
+  const isLoading = apiQuery.isLoading || rolesQuery.isLoading;
+  const isError = apiQuery.isError || rolesQuery.isError;
+  const error = apiQuery.error || rolesQuery.error;
+
+  const refetch = useCallback(() => {
+    apiQuery.refetch();
+    rolesQuery.refetch();
+    if (isStaffTab) staffQuery.refetch();
+    if (isAuditTab) auditQuery.refetch();
+    todayAuditCountQuery.refetch();
+  }, [apiQuery, rolesQuery, staffQuery, auditQuery, todayAuditCountQuery, isStaffTab, isAuditTab]);
 
   useEffect(() => {
     setSearchQuery('');
+    setPage(1);
   }, [activeFilter]);
 
   const stats = useMemo(
@@ -142,7 +168,7 @@ export default function SuperAdminDashboardPage() {
       {
         key: DASHBOARD_FILTERS.TOTAL_STAFF,
         label: 'Total Staff',
-        value: data?.total_staff ?? staff.length ?? '—',
+        value: data?.total_staff ?? '—',
         sub: 'Registered employees',
         tone: 'primary',
         icon: <Users size={18} />,
@@ -150,8 +176,10 @@ export default function SuperAdminDashboardPage() {
       {
         key: DASHBOARD_FILTERS.ACTIVE_STAFF,
         label: 'Active Staff',
-        value: data?.active_staff ?? staff.filter((s) => s.is_active).length ?? '—',
-        sub: 'Currently active',
+        value: data?.active_staff ?? '—',
+        sub: data?.inactive_staff != null
+          ? `${data.inactive_staff} inactive`
+          : 'Currently active',
         tone: 'success',
         icon: <UserCheck size={18} />,
       },
@@ -166,26 +194,68 @@ export default function SuperAdminDashboardPage() {
       {
         key: DASHBOARD_FILTERS.TODAY_EVENTS,
         label: "Today's Events",
-        value: data?.today_audit ?? auditLogs.length ?? '—',
+        value: todayEventsTotal ?? '—',
         sub: 'Audit log entries today',
         tone: 'info',
         icon: <ClipboardList size={18} />,
       },
     ],
-    [auditLogs.length, data, roles.length, staff],
+    [data, roles.length, todayEventsTotal],
   );
 
   const tableMeta = DASHBOARD_FILTER_META[activeFilter];
   const tableRows = useMemo(
-    () => getDashboardTableRows(activeFilter, { staff, roles, auditLogs }),
-    [activeFilter, auditLogs, roles, staff],
-  );
-  const filteredRows = useMemo(
-    () => filterDashboardTableRows(tableRows, searchQuery),
-    [tableRows, searchQuery],
+    () =>
+      getDashboardTableRows(activeFilter, {
+        staff,
+        roles,
+        auditLogs,
+        staffByRole: data?.staff_by_role ?? [],
+      }),
+    [activeFilter, auditLogs, data?.staff_by_role, roles, staff],
   );
 
-  const tableLoading = isLoading || (activeFilter === DASHBOARD_FILTERS.TODAY_EVENTS && auditLoading);
+  const displayRows = useMemo(() => {
+    if (isRolesTab) return filterDashboardTableRows(tableRows, searchQuery);
+    return tableRows;
+  }, [isRolesTab, searchQuery, tableRows]);
+
+  const tableLoading =
+    (isStaffTab && staffQuery.isLoading)
+    || (isAuditTab && auditQuery.isLoading)
+    || (isRolesTab && rolesQuery.isLoading);
+
+  const paginationProps = useMemo(() => {
+    if (isStaffTab) {
+      return {
+        page,
+        totalPages: staffTotalPages,
+        totalItems: staffTotal,
+        pageSize: PAGE_SIZE,
+        onPageChange: setPage,
+        itemLabel: 'staff',
+      };
+    }
+    if (isAuditTab) {
+      return {
+        page,
+        totalPages: auditTotalPages,
+        totalItems: auditTotal,
+        pageSize: PAGE_SIZE,
+        onPageChange: setPage,
+        itemLabel: 'events',
+      };
+    }
+    return null;
+  }, [
+    auditTotal,
+    auditTotalPages,
+    isAuditTab,
+    isStaffTab,
+    page,
+    staffTotal,
+    staffTotalPages,
+  ]);
 
   return (
     <SuperAdminLayout pageTitle="SuperAdmin Panel">
@@ -206,7 +276,7 @@ export default function SuperAdminDashboardPage() {
                   subtitle={s.sub}
                   icon={s.icon}
                   tone={s.tone}
-                  isLoading={isLoading}
+                  isLoading={isLoading && s.key !== DASHBOARD_FILTERS.TODAY_EVENTS}
                 />
               </button>
             ))}
@@ -225,31 +295,36 @@ export default function SuperAdminDashboardPage() {
                   <div className="admin-empty-state"><p>Loading records…</p></div>
                 ) : !tableRows.length ? (
                   <div className="admin-empty-state"><p>{tableMeta.emptyMessage}</p></div>
-                ) : !filteredRows.length ? (
+                ) : !displayRows.length ? (
                   <div className="admin-empty-state"><p>{tableMeta.noResultsMessage}</p></div>
                 ) : (
-                  <div className="admin-table-wrap sa-dashboard-table-wrap">
-                    <table className="admin-table">
-                      <thead>
-                        <tr>
-                          {tableMeta.columns.map((col) => (
-                            <th key={col.key}>{col.label}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredRows.map((row) => (
-                          <tr key={row.id}>
+                  <>
+                    <div className="admin-table-wrap sa-dashboard-table-wrap">
+                      <table className="admin-table">
+                        <thead>
+                          <tr>
                             {tableMeta.columns.map((col) => (
-                              <td key={col.key}>
-                                <DashboardTableCell column={col} row={row} />
-                              </td>
+                              <th key={col.key}>{col.label}</th>
                             ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {displayRows.map((row) => (
+                            <tr key={row.id}>
+                              {tableMeta.columns.map((col) => (
+                                <td key={col.key}>
+                                  <DashboardTableCell column={col} row={row} />
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {paginationProps ? (
+                      <TablePagination {...paginationProps} />
+                    ) : null}
+                  </>
                 )}
               </div>
             </div>

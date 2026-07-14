@@ -11,7 +11,7 @@ export function getAppointmentStatus(appt) {
 }
 
 /** OPD unpaid scheduled — hidden from doctor lists until payment is collected. */
-export function isOpdPendingUnpaid(appt) {
+function isOpdPendingUnpaid(appt) {
   if (!appt) return false;
   if (appt.displayStatus === 'Pending') return true;
   const payment = appt.payment ?? buildPaymentFromApiFields(appt);
@@ -51,11 +51,6 @@ export function isPendingConsultation(appt) {
   return s === 'Scheduled' || s === 'Waiting' || s === 'In Progress';
 }
 
-/** @deprecated Use getAppointmentStatus */
-export function getConsultStatus(appt) {
-  return getAppointmentStatus(appt);
-}
-
 export function isConsultCompleted(appt) {
   return getAppointmentStatus(appt) === 'Completed';
 }
@@ -64,34 +59,9 @@ export function isConsultCancelled(appt) {
   return getAppointmentStatus(appt) === 'Cancelled';
 }
 
-/** Still on today's doctor board (not finished or cancelled). */
-export function isActiveConsultation(appt) {
-  return !isConsultCompleted(appt) && !isConsultCancelled(appt);
-}
-
 /** Shown on calendar week counts and day lists (excludes cancelled only). */
 export function isCalendarVisible(appt) {
   return !isConsultCancelled(appt);
-}
-
-/** Future / open visits for the Upcoming section. */
-export function isUpcomingAppointment(appt) {
-  if (!isDoctorSchedulableAppointment(appt)) return false;
-  const s = getAppointmentStatus(appt);
-  return s === 'Scheduled' || s === 'Waiting' || s === 'In Progress';
-}
-
-/** Waiting to be called — includes emergency triage while still waiting. */
-export function isInWaitingQueue(appt) {
-  if (!isDoctorSchedulableAppointment(appt)) return false;
-  const s = getAppointmentStatus(appt);
-  if (s === 'In Progress' || s === 'Completed' || s === 'Cancelled') return false;
-  return s === 'Waiting' || s === 'Scheduled' || appt?.type === 'Emergency';
-}
-
-export function initialConsultStatusForAppointment(appt) {
-  if (appt?.type === 'Emergency') return 'Waiting';
-  return 'Waiting';
 }
 
 /** Queue: emergencies first, then waiting, then by appointment time. */
@@ -104,10 +74,6 @@ export function compareQueueOrder(a, b) {
   const byPriority = rank(a) - rank(b);
   if (byPriority !== 0) return byPriority;
   return compareAppointmentsByDateTime(a, b);
-}
-
-export function canCallPatient(appt) {
-  return isInWaitingQueue(appt);
 }
 
 /** Allowed manual status actions in appointment detail (doctor uses Consult modal to complete). */

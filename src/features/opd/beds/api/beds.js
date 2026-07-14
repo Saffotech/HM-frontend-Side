@@ -41,13 +41,6 @@ export async function releaseBed(bedId, token) {
   });
 }
 
-export async function getWards(token) {
-  const response = await getBeds(token);
-  const rows = response?.beds ?? (Array.isArray(response) ? response : []);
-  const wards = [...new Set(rows.map((bed) => bed.ward_name ?? bed.ward).filter(Boolean))];
-  return wards;
-}
-
 export function apiBedToUi(bed) {
   if (!bed) return null;
   return {

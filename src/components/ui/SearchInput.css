@@ -1,0 +1,25 @@
+.ui-search .search-bar__input {
+  height: var(--control-height);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: var(--text-input);
+  font-weight: var(--text-input-weight);
+  background: var(--color-surface);
+}
+
+.ui-search .search-bar__input:focus {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+}
+
+.ui-search__spinner {
+  animation: ui-search-spin 0.7s linear infinite;
+  color: var(--color-primary);
+}
+
+@keyframes ui-search-spin {
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}

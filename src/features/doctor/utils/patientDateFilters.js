@@ -68,7 +68,7 @@ export function buildDoctorPatientsQueryParams({ search = '', dateFilters = DEFA
   return params;
 }
 
-export function parseRegisteredDate(dateStr) {
+function parseRegisteredDate(dateStr) {
   if (!dateStr) return null;
   const d = new Date(dateStr);
   return Number.isNaN(d.getTime()) ? null : d;

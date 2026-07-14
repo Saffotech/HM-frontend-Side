@@ -1,8 +1,7 @@
 import { useAuth } from '@/shared/hooks/useAuth';
 import { hasBackendPermission } from '@/hooks/permissions';
 
-export const NURSE_PERMISSIONS = {
-  queueView: 'opd:view',
+const NURSE_PERMISSIONS = {
   patientView: 'patients:view',
   vitalsView: 'nurse_vitals:view',
   vitalsCreate: 'nurse_vitals:create',
@@ -31,7 +30,6 @@ export function useNursePermission(permission) {
 export function useNursePermissionSet() {
   const { user } = useAuth();
   return {
-    canViewQueue: hasBackendPermission(user, NURSE_PERMISSIONS.queueView),
     canViewPatients: hasBackendPermission(user, NURSE_PERMISSIONS.patientView),
     canViewVitals: hasBackendPermission(user, NURSE_PERMISSIONS.vitalsView),
     canCreateVitals: hasBackendPermission(user, NURSE_PERMISSIONS.vitalsCreate),
@@ -52,3 +50,4 @@ export function useNursePermissionSet() {
     canEscalateAlerts: hasBackendPermission(user, NURSE_PERMISSIONS.alertsEscalate),
   };
 }
+

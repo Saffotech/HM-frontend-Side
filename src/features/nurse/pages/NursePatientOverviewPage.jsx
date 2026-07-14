@@ -22,7 +22,7 @@ import {
   useNurseNotesSearchQuery,
   useNursePatientMedicationsQuery,
   useNursePatientMedHistoryQuery,
-  useNurseQueueQuery,
+  useNurseBedPatientsQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
 
 function formatDate(iso) {
@@ -94,14 +94,14 @@ export default function NursePatientOverviewPage() {
   });
 
   const {
-    data: queueData,
-  } = useNurseQueueQuery({ page: 1, page_size: 100 });
+    data: bedData,
+  } = useNurseBedPatientsQuery({ page: 1, page_size: 100 });
 
   const patient = useMemo(() => {
     const fromMeds = meds?.patient_id ? meds : null;
     const fromVital = vitals?.items?.[0];
     const fromNote = notes?.items?.[0];
-    const queuePatient = queueData?.items?.find(
+    const bedPatient = bedData?.items?.find(
       (q) => String(q.patient_id) === String(patientId),
     );
     return {
@@ -110,13 +110,13 @@ export default function NursePatientOverviewPage() {
         fromMeds?.patientUid
         || fromVital?.patientUid
         || fromNote?.patientUid
-        || queuePatient?.patientUid
+        || bedPatient?.patientUid
         || '',
-      patient_name: fromMeds?.patient_name || fromVital?.patient_name || fromNote?.patient_name || queuePatient?.patient_name || 'Unknown Patient',
-      bed_number: fromMeds?.bed_number || fromVital?.bed_number || fromNote?.bed_number || queuePatient?.bed_number || '—',
-      ward_name: fromMeds?.ward_name || queuePatient?.ward_name || '—',
+      patient_name: fromMeds?.patient_name || fromVital?.patient_name || fromNote?.patient_name || bedPatient?.patient_name || 'Unknown Patient',
+      bed_number: fromMeds?.bed_number || fromVital?.bed_number || fromNote?.bed_number || bedPatient?.bed_number || '—',
+      ward_name: fromMeds?.ward_name || bedPatient?.ward_name || '—',
     };
-  }, [patientId, meds, vitals, notes, queueData?.items]);
+  }, [patientId, meds, vitals, notes, bedData?.items]);
 
   const tabs = [
     canViewVitals ? { id: 'vitals', label: 'Vitals', icon: Activity, count: vitals?.items?.length || 0 } : null,

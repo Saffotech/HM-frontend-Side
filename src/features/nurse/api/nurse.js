@@ -13,10 +13,16 @@ function appendQuery(path, params = {}) {
   return qs ? `${path}?${qs}` : path;
 }
 
-// —— Queue ——
+// —— Queue (OPD doctor queue — legacy) ——
 
 export function getTodayQueue(params, token) {
   return apiClient(appendQuery('/nurse/queue/today', params), { token });
+}
+
+// —— Bed-assigned patients (nurse dashboard) ——
+
+export function getBedPatients(params, token) {
+  return apiClient(appendQuery('/nurse/beds/patients', params), { token });
 }
 
 // —— Vitals ——
@@ -118,14 +124,6 @@ export function getPatientMedicationHistory(patientId, token) {
 export function createHandover(body, token) {
   return apiClient('/nurse/handover', {
     method: 'POST',
-    body: JSON.stringify(body),
-    token,
-  });
-}
-
-export function updateHandover(handoverId, body, token) {
-  return apiClient(`/nurse/handover/${handoverId}`, {
-    method: 'PUT',
     body: JSON.stringify(body),
     token,
   });

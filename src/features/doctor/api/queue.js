@@ -6,57 +6,9 @@ import {
   unwrapDoctorResponse,
 } from '@/shared/api/utils/doctorResponseUtils';
 
-function extractQueue(response) {
-  return response?.queue ?? null;
-}
-
-export async function addToQueue(appointmentId, token) {
-  const response = await apiClient('/queue/add', {
-    method: 'POST',
-    body: JSON.stringify({ appointment_id: appointmentId }),
-    token,
-  });
-  return extractQueue(response);
-}
-
 export async function getTodayQueue(token) {
   const response = await apiClient('/queue/today', { token });
   return normalizeDoctorList(unwrapDoctorResponse(response, 'queue'));
-}
-
-export async function getCurrentQueue(token) {
-  const response = await apiClient('/queue/current', { token });
-  return extractQueue(response);
-}
-
-export async function startConsultation(queueId, token) {
-  const response = await apiClient(`/queue/start/${queueId}`, {
-    method: 'PUT',
-    token,
-  });
-  return extractQueue(response);
-}
-
-export async function completeConsultation(queueId, token, clinical = null) {
-  const response = await apiClient(`/queue/complete/${queueId}`, {
-    method: 'PUT',
-    body: clinical ? JSON.stringify(clinical) : undefined,
-    token,
-  });
-  return response?.queue ?? response;
-}
-
-/** Atomic save by appointment_id — same as POST /consultations/save */
-export async function completeConsultationByAppointment(appointmentId, clinical, token) {
-  const response = await apiClient('/queue/complete', {
-    method: 'PUT',
-    body: JSON.stringify({
-      appointment_id: appointmentId,
-      clinical: clinical ?? {},
-    }),
-    token,
-  });
-  return response;
 }
 
 export async function requestNextPatient(appointmentId, token) {

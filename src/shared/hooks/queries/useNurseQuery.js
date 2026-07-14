@@ -1,6 +1,7 @@
-import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getQueue,
+  getBedPatients,
   getVital,
   listVitals,
   searchVitals,
@@ -20,7 +21,6 @@ import {
   listHandovers,
   getHandover,
   createHandover,
-  updateHandover,
   bulkAddPatients,
   updatePatientRow,
   deletePatientRow,
@@ -35,13 +35,7 @@ import {
 } from '@/shared/api/services/nurse';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
-
-const NURSE_QUEUE_KPI_FILTERS = {
-  waiting: { status: 'waiting', page: 1, page_size: 1 },
-  vitals_completed: { status: 'vitals_completed', page: 1, page_size: 1 },
-  in_consultation: { status: 'in_consultation', page: 1, page_size: 1 },
-  emergency: { priority: 'emergency', page: 1, page_size: 1 },
-};
+import { listAppointmentsPage, listAppointmentsForPatientPage } from '@/shared/api/services/appointments';
 
 export function useNurseQueueQuery(filters = {}, options = {}) {
   const { enabled = true } = options;
@@ -54,32 +48,16 @@ export function useNurseQueueQuery(filters = {}, options = {}) {
   });
 }
 
-/** Dashboard KPI totals — uses backend `total` per filter (page_size 1, no bulk fetch). */
-export function useNurseQueueKpiCounts(options = {}) {
+/** Bed-assigned patients — primary nurse dashboard list. */
+export function useNurseBedPatientsQuery(filters = {}, options = {}) {
   const { enabled = true } = options;
   const token = useQueryToken();
-  const entries = Object.entries(NURSE_QUEUE_KPI_FILTERS);
-  const results = useQueries({
-    queries: entries.map(([, filters]) => ({
-      queryKey: queryKeys.nurse.queue(filters),
-      queryFn: () => getQueue(filters, token),
-      enabled: enabled && Boolean(token),
-    })),
+  return useQuery({
+    queryKey: queryKeys.nurse.bedPatients(filters),
+    enabled: enabled && Boolean(token),
+    queryFn: () => getBedPatients(filters, token),
+    staleTime: 30 * 1000,
   });
-
-  const counts = Object.fromEntries(
-    entries.map(([id], index) => [id, results[index].data?.total ?? 0]),
-  );
-  const isLoading = results.some((result) => result.isLoading);
-  const isError = results.some((result) => result.isError);
-  const error = results.find((result) => result.isError)?.error;
-  const refetch = () => {
-    results.forEach((result) => {
-      result.refetch?.();
-    });
-  };
-
-  return { counts, isLoading, isError, error, refetch };
 }
 
 function findQueueAppointmentIdForPatient(queueData, patientId) {
@@ -90,21 +68,75 @@ function findQueueAppointmentIdForPatient(queueData, patientId) {
   return match.appointment_id ?? match.id ?? null;
 }
 
+function appointmentSortTime(appt) {
+  const raw = appt?.scheduledAt ?? appt?.createdAt ?? appt?.date;
+  const ts = raw ? new Date(raw).getTime() : 0;
+  return Number.isNaN(ts) ? 0 : ts;
+}
+
+/** Prefer latest non-cancelled OPD appointment for bed/IPD patients (no nurse queue row). */
+function pickAppointmentIdFromList(appointments, patientId) {
+  if (!appointments?.length || patientId == null) return null;
+  const pid = String(patientId);
+  const matches = appointments.filter((appt) => {
+    const status = String(appt?.status ?? '').toLowerCase();
+    if (status === 'cancelled') return false;
+    const dbId = appt.patientDbId ?? appt.patient_id;
+    return dbId != null && String(dbId) === pid;
+  });
+  if (!matches.length) return null;
+  matches.sort((a, b) => appointmentSortTime(b) - appointmentSortTime(a));
+  const best = matches[0];
+  return best.dbId ?? best.id ?? null;
+}
+
 /**
- * Resolve today's queue appointment_id for a patient (vitals/notes require appointment_id, not patient_id).
- * Uses queue search — backend matches numeric search against patient_id.
+ * Resolve appointment_id for vitals/notes.
+ * 1) Nurse OPD queue (today)
+ * 2) Fallback: patient's OPD appointments (bed-assigned patients are often not on the queue)
  */
 export function useNursePatientQueueAppointmentId(patientId, options = {}) {
   const { enabled = true } = options;
   const token = useQueryToken();
   const patientKey = patientId != null ? String(patientId) : '';
+  const patientDbId = Number(patientKey);
   const filters = { search: patientKey, page: 1, page_size: 50 };
+  const canResolve =
+    enabled && Boolean(patientKey) && Boolean(token) && Number.isSafeInteger(patientDbId) && patientDbId >= 1;
 
   const query = useQuery({
-    queryKey: queryKeys.nurse.queue(filters),
-    enabled: enabled && Boolean(patientKey) && Boolean(token),
-    queryFn: () => getQueue(filters, token),
-    select: (data) => findQueueAppointmentIdForPatient(data, patientKey),
+    queryKey: queryKeys.nurse.patientAppointment(patientKey),
+    enabled: canResolve,
+    queryFn: async () => {
+      try {
+        const queueData = await getQueue(filters, token);
+        const fromQueue = findQueueAppointmentIdForPatient(queueData, patientKey);
+        if (fromQueue != null) return fromQueue;
+      } catch {
+        /* Bed patients often have no queue access path — fall through to appointments. */
+      }
+
+      try {
+        const page = await listAppointmentsPage(
+          token,
+          { patient_id: patientDbId, page: 1, limit: 50, sort: 'scheduled_at', order: 'desc' },
+          { softFail: true },
+        );
+        const fromFiltered = pickAppointmentIdFromList(page?.appointments, patientKey);
+        if (fromFiltered != null) return fromFiltered;
+
+        const scanned = await listAppointmentsForPatientPage(token, {
+          patientDbId,
+          page: 1,
+          limit: 20,
+          maxScanPages: 10,
+        });
+        return pickAppointmentIdFromList(scanned?.appointments, patientKey);
+      } catch {
+        return null;
+      }
+    },
+    staleTime: 30 * 1000,
   });
 
   return {
@@ -281,6 +313,7 @@ export function useCreateVitalsMutation() {
       queryClient.invalidateQueries({ queryKey: ['nurse', 'vitals'] });
       queryClient.invalidateQueries({ queryKey: ['nurse', 'vitals-search'] });
       queryClient.invalidateQueries({ queryKey: ['nurse', 'queue'] });
+      queryClient.invalidateQueries({ queryKey: ['nurse', 'bed-patients'] });
     },
   });
 }
@@ -307,6 +340,7 @@ export function useCreateNoteMutation() {
       queryClient.invalidateQueries({ queryKey: ['nurse', 'notes'] });
       queryClient.invalidateQueries({ queryKey: ['nurse', 'notes-search'] });
       queryClient.invalidateQueries({ queryKey: ['nurse', 'queue'] });
+      queryClient.invalidateQueries({ queryKey: ['nurse', 'bed-patients'] });
     },
   });
 }
@@ -345,18 +379,6 @@ export function useCreateHandoverMutation() {
   return useMutation({
     mutationFn: (data) => createHandover(data, token),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.nurse.handovers() }),
-  });
-}
-
-export function useUpdateHandoverMutation(handoverId) {
-  const token = useQueryToken();
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (data) => updateHandover(handoverId, data, token),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['nurse', 'handovers'] });
-      if (handoverId) queryClient.invalidateQueries({ queryKey: queryKeys.nurse.handover(handoverId) });
-    },
   });
 }
 

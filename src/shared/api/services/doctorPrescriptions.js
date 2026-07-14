@@ -21,17 +21,6 @@ export async function fetchPrescriptionById(id, token) {
   return apiToUiPrescription(raw);
 }
 
-/** Aggregate prescriptions for unique integer patient IDs (no global list endpoint). */
-export async function fetchAllPrescriptionsForPatientIds(patientIds, token) {
-  const ids = [...new Set(patientIds.filter((id) => id != null && !Number.isNaN(Number(id))))];
-  if (!ids.length) return [];
-
-  const batches = await Promise.all(
-    ids.map((id) => getPrescriptionsByPatient(id, token).catch(() => []))
-  );
-  return mapPrescriptionList(batches.flat());
-}
-
 export async function addPrescription(payload, token) {
   const body = uiToApiPrescriptionBody(payload);
   const created = await createPrescription(body, token);

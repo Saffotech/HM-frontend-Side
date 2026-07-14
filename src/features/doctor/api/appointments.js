@@ -2,10 +2,6 @@
 
 import { apiClient } from '@/shared/api/client';
 
-export async function getDashboardStats(token) {
-  return apiClient('/appointments/dashboard-stats', { token });
-}
-
 export async function getTodayAppointments(token) {
   return apiClient('/appointments/today', { token });
 }

@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal, Button } from '@/shared/components/common';
-import { ROUTES } from '@/shared/constants';
+import { ROUTES, ROLES } from '@/shared/constants';
 import { useAuth } from '@/shared/hooks/useAuth';
-import { isDemoReceptionistSession } from '@/features/receptionist/utils/receptionistPortal';
-import { isDemoSuperAdminSession } from '@/features/super-admin/utils/superAdminPortal';
 
 const IDLE_MS = 30 * 60 * 1000;
 const WARNING_MS = 60 * 1000;
@@ -28,8 +26,8 @@ export default function SessionTimeout() {
   }, []);
 
   const forceLogout = useCallback(() => {
-    const returnToReceptionLogin = isDemoReceptionistSession(user);
-    const returnToSuperAdminLogin = isDemoSuperAdminSession(user);
+    const returnToSuperAdminLogin = user?.role === ROLES.SUPER_ADMIN;
+    const returnToReceptionLogin = user?.role === ROLES.RECEPTIONIST;
     clearTimers();
     setWarningOpen(false);
     logout();

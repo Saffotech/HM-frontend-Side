@@ -6,6 +6,7 @@ import * as nurseApi from '@/features/nurse/api/nurse';
 import { getOccupiedBedMapByPatientDbId } from '@/shared/api/services/beds';
 import {
   mapQueueResponse,
+  mapBedPatientsResponse,
   mapQueueFiltersToApi,
   enrichQueueItemsWithBeds,
   mapVitalsNotesSearchToApi,
@@ -43,14 +44,19 @@ async function fetchTodayQueueItems(token) {
   return enriched.items ?? [];
 }
 
+async function fetchBedPatientItems(token) {
+  const raw = await nurseApi.getBedPatients({ page: 1, page_size: NURSE_QUEUE_MAX_PAGE_SIZE }, token);
+  return mapBedPatientsResponse(raw).items ?? [];
+}
+
 async function fetchPatientUidSources(token) {
-  const [queueItems, rawMeds] = await Promise.all([
-    fetchTodayQueueItems(token),
+  const [bedItems, rawMeds] = await Promise.all([
+    fetchBedPatientItems(token),
     nurseApi.getMedicationPatients({ page: 1, page_size: NURSE_QUEUE_MAX_PAGE_SIZE }, token),
   ]);
   const medRows = Array.isArray(rawMeds) ? rawMeds : rawMeds?.items ?? rawMeds?.data ?? [];
   const medItems = medRows.map(mapMedicationPatientRow).filter(Boolean);
-  return [...queueItems, ...medItems];
+  return [...bedItems, ...medItems];
 }
 
 async function enrichRowsWithQueueUid(items, token) {
@@ -108,6 +114,23 @@ export async function getQueue(params = {}, token) {
   const raw = await nurseApi.getTodayQueue(mapQueueFiltersToApi(safeParams), token);
   const mapped = mapQueueResponse(raw);
   return enrichQueueResponse(mapped, token);
+}
+
+/** Occupied-bed patients for nurse dashboard (GET /nurse/beds/patients). */
+export async function getBedPatients(params = {}, token) {
+  const page = params.page ?? 1;
+  const pageSize = Math.min(Math.max(params.page_size ?? 20, 1), 100);
+  const raw = await nurseApi.getBedPatients({
+    search: params.search,
+    ward_name: params.ward_name,
+    bed_number: params.bed_number,
+    department_id: params.department_id,
+    patient_id: params.patient_id,
+    patient_uid: params.patient_uid,
+    page,
+    page_size: pageSize,
+  }, token);
+  return mapBedPatientsResponse(raw);
 }
 
 export async function createVitals(data, token) {
@@ -272,11 +295,6 @@ export async function getPatientMedicationHistory(patientId, token) {
 
 export async function createHandover(data, token) {
   const raw = await nurseApi.createHandover(data, token);
-  return mapHandoverDetail(raw) ?? mapHandoverListItem(raw);
-}
-
-export async function updateHandover(id, data, token) {
-  const raw = await nurseApi.updateHandover(id, data, token);
   return mapHandoverDetail(raw) ?? mapHandoverListItem(raw);
 }
 

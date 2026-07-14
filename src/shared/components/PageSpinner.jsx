@@ -1,9 +1,5 @@
-import './PageSpinner.css';
+import { Spinner } from '@/components/ui';
 
 export default function PageSpinner() {
-  return (
-    <div className="page-spinner" aria-live="polite" aria-busy="true">
-      Loading...
-    </div>
-  );
+  return <Spinner fullPage label="Loading..." />;
 }

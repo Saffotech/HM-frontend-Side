@@ -4,7 +4,7 @@
   max-width: 100%;
   gap: 0.5rem;
   padding: 0 0 0.35rem;
-  background: linear-gradient(180deg, #f1f5f9 0%, #f8fafc 12%, transparent 28%);
+  background: var(--color-surface);
   border-radius: var(--radius-lg);
 }
 
@@ -117,7 +117,7 @@ button.bed-stat-card {
 }
 
 .bed-stat-card--assign .bed-stat-card__icon {
-  background: linear-gradient(160deg, #1d6fa4 0%, #1565a0 100%);
+  background: var(--color-primary);
   color: #fff;
   box-shadow: 0 2px 8px rgba(29, 111, 164, 0.3);
 }
@@ -283,7 +283,7 @@ button.bed-stat-card {
   gap: 0.5rem;
   padding: 0.75rem 1rem 0.65rem;
   border-bottom: 1px solid var(--color-border-light);
-  background: linear-gradient(180deg, #f1f5f9 0%, #fff 70%);
+  background: var(--color-surface);
 }
 
 .beds-table-card__title {
@@ -322,7 +322,7 @@ button.bed-stat-card {
   top: 0;
   z-index: 1;
   width: calc(100% / 6);
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  background: var(--color-surface);
   border-bottom: 2px solid var(--color-border);
   font-size: 0.65rem;
   letter-spacing: 0.06em;
@@ -371,7 +371,7 @@ button.bed-stat-card {
   font-size: 0.75rem;
   font-weight: 600;
   color: #334155;
-  background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+  background: var(--color-surface);
   border: 1px solid #e2e8f0;
   border-radius: 6px;
 }
@@ -382,12 +382,6 @@ button.bed-stat-card {
 }
 
 .beds-table__empty {
-  color: var(--color-text-muted);
-}
-
-.beds-table__occupied-label {
-  font-size: 0.8rem;
-  font-weight: 600;
   color: var(--color-text-muted);
 }
 

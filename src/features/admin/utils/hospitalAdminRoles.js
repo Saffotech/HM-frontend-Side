@@ -1,16 +1,16 @@
-/** Roles Hospital Admin may assign when registering or updating staff (frontend filter). */
-export const HOSPITAL_ADMIN_REGISTER_ROLE_NAMES = [
-  'doctor',
-  'nurse',
-  'opd_billing',
-  'pharmacist',
-];
+/**
+ * Roles Hospital Admin may assign when registering or updating staff.
+ * Admin may assign any role except elevated admins (admin / super_admin).
+ */
+export const HOSPITAL_ADMIN_FORBIDDEN_ROLE_NAMES = ['admin', 'super_admin'];
 
 const PRIVILEGED_ROLE_NAMES = new Set(['admin', 'super_admin']);
 
 export function filterHospitalAdminRegisterRoles(roles) {
   if (!roles?.length) return [];
-  return roles.filter((role) => HOSPITAL_ADMIN_REGISTER_ROLE_NAMES.includes(role.name));
+  return roles.filter(
+    (role) => !HOSPITAL_ADMIN_FORBIDDEN_ROLE_NAMES.includes(role.name),
+  );
 }
 
 export function isPrivilegedStaffRole(roleName) {

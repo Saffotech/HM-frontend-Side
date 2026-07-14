@@ -3,12 +3,6 @@
   max-width: 100%;
 }
 
-.patients-page__header-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
 .patients-page__register-link {
   text-decoration: none;
 }
@@ -64,8 +58,8 @@
 }
 
 .patients-page__date-filter--active {
-  background: #0d9488;
-  border-color: #0d9488;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
   color: #fff;
 }
 
@@ -160,15 +154,6 @@
 }
 
 @media (max-width: 768px) {
-  .patients-page__header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .patients-page__header-actions {
-    width: 100%;
-  }
-
   .patients-page__register-link {
     display: block;
     width: 100%;

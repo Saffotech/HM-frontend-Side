@@ -44,8 +44,6 @@ import Skeleton from '@/shared/components/common/Skeleton';
 
 import { toast } from '@/shared/utils/toast';
 
-import StatusPill from './StatusPill';
-
 import DashboardFilterBar from './DashboardFilterBar';
 
 import DashboardAppointmentsTable from './DashboardAppointmentsTable';

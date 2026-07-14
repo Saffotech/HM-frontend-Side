@@ -5,37 +5,31 @@ import SuperAdminLayout from '@/features/super-admin/components/SuperAdminLayout
 import SuperAdminPageHeader from '@/features/super-admin/components/SuperAdminPageHeader';
 import SuperAdminRoleCard from '@/features/super-admin/components/SuperAdminRoleCard';
 import AdminEmptyState from '@/features/admin/components/AdminEmptyState';
-import { useAdminRolesQuery, useAdminStaffListQuery } from '@/shared/hooks/queries/useAdminQuery';
+import { useAdminDashboardQuery, useAdminRolesQuery } from '@/shared/hooks/queries/useAdminQuery';
 import { Button, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
-import { useSuperAdminDemoMode } from '@/features/super-admin/hooks/useSuperAdminDemoMode';
-import {
-  MOCK_SUPER_ADMIN_ROLES,
-  MOCK_SUPER_ADMIN_STAFF,
-} from '@/features/super-admin/mock/superAdminMockData';
 
-function buildStaffCounts(staff = []) {
-  return staff.reduce((acc, user) => {
-    const key = user.role_name || user.role;
-    if (key) acc[key] = (acc[key] || 0) + 1;
+function buildStaffCounts(staffByRole = []) {
+  return staffByRole.reduce((acc, row) => {
+    if (row.role_name) acc[row.role_name] = row.count ?? 0;
     return acc;
   }, {});
 }
 
 export default function SuperAdminRolesListPage() {
   const navigate = useNavigate();
-  const isDemo = useSuperAdminDemoMode();
-  const apiQuery = useAdminRolesQuery({ enabled: !isDemo });
-  const staffQuery = useAdminStaffListQuery({ page: 1, limit: 100 }, { enabled: !isDemo });
+  const apiQuery = useAdminRolesQuery();
+  const dashboardQuery = useAdminDashboardQuery();
 
-  const roles = isDemo ? MOCK_SUPER_ADMIN_ROLES : apiQuery.data;
-  const staff = isDemo ? MOCK_SUPER_ADMIN_STAFF : staffQuery.data?.staff ?? [];
-  const staffCounts = useMemo(() => buildStaffCounts(staff), [staff]);
+  const roles = apiQuery.data;
+  const staffCounts = useMemo(
+    () => buildStaffCounts(dashboardQuery.data?.staff_by_role ?? []),
+    [dashboardQuery.data?.staff_by_role],
+  );
 
-  const isLoading = isDemo ? false : apiQuery.isLoading || staffQuery.isLoading;
-  const isError = isDemo ? false : apiQuery.isError || staffQuery.isError;
-  const error = apiQuery.error || staffQuery.error;
-
+  const isLoading = apiQuery.isLoading;
+  const isError = apiQuery.isError;
+  const error = apiQuery.error;
   const permissionsPath = (roleId) =>
     ROUTES.SUPER_ADMIN_ROLES_ASSIGN.replace(':roleId', String(roleId));
 
@@ -62,7 +56,7 @@ export default function SuperAdminRolesListPage() {
           error={error}
           onRetry={() => {
             apiQuery.refetch();
-            staffQuery.refetch();
+            dashboardQuery.refetch();
           }}
         >
           {!roles?.length ? (

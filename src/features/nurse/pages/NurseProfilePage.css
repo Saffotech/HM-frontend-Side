@@ -1,25 +1,25 @@
-.nurse-profile-page {
+.nurse-profile-page{
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.nurse-profile-page__toolbar {
+.nurse-profile-page__toolbar{
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 0.5rem;
 }
 
-.nurse-profile-card {
+.nurse-profile-card{
   overflow: hidden;
 }
 
-.nurse-profile-head__meta {
+.nurse-profile-head__meta{
   min-width: 0;
 }
 
-.nurse-profile-head__name {
+.nurse-profile-head__name{
   margin: 0;
   font-size: 1.375rem;
   font-weight: 700;
@@ -27,15 +27,15 @@
   line-height: 1.25;
 }
 
-.nurse-profile-head__role {
+.nurse-profile-head__role{
   margin: 0.25rem 0 0;
-  color: #2563eb;
+  color: var(--color-info);
   font-size: 0.8125rem;
   font-weight: 600;
   text-transform: capitalize;
 }
 
-.nurse-profile-head__badge {
+.nurse-profile-head__badge{
   display: inline-flex;
   align-items: center;
   margin-top: 0.5rem;
@@ -49,20 +49,20 @@
   border-radius: 999px;
 }
 
-.nurse-profile-body {
+.nurse-profile-body{
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
   padding: 1rem 1.25rem 1.25rem;
 }
 
-.nurse-profile-section {
+.nurse-profile-section{
   display: flex;
   flex-direction: column;
   gap: 0.875rem;
 }
 
-.nurse-profile-section__title {
+.nurse-profile-section__title{
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -74,30 +74,24 @@
   border-bottom: 1px solid #e2e8f0;
 }
 
-.nurse-profile-section__title svg {
+.nurse-profile-section__title svg{
   color: #94a3b8;
   flex-shrink: 0;
 }
 
-.nurse-profile-fields {
+.nurse-profile-fields{
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.875rem 1rem;
 }
 
-.nurse-profile-fields--2 {
+.nurse-profile-fields--2{
   grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.nurse-profile-field--span-2 {
-  grid-column: span 2;
-}
-
-.nurse-profile-field--span-4 {
+}.nurse-profile-field--span-4{
   grid-column: 1 / -1;
 }
 
-.nurse-profile-readonly {
+.nurse-profile-readonly{
   margin: 0;
   font-size: 0.875rem;
   color: #0f172a;
@@ -105,20 +99,20 @@
   word-break: break-word;
 }
 
-.nurse-profile-readonly--muted {
+.nurse-profile-readonly--muted{
   color: #64748b;
 }
 
-.nurse-profile-readonly--empty {
+.nurse-profile-readonly--empty{
   color: #94a3b8;
   font-style: italic;
 }
 
-.nurse-profile-perms {
+.nurse-profile-perms{
   padding-top: 0.25rem;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 900px){
   .nurse-profile-fields {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -129,7 +123,7 @@
   }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 560px){
   .nurse-profile-fields,
   .nurse-profile-fields--2 {
     grid-template-columns: 1fr;

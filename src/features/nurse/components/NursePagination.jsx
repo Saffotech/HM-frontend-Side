@@ -1,6 +1,11 @@
 import { memo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button, Pagination } from '@/components/ui';
 
+/**
+ * Nurse list pagination — supports known totals via shared Pagination,
+ * or cursor-style prev/next when only hasNextPage is known.
+ */
 function NursePagination({
   page = 1,
   pageSize = 20,
@@ -11,56 +16,56 @@ function NursePagination({
 }) {
   const hasKnownTotal = total != null && Number.isFinite(total);
   const totalPages = hasKnownTotal ? Math.ceil(total / pageSize) || 1 : null;
-  const canGoPrev = page > 1;
-  const canGoNext = hasKnownTotal ? page < totalPages : hasNextPage;
 
-  if (!canGoPrev && !canGoNext) {
-    return null;
+  if (hasKnownTotal) {
+    return (
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        totalItems={total}
+        pageSize={pageSize}
+        onPageChange={onChange}
+      />
+    );
   }
 
+  const canGoPrev = page > 1;
+  const canGoNext = hasNextPage;
+  if (!canGoPrev && !canGoNext) return null;
+
   const start = itemCount > 0 ? (page - 1) * pageSize + 1 : 0;
-  const end = hasKnownTotal
-    ? Math.min(page * pageSize, total)
-    : (page - 1) * pageSize + itemCount;
+  const end = (page - 1) * pageSize + itemCount;
 
   return (
-    <div className="nurse-pagination">
-      <p>
-        {hasKnownTotal ? (
-          <>
-            Showing <strong>{start}</strong> to <strong>{end}</strong> of <strong>{total}</strong>
-          </>
-        ) : (
-          <>
-            Showing <strong>{start}</strong> to <strong>{end}</strong>
-            {hasNextPage ? ' (more available)' : ''}
-          </>
-        )}
+    <nav className="ui-pagination nurse-pagination" aria-label="Pagination">
+      <p className="text-description">
+        Showing <strong>{start}</strong> to <strong>{end}</strong>
+        {hasNextPage ? ' (more available)' : ''}
       </p>
-      <div className="nurse-pagination__nav">
-        <button
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <Button
           type="button"
-          className="nurse-pagination__btn"
+          variant="outline"
+          size="sm"
+          iconOnly
           disabled={!canGoPrev}
           onClick={() => onChange(page - 1)}
           aria-label="Previous page"
-        >
-          <ChevronLeft size={18} />
-        </button>
-        <span>
-          {hasKnownTotal ? `${page} / ${totalPages}` : `Page ${page}`}
-        </span>
-        <button
+          leftIcon={ChevronLeft}
+        />
+        <span className="text-body">Page {page}</span>
+        <Button
           type="button"
-          className="nurse-pagination__btn"
+          variant="outline"
+          size="sm"
+          iconOnly
           disabled={!canGoNext}
           onClick={() => onChange(page + 1)}
           aria-label="Next page"
-        >
-          <ChevronRight size={18} />
-        </button>
+          leftIcon={ChevronRight}
+        />
       </div>
-    </div>
+    </nav>
   );
 }
 

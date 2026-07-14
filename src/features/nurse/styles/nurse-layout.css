@@ -1,57 +1,34 @@
-﻿.nurse-role-label {
+.nurse-role-label{
   padding: 0 1rem 0.5rem;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted, #64748b);
+  letter-spacing: 0.08em;
+  color: var(--color-sidebar-text-active);
 }
 
-/* .nurse-page {
+/* .nurse-page{
   display: flex;
   flex-direction: column;
   
-} */
-
-.nurse-page-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.nurse-page-header h1 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary, #0f172a);
-}
-
-.nurse-page-header__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.nurse-card {
+}.nurse-card{
   background: #fff;
   border: 1px solid var(--border-color, #e2e8f0);
   border-radius: var(--radius-md, 8px);
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
-.nurse-card--padded {
+.nurse-card--padded{
   padding: 1rem 1.25rem;
 }
 
-.nurse-filters {
+.nurse-filters{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
 }
 
-.nurse-field label {
+.nurse-field label{
   display: block;
   font-size: 0.75rem;
   font-weight: 600;
@@ -61,7 +38,7 @@
 
 .nurse-input,
 .nurse-select,
-.nurse-textarea {
+.nurse-textarea{
   width: 100%;
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
@@ -71,20 +48,20 @@
   color: #0f172a;
 }
 
-.nurse-textarea {
+.nurse-textarea{
   resize: vertical;
   min-height: 5rem;
 }
 
 .nurse-input:focus,
 .nurse-select:focus,
-.nurse-textarea:focus {
+.nurse-textarea:focus{
   outline: none;
-  border-color: var(--primary, #2563eb);
+  border-color: var(--primary, var(--color-primary));
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
-.nurse-btn {
+.nurse-btn{
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -98,69 +75,75 @@
   transition: background 0.15s, color 0.15s;
 }
 
-.nurse-btn:disabled {
+.nurse-btn:disabled{
   opacity: 0.55;
   cursor: not-allowed;
 }
 
-.nurse-btn--primary {
-  background: var(--primary, #2563eb);
+.nurse-btn--primary{
+  background: var(--color-primary);
   color: #fff;
 }
 
-.nurse-btn--primary:hover:not(:disabled) {
-  background: #1d4ed8;
+.nurse-btn--primary:hover:not(:disabled){
+  background: var(--color-primary-hover);
 }
 
-.nurse-btn--secondary {
-  background: #fff;
-  color: #334155;
-  border-color: #cbd5e1;
+.nurse-btn--secondary{
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-border-strong);
 }
 
-.nurse-btn--secondary:hover:not(:disabled) {
-  background: #f8fafc;
+.nurse-btn--secondary:hover:not(:disabled){
+  background: var(--color-surface-hover);
 }
 
-.nurse-btn--danger {
-  background: #dc2626;
+.nurse-btn--danger{
+  background: var(--color-danger);
   color: #fff;
 }
 
-.nurse-btn--ghost {
+.nurse-btn--ghost{
   background: transparent;
-  color: #64748b;
+  color: var(--color-text-muted);
   border: none;
   padding: 0.35rem;
 }
 
-.nurse-btn--ghost:hover {
-  color: #2563eb;
+.nurse-btn--ghost:hover{
+  color: var(--color-primary);
+}
+*/
+
+.nurse-card--padded{
+  padding: 1rem 1.25rem;
 }
 
-.nurse-kpi-grid {
+.nurse-kpi-grid{
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
+  width: 100%;
 }
 
-@media (max-width: 1100px) {
-  .nurse-kpi-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 640px) {
+@media (max-width: 1100px){
   .nurse-kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-.nurse-kpi {
+@media (max-width: 640px){
+  .nurse-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.nurse-kpi{
   width: 100%;
   padding: 0.75rem 0.875rem;
   min-height: 4.5rem;
-  border-left: 3px solid #2563eb;
+  border-left: 3px solid var(--color-primary);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -171,29 +154,29 @@
   transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s, background 0.15s;
 }
 
-.nurse-kpi:hover {
+.nurse-kpi:hover{
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
   transform: translateY(-1px);
 }
 
-.nurse-kpi:focus-visible {
+.nurse-kpi:focus-visible{
   outline: none;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
 }
 
-.nurse-kpi--active {
+.nurse-kpi--active{
   background: #f8fafc;
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.35);
 }
 
-.nurse-section-title {
+.nurse-section-title{
   margin: 0;
   font-size: 1.125rem;
   font-weight: 600;
   color: #0f172a;
 }
 
-.nurse-dashboard-table__header {
+.nurse-dashboard-table__header{
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -202,17 +185,17 @@
   flex-wrap: wrap;
 }
 
-.nurse-dashboard-table__search {
+.nurse-dashboard-table__search{
   margin: 0;
   min-width: min(100%, 16rem);
   flex: 0 1 18rem;
 }
 
-.nurse-dashboard-table__search label {
+.nurse-dashboard-table__search label{
   display: none;
 }
 
-@media (max-width: 560px) {
+@media (max-width: 560px){
   .nurse-dashboard-table__header {
     flex-direction: column;
     align-items: stretch;
@@ -225,43 +208,45 @@
 }
 
 /* —— Nurse dashboard (queue home) —— */
-.nurse-dashboard-page {
+.nurse-dashboard-page{
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
 }
 
-.nurse-dashboard-page .nurse-kpi-grid {
+.nurse-dashboard-page .nurse-kpi-grid{
   gap: 0.5rem;
+  width: 100%;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.nurse-dashboard-page .nurse-kpi {
+.nurse-dashboard-page .nurse-kpi{
   padding: 0.45rem 0.65rem;
   min-height: 0;
   border-left-width: 3px;
   border-radius: 10px;
 }
 
-.nurse-dashboard-page .nurse-kpi:hover {
+.nurse-dashboard-page .nurse-kpi:hover{
   transform: none;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
 }
 
-.nurse-dashboard-page .nurse-kpi--active {
-  background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+.nurse-dashboard-page .nurse-kpi--active{
+  background: var(--color-surface);
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.28);
 }
 
-.nurse-dashboard-page .nurse-kpi__label {
+.nurse-dashboard-page .nurse-kpi__label{
   font-size: 0.625rem;
   letter-spacing: 0.04em;
 }
 
-.nurse-dashboard-page .nurse-kpi__value {
+.nurse-dashboard-page .nurse-kpi__value{
   font-size: 1.125rem;
 }
 
-.nurse-dashboard-page .nurse-dashboard-table__header {
+.nurse-dashboard-page .nurse-dashboard-table__header{
   margin-bottom: 0.375rem;
   padding: 0.25rem 0;
   align-items: center;
@@ -269,18 +254,18 @@
   padding-bottom: 0.5rem;
 }
 
-.nurse-dashboard-page .nurse-section-title {
+.nurse-dashboard-page .nurse-section-title{
   font-size: 0.9375rem;
   font-weight: 700;
   color: #1e293b;
 }
 
-.nurse-dashboard-page .nurse-dashboard-table__search {
+.nurse-dashboard-page .nurse-dashboard-table__search{
   min-width: min(100%, 18rem);
   flex: 0 1 20rem;
 }
 
-.nurse-dashboard-page .nurse-dashboard-table__search label {
+.nurse-dashboard-page .nurse-dashboard-table__search label{
   position: absolute;
   width: 1px;
   height: 1px;
@@ -291,24 +276,24 @@
   border: 0;
 }
 
-.nurse-dashboard-page__search-wrap {
+.nurse-dashboard-page__search-wrap{
   position: relative;
   width: 100%;
 }
 
-.nurse-dashboard-page__search-icon {
+.nurse-dashboard-page__search-icon{
   position: absolute;
   left: 0.7rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #6366f1;
+  color: var(--color-primary);
   pointer-events: none;
 }
 
-.nurse-dashboard-page__search {
+.nurse-dashboard-page__search{
   width: 100%;
   padding: 0.45rem 0.75rem 0.45rem 2.15rem;
-  border: 1px solid #c7d2fe;
+  border: 1px solid var(--color-primary-border);
   border-radius: 10px;
   background: #fff;
   font-size: 0.8125rem;
@@ -317,34 +302,34 @@
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.nurse-dashboard-page__search:focus {
+.nurse-dashboard-page__search:focus{
   outline: none;
-  border-color: #818cf8;
+  border-color: var(--color-primary-border);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
-.nurse-dashboard-page__search::placeholder {
+.nurse-dashboard-page__search::placeholder{
   color: #94a3b8;
 }
 
-.nurse-dashboard-page__table .nurse-card {
+.nurse-dashboard-page__table .nurse-card{
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
   overflow: hidden;
 }
 
-.nurse-dashboard-page__table .nurse-table {
+.nurse-dashboard-page__table .nurse-table{
   table-layout: fixed;
   width: 100%;
 }
 
-.nurse-dashboard-page__table .nurse-table th {
+.nurse-dashboard-page__table .nurse-table th{
   padding: 0.45rem 0.65rem;
   font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.05em;
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  background: var(--color-surface);
   border-bottom: 1px solid #e2e8f0;
   text-align: left;
   white-space: nowrap;
@@ -353,7 +338,7 @@
   width: calc(100% / 6);
 }
 
-.nurse-dashboard-page__table .nurse-table td {
+.nurse-dashboard-page__table .nurse-table td{
   padding: 0.45rem 0.65rem;
   font-size: 0.8125rem;
   line-height: 1.35;
@@ -365,34 +350,34 @@
   width: calc(100% / 6);
 }
 
-.nurse-dashboard-page__table .nurse-table td:last-child {
+.nurse-dashboard-page__table .nurse-table td:last-child{
   overflow: visible;
 }
 
-.nurse-dashboard-page__table .nurse-table tbody tr:last-child td {
+.nurse-dashboard-page__table .nurse-table tbody tr:last-child td{
   border-bottom: none;
 }
 
-.nurse-dashboard-page__table .nurse-table tr:hover td {
-  background: #f0f9ff;
+.nurse-dashboard-page__table .nurse-table tr:hover td{
+  background: var(--color-info-bg);
 }
 
-.nurse-dashboard-page__table .nurse-badge {
+.nurse-dashboard-page__table .nurse-badge{
   padding: 0.1rem 0.45rem;
   font-size: 0.6875rem;
 }
 
-.nurse-dashboard-page__table .nurse-table__actions {
+.nurse-dashboard-page__table .nurse-table__actions{
   gap: 0.375rem;
   justify-content: flex-start;
   width: 100%;
 }
 
-.nurse-dashboard-page__actions {
+.nurse-dashboard-page__actions{
   flex-wrap: nowrap;
 }
 
-.nurse-dashboard-page__action-btn {
+.nurse-dashboard-page__action-btn{
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -407,56 +392,56 @@
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.nurse-dashboard-page__action-btn--vitals {
-  color: #1d4ed8;
-  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+.nurse-dashboard-page__action-btn--vitals{
+  color: var(--color-primary-hover);
+  background: var(--color-surface);
   border-color: #93c5fd;
 }
 
-.nurse-dashboard-page__action-btn--vitals:hover {
+.nurse-dashboard-page__action-btn--vitals:hover{
   color: #1e3a8a;
-  background: linear-gradient(180deg, #dbeafe 0%, #bfdbfe 100%);
+  background: var(--color-surface);
   border-color: #60a5fa;
   box-shadow: 0 1px 4px rgba(37, 99, 235, 0.2);
 }
 
-.nurse-dashboard-page__action-btn--note {
+.nurse-dashboard-page__action-btn--note{
   color: #047857;
-  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
+  background: var(--color-surface);
   border-color: #6ee7b7;
 }
 
-.nurse-dashboard-page__action-btn--note:hover {
+.nurse-dashboard-page__action-btn--note:hover{
   color: #065f46;
-  background: linear-gradient(180deg, #d1fae5 0%, #a7f3d0 100%);
+  background: var(--color-surface);
   border-color: #34d399;
   box-shadow: 0 1px 4px rgba(5, 150, 105, 0.2);
 }
 
-.nurse-dashboard-page__action-btn:focus-visible {
-  outline: 2px solid #6366f1;
+.nurse-dashboard-page__action-btn:focus-visible{
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
-.nurse-dashboard-page__table .nurse-table tbody tr.nurse-row--clickable {
+.nurse-dashboard-page__table .nurse-table tbody tr.nurse-row--clickable{
   cursor: pointer;
 }
 
-.nurse-dashboard-page__table .nurse-table tbody tr.nurse-row--clickable:hover td {
-  background: #f0f9ff;
+.nurse-dashboard-page__table .nurse-table tbody tr.nurse-row--clickable:hover td{
+  background: var(--color-info-bg);
 }
 
-.nurse-dashboard-page__table .nurse-table tbody tr.nurse-row--clickable:focus-visible {
-  outline: 2px solid #6366f1;
+.nurse-dashboard-page__table .nurse-table tbody tr.nurse-row--clickable:focus-visible{
+  outline: 2px solid var(--color-primary);
   outline-offset: -2px;
 }
 
-.nurse-kpi--yellow { border-left-color: #eab308; }
-.nurse-kpi--green { border-left-color: #16a34a; }
-.nurse-kpi--purple { border-left-color: #9333ea; }
-.nurse-kpi--red { border-left-color: #dc2626; }
+.nurse-kpi--yellow{ border-left-color: #eab308; }
+.nurse-kpi--green{ border-left-color: #16a34a; }
+.nurse-kpi--purple{ border-left-color: var(--color-primary); }
+.nurse-kpi--red{ border-left-color: #dc2626; }
 
-.nurse-kpi__label {
+.nurse-kpi__label{
   font-size: 0.6875rem;
   font-weight: 600;
   line-height: 1.3;
@@ -466,7 +451,7 @@
   letter-spacing: 0.03em;
 }
 
-.nurse-kpi__value {
+.nurse-kpi__value{
   font-size: 1.375rem;
   font-weight: 700;
   line-height: 1.1;
@@ -474,17 +459,17 @@
   margin: 0;
 }
 
-.nurse-table-wrap {
+.nurse-table-wrap{
   overflow-x: auto;
 }
 
-.nurse-table {
+.nurse-table{
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
 }
 
-.nurse-table th {
+.nurse-table th{
   padding: 0.75rem 1rem;
   text-align: left;
   font-size: 0.75rem;
@@ -496,59 +481,55 @@
   border-bottom: 1px solid #e2e8f0;
 }
 
-.nurse-table td {
+.nurse-table td{
   padding: 0.875rem 1rem;
   color: #334155;
   border-bottom: 1px solid #f1f5f9;
   white-space: nowrap;
 }
 
-.nurse-table tr:hover td {
+.nurse-table tr:hover td{
   background: #f8fafc;
 }
 
-.nurse-table tr.nurse-row--clickable {
+.nurse-table tr.nurse-row--clickable{
   cursor: pointer;
 }
 
-.nurse-table tr.nurse-row--emergency td:first-child {
+.nurse-table tr.nurse-row--emergency td:first-child{
   box-shadow: inset 4px 0 0 #dc2626;
 }
 
-.nurse-table__actions {
+.nurse-table__actions{
   display: flex;
   gap: 0.5rem;
 }
 
-.nurse-btn--sm {
+.nurse-btn--sm{
   padding: 0.35rem 0.75rem;
   font-size: 0.8125rem;
 }
 
-.nurse-badge {
+.nurse-badge{
   display: inline-flex;
   align-items: center;
   padding: 0.15rem 0.6rem;
   font-size: 0.75rem;
   font-weight: 500;
   border-radius: 999px;
-}
+}.nurse-badge--waiting{ background: var(--badge-pending-bg); color: var(--badge-pending-fg); }
+.nurse-badge--vitals{ background: var(--badge-scheduled-bg); color: var(--badge-scheduled-fg); }
+.nurse-badge--notes{ background: var(--badge-scheduled-bg); color: var(--badge-scheduled-fg); }
+.nurse-badge--consult{ background: var(--badge-scheduled-bg); color: var(--badge-scheduled-fg); }
+.nurse-badge--completed{ background: var(--badge-completed-bg); color: var(--badge-completed-fg); }
+.nurse-badge--draft{ background: var(--badge-inactive-bg); color: var(--badge-inactive-fg); }
+.nurse-badge--submitted{ background: var(--badge-completed-bg); color: var(--badge-completed-fg); }
+.nurse-badge--given{ background: var(--badge-completed-bg); color: var(--badge-completed-fg); }
+.nurse-badge--missed{ background: var(--badge-cancelled-bg); color: var(--badge-cancelled-fg); }
+.nurse-badge--delayed{ background: var(--badge-pending-bg); color: var(--badge-pending-fg); }
+.nurse-badge--refused{ background: var(--badge-inactive-bg); color: var(--badge-inactive-fg); }
 
-.nurse-badge--emergency { background: #fee2e2; color: #b91c1c; font-weight: 600; }
-.nurse-badge--urgent { background: #ffedd5; color: #c2410c; }
-.nurse-badge--normal { background: #f1f5f9; color: #475569; }
-.nurse-badge--waiting { background: #fef9c3; color: #a16207; }
-.nurse-badge--vitals { background: #dbeafe; color: #1d4ed8; }
-.nurse-badge--consult { background: #f3e8ff; color: #7e22ce; }
-.nurse-badge--completed { background: #dcfce7; color: #15803d; }
-.nurse-badge--draft { background: #f1f5f9; color: #64748b; }
-.nurse-badge--submitted { background: #dcfce7; color: #15803d; }
-.nurse-badge--given { background: #dcfce7; color: #15803d; }
-.nurse-badge--missed { background: #fee2e2; color: #b91c1c; }
-.nurse-badge--delayed { background: #ffedd5; color: #c2410c; }
-.nurse-badge--refused { background: #f1f5f9; color: #64748b; }
-
-.nurse-pagination {
+.nurse-pagination{
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -559,343 +540,150 @@
   border-radius: 6px;
   font-size: 0.875rem;
   color: #475569;
-}
-
-.nurse-pagination__nav {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.nurse-pagination__btn {
-  padding: 0.35rem 0.5rem;
-  border: 1px solid #cbd5e1;
-  background: #fff;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.nurse-pagination__btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.nurse-form {
+}.nurse-form{
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-.nurse-form-grid {
+.nurse-form-grid{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1.25rem;
 }
 
-.nurse-form-actions {
+.nurse-custom-vitals{
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding-top: 0.25rem;
+}
+
+.nurse-custom-vitals__head{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.nurse-custom-vitals__title{
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text, #0f172a);
+}
+
+.nurse-custom-vitals__hint{
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.nurse-custom-vitals__add{
+  flex-shrink: 0;
+}
+
+.nurse-custom-vitals__list{
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.nurse-custom-vitals__row{
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 0.7fr) auto;
+  gap: 0.75rem;
+  align-items: end;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 10px;
+  background: var(--color-surface, #fff);
+}
+
+.nurse-custom-vitals__remove{
+  margin-bottom: 0.15rem;
+  color: var(--color-danger, #dc2626);
+}
+
+@media (max-width: 720px){
+  .nurse-custom-vitals__row{
+    grid-template-columns: 1fr;
+  }
+
+  .nurse-custom-vitals__remove{
+    justify-self: end;
+  }
+}
+
+.nurse-form-actions{
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
   padding-top: 1rem;
   border-top: 1px solid #e2e8f0;
-}
-
-.nurse-custom-vitals {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid #e2e8f0;
-}
-
-.nurse-custom-vitals__title {
-  margin: 0;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: #334155;
-}
-
-.nurse-custom-vitals__header {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: 1rem;
-  padding: 0 0.125rem;
-}
-
-.nurse-custom-vitals__header span {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #64748b;
-}
-
-.nurse-custom-vitals__list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.nurse-custom-vital-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: 1rem;
-  align-items: center;
-}
-
-.nurse-custom-vital-row__remove {
-  color: #dc2626;
-}
-
-.nurse-add-field-btn {
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-}
-
-.nurse-quick-links {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-}
-
-.nurse-quick-links span {
-  font-size: 0.875rem;
-  color: #64748b;
-  font-weight: 500;
-}
-
-.nurse-quick-links a {
-  font-size: 0.875rem;
-  color: #2563eb;
-  text-decoration: none;
-}
-
-.nurse-quick-links a:hover {
-  text-decoration: underline;
-}
-
-.nurse-timeline {
+}.nurse-timeline{
   position: relative;
   margin-left: 1rem;
   padding-left: 1.5rem;
   border-left: 2px solid #e2e8f0;
 }
 
-.nurse-timeline__item {
+.nurse-timeline__item{
   position: relative;
   margin-bottom: 2rem;
 }
 
-.nurse-timeline__dot {
+.nurse-timeline__dot{
   position: absolute;
   left: -1.65rem;
   top: 0.25rem;
   width: 1.25rem;
   height: 1.25rem;
   background: #fff;
-  border: 2px solid #2563eb;
+  border: 2px solid var(--color-primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #2563eb;
-}
-
-.nurse-tabs {
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.nurse-tabs__nav {
-  display: flex;
-  gap: 2rem;
-  padding: 0 1.5rem;
-}
-
-.nurse-tabs__btn {
-  padding: 1rem 0;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #64748b;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-}
-
-.nurse-tabs__btn--active {
-  color: #2563eb;
-  border-bottom-color: #2563eb;
-}
-
-.nurse-tabs__panel {
-  padding: 1.5rem;
-}
-
-.nurse-alert {
+  color: var(--color-primary);
+}.nurse-alert{
   padding: 1rem;
   border-radius: 6px;
   font-size: 0.875rem;
 }
 
-.nurse-alert--error {
+.nurse-alert--error{
   background: #fef2f2;
   border: 1px solid #fecaca;
   color: #b91c1c;
-}
-
-.nurse-alert--warn {
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-  color: #92400e;
-}
-
-.nurse-skeleton-card {
-  padding: 0.75rem 0.875rem;
-  min-height: 4.5rem;
-  animation: nurse-pulse 1.5s ease-in-out infinite;
-}
-
-.nurse-skeleton-line {
+}.nurse-skeleton-line{
   height: 0.625rem;
   background: #e2e8f0;
   border-radius: 4px;
   margin-bottom: 0.5rem;
+}@keyframes nurse-pulse {
+  0%, 100%{ opacity: 1; }
+  50%{ opacity: 0.55; }
 }
 
-.nurse-skeleton-line--short { width: 55%; }
-.nurse-skeleton-line--tall { height: 1.25rem; width: 35%; margin-bottom: 0; }
-
-@keyframes nurse-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.55; }
-}
-
-.nurse-detail-grid {
+.nurse-detail-grid{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1.25rem;
 }
 
-.nurse-detail-grid dt {
+.nurse-detail-grid dt{
   font-size: 0.875rem;
   color: #64748b;
   margin: 0;
 }
 
-.nurse-detail-grid dd {
+.nurse-detail-grid dd{
   margin: 0.25rem 0 0;
   font-size: 0.875rem;
   color: #0f172a;
-}
-
-.nurse-med-card {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1.125rem 1.25rem;
-}
-
-.nurse-med-card__body {
-  flex: 1;
-  min-width: 0;
-}
-
-.nurse-med-card__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.625rem 0.75rem;
-  margin-bottom: 0.5rem;
-}
-
-.nurse-med-card__name {
-  margin: 0;
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.35;
-}
-
-.nurse-med-card__meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem 0.5rem;
-  margin: 0;
-  font-size: 0.8125rem;
-  color: #334155;
-  line-height: 1.5;
-}
-
-.nurse-med-card__meta-label {
-  margin-right: 0.35rem;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: #94a3b8;
-}
-
-.nurse-med-card__meta-sep {
-  color: #cbd5e1;
-  user-select: none;
-}
-
-.nurse-med-card__action {
-  flex-shrink: 0;
-  align-self: flex-start;
-}
-
-@media (min-width: 768px) {
-  .nurse-med-card {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .nurse-med-card__action {
-    align-self: center;
-  }
-}
-
-.nurse-stepper {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 2rem;
-}
-
-.nurse-stepper__step {
-  flex: 1;
-  text-align: center;
-}
-
-.nurse-stepper__circle {
-  width: 2rem;
-  height: 2rem;
-  margin: 0 auto 0.5rem;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.875rem;
-  font-weight: 600;
-  background: #e2e8f0;
-  color: #64748b;
-}
-
-.nurse-stepper__circle--active {
-  background: #2563eb;
-  color: #fff;
-}
-
-.nurse-stepper__circle--done {
-  background: #16a34a;
-  color: #fff;
-}
-
-.nurse-profile-head {
+}.nurse-profile-head{
   display: flex;
   align-items: center;
   gap: 1.5rem;
@@ -904,11 +692,11 @@
   border-bottom: 1px solid #e2e8f0;
 }
 
-.nurse-profile-avatar {
+.nurse-profile-avatar{
   width: 5rem;
   height: 5rem;
   border-radius: 50%;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   display: flex;
   align-items: center;
@@ -917,13 +705,13 @@
   font-weight: 700;
 }
 
-.nurse-perm-list {
+.nurse-perm-list{
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
 
-.nurse-perm-chip {
+.nurse-perm-chip{
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
@@ -935,7 +723,7 @@
   color: #334155;
 }
 
-.nurse-confirm-overlay {
+.nurse-confirm-overlay{
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -946,7 +734,7 @@
   background: rgba(15, 23, 42, 0.5);
 }
 
-.nurse-confirm {
+.nurse-confirm{
   width: 100%;
   max-width: 28rem;
   background: #fff;
@@ -955,21 +743,21 @@
   overflow: hidden;
 }
 
-.nurse-confirm__header {
+.nurse-confirm__header{
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.875rem 1rem;
-  background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+  background: var(--color-surface);
   border-bottom: 1px solid #e2e8f0;
 }
 
-.nurse-confirm__header-text {
+.nurse-confirm__header-text{
   min-width: 0;
 }
 
-.nurse-confirm__subtitle {
+.nurse-confirm__subtitle{
   margin: 0 0 0.2rem;
   font-size: 0.6875rem;
   font-weight: 700;
@@ -978,7 +766,7 @@
   color: #64748b;
 }
 
-.nurse-confirm__close {
+.nurse-confirm__close{
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -993,16 +781,16 @@
   flex-shrink: 0;
 }
 
-.nurse-confirm__close:hover {
+.nurse-confirm__close:hover{
   background: #f1f5f9;
   color: #0f172a;
 }
 
-.nurse-confirm__body {
+.nurse-confirm__body{
   padding: 0.875rem 1rem;
 }
 
-.nurse-confirm__title {
+.nurse-confirm__title{
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
@@ -1010,7 +798,7 @@
   line-height: 1.35;
 }
 
-.nurse-confirm__actions {
+.nurse-confirm__actions{
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
@@ -1019,54 +807,42 @@
   border-top: 1px solid #e2e8f0;
 }
 
-.nurse-confirm--med-admin .nurse-confirm__header {
-  background: linear-gradient(180deg, #eff6ff 0%, #fff 100%);
+.nurse-confirm--med-admin{
+  max-width: 32rem;
 }
 
-.nurse-confirm--med-admin .nurse-confirm__subtitle {
-  color: #2563eb;
+.nurse-confirm--med-admin .nurse-confirm__header{
+  background: var(--color-surface);
+  padding: 0.85rem 1rem;
 }
 
-.nurse-max-w-form {
+.nurse-confirm--med-admin .nurse-confirm__subtitle{
+  color: var(--color-primary);
+}
+
+.nurse-confirm--med-admin .nurse-confirm__body{
+  padding: 1rem;
+}
+
+.nurse-confirm--med-admin .nurse-confirm__actions{
+  padding: 0.75rem 1rem;
+}
+
+.nurse-max-w-form{
   max-width: 48rem;
   margin: 0 auto;
 }
 
-.nurse-max-w-wide {
+.nurse-max-w-wide{
   max-width: 72rem;
   margin: 0 auto;
-}
-
-.nurse-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 4rem 1.5rem;
-  gap: 0.75rem;
-  color: #64748b;
-}
-
-.nurse-placeholder h2 {
-  margin: 0;
-  color: #0f172a;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.nurse-placeholder p {
-  margin: 0;
-  font-size: 0.9375rem;
-}
-
-.nurse-queue-page {
+}.nurse-queue-page{
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.nurse-queue-page__header {
+.nurse-queue-page__header{
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -1075,25 +851,25 @@
   padding: 0.65rem 0.875rem;
 }
 
-.nurse-queue-page__header-left {
+.nurse-queue-page__header-left{
   display: flex;
   align-items: center;
   gap: 0.625rem;
 }
 
-.nurse-queue-page__icon {
+.nurse-queue-page__icon{
   display: flex;
   align-items: center;
   justify-content: center;
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 8px;
-  background: linear-gradient(135deg, #fef3c7 0%, #ffedd5 100%);
+  background: var(--color-surface);
   color: #d97706;
   flex-shrink: 0;
 }
 
-.nurse-queue-page__title {
+.nurse-queue-page__title{
   margin: 0;
   font-size: 1.0625rem;
   font-weight: 700;
@@ -1101,23 +877,16 @@
   line-height: 1.3;
 }
 
-.nurse-queue-page__subtitle {
+.nurse-queue-page__subtitle{
   margin: 0.125rem 0 0;
   font-size: 0.75rem;
   color: #64748b;
 }
 
-.nurse-queue-page__subtitle strong {
+.nurse-queue-page__subtitle strong{
   color: #334155;
   font-weight: 700;
-}
-
-.nurse-queue-page__emergency-tag {
-  color: #dc2626;
-  font-weight: 600;
-}
-
-.nurse-queue-page__refresh {
+}.nurse-queue-page__refresh{
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
@@ -1125,22 +894,22 @@
   font-size: 0.8125rem;
 }
 
-.nurse-queue-page__spin {
+.nurse-queue-page__spin{
   animation: nurse-spin 0.8s linear infinite;
 }
 
-@keyframes nurse-spin {
+@keyframes nurse-spin{
   to { transform: rotate(360deg); }
 }
 
-.nurse-queue-page__toolbar {
+.nurse-queue-page__toolbar{
   padding: 0.5rem 0.75rem;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
-.nurse-queue-page__search-label {
+.nurse-queue-page__search-label{
   position: absolute;
   width: 1px;
   height: 1px;
@@ -1151,32 +920,32 @@
   border: 0;
 }
 
-.nurse-queue-page__toolbar-row {
+.nurse-queue-page__toolbar-row{
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.nurse-queue-page__search-wrap {
+.nurse-queue-page__search-wrap{
   position: relative;
   flex: 1 1 auto;
   min-width: 0;
   max-width: 22rem;
 }
 
-.nurse-queue-page__search-icon {
+.nurse-queue-page__search-icon{
   position: absolute;
   left: 0.7rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #6366f1;
+  color: var(--color-primary);
   pointer-events: none;
 }
 
-.nurse-queue-page__search {
+.nurse-queue-page__search{
   width: 100%;
   padding: 0.42rem 0.75rem 0.42rem 2.15rem;
-  border: 1px solid #c7d2fe;
+  border: 1px solid var(--color-primary-border);
   border-radius: 10px;
   background: #fff;
   font-size: 0.8125rem;
@@ -1185,17 +954,17 @@
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.nurse-queue-page__search:focus {
+.nurse-queue-page__search:focus{
   outline: none;
-  border-color: #818cf8;
+  border-color: var(--color-primary-border);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
-.nurse-queue-page__search::placeholder {
+.nurse-queue-page__search::placeholder{
   color: #94a3b8;
 }
 
-.nurse-queue-page__clear {
+.nurse-queue-page__clear{
   flex-shrink: 0;
   padding: 0.35rem 0.55rem;
   border: 1px solid #e2e8f0;
@@ -1208,27 +977,27 @@
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.nurse-queue-page__clear:hover {
+.nurse-queue-page__clear:hover{
   background: #f1f5f9;
   border-color: #cbd5e1;
   color: #1e293b;
 }
 
-.nurse-queue-page__table .nurse-card {
+.nurse-queue-page__table .nurse-card{
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
   overflow: hidden;
 }
 
-.nurse-queue-page__table .nurse-table {
+.nurse-queue-page__table .nurse-table{
   table-layout: fixed;
   width: 100%;
 }
 
-.nurse-queue-page__table .nurse-table th {
+.nurse-queue-page__table .nurse-table th{
   padding: 0.45rem 0.65rem;
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  background: var(--color-surface);
   color: #475569;
   font-size: 0.625rem;
   font-weight: 700;
@@ -1241,7 +1010,7 @@
   width: calc(100% / 7);
 }
 
-.nurse-queue-page__table .nurse-table td {
+.nurse-queue-page__table .nurse-table td{
   padding: 0.45rem 0.65rem;
   font-size: 0.8125rem;
   vertical-align: middle;
@@ -1252,57 +1021,49 @@
   width: calc(100% / 7);
 }
 
-.nurse-queue-page__table .nurse-table td:last-child {
+.nurse-queue-page__table .nurse-table td:last-child{
   overflow: visible;
 }
 
-.nurse-queue-page__table .nurse-table tbody tr:last-child td {
+.nurse-queue-page__table .nurse-table tbody tr:last-child td{
   border-bottom: none;
 }
 
-.nurse-queue-page__table .nurse-table tbody tr {
+.nurse-queue-page__table .nurse-table tbody tr{
   transition: background 0.12s;
 }
 
-.nurse-queue-page__table .nurse-table tbody tr.nurse-row--clickable {
+.nurse-queue-page__table .nurse-table tbody tr.nurse-row--clickable{
   cursor: pointer;
 }
 
-.nurse-queue-page__table .nurse-table tbody tr.nurse-row--clickable:hover td {
-  background: #f0f9ff;
+.nurse-queue-page__table .nurse-table tbody tr.nurse-row--clickable:hover td{
+  background: var(--color-info-bg);
 }
 
-.nurse-queue-page__table .nurse-badge {
+.nurse-queue-page__table .nurse-badge{
   padding: 0.1rem 0.45rem;
   font-size: 0.6875rem;
-}
-
-.nurse-queue-page__actions {
-  gap: 0.375rem;
-  justify-content: flex-start;
-  flex-wrap: nowrap;
-}
-
-.nurse-queue-page .nurse-pagination {
+}.nurse-queue-page .nurse-pagination{
   margin-top: 0.375rem;
   padding: 0.45rem 0.75rem;
   border-radius: 10px;
   font-size: 0.8125rem;
 }
 
-.nurse-queue__id {
+.nurse-queue__id{
   font-size: 0.8125rem;
   font-weight: 600;
   color: #64748b;
   font-variant-numeric: tabular-nums;
 }
 
-.nurse-queue__name {
+.nurse-queue__name{
   font-weight: 600;
   color: #0f172a;
 }
 
-.nurse-queue__bed {
+.nurse-queue__bed{
   display: inline-flex;
   padding: 0.2rem 0.55rem;
   font-size: 0.8125rem;
@@ -1313,13 +1074,13 @@
   border: 1px solid #e2e8f0;
 }
 
-.nurse-queue__phone {
+.nurse-queue__phone{
   font-size: 0.8125rem;
   color: #64748b;
   font-variant-numeric: tabular-nums;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 900px){
   .nurse-queue-page__toolbar-row {
     flex-wrap: wrap;
   }

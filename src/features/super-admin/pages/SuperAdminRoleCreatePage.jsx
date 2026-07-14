@@ -7,11 +7,9 @@ import { useCreateRoleMutation } from '@/shared/hooks/queries/useAdminQuery';
 import { Button, Input, Label } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
-import { useSuperAdminDemoMode } from '@/features/super-admin/hooks/useSuperAdminDemoMode';
 
 export default function SuperAdminRoleCreatePage() {
   const navigate = useNavigate();
-  const isDemo = useSuperAdminDemoMode();
   const [form, setForm] = useState({ name: '', description: '' });
   const createMutation = useCreateRoleMutation();
 
@@ -20,11 +18,6 @@ export default function SuperAdminRoleCreatePage() {
     const name = form.name.trim();
     if (!name) {
       toast.error('Role name is required');
-      return;
-    }
-    if (isDemo) {
-      toast.success('Role saved locally in demo mode only');
-      navigate(ROUTES.SUPER_ADMIN_ROLES);
       return;
     }
     try {
@@ -61,7 +54,8 @@ export default function SuperAdminRoleCreatePage() {
                   id="sa_role_name"
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  placeholder="e.g. head_pharmacist"
+                  placeholder="e.g. head_nurse"
+                  required
                 />
               </div>
               <div>
@@ -70,12 +64,13 @@ export default function SuperAdminRoleCreatePage() {
                   id="sa_role_desc"
                   value={form.description}
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                  placeholder="Optional description"
                 />
               </div>
               <div className="admin-form-actions">
                 <Button type="submit" disabled={createMutation.isPending}>
                   <ShieldPlus size={16} aria-hidden />
-                  {createMutation.isPending ? 'Creating…' : 'Create & assign permissions'}
+                  {createMutation.isPending ? 'Creating…' : 'Create role'}
                 </Button>
               </div>
             </form>

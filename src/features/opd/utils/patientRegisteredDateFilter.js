@@ -8,7 +8,7 @@ export const REGISTRATION_DATE_FILTER_OPTIONS = [
   { id: 'custom', label: 'Custom' },
 ];
 
-export function parseRegisteredDate(dateStr) {
+function parseRegisteredDate(dateStr) {
   if (!dateStr) return null;
   const d = new Date(dateStr);
   return Number.isNaN(d.getTime()) ? null : d;

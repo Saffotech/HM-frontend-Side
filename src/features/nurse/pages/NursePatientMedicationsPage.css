@@ -29,7 +29,7 @@
 }
 
 .nurse-patient-meds-page__back:hover {
-  color: #2563eb;
+  color: var(--color-info);
 }
 
 .nurse-patient-meds__status-unknown {
@@ -46,7 +46,7 @@
   gap: 0.75rem;
   padding: 0.625rem 0.875rem;
   border: 1px solid #e2e8f0;
-  background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+  background: var(--color-surface);
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
 }
 
@@ -57,8 +57,8 @@
   width: 2rem;
   height: 2rem;
   border-radius: 8px;
-  background: #dbeafe;
-  color: #2563eb;
+  background: var(--color-info-bg);
+  color: var(--color-info);
 }
 
 .nurse-patient-meds-page__patient-grid {
@@ -157,21 +157,21 @@
 }
 
 .nurse-patient-meds-page__stat--total {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  background: var(--color-surface);
   border-color: #bfdbfe;
 }
 
 .nurse-patient-meds-page__stat--total .nurse-patient-meds-page__stat-icon {
-  color: #2563eb;
+  color: var(--color-info);
   background: #fff;
 }
 
 .nurse-patient-meds-page__stat--total .nurse-patient-meds-page__stat-label {
-  color: #1d4ed8;
+  color: var(--color-info);
 }
 
 .nurse-patient-meds-page__stat--pending {
-  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  background: var(--color-surface);
   border-color: #fde68a;
 }
 
@@ -185,7 +185,7 @@
 }
 
 .nurse-patient-meds-page__stat--followup {
-  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  background: var(--color-surface);
   border-color: #fed7aa;
 }
 
@@ -264,8 +264,8 @@
   white-space: nowrap;
   padding: 0.35rem 0.7rem;
   font-weight: 600;
-  color: #0d9488;
-  background: linear-gradient(180deg, #f0fdfa 0%, #ccfbf1 100%);
+  color: var(--color-primary);
+  background: var(--color-surface);
   border: 1px solid #5eead4;
   border-radius: 8px;
   box-shadow: 0 1px 2px rgba(13, 148, 136, 0.12);
@@ -273,17 +273,17 @@
 }
 
 .nurse-patient-meds__view-btn:hover {
-  color: #0f766e;
-  background: linear-gradient(180deg, #ccfbf1 0%, #99f6e4 100%);
+  color: var(--color-primary-hover);
+  background: var(--color-surface);
   border-color: #2dd4bf;
   box-shadow: 0 2px 6px rgba(13, 148, 136, 0.18);
 }
 
 .nurse-patient-meds__view-btn--open {
   color: #fff;
-  background: linear-gradient(180deg, #14b8a6 0%, #0d9488 100%);
-  border-color: #0f766e;
-  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.28);
+  background: var(--color-primary);
+  border-color: var(--color-primary-hover);
+  box-shadow: var(--shadow-sm);
 }
 
 .nurse-patient-meds__last-admin-card {
@@ -309,7 +309,7 @@
   right: 1.25rem;
   width: 10px;
   height: 10px;
-  background: linear-gradient(135deg, #5eead4 0%, #14b8a6 100%);
+  background: var(--color-surface);
   border-top: 1px solid #99f6e4;
   border-left: 1px solid #99f6e4;
   transform: rotate(45deg);
@@ -328,7 +328,7 @@
 
 .nurse-patient-meds__last-admin-card-header {
   padding: 0.5rem 0.75rem;
-  background: linear-gradient(90deg, #0d9488 0%, #14b8a6 55%, #2dd4bf 100%);
+  background: var(--color-primary);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
@@ -346,7 +346,7 @@
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.625rem;
-  background: linear-gradient(180deg, #f8fffe 0%, #fff 100%);
+  background: var(--color-surface);
 }
 
 .nurse-patient-meds__last-admin-row {
@@ -359,13 +359,13 @@
 }
 
 .nurse-patient-meds__last-admin-row--time {
-  background: #eff6ff;
-  border-color: #dbeafe;
+  background: var(--color-info-bg);
+  border-color: var(--color-info-bg);
 }
 
 .nurse-patient-meds__last-admin-row--by {
-  background: #f5f3ff;
-  border-color: #ede9fe;
+  background: var(--color-primary-light);
+  border-color: var(--color-primary-light);
 }
 
 .nurse-patient-meds__last-admin-icon {
@@ -379,13 +379,13 @@
 }
 
 .nurse-patient-meds__last-admin-row--time .nurse-patient-meds__last-admin-icon {
-  color: #2563eb;
-  background: #dbeafe;
+  color: var(--color-info);
+  background: var(--color-info-bg);
 }
 
 .nurse-patient-meds__last-admin-row--by .nurse-patient-meds__last-admin-icon {
-  color: #7c3aed;
-  background: #ede9fe;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
 }
 
 .nurse-patient-meds__last-admin-content {
@@ -430,27 +430,72 @@
 
 .nurse-patient-meds-admin-form__row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   gap: 0.75rem;
+  align-items: start;
 }
 
 .nurse-patient-meds-admin-form .nurse-field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
   margin: 0;
+  min-width: 0;
 }
 
 .nurse-patient-meds-admin-form .nurse-field label {
-  margin-bottom: 0.25rem;
+  display: block;
+  margin: 0;
   font-size: 0.6875rem;
-  letter-spacing: 0.03em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #64748b;
+  line-height: 1.2;
+}
+
+.nurse-patient-meds-admin-form .nurse-input,
+.nurse-patient-meds-admin-form .nurse-select,
+.nurse-patient-meds-admin-form .nurse-textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  color: #0f172a;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+.nurse-patient-meds-admin-form .nurse-select {
+  height: 2.375rem;
+  appearance: auto;
+}
+
+.nurse-patient-meds-admin-form .nurse-input[type='datetime-local'] {
+  height: 2.375rem;
+  min-height: 2.375rem;
+}
+
+.nurse-patient-meds-admin-form .nurse-input:focus,
+.nurse-patient-meds-admin-form .nurse-select:focus,
+.nurse-patient-meds-admin-form .nurse-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary, #1a5c34);
+  box-shadow: 0 0 0 3px rgba(26, 92, 52, 0.12);
 }
 
 .nurse-patient-meds-admin-form__remarks {
-  min-height: 3.5rem;
+  min-height: 4rem;
+  resize: vertical;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 520px) {
   .nurse-patient-meds-admin-form__row {
     grid-template-columns: 1fr;
   }

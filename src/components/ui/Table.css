@@ -1,0 +1,25 @@
+.ui-table-shell {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.ui-table__state {
+  padding: var(--space-8) var(--space-4);
+  display: flex;
+  justify-content: center;
+}
+
+.ui-table.data-table th {
+  font-size: var(--text-table-header);
+  font-weight: var(--text-table-header-weight);
+  line-height: var(--text-table-header-leading);
+}
+
+.ui-table.data-table td {
+  font-size: var(--text-body);
+  font-weight: var(--text-body-weight);
+  line-height: var(--text-body-leading);
+}

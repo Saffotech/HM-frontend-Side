@@ -21,50 +21,30 @@ export default function NurseRecordVitalsPage() {
   const {
     appointmentId: resolvedAppointmentId,
     isLoading: isResolvingAppointment,
-    isError: isResolveError,
-    error: resolveError,
-    refetch: refetchAppointment,
   } = useNursePatientQueueAppointmentId(patientIdFromUrl, {
     enabled: !appointmentIdFromUrl && Boolean(patientIdFromUrl),
   });
 
   const appointmentId = appointmentIdFromUrl || resolvedAppointmentId;
+  const patientId = patientIdFromUrl ? Number(patientIdFromUrl) : null;
+  const canSubmit = Boolean(appointmentId) || (Number.isSafeInteger(patientId) && patientId >= 1);
 
   if (!appointmentIdFromUrl && patientIdFromUrl && isResolvingAppointment) {
     return (
       <NurseLayout>
         <div className="nurse-page nurse-max-w-form">
-          <QueryFeedback isLoading={true} onRetry={refetchAppointment} />
+          <QueryFeedback isLoading />
         </div>
       </NurseLayout>
     );
   }
 
-  if (!appointmentIdFromUrl && patientIdFromUrl && isResolveError) {
-    return (
-      <NurseLayout>
-        <div className="nurse-page nurse-max-w-form">
-          <QueryFeedback
-            isLoading={false}
-            isError
-            error={resolveError}
-            onRetry={refetchAppointment}
-          />
-        </div>
-      </NurseLayout>
-    );
-  }
-
-  if (!appointmentId) {
+  if (!canSubmit) {
     return (
       <NurseLayout>
         <div className="nurse-alert nurse-alert--error">
-          <p>
-            {patientIdFromUrl
-              ? 'This patient is not in today\'s queue. Open them from the queue or dashboard to record vitals.'
-              : 'Appointment ID is required to record vitals.'}
-          </p>
-          <Link to={ROUTES.NURSE_QUEUE}>Return to Queue</Link>
+          <p>Select a patient from the Dashboard to record vitals.</p>
+          <Link to={ROUTES.NURSE_DASHBOARD}>Return to Dashboard</Link>
         </div>
       </NurseLayout>
     );
@@ -76,7 +56,7 @@ export default function NurseRecordVitalsPage() {
         <div className="nurse-page nurse-max-w-form">
           <div className="nurse-alert nurse-alert--error">
             <p>You do not have permission to record vitals.</p>
-            <Link to={ROUTES.NURSE_QUEUE}>Return to Queue</Link>
+            <Link to={ROUTES.NURSE_DASHBOARD}>Return to Dashboard</Link>
           </div>
         </div>
       </NurseLayout>
@@ -85,13 +65,18 @@ export default function NurseRecordVitalsPage() {
 
   const onSubmit = (e) => {
     e.preventDefault();
-    const payload = buildVitalsPayload(form, { appointmentId });
+    const payload = buildVitalsPayload(form, {
+      appointmentId: appointmentId || undefined,
+      patientId: patientId || undefined,
+    });
     createMut.mutate(payload, {
       onSuccess: () => {
         toast.success('Vitals recorded successfully');
-        navigate(ROUTES.NURSE_QUEUE);
+        navigate(ROUTES.NURSE_DASHBOARD);
       },
-      onError: () => toast.error('Failed to save vitals'),
+      onError: (err) => {
+        toast.error(err?.message || 'Failed to save vitals');
+      },
     });
   };
 

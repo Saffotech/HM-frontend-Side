@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  Building2,
   ClipboardList,
   LayoutDashboard,
   Settings,
@@ -13,6 +14,7 @@ import '../styles/super-admin.css';
 const NAV_LINKS = [
   { href: ROUTES.SUPER_ADMIN_DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
   { href: ROUTES.SUPER_ADMIN_STAFF, label: 'Staff', icon: Users },
+  { href: ROUTES.SUPER_ADMIN_DEPARTMENTS, label: 'Departments', icon: Building2 },
   { href: ROUTES.SUPER_ADMIN_ROLES, label: 'Roles', icon: UserCog },
   { href: ROUTES.SUPER_ADMIN_SETTINGS, label: 'Settings', icon: Settings },
   { href: ROUTES.SUPER_ADMIN_REPORTS, label: 'Reports', icon: BarChart3 },
@@ -29,12 +31,18 @@ function isStaffActive(pathname) {
   return pathname === ROUTES.SUPER_ADMIN_STAFF || pathname.startsWith('/super-admin/staff/');
 }
 
+function isDepartmentsActive(pathname) {
+  return pathname === ROUTES.SUPER_ADMIN_DEPARTMENTS
+    || pathname.startsWith('/super-admin/departments/');
+}
+
 function isRolesActive(pathname) {
   return pathname === ROUTES.SUPER_ADMIN_ROLES || pathname.startsWith('/super-admin/roles/');
 }
 
 function isNavLinkActive(pathname, link) {
   if (link.href === ROUTES.SUPER_ADMIN_STAFF) return isStaffActive(pathname);
+  if (link.href === ROUTES.SUPER_ADMIN_DEPARTMENTS) return isDepartmentsActive(pathname);
   if (link.href === ROUTES.SUPER_ADMIN_ROLES) return isRolesActive(pathname);
   return pathname === link.href || pathname.startsWith(`${link.href}/`);
 }

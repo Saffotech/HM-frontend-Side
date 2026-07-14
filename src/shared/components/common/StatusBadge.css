@@ -2,32 +2,46 @@
   display: inline-flex;
   align-items: center;
   padding: 0.2rem 0.625rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  border-radius: var(--radius-badge);
+  font-family: var(--font-sans);
+  font-size: var(--text-badge);
+  font-weight: var(--text-badge-weight);
+  line-height: 1.25;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
 }
 
-.status-badge--default {
-  background: #f1f5f9;
-  color: #475569;
+.status-badge--default,
+.status-badge--inactive {
+  background: var(--badge-inactive-bg);
+  color: var(--badge-inactive-fg);
 }
 
-.status-badge--info {
-  background: var(--color-primary-light);
-  color: var(--color-primary);
+.status-badge--info,
+.status-badge--scheduled {
+  background: var(--badge-scheduled-bg);
+  color: var(--badge-scheduled-fg);
 }
 
-.status-badge--success {
-  background: var(--color-success-bg);
-  color: var(--color-success);
+.status-badge--success,
+.status-badge--completed,
+.status-badge--active,
+.status-badge--paid {
+  background: var(--badge-completed-bg);
+  color: var(--badge-completed-fg);
 }
 
-.status-badge--danger {
-  background: var(--color-danger-bg);
-  color: var(--color-danger);
+.status-badge--danger,
+.status-badge--cancelled,
+.status-badge--failed {
+  background: var(--badge-cancelled-bg);
+  color: var(--badge-cancelled-fg);
 }
 
-.status-badge--warning {
-  background: var(--color-warning-bg);
-  color: var(--color-warning);
+.status-badge--warning,
+.status-badge--pending,
+.status-badge--waiting {
+  background: var(--badge-pending-bg);
+  color: var(--badge-pending-fg);
 }

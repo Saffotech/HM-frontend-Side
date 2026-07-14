@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Download, FileText } from 'lucide-react';
+import { Download, FileText, RotateCcw } from 'lucide-react';
 import AdminLayout from '@/features/admin/components/AdminLayout';
 import AdminEmptyState from '@/features/admin/components/AdminEmptyState';
 import AdminPageHeader from '@/features/admin/components/AdminPageHeader';
@@ -77,11 +77,9 @@ export default function VisitsReportPage() {
 
   return (
     <AdminLayout pageTitle="Visit reports">
-      <div className="admin-page">
+      <div className="admin-page admin-page--compact">
         <AdminPageHeader
-          eyebrow="Analytics"
           title="Visit reports"
-          subtitle="Detailed visit records with billing and payment status."
           actions={(
             <nav className="admin-subnav" aria-label="Report sections">
               <NavLink
@@ -105,25 +103,35 @@ export default function VisitsReportPage() {
           )}
         />
 
-        <AdminReportFilters
-          fromDate={range.from_date}
-          toDate={range.to_date}
-          onFromChange={(value) => setRange((prev) => ({ ...prev, from_date: value }))}
-          onToChange={(value) => setRange((prev) => ({ ...prev, to_date: value }))}
-          onReset={resetFilters}
-          showReset
-        >
-          <Select
-            label="Department"
-            value={departmentId}
-            onChange={setDepartmentId}
-            options={departmentOptions}
-          />
-          <Button type="button" variant="outline" onClick={handleExport}>
-            <Download size={16} aria-hidden />
-            Export
-          </Button>
-        </AdminReportFilters>
+        <p className="admin-reports-toolbar__subtitle">
+          Detailed visit records with billing and payment status.
+        </p>
+
+        <div className="admin-visits-filter-row">
+          <AdminReportFilters
+            inline
+            fromDate={range.from_date}
+            toDate={range.to_date}
+            onFromChange={(value) => setRange((prev) => ({ ...prev, from_date: value }))}
+            onToChange={(value) => setRange((prev) => ({ ...prev, to_date: value }))}
+          >
+            <Select
+              label="Department"
+              value={departmentId}
+              onChange={setDepartmentId}
+              options={departmentOptions}
+              className="admin-visits-filter-row__dept"
+            />
+            <Button type="button" variant="outline" size="sm" onClick={handleExport}>
+              <Download size={16} aria-hidden />
+              Export
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={resetFilters}>
+              <RotateCcw size={14} aria-hidden />
+              Reset
+            </Button>
+          </AdminReportFilters>
+        </div>
 
         <QueryFeedback
           isLoading={isLoading}
@@ -133,12 +141,6 @@ export default function VisitsReportPage() {
         >
           {data && (
             <>
-              <p className="admin-report-period">
-                Period: {formatReportDate(data.from_date)} — {formatReportDate(data.to_date)}
-                {' · '}
-                {total} visit{total === 1 ? '' : 's'}
-              </p>
-
               <div className="admin-card admin-card--flat">
                 <div className="admin-card__body admin-card__body--flush-top">
                   {!visits.length ? (

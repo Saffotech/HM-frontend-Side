@@ -10,7 +10,7 @@
   align-items: center;
   gap: 1rem;
   padding: 1.125rem 1.25rem;
-  background: linear-gradient(135deg, #ebf5fb 0%, #f8fafc 60%, #fff 100%);
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: 0 2px 12px rgba(29, 111, 164, 0.08);
@@ -156,7 +156,7 @@
   gap: 0.5rem;
   padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--color-border-light);
-  background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+  background: var(--color-surface);
 }
 
 .ward-table-card__title {

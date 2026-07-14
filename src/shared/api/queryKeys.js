@@ -82,6 +82,8 @@ export const queryKeys = {
   nurse: {
     all: ['nurse'],
     queue: (filters) => ['nurse', 'queue', filters],
+    bedPatients: (filters) => ['nurse', 'bed-patients', filters],
+    patientAppointment: (patientId) => ['nurse', 'patient-appointment', patientId],
     vitals: (filters) => ['nurse', 'vitals', filters],
     vitalsSearch: (filters) => ['nurse', 'vitals-search', filters],
     vital: (id) => ['nurse', 'vital', id],

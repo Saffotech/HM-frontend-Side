@@ -364,7 +364,7 @@ export default function NursePatientMedicationsPage() {
                     </select>
                   </div>
                   <div className="nurse-field">
-                    <label htmlFor="med-admin-time">Scheduled time (optional)</label>
+                    <label htmlFor="med-admin-time">Scheduled time</label>
                     <input
                       id="med-admin-time"
                       type="datetime-local"

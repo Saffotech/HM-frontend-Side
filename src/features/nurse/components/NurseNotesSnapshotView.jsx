@@ -9,13 +9,13 @@ import {
 import NurseHistoryFilter from '@/features/nurse/components/NurseHistoryFilter';
 import NurseQueueStatusBadge from '@/features/nurse/components/NurseQueueStatusBadge';
 
-export const NOTE_SECTIONS = [
+const NOTE_SECTIONS = [
   { key: 'symptoms', label: 'Symptoms', icon: Stethoscope, accent: 'rose' },
   { key: 'treatment_response', label: 'Treatment Response', icon: ClipboardList, accent: 'blue' },
   { key: 'additional_notes', label: 'Additional Notes', icon: FileText, accent: 'purple' },
 ];
 
-export function formatCreatedAt(iso) {
+function formatCreatedAt(iso) {
   if (!iso) return '—';
   return new Date(iso).toLocaleString();
 }

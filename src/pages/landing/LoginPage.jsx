@@ -3,6 +3,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
   ArrowRight,
+  Eye,
+  EyeOff,
   Lock,
   Mail,
   ShieldCheck,
@@ -14,14 +16,6 @@ import { getAppEntryForRole, getAppEntryForUser } from '@/shared/utils/authRedir
 import { trimCredentials, hasCredentials } from '@/shared/utils/credentials';
 import { toast } from '@/shared/utils/toast';
 import { isStaffModuleLive } from '@/shared/constants/moduleAvailability';
-import {
-  authenticateDemoReceptionist,
-  DEMO_RECEPTIONIST_CREDENTIALS,
-  setReceptionistPortalScope,
-} from '@/features/receptionist/utils/receptionistPortal';
-import {
-  DEMO_SUPER_ADMIN_CREDENTIALS,
-} from '@/features/super-admin/utils/superAdminPortal';
 import './LoginPage.css';
 
 const STATS = [
@@ -34,13 +28,13 @@ const STATS = [
 const STAFF_LOGIN_BG_VIDEO = '/videos/Login_Animetion.mp4?v=1';
 
 export default function LoginPage() {
-  const { login, loginDemoReceptionist, loginDemoSuperAdmin, logout, error, isAuthenticated, user, authReady } = useAuthStore();
+  const { login, logout, error, isAuthenticated, user, authReady } = useAuthStore();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [portalLoading, setPortalLoading] = useState(null);
   const [formError, setFormError] = useState('');
   const [bgVideoOk, setBgVideoOk] = useState(true);
   const bgVideoRef = useRef(null);
@@ -69,14 +63,6 @@ export default function LoginPage() {
 
     setSubmitting(true);
     try {
-      if (authenticateDemoReceptionist(trimmed)) {
-        const me = await loginDemoReceptionist(trimmed);
-        toast.success(`Welcome, ${me.full_name}`);
-        navigate(ROUTES.RECEPTIONIST_DASHBOARD, { replace: true });
-        return;
-      }
-
-      setReceptionistPortalScope(false);
       const me = await login(trimmed);
       if (!isStaffModuleLive(me.department, me.role)) {
         logout();
@@ -96,38 +82,6 @@ export default function LoginPage() {
       toast.error(message);
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handleSuperAdminPortal = async () => {
-    setFormError('');
-    setPortalLoading('super-admin');
-    try {
-      const profile = await loginDemoSuperAdmin(DEMO_SUPER_ADMIN_CREDENTIALS);
-      toast.success(`Welcome, ${profile.full_name}`);
-      navigate(ROUTES.SUPER_ADMIN_DASHBOARD, { replace: true });
-    } catch (err) {
-      const message = err?.message || 'Unable to open Super Admin portal.';
-      setFormError(message);
-      toast.error(message);
-    } finally {
-      setPortalLoading(null);
-    }
-  };
-
-  const handleReceptionistPortal = async () => {
-    setFormError('');
-    setPortalLoading('receptionist');
-    try {
-      const profile = await loginDemoReceptionist(DEMO_RECEPTIONIST_CREDENTIALS);
-      toast.success(`Welcome, ${profile.full_name}`);
-      navigate(ROUTES.RECEPTIONIST_DASHBOARD, { replace: true });
-    } catch (err) {
-      const message = err?.message || 'Unable to open Receptionist portal.';
-      setFormError(message);
-      toast.error(message);
-    } finally {
-      setPortalLoading(null);
     }
   };
 
@@ -247,25 +201,6 @@ export default function LoginPage() {
                 <p>Welcome back. Enter your credentials to continue.</p>
               </header>
 
-              <div className="staff-login-page__portal-actions">
-                <button
-                  type="button"
-                  className="staff-login-page__portal-btn staff-login-page__portal-btn--super-admin"
-                  onClick={handleSuperAdminPortal}
-                  disabled={Boolean(portalLoading)}
-                >
-                  {portalLoading === 'super-admin' ? 'Opening…' : 'Super Admin'}
-                </button>
-                <button
-                  type="button"
-                  className="staff-login-page__portal-btn staff-login-page__portal-btn--receptionist"
-                  onClick={handleReceptionistPortal}
-                  disabled={Boolean(portalLoading)}
-                >
-                  {portalLoading === 'receptionist' ? 'Opening…' : 'Receptionist'}
-                </button>
-              </div>
-
               {isAuthenticated && user && (
                 <div className="staff-login-page__session" role="status">
                   <p>
@@ -324,13 +259,21 @@ export default function LoginPage() {
                     </span>
                     <input
                       id="staff-password"
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       autoComplete="current-password"
                       required
                     />
+                    <button
+                      type="button"
+                      className="staff-login-page__toggle-pw"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                    </button>
                   </div>
                 </div>
 

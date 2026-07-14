@@ -1,10 +1,10 @@
 /* Doctor dashboard — stat cards from doctor-ui.css */
 
-.doc-dashboard {
+.doc-dashboard{
   gap: 1rem;
 }
 
-.doc-stat--clickable {
+.doc-stat--clickable{
   width: 100%;
   text-align: left;
   font: inherit;
@@ -15,52 +15,52 @@
     transform 0.15s ease;
 }
 
-.doc-stat--clickable:hover {
+.doc-stat--clickable:hover{
   border-color: var(--color-primary);
   box-shadow: 0 2px 8px rgba(29, 111, 164, 0.08);
   transform: translateY(-1px);
 }
 
-.doc-stat--clickable:focus-visible {
+.doc-stat--clickable:focus-visible{
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
-.doc-stat--selected {
+.doc-stat--selected{
   border-color: var(--color-primary);
   background: rgba(29, 111, 164, 0.04);
   box-shadow: 0 0 0 2px rgba(29, 111, 164, 0.12);
 }
 
-.doc-stat--selected .doc-stat__value {
+.doc-stat--selected .doc-stat__value{
   color: var(--color-primary);
 }
 
-.doc-stat__value--dashboard {
+.doc-stat__value--dashboard{
   min-height: 1.5rem;
   display: flex;
   align-items: center;
 }
 
-.doc-stat__value-skeleton {
+.doc-stat__value-skeleton{
   display: inline-block;
   border-radius: 6px;
 }
 
-.doc-dashboard-table--loading {
+.doc-dashboard-table--loading{
   pointer-events: none;
 }
 
-.doc-dashboard-table__row--skeleton td {
+.doc-dashboard-table__row--skeleton td{
   padding-top: 0.85rem;
   padding-bottom: 0.85rem;
 }
 
-.doc-recent-card--skeleton {
+.doc-recent-card--skeleton{
   pointer-events: none;
 }
 
-.doc-recent-card__info--skeleton {
+.doc-recent-card__info--skeleton{
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -68,7 +68,7 @@
   flex: 1;
 }
 
-.doc-dashboard-grid {
+.doc-dashboard-grid{
   display: grid;
   gap: 1rem;
   min-width: 0;
@@ -77,11 +77,11 @@
 
 .doc-dashboard-main,
 .doc-dashboard-side,
-.doc-dashboard-recent {
+.doc-dashboard-recent{
   min-width: 0;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1024px){
   .doc-dashboard-grid {
     grid-template-columns: repeat(12, minmax(0, 1fr));
     align-items: start;
@@ -96,15 +96,15 @@
   }
 }
 
-.doc-dashboard .doc-card {
+.doc-dashboard .doc-card{
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
-.doc-dashboard-main .doc-card__head {
+.doc-dashboard-main .doc-card__head{
   border-bottom: 1px solid var(--color-border-light);
 }
 
-.doc-queue-card__head {
+.doc-queue-card__head{
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -112,7 +112,7 @@
   gap: 0.5rem;
 }
 
-.doc-queue-card__actions {
+.doc-queue-card__actions{
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -121,25 +121,25 @@
   justify-content: flex-end;
 }
 
-.doc-view-all-link {
+.doc-view-all-link{
   border: none;
   background: none;
   padding: 0;
   font: inherit;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--color-brand-green-dark, #0f766e);
+  color: var(--color-brand-green-dark, var(--color-primary-hover));
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
   white-space: nowrap;
 }
 
-.doc-view-all-link:hover {
+.doc-view-all-link:hover{
   color: var(--color-primary);
 }
 
-.doc-dashboard-empty {
+.doc-dashboard-empty{
   margin: 0;
   padding: 1.5rem 1.25rem;
   font-size: 0.875rem;
@@ -147,12 +147,12 @@
   text-align: center;
 }
 
-.doc-dashboard-empty--sm {
+.doc-dashboard-empty--sm{
   padding: 1rem;
   text-align: left;
 }
 
-.doc-dashboard-table__empty {
+.doc-dashboard-table__empty{
   padding: 1.25rem;
   text-align: center;
   font-size: 0.875rem;
@@ -160,21 +160,21 @@
 }
 
 /* Today's Appointments table */
-.doc-dashboard-table {
+.doc-dashboard-table{
   min-width: 20rem;
   table-layout: fixed;
   width: 100%;
 }
 
 .doc-dashboard-table th,
-.doc-dashboard-table td {
+.doc-dashboard-table td{
   padding: 0.5rem 0.65rem;
   vertical-align: middle;
   width: 25%;
 }
 
 .doc-dashboard-table--with-actions th,
-.doc-dashboard-table--with-actions td {
+.doc-dashboard-table--with-actions td{
   width: 20%;
 }
 
@@ -183,42 +183,38 @@
 .doc-dashboard-table--with-actions .doc-dashboard-table__time,
 .doc-dashboard-table--with-actions .doc-dashboard-table__appt-status,
 .doc-dashboard-table--with-actions .doc-dashboard-table__th-actions,
-.doc-dashboard-table--with-actions .doc-dashboard-table__actions {
+.doc-dashboard-table--with-actions .doc-dashboard-table__actions{
   width: 20%;
 }
 
 .doc-dashboard-table--with-actions .doc-dashboard-table__th-actions,
-.doc-dashboard-table--with-actions .doc-dashboard-table__actions {
+.doc-dashboard-table--with-actions .doc-dashboard-table__actions{
   text-align: left;
 }
 
-.doc-dashboard-table--with-actions .doc-dashboard-table__actions .doc-appt-actions {
+.doc-dashboard-table--with-actions .doc-dashboard-table__actions .doc-appt-actions{
   width: 100%;
 }
 
-.doc-dashboard-table--with-actions .doc-dashboard-table__actions .doc-appt-actions__bar {
+.doc-dashboard-table--with-actions .doc-dashboard-table__actions .doc-appt-actions__bar{
   justify-content: flex-start;
 }
 
-.doc-dashboard-table thead th {
+.doc-dashboard-table thead th{
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   text-align: left;
-  color: var(--color-brand-green-dark, #0f766e);
-  background: linear-gradient(
-    180deg,
-    rgba(15, 118, 110, 0.08) 0%,
-    rgba(15, 118, 110, 0.03) 100%
-  );
+  color: var(--color-brand-green-dark, var(--color-primary-hover));
+  background: var(--color-surface);
   border-bottom: 2px solid rgba(15, 118, 110, 0.12);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.doc-dashboard-table__patient-id {
+.doc-dashboard-table__patient-id{
   width: 25%;
   font-size: 0.8125rem;
   font-weight: 600;
@@ -226,7 +222,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.doc-dashboard-table__patient-name-cell {
+.doc-dashboard-table__patient-name-cell{
   width: 25%;
   min-width: 0;
   overflow: hidden;
@@ -237,95 +233,36 @@
   color: var(--color-brand-green-dark);
 }
 
-.doc-dashboard-table tbody tr:hover {
+.doc-dashboard-table tbody tr:hover{
   background: var(--color-surface-hover);
 }
 
-.doc-dashboard-table__time {
+.doc-dashboard-table__time{
   width: 25%;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
-.doc-dashboard-table__time time {
+.doc-dashboard-table__time time{
   font-weight: 700;
   font-size: 0.8125rem;
   color: var(--color-text);
-}
-
-.doc-dashboard-table__patient {
-  width: 25%;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.doc-dashboard-table__patient-name {
-  display: block;
-  border: none;
-  background: none;
-  padding: 0;
-  margin: 0 0 0.2rem;
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 700;
-  line-height: 1.3;
-  color: var(--color-brand-green-dark);
-  cursor: pointer;
-  text-align: left;
-}
-
-.doc-dashboard-table__patient-name:hover {
-  text-decoration: underline;
-}
-
-.doc-dashboard-table__patient-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.25rem 0.35rem;
-  font-size: 0.75rem;
-  line-height: 1.35;
-  color: var(--color-text-muted);
-}
-
-.doc-dashboard-table__patient-id {
+}.doc-dashboard-table__patient-id{
   font-weight: 600;
   color: var(--color-text-label);
-}
-
-.doc-dashboard-table__patient-sep {
-  color: var(--color-text-lighter);
-}
-
-.doc-dashboard-table__patient-reason {
-  color: var(--color-text-muted);
-}
-
-.doc-dashboard-table__appt-status {
+}.doc-dashboard-table__appt-status{
   width: 25%;
   white-space: nowrap;
-}
-
-.doc-dashboard-table__actions-row {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.35rem;
-  flex-wrap: nowrap;
-  width: 100%;
-  white-space: nowrap;
-}
-
-.doc-dashboard-table__actions-row .doc-appt-actions {
+}.doc-dashboard-table__actions-row .doc-appt-actions{
   width: auto;
   flex-shrink: 0;
 }
 
-.doc-dashboard-table__actions-row .btn {
+.doc-dashboard-table__actions-row .btn{
   flex-shrink: 0;
 }
 
-.doc-dashboard-table__actions {
+.doc-dashboard-table__actions{
   width: 25%;
   min-width: 0;
   max-width: none;
@@ -337,100 +274,39 @@
   text-align: left;
 }
 
-.doc-appt-detail {
+.doc-appt-detail{
   margin-top: 0;
 }
 
-.doc-dashboard-table tbody tr {
+.doc-dashboard-table tbody tr{
   position: relative;
 }
 
-.doc-dashboard-table__row {
+.doc-dashboard-table__row{
   cursor: pointer;
 }
 
-.doc-dashboard-table__row:focus-visible {
+.doc-dashboard-table__row:focus-visible{
   outline: 2px solid rgba(15, 118, 110, 0.35);
   outline-offset: -2px;
 }
 
-.doc-dashboard-main .table-wrap {
+.doc-dashboard-main .table-wrap{
   overflow-x: auto;
   overflow-y: visible;
 }
 
-.doc-dashboard-main .doc-card__body--flush {
+.doc-dashboard-main .doc-card__body--flush{
   overflow: visible;
-}
-
-.doc-dashboard-today-list {
-  max-height: 28rem;
-}
-
-.doc-dashboard-side .doc-card__head {
+}.doc-dashboard-side .doc-card__head{
   border-bottom: 1px solid var(--color-border-light);
-}
-
-/* Queue / today's appointments list */
-.doc-dashboard-queue {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  padding: 0.65rem 0.75rem 0.85rem;
-  max-height: 24rem;
-  overflow-y: auto;
-}
-
-.doc-dashboard-side .doc-queue-item {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.55rem 0.65rem;
-}
-
-.doc-queue-item__num {
-  display: grid;
-  place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 50%;
-  background: var(--color-surface-hover);
-  font-size: 0.6875rem;
-  font-weight: 700;
-  color: var(--color-text-muted);
-  flex-shrink: 0;
-}
-
-.doc-queue-item__body {
-  min-width: 0;
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-
-.doc-queue-item__name {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.doc-queue-item__meta {
-  font-size: 0.6875rem;
-  color: var(--color-text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Recent patients — full width, horizontal scroll */
-.doc-dashboard-recent-body {
+}/* Recent patients — full width, horizontal scroll */
+.doc-dashboard-recent-body{
   padding-top: 0.75rem;
   padding-bottom: 0.85rem;
 }
 
-.doc-dashboard-recent-track {
+.doc-dashboard-recent-track{
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
@@ -442,7 +318,7 @@
   scrollbar-width: thin;
 }
 
-.doc-recent-card {
+.doc-recent-card{
   flex: 0 0 auto;
   display: flex;
   flex-direction: row;
@@ -456,23 +332,23 @@
   background: var(--color-surface-hover);
 }
 
-.doc-recent-card--clickable {
+.doc-recent-card--clickable{
   cursor: pointer;
   transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.doc-recent-card--clickable:hover {
+.doc-recent-card--clickable:hover{
   border-color: #cbd5e1;
   background: #fff;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
 }
 
-.doc-recent-card--clickable:focus-visible {
+.doc-recent-card--clickable:focus-visible{
   outline: 2px solid rgba(15, 118, 110, 0.35);
   outline-offset: 2px;
 }
 
-.doc-recent-card__info {
+.doc-recent-card__info{
   flex: 1;
   min-width: 0;
   display: flex;
@@ -481,32 +357,24 @@
   text-align: left;
 }
 
-.doc-recent-card__name {
+.doc-recent-card__name{
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--color-text);
 }
 
-.doc-recent-card__info .text-muted {
+.doc-recent-card__info .text-muted{
   font-size: 0.75rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.doc-recent-card__actions {
-  display: flex;
-  flex-shrink: 0;
-  gap: 0.35rem;
-}
-
-@media (max-width: 768px) {
-  .doc-recent-card {
+}@media (max-width: 768px) {
+  .doc-recent-card{
     min-width: 16rem;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 480px){
   .doc-recent-card {
     flex-direction: column;
     align-items: flex-start;
@@ -523,7 +391,7 @@
   }
 }
 
-@media (min-width: 900px) {
+@media (min-width: 900px){
   .doc-dashboard-recent-track {
     flex-wrap: wrap;
     overflow-x: visible;

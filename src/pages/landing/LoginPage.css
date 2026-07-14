@@ -1,6 +1,4 @@
 /* Staff login — SaffoCare brand (forest green + gold) */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
-
 .staff-login-page {
   --login-primary: var(--color-brand-green);
   --login-primary-dark: var(--color-brand-green-dark);
@@ -18,7 +16,7 @@
   align-items: center;
   justify-content: center;
   padding: 1.25rem;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   color: var(--color-text);
   background-color: #eef4f9;
   -webkit-font-smoothing: antialiased;
@@ -135,7 +133,7 @@
 
 .staff-login-page__hero-title {
   margin: 0 0 0.75rem;
-  font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-size: clamp(1.5rem, 3vw, 1.875rem);
   font-weight: 800;
   line-height: 1.2;
@@ -294,7 +292,7 @@
 
 .staff-login-page__form-head h2 {
   margin: 0;
-  font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-size: 1.625rem;
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -425,6 +423,32 @@
 
 .staff-login-page__input input::placeholder {
   color: var(--color-text-lighter);
+}
+
+.staff-login-page__toggle-pw {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-right: -0.25rem;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.staff-login-page__toggle-pw:hover {
+  color: var(--login-primary);
+  background: var(--login-primary-light);
+}
+
+.staff-login-page__toggle-pw:focus-visible {
+  outline: 2px solid var(--login-primary);
+  outline-offset: 2px;
 }
 
 .staff-login-page__error {

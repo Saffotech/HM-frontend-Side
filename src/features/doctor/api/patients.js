@@ -29,5 +29,3 @@ export async function getPatientHistory(patientUhid, token) {
   );
   return unwrapDoctorResponse(response, "patient_history");
 }
-
-export { getPrescriptionsByPatient as getPatientPrescriptions } from "@/features/doctor/api/prescriptions";

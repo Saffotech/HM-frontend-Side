@@ -9,9 +9,11 @@ export default function AdminReportFilters({
   children,
   onReset,
   showReset = false,
+  /** Inline row without the Filters label / heavy panel chrome */
+  inline = false,
 }) {
-  return (
-    <AdminFilterPanel onReset={onReset} showReset={showReset}>
+  const fields = (
+    <>
       <DateInput
         label="From"
         value={fromDate}
@@ -25,6 +27,16 @@ export default function AdminReportFilters({
         className="admin-report-filters__date"
       />
       {children}
+    </>
+  );
+
+  if (inline) {
+    return <div className="admin-report-filters admin-report-filters--inline">{fields}</div>;
+  }
+
+  return (
+    <AdminFilterPanel onReset={onReset} showReset={showReset} hideLabel>
+      {fields}
     </AdminFilterPanel>
   );
 }

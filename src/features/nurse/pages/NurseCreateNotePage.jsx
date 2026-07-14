@@ -12,7 +12,7 @@ import NurseNoteFormFields, { INITIAL_NOTE_FORM } from '@/features/nurse/compone
 import {
   useCreateNoteMutation,
   useNursePatientQueueAppointmentId,
-  useNurseQueueQuery,
+  useNurseBedPatientsQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
 
 import { toast } from '@/shared/utils/toast';
@@ -43,17 +43,17 @@ export default function NurseCreateNotePage() {
   const {
     appointmentId: resolvedAppointmentId,
     isLoading: isResolvingAppointment,
-    isError: isResolveError,
-    error: resolveError,
-    refetch: refetchAppointment,
   } = useNursePatientQueueAppointmentId(patientIdFromUrl, {
     enabled: !appointmentIdFromUrl && Boolean(patientIdFromUrl),
   });
 
   const appointmentId = appointmentIdFromUrl || resolvedAppointmentId;
-  const { data: queueData } = useNurseQueueQuery(
+  const patientId = patientIdFromUrl ? Number(patientIdFromUrl) : null;
+  const canSubmit = Boolean(appointmentId) || (Number.isSafeInteger(patientId) && patientId >= 1);
+
+  const { data: bedData } = useNurseBedPatientsQuery(
     { page: 1, page_size: 100 },
-    { enabled: Boolean(appointmentIdFromUrl || patientIdFromUrl) }
+    { enabled: Boolean(appointmentIdFromUrl || patientIdFromUrl) },
   );
 
   if (!appointmentIdFromUrl && patientIdFromUrl && isResolvingAppointment) {
@@ -66,22 +66,7 @@ export default function NurseCreateNotePage() {
     );
   }
 
-  if (!appointmentIdFromUrl && patientIdFromUrl && isResolveError) {
-    return (
-      <NurseLayout>
-        <div className="nurse-page nurse-max-w-wide">
-          <QueryFeedback
-            isLoading={false}
-            isError
-            error={resolveError}
-            onRetry={refetchAppointment}
-          />
-        </div>
-      </NurseLayout>
-    );
-  }
-
-  if (!appointmentId) {
+  if (!canSubmit) {
 
     return (
 
@@ -91,13 +76,9 @@ export default function NurseCreateNotePage() {
 
           <div className="nurse-alert nurse-alert--error">
 
-            <p>
-              {patientIdFromUrl
-                ? 'This patient is not in today\'s queue. Open them from the queue or dashboard to add notes.'
-                : 'Appointment ID is required.'}
-            </p>
+            <p>Select a patient from the Dashboard to add a nursing note.</p>
 
-            <Link to={ROUTES.NURSE_QUEUE}>Return to Queue</Link>
+            <Link to={ROUTES.NURSE_DASHBOARD}>Return to Dashboard</Link>
 
           </div>
 
@@ -115,7 +96,7 @@ export default function NurseCreateNotePage() {
         <div className="nurse-page nurse-max-w-wide">
           <div className="nurse-alert nurse-alert--error">
             <p>You do not have permission to create nursing notes.</p>
-            <Link to={ROUTES.NURSE_QUEUE}>Return to Queue</Link>
+            <Link to={ROUTES.NURSE_DASHBOARD}>Return to Dashboard</Link>
           </div>
         </div>
       </NurseLayout>
@@ -128,9 +109,17 @@ export default function NurseCreateNotePage() {
 
     e.preventDefault();
 
+    const payload = {
+      ...form,
+      ...(appointmentId ? { appointment_id: Number(appointmentId) } : {}),
+      ...(Number.isSafeInteger(patientId) && patientId >= 1
+        ? { patient_id: patientId }
+        : {}),
+    };
+
     createMut.mutate(
 
-      { appointment_id: appointmentId, ...form },
+      payload,
 
       {
 
@@ -138,11 +127,11 @@ export default function NurseCreateNotePage() {
 
           toast.success('Nursing note saved');
 
-          navigate(ROUTES.NURSE_QUEUE);
+          navigate(ROUTES.NURSE_DASHBOARD);
 
         },
 
-        onError: () => toast.error('Failed to save note'),
+        onError: (err) => toast.error(err?.message || 'Failed to save note'),
 
       }
 
@@ -153,17 +142,17 @@ export default function NurseCreateNotePage() {
 
 
   const createdAt = new Date().toLocaleString();
-  const queueAppointment = queueData?.items?.find((item) => {
+  const bedPatient = bedData?.items?.find((item) => {
     if (appointmentIdFromUrl) {
       return String(item.appointment_id ?? item.id) === String(appointmentIdFromUrl);
     }
     return String(item.patient_id) === String(patientIdFromUrl);
   });
-  const patientMeta = queueAppointment
+  const patientMeta = bedPatient
     ? {
-        patient_name: queueAppointment.patient_name || 'Unknown Patient',
-        patientUid: queueAppointment.patientUid || '',
-        bed_number: queueAppointment.bed_number || '—',
+        patient_name: bedPatient.patient_name || 'Unknown Patient',
+        patientUid: bedPatient.patientUid || '',
+        bed_number: bedPatient.bed_number || '—',
       }
     : null;
 
@@ -240,7 +229,7 @@ export default function NurseCreateNotePage() {
 
               <span className="nurse-vital-detail__info-label">Appointment</span>
 
-              <span className="nurse-vital-detail__info-value">{appointmentId}</span>
+              <span className="nurse-vital-detail__info-value">{appointmentId || 'Linked on save'}</span>
 
             </div>
 

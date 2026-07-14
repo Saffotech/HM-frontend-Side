@@ -1,8 +1,6 @@
 import {
-  getDashboardStats,
   getTodayAppointments,
   getAppointmentsByDate,
-  getAppointmentsHistory,
   getAppointmentById,
   updateAppointmentStatus,
 } from '@/features/doctor/api/appointments';
@@ -10,7 +8,6 @@ import { listAppointmentsAll } from '@/shared/api/services/appointments';
 import { unwrapDoctorResponse } from '@/shared/api/utils/doctorResponseUtils';
 import {
   apiToUiAppointment,
-  apiToUiDashboardStats,
   uiDateToApiDate,
   uiStatusToApiStatus,
 } from '@/shared/api/mappers/appointmentMapper';
@@ -45,11 +42,6 @@ async function fetchDoctorAppointmentsWithOpdPayment(fetchDoctorList, token, uiD
   return enrichDoctorAppointmentsWithOpdPayment(mapAppointmentsList(doctorRaw), opdAppts);
 }
 
-export async function fetchDashboardStats(token) {
-  const raw = await getDashboardStats(token);
-  return apiToUiDashboardStats(raw);
-}
-
 export async function fetchTodayAppointments(token) {
   return fetchDoctorAppointmentsWithOpdPayment(
     () => getTodayAppointments(token),
@@ -64,10 +56,6 @@ export async function fetchAppointmentsByDate(uiDate, token) {
     token,
     uiDate,
   );
-}
-
-export async function fetchAppointmentsHistory(token) {
-  return getAppointmentsHistory(token).then(mapAppointmentsList);
 }
 
 export async function fetchAppointmentById(id, token) {

@@ -1,16 +1,18 @@
-import { API_BASE_URL, API_PREFIX, ROUTES } from '@/shared/constants';
+import { API_BASE_URL, API_PREFIX, ROUTES, ROLES } from '@/shared/constants';
 import { getAuthRef } from '@/components/security/authRef';
 import {
   applyRefreshedTokens,
   loadAuthSession,
 } from '@/components/security/authSession';
 import { refreshAccessToken } from '@/shared/api/auth';
-import { isTokenExpired } from '@/shared/utils/jwtHelper';
-import { isDemoReceptionistSession } from '@/features/receptionist/utils/receptionistPortal';
-import { isDemoSuperAdminSession } from '@/features/super-admin/utils/superAdminPortal';
+import { isTokenExpired, decodeJwt } from '@/shared/utils/jwtHelper';
 
-function isDemoSession(user) {
-  return isDemoReceptionistSession(user) || isDemoSuperAdminSession(user);
+function isLegacyDemoSession(user, token) {
+  if (user?.isDemoSession) return true;
+  if (!token) return false;
+  if (String(token).endsWith('.demo')) return true;
+  const payload = decodeJwt(token);
+  return Boolean(payload?.demo);
 }
 
 const DEFAULT_TIMEOUT_MS = 15000;
@@ -33,7 +35,7 @@ function resolveAuthToken(explicitToken) {
 
 async function refreshSessionTokens() {
   const session = loadAuthSession();
-  if (isDemoSession(session?.user)) return null;
+  if (isLegacyDemoSession(session?.user, session?.token)) return null;
 
   const refreshToken = session?.refreshToken;
   if (!refreshToken || isTokenExpired(refreshToken)) return null;
@@ -94,8 +96,9 @@ export async function apiClient(endpoint, options = {}) {
     _retriedAfterRefresh = false,
     ...rest
   } = options;
-  const isLoginRequest =
-    endpoint === '/auth/login' || endpoint === '/auth/register';
+  // Only login is public. /auth/register requires an admin Bearer token
+  // (users:create) — do not strip Authorization for it.
+  const isLoginRequest = endpoint === '/auth/login';
   const isRefreshRequest = endpoint === '/auth/refresh';
 
   const authToken = isLoginRequest ? token : resolveAuthToken(token);
@@ -148,15 +151,16 @@ export async function apiClient(endpoint, options = {}) {
 
     if (!skipSessionLogout && authToken) {
       const sessionUser = loadAuthSession()?.user;
-      if (isDemoSession(sessionUser)) {
-        const err = new Error('Demo session — backend API is not available for this portal.');
+      if (isLegacyDemoSession(sessionUser, authToken)) {
+        const err = new Error('Session expired. Please sign in again.');
         err.status = 401;
         throw err;
       }
       getAuthRef().logout();
-      const loginRoute = isDemoSuperAdminSession(sessionUser)
-        ? ROUTES.SUPER_ADMIN_LOGIN
-        : isDemoReceptionistSession(sessionUser)
+      const loginRoute =
+        sessionUser?.role === ROLES.SUPER_ADMIN
+          ? ROUTES.SUPER_ADMIN_LOGIN
+          : sessionUser?.role === ROLES.RECEPTIONIST
           ? ROUTES.RECEPTIONIST_LOGIN
           : ROUTES.LOGIN;
       if (typeof window !== 'undefined' && window.location.pathname !== loginRoute) {

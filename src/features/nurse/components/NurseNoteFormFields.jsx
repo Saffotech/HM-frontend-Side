@@ -1,6 +1,6 @@
 import { ClipboardList, Eraser, FileText, Stethoscope } from 'lucide-react';
 
-export const NOTE_FIELDS = [
+const NOTE_FIELDS = [
   { key: 'symptoms', label: 'Symptoms', icon: Stethoscope, accent: 'rose', placeholder: 'Describe patient symptoms…' },
   { key: 'treatment_response', label: 'Treatment Response', icon: ClipboardList, accent: 'blue', placeholder: 'Document treatment given and patient response…' },
   { key: 'additional_notes', label: 'Additional Notes', icon: FileText, accent: 'purple', placeholder: 'Any other observations or follow-up actions…' },

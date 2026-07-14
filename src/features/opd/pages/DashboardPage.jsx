@@ -3,7 +3,7 @@ import { UserPlus, CalendarPlus, BedDouble, Receipt, Clock } from 'lucide-react'
 import { usePatientsQuery, PATIENTS_PAGE_SIZE } from '@/shared/hooks/queries/usePatientQuery';
 import { useTodayAppointmentsQuery } from '@/shared/hooks/queries/useAppointmentQuery';
 import { useOpdDashboardQuery } from '@/shared/hooks/queries/useOpdDashboardQuery';
-import { enrichAppointmentsWithApiPayment } from '@/features/opd/utils/appointmentPaymentUtils';
+import { enrichAppointmentsWithApiPayment, prepareOpdDashboardAppointments } from '@/features/opd/utils/appointmentPaymentUtils';
 import { Avatar, StatusBadge, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import './DashboardPage.css';
@@ -23,7 +23,9 @@ export default function DashboardPage() {
     error: errP,
   } = usePatientsQuery({ fetchAll: false, page: 1, limit: PATIENTS_PAGE_SIZE });
 
-  const todaysAppts = enrichAppointmentsWithApiPayment(todayApptPage?.appointments ?? []);
+  const todaysAppts = prepareOpdDashboardAppointments(
+    enrichAppointmentsWithApiPayment(todayApptPage?.appointments ?? []),
+  );
   const recentPatients = recentPage?.patients ?? [];
   const wardBedStats = dashboard?.wardBedStats ?? [];
 

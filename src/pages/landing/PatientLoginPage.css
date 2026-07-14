@@ -1,6 +1,4 @@
 /* Patient portal login — SaffoCare brand (forest green + gold) */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
-
 .patient-login-page {
   --p-primary:        var(--color-brand-green);
   --p-primary-dark:   var(--color-brand-green-dark);
@@ -17,7 +15,7 @@
   align-items: center;
   justify-content: center;
   padding: 1.25rem;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   color: var(--p-text);
   position: relative;
@@ -162,7 +160,7 @@
 }
 
 .patient-login-page__hero-name {
-  font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-size: 1.125rem;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -218,7 +216,7 @@
 /* title */
 .patient-login-page__hero-title {
   margin: 0;
-  font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-size: clamp(1.5rem, 2.5vw, 2rem);
   font-weight: 800;
   line-height: 1.2;
@@ -366,7 +364,7 @@
 
 .patient-login-page__panel-head h2 {
   margin: 0;
-  font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -642,7 +640,7 @@
   height: 1.25rem;
   font-size: 0.875rem;
   font-weight: 700;
-  font-family: 'Poppins', system-ui, sans-serif;
+  font-family: var(--font-sans);
   color: #4285f4;
 }
 

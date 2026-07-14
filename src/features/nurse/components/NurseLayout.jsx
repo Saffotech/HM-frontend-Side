@@ -15,7 +15,7 @@ import '../styles/nurse-alerts.css';
 
 const NAV_LINKS = [
   { href: ROUTES.NURSE_DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
-  { href: ROUTES.NURSE_QUEUE, label: "Today's Queue", icon: Users },
+  { href: ROUTES.NURSE_QUEUE, label: 'Patient', icon: Users },
   { href: ROUTES.NURSE_VITALS, label: 'Vitals', icon: Activity },
   { href: ROUTES.NURSE_NOTES, label: 'Nursing Notes', icon: FileText },
   { href: ROUTES.NURSE_MEDICATIONS, label: 'Medications', icon: Pill },
@@ -30,7 +30,7 @@ const PAGE_TITLES = [
   { prefix: '/nurse/medications', title: 'Medications' },
   { prefix: '/nurse/notes', title: 'Nursing Notes' },
   { prefix: '/nurse/vitals', title: 'Vitals' },
-  { prefix: ROUTES.NURSE_QUEUE, title: "Today's Queue" },
+  { prefix: ROUTES.NURSE_QUEUE, title: 'Patient' },
   { prefix: ROUTES.NURSE_DASHBOARD, title: 'Nurse Dashboard' },
   { prefix: '/nurse/patients', title: 'Patient' },
   { prefix: ROUTES.NURSE_PROFILE, title: 'My Profile' },

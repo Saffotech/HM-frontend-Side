@@ -9,8 +9,6 @@ const LAB_ORDER_STATUS = {
 export const DOCTOR_LAB_FILTERS = [
   { id: 'all', label: 'All' },
   { id: 'ordered', label: 'Ordered' },
-  { id: 'sample_collected', label: 'Sample Collected' },
-  { id: 'processing', label: 'Processing' },
   { id: 'completed', label: 'Completed' },
   { id: 'cancelled', label: 'Cancelled' },
 ];

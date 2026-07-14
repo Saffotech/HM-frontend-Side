@@ -12,9 +12,13 @@ export default function PageTransition({ children, className = 'page-transition'
   const controls = useAnimation();
 
   useEffect(() => {
-    if (reducedMotion) return;
+    if (reducedMotion) return undefined;
     controls.set(pageTransition.initial);
-    controls.start(pageTransition.animate);
+    const animation = controls.start(pageTransition.animate);
+    return () => {
+      controls.stop();
+      void animation;
+    };
   }, [pathname, controls, reducedMotion]);
 
   if (reducedMotion) {

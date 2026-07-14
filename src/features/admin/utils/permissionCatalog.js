@@ -11,6 +11,15 @@ export function loadPermissionCatalog() {
   }
 }
 
+export function savePermissionCatalog(catalog) {
+  if (typeof window === 'undefined' || !Array.isArray(catalog)) return catalog;
+  const normalized = catalog
+    .filter((item) => item?.id != null && item?.name)
+    .map((item) => ({ id: item.id, name: item.name }));
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+  return normalized;
+}
+
 export function addPermissionToCatalog(entry) {
   if (!entry?.id || !entry?.name) return loadPermissionCatalog();
   const catalog = loadPermissionCatalog();

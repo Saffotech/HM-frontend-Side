@@ -7,44 +7,52 @@ import AdminBackBar from '@/features/admin/components/AdminBackBar';
 import {
   useAdminRolesQuery,
   useAssignRolePermissionsMutation,
-  usePermissionCatalogQuery,
 } from '@/shared/hooks/queries/useAdminQuery';
+import { useSuperAdminPermissionCatalogQuery } from '@/features/super-admin/hooks/useSuperAdminQuery';
 import { Button, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
-import { useSuperAdminDemoMode } from '@/features/super-admin/hooks/useSuperAdminDemoMode';
 import { formatRoleLabel } from '@/features/super-admin/utils/permissionPresentation';
-import {
-  MOCK_SUPER_ADMIN_PERMISSIONS,
-  MOCK_SUPER_ADMIN_ROLES,
-} from '@/features/super-admin/mock/superAdminMockData';
 
 export default function SuperAdminAssignPermissionsPage() {
   const { roleId } = useParams();
   const navigate = useNavigate();
-  const isDemo = useSuperAdminDemoMode();
   const [selectedIds, setSelectedIds] = useState([]);
 
-  const apiRolesQuery = useAdminRolesQuery({ enabled: !isDemo });
-  const apiCatalogQuery = usePermissionCatalogQuery({ enabled: !isDemo });
+  const apiRolesQuery = useAdminRolesQuery();
+  const apiCatalogQuery = useSuperAdminPermissionCatalogQuery();
   const assignMutation = useAssignRolePermissionsMutation();
 
-  const roles = isDemo ? MOCK_SUPER_ADMIN_ROLES : apiRolesQuery.data;
-  const catalog = isDemo ? MOCK_SUPER_ADMIN_PERMISSIONS : (apiCatalogQuery.data ?? []);
-  const isLoading = isDemo ? false : apiRolesQuery.isLoading;
-  const isError = isDemo ? false : apiRolesQuery.isError;
-  const error = isDemo ? null : apiRolesQuery.error;
+  const roles = apiRolesQuery.data;
+  const catalog = apiCatalogQuery.data ?? [];
+  const isLoading = apiRolesQuery.isLoading || apiCatalogQuery.isLoading;
+  const isError = apiRolesQuery.isError || apiCatalogQuery.isError;
+  const error = apiRolesQuery.error || apiCatalogQuery.error;
 
   const selectedRole = roles?.find((role) => String(role.id) === String(roleId));
-  const totalPermissions = catalog.length;
+  const assignableCatalog = useMemo(
+    () => catalog.filter((p) => p.id != null && !p.unresolved),
+    [catalog],
+  );
+  const totalPermissions = assignableCatalog.length;
+  const rolePermissionKey = selectedRole?.permissions?.join('|') ?? '';
+  const rolePermissionNames = useMemo(() => {
+    if (!rolePermissionKey) return new Set();
+    return new Set(rolePermissionKey.split('|'));
+  }, [rolePermissionKey]);
 
   useEffect(() => {
-    if (!selectedRole?.permissions?.length) return;
-    const ids = catalog
-      .filter((p) => selectedRole.permissions.includes(p.name))
+    if (!rolePermissionNames.size || !assignableCatalog.length) return;
+    const ids = assignableCatalog
+      .filter((p) => rolePermissionNames.has(p.name))
       .map((p) => p.id);
-    setSelectedIds(ids);
-  }, [selectedRole, catalog]);
+    setSelectedIds((prev) => {
+      if (prev.length === ids.length && prev.every((id, index) => id === ids[index])) {
+        return prev;
+      }
+      return ids;
+    });
+  }, [rolePermissionNames, assignableCatalog]);
 
   const togglePermission = (id) => {
     setSelectedIds((prev) =>
@@ -67,11 +75,6 @@ export default function SuperAdminAssignPermissionsPage() {
     e.preventDefault();
     if (!selectedIds.length) {
       toast.error('Select at least one permission for this role');
-      return;
-    }
-    if (isDemo) {
-      toast.success('Permission assignment saved locally in demo mode only');
-      navigate(ROUTES.SUPER_ADMIN_ROLES);
       return;
     }
     try {
@@ -116,18 +119,24 @@ export default function SuperAdminAssignPermissionsPage() {
                     <h1 className="sa-perm-card__title">Permissions for {roleLabel}</h1>
                     <p className="sa-perm-card__sub">{summaryText}</p>
                   </div>
-                  <Button type="submit" disabled={assignMutation.isPending}>
+                  <Button type="submit" disabled={assignMutation.isPending || !totalPermissions}>
                     <Save size={16} aria-hidden />
                     {assignMutation.isPending ? 'Saving…' : 'Save changes'}
                   </Button>
                 </div>
 
-                <SuperAdminPermissionPicker
-                  catalog={catalog}
-                  selectedIds={selectedIds}
-                  onToggle={togglePermission}
-                  onToggleGroup={toggleGroup}
-                />
+                {!totalPermissions ? (
+                  <p className="sa-settings-unsupported" role="note">
+                    Permission catalog is unavailable. Re-run database seed or assign permissions via API.
+                  </p>
+                ) : (
+                  <SuperAdminPermissionPicker
+                    catalog={assignableCatalog}
+                    selectedIds={selectedIds}
+                    onToggle={togglePermission}
+                    onToggleGroup={toggleGroup}
+                  />
+                )}
               </div>
             </form>
           )}

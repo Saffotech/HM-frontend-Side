@@ -75,7 +75,7 @@ function StandardRoleLayout({
         <div className="layout-sidebar__head">
           <Link to={homeRoute} className="layout-brand">
             <BrandLogo size={32} />
-            <BrandName />
+            <BrandName className="brand-name--on-dark" />
           </Link>
           <button
             type="button"

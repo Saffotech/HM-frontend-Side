@@ -204,6 +204,47 @@ export function mapQueueResponse(raw) {
   };
 }
 
+/** Occupied-bed patient row from GET /nurse/beds/patients */
+export function mapBedPatientItem(row) {
+  if (!row) return null;
+  return attachPatientUid({
+    ...row,
+    phone: row.patient_phone ?? row.phone ?? '',
+    bed_number: row.bed_number ?? '',
+    ward_name: row.ward_name ?? '',
+    department: row.department_name ?? row.department ?? '',
+    pending_medications: row.pending_medication_count ?? 0,
+    has_vitals: Boolean(row.last_vitals),
+    last_vitals: row.last_vitals ?? null,
+  });
+}
+
+export function mapBedPatientsResponse(raw) {
+  if (!raw) return { items: [], total: 0, page: 1, page_size: 20 };
+  const items = (raw.items ?? []).map(mapBedPatientItem).filter(Boolean);
+  return {
+    items,
+    total: raw.total ?? items.length,
+    page: raw.page ?? 1,
+    page_size: raw.page_size ?? 20,
+  };
+}
+
+/** Vitals/notes still need appointment_id when available; otherwise patient_id (Phase 1). */
+export function buildNurseVitalsUrl(row) {
+  if (!row) return null;
+  if (row.appointment_id) return `/nurse/vitals/new?appointmentId=${row.appointment_id}`;
+  if (row.patient_id) return `/nurse/vitals/new?patientId=${row.patient_id}`;
+  return null;
+}
+
+export function buildNurseNotesUrl(row) {
+  if (!row) return null;
+  if (row.appointment_id) return `/nurse/notes/new?appointmentId=${row.appointment_id}`;
+  if (row.patient_id) return `/nurse/notes/new?patientId=${row.patient_id}`;
+  return null;
+}
+
 function wrapPagedArrayTotal(items, page, pageSize) {
   const p = Number(page) || 1;
   const ps = Number(pageSize) || 20;
@@ -245,7 +286,7 @@ function buildVitalHistoryEntry(vital) {
   return {
     history_id: vital.id,
     recorded_at: vital.recorded_at,
-    recorded_by: vital.recorded_by_name ?? vital.recorded_by ?? vital.nurse_id ?? '',
+    recorded_by: vital.recorded_by_name ?? null,
     status: vital.status ?? 'recorded',
     temperature: vital.temperature,
     blood_pressure: vital.blood_pressure,
@@ -265,14 +306,14 @@ export function mapVitalItem(row) {
     ...row,
     patient_name: row.patient_name ?? '',
     bed_number: row.bed_number || '',
-    recorded_by: row.recorded_by_name ?? row.recorded_by ?? row.nurse_id ?? '',
+    recorded_by: row.recorded_by_name ?? null,
     history: row.history?.length ? row.history : [buildVitalHistoryEntry(row)],
   });
 }
 
 export function mapNoteItem(row) {
   if (!row) return null;
-  const createdBy = row.created_by_name ?? row.created_by ?? row.nurse_id ?? '';
+  const createdBy = row.created_by_name ?? row.nurse_name ?? null;
   const entry = {
     history_id: row.id,
     created_at: row.created_at,
@@ -412,7 +453,7 @@ export function mapMedicationHistoryRow(row) {
     medicine_name: row.medicine_name ?? row.medicine ?? '',
     dose: row.dosage ?? row.dose ?? '',
     patient_name: row.patient_name ?? '',
-    administered_by_name: row.administered_by_name ?? String(row.administered_by ?? ''),
+    administered_by_name: row.administered_by_name ?? null,
   });
 }
 
@@ -520,7 +561,9 @@ export function applyQueuePatientUidLookup(items = [], uidSources = []) {
 export function toApiVitalBody(body = {}) {
   const {
     additional_vitals: _a,
+    customVitals: _c,
     appointmentId,
+    patientId,
     patient_name: _p,
     bed_number: _b,
     history: _h,
@@ -532,6 +575,11 @@ export function toApiVitalBody(body = {}) {
   } else if (appointmentId != null) {
     payload.appointment_id = Number(appointmentId);
   }
+  if (body.patient_id != null) {
+    payload.patient_id = Number(body.patient_id);
+  } else if (patientId != null) {
+    payload.patient_id = Number(patientId);
+  }
   return payload;
 }
 
@@ -540,6 +588,9 @@ export function toApiNoteBody(body = {}) {
   const payload = { ...rest };
   if (payload.appointment_id != null) {
     payload.appointment_id = Number(payload.appointment_id);
+  }
+  if (payload.patient_id != null) {
+    payload.patient_id = Number(payload.patient_id);
   }
   return payload;
 }

@@ -7,7 +7,6 @@ import { useAuthStore } from '@/shared/store/useAuthStore';
 import { isStaffModuleLive } from '@/shared/constants/moduleAvailability';
 import { trimCredentials, hasCredentials } from '@/shared/utils/credentials';
 import { toast } from '@/shared/utils/toast';
-import { isDemoSuperAdminSession } from '@/features/super-admin/utils/superAdminPortal';
 import '@/features/admin/styles/admin-login.css';
 
 export default function AdminLoginPage() {
@@ -20,7 +19,7 @@ export default function AdminLoginPage() {
 
   useEffect(() => {
     if (!authReady || !isAuthenticated || !user) return;
-    if (isDemoSuperAdminSession(user)) {
+    if (user.role === ROLES.SUPER_ADMIN) {
       navigate(ROUTES.SUPER_ADMIN_DASHBOARD, { replace: true });
       return;
     }

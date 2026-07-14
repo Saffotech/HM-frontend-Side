@@ -33,7 +33,13 @@ export function buildDepartmentPayload(form, { includeStatus = false } = {}) {
   return payload;
 }
 
-export default function DepartmentForm({ form, onChange, showStatus = false, idPrefix = 'dept' }) {
+export default function DepartmentForm({
+  form,
+  onChange,
+  showStatus = false,
+  hideDescription = false,
+  idPrefix = 'dept',
+}) {
   const handleChange = (field) => (e) => {
     const value = field === 'is_active' ? e.target.checked : e.target.value;
     onChange((prev) => ({ ...prev, [field]: value }));
@@ -65,16 +71,18 @@ export default function DepartmentForm({ form, onChange, showStatus = false, idP
             />
           </div>
         </div>
-        <div>
-          <Label htmlFor={`${idPrefix}_description`}>Description</Label>
-          <Input
-            id={`${idPrefix}_description`}
-            value={form.description}
-            onChange={handleChange('description')}
-            maxLength={500}
-            placeholder="Optional description"
-          />
-        </div>
+        {!hideDescription && (
+          <div>
+            <Label htmlFor={`${idPrefix}_description`}>Description</Label>
+            <Input
+              id={`${idPrefix}_description`}
+              value={form.description}
+              onChange={handleChange('description')}
+              maxLength={500}
+              placeholder="Optional description"
+            />
+          </div>
+        )}
       </div>
 
       {showStatus && (

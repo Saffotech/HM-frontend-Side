@@ -91,24 +91,29 @@ export function buildStaffRows(staff = [], { activeOnly = false } = {}) {
     name: staffDisplayName(user),
     email: user.email || '—',
     role: user.role_name || user.role || '—',
-    department: user.department || '—',
+    department: user.department_name || user.department || '—',
     status: user.is_active ? 'Active' : 'Inactive',
     joined: formatJoinedDate(user.created_at),
     isActive: Boolean(user.is_active),
   }));
 }
 
-export function buildRoleRows(roles = [], staff = []) {
-  const counts = staff.reduce((acc, user) => {
-    const key = user.role_name || user.role;
-    if (key) acc[key] = (acc[key] || 0) + 1;
-    return acc;
-  }, {});
+export function buildRoleRows(roles = [], staffByRole = []) {
+  const counts = Array.isArray(staffByRole) && staffByRole.length
+    ? staffByRole.reduce((acc, row) => {
+        if (row.role_name) acc[row.role_name] = row.count ?? 0;
+        return acc;
+      }, {})
+    : {};
 
   return roles.map((role) => ({
     id: role.id,
     role: role.name,
-    description: role.description || '—',
+    description:
+      role.description
+      || (Array.isArray(role.permissions) && role.permissions.length > 0
+        ? `${role.permissions.length} permissions`
+        : '—'),
     staffCount: counts[role.name] ?? 0,
   }));
 }
@@ -124,12 +129,15 @@ export function buildAuditRows(logs = []) {
   }));
 }
 
-export function getDashboardTableRows(filter, { staff = [], roles = [], auditLogs = [] } = {}) {
+export function getDashboardTableRows(
+  filter,
+  { staff = [], roles = [], auditLogs = [], staffByRole = [] } = {},
+) {
   switch (filter) {
     case DASHBOARD_FILTERS.ACTIVE_STAFF:
-      return buildStaffRows(staff, { activeOnly: true });
+      return buildStaffRows(staff);
     case DASHBOARD_FILTERS.TOTAL_ROLES:
-      return buildRoleRows(roles, staff);
+      return buildRoleRows(roles, staffByRole);
     case DASHBOARD_FILTERS.TODAY_EVENTS:
       return buildAuditRows(auditLogs);
     case DASHBOARD_FILTERS.TOTAL_STAFF:

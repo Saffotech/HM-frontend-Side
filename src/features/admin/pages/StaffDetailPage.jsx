@@ -26,6 +26,7 @@ function formatDate(value) {
 
 function formatRoleLabel(name) {
   if (name === 'opd_billing') return 'OPD Billing';
+  if (name === 'receptionist') return 'Receptionist';
   return name || '—';
 }
 

@@ -24,8 +24,8 @@
   width: 2.75rem;
   height: 2.75rem;
   border-radius: 10px;
-  background: linear-gradient(135deg, #ede9fe 0%, #f3e8ff 100%);
-  color: #7c3aed;
+  background: var(--color-surface);
+  color: var(--color-primary);
   flex-shrink: 0;
 }
 
@@ -86,7 +86,7 @@
 }
 
 .nurse-notes-registry__table .nurse-table tbody tr.nurse-row--clickable:hover td {
-  background: #f5f3ff;
+  background: var(--color-primary-light);
 }
 
 .nurse-notes-registry__id {
@@ -171,8 +171,8 @@
   width: 3rem;
   height: 3rem;
   border-radius: 10px;
-  background: linear-gradient(135deg, #ede9fe 0%, #f3e8ff 100%);
-  color: #7c3aed;
+  background: var(--color-surface);
+  color: var(--color-primary);
   flex-shrink: 0;
 }
 
@@ -215,8 +215,8 @@
 }
 
 .nurse-note-detail__card-icon--rose { background: #ffe4e6; color: #e11d48; }
-.nurse-note-detail__card-icon--blue { background: #dbeafe; color: #2563eb; }
-.nurse-note-detail__card-icon--purple { background: #ede9fe; color: #7c3aed; }
+.nurse-note-detail__card-icon--blue { background: var(--color-info-bg); color: var(--color-info); }
+.nurse-note-detail__card-icon--purple { background: var(--color-primary-light); color: var(--color-primary); }
 
 .nurse-note-detail__card p {
   margin: 0;
@@ -280,8 +280,8 @@
 }
 
 .nurse-note-edit__field--rose { border-left: 3px solid #f43f5e; }
-.nurse-note-edit__field--blue { border-left: 3px solid #2563eb; }
-.nurse-note-edit__field--purple { border-left: 3px solid #7c3aed; }
+.nurse-note-edit__field--blue { border-left: 3px solid var(--color-info); }
+.nurse-note-edit__field--purple { border-left: 3px solid var(--color-primary); }
 
 .nurse-note-edit__field-label {
   display: flex;
@@ -304,6 +304,6 @@
 }
 
 .nurse-note-edit__textarea:focus {
-  border-color: #7c3aed;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
 }

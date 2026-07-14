@@ -1,13 +1,11 @@
 import {
   getRecords,
-  createRecord,
   getNotifications,
 } from '@/features/doctor/api/clinical';
 import { asList } from '@/shared/api/dataSource';
 import {
   apiToUiRecord,
   apiToUiNotification,
-  uiRecordToApiCreate,
 } from '@/shared/api/mappers/clinicalMapper';
 import {
   syncRecords,
@@ -33,15 +31,6 @@ async function applyUpdater(token, fetchList, syncFn, updater) {
   const next = typeof updater === 'function' ? updater(prev) : updater;
   await syncFn(prev, next, token);
   return next;
-}
-
-export async function listRecords(token) {
-  return fetchUiRecords(token);
-}
-
-export async function addRecord(record, token) {
-  const created = await createRecord(uiRecordToApiCreate(record), token);
-  return apiToUiRecord(created);
 }
 
 export async function mutateRecords(updater, token) {

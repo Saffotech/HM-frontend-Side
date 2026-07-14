@@ -176,7 +176,6 @@ function ApptTable({ items, loading, onOpenPatient, onView }) {
           <tr>
             <th>Time / Date</th>
             <th>Patient</th>
-            <th>Reason</th>
             <th>Status</th>
             <th className="doc-schedule-table__actions-head">Action</th>
           </tr>
@@ -203,7 +202,6 @@ function ApptTable({ items, loading, onOpenPatient, onView }) {
               <td>
                 <strong>{a.patientName}</strong>
               </td>
-              <td>{a.reason || a.notes || '—'}</td>
               <td>
                 <StatusPill status={getDoctorDisplayStatus(a)} />
               </td>

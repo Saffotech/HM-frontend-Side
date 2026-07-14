@@ -21,7 +21,7 @@ export default function NursePatientPicker({
   required = false,
   disabled = false,
   placeholder = 'Search by patient ID or name…',
-  hint = 'Patients from today\'s queue and active medication list',
+  hint = 'Patients with an assigned bed or active medications',
 }) {
   const autoId = useId();
   const inputId = idProp ?? `nurse-patient-picker-${autoId}`;

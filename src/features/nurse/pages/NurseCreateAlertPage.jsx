@@ -111,7 +111,7 @@ export default function NurseCreateAlertPage() {
                 onChange={setSelectedPatientId}
                 required
                 placeholder="Search by patient ID (e.g. P-1014) or name…"
-                hint="Select from today's queue or patients with active medications"
+                hint="Select from bed-assigned patients or patients with active medications"
               />
             </section>
 

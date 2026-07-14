@@ -9,6 +9,9 @@ const SuperAdminDashboardPage = lazy(() => import('@/features/super-admin/pages/
 const SuperAdminStaffListPage = lazy(() => import('@/features/super-admin/pages/SuperAdminStaffListPage'));
 const SuperAdminStaffRegisterPage = lazy(() => import('@/features/super-admin/pages/SuperAdminStaffRegisterPage'));
 const SuperAdminStaffDetailPage = lazy(() => import('@/features/super-admin/pages/SuperAdminStaffDetailPage'));
+const SuperAdminDepartmentCreatePage = lazy(() => import('@/features/super-admin/pages/SuperAdminDepartmentCreatePage'));
+const SuperAdminDepartmentDetailPage = lazy(() => import('@/features/super-admin/pages/SuperAdminDepartmentDetailPage'));
+const SuperAdminDepartmentsListPage = lazy(() => import('@/features/super-admin/pages/SuperAdminDepartmentsListPage'));
 const SuperAdminRolesListPage = lazy(() => import('@/features/super-admin/pages/SuperAdminRolesListPage'));
 const SuperAdminRoleCreatePage = lazy(() => import('@/features/super-admin/pages/SuperAdminRoleCreatePage'));
 const SuperAdminAssignPermissionsPage = lazy(() => import('@/features/super-admin/pages/SuperAdminAssignPermissionsPage'));
@@ -58,6 +61,30 @@ export const superAdminRoutes = [
             element: (
               <LazyRoute>
                 <SuperAdminStaffDetailPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.SUPER_ADMIN_DEPARTMENTS,
+            element: (
+              <LazyRoute>
+                <SuperAdminDepartmentsListPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.SUPER_ADMIN_DEPARTMENTS_NEW,
+            element: (
+              <LazyRoute>
+                <SuperAdminDepartmentCreatePage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.SUPER_ADMIN_DEPARTMENT_DETAIL,
+            element: (
+              <LazyRoute>
+                <SuperAdminDepartmentDetailPage />
               </LazyRoute>
             ),
           },

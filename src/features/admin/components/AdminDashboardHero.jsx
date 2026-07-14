@@ -5,7 +5,7 @@ function ActiveRing({ percent, isLoading }) {
   const safePercent = Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0;
 
   if (isLoading) {
-    return <Skeleton width={88} height={88} circle />;
+    return <Skeleton width={68} height={68} circle />;
   }
 
   return (
@@ -37,21 +37,17 @@ export default function AdminDashboardHero({
   return (
     <section className="admin-dashboard-hero">
       <div className="admin-dashboard-hero__main">
-        <p className="admin-dashboard-hero__eyebrow">Hospital administration</p>
         <h1 className="admin-dashboard-hero__title">{greeting}</h1>
-        <p className="admin-dashboard-hero__subtitle">
-          Overview of staff accounts, departments, and role distribution across your hospital.
-        </p>
 
         <div className="admin-dashboard-hero__highlights">
           <div className="admin-dashboard-hero__highlight">
-            <Users size={16} aria-hidden />
+            <Users size={14} aria-hidden />
             <span>
               <strong>{isLoading ? '—' : totalStaff}</strong> total staff
             </span>
           </div>
           <div className="admin-dashboard-hero__highlight">
-            <Building2 size={16} aria-hidden />
+            <Building2 size={14} aria-hidden />
             <span>
               <strong>{isLoading ? '—' : totalDepartments}</strong> active departments
             </span>

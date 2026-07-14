@@ -135,6 +135,12 @@ export async function createRole(body) {
   });
 }
 
+/** GET /roles/permissions */
+export async function listPermissions() {
+  const data = await apiClient('/roles/permissions');
+  return Array.isArray(data) ? data : [];
+}
+
 /** POST /roles/permissions */
 export async function createPermission(body) {
   return apiClient('/roles/permissions', {

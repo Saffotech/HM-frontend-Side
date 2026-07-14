@@ -32,7 +32,7 @@
   gap: 0.875rem;
   flex-shrink: 0;
   padding: 1.25rem 1.25rem 1rem;
-  background: linear-gradient(135deg, #1d6fa4 0%, #2d8bc9 55%, #3b9fd4 100%);
+  background: var(--color-primary);
   color: #fff;
   position: relative;
 }
@@ -145,7 +145,7 @@
   gap: 0.75rem;
   margin-top: 0.75rem;
   padding: 0.75rem 1rem;
-  background: linear-gradient(135deg, #f0f9ff 0%, #f8fafc 100%);
+  background: var(--color-surface);
   border: 1px solid var(--color-primary-border, #bfdbfe);
   border-radius: var(--radius-md);
 }

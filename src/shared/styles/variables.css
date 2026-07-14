@@ -1,56 +1,206 @@
+/**
+ * SaffoCare HMS — Unified Design Tokens
+ * All modules must use these tokens. Do not invent module-local palettes.
+ */
 :root {
-  /* SaffoCare logo palette */
-  --color-brand-green: #1a5c34;
-  --color-brand-green-dark: #143d24;
-  --color-brand-green-light: #e6f4ec;
-  --color-brand-gold: #e8b923;
-  --color-brand-gold-dark: #c99a12;
-
-  --color-primary: var(--color-brand-green);
-  --color-primary-dark: var(--color-brand-green-dark);
-  --color-primary-light: var(--color-brand-green-light);
+  /* ── Brand / Primary ── */
+  --color-primary: #1a5c34;
+  --color-primary-hover: #164c2b;
+  --color-primary-dark: #164c2b;
+  --color-primary-light: #e8f5ee;
   --color-primary-border: #a7d4b8;
+  --color-primary-muted: rgba(26, 92, 52, 0.12);
+  /* Sidebar + page: matched teal-stone (medium sidebar, soft page — not dark vs white) */
+  --color-sidebar: #4a5f5b;
+  --color-sidebar-border: rgba(255, 255, 255, 0.12);
+  --color-sidebar-hover: rgba(255, 255, 255, 0.1);
+  --color-sidebar-accent: #0e9384;
+  --color-sidebar-accent-hover: #14b8a6;
+  --color-sidebar-active: rgba(14, 147, 132, 0.2);
+  --color-sidebar-text: #f4f7f6;
+  --color-sidebar-text-muted: #c5d2cf;
+  --color-sidebar-text-active: #5eead4;
 
-  --color-success: #27ae60;
-  --color-success-bg: #eafaf1;
-  --color-danger: #e74c3c;
-  --color-danger-bg: #fdedec;
-  --color-warning: #e67e22;
-  --color-warning-bg: #fef9e7;
+  --color-brand-green: var(--color-primary);
+  --color-brand-green-dark: var(--color-primary-hover);
+  --color-brand-green-light: var(--color-primary-light);
+  --color-accent: #d4af37;
+  --color-brand-gold: var(--color-accent);
+  --color-brand-gold-dark: #b8962e;
 
-  /* Accent-only — never use on large surfaces, wide buttons, or card backgrounds */
-  --color-teal: #16a085; /* bill stripes, small action badges */
-  --color-purple: #8e44ad; /* note badges, secondary labels only */
+  /* ── Semantic ── */
+  --color-success: #16a34a;
+  --color-success-bg: #ecfdf3;
+  --color-warning: #f59e0b;
+  --color-warning-bg: #fffbeb;
+  --color-danger: #dc2626;
+  --color-danger-bg: #fef2f2;
+  --color-info: #2563eb;
+  --color-info-bg: #eff6ff;
 
-  --color-bg: #f0f4f8;
-  --color-surface: #ffffff;
-  --color-border: #e2e8f0;
-  --color-border-light: #f0f4f8;
-  --color-border-hover: #cbd5e0;
-  --color-surface-hover: #f8fafc;
-  --color-table-header: #f9fafb;
+  /* Legacy accent aliases (map to semantic — no random colors) */
+  --color-teal: var(--color-info);
+  --color-purple: var(--color-info);
 
-  --color-text: #1a202c;
-  --color-text-muted: #718096;
-  --color-text-light: #64748b;
-  --color-text-lighter: #9ca3af;
-  --color-text-label: #4b5563;
+  /* ── Surfaces (same family as sidebar — soft teal-stone, not pure white) ── */
+  --color-bg: #e4ebe9;
+  --color-surface: #f5f8f7;
+  --color-border: #cfd9d6;
+  --color-border-strong: #b5c2be;
+  --color-border-light: #e0e8e6;
+  --color-border-hover: #b5c2be;
+  --color-surface-hover: #ebf1ef;
+  --color-table-header: #eef3f1;
 
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --radius-sm: 6px;
+  /* ── Text ── */
+  --color-text: #101828;
+  --color-text-muted: #475467;
+  --color-text-light: #667085;
+  --color-text-lighter: #98a2b3;
+  --color-text-label: #344054;
+  --color-text-on-primary: #ffffff;
+
+  /* ── Typography ── */
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-sidebar: 'Manrope', 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Display / Dashboard title — 32 / 700 / 40 */
+  --text-display: 2rem;
+  --text-display-weight: 700;
+  --text-display-leading: 2.5rem;
+
+  /* Page title — 28 / 700 / 36 */
+  --text-page-title: 1.75rem;
+  --text-page-title-weight: 700;
+  --text-page-title-leading: 2.25rem;
+
+  /* Section heading — 22 / 700 / 30 */
+  --text-section-title: 1.375rem;
+  --text-section-title-weight: 700;
+  --text-section-title-leading: 1.875rem;
+
+  /* Card title — 18 / 600 / 26 */
+  --text-card-title: 1.125rem;
+  --text-card-title-weight: 600;
+  --text-card-title-leading: 1.625rem;
+
+  /* Table header — 14 / 600 / 20 */
+  --text-table-header: 0.875rem;
+  --text-table-header-weight: 600;
+  --text-table-header-leading: 1.25rem;
+
+  /* Form label — 13 / 600 / 18 */
+  --text-label: 0.8125rem;
+  --text-label-weight: 600;
+  --text-label-leading: 1.125rem;
+
+  /* Body — 14 / 400 / 22 */
+  --text-body: 0.875rem;
+  --text-body-weight: 400;
+  --text-body-leading: 1.375rem;
+
+  /* Small — 12 / 500 / 18 */
+  --text-small: 0.75rem;
+  --text-small-weight: 500;
+  --text-small-leading: 1.125rem;
+
+  /* Button — 14 / 600 */
+  --text-button: 0.875rem;
+  --text-button-weight: 600;
+
+  /* Badge — 12 / 600 */
+  --text-badge: 0.75rem;
+  --text-badge-weight: 600;
+
+  /* Form extras */
+  --text-input: 0.875rem;
+  --text-input-weight: 500;
+  --text-placeholder-weight: 400;
+  --text-helper-weight: 400;
+  --text-error-weight: 600;
+
+  /* Card metric number — 30 / 700 */
+  --text-metric: 1.875rem;
+  --text-metric-weight: 700;
+  --text-metric-leading: 2.25rem;
+
+  /* Card description — 13 / 400 */
+  --text-description: 0.8125rem;
+  --text-description-weight: 400;
+  --text-description-leading: 1.125rem;
+
+  /* ── Radius ── */
+  --radius-sm: 8px;
   --radius-md: 8px;
   --radius-lg: 10px;
   --radius-xl: 12px;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --sidebar-width: 15rem;
+  --radius-pill: 999px;
+  --radius-badge: 999px;
 
-  --space-xs: 0.25rem;
-  --space-sm: 0.5rem;
-  --space-md: 0.75rem;
-  --space-lg: 1rem;
-  --space-xl: 1.25rem;
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.08);
+  --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.08);
+  --shadow-focus: 0 0 0 2px rgba(26, 92, 52, 0.2);
+
+  /* ── Spacing (8px system) ── */
+  --space-1: 0.25rem;  /* 4 */
+  --space-2: 0.5rem;   /* 8 */
+  --space-3: 0.75rem;  /* 12 */
+  --space-4: 1rem;     /* 16 */
+  --space-5: 1.25rem;  /* 20 */
+  --space-6: 1.5rem;   /* 24 */
+  --space-8: 2rem;     /* 32 */
+
+  --space-xs: var(--space-1);
+  --space-sm: var(--space-2);
+  --space-md: var(--space-3);
+  --space-lg: var(--space-4);
+  --space-xl: var(--space-5);
+
+  --pad-card: 1rem;
+  --pad-input: 0.625rem 0.875rem;
+  --pad-input-y: 0.625rem;
+  --pad-input-x: 0.875rem;
+  --pad-button-y: 0.625rem;
+  --pad-button-x: 1rem;
+  --pad-table-cell: 0.75rem;
+  --gap-dashboard: 1rem;
+  --gap-section: 1.25rem;
+  --gap-field: 1rem;
+  --gap-label: 0.375rem;
+
+  --control-height: 2.5rem; /* 40px */
+  --icon-button-size: 2.5rem;
+
+  /* ── Layout shell ── */
+  --sidebar-width: 16.25rem; /* 260px */
+  --sidebar-collapsed: 4.5rem; /* 72px */
+  --topbar-height: 4rem; /* 64px */
+
+  /* ── Motion ── */
+  --duration-fast: 0.2s;
+  --duration-normal: 0.2s;
+  --ease-standard: ease;
 
   --dropdown-max-height: 16rem;
   --dropdown-z-index: 1100;
+
+  /* ── Badge semantic backgrounds ── */
+  --badge-scheduled-bg: var(--color-info-bg);
+  --badge-scheduled-fg: var(--color-info);
+  --badge-completed-bg: var(--color-success-bg);
+  --badge-completed-fg: var(--color-success);
+  --badge-pending-bg: var(--color-warning-bg);
+  --badge-pending-fg: #b45309;
+  --badge-cancelled-bg: var(--color-danger-bg);
+  --badge-cancelled-fg: var(--color-danger);
+  --badge-active-bg: var(--color-success-bg);
+  --badge-active-fg: var(--color-success);
+  --badge-inactive-bg: #f2f4f7;
+  --badge-inactive-fg: #667085;
 }

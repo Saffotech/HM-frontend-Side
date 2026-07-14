@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 *,
 *::before,
@@ -8,23 +8,30 @@
   padding: 0;
 }
 
-body {
+html {
   font-family: var(--font-sans);
-  background: var(--color-bg);
-  color: var(--color-text);
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
 }
 
-/* Auth bootstrap / route guards — was unstyled (easy to mistake for a blank page) */
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  font-weight: var(--text-body-weight);
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: var(--text-body-leading);
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: normal;
+}
+
 .loading {
   display: flex;
   min-height: 100vh;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
-  font-size: 1rem;
-  font-weight: 500;
+  padding: var(--space-8);
+  font-size: var(--text-body);
+  font-weight: var(--text-body-weight);
+  line-height: var(--text-body-leading);
   color: var(--color-text);
   background: var(--color-bg);
 }
@@ -51,14 +58,7 @@ table {
   width: 100%;
 }
 
-.page-title {
-  font-size: clamp(1.125rem, 2.5vw, 1.25rem);
-  font-weight: 700;
-  color: var(--color-text);
-  letter-spacing: -0.01em;
-  line-height: 1.3;
-  word-break: break-word;
-}
+/* .page-title / .section-title live in typography.css */
 
 .page-container {
   max-width: 1100px;
@@ -77,8 +77,8 @@ table {
   box-shadow: var(--shadow-sm);
   overflow: hidden;
   transition:
-    transform var(--duration-fast, 0.2s) var(--ease-standard, ease),
-    box-shadow var(--duration-fast, 0.2s) var(--ease-standard, ease);
+    box-shadow var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
 }
 
 .card--hover,
@@ -88,29 +88,30 @@ table {
 
 .card--hover:hover,
 .card.ui-interactive:hover {
-  transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
 
 .card__header {
-  padding: 0.875rem 1rem;
+  padding: var(--pad-card);
   border-bottom: 1px solid var(--color-border-light);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
   min-height: 3rem;
 }
 
 .card__header h3 {
-  font-size: 0.9375rem;
-  font-weight: 600;
+  font-size: var(--text-card-title);
+  font-weight: var(--text-card-title-weight);
+  line-height: var(--text-card-title-leading);
   color: var(--color-text);
 }
 
 .card__header a {
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--text-body-leading);
   color: var(--color-primary);
 }
 
@@ -119,7 +120,7 @@ table {
 }
 
 .card__body {
-  padding: 1rem;
+  padding: var(--pad-card);
 }
 
 .card--flat {
@@ -128,32 +129,52 @@ table {
 
 .table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .data-table th {
-  padding: 0.625rem 0.875rem;
-  font-size: 0.65rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--pad-table-cell);
+  font-size: var(--text-table-header);
+  font-weight: var(--text-table-header-weight);
+  line-height: var(--text-table-header-leading);
+  text-transform: none;
+  letter-spacing: normal;
   color: var(--color-text-muted);
-  background: var(--color-surface-hover);
-  border-bottom: 1px solid var(--color-border-light);
+  background: var(--color-table-header);
+  border-bottom: 1px solid var(--color-border);
   text-align: left;
   white-space: nowrap;
 }
 
 .data-table td {
-  padding: 0.625rem 0.875rem;
+  padding: var(--pad-table-cell);
   border-bottom: 1px solid var(--color-border-light);
-  font-size: 0.8125rem;
+  font-size: var(--text-body);
+  font-weight: var(--text-body-weight);
+  line-height: var(--text-body-leading);
   vertical-align: middle;
+  color: var(--color-text);
+}
+
+.data-table tbody tr {
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.data-table tbody tr:hover {
+  background: var(--color-surface-hover);
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 @media (max-width: 480px) {
   .data-table th,
   .data-table td {
-    font-size: 13px;
+    padding: 0.625rem;
   }
 
   .col-optional {
@@ -179,29 +200,22 @@ table {
   }
 }
 
-.data-table tbody tr:hover {
-  background: var(--color-surface-hover);
-}
-
-.data-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
 .form-section-title {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin: 0.5rem 0 0.25rem;
-  padding-top: 0.5rem;
+  font-size: var(--text-card-title);
+  font-weight: var(--text-card-title-weight);
+  line-height: var(--text-card-title-leading);
+  color: var(--color-text);
+  text-transform: none;
+  letter-spacing: normal;
+  margin: var(--space-2) 0 var(--space-1);
+  padding-top: var(--space-2);
   border-top: 1px solid var(--color-border-light);
 }
 
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  gap: var(--gap-field);
 }
 
 .form-grid--full {

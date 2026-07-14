@@ -11,8 +11,9 @@ import {
   Wind,
 } from 'lucide-react';
 import NurseHistoryFilter from '@/features/nurse/components/NurseHistoryFilter';
+import { decodeCustomVitals } from '@/features/nurse/components/NurseVitalsFormFields';
 
-export const CORE_VITALS = [
+const CORE_VITALS = [
   { key: 'temperature', label: 'Temperature', unit: '°F', icon: Thermometer, accent: 'rose' },
   { key: 'blood_pressure', label: 'Blood Pressure', unit: '', icon: Activity, accent: 'blue' },
   { key: 'heart_rate', label: 'Heart Rate', unit: 'BPM', icon: Heart, accent: 'red' },
@@ -23,13 +24,13 @@ export const CORE_VITALS = [
   { key: 'pain_level', label: 'Pain Level', unit: '', icon: Stethoscope, accent: 'purple' },
 ];
 
-export function formatVitalValue(key, value) {
+function formatVitalValue(key, value) {
   if (value === null || value === undefined || value === '') return '—';
   if (key === 'pain_level') return `${value}/10`;
   return String(value);
 }
 
-export function formatRecordedAt(iso) {
+function formatRecordedAt(iso) {
   if (!iso) return '—';
   return new Date(iso).toLocaleString();
 }
@@ -95,6 +96,11 @@ export default function NurseVitalsSnapshotView({ vital }) {
     [historyItems, activeHistoryId]
   );
 
+  const customVitals = useMemo(
+    () => decodeCustomVitals(snapshot?.observation_notes),
+    [snapshot?.observation_notes],
+  );
+
   if (!vital || !snapshot) return null;
 
   return (
@@ -158,12 +164,29 @@ export default function NurseVitalsSnapshotView({ vital }) {
         </div>
       </section>
 
-      <section className="nurse-vital-detail__section">
-        <h2 className="nurse-vital-detail__section-title">Observation Notes</h2>
-        <div className="nurse-vital-notes nurse-card nurse-card--padded">
-          <p>{snapshot.observation_notes || 'No observation notes recorded.'}</p>
-        </div>
-      </section>
+      {customVitals.length > 0 && (
+        <section className="nurse-vital-detail__section">
+          <h2 className="nurse-vital-detail__section-title">Other Vitals</h2>
+          <div className="nurse-vital-metrics">
+            {customVitals.map((row) => (
+              <div key={`${row.label}-${row.value}`} className="nurse-vital-metric nurse-vital-metric--slate">
+                <div className="nurse-vital-metric__icon">
+                  <Activity size={20} />
+                </div>
+                <div className="nurse-vital-metric__body">
+                  <span className="nurse-vital-metric__label">{row.label}</span>
+                  <span className="nurse-vital-metric__value">
+                    {row.value}
+                    {row.unit ? (
+                      <span className="nurse-vital-metric__unit"> {row.unit}</span>
+                    ) : null}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

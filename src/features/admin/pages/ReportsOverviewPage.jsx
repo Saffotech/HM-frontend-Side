@@ -3,7 +3,6 @@ import { NavLink } from 'react-router-dom';
 import {
   Activity,
   Banknote,
-  CalendarRange,
   CircleDollarSign,
   Stethoscope,
   Users,
@@ -17,7 +16,7 @@ import AdminStatCard from '@/features/admin/components/AdminStatCard';
 import {
   defaultReportDateRange,
   formatCurrency,
-  formatReportDate,
+  normalizeReportsOverviewPayments,
 } from '@/features/admin/utils/reportUtils';
 import { useAdminReportsOverviewQuery } from '@/shared/hooks/queries/useAdminQuery';
 import { QueryFeedback } from '@/shared/components/common';
@@ -31,15 +30,14 @@ export default function ReportsOverviewPage() {
     [range]
   );
 
-  const { data, isLoading, isError, error, refetch } = useAdminReportsOverviewQuery(filters);
+  const { data: rawData, isLoading, isError, error, refetch } = useAdminReportsOverviewQuery(filters);
+  const data = useMemo(() => normalizeReportsOverviewPayments(rawData), [rawData]);
 
   return (
     <AdminLayout pageTitle="Reports">
-      <div className="admin-page">
+      <div className="admin-page admin-page--compact">
         <AdminPageHeader
-          eyebrow="Analytics"
           title="Reports overview"
-          subtitle="Hospital activity and revenue summary for the selected period."
           actions={(
             <nav className="admin-subnav" aria-label="Report sections">
               <NavLink
@@ -64,6 +62,7 @@ export default function ReportsOverviewPage() {
         />
 
         <AdminReportFilters
+          inline
           fromDate={range.from_date}
           toDate={range.to_date}
           onFromChange={(value) => setRange((prev) => ({ ...prev, from_date: value }))}
@@ -78,11 +77,6 @@ export default function ReportsOverviewPage() {
         >
           {data && (
             <>
-              <p className="admin-report-period">
-                <CalendarRange size={15} aria-hidden />
-                Period: {formatReportDate(data.from_date)} — {formatReportDate(data.to_date)}
-              </p>
-
               <div className="admin-stats admin-stats--reports">
                 <AdminStatCard
                   title="Total patients"
@@ -132,13 +126,6 @@ export default function ReportsOverviewPage() {
                   icon={<Banknote size={18} />}
                   isLoading={isLoading}
                   tone="success"
-                />
-                <AdminStatCard
-                  title="Outstanding"
-                  value={formatCurrency(data.outstanding_revenue)}
-                  icon={<Wallet size={18} />}
-                  isLoading={isLoading}
-                  tone="danger"
                 />
               </div>
 

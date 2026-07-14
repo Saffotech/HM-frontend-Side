@@ -252,15 +252,11 @@ export default function StaffListPage() {
 
     <AdminLayout pageTitle="Staff" compact>
 
-      <div className="admin-page">
+      <div className="admin-page admin-page--compact">
 
         <AdminPageHeader
 
-          eyebrow="People"
-
           title="Staff management"
-
-          subtitle="Search, filter, and manage hospital staff accounts, roles, and access."
 
           actions={(
 

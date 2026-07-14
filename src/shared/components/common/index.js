@@ -24,3 +24,16 @@ export { default as Skeleton, PageSkeleton } from './Skeleton';
 export { default as MoneyAmount } from './MoneyAmount';
 export { default as ConfirmDialog } from '../ConfirmDialog';
 export { default as EmptyState } from '../EmptyState';
+
+/* Design system — also available from '@/components/ui' */
+export { default as PageHeader } from '@/components/ui/PageHeader';
+export { default as FilterBar } from '@/components/ui/FilterBar';
+export { default as Card } from '@/components/ui/Card';
+export { CardHeader, CardBody } from '@/components/ui/Card';
+export { default as StatCard } from '@/components/ui/StatCard';
+export { default as Badge } from '@/components/ui/Badge';
+export { default as Spinner } from '@/components/ui/Spinner';
+export { default as Pagination } from '@/components/ui/Pagination';
+export { default as Table } from '@/components/ui/Table';
+export { default as SearchInput } from '@/components/ui/SearchInput';
+export { default as PageSpinner } from '../PageSpinner';

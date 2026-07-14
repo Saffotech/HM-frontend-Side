@@ -45,6 +45,3 @@ export const REGISTER_PATIENT_INITIAL_FORM = {
   doctorId: '',
 };
 
-export function newBillDateLabel() {
-  return new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-}

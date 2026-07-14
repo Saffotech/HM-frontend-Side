@@ -163,7 +163,6 @@
 }
 
 @media (max-width: 768px) {
-  .bill-totals-box,
   .bill-footer-summary {
     width: 100%;
     max-width: none;

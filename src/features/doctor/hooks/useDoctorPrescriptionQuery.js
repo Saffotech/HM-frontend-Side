@@ -29,17 +29,6 @@ function invalidatePrescriptionQueries(
   }
 }
 
-/** Lists prescriptions by aggregating GET /prescriptions/patient/{id} for known patient IDs. */
-export function useDoctorPrescriptionsQuery(patientIds = []) {
-  const token = useQueryToken();
-  const stableIds = [...patientIds].sort((a, b) => a - b).join(',');
-  return useQuery({
-    queryKey: [...queryKeys.doctor.prescriptions, stableIds],
-    queryFn: () => doctorPrescriptionsApi.fetchAllPrescriptionsForPatientIds(patientIds, token),
-    enabled: patientIds.length > 0,
-  });
-}
-
 export function useCreatePrescriptionMutation() {
   const token = useQueryToken();
   const queryClient = useQueryClient();
@@ -62,7 +51,7 @@ export function useDoctorPrescriptionDetailQuery(prescriptionId, options = {}) {
   const { enabled = true } = options;
   const token = useQueryToken();
   return useQuery({
-      queryKey: queryKeys.doctor.prescriptionDetail(prescriptionId),
+    queryKey: queryKeys.doctor.prescriptionDetail(prescriptionId),
     queryFn: () => doctorPrescriptionsApi.fetchPrescriptionById(prescriptionId, token),
     enabled: enabled && prescriptionId != null,
   });

@@ -79,7 +79,7 @@ export function uiToApiPatient(uiPatient) {
 /** POST /opd/patient/register body (patient + visit billing fields). */
 export function uiToApiPatientRegister(uiPatient) {
   const base = uiToApiPatient(uiPatient);
-  return {
+  const body = {
     ...base,
     department_id: Number(uiPatient.deptId ?? uiPatient.department_id),
     doctor_id: Number(uiPatient.doctorId ?? uiPatient.doctor_id),
@@ -91,11 +91,21 @@ export function uiToApiPatientRegister(uiPatient) {
     ),
     gst_percent: Number(uiPatient.gstPercent ?? uiPatient.gst_percent ?? 5),
   };
+
+  const scheduledAt = uiPatient.scheduledAt ?? uiPatient.scheduled_at;
+  if (scheduledAt) body.scheduled_at = scheduledAt;
+
+  const appointmentId = uiPatient.appointmentId ?? uiPatient.appointment_id;
+  if (appointmentId != null && appointmentId !== '') {
+    body.appointment_id = Number(appointmentId);
+  }
+
+  return body;
 }
 
 /** POST /opd/visit body for existing patient revisit */
 export function uiToApiOpdVisit(uiPatient) {
-  return {
+  const body = {
     patient_id: Number(uiPatient.dbId ?? uiPatient.patientDbId ?? uiPatient.patient_id),
     department_id: Number(uiPatient.deptId ?? uiPatient.department_id),
     doctor_id: Number(uiPatient.doctorId ?? uiPatient.doctor_id),
@@ -110,6 +120,16 @@ export function uiToApiOpdVisit(uiPatient) {
       uiPatient.waiveRegistrationFee ?? uiPatient.waive_registration_fee ?? true
     ),
   };
+
+  const scheduledAt = uiPatient.scheduledAt ?? uiPatient.scheduled_at;
+  if (scheduledAt) body.scheduled_at = scheduledAt;
+
+  const appointmentId = uiPatient.appointmentId ?? uiPatient.appointment_id;
+  if (appointmentId != null && appointmentId !== '') {
+    body.appointment_id = Number(appointmentId);
+  }
+
+  return body;
 }
 
 export function uiToApiOpdVisitQuery(uiPatient) {

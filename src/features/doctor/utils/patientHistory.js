@@ -31,12 +31,6 @@ export function formatVisitDateTime(dateStr, visitAt) {
   return dateStr;
 }
 
-function recordSortTime(record) {
-  if (record.visitAt) return new Date(record.visitAt).getTime();
-  const d = new Date(record.date);
-  return Number.isNaN(d.getTime()) ? 0 : d.getTime();
-}
-
 function rxSortTime(rx) {
   const d = new Date(rx.date);
   return Number.isNaN(d.getTime()) ? 0 : d.getTime();
@@ -67,49 +61,6 @@ function findPrescriptionForVisit(visit, prescriptions, usedRx) {
       : new Date(visit.sortTime).toDateString();
     return rxDay === visitDay;
   });
-}
-
-/** Build visit history cards from EMR records + prescriptions */
-export function buildVisitHistory(records, prescriptions, patientId) {
-  const patientRecords = records.filter((r) => r.patientId === patientId);
-  const patientRx = prescriptions.filter((r) => r.patientId === patientId);
-  const usedRxIds = new Set();
-
-  const fromRecords = patientRecords.map((record) => {
-    const rxMatch = patientRx.find((r) => r.date === record.date);
-    if (rxMatch) usedRxIds.add(rxMatch.id);
-
-    return {
-      id: record.id,
-      dateTime: formatVisitDateTime(record.date, record.visitAt),
-      sortTime: recordSortTime(record),
-      symptoms: record.symptoms || '—',
-      diagnosis: record.diagnosis || '—',
-      notes: record.notes || record.treatmentPlan || '—',
-      followUp: record.followUp || '—',
-      medicines: rxMatch?.medicines ?? [],
-    };
-  });
-
-  const fromPrescriptions = patientRx
-    .filter((rx) => !usedRxIds.has(rx.id))
-    .map((rx) => ({
-      id: `rx-${rx.id}`,
-      dateTime: formatVisitDateTime(rx.date),
-      sortTime: rxSortTime(rx),
-      symptoms: '—',
-      diagnosis: '—',
-      notes: '—',
-      followUp: '—',
-      medicines: rx.medicines ?? [],
-    }));
-
-  return [...fromRecords, ...fromPrescriptions].sort((a, b) => b.sortTime - a.sortTime);
-}
-
-/** @deprecated Use resolveDoctorPatient for doctor visit list rows */
-export function resolvePatient(patients, patientId, fallbackName) {
-  return resolveDoctorPatient(patients, patientId, fallbackName);
 }
 
 function matchesPatientKey(row, patientKey) {

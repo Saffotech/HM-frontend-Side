@@ -2,11 +2,6 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, UserPlus } from 'lucide-react';
 import SuperAdminLayout from '@/features/super-admin/components/SuperAdminLayout';
-import { useSuperAdminDemoMode } from '@/features/super-admin/hooks/useSuperAdminDemoMode';
-import {
-  MOCK_SUPER_ADMIN_DEPARTMENTS,
-  MOCK_SUPER_ADMIN_ROLES,
-} from '@/features/super-admin/mock/superAdminMockData';
 import {
   useAdminDepartmentsQuery,
   useAdminRolesQuery,
@@ -47,22 +42,21 @@ function RegisterField({ id, label, required, children, className = '' }) {
 
 export default function SuperAdminStaffRegisterPage() {
   const navigate = useNavigate();
-  const isDemo = useSuperAdminDemoMode();
   const [form, setForm] = useState(EMPTY_FORM);
 
-  const rolesQuery = useAdminRolesQuery({ enabled: !isDemo });
-  const departmentsQuery = useAdminDepartmentsQuery({ enabled: !isDemo });
+  const rolesQuery = useAdminRolesQuery();
+  const departmentsQuery = useAdminDepartmentsQuery();
   const registerMutation = useRegisterStaffMutation();
 
-  const roles = isDemo ? MOCK_SUPER_ADMIN_ROLES : rolesQuery.data;
-  const departments = isDemo ? MOCK_SUPER_ADMIN_DEPARTMENTS : departmentsQuery.data;
-  const rolesLoading = isDemo ? false : rolesQuery.isLoading;
-  const rolesError = isDemo ? false : rolesQuery.isError;
-  const departmentsLoading = isDemo ? false : departmentsQuery.isLoading;
-  const departmentsError = isDemo ? false : departmentsQuery.isError;
+  const roles = rolesQuery.data;
+  const departments = departmentsQuery.data;
+  const rolesLoading = rolesQuery.isLoading;
+  const rolesError = rolesQuery.isError;
+  const departmentsLoading = departmentsQuery.isLoading;
+  const departmentsError = departmentsQuery.isError;
 
   const selectedRole = roles?.find((r) => String(r.id) === String(form.role_id));
-  const needsDepartment = selectedRole?.name === 'doctor' || selectedRole?.name === 'nurse';
+  const departmentRequired = selectedRole?.name === 'doctor' || selectedRole?.name === 'nurse';
 
   const roleOptions = useMemo(
     () =>
@@ -99,20 +93,13 @@ export default function SuperAdminStaffRegisterPage() {
       return;
     }
 
-    if (isDemo) {
-      toast.success('Staff registration saved locally in demo mode only');
-      navigate(ROUTES.SUPER_ADMIN_STAFF);
-      return;
-    }
-
     const payload = {
       first_name: form.first_name.trim(),
       last_name: form.last_name.trim() || null,
       email: form.email.trim(),
       password: form.password,
       role_id: Number(form.role_id),
-      department_id:
-        needsDepartment && form.department_id ? Number(form.department_id) : null,
+      department_id: form.department_id ? Number(form.department_id) : null,
     };
 
     try {
@@ -152,7 +139,6 @@ export default function SuperAdminStaffRegisterPage() {
                 <p className="sa-register-shell__desc">Register any hospital role</p>
               </div>
             </div>
-            {isDemo ? <span className="sa-mock-badge">Demo</span> : null}
           </header>
 
           {rolesError ? (
@@ -210,26 +196,25 @@ export default function SuperAdminStaffRegisterPage() {
                       disabled={rolesLoading || rolesError}
                     />
                   </RegisterField>
-                  {needsDepartment ? (
-                    <RegisterField id="sa_department" label="Department">
-                      {departmentsError && !isDemo ? (
-                        <p className="sa-register-field__error" role="alert">
-                          {departmentsQuery.error?.message || 'Could not load departments'}
-                        </p>
-                      ) : null}
-                      <Select
-                        value={form.department_id}
-                        onChange={(value) =>
-                          setForm((prev) => ({ ...prev, department_id: value }))
-                        }
-                        options={departmentOptions}
-                        placeholder={departmentsLoading ? 'Loading…' : 'Select department'}
-                        disabled={departmentsLoading || departmentsError}
-                      />
-                    </RegisterField>
-                  ) : (
-                    <div className="sa-register-field sa-register-field--spacer" aria-hidden />
-                  )}
+                  <RegisterField
+                    id="sa_department"
+                    label={departmentRequired ? 'Department' : 'Department (optional)'}
+                  >
+                    {departmentsError ? (
+                      <p className="sa-register-field__error" role="alert">
+                        {departmentsQuery.error?.message || 'Could not load departments'}
+                      </p>
+                    ) : null}
+                    <Select
+                      value={form.department_id}
+                      onChange={(value) =>
+                        setForm((prev) => ({ ...prev, department_id: value }))
+                      }
+                      options={departmentOptions}
+                      placeholder={departmentsLoading ? 'Loading…' : 'Select department'}
+                      disabled={departmentsLoading || departmentsError}
+                    />
+                  </RegisterField>
                 </div>
               </div>
 

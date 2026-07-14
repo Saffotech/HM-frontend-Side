@@ -28,6 +28,21 @@ function visitRowKey(api) {
   return uhid ?? String(api.id ?? '');
 }
 
+function isPlaceholderReason(value) {
+  return /^opd\s*walk[-\s]?in$/i.test(String(value ?? '').trim());
+}
+
+/** Prefer clinical symptoms; never surface default walk-in reason as symptoms. */
+function resolveVisitSymptoms(api) {
+  const clinical = api?.symptoms ?? api?.chief_complaint ?? null;
+  if (clinical != null && String(clinical).trim()) return String(clinical).trim();
+  const reason = api?.reason ?? null;
+  if (reason != null && String(reason).trim() && !isPlaceholderReason(reason)) {
+    return String(reason).trim();
+  }
+  return null;
+}
+
 /** Completed-visit row from GET /patients or patient_history item */
 export function apiToUiPatientVisitRow(api) {
   if (!api) return null;
@@ -47,10 +62,10 @@ export function apiToUiPatientVisitRow(api) {
     scheduledAt,
     visitAt: scheduledAt,
     status: apiStatusToUiStatus(api.status) ?? api.status,
-    symptoms: api.symptoms ?? api.chief_complaint ?? api.reason ?? null,
+    symptoms: resolveVisitSymptoms(api),
     diagnosis: api.diagnosis ?? null,
     notes: api.notes ?? null,
-    followUp: api.follow_up ?? api.followUp ?? null,
+    followUp: api.follow_up ?? api.follow_up_date ?? api.followUp ?? api.followUpDate ?? null,
   };
 }
 

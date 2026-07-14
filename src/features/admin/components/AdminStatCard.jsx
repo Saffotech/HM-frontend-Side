@@ -1,14 +1,16 @@
-import { Skeleton } from '@/shared/components/common';
+import { Skeleton } from '@/components/ui';
+import '@/components/ui/StatCard.css';
 
 const TONE_CLASS = {
-  primary: 'admin-stat-card--primary',
-  success: 'admin-stat-card--success',
-  warning: 'admin-stat-card--warning',
-  danger: 'admin-stat-card--danger',
-  info: 'admin-stat-card--info',
-  neutral: 'admin-stat-card--neutral',
+  primary: 'ui-stat-card--default',
+  success: 'ui-stat-card--success',
+  warning: 'ui-stat-card--warning',
+  danger: 'ui-stat-card--danger',
+  info: 'ui-stat-card--info',
+  neutral: 'ui-stat-card--default',
 };
 
+/** Admin KPI card — shared StatCard visuals; icon is a React node. */
 export default function AdminStatCard({
   title,
   value,
@@ -18,19 +20,23 @@ export default function AdminStatCard({
   tone = 'neutral',
 }) {
   return (
-    <article className={`admin-stat-card ${TONE_CLASS[tone] || TONE_CLASS.neutral}`}>
-      <div className="admin-stat-card__icon-wrap" aria-hidden>
-        {icon}
-      </div>
-      <div className="admin-stat-card__content">
-        <span className="admin-stat-card__label">{title}</span>
+    <article
+      className={`ui-stat-card admin-stat-card ${TONE_CLASS[tone] || TONE_CLASS.neutral}`}
+    >
+      {icon ? (
+        <div className="ui-stat-card__icon" aria-hidden>
+          {icon}
+        </div>
+      ) : null}
+      <div className="ui-stat-card__content">
+        <span className="ui-stat-card__label">{title}</span>
         {isLoading ? (
           <Skeleton height={28} width={64} />
         ) : (
-          <div className="admin-stat-card__value">{value ?? '—'}</div>
+          <div className="ui-stat-card__value">{value ?? '—'}</div>
         )}
         {subtitle && !isLoading ? (
-          <span className="admin-stat-card__subtitle">{subtitle}</span>
+          <span className="ui-stat-card__description">{subtitle}</span>
         ) : null}
       </div>
     </article>

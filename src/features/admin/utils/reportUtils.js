@@ -32,3 +32,31 @@ export function formatReportDate(value) {
     year: 'numeric',
   });
 }
+
+/**
+ * Normalize payment metrics from GET /admin/reports/overview.
+ * Visit paid_amount can exceed billed totals; PaymentTransaction sums are the reliable collected amount.
+ */
+export function normalizeReportsOverviewPayments(data) {
+  if (!data) return data;
+
+  const billed = Number(data.total_revenue) || 0;
+  const paidOnVisits = Number(data.collected_revenue) || 0;
+  const modes = data.revenue_by_payment_mode ?? [];
+  const collectedFromTxns = modes.reduce(
+    (sum, row) => sum + (Number(row.total_amount) || 0),
+    0,
+  );
+
+  const hasTxnBreakdown = modes.length > 0;
+  const collected = hasTxnBreakdown
+    ? collectedFromTxns
+    : Math.min(paidOnVisits, billed || paidOnVisits);
+
+  return {
+    ...data,
+    total_revenue: billed,
+    collected_revenue: Math.round(collected * 100) / 100,
+  };
+}
+

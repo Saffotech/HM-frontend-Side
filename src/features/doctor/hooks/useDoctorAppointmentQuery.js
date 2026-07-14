@@ -123,22 +123,6 @@ export function useDoctorWeekAppointmentsQueries(dayCount = 14) {
 
 
 
-export function useDoctorAppointmentsHistoryQuery() {
-
-  const token = useQueryToken();
-
-  return useQuery({
-
-    queryKey: queryKeys.doctor.appointments.history,
-
-    queryFn: () => doctorAppointmentsApi.fetchAppointmentsHistory(token),
-
-  });
-
-}
-
-
-
 /** GET /appointments/{id} — always fetch fresh detail from API. */
 
 export function useDoctorAppointmentDetailQuery(appointmentDbId, options = {}) {
