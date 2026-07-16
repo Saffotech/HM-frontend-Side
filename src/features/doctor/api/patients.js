@@ -15,10 +15,15 @@ export async function getPatients(token, params = {}) {
   const path = query ? `/patients?${query}` : '/patients';
   const response = await apiClient(path, { token });
   return {
-    patients: unwrapDoctorResponse(response, 'patients'),
-    totalPatients: response?.total_patients ?? response?.totalPatients ?? 0,
+    // Backend doctor patients list returns { items, total, page, page_size }.
+    patients: unwrapDoctorResponse(response, 'items'),
+    totalPatients:
+      response?.total_patients ??
+      response?.totalPatients ??
+      response?.total ??
+      0,
     page: response?.page,
-    limit: response?.limit,
+    limit: response?.limit ?? response?.page_size,
   };
 }
 

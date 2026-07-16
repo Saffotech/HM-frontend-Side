@@ -93,7 +93,7 @@
 .searchable-select__input {
   width: 100%;
   height: 2.375rem;
-  padding: 0 2rem 0 2.125rem;
+  padding: 0 2rem 0 0.75rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: #fff;

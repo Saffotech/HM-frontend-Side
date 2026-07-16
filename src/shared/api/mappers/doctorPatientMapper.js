@@ -21,7 +21,8 @@ function normalizeGender(raw) {
 }
 
 function visitRowKey(api) {
-  const uhid = api.patient_uhid ?? api.patientUid;
+  const uhid =
+    api.patient_uid ?? api.patient_uhid ?? api.patientUhid ?? api.patientUid;
   const at = api.scheduled_at ?? api.scheduledAt;
   if (api.visit_id != null) return String(api.visit_id);
   if (uhid && at) return `${uhid}-${at}`;
@@ -47,7 +48,8 @@ function resolveVisitSymptoms(api) {
 export function apiToUiPatientVisitRow(api) {
   if (!api) return null;
   const scheduledAt = api.scheduled_at ?? api.scheduledAt ?? null;
-  const patientUid = api.patient_uhid ?? api.patientUid ?? null;
+  const patientUid =
+    api.patient_uid ?? api.patient_uhid ?? api.patientUhid ?? api.patientUid ?? null;
   const patientId = api.patient_id ?? api.patientId ?? null;
 
   return {

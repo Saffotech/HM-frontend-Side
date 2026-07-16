@@ -30,19 +30,28 @@ export default function DepartmentDoctorFilter({
     const byId = new Map();
     doctors.forEach((doctor) => {
       if (doctor.department_id != null && doctor.department) {
-        byId.set(doctor.department_id, doctor.department);
+        byId.set(String(doctor.department_id), {
+          id: doctor.department_id,
+          name: doctor.department,
+        });
+      } else if (doctor.department) {
+        const key = `name:${doctor.department}`;
+        if (!byId.has(key)) {
+          byId.set(key, { id: key, name: doctor.department });
+        }
       }
     });
-    return Array.from(byId.entries())
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [doctors]);
 
   const filteredDoctors = useMemo(() => {
     if (selectedDepartmentId === 'all') return doctors;
-    return doctors.filter(
-      (doctor) => String(doctor.department_id) === String(selectedDepartmentId),
-    );
+    return doctors.filter((doctor) => {
+      if (String(selectedDepartmentId).startsWith('name:')) {
+        return doctor.department === String(selectedDepartmentId).slice(5);
+      }
+      return String(doctor.department_id) === String(selectedDepartmentId);
+    });
   }, [doctors, selectedDepartmentId]);
 
   return (

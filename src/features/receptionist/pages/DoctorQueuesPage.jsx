@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Stethoscope, ArrowLeft, Search, ChevronDown, CalendarClock } from 'lucide-react';
+import { Stethoscope, ArrowLeft, ChevronDown, CalendarClock } from 'lucide-react';
 import { receptionistApi } from '../api/receptionist';
 import StatusBadge from '../components/StatusBadge';
 import PaginationBar from '../components/PaginationBar';
@@ -112,19 +112,31 @@ export default function DoctorQueuesPage() {
     const byId = new Map();
     doctors.forEach((doctor) => {
       if (doctor.department_id != null && doctor.department) {
-        byId.set(doctor.department_id, doctor.department);
+        byId.set(String(doctor.department_id), {
+          id: doctor.department_id,
+          name: doctor.department,
+        });
+      } else if (doctor.department) {
+        // Fallback when API returns name without id
+        const key = `name:${doctor.department}`;
+        if (!byId.has(key)) {
+          byId.set(key, { id: key, name: doctor.department });
+        }
       }
     });
-    return Array.from(byId.entries())
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [doctors]);
 
   const dropdownDoctors = useMemo(
     () =>
       filterDept === 'all'
         ? doctors
-        : doctors.filter((d) => String(d.department_id) === String(filterDept)),
+        : doctors.filter((d) => {
+            if (String(filterDept).startsWith('name:')) {
+              return d.department === filterDept.slice(5);
+            }
+            return String(d.department_id) === String(filterDept);
+          }),
     [filterDept, doctors],
   );
 
@@ -133,7 +145,12 @@ export default function DoctorQueuesPage() {
     let list = doctors;
 
     if (filterDept !== 'all') {
-      list = list.filter((d) => String(d.department_id) === String(filterDept));
+      list = list.filter((d) => {
+        if (String(filterDept).startsWith('name:')) {
+          return d.department === filterDept.slice(5);
+        }
+        return String(d.department_id) === String(filterDept);
+      });
     }
     if (filterDoctor !== 'all') {
       list = list.filter((d) => d.id === Number(filterDoctor));
@@ -301,7 +318,6 @@ export default function DoctorQueuesPage() {
           <div className="rec-doctor-detail__filters">
             <div className="rec-doctor-detail__filter-row">
               <div className="rec-search rec-doctor-detail__search">
-                <Search className="rec-search__icon" size={16} />
                 <input
                   type="text"
                   placeholder="Search patient name, ID or UHID..."
@@ -430,7 +446,6 @@ export default function DoctorQueuesPage() {
 
           <div className="rec-filter-group rec-doctor-list__filters">
             <div className="rec-filter-group__field rec-search">
-              <Search className="rec-search__icon" size={16} />
               <input
                 type="text"
                 placeholder="Search doctor name, department or room..."

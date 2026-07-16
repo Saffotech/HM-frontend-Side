@@ -84,7 +84,9 @@ export default function NurseEditNotePage() {
                   <User size={18} aria-hidden />
                   <div>
                     <span className="nurse-vital-detail__info-label">Recorded By</span>
-                    <span className="nurse-vital-detail__info-value">{note.created_by || '—'}</span>
+                    <span className="nurse-vital-detail__info-value">
+                      {note.created_by || note.nurse_name || note.created_by_name || '—'}
+                    </span>
                   </div>
                 </div>
               </div>

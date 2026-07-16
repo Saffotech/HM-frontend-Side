@@ -1007,6 +1007,16 @@
   color: var(--color-text-muted);
 }
 
+.doc-patient-table__empty-cell{
+  padding: 1.5rem 1rem;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.doc-patient-table__empty-cell .ui-empty-state{
+  margin: 0 auto;
+}
+
 .doc-patient-table--compact{
   width: 100%;
   table-layout: fixed;
@@ -1224,7 +1234,7 @@
 
 .doc-patient-search__field .field__input{
   width: 100%;
-  padding-left: 2.25rem;
+  padding-left: 0.75rem;
 }
 
 .doc-patient-filters{

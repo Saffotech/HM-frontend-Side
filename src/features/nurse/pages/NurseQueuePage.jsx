@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { useNavigate } from 'react-router-dom';
-import { RefreshCw, Search, Users } from 'lucide-react';
+import { RefreshCw, Users } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseDataTable from '@/features/nurse/components/NurseDataTable';
 import NursePagination from '@/features/nurse/components/NursePagination';
@@ -112,7 +112,6 @@ export default function NurseQueuePage() {
           </label>
           <div className="nurse-queue-page__toolbar-row">
             <div className="nurse-queue-page__search-wrap">
-              <Search size={16} className="nurse-queue-page__search-icon" aria-hidden />
               <input
                 id="nurse-queue-search"
                 type="search"

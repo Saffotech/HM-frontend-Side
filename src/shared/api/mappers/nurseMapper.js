@@ -453,7 +453,10 @@ export function mapMedicationHistoryRow(row) {
     medicine_name: row.medicine_name ?? row.medicine ?? '',
     dose: row.dosage ?? row.dose ?? '',
     patient_name: row.patient_name ?? '',
-    administered_by_name: row.administered_by_name ?? null,
+    administered_by_name:
+      row.administered_by_name ??
+      row.nurse_name ??
+      null,
   });
 }
 

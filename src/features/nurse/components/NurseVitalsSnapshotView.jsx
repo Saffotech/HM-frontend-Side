@@ -43,7 +43,7 @@ function normalizeHistory(vital) {
   return [{
     history_id: `${vital.id}-current`,
     recorded_at: vital.recorded_at,
-    recorded_by: vital.recorded_by,
+    recorded_by: vital.recorded_by_name ?? vital.recorded_by ?? null,
     status: vital.status,
     temperature: vital.temperature,
     blood_pressure: vital.blood_pressure,

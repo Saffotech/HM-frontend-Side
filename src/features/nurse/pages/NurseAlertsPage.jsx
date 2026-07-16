@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Plus, Search } from 'lucide-react';
+import { AlertTriangle, Plus } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseDataTable from '@/features/nurse/components/NurseDataTable';
 import NursePagination from '@/features/nurse/components/NursePagination';
@@ -196,7 +196,6 @@ export default function NurseAlertsPage() {
                 Search
               </label>
               <div className="nurse-alerts-search-wrap">
-                <Search size={16} className="nurse-alerts-search-icon" aria-hidden />
                 <input
                   id="nurse-alerts-search"
                   type="search"

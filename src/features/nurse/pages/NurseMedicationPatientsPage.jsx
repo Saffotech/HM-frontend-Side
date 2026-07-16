@@ -2,7 +2,6 @@ import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { useNavigate } from 'react-router-dom';
 import {
-  Search,
   Users,
   ClipboardList,
   Pill,
@@ -223,7 +222,6 @@ export default function NurseMedicationPatientsPage() {
                 <div className="nurse-field nurse-med-patients-page__search-field">
                   <label htmlFor="med-patients-search">Patient Search</label>
                   <div className="nurse-med-patients-page__search-wrap">
-                    <Search size={16} className="nurse-med-patients-page__search-icon" aria-hidden />
                     <input
                       id="med-patients-search"
                       type="search"

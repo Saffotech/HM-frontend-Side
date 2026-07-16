@@ -82,16 +82,6 @@ export default function PatientListPage() {
     <QueryFeedback isLoading={isLoading} isError={isError} error={error}>
     <div className="page-stack patients-page">
       <div className="card patients-page__card">
-        {patients.length === 0 ? (
-          <EmptyState
-            icon={Users}
-            title="No patients yet"
-            description="Register your first patient to get started"
-            action="Register patient"
-            onAction={() => navigate(ROUTES.PATIENTS_REGISTER)}
-          />
-        ) : (
-        <>
         <div className="page-toolbar patients-page__toolbar">
           <SearchBar
             value={search}
@@ -192,14 +182,36 @@ export default function PatientListPage() {
               ))}
               {!paginatedItems.length && (
                 <tr>
-                  <td colSpan={5} className="empty-row">No patients found</td>
+                  <td colSpan={5} className="empty-row patients-table__empty-cell">
+                    <EmptyState
+                      icon={Users}
+                      title={
+                        debouncedSearch || dateFilter !== 'all'
+                          ? 'No patients found'
+                          : 'No patients yet'
+                      }
+                      description={
+                        debouncedSearch || dateFilter !== 'all'
+                          ? 'Try a different name, phone, ID, or clear filters'
+                          : 'Register your first patient to get started'
+                      }
+                      action={
+                        debouncedSearch || dateFilter !== 'all'
+                          ? undefined
+                          : 'Register patient'
+                      }
+                      onAction={
+                        debouncedSearch || dateFilter !== 'all'
+                          ? undefined
+                          : () => navigate(ROUTES.PATIENTS_REGISTER)
+                      }
+                    />
+                  </td>
                 </tr>
               )}
             </tbody>
           </table>
         </DataTableShell>
-        </>
-        )}
       </div>
     </div>
       <ConfirmDialog

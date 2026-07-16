@@ -93,7 +93,6 @@ export default function TodayQueuePage() {
         <div className="rec-filters">
           <div className="rec-filters__row">
             <div className="rec-search" style={{ maxWidth: '20rem' }}>
-              <Search className="rec-search__icon" size={16} />
               <input
                 type="text"
                 placeholder="Search patient name, ID or UHID..."

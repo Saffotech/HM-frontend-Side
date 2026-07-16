@@ -18,7 +18,6 @@ export default function QueueHistoryPage() {
   const [search, setSearch] = useState('');
   const [deptId, setDeptId] = useState('all');
   const [docId, setDocId] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [paymentStatus, setPaymentStatus] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -33,7 +32,7 @@ export default function QueueHistoryPage() {
         search: debouncedSearch.trim() || undefined,
         doctor_id: docId !== 'all' ? Number(docId) : undefined,
         department_id: deptId !== 'all' ? Number(deptId) : undefined,
-        status: statusFilter !== 'all' ? statusFilter : undefined,
+        status: 'completed',
         payment_status: paymentStatus !== 'all' ? paymentStatus : undefined,
         ...buildQueueHistoryDateParams(dateFrom, dateTo),
         page: currentPage,
@@ -51,7 +50,7 @@ export default function QueueHistoryPage() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, deptId, docId, statusFilter, paymentStatus, dateFrom, dateTo, currentPage]);
+  }, [debouncedSearch, deptId, docId, paymentStatus, dateFrom, dateTo, currentPage]);
 
   const getDoctorName = (p) => p.doctor_name || (p.doctor_id ? `Doctor #${p.doctor_id}` : '—');
 
@@ -75,7 +74,6 @@ export default function QueueHistoryPage() {
         <div className="rec-queue-history__filters">
           <div className="rec-queue-history__filter-row">
             <div className="rec-search rec-queue-history__search">
-              <Search className="rec-search__icon" size={16} />
               <input
                 type="text"
                 placeholder="Search patient name, ID or UHID..."
@@ -133,20 +131,6 @@ export default function QueueHistoryPage() {
 
             <select
               className="rec-select rec-select--compact rec-queue-history__select"
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              aria-label="Status"
-            >
-              <option value="all">All Statuses</option>
-              <option value="completed">Completed</option>
-              <option value="scheduled">Scheduled</option>
-            </select>
-
-            <select
-              className="rec-select rec-select--compact rec-queue-history__select"
               value={paymentStatus}
               onChange={(e) => {
                 setPaymentStatus(e.target.value);
@@ -190,7 +174,7 @@ export default function QueueHistoryPage() {
                     <div className="rec-table__empty-icon">
                       <Search size={24} />
                     </div>
-                    <p>No history found for the selected filters</p>
+                    <p>No completed consultations found for the selected filters</p>
                   </td>
                 </tr>
               ) : (

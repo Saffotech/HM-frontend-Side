@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, memo, useId } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, ChevronDown, X } from 'lucide-react';
+import { ChevronDown, X } from 'lucide-react';
 import { highlightMatch } from '@/shared/utils/highlightMatch';
 import './SearchableSelect.css';
 
@@ -194,7 +194,6 @@ function SearchableSelect({
         className={`searchable-select__input-wrap${showClear ? ' searchable-select__input-wrap--has-clear' : ''}`}
         ref={inputWrapRef}
       >
-        <Search className="searchable-select__icon" size={15} aria-hidden />
         <input
           id={inputId}
           className="searchable-select__input"

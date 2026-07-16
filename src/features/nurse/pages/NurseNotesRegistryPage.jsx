@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Search } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseDataTable from '@/features/nurse/components/NurseDataTable';
 import NursePagination from '@/features/nurse/components/NursePagination';
@@ -124,7 +124,6 @@ export default function NurseNotesRegistryPage() {
             </div>
           </div>
           <div className="nurse-notes-registry__search-wrap">
-            <Search size={18} className="nurse-notes-registry__search-icon" aria-hidden />
             <input
               type="text"
               className="nurse-input nurse-notes-registry__search"

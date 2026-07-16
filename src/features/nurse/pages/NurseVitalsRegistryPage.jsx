@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { useNavigate } from 'react-router-dom';
-import { Activity, Search } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseDataTable from '@/features/nurse/components/NurseDataTable';
 import NursePagination from '@/features/nurse/components/NursePagination';
@@ -147,7 +147,6 @@ export default function NurseVitalsRegistryPage() {
             </div>
           </div>
           <div className="nurse-vitals-registry__search-wrap">
-            <Search size={18} className="nurse-vitals-registry__search-icon" aria-hidden />
             <input
               type="text"
               className="nurse-input nurse-vitals-registry__search"

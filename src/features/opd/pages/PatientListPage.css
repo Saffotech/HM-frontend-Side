@@ -214,3 +214,12 @@
     justify-content: center;
   }
 }
+
+.patients-table__empty-cell {
+  padding: 1.5rem 1rem !important;
+  vertical-align: middle;
+}
+
+.patients-table__empty-cell .ui-empty-state {
+  padding: 1.25rem 0.5rem;
+}

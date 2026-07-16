@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Search, X, Printer } from 'lucide-react';
+import { X, Printer } from 'lucide-react';
 import { useLabReportsQuery } from '@/shared/hooks/queries/useLabQuery';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { printLabReport } from '@/features/lab/utils/labReportUtils';
@@ -34,7 +34,6 @@ export default function LabDashboardReportFinder({ onClose }) {
       </div>
 
       <div className="lab-dash-finder__search">
-        <Search size={18} aria-hidden />
         <input
           type="search"
           value={query}

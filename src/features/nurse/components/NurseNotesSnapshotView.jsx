@@ -28,7 +28,7 @@ function normalizeHistory(note) {
   return [{
     history_id: `${note.id}-current`,
     created_at: note.created_at,
-    created_by: note.created_by,
+    created_by: note.created_by || note.nurse_name || note.created_by_name || null,
     status: note.status,
     symptoms: note.symptoms,
     treatment_response: note.treatment_response,
@@ -96,7 +96,9 @@ export default function NurseNotesSnapshotView({ note }) {
           <User size={18} aria-hidden />
           <div>
             <span className="nurse-vital-detail__info-label">Recorded By</span>
-            <span className="nurse-vital-detail__info-value">{snapshot.created_by || '—'}</span>
+            <span className="nurse-vital-detail__info-value">
+              {snapshot.created_by || snapshot.nurse_name || snapshot.created_by_name || '—'}
+            </span>
           </div>
         </div>
         <div className="nurse-vital-detail__info-item">

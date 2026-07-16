@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { Search, Users, Filter, ChevronRight, ChevronDown, CalendarDays, RotateCcw, Check } from 'lucide-react';
+import { Users, Filter, ChevronRight, ChevronDown, CalendarDays, RotateCcw, Check } from 'lucide-react';
 
 import { useDoctorPatientVisitsQuery } from '@/features/doctor/hooks/useDoctorPatientQuery';
 
@@ -380,6 +380,7 @@ export default function PatientsEMRSection({
 
 
   const showPatientActions = categoryFilter === PATIENT_CATEGORY_FILTER.COMPLETED;
+  const tableColumnCount = showPatientActions ? 6 : 5;
 
   const profilePlaceholderVisits = useMemo(
     () => (view ? list.filter((row) => row.patientUid === view.patientUid) : []),
@@ -447,7 +448,6 @@ export default function PatientsEMRSection({
 
         <div className="doc-patients-page__toolbar">
           <div className="doc-patient-search doc-patient-search--inline">
-            <Search size={15} aria-hidden className="doc-patient-search__icon" />
             <Input
               className="doc-patient-search__field"
               placeholder="Search by name or patient ID…"
@@ -475,55 +475,53 @@ export default function PatientsEMRSection({
 
 
         <div className="doc-patients-page__table-wrap table-wrap">
-
-          {isLoading ? (
-
-            <p className="doc-patients-page__empty">Loading patients…</p>
-
-          ) : list.length === 0 ? (
-
-            <EmptyState
-
-              icon={Users}
-
-              title="No patients found"
-
-              description={categoryEmptyMessage(categoryFilter)}
-
-            />
-
-          ) : (
-
-            <table
-              className={`data-table doc-patient-table doc-patient-table--compact${showPatientActions ? '' : ' doc-patient-table--no-action'}`}
-            >
-              <colgroup>
-                <col className="doc-patient-col doc-patient-col--uid" />
-                <col className="doc-patient-col doc-patient-col--name" />
-                <col className="doc-patient-col doc-patient-col--meta" />
-                <col className="doc-patient-col doc-patient-col--date" />
-                <col className="doc-patient-col doc-patient-col--status" />
+          <table
+            className={`data-table doc-patient-table doc-patient-table--compact${showPatientActions ? '' : ' doc-patient-table--no-action'}`}
+          >
+            <colgroup>
+              <col className="doc-patient-col doc-patient-col--uid" />
+              <col className="doc-patient-col doc-patient-col--name" />
+              <col className="doc-patient-col doc-patient-col--meta" />
+              <col className="doc-patient-col doc-patient-col--date" />
+              <col className="doc-patient-col doc-patient-col--status" />
+              {showPatientActions ? (
+                <col className="doc-patient-col doc-patient-col--action" />
+              ) : null}
+            </colgroup>
+            <thead>
+              <tr>
+                <th scope="col">Patient Id</th>
+                <th scope="col">Name</th>
+                <th scope="col">Age/Gender</th>
+                <th scope="col">Visit date</th>
+                <th scope="col">Status</th>
                 {showPatientActions ? (
-                  <col className="doc-patient-col doc-patient-col--action" />
+                  <th className="doc-patient-table__th-action" scope="col">
+                    Action
+                  </th>
                 ) : null}
-              </colgroup>
-              <thead>
-                <tr>
-                  <th scope="col">Patient Id</th>
-                  <th scope="col">Name</th>
-                  <th scope="col">Age/Gender</th>
-                  <th scope="col">Visit date</th>
-                  <th scope="col">Status</th>
-                  {showPatientActions ? (
-                    <th className="doc-patient-table__th-action" scope="col">
-                      Action
-                    </th>
-                  ) : null}
-                </tr>
-              </thead>
+              </tr>
+            </thead>
 
-              <tbody>
-                {list.map((row) => (
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={tableColumnCount} className="doc-patients-page__empty">
+                    Loading patients…
+                  </td>
+                </tr>
+              ) : list.length === 0 ? (
+                <tr>
+                  <td colSpan={tableColumnCount} className="doc-patient-table__empty-cell">
+                    <EmptyState
+                      icon={Users}
+                      title="No patients found"
+                      description={categoryEmptyMessage(categoryFilter)}
+                    />
+                  </td>
+                </tr>
+              ) : (
+                list.map((row) => (
                   <tr
                     key={row.id}
                     className="doc-patient-row"
@@ -558,12 +556,10 @@ export default function PatientsEMRSection({
                       </td>
                     ) : null}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-
-          )}
-
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
 
       </div>

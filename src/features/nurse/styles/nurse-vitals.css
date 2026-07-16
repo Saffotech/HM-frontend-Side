@@ -1,4 +1,4 @@
-﻿.nurse-vitals-registry{
+.nurse-vitals-registry{
   gap: 1rem;
 }
 
@@ -60,7 +60,7 @@
 
 .nurse-vitals-registry__search{
   width: 100%;
-  padding-left: 2.5rem;
+  padding-left: 0.75rem;
 }
 
 .nurse-vitals-registry__table .nurse-card{

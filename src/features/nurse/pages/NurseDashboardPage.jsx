@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseDataTable from '@/features/nurse/components/NurseDataTable';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
@@ -158,7 +157,6 @@ export default function NurseDashboardPage() {
             <div className="nurse-field nurse-dashboard-table__search">
               <label htmlFor="nurse-dashboard-search">Search patients</label>
               <div className="nurse-dashboard-page__search-wrap">
-                <Search size={16} className="nurse-dashboard-page__search-icon" aria-hidden />
                 <input
                   id="nurse-dashboard-search"
                   type="search"

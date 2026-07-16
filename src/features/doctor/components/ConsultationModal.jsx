@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useCreatePrescriptionMutation } from '@/features/doctor/hooks/useDoctorPrescriptionQuery';
 import { useCreateLabTestMutation } from '@/features/doctor/hooks/useDoctorLabQuery';
@@ -11,11 +11,17 @@ import {
 } from '@/features/doctor/constants';
 import { DOCTOR_PATIENT_HISTORY_QUERY_OPTIONS } from '@/features/doctor/utils/doctorPatientProfileCache';
 import { getDoctorDisplayStatus } from '@/features/doctor/utils/appointmentWorkflow';
+import {
+  clearConsultationDraft,
+  loadConsultationDraft,
+  saveConsultationDraft,
+} from '@/features/doctor/utils/consultationDraftStorage';
 import { stripInternalAppointmentMarkers } from '@/features/opd/utils/appointmentPaymentUtils';
 import { Modal, Button, Input, Label, Textarea, Select, QueryFeedback } from '@/shared/components/common';
 import { doctorPatientsApi } from '@/shared/api/services';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
+import { useAuthStore } from '@/shared/store/useAuthStore';
 import { toast } from '@/shared/utils/toast';
 import '../styles/doctor-ui.css';
 
@@ -28,6 +34,36 @@ function defaultLabCategory(testName) {
 
 function emptyMedicineRow() {
   return { ...DEFAULT_MEDICINE, durationValue: '', durationUnit: 'Days' };
+}
+
+function resetConsultationFormState() {
+  return {
+    tab: 'clinical',
+    symptoms: '',
+    diagnosis: '',
+    notes: '',
+    followUp: '',
+    meds: [emptyMedicineRow()],
+    labTest: '',
+    labCategory: 'Blood',
+    labPriority: 'Normal',
+    labClinicalNotes: '',
+  };
+}
+
+function applyDraftToForm(draft) {
+  return {
+    tab: draft.tab ?? 'clinical',
+    symptoms: draft.symptoms ?? '',
+    diagnosis: draft.diagnosis ?? '',
+    notes: draft.notes ?? '',
+    followUp: draft.followUp ?? '',
+    meds: draft.meds?.length ? draft.meds : [emptyMedicineRow()],
+    labTest: draft.labTest ?? '',
+    labCategory: draft.labCategory ?? 'Blood',
+    labPriority: draft.labPriority ?? 'Normal',
+    labClinicalNotes: draft.labClinicalNotes ?? '',
+  };
 }
 
 /** Appointment reason defaults like "OPD walk-in" are not real clinical symptoms. */
@@ -46,6 +82,7 @@ export default function ConsultationModal({
   onDone,
 }) {
   const token = useQueryToken();
+  const doctorId = useAuthStore((state) => state.user?.id);
   const saveConsultation = useSaveConsultationWorkflowMutation();
   const createPrescription = useCreatePrescriptionMutation();
   const createLabTest = useCreateLabTestMutation();
@@ -60,8 +97,9 @@ export default function ConsultationModal({
   const [labPriority, setLabPriority] = useState('Normal');
   const [labClinicalNotes, setLabClinicalNotes] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
+  const [hydratedFromDraft, setHydratedFromDraft] = useState(false);
+  const skipDraftPersistRef = useRef(false);
 
-  const appointmentId = appointment?.id;
   const appointmentDbId = appointment?.dbId;
   const patientUid = appointment?.patientUid ?? appointment?.patientId;
 
@@ -77,22 +115,37 @@ export default function ConsultationModal({
   });
 
   useEffect(() => {
-    if (!open || !appointmentId) return;
-    setTab('clinical');
-    setSymptoms('');
-    setDiagnosis('');
-    setNotes('');
-    setFollowUp('');
-    setMeds([emptyMedicineRow()]);
-    setLabTest('');
-    setLabCategory('Blood');
-    setLabPriority('Normal');
-    setLabClinicalNotes('');
+    if (!open || appointmentDbId == null) {
+      setHydratedFromDraft(false);
+      return;
+    }
+
+    skipDraftPersistRef.current = true;
+    const draft = loadConsultationDraft(appointmentDbId, doctorId);
+    const next = draft ? applyDraftToForm(draft) : resetConsultationFormState();
+
+    setTab(next.tab);
+    setSymptoms(next.symptoms);
+    setDiagnosis(next.diagnosis);
+    setNotes(next.notes);
+    setFollowUp(next.followUp);
+    setMeds(next.meds);
+    setLabTest(next.labTest);
+    setLabCategory(next.labCategory);
+    setLabPriority(next.labPriority);
+    setLabClinicalNotes(next.labClinicalNotes);
     setFieldErrors({});
-  }, [open, appointmentId]);
+    setHydratedFromDraft(Boolean(draft));
+
+    const timer = window.setTimeout(() => {
+      skipDraftPersistRef.current = false;
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [open, appointmentDbId, doctorId]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || hydratedFromDraft) return;
     const detail = consultationContextQuery.data?.appointment;
     if (!detail) return;
     if (!symptoms) setSymptoms(symptomsPrefillFromAppointment(detail));
@@ -101,7 +154,38 @@ export default function ConsultationModal({
       setNotes(stripInternalAppointmentMarkers(detail.notes));
     }
     if (!followUp && detail.followUpDate) setFollowUp(detail.followUpDate);
-  }, [open, consultationContextQuery.data, symptoms, diagnosis, notes, followUp]);
+  }, [open, hydratedFromDraft, consultationContextQuery.data, symptoms, diagnosis, notes, followUp]);
+
+  useEffect(() => {
+    if (!open || appointmentDbId == null || skipDraftPersistRef.current) return;
+
+    saveConsultationDraft(appointmentDbId, doctorId, {
+      tab,
+      symptoms,
+      diagnosis,
+      notes,
+      followUp,
+      meds,
+      labTest,
+      labCategory,
+      labPriority,
+      labClinicalNotes,
+    });
+  }, [
+    open,
+    appointmentDbId,
+    doctorId,
+    tab,
+    symptoms,
+    diagnosis,
+    notes,
+    followUp,
+    meds,
+    labTest,
+    labCategory,
+    labPriority,
+    labClinicalNotes,
+  ]);
 
   useEffect(() => {
     if (labTest) setLabCategory(defaultLabCategory(labTest));
@@ -201,6 +285,7 @@ export default function ConsultationModal({
       }
 
       toast.success('Consultation saved');
+      clearConsultationDraft(appointmentDbId, doctorId);
       onDone();
     } catch {
       // mutation hooks toast via mutationOnError

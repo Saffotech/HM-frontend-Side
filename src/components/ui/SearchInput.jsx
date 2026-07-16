@@ -1,9 +1,9 @@
-import { Search, X, Loader2 } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import '@/shared/components/common/SearchBar.css';
 import './SearchInput.css';
 
 /**
- * Unified search field — icon, clear, optional loading.
+ * Unified search field — clear, optional loading.
  */
 export default function SearchInput({
   value,
@@ -20,9 +20,7 @@ export default function SearchInput({
     <div className={`search-bar ui-search ${className}`.trim()}>
       {loading ? (
         <Loader2 size={16} className="search-bar__icon ui-search__spinner" aria-hidden />
-      ) : (
-        <Search size={16} className="search-bar__icon" aria-hidden />
-      )}
+      ) : null}
       <input
         id={id}
         name={name}

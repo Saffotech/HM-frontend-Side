@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Search, User, X } from 'lucide-react';
+import { User, X } from 'lucide-react';
 import { formatPatientPickerLabel } from '@/shared/api/mappers/nurseMapper';
 import { useNursePatientDirectory } from '@/features/nurse/hooks/useNursePatientDirectory';
 import './NursePatientPicker.css';
@@ -106,7 +106,6 @@ export default function NursePatientPicker({
         Patient{required ? ' *' : ''}
       </label>
       <div className="nurse-patient-picker__input-wrap">
-        <Search size={16} className="nurse-patient-picker__icon" aria-hidden />
         <input
           id={inputId}
           type="search"

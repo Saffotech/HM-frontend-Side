@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarCheck, CheckCircle2, XCircle, Clock, ArrowRight, Search } from 'lucide-react';
+import { CalendarCheck, CheckCircle2, XCircle, Clock, ArrowRight } from 'lucide-react';
 import { receptionistApi } from '../api/receptionist';
 import DepartmentDoctorFilter from '../components/DepartmentDoctorFilter';
 import StatusBadge from '../components/StatusBadge';
@@ -243,7 +243,6 @@ export default function ReceptionistDashboardPage() {
           </div>
 
           <div className="rec-search">
-            <Search className="rec-search__icon" size={16} />
             <input
               type="text"
               value={search}

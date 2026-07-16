@@ -1,4 +1,4 @@
-﻿.nurse-notes-registry {
+.nurse-notes-registry {
   gap: 1rem;
 }
 
@@ -60,7 +60,7 @@
 
 .nurse-notes-registry__search {
   width: 100%;
-  padding-left: 2.5rem;
+  padding-left: 0.75rem;
 }
 
 .nurse-notes-registry__table .nurse-card {
