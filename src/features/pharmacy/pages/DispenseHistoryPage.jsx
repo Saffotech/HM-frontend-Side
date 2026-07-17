@@ -3,7 +3,13 @@ import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { Rows3 } from 'lucide-react';
 import PharmacyLayout from '@/features/pharmacy/components/PharmacyLayout';
 import PharmacyStatusBadge from '@/features/pharmacy/components/PharmacyStatusBadge';
-import { DataTableShell, EmptyState, QueryFeedback, SearchBar } from '@/shared/components/common';
+import {
+  DataTableShell,
+  DateInput,
+  EmptyState,
+  QueryFeedback,
+  SearchBar,
+} from '@/shared/components/common';
 import {
   usePharmacyHistoryQuery,
   PHARMACY_HISTORY_PAGE_SIZES,
@@ -44,9 +50,16 @@ export default function DispenseHistoryPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const debouncedSearch = useDebouncedValue(search.trim(), 300);
 
-  const { data, isLoading, isError, error } = usePharmacyHistoryQuery({ page, limit: pageSize });
+  const { data, isLoading, isError, error } = usePharmacyHistoryQuery({
+    page,
+    limit: pageSize,
+    date_from: dateFrom || undefined,
+    date_to: dateTo || undefined,
+  });
 
   const allRows = data?.data ?? [];
   const total = data?.total ?? 0;
@@ -57,11 +70,18 @@ export default function DispenseHistoryPage() {
     [allRows, debouncedSearch]
   );
 
-  const hasActiveFilters = Boolean(debouncedSearch);
-  const displayCount = hasActiveFilters ? rows.length : total;
+  const hasDateFilter = Boolean(dateFrom || dateTo);
+  const hasActiveFilters = Boolean(debouncedSearch) || hasDateFilter;
+  const displayCount = debouncedSearch ? rows.length : total;
 
   const handlePageSizeChange = (e) => {
     setPageSize(Number(e.target.value));
+    setPage(1);
+  };
+
+  const clearDateRange = () => {
+    setDateFrom('');
+    setDateTo('');
     setPage(1);
   };
 
@@ -83,6 +103,43 @@ export default function DispenseHistoryPage() {
                   className="pharmacy-history-card__search"
                 />
                 <span className="pharmacy-history-toolbar-strip__divider" aria-hidden />
+                <div className="pharmacy-history-date-range">
+                  <DateInput
+                    className="pharmacy-history-date"
+                    value={dateFrom}
+                    onChange={(e) => {
+                      setDateFrom(e.target.value);
+                      setPage(1);
+                    }}
+                    aria-label="From date"
+                    placeholder="From"
+                  />
+                  <span className="pharmacy-history-date-range__sep" aria-hidden>
+                    to
+                  </span>
+                  <DateInput
+                    className="pharmacy-history-date"
+                    value={dateTo}
+                    onChange={(e) => {
+                      setDateTo(e.target.value);
+                      setPage(1);
+                    }}
+                    aria-label="To date"
+                    placeholder="To"
+                  />
+                  {hasDateFilter && (
+                    <button
+                      type="button"
+                      className="pharmacy-history-date-range__clear"
+                      onClick={clearDateRange}
+                      title="Show all time"
+                      aria-label="Clear date range"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+                <span className="pharmacy-history-toolbar-strip__divider" aria-hidden />
                 <label className="pharmacy-history-pagesize">
                   <Rows3 size={13} className="pharmacy-history-pagesize__icon" aria-hidden />
                   <span className="pharmacy-history-pagesize__label">Show</span>
@@ -102,7 +159,12 @@ export default function DispenseHistoryPage() {
               </div>
               <span className="pharmacy-history-card__meta">
                 <strong>{displayCount}</strong> record{displayCount !== 1 ? 's' : ''}
-                {hasActiveFilters && allRows.length !== rows.length && (
+                {hasDateFilter ? (
+                  <span className="pharmacy-history-card__meta-note"> · date range</span>
+                ) : (
+                  <span className="pharmacy-history-card__meta-note"> · all time</span>
+                )}
+                {debouncedSearch && allRows.length !== rows.length && (
                   <span className="pharmacy-history-card__meta-note"> · filtered</span>
                 )}
               </span>
@@ -115,7 +177,7 @@ export default function DispenseHistoryPage() {
                 }
                 description={
                   hasActiveFilters
-                    ? 'Try a different search term.'
+                    ? 'Try a different search term or date range.'
                     : 'Completed dispense records will appear here.'
                 }
               />

@@ -245,17 +245,19 @@ export default function DoctorQueuesPage() {
           ) : null}
 
           <div className="rec-doctor-detail__schedule-wrap">
-            <button
-              type="button"
+            <div
               className={cn(
-                'rec-doctor-detail__schedule-trigger',
-                scheduleOpen && 'rec-doctor-detail__schedule-trigger--open',
+                'rec-doctor-detail__schedule-header',
+                scheduleOpen && 'rec-doctor-detail__schedule-header--open',
               )}
-              onClick={() => setScheduleOpen((open) => !open)}
-              aria-expanded={scheduleOpen}
-              aria-controls="doctor-schedule-panel"
             >
-              <span className="rec-doctor-detail__schedule-trigger-main">
+              <button
+                type="button"
+                className="rec-doctor-detail__schedule-trigger"
+                onClick={() => setScheduleOpen((open) => !open)}
+                aria-expanded={scheduleOpen}
+                aria-controls="doctor-schedule-panel"
+              >
                 <CalendarClock size={18} className="rec-doctor-detail__schedule-icon" aria-hidden />
                 <span className="rec-doctor-detail__schedule-title">Today&apos;s Schedule</span>
                 {!loading && slotStats.total > 0 ? (
@@ -268,41 +270,54 @@ export default function DoctorQueuesPage() {
                     </span>
                   </span>
                 ) : null}
-              </span>
-              <ChevronDown
-                size={20}
-                className={cn(
-                  'rec-doctor-detail__schedule-chevron',
-                  scheduleOpen && 'rec-doctor-detail__schedule-chevron--open',
-                )}
-                aria-hidden
-              />
-            </button>
+              </button>
+
+              <div
+                className="rec-toggle-group rec-doctor-detail__slot-toggle"
+                role="group"
+                aria-label="Filter slots"
+              >
+                {['all', 'free', 'busy'].map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setSlotFilter(f)}
+                    className={cn(
+                      'rec-toggle-group__btn',
+                      slotFilter === f && 'rec-toggle-group__btn--active',
+                      slotFilter === f && f === 'free' && 'rec-toggle-group__btn--active-free',
+                      slotFilter === f && f === 'busy' && 'rec-toggle-group__btn--active-busy',
+                    )}
+                  >
+                    {f === 'all' ? 'All Slots' : f === 'free' ? 'Free' : 'Busy'}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                className="rec-doctor-detail__schedule-chevron-btn"
+                onClick={() => setScheduleOpen((open) => !open)}
+                aria-expanded={scheduleOpen}
+                aria-controls="doctor-schedule-panel"
+                aria-label={scheduleOpen ? 'Collapse schedule' : 'Expand schedule'}
+              >
+                <ChevronDown
+                  size={20}
+                  className={cn(
+                    'rec-doctor-detail__schedule-chevron',
+                    scheduleOpen && 'rec-doctor-detail__schedule-chevron--open',
+                  )}
+                  aria-hidden
+                />
+              </button>
+            </div>
 
             {scheduleOpen ? (
               <div
                 id="doctor-schedule-panel"
                 className="rec-doctor-detail__schedule-panel rec-schedule-slots"
               >
-                <div className="rec-doctor-detail__schedule-toolbar">
-                  <div className="rec-toggle-group rec-doctor-detail__slot-toggle">
-                    {['all', 'free', 'busy'].map((f) => (
-                      <button
-                        key={f}
-                        type="button"
-                        onClick={() => setSlotFilter(f)}
-                        className={cn(
-                          'rec-toggle-group__btn',
-                          slotFilter === f && 'rec-toggle-group__btn--active',
-                          slotFilter === f && f === 'free' && 'rec-toggle-group__btn--active-free',
-                          slotFilter === f && f === 'busy' && 'rec-toggle-group__btn--active-busy',
-                        )}
-                      >
-                        {f === 'all' ? 'All Slots' : f === 'free' ? 'Free' : 'Busy'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
                 <TimeSlotGrid
                   className="time-slot-grid--compact"
                   date={scheduleDate}

@@ -122,6 +122,7 @@ export function useBookAppointmentMutation() {
       queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
       queryClient.invalidateQueries({ queryKey: ['appointments', 'list'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.appointments.today });
+      queryClient.invalidateQueries({ queryKey: ['appointments', 'slots'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.opd.dashboard });
     },
     onError: mutationOnError,
@@ -137,6 +138,7 @@ export function useUpdateAppointmentMutation() {
       queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
       queryClient.invalidateQueries({ queryKey: ['appointments', 'list'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.appointments.today });
+      queryClient.invalidateQueries({ queryKey: ['appointments', 'slots'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.doctor.appointments.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.doctor.queue.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.opd.dashboard });
@@ -154,6 +156,23 @@ export function useCancelAppointmentMutation() {
       queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
       queryClient.invalidateQueries({ queryKey: ['appointments', 'list'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.appointments.today });
+      queryClient.invalidateQueries({ queryKey: ['appointments', 'slots'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.opd.dashboard });
+    },
+    onError: mutationOnError,
+  });
+}
+
+export function useDeleteAppointmentMutation() {
+  const token = useQueryToken();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => appointmentsApi.deleteAppointmentById(id, token),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+      queryClient.invalidateQueries({ queryKey: ['appointments', 'list'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointments.today });
+      queryClient.invalidateQueries({ queryKey: ['appointments', 'slots'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.opd.dashboard });
     },
     onError: mutationOnError,
@@ -166,8 +185,10 @@ export function useDoctorSlotsQuery({ doctorId, departmentId, date, enabled = tr
     typeof date === 'string' ? date : date?.toISOString?.()?.slice(0, 10) ?? '';
 
   return useQuery({
-    queryKey: ['appointments', 'slots', doctorId, departmentId, dateKey],
+    queryKey: queryKeys.appointments.doctorSlots(doctorId, departmentId, dateKey),
     enabled: enabled && Boolean(doctorId && departmentId && dateKey),
+    staleTime: 0,
+    refetchOnMount: 'always',
     queryFn: () =>
       appointmentsApi.fetchDoctorSlots(token, {
         doctorId,

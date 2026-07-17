@@ -147,23 +147,32 @@ export default function DashboardPage() {
                       <th className="col-optional">Doctor</th>
                       <th>Time</th>
                       <th>Status</th>
+                      <th>Payment Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {la ? (
                       <tr>
-                        <td colSpan={5} className="dashboard-empty-row">
+                        <td colSpan={6} className="dashboard-empty-row">
                           Loading appointments…
                         </td>
                       </tr>
                     ) : todaysAppts.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="dashboard-empty-row">
+                        <td colSpan={6} className="dashboard-empty-row">
                           No appointments scheduled for today.
                         </td>
                       </tr>
                     ) : (
-                      todaysAppts.slice(0, 8).map((appt, i) => (
+                      todaysAppts.slice(0, 8).map((appt, i) => {
+                        const paymentLabel =
+                          appt.payment?.label
+                          ?? (String(appt.paymentStatus ?? '').toLowerCase() === 'paid'
+                            ? 'Paid'
+                            : String(appt.paymentStatus ?? '').toLowerCase() === 'partial'
+                              ? 'Partial'
+                              : 'Unpaid');
+                        return (
                         <tr key={appt.id}>
                           <td className="text-muted-num col-optional">{i + 1}</td>
                           <td>
@@ -189,8 +198,12 @@ export default function DashboardPage() {
                           <td>
                             <StatusBadge status={appt.displayStatus ?? appt.status} />
                           </td>
+                          <td>
+                            <StatusBadge status={paymentLabel} />
+                          </td>
                         </tr>
-                      ))
+                        );
+                      })
                     )}
                   </tbody>
                 </table>

@@ -346,16 +346,13 @@ export async function getAlert(id, token) {
 }
 
 export async function assignAlert(alertId, data, token) {
-  const raw = await nurseApi.assignAlert(alertId, data, token);
-  return mapAlertDetail(raw);
+  return nurseApi.assignAlert(alertId, data, token);
 }
 
 export async function resolveAlert(alertId, data, token) {
-  const raw = await nurseApi.resolveAlert(alertId, data, token);
-  return mapAlertDetail(raw);
+  return nurseApi.resolveAlert(alertId, data, token);
 }
 
 export async function escalateAlert(alertId, data, token) {
-  const raw = await nurseApi.escalateAlert(alertId, data, token);
-  return mapAlertDetail(raw);
+  return nurseApi.escalateAlert(alertId, data, token);
 }

@@ -47,6 +47,13 @@ export async function cancelAppointment(id, token) {
   });
 }
 
+export async function deleteAppointment(id, token) {
+  return apiClient(`/opd/appointments/${id}`, {
+    method: 'DELETE',
+    token,
+  });
+}
+
 export async function getDoctorSlots(doctorId, departmentId, date, token) {
   const qs = new URLSearchParams({
     department_id: String(departmentId),

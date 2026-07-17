@@ -4,7 +4,11 @@
  */
 
 export const APPT_PAY_LATER_NOTE = '[pay-later]';
-const REGISTRATION_BOOKING_MARKERS = ['booked during registration', 'new patient registration'];
+const REGISTRATION_BOOKING_MARKERS = [
+  'booked during registration',
+  'new patient registration',
+  'opd revisit',
+];
 
 /** Remove internal OPD booking markers before showing notes in clinical UI. */
 export function stripInternalAppointmentMarkers(text) {
@@ -112,7 +116,8 @@ export function isPaidActiveAppointment(appt, payment) {
 export function matchesAppointmentStatusFilter(appt, filterStatus, payment) {
   if (!appt) return false;
   if (!filterStatus || filterStatus === 'All') {
-    return appt.status === 'Scheduled';
+    // All = every visible row for the date (scheduled/pending/completed/cancelled).
+    return true;
   }
   if (filterStatus === 'Pending') return isAppointmentPending(appt, payment);
   if (filterStatus === 'Scheduled') return isPaidActiveAppointment(appt, payment);
@@ -121,6 +126,11 @@ export function matchesAppointmentStatusFilter(appt, filterStatus, payment) {
 
 export function showsAppointmentPaymentActions(filterStatus) {
   return filterStatus !== 'Completed' && filterStatus !== 'Cancelled';
+}
+
+export function isDeletableAppointment(appt) {
+  if (!appt) return false;
+  return appt.status === 'Completed' || appt.status === 'Cancelled';
 }
 
 export function countAppointmentsByStatusFilter(appointments, filterStatus) {

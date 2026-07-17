@@ -162,14 +162,10 @@ export default function NursePatientMedicationsPage() {
 
   const openAdmin = useCallback((rx) => {
     setSelected(rx);
-    const adm = rx.administration;
     setAdminData({
-      id: adm?.id,
-      status: adm?.status || rx.status || 'given',
-      remarks: adm?.remarks || '',
-      scheduled_time: adm?.scheduled_time
-        ? new Date(adm.scheduled_time).toISOString().slice(0, 16)
-        : '',
+      status: 'given',
+      remarks: '',
+      scheduled_time: '',
     });
   }, []);
 
@@ -186,11 +182,10 @@ export default function NursePatientMedicationsPage() {
         scheduled_time: adminData.scheduled_time
           ? new Date(adminData.scheduled_time).toISOString()
           : null,
-        ...(adminData.id ? { id: adminData.id } : {}),
       },
       {
         onSuccess: () => {
-          toast.success(`Medication marked as ${adminData.status}`);
+          toast.success(`Dose recorded as ${adminData.status}`);
           setSelected(null);
         },
         onError: () => toast.error('Failed to record administration'),
@@ -219,7 +214,7 @@ export default function NursePatientMedicationsPage() {
       header: 'Action',
       render: (p) => {
         const hasRecord = Boolean(p.administration?.id);
-        const canManageMedication = hasRecord ? canUpdateMedication : canCreateMedication;
+        const canManageMedication = canCreateMedication || canUpdateMedication;
         if (!canManageMedication) return '—';
         return (
           <button
@@ -229,7 +224,7 @@ export default function NursePatientMedicationsPage() {
             }`}
             onClick={() => openAdmin(p)}
           >
-            {hasRecord ? 'Update record' : 'Administer'}
+            {hasRecord ? 'Record dose' : 'Administer'}
           </button>
         );
       },
@@ -343,7 +338,7 @@ export default function NursePatientMedicationsPage() {
             open={!!selected}
             className="nurse-confirm--med-admin"
             title={selected?.medicine_name}
-            subtitle="Record administration"
+            subtitle={selected?.administration?.id ? 'Record new dose' : 'Record administration'}
             description={
               <div className="nurse-patient-meds-admin-form">
                 <div className="nurse-patient-meds-admin-form__row">

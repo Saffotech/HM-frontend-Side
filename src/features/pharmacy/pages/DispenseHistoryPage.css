@@ -75,6 +75,69 @@
   left: 0.55rem;
 }
 
+.pharmacy-history-date-range {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  padding: 0 0.15rem;
+}
+
+.pharmacy-history-date-range__sep {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: lowercase;
+}
+
+.pharmacy-history-date {
+  margin: 0;
+  width: 8.75rem;
+}
+
+.pharmacy-history-date .field,
+.pharmacy-history-date.field {
+  margin: 0;
+}
+
+.pharmacy-history-date .field__label {
+  display: none;
+}
+
+.pharmacy-history-date .field__input,
+.pharmacy-history-date input {
+  height: 2rem;
+  min-height: 2rem;
+  padding: 0 0.45rem;
+  border: none;
+  border-radius: 0.45rem;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.pharmacy-history-date-range__clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pharmacy-history-date-range__clear:hover {
+  background: #cbd5e1;
+  color: var(--color-text);
+}
+
 /* Per-page control */
 .pharmacy-history-pagesize {
   display: inline-flex;
@@ -272,6 +335,17 @@
     width: auto;
     max-width: none;
     min-width: 0;
+  }
+
+  .pharmacy-history-date-range {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+  }
+
+  .pharmacy-history-date {
+    flex: 1 1 7.5rem;
+    width: auto;
+    min-width: 7rem;
   }
 
   .pharmacy-history-pagesize__select {

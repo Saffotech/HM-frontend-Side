@@ -41,6 +41,22 @@
   padding: 0.25rem 0 1.5rem;
 }
 
+.layout--super-admin .layout-content--compact {
+  padding-top: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .layout--super-admin .layout-content--compact {
+    padding-top: 0.625rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+.layout--super-admin .sa-shell:has(.sa-staff-list-page) {
+  padding-top: 0;
+}
+
 .sa-page-header__actions {
   display: flex;
   flex-wrap: wrap;
@@ -2858,15 +2874,27 @@
 }
 
 /* ── Staff list page ───────────────────────────────────────── */
-.sa-staff-list-page .admin-page__head--row {
-  align-items: center;
-  margin-bottom: 1rem;
+.sa-staff-list-page.admin-page {
+  gap: 0.65rem;
 }
 
-.sa-staff-list-page .admin-page__title {
+.sa-staff-list-page .ui-page-header {
+  margin-bottom: 0;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.sa-staff-list-page .ui-page-header__title {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.75rem;
+  font-weight: 700;
   line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+
+.sa-staff-list-page .sa-filters-card .admin-card__body {
+  padding: 0.75rem 1rem;
 }
 
 .sa-staff-list-page .admin-table__actions {

@@ -8,9 +8,10 @@ const FALLBACK_SLOTS = [
   '3:00 PM', '3:30 PM', '4:00 PM', '4:30 PM', '5:00 PM',
 ];
 
+/** Offline/demo only — never used when useApiSlots is true. */
 function buildFallbackSlots(date, doctorId) {
   if (!date || !doctorId) {
-    return FALLBACK_SLOTS.map((time) => ({ time, available: true }));
+    return FALLBACK_SLOTS.map((time) => ({ time, available: true, status: 'available' }));
   }
   const seedString = `${date.toISOString?.() || date}-${doctorId}`;
   let hash = 0;
@@ -21,7 +22,10 @@ function buildFallbackSlots(date, doctorId) {
     const x = Math.sin(hash++) * 10000;
     return x - Math.floor(x);
   };
-  return FALLBACK_SLOTS.map((time) => ({ time, available: random() > 0.3 }));
+  return FALLBACK_SLOTS.map((time) => {
+    const available = random() > 0.3;
+    return { time, available, status: available ? 'available' : 'booked' };
+  });
 }
 
 export default function TimeSlotGrid({
@@ -36,8 +40,9 @@ export default function TimeSlotGrid({
   className = '',
 }) {
   const slots = useMemo(() => {
-    if (useApiSlots && apiSlots != null) {
-      return apiSlots;
+    // Live booking must use API occupancy — never random fallback.
+    if (useApiSlots) {
+      return Array.isArray(apiSlots) ? apiSlots : [];
     }
     return buildFallbackSlots(date, doctorId);
   }, [apiSlots, date, doctorId, useApiSlots]);
@@ -67,16 +72,20 @@ export default function TimeSlotGrid({
   return (
     <div className={`time-slot-grid ${className}`.trim()}>
       {slots.map(({ time, available }) => {
+        const isAvailable = available !== false;
         const isSelected = selectedTime === time;
+        const isBooked = !isAvailable;
         return (
           <button
-            key={`${time}-${available}`}
+            key={time}
             type="button"
-            disabled={!available}
+            disabled={isBooked}
+            title={isBooked ? 'Slot already booked' : undefined}
             onClick={() => onSelectTime && onSelectTime(time)}
-            className={`time-slot ${!available ? 'time-slot--disabled' : ''} ${isSelected ? 'time-slot--selected' : ''}`}
+            className={`time-slot ${isBooked ? 'time-slot--disabled time-slot--booked' : ''} ${isSelected ? 'time-slot--selected' : ''}`}
           >
-            {time}
+            <span className="time-slot__time">{time}</span>
+            {isBooked && <span className="time-slot__badge">Booked</span>}
           </button>
         );
       })}

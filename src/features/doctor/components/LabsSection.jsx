@@ -80,33 +80,61 @@ function LabEditModal({ test, open, onClose, onSave, saving }) {
   );
 }
 
-function LabTestsList({ tests, filter, onFilterChange, onRowClick, onEdit, onCancel, onViewReport }) {
-  const counts = useMemo(() => countDoctorLabFilters(tests), [tests]);
+function LabTestsList({
+  tests,
+  filter,
+  onFilterChange,
+  search,
+  onSearchChange,
+  onRowClick,
+  onEdit,
+  onCancel,
+  onViewReport,
+}) {
+  const searched = useMemo(() => {
+    const q = String(search ?? '').trim().toLowerCase();
+    if (!q) return tests;
+    return tests.filter((t) => {
+      const name = String(t.patientName ?? '').toLowerCase();
+      const id = String(t.patientId ?? '').toLowerCase();
+      return name.includes(q) || id.includes(q);
+    });
+  }, [tests, search]);
+
+  const counts = useMemo(() => countDoctorLabFilters(searched), [searched]);
   const filtered = useMemo(
-    () => filterDoctorLabTests(tests, filter),
-    [tests, filter]
+    () => filterDoctorLabTests(searched, filter),
+    [searched, filter]
   );
 
   return (
     <>
-      <header className="doc-labs-header">
+      <header className="doc-labs-toolbar">
         <h2>Lab Tests</h2>
+        <div className="doc-labs-search">
+          <Input
+            className="doc-labs-search__field"
+            placeholder="Search patient by name or ID…"
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            aria-label="Search patient"
+          />
+        </div>
+        <div className="doc-labs-filters" role="tablist" aria-label="Filter lab tests">
+          {DOCTOR_LAB_FILTERS.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              role="tab"
+              aria-selected={filter === f.id}
+              className={`doc-labs-filter${filter === f.id ? ' doc-labs-filter--active' : ''}`}
+              onClick={() => onFilterChange(f.id)}
+            >
+              {f.label} ({counts[f.id] ?? 0})
+            </button>
+          ))}
+        </div>
       </header>
-
-      <div className="doc-labs-filters" role="tablist" aria-label="Filter lab tests">
-        {DOCTOR_LAB_FILTERS.map((f) => (
-          <button
-            key={f.id}
-            type="button"
-            role="tab"
-            aria-selected={filter === f.id}
-            className={`doc-labs-filter${filter === f.id ? ' doc-labs-filter--active' : ''}`}
-            onClick={() => onFilterChange(f.id)}
-          >
-            {f.label} ({counts[f.id] ?? 0})
-          </button>
-        ))}
-      </div>
 
       <div className="doc-card doc-card__body--flush table-wrap">
         <table className="data-table doc-labs-table">
@@ -124,7 +152,9 @@ function LabTestsList({ tests, filter, onFilterChange, onRowClick, onEdit, onCan
             {filtered.length === 0 ? (
               <tr>
                 <td colSpan={6} className="text-muted" style={{ textAlign: 'center', padding: '2rem' }}>
-                  No lab tests in this category.
+                  {String(search ?? '').trim()
+                    ? 'No lab tests match this patient search.'
+                    : 'No lab tests in this category.'}
                 </td>
               </tr>
             ) : (
@@ -207,6 +237,7 @@ export default function LabsSection() {
   const { data: patientVisitsData } = useDoctorPatientVisitsQuery();
   const patientVisits = patientVisitsData?.visits ?? [];
   const [filter, setFilter] = useState('all');
+  const [search, setSearch] = useState('');
   const [profilePatient, setProfilePatient] = useState(null);
   const [editTest, setEditTest] = useState(null);
   const [reportTest, setReportTest] = useState(null);
@@ -249,6 +280,8 @@ export default function LabsSection() {
         tests={tests}
         filter={filter}
         onFilterChange={setFilter}
+        search={search}
+        onSearchChange={setSearch}
         onRowClick={(t) =>
           setProfilePatient(resolveDoctorPatient(patientVisits, t.patientId, t.patientName))
         }

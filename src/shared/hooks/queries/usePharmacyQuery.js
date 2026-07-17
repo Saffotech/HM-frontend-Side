@@ -32,12 +32,19 @@ export function usePharmacyPrescriptionQuery(id, options = {}) {
   });
 }
 
-export function usePharmacyHistoryQuery({ page = 1, limit = 20, enabled = true } = {}) {
+export function usePharmacyHistoryQuery({
+  page = 1,
+  limit = 20,
+  date_from,
+  date_to,
+  enabled = true,
+} = {}) {
   const token = useQueryToken();
+  const params = { page, limit, date_from, date_to };
   return useQuery({
-    queryKey: queryKeys.pharmacy.history({ page, limit }),
+    queryKey: queryKeys.pharmacy.history(params),
     enabled,
-    queryFn: () => fetchDispenseHistory(token, { page, limit }),
+    queryFn: () => fetchDispenseHistory(token, params),
   });
 }
 

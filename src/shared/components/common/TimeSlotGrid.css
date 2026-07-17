@@ -46,7 +46,34 @@
 }
 
 .time-slot--disabled {
-  background: #f1f5f9;
-  color: var(--color-text-lighter);
+  background: #e2e8f0;
+  color: #64748b;
   cursor: not-allowed;
+  border-color: #cbd5e1;
+  opacity: 1;
+}
+
+.time-slot--booked {
+  flex-direction: column;
+  gap: 0.15rem;
+  line-height: 1.15;
+}
+
+.time-slot__time {
+  display: block;
+}
+
+.time-slot__badge {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #b91c1c;
+}
+
+.time-slot--disabled:hover {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+  color: #64748b;
 }

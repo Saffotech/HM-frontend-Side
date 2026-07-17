@@ -74,10 +74,15 @@ export async function dispenseMedicine(prescriptionId, body, token) {
 
 
 
-export async function getDispenseHistory(token, { page = 1, limit = 20 } = {}) {
+export async function getDispenseHistory(
+  token,
+  { page = 1, limit = 20, date_from, date_to } = {}
+) {
   const search = new URLSearchParams();
   search.set('page', String(page));
   search.set('limit', String(limit));
+  if (date_from) search.set('date_from', date_from);
+  if (date_to) search.set('date_to', date_to);
   return apiClient(`/pharmacy/history?${search.toString()}`, { token });
 }
 

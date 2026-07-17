@@ -3,6 +3,7 @@ import {
   createAppointment,
   updateAppointment,
   cancelAppointment,
+  deleteAppointment,
   getDoctorSlots,
 } from '@/features/opd/api/appointments';
 import { mapApiDoctorSlots } from '@/shared/utils/slotTime';
@@ -139,6 +140,10 @@ export async function patchAppointment(id, data, token) {
 
 export async function cancelAppointmentById(id, token) {
   return cancelAppointment(id, token);
+}
+
+export async function deleteAppointmentById(id, token) {
+  return deleteAppointment(id, token);
 }
 
 export function uiFilterStatusToApi(status) {

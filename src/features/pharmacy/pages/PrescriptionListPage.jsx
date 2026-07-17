@@ -30,9 +30,19 @@ const STATUS_OPTIONS = [
 
 const STATUS_LABELS = Object.fromEntries(STATUS_OPTIONS.map((o) => [o.value, o.label]));
 
+/** YYYY-MM-DD in local time for <input type="date"> comparison. */
+function toLocalDateKey(d) {
+  const dt = new Date(d);
+  if (Number.isNaN(dt.getTime())) return '';
+  const m = String(dt.getMonth() + 1).padStart(2, '0');
+  const day = String(dt.getDate()).padStart(2, '0');
+  return `${dt.getFullYear()}-${m}-${day}`;
+}
+
 export default function PrescriptionListPage() {
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState('pending');
+  const [dateFilter, setDateFilter] = useState('');
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search.trim(), 300);
   const status = statusFilter === 'all' ? undefined : statusFilter;
@@ -42,9 +52,12 @@ export default function PrescriptionListPage() {
     search: debouncedSearch || undefined,
   });
 
-  const prescriptions = data?.data ?? [];
+  const allPrescriptions = data?.data ?? [];
+  const prescriptions = dateFilter
+    ? allPrescriptions.filter((rx) => toLocalDateKey(rx.created_at) === dateFilter)
+    : allPrescriptions;
   const statusLabel = STATUS_LABELS[statusFilter] ?? 'All';
-  const hasActiveFilters = Boolean(debouncedSearch);
+  const hasActiveFilters = Boolean(debouncedSearch) || Boolean(dateFilter);
 
   return (
     <PharmacyLayout compact>
@@ -82,9 +95,31 @@ export default function PrescriptionListPage() {
                     ))}
                   </select>
                 </label>
+                <span className="pharmacy-rx-toolbar-strip__divider" aria-hidden />
+                <label className="pharmacy-rx-date-filter">
+                  <input
+                    type="date"
+                    className="pharmacy-rx-date-filter__input"
+                    aria-label="Filter by date"
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                  />
+                  {dateFilter && (
+                    <button
+                      type="button"
+                      className="pharmacy-rx-date-filter__clear"
+                      aria-label="Show all time"
+                      title="Show all time"
+                      onClick={() => setDateFilter('')}
+                    >
+                      ×
+                    </button>
+                  )}
+                </label>
               </div>
               <span className="pharmacy-rx-card__meta">
                 <strong>{prescriptions.length}</strong> · {statusLabel}
+                {dateFilter ? ` · ${formatDate(dateFilter)}` : ' · All time'}
               </span>
             </div>
 
@@ -93,7 +128,7 @@ export default function PrescriptionListPage() {
                 title={hasActiveFilters ? 'No matching prescriptions' : 'No prescriptions found'}
                 description={
                   hasActiveFilters
-                    ? 'Try a different search term or status filter.'
+                    ? 'Try a different search term, status or date filter.'
                     : `No ${statusLabel.toLowerCase()} prescriptions at the moment.`
                 }
               />

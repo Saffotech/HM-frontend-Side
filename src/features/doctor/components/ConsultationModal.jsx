@@ -54,7 +54,7 @@ function resetConsultationFormState() {
 function applyDraftToForm(draft) {
   return {
     tab: draft.tab ?? 'clinical',
-    symptoms: draft.symptoms ?? '',
+    symptoms: stripInternalAppointmentMarkers(draft.symptoms ?? ''),
     diagnosis: draft.diagnosis ?? '',
     notes: draft.notes ?? '',
     followUp: draft.followUp ?? '',
@@ -69,9 +69,10 @@ function applyDraftToForm(draft) {
 /** Appointment reason defaults like "OPD walk-in" are not real clinical symptoms. */
 function symptomsPrefillFromAppointment(detail) {
   const raw = detail?.symptoms ?? detail?.reason ?? '';
-  const text = String(raw).trim();
+  const text = stripInternalAppointmentMarkers(raw);
   if (!text) return '';
   if (/^opd\s*walk[-\s]?in$/i.test(text)) return '';
+  if (/^opd\s*revisit$/i.test(text)) return '';
   return text;
 }
 

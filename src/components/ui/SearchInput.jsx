@@ -4,6 +4,8 @@ import './SearchInput.css';
 
 /**
  * Unified search field — clear, optional loading.
+ * Use type="text" (not "search") so browser native clear doesn't fight
+ * our custom clear button or block backspace/continuous typing.
  */
 export default function SearchInput({
   value,
@@ -24,7 +26,9 @@ export default function SearchInput({
       <input
         id={id}
         name={name}
-        type="search"
+        type="text"
+        inputMode="search"
+        autoComplete="off"
         className="search-bar__input"
         placeholder={placeholder}
         value={value}

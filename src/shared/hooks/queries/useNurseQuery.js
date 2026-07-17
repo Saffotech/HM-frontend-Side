@@ -15,7 +15,6 @@ import {
   getMedicationPatients,
   getPatientMedications,
   administerMedication,
-  updateAdministration,
   getMedicationHistory,
   getPatientMedicationHistory,
   listHandovers,
@@ -362,8 +361,7 @@ export function useAdministerMedicationMutation(patientId) {
   const token = useQueryToken();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data) =>
-      data.id ? updateAdministration(data.id, data, token) : administerMedication(data, token),
+    mutationFn: (data) => administerMedication(data, token),
     onSuccess: () => {
       if (patientId) queryClient.invalidateQueries({ queryKey: queryKeys.nurse.patientMedications(patientId) });
       if (patientId) queryClient.invalidateQueries({ queryKey: queryKeys.nurse.patientMedHistory(patientId) });

@@ -130,6 +130,7 @@ export default function BookAppointmentPage() {
   const {
     data: apiSlots = [],
     isLoading: slotsLoading,
+    isPending: slotsPending,
     isError: slotsError,
   } = useDoctorSlotsQuery({
     doctorId,
@@ -479,7 +480,7 @@ export default function BookAppointmentPage() {
                     onSelectTime={(t) => set('time', t)}
                     apiSlots={apiSlots}
                     useApiSlots
-                    slotsLoading={slotsLoading}
+                    slotsLoading={slotsLoading || slotsPending}
                     slotsError={slotsError}
                   />
                 </div>

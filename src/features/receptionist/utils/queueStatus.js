@@ -9,8 +9,18 @@ export function deriveQueueDisplayStatus(appointmentStatus, paymentStatus) {
   const payment = String(paymentStatus || '').toLowerCase();
 
   if (appt === 'completed') return 'completed';
+  if (appt === 'cancelled') return 'cancelled';
   if (payment === 'paid') return 'scheduled';
   return 'pending';
+}
+
+/** Badge key for payment column — same labels as OPD (Paid / Partial / Unpaid). */
+export function derivePaymentDisplayStatus(paymentStatus) {
+  const payment = String(paymentStatus || 'pending').toLowerCase();
+  if (payment === 'paid') return 'paid';
+  if (payment === 'partial') return 'partial';
+  // OPD shows unpaid for pending / no_bill / unpaid
+  return 'unpaid';
 }
 
 /**

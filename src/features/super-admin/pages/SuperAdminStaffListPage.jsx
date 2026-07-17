@@ -111,10 +111,10 @@ export default function SuperAdminStaffListPage() {
   }
 
   return (
-    <SuperAdminLayout pageTitle="Staff">
-      <div className="admin-page sa-staff-list-page">
+    <SuperAdminLayout pageTitle="Staff" compact>
+      <div className="admin-page admin-page--compact sa-staff-list-page">
         <SuperAdminPageHeader
-          title="Staff members"
+          title="Staff Member"
           actions={(
             <Button onClick={() => navigate(ROUTES.SUPER_ADMIN_STAFF_NEW)}>
               <Plus size={16} aria-hidden />

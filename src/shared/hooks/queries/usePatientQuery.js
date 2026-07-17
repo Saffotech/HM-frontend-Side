@@ -54,6 +54,10 @@ export function useAddPatientMutation() {
       queryClient.invalidateQueries({ queryKey: queryKeys.opd.dashboard });
       queryClient.invalidateQueries({ queryKey: queryKeys.bills.all });
       queryClient.invalidateQueries({ queryKey: ['bills', 'list'] });
+      // Refresh OPD Dashboard "Today's Appointments" + Appointments list after register.
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointments.today });
+      queryClient.invalidateQueries({ queryKey: ['appointments', 'list'] });
+      queryClient.invalidateQueries({ queryKey: ['appointments', 'slots'] });
     },
     onError: mutationOnError,
   });
@@ -71,6 +75,10 @@ export function useAddOpdVisitMutation() {
       queryClient.invalidateQueries({ queryKey: queryKeys.opd.dashboard });
       queryClient.invalidateQueries({ queryKey: queryKeys.bills.all });
       queryClient.invalidateQueries({ queryKey: ['bills', 'list'] });
+      // Same path as register (existing patient revisit) — keep Today's Appointments in sync.
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointments.today });
+      queryClient.invalidateQueries({ queryKey: ['appointments', 'list'] });
+      queryClient.invalidateQueries({ queryKey: ['appointments', 'slots'] });
     },
     onError: mutationOnError,
   });

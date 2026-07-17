@@ -158,24 +158,55 @@
 .doc-pill--reviewed{ background: #f5f3ff; color: #6d28d9; border-color: #c4b5fd; }
 
 /* Doctor — Lab Tests */
-.doc-labs-header h2{
+.doc-labs-toolbar{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  margin: 0 0 0.65rem;
+}
+
+.doc-labs-toolbar h2{
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: #0f2744;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.doc-labs-search{
+  width: min(100%, 15.5rem);
+  flex: 0 1 15.5rem;
+}
+
+.doc-labs-search .field,
+.doc-labs-search__field{
+  margin: 0;
+}
+
+.doc-labs-search .field__input{
+  border-radius: 0.65rem;
+  border: 1px solid #dbe3ee;
+  background: #fff;
+  min-height: 2.1rem;
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
 }
 
 .doc-labs-filters{
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
 }
 
 .doc-labs-filter{
   border: 1px solid var(--color-border);
   background: #fff;
   border-radius: 999px;
-  padding: 0.4rem 0.85rem;
+  padding: 0.32rem 0.75rem;
   font-size: 0.8125rem;
   font-weight: 600;
   color: #334155;

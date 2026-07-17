@@ -60,8 +60,11 @@ export async function fetchPrescriptionDispenseHistory(prescriptionId, token) {
   return rows.filter((row) => String(row.prescription_id) === String(prescriptionId));
 }
 
-export async function fetchDispenseHistory(token, { page = 1, limit = 20 } = {}) {
-  const raw = await getDispenseHistory(token, { page, limit });
+export async function fetchDispenseHistory(
+  token,
+  { page = 1, limit = 20, date_from, date_to } = {}
+) {
+  const raw = await getDispenseHistory(token, { page, limit, date_from, date_to });
   const data = mapDispenseHistory(raw);
 
   return {

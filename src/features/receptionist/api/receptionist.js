@@ -95,17 +95,21 @@ function mapScheduleDoctor(row) {
     id: row.doctor_id,
     name: row.doctor_name || `Doctor #${row.doctor_id}`,
     department_id: row.department_id ?? null,
-    department: row.department ?? row.specialization ?? null,
+    department: row.department_name ?? row.department ?? row.specialization ?? null,
     room_no: row.room_no ?? null,
     specialization: row.specialization ?? null,
-    shift_start: row.shift_start,
-    shift_end: row.shift_end,
-    total_slots: row.total_slots ?? 0,
-    booked_slots: row.booked_slots ?? 0,
+    shift_start: row.shift_start_time ?? row.shift_start ?? null,
+    shift_end: row.shift_end_time ?? row.shift_end ?? null,
+    total_slots: row.total_slots ?? row.appointments_count ?? 0,
+    booked_slots: row.booked_slots ?? row.scheduled_count ?? 0,
     available_slots: row.available_slots ?? 0,
-    status: row.status,
-    schedule_date: row.schedule_date,
+    status: row.status ?? (row.is_available ? 'available' : 'unavailable'),
+    schedule_date: row.schedule_date ?? row.date ?? null,
     slots: row.slots ?? null,
+    appointments_count: row.appointments_count ?? 0,
+    scheduled_count: row.scheduled_count ?? 0,
+    completed_count: row.completed_count ?? 0,
+    cancelled_count: row.cancelled_count ?? 0,
   };
 }
 
@@ -179,7 +183,7 @@ export const receptionistApi = {
         ...params,
       }),
     );
-    const items = (raw?.items || []).map(mapScheduleDoctor).filter(Boolean);
+    const items = (raw?.doctors || raw?.items || []).map(mapScheduleDoctor).filter(Boolean);
     const byId = new Map();
     items.forEach((d) => {
       if (!byId.has(d.id)) byId.set(d.id, d);
@@ -200,7 +204,7 @@ export const receptionistApi = {
         ...params,
       }),
     );
-    const row = (raw?.items || [])[0];
+    const row = (raw?.doctors || raw?.items || [])[0];
     if (!row) return [];
 
     if (Array.isArray(row.slots) && row.slots.length > 0) {

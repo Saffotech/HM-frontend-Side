@@ -12,6 +12,8 @@ const API_STATUS_TO_UI = {
   in_progress: 'In Progress',
   completed: 'Completed',
   cancelled: 'Cancelled',
+  // Legacy system status — treat as Cancelled in OPD UI.
+  no_show: 'Cancelled',
 };
 
 const UI_STATUS_TO_API = {

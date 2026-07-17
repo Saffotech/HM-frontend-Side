@@ -7,14 +7,24 @@ import StatusBadge from '../components/StatusBadge';
 import PaginationBar from '../components/PaginationBar';
 import { ROUTES } from '@/shared/constants';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
+import { derivePaymentDisplayStatus } from '../utils/queueStatus';
 import { PAGE_SIZE_LIST } from '../utils/params';
 import { cn } from '../utils/cn';
 
 function tableQueryFromStatusFilter(statusFilter) {
-  if (statusFilter === 'scheduled') return { payment_status: 'paid' };
+  // Open today: appointment still scheduled (paid → Scheduled, unpaid → Pending in UI)
+  if (statusFilter === 'today') return { status: 'scheduled' };
   if (statusFilter === 'completed') return { status: 'completed' };
-  if (statusFilter === 'cancelled') return { __unsupported: true };
+  if (statusFilter === 'cancelled') return { status: 'cancelled' };
   return {};
+}
+
+function activeTodayCount(stats) {
+  if (!stats) return 0;
+  const total = stats.total ?? 0;
+  const completed = stats.completed ?? 0;
+  const cancelled = stats.cancelled ?? 0;
+  return Math.max(0, total - completed - cancelled);
 }
 
 export default function ReceptionistDashboardPage() {
@@ -38,6 +48,7 @@ export default function ReceptionistDashboardPage() {
 
   const loadStats = () => {
     setLoadingStats(true);
+    setError('');
     receptionistApi
       .getDashboardStats(doctorId ? { doctor_id: doctorId } : {})
       .then((d) => setStats(d))
@@ -47,15 +58,9 @@ export default function ReceptionistDashboardPage() {
 
   const loadTable = () => {
     const statusQuery = tableQueryFromStatusFilter(statusFilter);
-    if (statusQuery.__unsupported) {
-      setPatients([]);
-      setTableTotal(0);
-      setTableTotalPages(1);
-      setLoadingTable(false);
-      return;
-    }
 
     setLoadingTable(true);
+    setError('');
     receptionistApi
       .getTodayQueue({
         search: debouncedSearch.trim() || undefined,
@@ -94,9 +99,9 @@ export default function ReceptionistDashboardPage() {
 
   const statCards = [
     {
-      id: 'scheduled',
-      label: 'Scheduled',
-      value: stats?.scheduled ?? 0,
+      id: 'today',
+      label: "Today's Patients",
+      value: activeTodayCount(stats),
       icon: CalendarCheck,
       iconClass: 'rec-stat-card__icon--teal',
       activeClass: 'scheduled',
@@ -128,11 +133,8 @@ export default function ReceptionistDashboardPage() {
   ];
 
   const tableEmptyMessage = useMemo(() => {
-    if (statusFilter === 'cancelled') {
-      return 'Cancelled appointments are included in dashboard stats only.';
-    }
     return 'No patients match the selected filters.';
-  }, [statusFilter]);
+  }, []);
 
   return (
     <>
@@ -212,7 +214,13 @@ export default function ReceptionistDashboardPage() {
               <h3 className="rec-filters__title">
                 {statusFilter === 'all'
                   ? "Today's Patients"
-                  : `${statusFilter.charAt(0).toUpperCase()}${statusFilter.slice(1)} Patients`}
+                  : statusFilter === 'today'
+                    ? "Today's Patients"
+                    : statusFilter === 'completed'
+                      ? 'Completed Patients'
+                      : statusFilter === 'cancelled'
+                        ? 'Cancelled Patients'
+                        : "Today's Patients"}
               </h3>
               {statusFilter !== 'all' && (
                 <button
@@ -266,18 +274,19 @@ export default function ReceptionistDashboardPage() {
                 <th>Department</th>
                 <th>Time</th>
                 <th>Status</th>
+                <th>Payment</th>
               </tr>
             </thead>
             <tbody>
               {loadingTable ? (
                 <tr>
-                  <td colSpan={6} className="rec-table__empty">
+                  <td colSpan={7} className="rec-table__empty">
                     Loading patients…
                   </td>
                 </tr>
               ) : patients.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="rec-table__empty">
+                  <td colSpan={7} className="rec-table__empty">
                     {tableEmptyMessage}
                   </td>
                 </tr>
@@ -291,6 +300,11 @@ export default function ReceptionistDashboardPage() {
                     <td className="rec-text-muted rec-tabular">{patient.scheduled_at}</td>
                     <td>
                       <StatusBadge status={patient.display_status ?? patient.status} />
+                    </td>
+                    <td>
+                      <StatusBadge
+                        status={derivePaymentDisplayStatus(patient.payment_status)}
+                      />
                     </td>
                   </tr>
                 ))

@@ -5,6 +5,7 @@ import {
   useAppointmentsQuery,
   useUpdateAppointmentMutation,
   useCancelAppointmentMutation,
+  useDeleteAppointmentMutation,
   useDoctorSlotsQuery,
 } from '@/shared/hooks/queries/useAppointmentQuery';
 import { asAppointmentList, asAppointmentPageMeta } from '@/shared/hooks/queries/listDataUtils';
@@ -13,6 +14,7 @@ import {
   isAppointmentPending,
   isPaidActiveAppointment,
   showsAppointmentPaymentActions,
+  isDeletableAppointment,
   buildPaymentFromApiFields,
   matchesAppointmentStatusFilter,
   countAppointmentsByStatusFilter,
@@ -117,9 +119,11 @@ export default function AppointmentListPage() {
   );
   const updateAppointment = useUpdateAppointmentMutation();
   const cancelAppointment = useCancelAppointmentMutation();
+  const deleteAppointment = useDeleteAppointmentMutation();
   const [selectedAppt, setSelectedAppt] = useState(null);
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentContext, setPaymentContext] = useState(null);
   const [newDate, setNewDate] = useState('');
@@ -159,6 +163,7 @@ export default function AppointmentListPage() {
   }, [countData]);
 
   const showPaymentActions = showsAppointmentPaymentActions(filterStatus);
+  const tableColumnCount = showPaymentActions ? 6 : 5;
   const listTotal = usesClientStatusFilter ? filteredAppointments.length : pageMeta.total;
   const paginationTotalPages = Math.max(
     1,
@@ -174,6 +179,11 @@ export default function AppointmentListPage() {
   const openCancelAppointment = (appt) => {
     setSelectedAppt(appt);
     setCancelOpen(true);
+  };
+
+  const openDeleteAppointment = (appt) => {
+    setSelectedAppt(appt);
+    setDeleteOpen(true);
   };
 
   const formatFilterDate = (d) =>
@@ -243,6 +253,16 @@ export default function AppointmentListPage() {
       onSuccess: () => {
         toast.success('Appointment cancelled');
         setCancelOpen(false);
+        setSelectedAppt(null);
+      },
+    });
+  };
+
+  const handleDelete = () => {
+    deleteAppointment.mutate(selectedAppt.dbId ?? selectedAppt.id, {
+      onSuccess: () => {
+        toast.success('Appointment deleted');
+        setDeleteOpen(false);
         setSelectedAppt(null);
       },
     });
@@ -355,7 +375,7 @@ export default function AppointmentListPage() {
                   <th>Schedule</th>
                   <th>Status</th>
                   {showPaymentActions && <th>Payment</th>}
-                  {showPaymentActions && <th className="actions-col">Actions</th>}
+                  <th className="actions-col">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -394,50 +414,57 @@ export default function AppointmentListPage() {
                         <StatusBadge status={appt.payment?.label ?? 'Unpaid'} />
                       </td>
                     )}
-                    {showPaymentActions && (
-                      <td
-                        className="actions-cell actions-cell--center appointments-table__actions"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {isAppointmentPending(appt, appt.payment) && (
-                          <Button
-                            size="sm"
-                            variant="success"
-                            onClick={() => openCollectPayment(appt)}
-                          >
-                            Collect Payment
-                          </Button>
-                        )}
-                        {isPaidActiveAppointment(appt, appt.payment) && (
-                          <Button
-                            size="sm"
-                            variant="warning"
-                            onClick={() => {
-                              setSelectedAppt(appt);
-                              setRescheduleOpen(true);
-                              setNewDate('');
-                              setNewTime('');
-                            }}
-                          >
-                            <Calendar size={14} /> Reschedule
-                          </Button>
-                        )}
-                        {appt.status === 'Scheduled' && (
-                          <Button
-                            size="sm"
-                            variant="danger"
-                            onClick={() => openCancelAppointment(appt)}
-                          >
-                            Cancel
-                          </Button>
-                        )}
-                      </td>
-                    )}
+                    <td
+                      className="actions-cell actions-cell--center appointments-table__actions"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {showPaymentActions && isAppointmentPending(appt, appt.payment) && (
+                        <Button
+                          size="sm"
+                          variant="success"
+                          onClick={() => openCollectPayment(appt)}
+                        >
+                          Collect Payment
+                        </Button>
+                      )}
+                      {showPaymentActions && isPaidActiveAppointment(appt, appt.payment) && (
+                        <Button
+                          size="sm"
+                          variant="warning"
+                          onClick={() => {
+                            setSelectedAppt(appt);
+                            setRescheduleOpen(true);
+                            setNewDate('');
+                            setNewTime('');
+                          }}
+                        >
+                          <Calendar size={14} /> Reschedule
+                        </Button>
+                      )}
+                      {showPaymentActions && appt.status === 'Scheduled' && (
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          onClick={() => openCancelAppointment(appt)}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                      {isDeletableAppointment(appt) && (
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          onClick={() => openDeleteAppointment(appt)}
+                        >
+                          Delete
+                        </Button>
+                      )}
+                    </td>
                   </tr>
                 ))}
                 {!visibleAppointments.length && (
                   <tr>
-                    <td colSpan={showPaymentActions ? 6 : 4} className="empty-row">
+                    <td colSpan={tableColumnCount} className="empty-row">
                       {isFetching ? 'Loading appointments…' : emptyListMessage}
                     </td>
                   </tr>
@@ -507,6 +534,13 @@ export default function AppointmentListPage() {
           message={`Cancel appointment for ${selectedAppt?.patientName}?`}
           onCancel={() => setCancelOpen(false)}
           onConfirm={handleCancel}
+        />
+
+        <ConfirmDialog
+          isOpen={deleteOpen}
+          message={`Delete ${selectedAppt?.status?.toLowerCase() ?? ''} appointment for ${selectedAppt?.patientName}? This cannot be undone.`}
+          onCancel={() => setDeleteOpen(false)}
+          onConfirm={handleDelete}
         />
 
         <CollectPaymentModal

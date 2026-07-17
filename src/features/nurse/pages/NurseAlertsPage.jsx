@@ -21,12 +21,20 @@ const STATUS_TABS = [
   { id: 'resolved', label: 'Resolved' },
 ];
 
+const KPI_FILTERS = {
+  active: 'active',
+  critical: 'critical',
+  unassigned: 'unassigned',
+};
+
 export default function NurseAlertsPage() {
   const navigate = useNavigate();
   const { canCreateAlerts, canViewAlerts } = useNursePermissionSet();
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState('active');
   const [severity, setSeverity] = useState('');
+  const [unassignedOnly, setUnassignedOnly] = useState(false);
+  const [kpiFilter, setKpiFilter] = useState(null);
   const [alertType, setAlertType] = useState('');
   const [wardName, setWardName] = useState('');
   const [search, setSearch] = useState('');
@@ -37,6 +45,7 @@ export default function NurseAlertsPage() {
   const { data, isLoading, isError, error, refetch } = useNurseAlertsQuery({
     status,
     severity: severity || undefined,
+    unassigned: unassignedOnly || undefined,
     alert_type: alertType || undefined,
     ward_name: wardName.trim() || undefined,
     search: debouncedSearch || undefined,
@@ -54,11 +63,37 @@ export default function NurseAlertsPage() {
   } = useNurseAlertSummaryQuery({ enabled: canViewAlerts });
 
   const hasActiveFilters = Boolean(
-    severity || alertType.trim() || wardName.trim() || search.trim() || fromDate || toDate
+    severity || unassignedOnly || alertType.trim() || wardName.trim() || search.trim() || fromDate || toDate
   );
 
+  const applyKpiFilter = (filter) => {
+    setPage(1);
+    setStatus('active');
+
+    if (kpiFilter === filter) {
+      setKpiFilter(null);
+      setSeverity('');
+      setUnassignedOnly(false);
+      return;
+    }
+
+    setKpiFilter(filter);
+    if (filter === KPI_FILTERS.active) {
+      setSeverity('');
+      setUnassignedOnly(false);
+    } else if (filter === KPI_FILTERS.critical) {
+      setSeverity('critical');
+      setUnassignedOnly(false);
+    } else if (filter === KPI_FILTERS.unassigned) {
+      setSeverity('');
+      setUnassignedOnly(true);
+    }
+  };
+
   const clearFilters = () => {
+    setKpiFilter(null);
     setSeverity('');
+    setUnassignedOnly(false);
     setAlertType('');
     setWardName('');
     setSearch('');
@@ -70,8 +105,8 @@ export default function NurseAlertsPage() {
   const columns = useMemo(
     () => [
       {
-        header: 'Alert ID',
-        render: (row) => <span className="nurse-alerts__uid">{row.alert_uid || `#${row.id}`}</span>,
+        header: 'Patient name',
+        render: (row) => row.patient_name?.trim() || '—',
       },
       { header: 'Patient ID', render: (row) => formatPatientIdDisplay(row) },
       {
@@ -144,18 +179,39 @@ export default function NurseAlertsPage() {
         >
           {summary ? (
             <div className="nurse-alerts-kpi">
-              <div className="nurse-card nurse-kpi nurse-kpi--static">
+              <button
+                type="button"
+                className={`nurse-card nurse-kpi nurse-kpi--filter${
+                  kpiFilter === KPI_FILTERS.active ? ' nurse-kpi--filter-active' : ''
+                }`}
+                onClick={() => applyKpiFilter(KPI_FILTERS.active)}
+                aria-pressed={kpiFilter === KPI_FILTERS.active}
+              >
                 <p className="nurse-kpi__label">Active</p>
                 <p className="nurse-kpi__value">{summary.active_total ?? 0}</p>
-              </div>
-              <div className="nurse-card nurse-kpi nurse-kpi--red nurse-kpi--static">
+              </button>
+              <button
+                type="button"
+                className={`nurse-card nurse-kpi nurse-kpi--red nurse-kpi--filter${
+                  kpiFilter === KPI_FILTERS.critical ? ' nurse-kpi--filter-active' : ''
+                }`}
+                onClick={() => applyKpiFilter(KPI_FILTERS.critical)}
+                aria-pressed={kpiFilter === KPI_FILTERS.critical}
+              >
                 <p className="nurse-kpi__label">Critical</p>
                 <p className="nurse-kpi__value">{summary.critical_count ?? 0}</p>
-              </div>
-              <div className="nurse-card nurse-kpi nurse-kpi--yellow nurse-kpi--static">
+              </button>
+              <button
+                type="button"
+                className={`nurse-card nurse-kpi nurse-kpi--yellow nurse-kpi--filter${
+                  kpiFilter === KPI_FILTERS.unassigned ? ' nurse-kpi--filter-active' : ''
+                }`}
+                onClick={() => applyKpiFilter(KPI_FILTERS.unassigned)}
+                aria-pressed={kpiFilter === KPI_FILTERS.unassigned}
+              >
                 <p className="nurse-kpi__label">Unassigned</p>
                 <p className="nurse-kpi__value">{summary.unassigned_count ?? 0}</p>
-              </div>
+              </button>
             </div>
           ) : (
             <div className="nurse-card nurse-alerts-page__empty-summary">No alert summary available.</div>
@@ -176,6 +232,9 @@ export default function NurseAlertsPage() {
                   }`}
                   onClick={() => {
                     setStatus(tab.id);
+                    setKpiFilter(null);
+                    setUnassignedOnly(false);
+                    if (tab.id !== 'active') setSeverity('');
                     setPage(1);
                   }}
                 >
@@ -220,7 +279,10 @@ export default function NurseAlertsPage() {
                 className="nurse-select nurse-alerts-filters__control"
                 value={severity}
                 onChange={(e) => {
-                  setSeverity(e.target.value);
+                  const next = e.target.value;
+                  setSeverity(next);
+                  setUnassignedOnly(false);
+                  setKpiFilter(next === 'critical' ? KPI_FILTERS.critical : null);
                   setPage(1);
                 }}
                 aria-label="Filter by severity"

@@ -666,29 +666,55 @@
   border-bottom: 1px solid var(--rec-border-light);
 }
 
-.rec-doctor-detail__schedule-trigger {
+.rec-doctor-detail__schedule-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 0.75rem;
   width: 100%;
   padding: 0.875rem 1.25rem;
-  font-family: inherit;
-  text-align: left;
   background: var(--color-surface);
-  border: none;
   border-bottom: 1px solid transparent;
-  cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
 
-.rec-doctor-detail__schedule-trigger:hover {
+.rec-doctor-detail__schedule-header:hover {
   background: rgba(240, 253, 250, 0.9);
 }
 
-.rec-doctor-detail__schedule-trigger--open {
+.rec-doctor-detail__schedule-header--open {
   border-bottom-color: var(--rec-border-light);
   background: rgba(240, 253, 250, 0.85);
+}
+
+.rec-doctor-detail__schedule-trigger {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  font-family: inherit;
+  text-align: left;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.rec-doctor-detail__schedule-header .rec-doctor-detail__slot-toggle {
+  flex-shrink: 0;
+}
+
+.rec-doctor-detail__schedule-chevron-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0.25rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--rec-teal);
 }
 
 .rec-doctor-detail__schedule-trigger-main {
@@ -766,12 +792,6 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.rec-doctor-detail__schedule-toolbar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 0.75rem;
 }
 
 .rec-doctor-detail__schedule-panel .time-slot-grid--compact .time-slot:not(:disabled) {

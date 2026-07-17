@@ -13,10 +13,7 @@ import {
 
 } from '@/features/doctor/hooks/useDoctorAppointmentQuery';
 
-import {
-  useDoctorDashboardTodayQueueQuery,
-  useRequestNextPatientMutation,
-} from '@/features/doctor/hooks/useDoctorQueueQuery';
+import { useDoctorDashboardTodayQueueQuery } from '@/features/doctor/hooks/useDoctorQueueQuery';
 
 import {
 
@@ -39,7 +36,7 @@ import {
 
 import { findQueueRowForAppointment } from '@/features/doctor/utils/queueWorkflow';
 
-import { Button, Avatar } from '@/shared/components/common';
+import { Avatar } from '@/shared/components/common';
 import Skeleton from '@/shared/components/common/Skeleton';
 
 import { toast } from '@/shared/utils/toast';
@@ -86,24 +83,6 @@ function comparePatientQueueDashboard(a, b, queueMetaByAppointmentId) {
   return compareAppointmentsByDateTime(a, b);
 }
 
-function appointmentToQueueItem(appt, todayQueue) {
-  const queueRow = findQueueRowForAppointment(todayQueue, appt.dbId);
-  return {
-    queueId: queueRow?.queueId ?? null,
-    appointmentId: appt.dbId,
-    patientName: appt.patientName,
-    patientUid: appt.patientUid ?? appt.patientId,
-    tokenNumber: queueRow?.tokenNumber ?? null,
-    time: appt.time,
-    scheduledAt: appt.scheduledAt,
-    reason: appt.reason,
-    status: queueRow?.status ?? appt.status,
-    type: appt.type,
-    dbId: appt.dbId,
-    appointment: appt,
-  };
-}
-
 function DashboardSection({ onViewAllPatients }) {
 
   const token = useQueryToken();
@@ -116,8 +95,6 @@ function DashboardSection({ onViewAllPatients }) {
     useDoctorDashboardTodayQueueQuery();
 
   const isDashboardInitialLoad = isTodayPending || isQueuePending;
-
-  const requestNextMut = useRequestNextPatientMutation();
 
   const [consultFor, setConsultFor] = useState(null);
 
@@ -159,20 +136,6 @@ function DashboardSection({ onViewAllPatients }) {
       ),
     [todayQueue]
   );
-
-  const queuePanelList = useMemo(
-    () =>
-      [...todaysActive]
-        .sort(compareAppointmentsByDateTime)
-        .map((appt) => appointmentToQueueItem(appt, todayQueue)),
-    [todaysActive, todayQueue]
-  );
-
-  const nextQueueCandidate = useMemo(() => {
-    return (
-      queuePanelList.find((item) => isPendingConsultation(item.appointment)) ?? null
-    );
-  }, [queuePanelList]);
 
   const pendingConsultations = useMemo(
     () => todaysActive.filter(isPendingConsultation),
@@ -339,34 +302,6 @@ function DashboardSection({ onViewAllPatients }) {
 
 
 
-  const requestNextPatient = useCallback(async () => {
-
-    if (!nextQueueCandidate?.appointment?.dbId) {
-
-      toast.error('No scheduled patients to call next');
-
-      return;
-
-    }
-
-    try {
-
-      await requestNextMut.mutateAsync(nextQueueCandidate.appointment.dbId);
-
-      toast.success(
-
-        `Next patient notified to reception: ${nextQueueCandidate.appointment.patientName}`
-
-      );
-
-    } catch (err) {
-
-      toast.error(err?.message ?? 'Could not send next-patient request');
-
-    }
-
-  }, [nextQueueCandidate, requestNextMut]);
-
   const handleOpenPatient = useCallback((patientSummary) => {
     void prefetchPatientProfileData(queryClient, token, {
       patientUid: patientSummary?.patientUid ?? patientSummary?.id,
@@ -401,14 +336,6 @@ function DashboardSection({ onViewAllPatients }) {
               `${pendingConsultations.length} scheduled`
             )}
           </span>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={!nextQueueCandidate || requestNextMut.isPending || isDashboardInitialLoad}
-            onClick={requestNextPatient}
-          >
-            Next
-          </Button>
           <button
             type="button"
             className="doc-view-all-link"
@@ -433,9 +360,6 @@ function DashboardSection({ onViewAllPatients }) {
     activeFilter,
     pendingConsultations.length,
     isDashboardInitialLoad,
-    nextQueueCandidate,
-    requestNextMut.isPending,
-    requestNextPatient,
     onViewAllPatients,
     handleViewAllFromFilter,
   ]);

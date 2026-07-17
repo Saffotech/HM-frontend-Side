@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import LabLayout from '@/features/lab/components/LabLayout';
 import LabReportDetailModal from '@/features/lab/components/LabReportDetailModal';
 import { useLabReportsQuery } from '@/shared/hooks/queries/useLabQuery';
-import { downloadReportsCsv, printLabReport } from '@/features/lab/utils/labReportUtils';
+import { printLabReport } from '@/features/lab/utils/labReportUtils';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { QueryFeedback } from '@/shared/components/common';
 import { DateInput } from '@/shared/components/common';
@@ -45,18 +45,6 @@ export default function LabCompletedReportsPage() {
 
   return (
     <LabLayout pageTitle="Completed Reports">
-      <div className="lab-archive-toolbar no-print">
-        <button
-          type="button"
-          className="lab-btn lab-btn-secondary"
-          onClick={() => downloadReportsCsv(filtered)}
-          disabled={filtered.length === 0}
-        >
-          ↓ Export CSV ({filtered.length})
-        </button>
-        <span className="lab-archive-toolbar__hint">Archive only — not available on dashboard</span>
-      </div>
-
       <LabReportDetailModal report={selectedReport} onClose={() => setSelectedReport(null)} />
 
       <div className="lab-card">

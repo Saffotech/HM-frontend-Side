@@ -26,6 +26,7 @@ const MONTHS = [
 
 export const DAY_FILTER_OPTIONS = [
   { value: 'all', label: 'All days' },
+  { value: 'today', label: 'Today' },
   ...WEEKDAYS.map((d) => ({ value: d, label: d })),
 ];
 
@@ -81,7 +82,18 @@ export function matchesPatientDateFilters(patient, filters) {
   if (!d) return true;
 
   if (filters.day && filters.day !== 'all') {
-    if (WEEKDAYS[d.getDay()] !== filters.day) return false;
+    if (filters.day === 'today') {
+      const now = new Date();
+      if (
+        d.getFullYear() !== now.getFullYear() ||
+        d.getMonth() !== now.getMonth() ||
+        d.getDate() !== now.getDate()
+      ) {
+        return false;
+      }
+    } else if (WEEKDAYS[d.getDay()] !== filters.day) {
+      return false;
+    }
   }
 
   if (filters.month && filters.month !== 'all') {
