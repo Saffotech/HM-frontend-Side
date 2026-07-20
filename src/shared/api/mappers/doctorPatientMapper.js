@@ -4,6 +4,7 @@
 
 import { apiStatusToUiStatus } from '@/shared/api/mappers/appointmentMapper';
 import { formatVisitDateTime } from '@/features/doctor/utils/patientHistory';
+import { parseEmbeddedClinicalNotes } from '@/features/doctor/utils/clinicalNotesParse';
 
 const GENDER_LABELS = {
   1: 'Male',
@@ -145,16 +146,23 @@ function formatFollowUpDisplay(value) {
 export function apiToUiVisitHistoryItem(api) {
   const row = apiToUiPatientVisitRow(api);
   if (!row) return null;
+  const parsed = parseEmbeddedClinicalNotes(row.notes);
+  const symptoms = row.symptoms || parsed.symptoms || '—';
+  const followUp = formatFollowUpDisplay(row.followUp || parsed.followUp);
+  const notes =
+    parsed.notes ||
+    (row.notes && !/^\s*symptoms\s*:/i.test(String(row.notes)) ? row.notes : null) ||
+    '—';
   return {
     id: row.id,
     appointmentDbId: row.appointmentDbId,
     scheduledAt: row.scheduledAt,
     dateTime: formatVisitDateTime(null, row.scheduledAt),
     sortTime: row.scheduledAt ? new Date(row.scheduledAt).getTime() : 0,
-    symptoms: row.symptoms || '—',
+    symptoms,
     diagnosis: row.diagnosis || '—',
-    notes: row.notes || '—',
-    followUp: formatFollowUpDisplay(row.followUp),
+    notes,
+    followUp,
     status: row.status,
     medicines: [],
   };

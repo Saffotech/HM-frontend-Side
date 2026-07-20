@@ -88,7 +88,8 @@ export function uiRecordToApiCreate(ui) {
     patient_id: ui.patientId,
     chief_complaint: ui.symptoms || ui.chiefComplaint || '',
     diagnosis: ui.diagnosis || '',
-    notes: [ui.treatmentPlan, ui.notes, ui.followUp].filter(Boolean).join('\n'),
+    notes: ui.treatmentPlan || ui.notes || '',
+    follow_up: ui.followUp || ui.follow_up || undefined,
     vital_signs: ui.vitalSigns || {},
   };
 }

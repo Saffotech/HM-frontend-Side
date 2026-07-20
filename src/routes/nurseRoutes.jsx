@@ -58,6 +58,8 @@ const NurseAlertDetailPage = lazy(() => import('@/features/nurse/pages/NurseAler
 
 const NurseProfilePage = lazy(() => import('@/features/nurse/pages/NurseProfilePage'));
 
+const NurseNotificationsPage = lazy(() => import('@/features/nurse/pages/NurseNotificationsPage'));
+
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 
@@ -123,6 +125,8 @@ export const nurseRoutes = [
           { path: ROUTES.NURSE_ALERT_DETAIL, element: <LazyRoute><NurseAlertDetailPage /></LazyRoute> },
 
           { path: ROUTES.NURSE_PROFILE, element: <LazyRoute><NurseProfilePage /></LazyRoute> },
+
+          { path: ROUTES.NURSE_NOTIFICATIONS, element: <LazyRoute><NurseNotificationsPage /></LazyRoute> },
 
           { path: '*', element: <LazyRoute><NotFoundPage /></LazyRoute> },
 

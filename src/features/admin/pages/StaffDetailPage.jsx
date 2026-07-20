@@ -56,8 +56,8 @@ export default function StaffDetailPage() {
   const updateMutation = useUpdateStaffMutation();
 
   const selectedRole = roles?.find((r) => String(r.id) === String(form.role_id));
-  const needsDepartment =
-    selectedRole?.name === 'doctor' || selectedRole?.name === 'nurse';
+  // Department applies only to doctors
+  const needsDepartment = selectedRole?.name === 'doctor';
 
   const roleOptions = useMemo(
     () =>
@@ -95,6 +95,11 @@ export default function StaffDetailPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!staff) return;
+
+    if (needsDepartment && !form.department_id) {
+      toast.error('Please select a department for doctor');
+      return;
+    }
 
     const payload = {
       first_name: form.first_name.trim(),
@@ -205,12 +210,20 @@ export default function StaffDetailPage() {
                           <Select
                             label="Role"
                             value={form.role_id}
-                            onChange={(value) => setForm((prev) => ({ ...prev, role_id: value }))}
+                            onChange={(value) => {
+                              const nextRole = roles?.find((r) => String(r.id) === String(value));
+                              setForm((prev) => ({
+                                ...prev,
+                                role_id: value,
+                                department_id:
+                                  nextRole?.name === 'doctor' ? prev.department_id : '',
+                              }));
+                            }}
                             options={roleOptions}
                           />
                           {needsDepartment && (
                             <Select
-                              label="Department"
+                              label="Department *"
                               value={form.department_id}
                               onChange={(value) =>
                                 setForm((prev) => ({ ...prev, department_id: value }))

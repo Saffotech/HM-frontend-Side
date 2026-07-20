@@ -44,7 +44,10 @@ export default function NurseVitalDetailPage() {
                     <button
                       type="button"
                       className="nurse-btn nurse-btn--primary"
-                      onClick={() => navigate(`/nurse/vitals/${vital.id}/edit`)}
+                      onClick={() => {
+                        const latestId = vital.history?.[0]?.history_id ?? vital.id;
+                        navigate(`/nurse/vitals/${latestId}/edit`);
+                      }}
                     >
                       <Pencil size={16} />
                       Update

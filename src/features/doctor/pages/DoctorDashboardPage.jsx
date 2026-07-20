@@ -1,21 +1,21 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   LayoutDashboard,
   Users,
   FlaskConical,
   CalendarDays,
-  Bell,
 } from 'lucide-react';
 import DoctorShell from '@/features/doctor/components/DoctorShell';
 import PageSpinner from '@/shared/components/PageSpinner';
-import { useDoctorNotificationsQuery } from '@/features/doctor/hooks/useDoctorQuery';
 import { PATIENT_CATEGORY_FILTER } from '@/features/doctor/utils/patientListFilters';
 import {
   prefetchDoctorDashboard,
   preloadDashboardSectionChunk,
 } from '@/features/doctor/utils/doctorDashboardCache';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
+import { ROUTES } from '@/shared/constants';
 import '../styles/doctor-ui.css';
 import './DoctorDashboardPage.css';
 
@@ -28,7 +28,8 @@ const NotificationsSection = lazy(() => import('@/features/doctor/components/Not
 export default function DoctorDashboardPage() {
   const queryClient = useQueryClient();
   const token = useQueryToken();
-  const { data: notifications = [] } = useDoctorNotificationsQuery();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [active, setActive] = useState('dashboard');
   const [patientsCategoryFilter, setPatientsCategoryFilter] = useState(
     PATIENT_CATEGORY_FILTER.COMPLETED
@@ -41,29 +42,60 @@ export default function DoctorDashboardPage() {
     }
   }, [queryClient, token]);
 
-  const unread = useMemo(
-    () => notifications.filter((n) => !n.read).length,
-    [notifications]
-  );
+  useEffect(() => {
+    const section = location.state?.doctorSection;
+    if (typeof section === 'string' && section) {
+      setActive(section);
+    }
+  }, [location.state]);
 
+  // Doctor Phase 2 by Atharva — sidebar only main clinical sections (no notifications / profile)
   const nav = useMemo(
     () => [
-      { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
-      { id: 'patients', label: 'Patients', icon: <Users size={16} /> },
-      { id: 'labs', label: 'Lab Tests', icon: <FlaskConical size={16} /> },
-      { id: 'schedule', label: 'Calendar', icon: <CalendarDays size={16} /> },
-      {
-        id: 'notifications',
-        label: `Notifications${unread ? ` (${unread})` : ''}`,
-        icon: <Bell size={16} />,
-      },
+      { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={22} /> },
+      { id: 'patients', label: 'Patients', icon: <Users size={22} /> },
+      { id: 'labs', label: 'Lab Tests', icon: <FlaskConical size={22} /> },
+      { id: 'schedule', label: 'Calendar', icon: <CalendarDays size={22} /> },
     ],
-    [unread]
+    []
   );
 
   const openPatientsWithFilter = (category) => {
     setPatientsCategoryFilter(category);
     setActive('patients');
+  };
+
+  /** Doctor Phase 2 by Atharva — deep-link by reference_type (+ reference_id in state) */
+  const handleNotificationDeepLink = (n) => {
+    const refId = n?.reference_id;
+    switch (n?.reference_type) {
+      case 'LAB_ORDER':
+        setActive('labs');
+        navigate(ROUTES.DOCTOR_DASHBOARD, {
+          state: { doctorSection: 'labs', labOrderId: refId },
+          replace: true,
+        });
+        break;
+      case 'PATIENT':
+        setActive('patients');
+        navigate(ROUTES.DOCTOR_DASHBOARD, {
+          state: { doctorSection: 'patients', patientId: refId },
+          replace: true,
+        });
+        break;
+      case 'APPOINTMENT':
+        setActive('dashboard');
+        navigate(ROUTES.DOCTOR_DASHBOARD, {
+          state: { doctorSection: 'dashboard', appointmentId: refId },
+          replace: true,
+        });
+        break;
+      case 'USER':
+        navigate(ROUTES.DOCTOR_PROFILE);
+        break;
+      default:
+        break;
+    }
   };
 
   return (
@@ -80,7 +112,9 @@ export default function DoctorDashboardPage() {
         )}
         {active === 'labs' && <LabsSection />}
         {active === 'schedule' && <ScheduleSection />}
-        {active === 'notifications' && <NotificationsSection />}
+        {active === 'notifications' && (
+          <NotificationsSection onDeepLink={handleNotificationDeepLink} />
+        )}
       </Suspense>
     </DoctorShell>
   );

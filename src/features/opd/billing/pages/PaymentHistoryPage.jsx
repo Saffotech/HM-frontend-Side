@@ -53,7 +53,7 @@ export default function PaymentHistoryPage() {
     {
       key: 'all',
       label: 'Total Collected',
-      value: <MoneyAmount amount={summary?.totalCollected ?? 0} compact />,
+      value: <MoneyAmount amount={summary?.totalCollected ?? 0} exact />,
       icon: IndianRupee,
       color: 'blue',
       sub: `${summary?.transactionCount ?? 0} transactions`,
@@ -61,25 +61,36 @@ export default function PaymentHistoryPage() {
     {
       key: 'UPI',
       label: 'Online / UPI',
-      value: <MoneyAmount amount={summary?.upi ?? 0} compact />,
+      value: <MoneyAmount amount={summary?.upi ?? 0} exact />,
       icon: Smartphone,
       color: 'purple',
     },
     {
       key: 'Cash',
       label: 'Cash',
-      value: <MoneyAmount amount={summary?.cash ?? 0} compact />,
+      value: <MoneyAmount amount={summary?.cash ?? 0} exact />,
       icon: Banknote,
       color: 'green',
     },
     {
       key: 'Card',
       label: 'Card',
-      value: <MoneyAmount amount={summary?.card ?? 0} compact />,
+      value: <MoneyAmount amount={summary?.card ?? 0} exact />,
       icon: CreditCard,
       color: 'blue',
     },
   ];
+
+  if ((summary?.insurance ?? 0) > 0) {
+    cards.push({
+      key: 'Insurance',
+      label: 'Insurance',
+      value: <MoneyAmount amount={summary.insurance} exact />,
+      icon: IndianRupee,
+      color: 'blue',
+      sub: 'Included in total',
+    });
+  }
 
   const SortTh = ({ label, field, className = '' }) => (
     <th

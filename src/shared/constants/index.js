@@ -63,6 +63,8 @@ export const ROUTES = {
   APP_ENTRY: '/dashboard',
   /** Doctor module home (placeholder until full dashboard) */
   DOCTOR_DASHBOARD: '/doctor/dashboard',
+  // Doctor Phase 2 by Atharva — self-service doctor profile page
+  DOCTOR_PROFILE: '/doctor/profile',
   LAB_DASHBOARD: '/lab/dashboard',
   LAB_ORDERS: '/lab/orders',
   LAB_ORDER_UPLOAD: '/lab/orders/:id/upload',
@@ -97,6 +99,8 @@ export const ROUTES = {
   NURSE_ALERTS_NEW: '/nurse/alerts/new',
   NURSE_ALERT_DETAIL: '/nurse/alerts/:alertId',
   NURSE_PROFILE: '/nurse/profile',
+  // Nurse Phase 2 by Atharva — notifications inbox page
+  NURSE_NOTIFICATIONS: '/nurse/notifications',
   RECEPTIONIST_LOGIN: '/receptionist/login',
   RECEPTIONIST_REGISTER: '/receptionist/register',
   RECEPTIONIST_DASHBOARD: '/receptionist/dashboard',

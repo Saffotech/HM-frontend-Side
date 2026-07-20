@@ -26,9 +26,11 @@ export default function NurseEditVitalsPage() {
   const onSubmit = (e) => {
     e.preventDefault();
     updateMut.mutate(buildVitalsPayload(form), {
-      onSuccess: () => {
+      onSuccess: (updated) => {
         toast.success('Vitals updated');
-        navigate(`/nurse/vitals/${vitalId}`);
+        // Update creates a new recording — open that so Recorded At shows the latest time
+        const nextId = updated?.id ?? vitalId;
+        navigate(`/nurse/vitals/${nextId}`);
       },
       onError: () => toast.error('Failed to update vitals'),
     });

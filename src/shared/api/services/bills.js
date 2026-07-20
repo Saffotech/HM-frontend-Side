@@ -34,6 +34,7 @@ function formatPaymentMode(mode) {
 function filterModeParam(activeFilter) {
   if (!activeFilter || activeFilter === 'all') return undefined;
   if (activeFilter === 'UPI') return 'upi';
+  if (activeFilter === 'Insurance') return 'insurance';
   return activeFilter.toLowerCase();
 }
 
@@ -63,8 +64,13 @@ export function mapPaymentHistoryFromApi(data) {
       cash: Number(summary.cash ?? 0),
       upi: Number(summary.upi ?? summary.online ?? 0),
       card: Number(summary.card ?? 0),
+      insurance: Number(summary.insurance ?? 0),
       transactionCount: Number(
-        summary.transaction_count ?? summary.count ?? payments.length
+        summary.transaction_count
+          ?? summary.transactionCount
+          ?? summary.count
+          ?? data?.total
+          ?? payments.length
       ),
     },
     payments,

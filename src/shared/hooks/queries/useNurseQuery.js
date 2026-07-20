@@ -322,10 +322,14 @@ export function useUpdateVitalsMutation(vitalId) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data) => updateVitals(vitalId, data, token),
-    onSuccess: () => {
+    onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ['nurse', 'vitals'] });
       queryClient.invalidateQueries({ queryKey: ['nurse', 'vitals-search'] });
       if (vitalId) queryClient.invalidateQueries({ queryKey: queryKeys.nurse.vital(vitalId) });
+      if (updated?.id) {
+        queryClient.setQueryData(queryKeys.nurse.vital(updated.id), updated);
+        queryClient.invalidateQueries({ queryKey: queryKeys.nurse.vital(updated.id) });
+      }
     },
   });
 }
@@ -349,10 +353,14 @@ export function useUpdateNoteMutation(noteId) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data) => updateNote(noteId, data, token),
-    onSuccess: () => {
+    onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ['nurse', 'notes'] });
       queryClient.invalidateQueries({ queryKey: ['nurse', 'notes-search'] });
       if (noteId) queryClient.invalidateQueries({ queryKey: queryKeys.nurse.note(noteId) });
+      if (updated?.id) {
+        queryClient.setQueryData(queryKeys.nurse.note(updated.id), updated);
+        queryClient.invalidateQueries({ queryKey: queryKeys.nurse.note(updated.id) });
+      }
     },
   });
 }

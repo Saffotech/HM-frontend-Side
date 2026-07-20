@@ -44,7 +44,10 @@ export default function NurseNoteDetailPage() {
                     <button
                       type="button"
                       className="nurse-btn nurse-btn--primary"
-                      onClick={() => navigate(`/nurse/notes/${note.id}/edit`)}
+                      onClick={() => {
+                        const latestId = note.history?.[0]?.history_id ?? note.id;
+                        navigate(`/nurse/notes/${latestId}/edit`);
+                      }}
                     >
                       <Pencil size={16} />
                       Update

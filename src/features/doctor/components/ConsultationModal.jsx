@@ -16,6 +16,7 @@ import {
   loadConsultationDraft,
   saveConsultationDraft,
 } from '@/features/doctor/utils/consultationDraftStorage';
+import { parseEmbeddedClinicalNotes } from '@/features/doctor/utils/clinicalNotesParse';
 import { stripInternalAppointmentMarkers } from '@/features/opd/utils/appointmentPaymentUtils';
 import { Modal, Button, Input, Label, Textarea, Select, QueryFeedback } from '@/shared/components/common';
 import { doctorPatientsApi } from '@/shared/api/services';
@@ -149,12 +150,28 @@ export default function ConsultationModal({
     if (!open || hydratedFromDraft) return;
     const detail = consultationContextQuery.data?.appointment;
     if (!detail) return;
-    if (!symptoms) setSymptoms(symptomsPrefillFromAppointment(detail));
-    if (!diagnosis && detail.diagnosis) setDiagnosis(detail.diagnosis);
-    if (!notes && detail.notes) {
-      setNotes(stripInternalAppointmentMarkers(detail.notes));
+
+    const parsedNotes = parseEmbeddedClinicalNotes(detail.notes);
+
+    if (!symptoms) {
+      setSymptoms(
+        symptomsPrefillFromAppointment(detail) || parsedNotes.symptoms || '',
+      );
     }
-    if (!followUp && detail.followUpDate) setFollowUp(detail.followUpDate);
+    if (!diagnosis && detail.diagnosis) setDiagnosis(detail.diagnosis);
+    if (!notes) {
+      const cleanNotes =
+        parsedNotes.notes ??
+        (detail.notes && !/^\s*symptoms\s*:/i.test(String(detail.notes))
+          ? stripInternalAppointmentMarkers(detail.notes)
+          : '');
+      if (cleanNotes) setNotes(cleanNotes);
+    }
+    if (!followUp) {
+      const nextFollowUp =
+        detail.followUpDate ?? detail.followUp ?? parsedNotes.followUp ?? '';
+      if (nextFollowUp) setFollowUp(String(nextFollowUp).slice(0, 10));
+    }
   }, [open, hydratedFromDraft, consultationContextQuery.data, symptoms, diagnosis, notes, followUp]);
 
   useEffect(() => {
@@ -241,14 +258,7 @@ export default function ConsultationModal({
       });
 
       const validMeds = meds.filter((m) => m.name.trim());
-      const prescriptionNotes = [
-        symptoms.trim() ? `Symptoms: ${symptoms.trim()}` : '',
-        notes.trim(),
-        followUp ? `Follow-up: ${followUp}` : '',
-      ]
-        .filter(Boolean)
-        .join('\n');
-
+      // Keep prescription notes as clinical notes only — symptoms/follow-up have their own fields
       try {
         await createPrescription.mutateAsync({
           appointmentDbId,
@@ -256,7 +266,7 @@ export default function ConsultationModal({
           patientUid,
           patientName: appointment.patientName,
           diagnosis,
-          notes: prescriptionNotes,
+          notes: notes.trim() || undefined,
           medicines: validMeds,
         });
       } catch (rxErr) {

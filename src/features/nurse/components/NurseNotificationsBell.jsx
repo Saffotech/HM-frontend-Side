@@ -1,22 +1,22 @@
 /**
- * Doctor Phase 2 by Atharva —
+ * Nurse Phase 2 by Atharva —
  * Bell badge from unread-count (polled); preview list from notifications API.
  */
 
 import { useState, useRef, useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import {
-  useDoctorNotificationsListQuery,
-  useDoctorNotificationsUnreadCountQuery,
-} from '@/features/doctor/hooks/useDoctorNotificationsQuery';
-import NotificationRow from './NotificationRow';
-import './DoctorNotificationsBell.css';
+  useNurseNotificationsListQuery,
+  useNurseNotificationsUnreadCountQuery,
+} from '@/features/nurse/hooks/useNurseNotificationsQuery';
+import NurseNotificationRow from './NurseNotificationRow';
+import './NurseNotificationsBell.css';
 
-export default function DoctorNotificationsBell({ onViewAll }) {
+export default function NurseNotificationsBell({ onViewAll }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
-  const { data: unread = 0 } = useDoctorNotificationsUnreadCountQuery();
-  const { data: preview } = useDoctorNotificationsListQuery({
+  const { data: unread = 0 } = useNurseNotificationsUnreadCountQuery();
+  const { data: preview } = useNurseNotificationsListQuery({
     page: 1,
     limit: 8,
     is_read: false,
@@ -48,10 +48,10 @@ export default function DoctorNotificationsBell({ onViewAll }) {
   };
 
   return (
-    <div className="doctor-notif-bell" ref={wrapRef}>
+    <div className="nurse-notif-bell" ref={wrapRef}>
       <button
         type="button"
-        className="doctor-notif-bell__btn"
+        className="nurse-notif-bell__btn"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="true"
@@ -59,24 +59,29 @@ export default function DoctorNotificationsBell({ onViewAll }) {
       >
         <Bell size={20} aria-hidden />
         {showBadge && (
-          <span className="doctor-notif-bell__badge">{unread > 9 ? '9+' : unread}</span>
+          <span className="nurse-notif-bell__badge">{unread > 9 ? '9+' : unread}</span>
         )}
       </button>
 
       {open && (
-        <div className="doctor-notif-bell__panel" role="dialog" aria-label="Notifications">
-          <div className="doctor-notif-bell__panel-head">
-            <h2 className="doctor-notif-bell__panel-title">Notifications</h2>
-            <button type="button" className="doctor-notif-bell__view-all" onClick={handleViewAll}>
+        <div className="nurse-notif-bell__panel" role="dialog" aria-label="Notifications">
+          <div className="nurse-notif-bell__panel-head">
+            <h2 className="nurse-notif-bell__panel-title">Notifications</h2>
+            <button type="button" className="nurse-notif-bell__view-all" onClick={handleViewAll}>
               View all
             </button>
           </div>
-          <div className="doctor-notif-bell__panel-body">
+          <div className="nurse-notif-bell__panel-body">
             {notifications.length === 0 ? (
-              <p className="doctor-notif-bell__empty">No unread notifications.</p>
+              <p className="nurse-notif-bell__empty">No unread notifications.</p>
             ) : (
               notifications.map((n) => (
-                <NotificationRow key={n.id} notification={n} compact onClick={handleViewAll} />
+                <NurseNotificationRow
+                  key={n.id}
+                  notification={n}
+                  compact
+                  onClick={handleViewAll}
+                />
               ))
             )}
           </div>

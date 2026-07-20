@@ -51,8 +51,6 @@ export default function NursePatientOverviewPage() {
     canCreateMedication,
   } = useNursePermissionSet();
   const [activeTab, setActiveTab] = useState('vitals');
-  const [selectedVitalId, setSelectedVitalId] = useState('');
-  const [selectedNoteId, setSelectedNoteId] = useState('');
 
   const {
     data: vitals,
@@ -119,14 +117,20 @@ export default function NursePatientOverviewPage() {
   }, [patientId, meds, vitals, notes, bedData?.items]);
 
   const tabs = [
-    canViewVitals ? { id: 'vitals', label: 'Vitals', icon: Activity, count: vitals?.items?.length || 0 } : null,
-    canViewNotes ? { id: 'notes', label: 'Nursing Notes', icon: FileText, count: notes?.items?.length || 0 } : null,
+    canViewVitals ? { id: 'vitals', label: 'Vitals', icon: Activity, count: 0 } : null,
+    canViewNotes ? { id: 'notes', label: 'Nursing Notes', icon: FileText, count: 0 } : null,
     canViewMedication ? { id: 'meds', label: 'Medications', icon: Pill, count: meds?.prescriptions?.length || 0 } : null,
     canViewMedication ? { id: 'history', label: 'Med History', icon: History, count: medHistory?.items?.length || 0 } : null,
   ].filter(Boolean);
 
-  const vitalsItems = vitals?.items || [];
-  const notesItems = notes?.items || [];
+  const vitalsItems = useMemo(() => {
+    const items = vitals?.items || [];
+    return [...items].sort((a, b) => new Date(b.recorded_at) - new Date(a.recorded_at));
+  }, [vitals?.items]);
+  const notesItems = useMemo(() => {
+    const items = notes?.items || [];
+    return [...items].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }, [notes?.items]);
   const prescriptions = meds?.prescriptions || [];
   const historyItems = useMemo(() => {
     const items = medHistory?.items || [];
@@ -135,41 +139,31 @@ export default function NursePatientOverviewPage() {
     );
   }, [medHistory?.items]);
 
-  const activeVital = useMemo(() => {
-    if (!vitalsItems.length) return null;
-    return vitalsItems.find((v) => v.id === selectedVitalId) || vitalsItems[0];
-  }, [vitalsItems, selectedVitalId]);
+  // Newest recording is the source of truth; its `history` powers date filters
+  const latestVital = vitalsItems[0] || null;
+  const latestNote = notesItems[0] || null;
+  const vitalsTabCount = latestVital?.history?.length || vitalsItems.length;
+  const notesTabCount = latestNote?.history?.length || notesItems.length;
 
-  const activeNote = useMemo(() => {
-    if (!notesItems.length) return null;
-    return notesItems.find((n) => n.id === selectedNoteId) || notesItems[0];
-  }, [notesItems, selectedNoteId]);
-
-  useEffect(() => {
-    if (vitalsItems.length && !vitalsItems.some((v) => v.id === selectedVitalId)) {
-      setSelectedVitalId(vitalsItems[0].id);
-    }
-  }, [vitalsItems, selectedVitalId]);
-
-  useEffect(() => {
-    if (notesItems.length && !notesItems.some((n) => n.id === selectedNoteId)) {
-      setSelectedNoteId(notesItems[0].id);
-    }
-  }, [notesItems, selectedNoteId]);
+  const tabsWithCounts = tabs.map((tab) => {
+    if (tab.id === 'vitals') return { ...tab, count: vitalsTabCount };
+    if (tab.id === 'notes') return { ...tab, count: notesTabCount };
+    return tab;
+  });
 
   const tabAction = useMemo(() => {
-    if (activeTab === 'vitals' && activeVital && canUpdateVitals) {
+    if (activeTab === 'vitals' && latestVital && canUpdateVitals) {
       return {
         label: 'Update',
         icon: Pencil,
-        onClick: () => navigate(`/nurse/vitals/${activeVital.id}/edit`),
+        onClick: () => navigate(`/nurse/vitals/${latestVital.id}/edit`),
       };
     }
-    if (activeTab === 'notes' && activeNote && canUpdateNotes) {
+    if (activeTab === 'notes' && latestNote && canUpdateNotes) {
       return {
         label: 'Update',
         icon: Pencil,
-        onClick: () => navigate(`/nurse/notes/${activeNote.id}/edit`),
+        onClick: () => navigate(`/nurse/notes/${latestNote.id}/edit`),
       };
     }
     if (activeTab === 'meds' && canCreateMedication) {
@@ -180,13 +174,13 @@ export default function NursePatientOverviewPage() {
       };
     }
     return null;
-  }, [activeTab, activeVital, activeNote, patientId, navigate, canUpdateVitals, canUpdateNotes, canCreateMedication]);
+  }, [activeTab, latestVital, latestNote, patientId, navigate, canUpdateVitals, canUpdateNotes, canCreateMedication]);
 
   useEffect(() => {
-    if (!tabs.some((tab) => tab.id === activeTab) && tabs[0]) {
-      setActiveTab(tabs[0].id);
+    if (!tabsWithCounts.some((tab) => tab.id === activeTab) && tabsWithCounts[0]) {
+      setActiveTab(tabsWithCounts[0].id);
     }
-  }, [activeTab, tabs]);
+  }, [activeTab, tabsWithCounts]);
 
   const TabActionIcon = tabAction?.icon;
 
@@ -220,7 +214,7 @@ export default function NursePatientOverviewPage() {
         <div className="nurse-patient-overview__shell nurse-card">
           <div className="nurse-patient-overview__tab-bar">
             <div className="nurse-patient-overview__tabs">
-              {tabs.map(({ id, label, icon: Icon, count }) => (
+              {tabsWithCounts.map(({ id, label, icon: Icon, count }) => (
                 <button
                   key={id}
                   type="button"
@@ -256,23 +250,7 @@ export default function NursePatientOverviewPage() {
                 {vitalsItems.length === 0 ? (
                   <div className="nurse-patient-overview__empty">No vitals recorded for this patient.</div>
                 ) : (
-                  <>
-                    {vitalsItems.length > 1 && (
-                      <div className="nurse-patient-overview__vital-picker">
-                        {vitalsItems.map((v) => (
-                          <button
-                            key={v.id}
-                            type="button"
-                            className={`nurse-patient-overview__vital-pill${activeVital?.id === v.id ? ' nurse-patient-overview__vital-pill--active' : ''}`}
-                            onClick={() => setSelectedVitalId(v.id)}
-                          >
-                            {formatDate(v.recorded_at)}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    <NurseVitalsSnapshotView vital={activeVital} />
-                  </>
+                  <NurseVitalsSnapshotView vital={latestVital} />
                 )}
               </QueryFeedback>
             )}
@@ -287,23 +265,7 @@ export default function NursePatientOverviewPage() {
                 {notesItems.length === 0 ? (
                   <div className="nurse-patient-overview__empty">No nursing notes for this patient.</div>
                 ) : (
-                  <>
-                    {notesItems.length > 1 && (
-                      <div className="nurse-patient-overview__vital-picker">
-                        {notesItems.map((n) => (
-                          <button
-                            key={n.id}
-                            type="button"
-                            className={`nurse-patient-overview__vital-pill${activeNote?.id === n.id ? ' nurse-patient-overview__vital-pill--active' : ''}`}
-                            onClick={() => setSelectedNoteId(n.id)}
-                          >
-                            {formatDate(n.created_at)}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    <NurseNotesSnapshotView note={activeNote} />
-                  </>
+                  <NurseNotesSnapshotView note={latestNote} />
                 )}
               </QueryFeedback>
             )}

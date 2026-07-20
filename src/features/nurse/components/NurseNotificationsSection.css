@@ -1,0 +1,369 @@
+/**
+ * Nurse Phase 2 by Atharva —
+ * Polished clinical notifications inbox (teal / nurse system).
+ */
+
+.nurse-notif-page {
+  --nn-teal: #0f766e;
+  --nn-teal-deep: #0d5f59;
+  --nn-teal-soft: #e6f5f3;
+  --nn-teal-wash: #f0fafa;
+  --nn-ink: #0f2744;
+  --nn-muted: #5b6b7c;
+  --nn-line: #d0e4e0;
+  --nn-surface: #ffffff;
+  --nn-critical: #b42318;
+  --nn-high: #b54708;
+  --nn-normal: #667085;
+
+  /* Nurse Phase 2 by Atharva — full-width inbox */
+  max-width: none;
+  margin: 0;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  animation: nurseNotifIn 0.28s ease;
+}
+
+@keyframes nurseNotifIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.nurse-notif-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--nn-line);
+  border-radius: 0.9rem;
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(15, 118, 110, 0.05), transparent 55%),
+    linear-gradient(180deg, var(--nn-teal-wash) 0%, #fff 70%);
+  box-shadow: 0 6px 20px rgba(15, 39, 68, 0.04);
+}
+
+.nurse-notif-search {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 2.65rem;
+  padding: 0 0.9rem;
+  border: 1px solid #b8d5d0;
+  border-radius: 0.65rem;
+  background: #fff;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.nurse-notif-search:focus-within {
+  border-color: var(--nn-teal);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+
+.nurse-notif-search__icon {
+  flex-shrink: 0;
+  color: #7a9a95;
+}
+
+.nurse-notif-search__input {
+  flex: 1;
+  min-width: 0;
+  min-height: 2.4rem;
+  padding: 0.35rem 0;
+  border: none;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--nn-ink);
+  background: transparent;
+}
+
+.nurse-notif-search__input::placeholder {
+  color: #8fa9a4;
+}
+
+.nurse-notif-search__input:hover,
+.nurse-notif-search__input:focus {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+.nurse-notif-search__input::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
+.nurse-notif-filters__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nurse-notif-filters__tabs {
+  display: inline-flex;
+  gap: 0.15rem;
+  padding: 0.2rem;
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--nn-line);
+}
+
+.nurse-notif-filter-tab {
+  border: none;
+  background: transparent;
+  padding: 0.42rem 0.85rem;
+  border-radius: 0.45rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--nn-muted);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.nurse-notif-filter-tab:hover {
+  color: var(--nn-ink);
+  background: var(--nn-teal-wash);
+}
+
+.nurse-notif-filter-tab.is-active {
+  background: var(--nn-teal);
+  color: #fff;
+}
+
+.nurse-notif-mark-all,
+.nurse-notif-select {
+  min-height: 2.35rem;
+}
+
+.nurse-notif-mark-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  border-radius: 0.5rem !important;
+  font-weight: 650;
+  border-color: #b8ddd8 !important;
+  color: var(--nn-teal) !important;
+  background: #fff !important;
+}
+
+.nurse-notif-mark-all:hover:not(:disabled) {
+  background: var(--nn-teal-soft) !important;
+  border-color: #8fc9c1 !important;
+}
+
+/* Nurse Phase 2 by Atharva — Clear filters: right end, smaller, light gray */
+.nurse-notif-page .nurse-notif-clear-filters.btn.btn--outline {
+  margin-left: auto;
+  min-height: 1.85rem !important;
+  padding: 0.2rem 0.55rem !important;
+  font-size: 0.7rem !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  border-radius: 0.4rem !important;
+  color: #64748b !important;
+  border: 1px solid #e2e8f0 !important;
+  background: #f8fafc !important;
+  box-shadow: none !important;
+  gap: 0.2rem;
+}
+
+.nurse-notif-page .nurse-notif-clear-filters.btn.btn--outline svg {
+  width: 12px;
+  height: 12px;
+}
+
+.nurse-notif-page .nurse-notif-clear-filters.btn.btn--outline:hover:not(:disabled) {
+  color: #475569 !important;
+  border-color: #cbd5e1 !important;
+  background: #f1f5f9 !important;
+  box-shadow: none !important;
+}
+
+.nurse-notif-select {
+  min-width: 9.5rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #b8d5d0;
+  border-radius: 0.5rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 550;
+  color: var(--nn-ink);
+  background: #fff;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.nurse-notif-select:hover {
+  border-color: #8fc9c1;
+}
+
+.nurse-notif-select:focus {
+  outline: none;
+  border-color: var(--nn-teal);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+
+.nurse-notif-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--nn-muted, #64748b);
+}
+
+.nurse-notif-date__label {
+  white-space: nowrap;
+}
+
+.nurse-notif-date__input {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #b8d5d0;
+  border-radius: 0.5rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  color: var(--nn-ink);
+  background: #fff;
+}
+
+.nurse-notif-date__input:focus {
+  outline: none;
+  border-color: var(--nn-teal);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+
+.nurse-notif-card {
+  width: 100%;
+  border: 1px solid var(--nn-line);
+  border-radius: 0.9rem;
+  background: var(--nn-surface);
+  box-shadow: 0 8px 24px rgba(15, 39, 68, 0.045);
+  overflow: hidden;
+}
+
+.nurse-notif-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.7rem;
+  width: 100%;
+}
+
+.nurse-notif-page .nurse-notif {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  width: 100%;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid #e0ecea;
+  border-radius: 0.7rem;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.nurse-notif-page .nurse-notif:hover {
+  background: var(--nn-teal-wash);
+  border-color: #b8ddd8;
+}
+
+.nurse-notif-page .nurse-notif--read {
+  background: #fbfcfc;
+  opacity: 0.92;
+}
+
+.nurse-notif-page .nurse-notif--read:hover {
+  opacity: 1;
+}
+
+.nurse-notif-page .nurse-notif.nurse-notif-priority--critical {
+  border-left: 3px solid #d92d20;
+  background: linear-gradient(90deg, #fff5f5 0%, #fff 42%);
+}
+
+.nurse-notif-page .nurse-notif.nurse-notif-priority--high {
+  border-left: 3px solid #f79009;
+  background: linear-gradient(90deg, #fff8f0 0%, #fff 42%);
+}
+
+.nurse-notif-page .nurse-notif.nurse-notif-priority--normal {
+  border-left: 3px solid #98a2b3;
+}
+
+.nurse-notif-muted {
+  font-size: 0.8125rem;
+  color: var(--nn-muted);
+}
+
+.nurse-notif-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.15rem 0.15rem 0;
+  flex-wrap: wrap;
+}
+
+.nurse-notif-pagination .btn {
+  border-radius: 0.5rem;
+  font-weight: 650;
+}
+
+@media (max-width: 640px) {
+  .nurse-notif-filters {
+    padding: 0.8rem;
+  }
+
+  .nurse-notif-filters__row {
+    width: 100%;
+  }
+
+  .nurse-notif-filters__tabs {
+    width: 100%;
+  }
+
+  .nurse-notif-filter-tab {
+    flex: 1;
+    text-align: center;
+    padding-inline: 0.5rem;
+  }
+
+  .nurse-notif-select,
+  .nurse-notif-mark-all {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .nurse-notif-page .nurse-notif-clear-filters.btn.btn--outline {
+    margin-left: auto;
+    width: auto;
+    justify-content: center;
+  }
+
+  .nurse-notif-pagination {
+    justify-content: center;
+  }
+}

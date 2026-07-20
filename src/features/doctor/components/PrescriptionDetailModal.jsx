@@ -4,6 +4,7 @@ import {
   useReplacePrescriptionMutation,
 } from '@/features/doctor/hooks/useDoctorPrescriptionQuery';
 import { DEFAULT_MEDICINE } from '@/features/doctor/constants';
+import { parseEmbeddedClinicalNotes } from '@/features/doctor/utils/clinicalNotesParse';
 import { Modal, Button, Input, Label, Textarea } from '@/shared/components/common';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { ACTIONS, canAccessAction } from '@/hooks/permissions';
@@ -24,6 +25,32 @@ function formatDetailDate(dateStr) {
   });
 }
 
+function formatFollowUpLabel(value) {
+  if (!value) return null;
+  const d = new Date(value);
+  if (!Number.isNaN(d.getTime())) {
+    return d.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }
+  return String(value);
+}
+
+/** Split legacy "Symptoms: … Follow-up: …" blobs into dedicated display fields. */
+function clinicalFieldsFromDetail(detail) {
+  const parsed = parseEmbeddedClinicalNotes(detail?.notes);
+  const rawNotes = detail?.notes;
+  const isEmbeddedBlob = rawNotes && /^\s*symptoms\s*:/i.test(String(rawNotes));
+  return {
+    diagnosis: detail?.diagnosis || '—',
+    symptoms: parsed.symptoms || '—',
+    followUp: formatFollowUpLabel(parsed.followUp) || '—',
+    notes: parsed.notes || (isEmbeddedBlob ? '—' : rawNotes) || '—',
+  };
+}
+
 function medicinesFromDetail(detail) {
   if (!detail?.medicines?.length) {
     return [{ ...DEFAULT_MEDICINE }];
@@ -38,6 +65,8 @@ function medicinesFromDetail(detail) {
 }
 
 function PrescriptionDetailView({ detail }) {
+  const clinical = clinicalFieldsFromDetail(detail);
+
   return (
     <div className="doc-rx-detail doc-rx-detail--modal">
       <div className="doc-rx-detail__summary">
@@ -66,11 +95,19 @@ function PrescriptionDetailView({ detail }) {
       <div className="doc-rx-detail__clinical">
         <div className="doc-rx-detail__clinical-block">
           <span className="doc-rx-detail__clinical-label">Diagnosis</span>
-          <p>{detail.diagnosis || '—'}</p>
+          <p>{clinical.diagnosis}</p>
+        </div>
+        <div className="doc-rx-detail__clinical-block">
+          <span className="doc-rx-detail__clinical-label">Symptoms</span>
+          <p>{clinical.symptoms}</p>
+        </div>
+        <div className="doc-rx-detail__clinical-block">
+          <span className="doc-rx-detail__clinical-label">Follow-up</span>
+          <p>{clinical.followUp}</p>
         </div>
         <div className="doc-rx-detail__clinical-block">
           <span className="doc-rx-detail__clinical-label">Notes</span>
-          <p>{detail.notes || '—'}</p>
+          <p>{clinical.notes}</p>
         </div>
       </div>
 
@@ -226,8 +263,10 @@ export default function PrescriptionDetailModal({
 
   useEffect(() => {
     if (!editing || !detail) return;
+    const clinical = clinicalFieldsFromDetail(detail);
     setDiagnosis(detail.diagnosis ?? '');
-    setNotes(detail.notes ?? '');
+    // Edit form keeps real notes only — not the legacy Symptoms/Follow-up blob
+    setNotes(clinical.notes === '—' ? '' : clinical.notes);
     setMeds(medicinesFromDetail(detail));
     setFieldErrors({});
   }, [editing, detail]);

@@ -31,12 +31,8 @@ function mergeVisitRecords(historyRows, patientRows) {
 }
 
 function buildPrescriptionNotes(data) {
-  return [
-    data.chief_complaint ? `Symptoms: ${data.chief_complaint}` : '',
-    data.notes || '',
-  ]
-    .filter(Boolean)
-    .join('\n');
+  // Clinical notes only — symptoms/follow-up belong on appointment fields
+  return data.notes || '';
 }
 
 export async function getRecords(token) {

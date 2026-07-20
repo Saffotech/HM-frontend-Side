@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Calendar,
   ClipboardList,
@@ -38,29 +38,13 @@ function normalizeHistory(note) {
 
 export default function NurseNotesSnapshotView({ note }) {
   const historyItems = useMemo(() => normalizeHistory(note), [note]);
-  const [selectedHistoryId, setSelectedHistoryId] = useState('');
-  const historyLenRef = useRef(0);
+  const latestHistoryId = historyItems[0]?.history_id ?? '';
+  const [selectedHistoryId, setSelectedHistoryId] = useState(latestHistoryId);
 
   useEffect(() => {
-    historyLenRef.current = 0;
-    if (historyItems.length) {
-      setSelectedHistoryId(historyItems[0].history_id);
-    }
-  }, [note?.id]);
-
-  useEffect(() => {
-    if (!historyItems.length) return;
-    const len = historyItems.length;
-    if (len > historyLenRef.current && historyLenRef.current > 0) {
-      setSelectedHistoryId(historyItems[0].history_id);
-    } else {
-      setSelectedHistoryId((prev) => {
-        const stillExists = historyItems.some((entry) => entry.history_id === prev);
-        return stillExists ? prev : historyItems[0].history_id;
-      });
-    }
-    historyLenRef.current = len;
-  }, [historyItems, note?.id]);
+    // Prefer newest note whenever the note / history set changes
+    setSelectedHistoryId(latestHistoryId);
+  }, [note?.id, latestHistoryId]);
 
   const activeHistoryId = useMemo(() => {
     if (!historyItems.length) return '';

@@ -24,6 +24,10 @@ function StandardRoleLayout({
   isNavLinkActive,
   showBell = true,
   layoutClassName = '',
+  // Nurse Phase 2 by Atharva — optional profile name-click + custom bell slot
+  profileHref,
+  logoutMenuOnly = false,
+  headerBell = null,
 }) {
   const { pathname } = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -53,14 +57,17 @@ function StandardRoleLayout({
           <BrandName className="layout-mobile-bar__brand-text" />
         </Link>
         <h1 className="layout-mobile-bar__title">{title}</h1>
-        <button
-          type="button"
-          className="layout-menu-btn"
-          onClick={() => setSidebarOpen(true)}
-          aria-label="Open menu"
-        >
-          <Menu size={24} />
-        </button>
+        <div className="layout-mobile-bar__actions">
+          {showBell && headerBell ? headerBell : null}
+          <button
+            type="button"
+            className="layout-menu-btn"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open menu"
+          >
+            <Menu size={24} />
+          </button>
+        </div>
       </div>
 
       {sidebarOpen && (
@@ -109,7 +116,11 @@ function StandardRoleLayout({
         </nav>
 
         <div className="layout-sidebar__user">
-          <UserProfileMenu className="user-profile-menu--sidebar" />
+          <UserProfileMenu
+            className="user-profile-menu--sidebar"
+            profileHref={profileHref}
+            logoutMenuOnly={logoutMenuOnly}
+          />
         </div>
       </aside>
 
@@ -118,12 +129,13 @@ function StandardRoleLayout({
           <h1 className="layout-header__title">{title}</h1>
           <div className="layout-header__actions">
             <span className="layout-header__date">{today}</span>
-            {showBell && (
-              <button type="button" className="layout-header__bell" aria-label="Notifications">
-                <Bell size={20} />
-              </button>
-            )}
-            <UserProfileMenu />
+            {showBell &&
+              (headerBell ?? (
+                <button type="button" className="layout-header__bell" aria-label="Notifications">
+                  <Bell size={20} />
+                </button>
+              ))}
+            <UserProfileMenu profileHref={profileHref} logoutMenuOnly={logoutMenuOnly} />
           </div>
         </header>
 
@@ -148,6 +160,9 @@ export default function RoleLayout({
   isNavLinkActive,
   showBell = true,
   layoutClassName = '',
+  profileHref,
+  logoutMenuOnly = false,
+  headerBell = null,
 }) {
   return (
     <StandardRoleLayout
@@ -162,6 +177,9 @@ export default function RoleLayout({
       isNavLinkActive={isNavLinkActive}
       showBell={showBell}
       layoutClassName={layoutClassName}
+      profileHref={profileHref}
+      logoutMenuOnly={logoutMenuOnly}
+      headerBell={headerBell}
     >
       {children}
     </StandardRoleLayout>

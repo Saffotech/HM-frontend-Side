@@ -52,8 +52,8 @@ export default function StaffRegisterPage() {
   const registerMutation = useRegisterStaffMutation();
 
   const selectedRole = roles?.find((r) => String(r.id) === String(form.role_id));
-  const needsDepartment =
-    selectedRole?.name === 'doctor' || selectedRole?.name === 'nurse';
+  // Department applies only to doctors
+  const needsDepartment = selectedRole?.name === 'doctor';
 
   const roleOptions = useMemo(
     () =>
@@ -87,6 +87,11 @@ export default function StaffRegisterPage() {
 
     if (form.password.length < 8) {
       toast.error('Password must be at least 8 characters');
+      return;
+    }
+
+    if (needsDepartment && !form.department_id) {
+      toast.error('Please select a department for doctor');
       return;
     }
 
@@ -197,7 +202,14 @@ export default function StaffRegisterPage() {
                   <Select
                     label="Role *"
                     value={form.role_id}
-                    onChange={(value) => setForm((prev) => ({ ...prev, role_id: value }))}
+                    onChange={(value) => {
+                      const nextRole = roles?.find((r) => String(r.id) === String(value));
+                      setForm((prev) => ({
+                        ...prev,
+                        role_id: value,
+                        department_id: nextRole?.name === 'doctor' ? prev.department_id : '',
+                      }));
+                    }}
                     options={roleOptions}
                     placeholder={rolesLoading ? 'Loading roles…' : 'Select role'}
                     disabled={rolesLoading || rolesError}
@@ -218,7 +230,7 @@ export default function StaffRegisterPage() {
                         </p>
                       )}
                       <Select
-                        label="Department"
+                        label="Department *"
                         value={form.department_id}
                         onChange={(value) =>
                           setForm((prev) => ({ ...prev, department_id: value }))

@@ -99,6 +99,11 @@ export const queryKeys = {
     alerts: (filters) => ['nurse', 'alerts', filters],
     alertSummary: ['nurse', 'alert-summary'],
     alert: (id) => ['nurse', 'alert', id],
+    // Nurse Phase 2 by Atharva — profile + notifications cache keys
+    profile: ['nurse', 'profile'],
+    notifications: ['nurse', 'notifications'],
+    notificationsList: (filters) => ['nurse', 'notifications', 'list', filters],
+    notificationsUnreadCount: ['nurse', 'notifications', 'unread-count'],
   },
 
   admin: {
@@ -127,6 +132,11 @@ export const queryKeys = {
     labReport: (testId) => ['doctor', 'labs', 'report', testId],
 
     notifications: ['doctor', 'notifications'],
+
+    // Doctor Phase 2 by Atharva — cache keys for profile + paginated inbox / unread badge
+    profile: ['doctor', 'profile'],
+    notificationsList: (filters) => ['doctor', 'notifications', 'list', filters],
+    notificationsUnreadCount: ['doctor', 'notifications', 'unread-count'],
 
     appointments: {
 

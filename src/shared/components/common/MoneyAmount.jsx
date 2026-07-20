@@ -10,6 +10,7 @@ import {
  * - From ₹10,000: compact K / L / Cr (e.g. ₹10 K, ₹12 K, ₹10.2 K).
  *   Full amount is always accessible via tooltip (title).
  * - compact prop: always use short form on screen when applicable.
+ * - exact prop: always show full digits (for totals that must add up).
  * - printCompact prop: on print, render the short form (hides screen span, shows print span).
  */
 export default function MoneyAmount({
@@ -18,13 +19,14 @@ export default function MoneyAmount({
   strong = false,
   title,
   compact = false,
+  exact = false,
   printCompact = false,
 }) {
   const full = formatCurrency(amount);
   const short = formatCurrencyCompact(amount);
 
-  const autoCompact = shouldUseCompactCurrency(amount);
-  const screenText = compact || autoCompact ? short : full;
+  const autoCompact = !exact && shouldUseCompactCurrency(amount);
+  const screenText = exact ? full : compact || autoCompact ? short : full;
   const needsDualSpan = printCompact && short !== full;
 
   const Tag = strong ? 'strong' : 'span';

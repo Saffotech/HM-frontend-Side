@@ -72,7 +72,7 @@ function InfoRow({ icon: Icon, label, value, emptyLabel = 'Not provided' }) {
 }
 
 function roleRequiresDepartment(roleName) {
-  return roleName === 'doctor' || roleName === 'nurse';
+  return roleName === 'doctor';
 }
 
 export default function SuperAdminStaffDetailPage() {
@@ -147,13 +147,18 @@ export default function SuperAdminStaffDetailPage() {
   };
 
   const handleSave = async () => {
+    if (departmentRequired && !form.department_id) {
+      toast.error('Please select a department for doctor');
+      return;
+    }
     try {
       const payload = {
         first_name: form.first_name.trim(),
         last_name: form.last_name.trim() || null,
         phone: form.phone.trim() || null,
         role_id: Number(form.role_id),
-        department_id: form.department_id ? Number(form.department_id) : null,
+        department_id:
+          departmentRequired && form.department_id ? Number(form.department_id) : null,
       };
       await updateMutation.mutateAsync({ id: userId, data: payload });
       toast.success('Staff profile updated');
@@ -334,7 +339,15 @@ export default function SuperAdminStaffDetailPage() {
                           <Label>Role</Label>
                           <Select
                             value={form.role_id}
-                            onChange={(value) => setForm((f) => ({ ...f, role_id: value }))}
+                            onChange={(value) => {
+                              const nextRole = roles?.find((r) => String(r.id) === String(value));
+                              setForm((f) => ({
+                                ...f,
+                                role_id: value,
+                                department_id:
+                                  nextRole?.name === 'doctor' ? f.department_id : '',
+                              }));
+                            }}
                             options={roleOptions}
                             placeholder="Select role"
                           />
@@ -342,15 +355,18 @@ export default function SuperAdminStaffDetailPage() {
                         <div>
                           <Label>
                             Department
-                            {departmentRequired ? null : (
-                              <span className="sa-staff-detail__optional"> (optional)</span>
-                            )}
+                            {departmentRequired ? (
+                              <span className="sa-register-field__req" aria-hidden> *</span>
+                            ) : null}
                           </Label>
                           <Select
                             value={form.department_id}
                             onChange={(value) => setForm((f) => ({ ...f, department_id: value }))}
                             options={departmentOptions}
-                            placeholder={departmentRequired ? 'Select department' : 'No department'}
+                            placeholder={
+                              departmentRequired ? 'Select department' : 'Only for doctor role'
+                            }
+                            disabled={!departmentRequired}
                           />
                         </div>
                       </div>

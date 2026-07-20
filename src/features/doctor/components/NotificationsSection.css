@@ -1,0 +1,447 @@
+/**
+ * Doctor Phase 2 by Atharva —
+ * Polished clinical notifications inbox (matches doctor profile green system).
+ */
+
+.doc-notif-page,
+.doc-page.doc-notif-page,
+.doc-page.doc-notif-page:has(.doc-card .doc-notif) {
+  --dn-green: #1a5c34;
+  --dn-green-deep: #134228;
+  --dn-green-soft: #e8f3ec;
+  --dn-green-wash: #f3f9f5;
+  --dn-ink: #0f2744;
+  --dn-muted: #5b6b7c;
+  --dn-line: #d7e4dc;
+  --dn-surface: #ffffff;
+  --dn-critical: #b42318;
+  --dn-high: #b54708;
+  --dn-normal: #667085;
+
+  /* Doctor Phase 2 by Atharva — full-width inbox (same as profile page) */
+  max-width: none;
+  margin: 0;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  animation: docNotifIn 0.28s ease;
+}
+
+@keyframes docNotifIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Demo banner
+ * --------------------------------------------------------------------------- */
+.doc-notif-demo-banner {
+  padding: 0.75rem 1rem;
+  border-radius: 0.65rem;
+  background: #f4f8fb;
+  border: 1px solid #c9dae8;
+  color: #355a78;
+  font-size: 0.8125rem;
+  font-weight: 550;
+}
+
+/* ---------------------------------------------------------------------------
+ * Filters panel
+ * --------------------------------------------------------------------------- */
+.doc-notif-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--dn-line);
+  border-radius: 0.9rem;
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(26, 92, 52, 0.05), transparent 55%),
+    linear-gradient(180deg, var(--dn-green-wash) 0%, #fff 70%);
+  box-shadow: 0 6px 20px rgba(15, 39, 68, 0.04);
+}
+
+.doc-notif-search {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 2.65rem;
+  padding: 0 0.9rem;
+  border: 1px solid #c9d8cf;
+  border-radius: 0.65rem;
+  background: #fff;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.doc-notif-search:focus-within {
+  border-color: var(--dn-green);
+  box-shadow: 0 0 0 3px rgba(26, 92, 52, 0.12);
+}
+
+.doc-notif-search__icon {
+  flex-shrink: 0;
+  color: #7a8f84;
+}
+
+.doc-notif-search__input {
+  flex: 1;
+  min-width: 0;
+  min-height: 2.4rem;
+  padding: 0.35rem 0;
+  border: none;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--dn-ink);
+  background: transparent;
+}
+
+.doc-notif-search__input::placeholder {
+  color: #8fa09a;
+}
+
+.doc-notif-search__input:hover,
+.doc-notif-search__input:focus {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+.doc-notif-search__input::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
+.doc-notif-filters__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.doc-notif-filters__tabs {
+  display: inline-flex;
+  gap: 0.15rem;
+  padding: 0.2rem;
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--dn-line);
+}
+
+.doc-notif-filter-tab {
+  border: none;
+  background: transparent;
+  padding: 0.42rem 0.85rem;
+  border-radius: 0.45rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--dn-muted);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.doc-notif-filter-tab:hover {
+  color: var(--dn-ink);
+  background: var(--dn-green-wash);
+}
+
+.doc-notif-filter-tab.is-active {
+  background: var(--dn-green);
+  color: #fff;
+}
+
+.doc-notif-mark-all,
+.doc-notif-select {
+  min-height: 2.35rem;
+}
+
+.doc-notif-mark-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  border-radius: 0.5rem !important;
+  font-weight: 650;
+}
+
+.doc-notif-mark-all {
+  border-color: #c5dfcf !important;
+  color: var(--dn-green) !important;
+  background: #fff !important;
+}
+
+.doc-notif-mark-all:hover:not(:disabled) {
+  background: var(--dn-green-soft) !important;
+  border-color: #9fc9b0 !important;
+}
+
+/* Doctor Phase 2 by Atharva — Clear filters: right end, smaller, light gray */
+.doc-notif-page .doc-notif-clear-filters.btn.btn--outline,
+.doc-page.doc-notif-page > div:first-child .btn.btn--outline.doc-notif-clear-filters {
+  margin-left: auto;
+  min-height: 1.85rem !important;
+  padding: 0.2rem 0.55rem !important;
+  font-size: 0.7rem !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  border-radius: 0.4rem !important;
+  color: #64748b !important;
+  border: 1px solid #e2e8f0 !important;
+  background: #f8fafc !important;
+  box-shadow: none !important;
+  gap: 0.2rem;
+}
+
+.doc-notif-page .doc-notif-clear-filters.btn.btn--outline svg,
+.doc-page.doc-notif-page > div:first-child .btn.btn--outline.doc-notif-clear-filters svg {
+  width: 12px;
+  height: 12px;
+}
+
+.doc-notif-page .doc-notif-clear-filters.btn.btn--outline:hover:not(:disabled),
+.doc-page.doc-notif-page > div:first-child .btn.btn--outline.doc-notif-clear-filters:hover:not(:disabled) {
+  color: #475569 !important;
+  border-color: #cbd5e1 !important;
+  background: #f1f5f9 !important;
+  box-shadow: none !important;
+}
+
+.doc-notif-page .doc-notif-clear-filters.btn.btn--outline:active:not(:disabled),
+.doc-page.doc-notif-page > div:first-child .btn.btn--outline.doc-notif-clear-filters:active:not(:disabled) {
+  color: #334155 !important;
+  border-color: #94a3b8 !important;
+  background: #e2e8f0 !important;
+}
+
+.doc-notif-select {
+  min-width: 9.5rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #c9d8cf;
+  border-radius: 0.5rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 550;
+  color: var(--dn-ink);
+  background: #fff;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.doc-notif-select:hover {
+  border-color: #a8c4b4;
+}
+
+.doc-notif-select:focus {
+  outline: none;
+  border-color: var(--dn-green);
+  box-shadow: 0 0 0 3px rgba(26, 92, 52, 0.12);
+}
+
+.doc-notif-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--dn-muted, #64748b);
+}
+
+.doc-notif-date__label {
+  white-space: nowrap;
+}
+
+.doc-notif-date__input {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #c9d8cf;
+  border-radius: 0.5rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  color: var(--dn-ink);
+  background: #fff;
+}
+
+.doc-notif-date__input:focus {
+  outline: none;
+  border-color: var(--dn-green);
+  box-shadow: 0 0 0 3px rgba(26, 92, 52, 0.12);
+}
+
+/* ---------------------------------------------------------------------------
+ * List card — fills content width
+ * --------------------------------------------------------------------------- */
+.doc-notif-page .doc-card {
+  width: 100%;
+  border: 1px solid var(--dn-line);
+  border-radius: 0.9rem;
+  background: var(--dn-surface);
+  box-shadow: 0 8px 24px rgba(15, 39, 68, 0.045);
+  overflow: hidden;
+}
+
+.doc-notif-page .doc-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.7rem;
+  width: 100%;
+}
+
+/* ---------------------------------------------------------------------------
+ * Notification rows
+ * --------------------------------------------------------------------------- */
+.doc-notif-page .doc-notif {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  width: 100%;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid #e7eee9;
+  border-radius: 0.7rem;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.doc-notif-page .doc-notif:hover {
+  background: var(--dn-green-wash);
+  border-color: #c5dfcf;
+}
+
+.doc-notif-page .doc-notif--read {
+  background: #fbfcfc;
+  opacity: 0.92;
+}
+
+.doc-notif-page .doc-notif--read:hover {
+  opacity: 1;
+}
+
+.doc-notif-page .doc-notif.doc-notif-priority--critical {
+  border-left: 3px solid #d92d20;
+  background: linear-gradient(90deg, #fff5f5 0%, #fff 42%);
+}
+
+.doc-notif-page .doc-notif.doc-notif-priority--high {
+  border-left: 3px solid #f79009;
+  background: linear-gradient(90deg, #fff8f0 0%, #fff 42%);
+}
+
+.doc-notif-page .doc-notif.doc-notif-priority--normal {
+  border-left: 3px solid #98a2b3;
+}
+
+.doc-notif-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.4rem;
+  border-radius: 0.3rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: #f2f4f7;
+  color: var(--dn-normal);
+}
+
+.doc-notif-priority--critical .doc-notif-chip,
+.doc-notif-chip.doc-notif-priority--critical {
+  background: #fee4e2;
+  color: var(--dn-critical);
+}
+
+.doc-notif-priority--high .doc-notif-chip,
+.doc-notif-chip.doc-notif-priority--high {
+  background: #fef0c7;
+  color: var(--dn-high);
+}
+
+.doc-notif-priority--normal .doc-notif-chip,
+.doc-notif-chip.doc-notif-priority--normal {
+  background: #f2f4f7;
+  color: var(--dn-normal);
+}
+
+.doc-notif-page .doc-stat__icon {
+  flex-shrink: 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * Pagination
+ * --------------------------------------------------------------------------- */
+.doc-notif-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.15rem 0.15rem 0;
+  flex-wrap: wrap;
+}
+
+.doc-notif-pagination .text-muted {
+  font-size: 0.8125rem;
+  color: var(--dn-muted);
+}
+
+.doc-notif-pagination .btn {
+  border-radius: 0.5rem;
+  font-weight: 650;
+}
+
+/* ---------------------------------------------------------------------------
+ * Responsive
+ * --------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+  .doc-notif-filters {
+    padding: 0.8rem;
+  }
+
+  .doc-notif-filters__row {
+    width: 100%;
+  }
+
+  .doc-notif-filters__tabs {
+    width: 100%;
+  }
+
+  .doc-notif-filter-tab {
+    flex: 1;
+    text-align: center;
+    padding-inline: 0.5rem;
+  }
+
+  .doc-notif-select,
+  .doc-notif-mark-all {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .doc-notif-page .doc-notif-clear-filters.btn.btn--outline {
+    margin-left: auto;
+    width: auto;
+    justify-content: center;
+  }
+
+  .doc-notif-pagination {
+    justify-content: center;
+  }
+}

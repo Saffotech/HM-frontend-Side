@@ -56,7 +56,8 @@ export default function SuperAdminStaffRegisterPage() {
   const departmentsError = departmentsQuery.isError;
 
   const selectedRole = roles?.find((r) => String(r.id) === String(form.role_id));
-  const departmentRequired = selectedRole?.name === 'doctor' || selectedRole?.name === 'nurse';
+  // Department applies only to doctors (clinical specialty assignment)
+  const departmentEnabled = selectedRole?.name === 'doctor';
 
   const roleOptions = useMemo(
     () =>
@@ -80,6 +81,16 @@ export default function SuperAdminStaffRegisterPage() {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
   };
 
+  const handleRoleChange = (value) => {
+    const nextRole = roles?.find((r) => String(r.id) === String(value));
+    setForm((prev) => ({
+      ...prev,
+      role_id: value,
+      // Clear department when switching away from doctor
+      department_id: nextRole?.name === 'doctor' ? prev.department_id : '',
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -93,13 +104,19 @@ export default function SuperAdminStaffRegisterPage() {
       return;
     }
 
+    if (departmentEnabled && !form.department_id) {
+      toast.error('Please select a department for doctor');
+      return;
+    }
+
     const payload = {
       first_name: form.first_name.trim(),
       last_name: form.last_name.trim() || null,
       email: form.email.trim(),
       password: form.password,
       role_id: Number(form.role_id),
-      department_id: form.department_id ? Number(form.department_id) : null,
+      department_id:
+        departmentEnabled && form.department_id ? Number(form.department_id) : null,
     };
 
     try {
@@ -190,7 +207,7 @@ export default function SuperAdminStaffRegisterPage() {
                   <RegisterField id="sa_role" label="Role" required>
                     <Select
                       value={form.role_id}
-                      onChange={(value) => setForm((prev) => ({ ...prev, role_id: value }))}
+                      onChange={handleRoleChange}
                       options={roleOptions}
                       placeholder={rolesLoading ? 'Loading…' : 'Select role'}
                       disabled={rolesLoading || rolesError}
@@ -198,7 +215,8 @@ export default function SuperAdminStaffRegisterPage() {
                   </RegisterField>
                   <RegisterField
                     id="sa_department"
-                    label={departmentRequired ? 'Department' : 'Department (optional)'}
+                    label="Department"
+                    required={departmentEnabled}
                   >
                     {departmentsError ? (
                       <p className="sa-register-field__error" role="alert">
@@ -211,8 +229,16 @@ export default function SuperAdminStaffRegisterPage() {
                         setForm((prev) => ({ ...prev, department_id: value }))
                       }
                       options={departmentOptions}
-                      placeholder={departmentsLoading ? 'Loading…' : 'Select department'}
-                      disabled={departmentsLoading || departmentsError}
+                      placeholder={
+                        !departmentEnabled
+                          ? 'Only for doctor role'
+                          : departmentsLoading
+                            ? 'Loading…'
+                            : 'Select department'
+                      }
+                      disabled={
+                        !departmentEnabled || departmentsLoading || departmentsError
+                      }
                     />
                   </RegisterField>
                 </div>

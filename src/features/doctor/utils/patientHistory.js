@@ -1,4 +1,7 @@
 import { visitRowToPatientSummary } from '@/shared/api/mappers/doctorPatientMapper';
+import { parseEmbeddedClinicalNotes } from '@/features/doctor/utils/clinicalNotesParse';
+
+export { parseEmbeddedClinicalNotes } from '@/features/doctor/utils/clinicalNotesParse';
 
 export function formatVisitDateTime(dateStr, visitAt) {
   if (visitAt) {
@@ -96,27 +99,54 @@ export function mergeVisitTimelineWithPrescriptions(visits, prescriptions) {
   const withRx = visits.map((visit) => {
     const rxMatch = findPrescriptionForVisit(visit, prescriptions, usedRx);
     if (rxMatch) usedRx.add(rxMatch.id);
+
+    const fromVisitNotes = parseEmbeddedClinicalNotes(visit.notes);
+    const fromRxNotes = parseEmbeddedClinicalNotes(rxMatch?.notes);
+
+    const symptoms = coalesceVisitField(
+      visit.symptoms,
+      fromVisitNotes.symptoms ?? fromRxNotes.symptoms,
+    );
+    const followUp = coalesceVisitField(
+      visit.followUp,
+      fromVisitNotes.followUp ?? fromRxNotes.followUp,
+    );
+    // Prefer real clinical notes; never show embedded Symptoms/Follow-up blob as Notes
+    const rawVisitNotes =
+      visit.notes && !/^\s*symptoms\s*:/i.test(String(visit.notes))
+        ? visit.notes
+        : null;
+    const notes = coalesceVisitField(
+      fromVisitNotes.notes ?? rawVisitNotes,
+      fromRxNotes.notes,
+    );
+
     return {
       ...visit,
+      symptoms,
+      followUp,
       diagnosis: coalesceVisitField(visit.diagnosis, rxMatch?.diagnosis),
-      notes: coalesceVisitField(visit.notes, rxMatch?.notes),
+      notes,
       medicines: rxMatch?.medicines?.length ? rxMatch.medicines : visit.medicines ?? [],
     };
   });
 
   const extraRx = prescriptions
     .filter((rx) => !usedRx.has(rx.id))
-    .map((rx) => ({
-      id: `rx-${rx.id}`,
-      appointmentDbId: rx.appointmentId ?? null,
-      dateTime: formatVisitDateTime(rx.date),
-      sortTime: rxSortTime(rx),
-      symptoms: '—',
-      diagnosis: rx.diagnosis || '—',
-      notes: rx.notes || '—',
-      followUp: '—',
-      medicines: rx.medicines ?? [],
-    }));
+    .map((rx) => {
+      const parsed = parseEmbeddedClinicalNotes(rx.notes);
+      return {
+        id: `rx-${rx.id}`,
+        appointmentDbId: rx.appointmentId ?? null,
+        dateTime: formatVisitDateTime(rx.date),
+        sortTime: rxSortTime(rx),
+        symptoms: parsed.symptoms || '—',
+        diagnosis: rx.diagnosis || '—',
+        notes: parsed.notes || '—',
+        followUp: parsed.followUp || '—',
+        medicines: rx.medicines ?? [],
+      };
+    });
 
   return [...withRx, ...extraRx].sort((a, b) => b.sortTime - a.sortTime);
 }

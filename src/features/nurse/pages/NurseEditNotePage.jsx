@@ -28,9 +28,11 @@ export default function NurseEditNotePage() {
   const onSubmit = (e) => {
     e.preventDefault();
     updateMut.mutate(form, {
-      onSuccess: () => {
+      onSuccess: (updated) => {
         toast.success('Note updated');
-        navigate(`/nurse/notes/${noteId}`);
+        // Update creates a new note — open that so Created At shows the latest time
+        const nextId = updated?.id ?? noteId;
+        navigate(`/nurse/notes/${nextId}`);
       },
       onError: () => toast.error('Failed to update note'),
     });

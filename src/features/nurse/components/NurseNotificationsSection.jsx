@@ -1,34 +1,30 @@
 /**
- * Doctor Phase 2 by Atharva —
- * Notifications inbox using GET /doctor/notifications + mark-read APIs.
+ * Nurse Phase 2 by Atharva —
+ * Notifications inbox using GET /nurse/notifications + mark-read APIs.
  */
 
 import { useEffect, useMemo, useState } from 'react';
 import { Bell, Search, X } from 'lucide-react';
 import {
-  isDoctorNotificationRead,
-  isDoctorNotificationUnread,
-  useDoctorNotificationsListQuery,
-  useMarkAllDoctorNotificationsReadMutation,
-  useMarkDoctorNotificationReadMutation,
-} from '@/features/doctor/hooks/useDoctorNotificationsQuery';
+  isNurseNotificationRead,
+  isNurseNotificationUnread,
+  useNurseNotificationsListQuery,
+  useMarkAllNurseNotificationsReadMutation,
+  useMarkNurseNotificationReadMutation,
+} from '@/features/nurse/hooks/useNurseNotificationsQuery';
 import { Button, EmptyState } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
-import NotificationRow from './NotificationRow';
-import '../styles/doctor-ui.css';
-import './NotificationsSection.css';
+import NurseNotificationRow from './NurseNotificationRow';
+import './NurseNotificationsBell.css';
+import './NurseNotificationsSection.css';
 
 const TYPE_FILTERS = [
   { value: '', label: 'All types', kind: 'all' },
-  { value: 'NEW_APPOINTMENT', label: 'New appointment', kind: 'type' },
-  { value: 'APPOINTMENT_CANCELLED', label: 'Cancelled', kind: 'type' },
-  { value: 'APPOINTMENT_RESCHEDULED', label: 'Rescheduled', kind: 'type' },
-  { value: 'LAB_REPORT_READY', label: 'Lab ready', kind: 'type' },
   { value: 'EMERGENCY_ALERT', label: 'Emergency', kind: 'type' },
-  { value: 'ADMIN_UPDATE', label: 'Admin', kind: 'type' },
   { value: 'HANDOVER_TAKEN_OVER', label: 'Handover', kind: 'type' },
   { value: 'SHIFT_UPDATED', label: 'Shift updated', kind: 'type' },
-  // Doctor Phase 2 by Atharva — priority options in the same filter dropdown
+  { value: 'ADMIN_UPDATE', label: 'Admin', kind: 'type' },
+  // Nurse Phase 2 by Atharva — priority options in the same filter dropdown
   { value: 'CRITICAL', label: 'Critical', kind: 'priority' },
   { value: 'HIGH', label: 'High', kind: 'priority' },
   { value: 'NORMAL', label: 'Normal', kind: 'priority' },
@@ -38,10 +34,10 @@ const PRIORITY_FILTER_VALUES = new Set(
   TYPE_FILTERS.filter((t) => t.kind === 'priority').map((t) => t.value)
 );
 
-/** Doctor Phase 2 by Atharva — debounce live search so typing does not spam the API */
+/** Nurse Phase 2 by Atharva — debounce live search so typing does not spam the API */
 const SEARCH_DEBOUNCE_MS = 300;
 
-export default function NotificationsSection({ onDeepLink }) {
+export default function NurseNotificationsSection({ onDeepLink }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -50,7 +46,7 @@ export default function NotificationsSection({ onDeepLink }) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // Doctor Phase 2 by Atharva — dynamic search (no submit button); debounce then filter
+  // Nurse Phase 2 by Atharva — dynamic search (no submit button); debounce then filter
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const next = search.trim();
@@ -66,7 +62,7 @@ export default function NotificationsSection({ onDeepLink }) {
     if (readFilter === 'unread') next.is_read = false;
     if (readFilter === 'read') next.is_read = true;
     if (notificationType) {
-      // Doctor Phase 2 by Atharva — type dropdown also filters by priority
+      // Nurse Phase 2 by Atharva — type dropdown also filters by priority
       if (PRIORITY_FILTER_VALUES.has(notificationType)) {
         next.priority = notificationType;
       } else {
@@ -78,18 +74,17 @@ export default function NotificationsSection({ onDeepLink }) {
     return next;
   }, [page, debouncedSearch, readFilter, notificationType, startDate, endDate]);
 
-  const { data, isLoading, isError, error, refetch } = useDoctorNotificationsListQuery(filters);
-  const markOne = useMarkDoctorNotificationReadMutation();
-  const markAll = useMarkAllDoctorNotificationsReadMutation();
+  const { data, isLoading, isError, error, refetch } = useNurseNotificationsListQuery(filters);
+  const markOne = useMarkNurseNotificationReadMutation();
+  const markAll = useMarkAllNurseNotificationsReadMutation();
 
-  // Doctor Phase 2 by Atharva — client-side guard so Unread never shows already-read rows
-  // even if the API omits/ignores is_read or returns a mixed page.
+  // Nurse Phase 2 by Atharva — client-side guard so Unread never shows already-read rows
   const items = useMemo(() => {
     let list = data?.items ?? [];
     if (readFilter === 'unread') {
-      list = list.filter((n) => isDoctorNotificationUnread(n));
+      list = list.filter((n) => isNurseNotificationUnread(n));
     } else if (readFilter === 'read') {
-      list = list.filter((n) => isDoctorNotificationRead(n));
+      list = list.filter((n) => isNurseNotificationRead(n));
     }
     if (PRIORITY_FILTER_VALUES.has(notificationType)) {
       list = list.filter(
@@ -112,7 +107,7 @@ export default function NotificationsSection({ onDeepLink }) {
     }
   };
 
-  // Doctor Phase 2 by Atharva — Clear filters for search + type + date range
+  // Nurse Phase 2 by Atharva — Clear filters for search + type + date range
   const hasActiveFilters =
     Boolean(search.trim()) ||
     Boolean(debouncedSearch) ||
@@ -130,7 +125,7 @@ export default function NotificationsSection({ onDeepLink }) {
   };
 
   const handleRowClick = async (n) => {
-    if (isDoctorNotificationUnread(n)) {
+    if (isNurseNotificationUnread(n)) {
       try {
         await markOne.mutateAsync(n.id);
       } catch {
@@ -141,13 +136,13 @@ export default function NotificationsSection({ onDeepLink }) {
   };
 
   return (
-    <div className="doc-page doc-notif-page">
-      <div className="doc-notif-filters">
-        {/* Doctor Phase 2 by Atharva — search first; live filter as user types */}
-        <div className="doc-notif-search">
-          <Search size={16} className="doc-notif-search__icon" aria-hidden />
+    <div className="nurse-notif-page">
+      <div className="nurse-notif-filters">
+        {/* Nurse Phase 2 by Atharva — search first; live filter as user types */}
+        <div className="nurse-notif-search">
+          <Search size={16} className="nurse-notif-search__icon" aria-hidden />
           <input
-            className="doc-notif-search__input"
+            className="nurse-notif-search__input"
             type="search"
             placeholder="Search title, message, or sender…"
             value={search}
@@ -155,9 +150,9 @@ export default function NotificationsSection({ onDeepLink }) {
             aria-label="Search notifications"
           />
         </div>
-        {/* Doctor Phase 2 by Atharva — order: All → Unread → Read → Mark all read → All types */}
-        <div className="doc-notif-filters__row">
-          <div className="doc-notif-filters__tabs">
+        {/* Nurse Phase 2 by Atharva — order: All → Unread → Read → Mark all read → All types */}
+        <div className="nurse-notif-filters__row">
+          <div className="nurse-notif-filters__tabs">
             {[
               { id: 'all', label: 'All' },
               { id: 'unread', label: 'Unread' },
@@ -166,7 +161,7 @@ export default function NotificationsSection({ onDeepLink }) {
               <button
                 key={tab.id}
                 type="button"
-                className={`doc-notif-filter-tab${readFilter === tab.id ? ' is-active' : ''}`}
+                className={`nurse-notif-filter-tab${readFilter === tab.id ? ' is-active' : ''}`}
                 onClick={() => {
                   setReadFilter(tab.id);
                   setPage(1);
@@ -179,14 +174,14 @@ export default function NotificationsSection({ onDeepLink }) {
           <Button
             size="sm"
             variant="outline"
-            className="doc-notif-mark-all"
+            className="nurse-notif-mark-all"
             onClick={handleMarkAll}
             disabled={markAll.isPending}
           >
             Mark all read
           </Button>
           <select
-            className="doc-notif-select"
+            className="nurse-notif-select"
             value={notificationType}
             onChange={(e) => {
               setNotificationType(e.target.value);
@@ -200,11 +195,11 @@ export default function NotificationsSection({ onDeepLink }) {
               </option>
             ))}
           </select>
-          <label className="doc-notif-date">
-            <span className="doc-notif-date__label">From</span>
+          <label className="nurse-notif-date">
+            <span className="nurse-notif-date__label">From</span>
             <input
               type="date"
-              className="doc-notif-date__input"
+              className="nurse-notif-date__input"
               value={startDate}
               onChange={(e) => {
                 setStartDate(e.target.value);
@@ -213,11 +208,11 @@ export default function NotificationsSection({ onDeepLink }) {
               aria-label="Start date"
             />
           </label>
-          <label className="doc-notif-date">
-            <span className="doc-notif-date__label">To</span>
+          <label className="nurse-notif-date">
+            <span className="nurse-notif-date__label">To</span>
             <input
               type="date"
-              className="doc-notif-date__input"
+              className="nurse-notif-date__input"
               value={endDate}
               onChange={(e) => {
                 setEndDate(e.target.value);
@@ -230,7 +225,7 @@ export default function NotificationsSection({ onDeepLink }) {
             <Button
               size="sm"
               variant="outline"
-              className="doc-notif-clear-filters"
+              className="nurse-notif-clear-filters"
               onClick={handleClearFilters}
               type="button"
             >
@@ -241,10 +236,10 @@ export default function NotificationsSection({ onDeepLink }) {
         </div>
       </div>
 
-      <div className="doc-card">
-        <div className="doc-card__body">
+      <div className="nurse-notif-card">
+        <div className="nurse-notif-card__body">
           {isLoading ? (
-            <p className="text-muted">Loading notifications…</p>
+            <p className="nurse-notif-muted">Loading notifications…</p>
           ) : isError ? (
             <EmptyState
               icon={Bell}
@@ -264,7 +259,11 @@ export default function NotificationsSection({ onDeepLink }) {
             />
           ) : (
             items.map((n) => (
-              <NotificationRow key={n.id} notification={n} onClick={() => handleRowClick(n)} />
+              <NurseNotificationRow
+                key={n.id}
+                notification={n}
+                onClick={() => handleRowClick(n)}
+              />
             ))
           )}
           {isError ? (
@@ -278,7 +277,7 @@ export default function NotificationsSection({ onDeepLink }) {
       </div>
 
       {totalPages > 1 ? (
-        <div className="doc-notif-pagination">
+        <div className="nurse-notif-pagination">
           <Button
             size="sm"
             variant="outline"
@@ -287,7 +286,7 @@ export default function NotificationsSection({ onDeepLink }) {
           >
             Previous
           </Button>
-          <span className="text-muted">
+          <span className="nurse-notif-muted">
             Page {page} of {totalPages} · {total} total
           </span>
           <Button

@@ -284,9 +284,9 @@ export function getPagedListCount({ page = 1, page_size = 20, items, total, hasN
 
 function buildVitalHistoryEntry(vital) {
   return {
-    history_id: vital.id,
+    history_id: vital.history_id ?? vital.id,
     recorded_at: vital.recorded_at,
-    recorded_by: vital.recorded_by_name ?? null,
+    recorded_by: vital.recorded_by_name ?? vital.recorded_by ?? null,
     status: vital.status ?? 'recorded',
     temperature: vital.temperature,
     blood_pressure: vital.blood_pressure,
@@ -302,33 +302,50 @@ function buildVitalHistoryEntry(vital) {
 
 export function mapVitalItem(row) {
   if (!row) return null;
+  const history = Array.isArray(row.history) && row.history.length
+    ? [...row.history]
+        .map(buildVitalHistoryEntry)
+        .sort((a, b) => new Date(b.recorded_at) - new Date(a.recorded_at))
+    : [buildVitalHistoryEntry(row)];
   return attachPatientUid({
     ...row,
     patient_name: row.patient_name ?? '',
     bed_number: row.bed_number || '',
     recorded_by: row.recorded_by_name ?? null,
-    history: row.history?.length ? row.history : [buildVitalHistoryEntry(row)],
+    history,
   });
 }
 
 export function mapNoteItem(row) {
   if (!row) return null;
   const createdBy = row.created_by_name ?? row.nurse_name ?? null;
-  const entry = {
-    history_id: row.id,
-    created_at: row.created_at,
-    created_by: createdBy,
-    status: row.status ?? 'active',
-    symptoms: row.symptoms,
-    treatment_response: row.treatment_response,
-    additional_notes: row.additional_notes,
-  };
+  const history = Array.isArray(row.history) && row.history.length
+    ? [...row.history]
+        .map((entry) => ({
+          history_id: entry.history_id ?? entry.id,
+          created_at: entry.created_at,
+          created_by: entry.created_by ?? entry.created_by_name ?? entry.nurse_name ?? createdBy,
+          status: entry.status ?? 'active',
+          symptoms: entry.symptoms,
+          treatment_response: entry.treatment_response,
+          additional_notes: entry.additional_notes,
+        }))
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    : [{
+      history_id: row.id,
+      created_at: row.created_at,
+      created_by: createdBy,
+      status: row.status ?? 'active',
+      symptoms: row.symptoms,
+      treatment_response: row.treatment_response,
+      additional_notes: row.additional_notes,
+    }];
   return attachPatientUid({
     ...row,
     patient_name: row.patient_name ?? '',
     bed_number: row.bed_number || '',
     created_by: createdBy,
-    history: row.history?.length ? row.history : [entry],
+    history,
   });
 }
 

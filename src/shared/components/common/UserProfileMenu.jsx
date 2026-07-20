@@ -6,7 +6,18 @@ import { ROUTES } from '@/shared/constants';
 import Avatar from './Avatar';
 import './UserProfileMenu.css';
 
-export default function UserProfileMenu({ compact = false, className = '' }) {
+/**
+ * Doctor Phase 2 by Atharva —
+ * Doctor UX: clicking the name opens the profile page (no "My Profile" menu item).
+ * When already on the profile page (`logoutMenuOnly`), the same control opens a
+ * logout-only dropdown. Other roles keep the default logout dropdown.
+ */
+export default function UserProfileMenu({
+  compact = false,
+  className = '',
+  profileHref = null,
+  logoutMenuOnly = false,
+}) {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -41,25 +52,42 @@ export default function UserProfileMenu({ compact = false, className = '' }) {
     navigate(ROUTES.HOME);
   };
 
+  const handleTriggerClick = () => {
+    // Doctor Phase 2 by Atharva — name click opens profile; on profile page show logout menu
+    if (profileHref && !logoutMenuOnly) {
+      navigate(profileHref);
+      return;
+    }
+    setOpen((prev) => !prev);
+  };
+
+  const showDropdown = open && (logoutMenuOnly || !profileHref);
+
   return (
     <div className={`user-profile-menu ${className}`} ref={ref}>
       <button
         type="button"
         className={`user-profile-menu__trigger ${compact ? 'user-profile-menu__trigger--compact' : ''}`}
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-        aria-haspopup="true"
+        onClick={handleTriggerClick}
+        aria-expanded={showDropdown}
+        aria-haspopup={showDropdown || logoutMenuOnly ? 'true' : undefined}
+        title={profileHref && !logoutMenuOnly ? 'Open profile' : undefined}
       >
         <Avatar name={displayName} size={compact ? 32 : 36} className="avatar--primary" />
         {!compact && (
           <>
             <span className="user-profile-menu__name">{displayName}</span>
-            <ChevronDown size={16} className={`user-profile-menu__chev ${open ? 'user-profile-menu__chev--open' : ''}`} />
+            {(logoutMenuOnly || !profileHref) && (
+              <ChevronDown
+                size={16}
+                className={`user-profile-menu__chev ${showDropdown ? 'user-profile-menu__chev--open' : ''}`}
+              />
+            )}
           </>
         )}
       </button>
 
-      {open && (
+      {showDropdown && (
         <div className="user-profile-menu__dropdown" role="menu">
           <div className="user-profile-menu__info">
             <p className="user-profile-menu__info-name">{displayName}</p>

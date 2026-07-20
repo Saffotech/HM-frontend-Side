@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Activity,
   Calendar,
@@ -59,29 +59,13 @@ function normalizeHistory(vital) {
 
 export default function NurseVitalsSnapshotView({ vital }) {
   const historyItems = useMemo(() => normalizeHistory(vital), [vital]);
-  const [selectedHistoryId, setSelectedHistoryId] = useState('');
-  const historyLenRef = useRef(0);
+  const latestHistoryId = historyItems[0]?.history_id ?? '';
+  const [selectedHistoryId, setSelectedHistoryId] = useState(latestHistoryId);
 
   useEffect(() => {
-    historyLenRef.current = 0;
-    if (historyItems.length) {
-      setSelectedHistoryId(historyItems[0].history_id);
-    }
-  }, [vital?.id]);
-
-  useEffect(() => {
-    if (!historyItems.length) return;
-    const len = historyItems.length;
-    if (len > historyLenRef.current && historyLenRef.current > 0) {
-      setSelectedHistoryId(historyItems[0].history_id);
-    } else {
-      setSelectedHistoryId((prev) => {
-        const stillExists = historyItems.some((entry) => entry.history_id === prev);
-        return stillExists ? prev : historyItems[0].history_id;
-      });
-    }
-    historyLenRef.current = len;
-  }, [historyItems, vital?.id]);
+    // Prefer newest recording whenever the vital / history set changes
+    setSelectedHistoryId(latestHistoryId);
+  }, [vital?.id, latestHistoryId]);
 
   const activeHistoryId = useMemo(() => {
     if (!historyItems.length) return '';

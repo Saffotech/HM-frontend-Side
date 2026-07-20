@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { ROUTES } from '@/shared/constants';
 import { BrandLogo, BrandName, UserProfileMenu } from '@/shared/components/common';
@@ -8,7 +8,14 @@ import './DoctorShell.css';
 
 export default function DoctorShell({ title, nav, active, onSelect, children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const activeLabel = nav.find((n) => n.id === active)?.label ?? title;
+  const location = useLocation();
+  // Doctor Phase 2 by Atharva — header title for sections not listed in sidebar (bell → notifications)
+  const sectionLabels = { notifications: 'Notifications', profile: 'My Profile' };
+  const activeLabel =
+    nav.find((n) => n.id === active)?.label ?? sectionLabels[active] ?? title;
+
+  // Doctor Phase 2 by Atharva — on profile page, name click shows logout; elsewhere opens profile
+  const onProfilePage = location.pathname === ROUTES.DOCTOR_PROFILE;
 
   return (
     <div className="doctor-shell">
@@ -58,7 +65,11 @@ export default function DoctorShell({ title, nav, active, onSelect, children }) 
           ))}
         </nav>
         <div className="doctor-shell__sidebar-foot">
-          <UserProfileMenu className="user-profile-menu--sidebar" />
+          <UserProfileMenu
+            className="user-profile-menu--sidebar"
+            profileHref={ROUTES.DOCTOR_PROFILE}
+            logoutMenuOnly={onProfilePage}
+          />
         </div>
       </aside>
 
@@ -69,7 +80,10 @@ export default function DoctorShell({ title, nav, active, onSelect, children }) 
           </div>
           <div className="doctor-shell__header-actions">
             <DoctorNotificationsBell onViewAll={() => onSelect('notifications')} />
-            <UserProfileMenu />
+            <UserProfileMenu
+              profileHref={ROUTES.DOCTOR_PROFILE}
+              logoutMenuOnly={onProfilePage}
+            />
           </div>
         </header>
         <div className={`doctor-shell__content${active === 'dashboard' ? ' doctor-shell__content--dashboard' : ''}`}>
