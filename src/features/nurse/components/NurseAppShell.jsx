@@ -1,5 +1,10 @@
 import { Outlet } from 'react-router-dom';
+import { NursePatientScopeProvider } from '@/features/nurse/context/NursePatientScopeContext';
 
 export default function NurseAppShell() {
-  return <Outlet />;
+  return (
+    <NursePatientScopeProvider>
+      <Outlet />
+    </NursePatientScopeProvider>
+  );
 }

@@ -29,10 +29,15 @@ import {
   useUploadNurseProfileImageMutation,
 } from '@/features/nurse/hooks/useNurseProfileQuery';
 import { ROUTES } from '@/shared/constants';
-import { Button, ConfirmDialog, EmptyState } from '@/shared/components/common';
+import { Button, ConfirmDialog, EmptyState, ProfilePhotoCropDialog } from '@/shared/components/common';
 import PageSpinner from '@/shared/components/PageSpinner';
 import { toast } from '@/shared/utils/toast';
 import { formatPhoneInput } from '@/shared/utils/validators';
+import {
+  capitalizeFirst,
+  displayProfileText,
+  parseProfileLanguages,
+} from '@/shared/utils/profileTextFormat';
 import './NurseProfilePage.css';
 
 const GENDER_OPTIONS = [
@@ -92,34 +97,25 @@ function formatUpdatedAgo(iso) {
 
 function buildEditableForm(profile) {
   return {
-    qualification: profile?.qualification ?? '',
+    qualification: capitalizeFirst(profile?.qualification ?? ''),
     experience_years:
       profile?.experience_years === null || profile?.experience_years === undefined
         ? ''
         : String(profile.experience_years),
-    bio: profile?.bio ?? '',
-    languages: Array.isArray(profile?.languages) ? profile.languages.join(', ') : '',
+    bio: capitalizeFirst(profile?.bio ?? ''),
+    languages: Array.isArray(profile?.languages)
+      ? profile.languages.map((l) => capitalizeFirst(l)).join(', ')
+      : '',
     phone: formatPhoneInput(profile?.phone ?? ''),
     phone_code: profile?.phone_code ?? '+91',
-    address_line: profile?.address?.line ?? '',
-    city: profile?.address?.city ?? '',
-    state: profile?.address?.state ?? '',
+    address_line: capitalizeFirst(profile?.address?.line ?? ''),
+    city: capitalizeFirst(profile?.address?.city ?? ''),
+    state: capitalizeFirst(profile?.address?.state ?? ''),
     date_of_birth: profile?.date_of_birth ?? '',
     gender: profile?.gender ?? '',
-    emergency_contact_name: profile?.emergency_contact?.name ?? '',
+    emergency_contact_name: capitalizeFirst(profile?.emergency_contact?.name ?? ''),
     emergency_contact_phone: formatPhoneInput(profile?.emergency_contact?.phone ?? ''),
   };
-}
-
-function parseLanguages(raw) {
-  return [
-    ...new Set(
-      String(raw || '')
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean)
-    ),
-  ];
 }
 
 /**
@@ -131,7 +127,7 @@ function buildDirtyPayload(form, baseline) {
 
   NURSE_PROFILE_EDITABLE_TOP_KEYS.forEach((key) => {
     if (key === 'languages') {
-      const next = parseLanguages(form.languages);
+      const next = parseProfileLanguages(form.languages);
       const prev = Array.isArray(baseline.languages) ? baseline.languages : [];
       if (JSON.stringify(next) !== JSON.stringify(prev)) payload.languages = next;
       return;
@@ -151,17 +147,23 @@ function buildDirtyPayload(form, baseline) {
       if (next !== prev) payload.gender = next;
       return;
     }
-    if (key === 'phone' || key === 'phone_code' || key === 'qualification' || key === 'bio' || key === 'date_of_birth') {
+    if (key === 'phone' || key === 'phone_code' || key === 'date_of_birth') {
       const next = form[key] === '' ? null : form[key];
+      const prev = baseline[key] ?? null;
+      if ((next ?? null) !== (prev ?? null)) payload[key] = next;
+      return;
+    }
+    if (key === 'qualification' || key === 'bio') {
+      const next = form[key] === '' ? null : capitalizeFirst(form[key]);
       const prev = baseline[key] ?? null;
       if ((next ?? null) !== (prev ?? null)) payload[key] = next;
     }
   });
 
   const nextAddress = {
-    line: form.address_line === '' ? null : form.address_line,
-    city: form.city === '' ? null : form.city,
-    state: form.state === '' ? null : form.state,
+    line: form.address_line === '' ? null : capitalizeFirst(form.address_line),
+    city: form.city === '' ? null : capitalizeFirst(form.city),
+    state: form.state === '' ? null : capitalizeFirst(form.state),
   };
   const prevAddress = baseline.address || {};
   const addressChanged =
@@ -171,7 +173,10 @@ function buildDirtyPayload(form, baseline) {
   if (addressChanged) payload.address = nextAddress;
 
   const nextEmergency = {
-    name: form.emergency_contact_name === '' ? null : form.emergency_contact_name,
+    name:
+      form.emergency_contact_name === ''
+        ? null
+        : capitalizeFirst(form.emergency_contact_name),
     phone: form.emergency_contact_phone === '' ? null : form.emergency_contact_phone,
   };
   const prevEmergency = baseline.emergency_contact || {};
@@ -184,13 +189,14 @@ function buildDirtyPayload(form, baseline) {
 }
 
 function ReadField({ label, value }) {
+  const display = displayProfileText(value);
   return (
     <div className="nurse-profile-field">
       <span className="nurse-profile-field__label">{label}</span>
       <p
-        className={`nurse-profile-field__value${!value ? ' nurse-profile-field__value--empty' : ''}`}
+        className={`nurse-profile-field__value${!display ? ' nurse-profile-field__value--empty' : ''}`}
       >
-        {value || 'Not set'}
+        {display || 'Not set'}
       </p>
     </div>
   );
@@ -216,6 +222,8 @@ export default function NurseProfilePage() {
   });
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
   const [removePhotoConfirmOpen, setRemovePhotoConfirmOpen] = useState(false);
+  const [cropFile, setCropFile] = useState(null);
+  const [cropUploading, setCropUploading] = useState(false);
   const avatarWrapRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -259,7 +267,8 @@ export default function NurseProfilePage() {
 
   const displayName = useMemo(() => {
     if (!profile) return 'Nurse';
-    return `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email;
+    const name = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email;
+    return displayProfileText(name);
   }, [profile]);
 
   const imageUrl = resolveNurseProfileImageUrl(profile?.profile_image_url);
@@ -271,6 +280,10 @@ export default function NurseProfilePage() {
 
   const setField = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const setTextField = (key, value) => {
+    setField(key, capitalizeFirst(value));
   };
 
   const handleCancel = () => {
@@ -329,7 +342,7 @@ export default function NurseProfilePage() {
     }
   };
 
-  const handleImageChange = async (e) => {
+  const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
@@ -341,11 +354,19 @@ export default function NurseProfilePage() {
       toast.error('Image must be 5 MB or smaller');
       return;
     }
+    setCropFile(file);
+  };
+
+  const handleCropConfirm = async (croppedFile) => {
+    setCropUploading(true);
     try {
-      await uploadImage.mutateAsync(file);
+      await uploadImage.mutateAsync(croppedFile);
+      setCropFile(null);
       toast.success('Profile image uploaded');
     } catch {
       /* toasted */
+    } finally {
+      setCropUploading(false);
     }
   };
 
@@ -371,9 +392,9 @@ export default function NurseProfilePage() {
   };
 
   const addLanguageChip = () => {
-    const next = langDraft.trim();
+    const next = capitalizeFirst(langDraft.trim());
     if (!next) return;
-    const list = parseLanguages(form.languages);
+    const list = parseProfileLanguages(form.languages);
     if (!list.some((l) => l.toLowerCase() === next.toLowerCase())) {
       setField('languages', [...list, next].join(', '));
     }
@@ -383,7 +404,7 @@ export default function NurseProfilePage() {
   const removeLanguage = (lang) => {
     setField(
       'languages',
-      parseLanguages(form.languages)
+      parseProfileLanguages(form.languages)
         .filter((l) => l.toLowerCase() !== lang.toLowerCase())
         .join(', ')
     );
@@ -616,7 +637,8 @@ export default function NurseProfilePage() {
                   <Shield size={16} aria-hidden /> Account
                 </h3>
                 <p className="nurse-profile-hint">
-                  License number, employee ID, department, and shift are managed by admin.
+                  License number, employee ID, and shift are managed by admin.
+                  Daily patient responsibility comes from bed allocation, not department.
                 </p>
                 <div className="nurse-profile-grid">
                   <ReadField label="First name" value={profile.first_name} />
@@ -625,7 +647,9 @@ export default function NurseProfilePage() {
                   <ReadField label="License number" value={profile.registration_number} />
                   <ReadField label="Employee ID" value={profile.employee_id} />
                   <ReadField label="Joining date" value={profile.joining_date} />
-                  <ReadField label="Department" value={departmentName} />
+                  {departmentName ? (
+                    <ReadField label="Department" value={departmentName} />
+                  ) : null}
                   <ReadField label="Role" value={roleName} />
                   <ReadField label="Shift" value={fmtShift(profile.shift)} />
                   <ReadField label="Shift start" value={profile.shift?.start_time} />
@@ -652,7 +676,7 @@ export default function NurseProfilePage() {
                           className="nurse-profile-input"
                           value={form.qualification}
                           maxLength={255}
-                          onChange={(e) => setField('qualification', e.target.value)}
+                          onChange={(e) => setTextField('qualification', e.target.value)}
                         />
                       </label>
                       <label className="nurse-profile-field">
@@ -669,7 +693,7 @@ export default function NurseProfilePage() {
                       <div className="nurse-profile-field nurse-profile-field--span">
                         <span className="nurse-profile-field__label">Languages</span>
                         <div className="nurse-profile-lang-row">
-                          {parseLanguages(form.languages).map((lang) => (
+                          {parseProfileLanguages(form.languages).map((lang) => (
                             <button
                               key={lang}
                               type="button"
@@ -685,7 +709,7 @@ export default function NurseProfilePage() {
                             className="nurse-profile-input"
                             placeholder="Add language"
                             value={langDraft}
-                            onChange={(e) => setLangDraft(e.target.value)}
+                            onChange={(e) => setLangDraft(capitalizeFirst(e.target.value))}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 e.preventDefault();
@@ -709,7 +733,7 @@ export default function NurseProfilePage() {
                           className="nurse-profile-input"
                           rows={3}
                           value={form.bio}
-                          onChange={(e) => setField('bio', e.target.value)}
+                          onChange={(e) => setTextField('bio', e.target.value)}
                         />
                       </label>
                     </>
@@ -779,7 +803,7 @@ export default function NurseProfilePage() {
                           className="nurse-profile-input"
                           maxLength={120}
                           value={form.emergency_contact_name}
-                          onChange={(e) => setField('emergency_contact_name', e.target.value)}
+                          onChange={(e) => setTextField('emergency_contact_name', e.target.value)}
                         />
                       </label>
                       <label className="nurse-profile-field">
@@ -838,7 +862,7 @@ export default function NurseProfilePage() {
                           className="nurse-profile-input"
                           maxLength={100}
                           value={form.city}
-                          onChange={(e) => setField('city', e.target.value)}
+                          onChange={(e) => setTextField('city', e.target.value)}
                         />
                       </label>
                       <label className="nurse-profile-field">
@@ -847,7 +871,7 @@ export default function NurseProfilePage() {
                           className="nurse-profile-input"
                           maxLength={100}
                           value={form.state}
-                          onChange={(e) => setField('state', e.target.value)}
+                          onChange={(e) => setTextField('state', e.target.value)}
                         />
                       </label>
                       <label className="nurse-profile-field nurse-profile-field--span">
@@ -856,7 +880,7 @@ export default function NurseProfilePage() {
                           className="nurse-profile-input"
                           rows={2}
                           value={form.address_line}
-                          onChange={(e) => setField('address_line', e.target.value)}
+                          onChange={(e) => setTextField('address_line', e.target.value)}
                         />
                       </label>
                     </>
@@ -885,6 +909,16 @@ export default function NurseProfilePage() {
           </form>
         </div>
       </div>
+
+      <ProfilePhotoCropDialog
+        isOpen={Boolean(cropFile)}
+        file={cropFile}
+        confirming={cropUploading || uploadImage.isPending}
+        onCancel={() => {
+          if (!cropUploading && !uploadImage.isPending) setCropFile(null);
+        }}
+        onConfirm={handleCropConfirm}
+      />
 
       {/* Nurse Phase 2 by Atharva — confirm before removing profile photo */}
       <ConfirmDialog

@@ -126,7 +126,7 @@ export default function StaffRegisterPage() {
 
         <AdminPageHeader
           title="Register new staff"
-          subtitle="Create a staff account with role and optional department assignment."
+          subtitle="Create a staff account. Department is required for doctors only; nurses use bed allocation for daily responsibility."
         />
 
         <div className="admin-card admin-card--narrow">

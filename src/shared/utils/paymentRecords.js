@@ -46,7 +46,7 @@ export function sumByMode(records, mode) {
   if (mode === 'all') return records.reduce((s, r) => s + r.amount, 0);
   if (mode === 'UPI') {
     return records
-      .filter((r) => r.mode === 'UPI' || r.mode === 'Online')
+      .filter((r) => r.mode === 'UPI')
       .reduce((s, r) => s + r.amount, 0);
   }
   return records.filter((r) => r.mode === mode).reduce((s, r) => s + r.amount, 0);

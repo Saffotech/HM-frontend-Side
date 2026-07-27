@@ -1,6 +1,8 @@
 import { ClipboardList, History } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/shared/constants';
 import RoleLayout from '@/shared/components/layout/RoleLayout';
+import PharmacyNotificationsBell from '@/features/pharmacy/components/PharmacyNotificationsBell';
 import '../styles/pharmacy.css';
 
 const NAV_LINKS = [
@@ -9,14 +11,17 @@ const NAV_LINKS = [
 ];
 
 const PAGE_TITLES = [
+  { prefix: ROUTES.PHARMACY_NOTIFICATIONS, title: 'Notifications' },
+  { prefix: ROUTES.PHARMACY_PROFILE, title: 'My Profile' },
   { prefix: '/pharmacy/dispense', title: 'Dispense Medicine' },
   { prefix: ROUTES.PHARMACY_HISTORY, title: 'History' },
   { prefix: ROUTES.PHARMACY_PRESCRIPTIONS, title: 'Prescriptions' },
 ];
 
 function resolveTitle(pathname, pageTitleOverride) {
+  if (pageTitleOverride) return pageTitleOverride;
   const match = PAGE_TITLES.find((p) => pathname.startsWith(p.prefix));
-  return pageTitleOverride || match?.title || 'Prescriptions';
+  return match?.title || 'Prescriptions';
 }
 
 function isPrescriptionsActive(pathname) {
@@ -35,6 +40,10 @@ function isNavLinkActive(pathname, link) {
 }
 
 export default function PharmacyLayout({ children, pageTitle: pageTitleProp, compact = false }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const onProfilePage = location.pathname === ROUTES.PHARMACY_PROFILE;
+
   return (
     <RoleLayout
       navLinks={NAV_LINKS}
@@ -47,6 +56,13 @@ export default function PharmacyLayout({ children, pageTitle: pageTitleProp, com
       compact={compact}
       isNavLinkActive={isNavLinkActive}
       showBell
+      profileHref={ROUTES.PHARMACY_PROFILE}
+      logoutMenuOnly={onProfilePage}
+      headerBell={
+        <PharmacyNotificationsBell
+          onViewAll={() => navigate(ROUTES.PHARMACY_NOTIFICATIONS)}
+        />
+      }
     >
       {children}
     </RoleLayout>

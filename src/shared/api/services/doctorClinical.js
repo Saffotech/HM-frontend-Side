@@ -1,15 +1,12 @@
 import {
   getRecords,
-  getNotifications,
 } from '@/features/doctor/api/clinical';
 import { asList } from '@/shared/api/dataSource';
 import {
   apiToUiRecord,
-  apiToUiNotification,
 } from '@/shared/api/mappers/clinicalMapper';
 import {
   syncRecords,
-  syncNotifications,
 } from '@/shared/api/utils/clinicalListSync';
 
 function mapList(mapper, list) {
@@ -21,11 +18,6 @@ async function fetchUiRecords(token) {
   return mapList(apiToUiRecord, asList(raw));
 }
 
-async function fetchUiNotifications(token) {
-  const raw = await getNotifications(token);
-  return mapList(apiToUiNotification, asList(raw));
-}
-
 async function applyUpdater(token, fetchList, syncFn, updater) {
   const prev = await fetchList(token);
   const next = typeof updater === 'function' ? updater(prev) : updater;
@@ -35,17 +27,4 @@ async function applyUpdater(token, fetchList, syncFn, updater) {
 
 export async function mutateRecords(updater, token) {
   return applyUpdater(token, fetchUiRecords, syncRecords, updater);
-}
-
-export async function listNotifications(token) {
-  return fetchUiNotifications(token);
-}
-
-export async function mutateNotifications(updater, token) {
-  try {
-    return await applyUpdater(token, fetchUiNotifications, syncNotifications, updater);
-  } catch {
-    const prev = [];
-    return typeof updater === 'function' ? updater(prev) : updater;
-  }
 }

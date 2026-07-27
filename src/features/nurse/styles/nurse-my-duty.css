@@ -1,0 +1,545 @@
+/* —— My Duty: nurse self-service roster + beds —— */
+
+.nurse-my-duty {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.nurse-my-duty__today-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid #d7e3dc;
+  background: #f3f8f5;
+  color: #1a5c34;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.nurse-my-duty__hero-topline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.nurse-my-duty__hero-topline .nurse-my-duty__hero-label {
+  margin: 0;
+}
+
+/* Hero: current shift */
+.nurse-my-duty__hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(16rem, 0.9fr);
+  gap: 1.25rem;
+  padding: 1.35rem 1.5rem;
+  border-radius: 16px;
+  border: 1px solid #cfe0d5;
+  background:
+    linear-gradient(135deg, rgba(26, 92, 52, 0.08) 0%, rgba(255, 255, 255, 0.95) 42%, #fff 100%),
+    #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(26, 92, 52, 0.05);
+}
+
+.nurse-my-duty__hero::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, #1a5c34, #2f8f57);
+}
+
+.nurse-my-duty__hero-main {
+  min-width: 0;
+  padding-left: 0.35rem;
+}
+
+.nurse-my-duty__hero-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #3d7a55;
+}
+
+.nurse-my-duty__shift-name {
+  margin: 0;
+  font-size: clamp(1.75rem, 2.4vw, 2.15rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+.nurse-my-duty__shift-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.55rem 0 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #334155;
+  font-variant-numeric: tabular-nums;
+}
+
+.nurse-my-duty__shift-time svg {
+  color: #1a5c34;
+  flex-shrink: 0;
+}
+
+.nurse-my-duty__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.nurse-my-duty__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.85);
+  color: #475569;
+  font-size: 0.8125rem;
+  font-weight: 550;
+}
+
+.nurse-my-duty__pill svg {
+  color: #1a5c34;
+  flex-shrink: 0;
+}
+
+.nurse-my-duty__hero-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  align-content: center;
+}
+
+.nurse-my-duty__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.92);
+  min-width: 0;
+}
+
+.nurse-my-duty__stat-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.nurse-my-duty__stat-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.nurse-my-duty__stat-value--lg {
+  font-size: 1.75rem;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Section blocks */
+.nurse-my-duty__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.nurse-my-duty__section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.nurse-my-duty__section-title {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.nurse-my-duty__section-title svg {
+  color: #1a5c34;
+}
+
+.nurse-my-duty__section-hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+.nurse-my-duty__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: #e8f2ec;
+  color: #1a5c34;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Bed cards */
+.nurse-my-duty__beds {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.85rem;
+}
+
+.nurse-my-duty__bed {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem 1.05rem;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.nurse-my-duty__bed:hover {
+  border-color: #cfe0d5;
+  box-shadow: 0 4px 14px rgba(26, 92, 52, 0.08);
+}
+
+.nurse-my-duty__bed-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.nurse-my-duty__bed-id {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.nurse-my-duty__bed-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 10px;
+  background: #eef6f1;
+  color: #1a5c34;
+  flex-shrink: 0;
+}
+
+.nurse-my-duty__bed-number {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.nurse-my-duty__bed-ward {
+  margin: 0.15rem 0 0;
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+.nurse-my-duty__status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.nurse-my-duty__status--occupied {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.nurse-my-duty__status--vacant {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.nurse-my-duty__bed-patient {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 1.25rem;
+  font-size: 0.875rem;
+  color: #334155;
+}
+
+.nurse-my-duty__bed-patient svg {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.nurse-my-duty__bed-patient--empty {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.nurse-my-duty__bed-dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  padding-top: 0.15rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.nurse-my-duty__date-block {
+  min-width: 0;
+}
+
+.nurse-my-duty__date-label {
+  display: block;
+  margin-bottom: 0.2rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.nurse-my-duty__date-value {
+  font-size: 0.875rem;
+  font-weight: 650;
+  color: #0f172a;
+}
+
+.nurse-my-duty__date-value--ongoing {
+  color: #1a5c34;
+}
+
+.nurse-my-duty__bed-shift {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.nurse-my-duty__bed-shift svg {
+  color: #1a5c34;
+}
+
+/* Empty / roster */
+.nurse-my-duty__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 2rem 1.25rem;
+  border-radius: 14px;
+  border: 1px dashed #cbd5e1;
+  background: #f8fafc;
+  text-align: center;
+  color: #64748b;
+}
+
+.nurse-my-duty__empty svg {
+  color: #94a3b8;
+}
+
+.nurse-my-duty__empty-title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 650;
+  color: #334155;
+}
+
+.nurse-my-duty__empty-text {
+  margin: 0;
+  font-size: 0.8125rem;
+  max-width: 22rem;
+  line-height: 1.45;
+}
+
+.nurse-my-duty__roster {
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.nurse-my-duty__roster-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.85rem 1rem;
+  align-items: center;
+  padding: 0.95rem 1.15rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.nurse-my-duty__roster-row:last-child {
+  border-bottom: 0;
+}
+
+.nurse-my-duty__roster-row:hover {
+  background: #f8fafc;
+}
+
+.nurse-my-duty__roster-accent {
+  width: 0.35rem;
+  height: 2.4rem;
+  border-radius: 999px;
+  background: #94a3b8;
+}
+
+.nurse-my-duty__roster-accent--morning {
+  background: linear-gradient(180deg, #f59e0b, #ea580c);
+}
+
+.nurse-my-duty__roster-accent--evening {
+  background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+}
+
+.nurse-my-duty__roster-accent--night {
+  background: linear-gradient(180deg, #6366f1, #312e81);
+}
+
+.nurse-my-duty__roster-body {
+  min-width: 0;
+}
+
+.nurse-my-duty__roster-dates {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.nurse-my-duty__roster-days {
+  margin: 0.2rem 0 0;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.nurse-my-duty__roster-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  text-align: right;
+}
+
+.nurse-my-duty__shift-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.nurse-my-duty__shift-badge--morning {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+
+.nurse-my-duty__shift-badge--evening {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.nurse-my-duty__shift-badge--night {
+  background: #eef2ff;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+}
+
+.nurse-my-duty__shift-badge--default {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.nurse-my-duty__roster-time {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #475569;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 860px) {
+  .nurse-my-duty__hero {
+    grid-template-columns: 1fr;
+  }
+
+  .nurse-my-duty__hero-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .nurse-my-duty__hero {
+    padding: 1.1rem 1rem;
+  }
+
+  .nurse-my-duty__hero-stats,
+  .nurse-my-duty__bed-dates {
+    grid-template-columns: 1fr;
+  }
+
+  .nurse-my-duty__roster-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .nurse-my-duty__roster-side {
+    grid-column: 2;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+  }
+}

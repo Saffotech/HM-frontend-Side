@@ -19,6 +19,7 @@ import NursePagination from '@/features/nurse/components/NursePagination';
 import { QueryFeedback } from '@/shared/components/common';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
 import { useNurseMedicationPatientsQuery } from '@/shared/hooks/queries/useNurseQuery';
+import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
 import './NurseMedicationPatientsPage.css';
 
 const WARD_OPTIONS = [
@@ -137,16 +138,25 @@ export default function NurseMedicationPatientsPage() {
   const [wardFilter, setWardFilter] = useState('all');
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebouncedValue(search, 400);
-  const { data, isLoading, isError, error, refetch } = useNurseMedicationPatientsQuery({
-    search: debouncedSearch,
-    page,
-    page_size: 20,
-  });
+  const { scopeFilters, scopeReady, allocatedOnly } = useNursePatientScope();
+  const { data, isLoading, isError, error, refetch } = useNurseMedicationPatientsQuery(
+    {
+      search: debouncedSearch,
+      page,
+      page_size: 20,
+      ...scopeFilters,
+    },
+    { enabled: scopeReady },
+  );
   const patients = data?.items ?? [];
   const filteredPatients = useMemo(
     () => patients.filter((patient) => matchesWard(patient.ward_name, wardFilter)),
     [patients, wardFilter],
   );
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, wardFilter, allocatedOnly]);
 
   const totalMedicines = useMemo(
     () => filteredPatients.reduce((sum, p) => sum + (p.medicine_count || 0), 0),

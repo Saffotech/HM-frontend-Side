@@ -21,10 +21,10 @@ import {
 } from '@/shared/components/common';
 import './CollectPaymentModal.css';
 
-const COLLECT_PAYMENT_MODES = ['Cash', 'Card', 'UPI', 'Online'];
+const COLLECT_PAYMENT_MODES = ['Cash', 'Card', 'UPI', 'Insurance'];
 
 function normalizePaymentMode(mode) {
-  if (String(mode).toLowerCase() === 'online') return 'Card';
+  if (String(mode).toLowerCase() === 'online') return 'Insurance';
   return mode;
 }
 

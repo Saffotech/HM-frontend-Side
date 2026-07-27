@@ -26,7 +26,8 @@ function formatPaymentMode(mode) {
   const key = String(mode).toLowerCase();
   if (key === 'cash') return 'Cash';
   if (key === 'card') return 'Card';
-  if (key === 'upi' || key === 'online') return 'UPI';
+  if (key === 'upi') return 'UPI';
+  if (key === 'online') return 'Insurance';
   if (key === 'insurance') return 'Insurance';
   return String(mode).charAt(0).toUpperCase() + String(mode).slice(1);
 }
@@ -62,7 +63,7 @@ export function mapPaymentHistoryFromApi(data) {
     summary: {
       totalCollected: Number(summary.total_collected ?? summary.totalCollected ?? 0),
       cash: Number(summary.cash ?? 0),
-      upi: Number(summary.upi ?? summary.online ?? 0),
+      upi: Number(summary.upi ?? 0),
       card: Number(summary.card ?? 0),
       insurance: Number(summary.insurance ?? 0),
       transactionCount: Number(

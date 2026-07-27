@@ -68,6 +68,14 @@ export const queryKeys = {
 
     dashboard: ['opd', 'dashboard'],
 
+    profile: ['opd', 'profile'],
+
+    notifications: ['opd', 'notifications'],
+
+    notificationsList: (filters) => ['opd', 'notifications', 'list', filters],
+
+    notificationsUnreadCount: ['opd', 'notifications', 'unread-count'],
+
   },
 
   pharmacy: {
@@ -77,12 +85,18 @@ export const queryKeys = {
     prescription: (id) => ['pharmacy', 'prescription', id],
     history: (params) => ['pharmacy', 'history', params],
     prescriptionHistory: (id) => ['pharmacy', 'prescription-history', id],
+    profile: ['pharmacy', 'profile'],
+    notifications: ['pharmacy', 'notifications'],
+    notificationsList: (filters) => ['pharmacy', 'notifications', 'list', filters],
+    notificationsUnreadCount: ['pharmacy', 'notifications', 'unread-count'],
   },
 
   nurse: {
     all: ['nurse'],
+    myDuty: ['nurse', 'my-duty'],
     queue: (filters) => ['nurse', 'queue', filters],
     bedPatients: (filters) => ['nurse', 'bed-patients', filters],
+    bedAllocationSummary: (filters = {}) => ['nurse', 'bed-allocation-summary', filters],
     patientAppointment: (patientId) => ['nurse', 'patient-appointment', patientId],
     vitals: (filters) => ['nurse', 'vitals', filters],
     vitalsSearch: (filters) => ['nurse', 'vitals-search', filters],
@@ -117,6 +131,15 @@ export const queryKeys = {
     reportsOverview: (filters) => ['admin', 'reports', 'overview', filters],
     reportsVisits: (filters) => ['admin', 'reports', 'visits', filters],
     permissionCatalog: ['admin', 'permission-catalog'],
+    bedAllocations: (filters) => ['admin', 'bed-allocations', filters],
+    bedAllocationDetail: (id) => ['admin', 'bed-allocations', 'detail', id],
+    workforceDashboard: (filters) => ['admin', 'workforce', 'dashboard', filters],
+    workforceShifts: (filters) => ['admin', 'workforce', 'shifts', filters],
+    workforceRoster: (filters) => ['admin', 'workforce', 'roster', filters],
+    profile: ['admin', 'profile'],
+    notifications: ['admin', 'notifications'],
+    notificationsList: (filters) => ['admin', 'notifications', 'list', filters],
+    notificationsUnreadCount: ['admin', 'notifications', 'unread-count'],
   },
 
   doctor: {
@@ -189,6 +212,22 @@ export const queryKeys = {
     order: (id) => ['lab', 'order', id],
     reports: (filters) => ['lab', 'reports', filters],
     report: (id) => ['lab', 'report', id],
+    profile: ['lab', 'profile'],
+    notifications: ['lab', 'notifications'],
+    notificationsList: (filters) => ['lab', 'notifications', 'list', filters],
+    notificationsUnreadCount: ['lab', 'notifications', 'unread-count'],
+  },
+
+  receptionist: {
+    all: ['receptionist'],
+    profile: ['receptionist', 'profile'],
+    notifications: ['receptionist', 'notifications'],
+    notificationsList: (filters) => ['receptionist', 'notifications', 'list', filters],
+    notificationsUnreadCount: ['receptionist', 'notifications', 'unread-count'],
+  },
+
+  superAdmin: {
+    profile: ['super-admin', 'profile'],
   },
 
 };

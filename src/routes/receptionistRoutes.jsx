@@ -16,6 +16,12 @@ const DoctorQueuesPage = lazy(
 const QueueHistoryPage = lazy(
   () => import('@/features/receptionist/pages/QueueHistoryPage'),
 );
+const ReceptionistProfilePage = lazy(
+  () => import('@/features/receptionist/pages/ReceptionistProfilePage'),
+);
+const ReceptionistNotificationsPage = lazy(
+  () => import('@/features/receptionist/pages/ReceptionistNotificationsPage'),
+);
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 export const receptionistRoutes = [
@@ -59,6 +65,22 @@ export const receptionistRoutes = [
             element: (
               <LazyRoute>
                 <QueueHistoryPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.RECEPTIONIST_PROFILE,
+            element: (
+              <LazyRoute>
+                <ReceptionistProfilePage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.RECEPTIONIST_NOTIFICATIONS,
+            element: (
+              <LazyRoute>
+                <ReceptionistNotificationsPage />
               </LazyRoute>
             ),
           },

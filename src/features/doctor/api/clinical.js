@@ -95,18 +95,3 @@ export async function patchRecord(id, data) {
   }
   return { id, ...data };
 }
-
-export async function getNotifications() {
-  // TODO: wire to GET /doctor/notifications when backend is ready
-  return [];
-}
-
-export async function patchNotification() {
-  // TODO: wire to GET /doctor/notifications when backend is ready
-  return null;
-}
-
-export async function markAllNotificationsRead() {
-  // TODO: wire to GET /doctor/notifications when backend is ready
-  return null;
-}

@@ -115,6 +115,7 @@ export default function LabCompletedReportsPage() {
                     <th>Patient ID</th>
                     <th>Test Name</th>
                     <th>Doctor</th>
+                    <th>Lab Technician</th>
                     <th>Uploaded Date</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -130,6 +131,7 @@ export default function LabCompletedReportsPage() {
                       <td style={{ color: '#6b7f99', fontFamily: 'monospace', fontSize: '12.5px' }}>{report.patientId}</td>
                       <td>{report.testName}</td>
                       <td>{report.doctorName}</td>
+                      <td>{report.uploadedByName}</td>
                       <td style={{ whiteSpace: 'nowrap', color: '#6b7f99' }}>{report.uploadedDate}</td>
                       <td>
                         <span className="lab-badge completed">✓ Completed</span>

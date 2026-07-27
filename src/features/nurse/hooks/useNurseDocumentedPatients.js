@@ -4,6 +4,7 @@ import {
   useNurseNotesListQuery,
   useNurseVitalsListQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
+import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
 
 function patientIdsWithRecords(items = []) {
   const ids = new Set();
@@ -22,18 +23,24 @@ export function useNurseDocumentedPatients(
   options = {},
 ) {
   const { enabled = true } = options;
+  const { scopeFilters, scopeReady } = useNursePatientScope();
 
   const bedQuery = useNurseBedPatientsQuery(
-    { search: search || undefined, page: 1, page_size: 100 },
-    { enabled },
+    {
+      search: search || undefined,
+      page: 1,
+      page_size: 100,
+      ...scopeFilters,
+    },
+    { enabled: enabled && scopeReady },
   );
   const vitalsQuery = useNurseVitalsListQuery(
-    { page: 1, page_size: 100 },
-    { enabled },
+    { page: 1, page_size: 100, ...scopeFilters },
+    { enabled: enabled && scopeReady },
   );
   const notesQuery = useNurseNotesListQuery(
-    { page: 1, page_size: 100 },
-    { enabled },
+    { page: 1, page_size: 100, ...scopeFilters },
+    { enabled: enabled && scopeReady },
   );
 
   const documentedPatients = useMemo(() => {

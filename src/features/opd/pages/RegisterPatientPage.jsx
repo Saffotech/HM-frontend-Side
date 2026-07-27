@@ -14,10 +14,7 @@ import {
   MoneyAmount,
   TimeSlotGrid,
 } from '@/shared/components/common';
-import {
-  formatAadhaarInput,
-  formatPhoneInput,
-} from '@/shared/utils/validators';
+import { formatAadhaarInput } from '@/shared/utils/validators';
 import { formatPersonName } from '@/shared/utils/formatPersonName';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
 import { formatAppointmentDisplay, todayIso } from '@/features/opd/utils/registerPatientUtils';
@@ -25,6 +22,7 @@ import { useRegisterPatientFlow } from '@/features/opd/hooks/useRegisterPatientF
 import RegisterPatientStepIndicator from '@/features/opd/components/register/RegisterPatientStepIndicator';
 import RegisterPatientBillModal from '@/features/opd/components/register/RegisterPatientBillModal';
 import RegisterPatientSuccessModal from '@/features/opd/components/register/RegisterPatientSuccessModal';
+import RegisterPhoneField from '@/features/opd/components/register/RegisterPhoneField';
 import './RegisterPatientPage.css';
 
 export default function RegisterPatientPage() {
@@ -106,11 +104,12 @@ export default function RegisterPatientPage() {
                 onChange={(v) => set('gender', v)}
                 options={GENDERS.map((g) => ({ value: g, label: g }))}
               />
-              <Input
-                label="Phone"
-                value={form.phone}
-                onChange={(e) => {
-                  set('phone', formatPhoneInput(e.target.value));
+              <RegisterPhoneField
+                phoneCode={form.phoneCode}
+                phone={form.phone}
+                onPhoneCodeChange={(code) => set('phoneCode', code)}
+                onPhoneChange={(value) => {
+                  set('phone', value);
                   if (existingPatient) setExistingPatient(null);
                   if (revisitConfirmed) setRevisitConfirmed(false);
                 }}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Eye, MoreHorizontal, Pencil, Plus, RotateCcw, Search, Trash2, UserCheck, UserX } from 'lucide-react';
 
@@ -58,9 +58,35 @@ const PAGE_SIZE = 10;
 
 
 
+function statusFromSearchParams(searchParams) {
+
+  const status = searchParams.get('status');
+
+  if (status === 'true' || status === 'false') return status;
+
+  return 'all';
+
+}
+
+
+
+function roleFromSearchParams(searchParams) {
+
+  const roleId = searchParams.get('role_id');
+
+  if (roleId && /^\d+$/.test(roleId)) return roleId;
+
+  return 'all';
+
+}
+
+
+
 export default function StaffListPage() {
 
   const navigate = useNavigate();
+
+  const [searchParams] = useSearchParams();
 
   const { user } = useAuth();
 
@@ -70,15 +96,27 @@ export default function StaffListPage() {
 
   const [search, setSearch] = useState('');
 
-  const [roleFilter, setRoleFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState(() => roleFromSearchParams(searchParams));
 
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState(() => statusFromSearchParams(searchParams));
 
   const [page, setPage] = useState(1);
 
 
 
   const debouncedSearch = useDebouncedValue(search.trim(), 300);
+
+
+
+  useEffect(() => {
+
+    setRoleFilter(roleFromSearchParams(searchParams));
+
+    setStatusFilter(statusFromSearchParams(searchParams));
+
+    setPage(1);
+
+  }, [searchParams]);
 
 
 

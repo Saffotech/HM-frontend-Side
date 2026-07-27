@@ -55,11 +55,3 @@ export function useSaveConsultationWorkflowMutation() {
     onError: mutationOnError,
   });
 }
-
-export function useRequestNextPatientMutation() {
-  const token = useQueryToken();
-  return useMutation({
-    mutationFn: (appointmentId) => doctorQueueApi.notifyNextPatient(appointmentId, token),
-    onError: mutationOnError,
-  });
-}

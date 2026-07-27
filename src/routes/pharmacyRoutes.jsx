@@ -9,6 +9,10 @@ const PrescriptionListPage = lazy(() => import('@/features/pharmacy/pages/Prescr
 const PrescriptionDetailPage = lazy(() => import('@/features/pharmacy/pages/PrescriptionDetailPage'));
 const DispensePage = lazy(() => import('@/features/pharmacy/pages/DispensePage'));
 const DispenseHistoryPage = lazy(() => import('@/features/pharmacy/pages/DispenseHistoryPage'));
+const PharmacistProfilePage = lazy(() => import('@/features/pharmacy/pages/PharmacistProfilePage'));
+const PharmacistNotificationsPage = lazy(
+  () => import('@/features/pharmacy/pages/PharmacistNotificationsPage')
+);
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 export const pharmacyRoutes = [
@@ -51,6 +55,22 @@ export const pharmacyRoutes = [
             element: (
               <LazyRoute>
                 <DispenseHistoryPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.PHARMACY_PROFILE,
+            element: (
+              <LazyRoute>
+                <PharmacistProfilePage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.PHARMACY_NOTIFICATIONS,
+            element: (
+              <LazyRoute>
+                <PharmacistNotificationsPage />
               </LazyRoute>
             ),
           },

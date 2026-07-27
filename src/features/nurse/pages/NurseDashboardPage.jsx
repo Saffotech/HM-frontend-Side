@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseDataTable from '@/features/nurse/components/NurseDataTable';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
+import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
 import { QueryFeedback } from '@/shared/components/common';
 import {
   buildNurseNotesUrl,
@@ -43,26 +44,50 @@ export default function NurseDashboardPage() {
   const debouncedSearch = useDebouncedValue(search.trim(), 400);
 
   const {
+    listMode,
+    allocatedOnly,
+    scopeReady,
+    scopeFilters,
+    allocationSummary,
+    allocatedBedIdSet,
+  } = useNursePatientScope();
+
+  const bedFilters = useMemo(
+    () => ({
+      search: debouncedSearch || undefined,
+      page: 1,
+      page_size: 100,
+      ...scopeFilters,
+    }),
+    [debouncedSearch, scopeFilters],
+  );
+
+  const {
     data: bedPatients,
     isLoading,
     isError,
     error,
     refetch,
-  } = useNurseBedPatientsQuery({
-    search: debouncedSearch || undefined,
-    page: 1,
-    page_size: 100,
+  } = useNurseBedPatientsQuery(bedFilters, {
+    enabled: scopeReady,
   });
 
+  const patientsWithBadges = useMemo(() => {
+    return (bedPatients?.items ?? []).map((row) => ({
+      ...row,
+      is_allocated: allocatedBedIdSet.has(Number(row.bed_id)),
+    }));
+  }, [bedPatients?.items, allocatedBedIdSet]);
+
   const kpiCounts = useMemo(
-    () => computeKpiCounts(bedPatients?.items ?? []),
-    [bedPatients?.items],
+    () => computeKpiCounts(patientsWithBadges),
+    [patientsWithBadges],
   );
 
   const filteredPatients = useMemo(() => {
     const filterFn = KPI_FILTERS[activeKpi] ?? KPI_FILTERS.all;
-    return (bedPatients?.items ?? []).filter(filterFn);
-  }, [bedPatients?.items, activeKpi]);
+    return patientsWithBadges.filter(filterFn);
+  }, [patientsWithBadges, activeKpi]);
 
   const kpis = [
     { id: 'all', label: 'Admitted', value: bedPatients?.total ?? kpiCounts.all, border: '' },
@@ -82,7 +107,23 @@ export default function NurseDashboardPage() {
 
   const columns = useMemo(() => [
     { header: 'Patient ID', render: (row) => formatPatientIdDisplay(row) },
-    { header: 'Patient Name', accessor: 'patient_name' },
+    {
+      header: 'Patient Name',
+      render: (row) => (
+        <span className="nurse-dashboard-page__patient-cell">
+          <span>{row.patient_name}</span>
+          {listMode === 'allocated' && (
+            <span className="nurse-badge nurse-badge--allocated">Allocated</span>
+          )}
+          {listMode === 'all' && row.is_allocated && (
+            <span className="nurse-badge nurse-badge--allocated">Allocated</span>
+          )}
+          {listMode === 'all' && !row.is_allocated && allocatedBedIdSet.size > 0 && (
+            <span className="nurse-badge nurse-badge--outside-allocation">Outside Allocation</span>
+          )}
+        </span>
+      ),
+    },
     { header: 'Bed', accessor: 'bed_number' },
     { header: 'Ward', accessor: 'ward_name' },
     { header: 'Department', render: (row) => row.department || '—' },
@@ -123,7 +164,16 @@ export default function NurseDashboardPage() {
         </div>
       ),
     },
-  ], [navigate, canCreateVitals, canCreateNotes]);
+  ], [navigate, canCreateVitals, canCreateNotes, listMode, allocatedBedIdSet.size]);
+
+  const emptyMessage =
+    allocatedOnly && !(allocationSummary?.has_allocations)
+      ? 'No beds assigned for this shift.'
+      : allocatedOnly
+        ? 'No occupied patients on your assigned beds match the filters.'
+        : 'No admitted patients with an assigned bed match the filters.';
+
+  const pageLoading = !scopeReady || isLoading;
 
   return (
     <NurseLayout>
@@ -140,14 +190,14 @@ export default function NurseDashboardPage() {
             >
               <p className="nurse-kpi__label">{kpi.label}</p>
               <p className="nurse-kpi__value">
-                {isLoading ? '—' : kpi.value}
+                {pageLoading ? '—' : kpi.value}
               </p>
             </button>
           ))}
         </div>
 
         <QueryFeedback
-          isLoading={isLoading}
+          isLoading={pageLoading}
           isError={isError}
           error={error}
           onRetry={refetch}
@@ -174,7 +224,7 @@ export default function NurseDashboardPage() {
               columns={columns}
               data={filteredPatients}
               isLoading={false}
-              emptyMessage="No admitted patients with an assigned bed match the filters."
+              emptyMessage={emptyMessage}
               onRowClick={canViewPatients ? handleRowClick : undefined}
             />
           </div>

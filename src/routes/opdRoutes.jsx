@@ -18,6 +18,8 @@ const BillingListPage = lazy(() => import('@/features/opd/billing/pages/BillingL
 const OpdBillPage = lazy(() => import('@/features/opd/billing/pages/OpdBillPage'));
 const ViewBillPage = lazy(() => import('@/features/opd/billing/pages/ViewBillPage'));
 const PaymentHistoryPage = lazy(() => import('@/features/opd/billing/pages/PaymentHistoryPage'));
+const OpdBillingProfilePage = lazy(() => import('@/features/opd/pages/OpdBillingProfilePage'));
+const OpdBillingNotificationsPage = lazy(() => import('@/features/opd/pages/OpdBillingNotificationsPage'));
 const BedOverviewPage = lazy(() => import('@/features/opd/beds/pages/BedOverviewPage'));
 const WardStatusPage = lazy(() => import('@/features/opd/beds/pages/WardStatusPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
@@ -146,6 +148,22 @@ export const opdRoutes = [
             element: (
               <LazyRoute>
                 <PaymentHistoryPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.OPD_PROFILE,
+            element: (
+              <LazyRoute>
+                <OpdBillingProfilePage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.OPD_NOTIFICATIONS,
+            element: (
+              <LazyRoute>
+                <OpdBillingNotificationsPage />
               </LazyRoute>
             ),
           },

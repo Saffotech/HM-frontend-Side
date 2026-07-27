@@ -1,0 +1,611 @@
+/**
+ * Nurse Phase 2 by Atharva —
+ * Full-width compact profile layout — clinical green (#1a5c34), matches vitals/alerts.
+ */
+
+/* =============================================================================
+ * Root
+ * ============================================================================= */
+.receptionist-profile-page {
+  --rp-teal: #1a5c34;
+  --rp-teal-deep: #134228;
+  --rp-teal-soft: #e8f3ec;
+  --rp-teal-wash: #f4faf6;
+  --rp-ink: #0f2744;
+  --rp-muted: #64748b;
+  --rp-line: #dce8e1;
+  --rp-surface: #ffffff;
+  --rp-warn-bg: #fff8f1;
+  --rp-warn-ink: #9a4d12;
+  --rp-warn-line: #f0d5b8;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--rp-ink);
+  animation: nurseProfileIn 0.28s ease;
+}
+
+@keyframes nurseProfileIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* =============================================================================
+ * Banner
+ * ============================================================================= */
+.receptionist-profile-banner {
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.5rem;
+  background: var(--rp-warn-bg);
+  border: 1px solid var(--rp-warn-line);
+  color: var(--rp-warn-ink);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+/* =============================================================================
+ * Toolbar — sticky tab + edit bar
+ * ============================================================================= */
+.receptionist-profile-page__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  padding: 0.65rem 1.15rem;
+  border-bottom: 1px solid var(--rp-line);
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 1px 0 rgba(15, 39, 68, 0.04);
+}
+
+@media (min-width: 768px) {
+  .receptionist-profile-page__toolbar {
+    top: 4.25rem;
+  }
+}
+
+.receptionist-profile-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border-radius: 0.55rem;
+  background: var(--rp-teal-wash);
+  border: 1px solid var(--rp-line);
+}
+
+.receptionist-profile-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: none;
+  background: transparent;
+  padding: 0.45rem 0.8rem;
+  border-radius: 0.4rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--rp-muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.receptionist-profile-tab:hover {
+  color: var(--rp-ink);
+  background: #fff;
+}
+
+.receptionist-profile-tab.is-active {
+  background: var(--rp-teal);
+  color: #fff;
+}
+
+.receptionist-profile-page__actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.receptionist-profile-page__toolbar .btn {
+  border-radius: 0.45rem;
+  font-weight: 650;
+  min-height: 2.15rem;
+}
+
+.receptionist-profile-page__toolbar .btn--primary {
+  background: var(--rp-teal);
+  border-color: var(--rp-teal);
+}
+
+.receptionist-profile-page__toolbar .btn--primary:hover:not(:disabled) {
+  background: var(--rp-teal-deep);
+  border-color: var(--rp-teal-deep);
+}
+
+.receptionist-profile-hero__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* =============================================================================
+ * Main card — fills content width
+ * ============================================================================= */
+.receptionist-profile-card {
+  overflow: visible;
+  width: 100%;
+  border: 1px solid var(--rp-line);
+  border-radius: 0.75rem;
+  background: var(--rp-surface);
+  box-shadow: 0 2px 10px rgba(15, 39, 68, 0.04);
+}
+
+/* =============================================================================
+ * Hero — compact identity strip
+ * ============================================================================= */
+.receptionist-profile-hero {
+  display: flex;
+  align-items: center;
+  gap: 1.15rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid var(--rp-line);
+  background: linear-gradient(180deg, var(--rp-teal-wash) 0%, #fff 100%);
+  flex-wrap: wrap;
+  border-radius: 0.75rem 0.75rem 0 0;
+}
+
+.receptionist-profile-avatar-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.receptionist-profile-avatar-trigger {
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 0.75rem;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.receptionist-profile-avatar-trigger:hover {
+  box-shadow: 0 0 0 3px rgba(26, 92, 52, 0.18);
+}
+
+.receptionist-profile-avatar-trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(26, 92, 52, 0.28);
+}
+
+.receptionist-profile-avatar-img,
+.receptionist-profile-avatar-fallback {
+  width: 7rem;
+  height: 7rem;
+  border-radius: 0.85rem;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px var(--rp-line);
+  display: block;
+}
+
+.receptionist-profile-avatar-fallback {
+  display: grid;
+  place-items: center;
+  background: var(--rp-teal);
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Nurse Phase 2 by Atharva — Upload / Remove menu on photo click */
+.receptionist-profile-avatar-menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 50%;
+  z-index: 8;
+  min-width: 7.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.35rem;
+  border: 1px solid var(--rp-line);
+  border-radius: 0.5rem;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(15, 39, 68, 0.12);
+  transform: translateX(-50%);
+  animation: nurseProfileMenuIn 0.15s ease;
+}
+
+@keyframes nurseProfileMenuIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.receptionist-profile-avatar-menu__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0.4rem 0.55rem;
+  border: none;
+  border-radius: 0.35rem;
+  background: transparent;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--rp-ink);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.receptionist-profile-avatar-menu__item:hover:not(:disabled) {
+  background: var(--rp-teal-soft);
+  color: var(--rp-teal);
+}
+
+.receptionist-profile-avatar-menu__item:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.receptionist-profile-avatar-menu__item--danger {
+  color: #a33b3b;
+}
+
+.receptionist-profile-avatar-menu__item--danger:hover:not(:disabled) {
+  background: #fff5f5;
+  color: #8f2f2f;
+}
+
+.receptionist-profile-hero__meta {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.receptionist-profile-hero__name {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--rp-ink);
+  line-height: 1.25;
+}
+
+.receptionist-profile-hero__sub {
+  margin: 0.2rem 0 0.55rem;
+  color: var(--rp-muted);
+  font-size: 0.8125rem;
+}
+
+.receptionist-profile-hero__status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  margin-top: 0.75rem;
+}
+
+.receptionist-profile-hero__updated {
+  margin: 0;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--rp-teal, #1a5c34);
+}
+
+.receptionist-profile-hero__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.receptionist-profile-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.3rem;
+  background: #fff;
+  border: 1px solid var(--rp-line);
+  color: #3d5166;
+  font-size: 0.7rem;
+  font-weight: 650;
+}
+
+.receptionist-profile-tag--ok {
+  background: var(--rp-teal-soft);
+  border-color: #b8ddd8;
+  color: var(--rp-teal);
+}
+
+.receptionist-profile-tag--warn {
+  background: var(--rp-warn-bg);
+  border-color: var(--rp-warn-line);
+  color: var(--rp-warn-ink);
+}
+
+/* Nurse Phase 2 by Atharva — profile completion progress */
+.receptionist-profile-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 0;
+  flex: 1;
+  min-width: 10rem;
+  max-width: 22rem;
+}
+
+.receptionist-profile-progress__track {
+  flex: 1;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: #e2eee6;
+  overflow: hidden;
+}
+
+.receptionist-profile-progress__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2d8a52 0%, var(--rp-teal) 100%);
+  transition: width 0.3s ease;
+}
+
+.receptionist-profile-progress__label {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 650;
+  color: var(--rp-muted);
+}
+
+/* =============================================================================
+ * Form body
+ * ============================================================================= */
+.receptionist-profile-body {
+  padding: 1rem 1.15rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.receptionist-profile-section {
+  padding: 0.95rem 0.85rem;
+  border-bottom: none;
+  scroll-margin-top: 6.5rem;
+  border-radius: 0.5rem;
+  background: transparent;
+}
+
+.receptionist-profile-section__title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--rp-teal);
+}
+
+.receptionist-profile-section__title svg {
+  width: 1rem;
+  height: 1rem;
+  opacity: 0.9;
+}
+
+.receptionist-profile-hint {
+  margin: -0.35rem 0 0.7rem;
+  font-size: 0.75rem;
+  color: var(--rp-muted);
+  line-height: 1.4;
+}
+
+.receptionist-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.receptionist-profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+.receptionist-profile-field--span {
+  grid-column: 1 / -1;
+}
+
+.receptionist-profile-field__label {
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--rp-muted);
+}
+
+.receptionist-profile-field__value {
+  margin: 0;
+  min-height: 2.15rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 0.4rem;
+  background: var(--rp-teal-wash);
+  border: 1px solid transparent;
+  font-size: 0.875rem;
+  color: var(--rp-ink);
+  word-break: break-word;
+}
+
+.receptionist-profile-field__value--empty {
+  color: #94a3b8;
+  background: #f8fafc;
+}
+
+/* =============================================================================
+ * Inputs
+ * ============================================================================= */
+.receptionist-profile-page .receptionist-profile-input {
+  width: 100%;
+  min-height: 2.2rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid #d2dde4;
+  border-radius: 0.4rem;
+  font: inherit;
+  font-size: 0.875rem;
+  background: #fff;
+  color: var(--rp-ink);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.receptionist-profile-page textarea.receptionist-profile-input {
+  min-height: 4.25rem;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.receptionist-profile-page .receptionist-profile-input:hover {
+  border-color: #b7c9d4;
+}
+
+.receptionist-profile-page .receptionist-profile-input:focus {
+  outline: none;
+  border-color: var(--rp-teal);
+  box-shadow: 0 0 0 3px rgba(26, 92, 52, 0.12);
+}
+
+/* =============================================================================
+ * Language chips
+ * ============================================================================= */
+.receptionist-profile-lang-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.4rem;
+  min-height: 0;
+}
+
+.receptionist-profile-lang-chip {
+  border: 1px solid #b8ddd8;
+  background: var(--rp-teal-soft);
+  color: var(--rp-teal);
+  border-radius: 0.35rem;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.receptionist-profile-lang-chip:hover {
+  background: #cff5ef;
+  border-color: #8fc9c1;
+}
+
+.receptionist-profile-lang-add {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.receptionist-profile-lang-add .receptionist-profile-input {
+  flex: 1;
+}
+
+/* =============================================================================
+ * Responsive
+ * ============================================================================= */
+@media (max-width: 960px) {
+  .receptionist-profile-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .receptionist-profile-page {
+    gap: 0.6rem;
+  }
+
+  .receptionist-profile-hero {
+    gap: 0.85rem;
+    padding: 0.85rem;
+  }
+
+  .receptionist-profile-page__toolbar {
+    padding: 0.55rem 0.85rem;
+  }
+
+  .receptionist-profile-tabs {
+    width: 100%;
+  }
+
+  .receptionist-profile-tab {
+    flex: 1;
+    justify-content: center;
+    padding-inline: 0.45rem;
+  }
+
+  .receptionist-profile-page__actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .receptionist-profile-page__actions .btn {
+    flex: 1;
+  }
+
+  .receptionist-profile-body {
+    padding: 0.85rem;
+  }
+
+  .receptionist-profile-section {
+    scroll-margin-top: 5.5rem;
+  }
+
+  .receptionist-profile-grid {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .receptionist-profile-avatar-img,
+  .receptionist-profile-avatar-fallback {
+    width: 5.75rem;
+    height: 5.75rem;
+    font-size: 1.75rem;
+  }
+
+  .receptionist-profile-hero__name {
+    font-size: 1.1rem;
+  }
+}

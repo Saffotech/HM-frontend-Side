@@ -7,6 +7,7 @@ import { getOccupiedBedMapByPatientDbId } from '@/shared/api/services/beds';
 import {
   mapQueueResponse,
   mapBedPatientsResponse,
+  mapBedAllocationSummary,
   mapQueueFiltersToApi,
   enrichQueueItemsWithBeds,
   mapVitalsNotesSearchToApi,
@@ -36,6 +37,10 @@ import {
 
 /** Backend GET /nurse/queue/today enforces page_size <= 100. */
 export const NURSE_QUEUE_MAX_PAGE_SIZE = 100;
+
+function withAllocatedOnly(params = {}) {
+  return params.allocated_only === true ? { allocated_only: true } : {};
+}
 
 async function fetchTodayQueueItems(token) {
   const raw = await nurseApi.getTodayQueue({ page: 1, page_size: NURSE_QUEUE_MAX_PAGE_SIZE }, token);
@@ -120,6 +125,7 @@ export async function getQueue(params = {}, token) {
 export async function getBedPatients(params = {}, token) {
   const page = params.page ?? 1;
   const pageSize = Math.min(Math.max(params.page_size ?? 20, 1), 100);
+  const allocatedOnly = params.allocated_only === true;
   const raw = await nurseApi.getBedPatients({
     search: params.search,
     ward_name: params.ward_name,
@@ -129,8 +135,26 @@ export async function getBedPatients(params = {}, token) {
     patient_uid: params.patient_uid,
     page,
     page_size: pageSize,
+    // Optional — omit when false so defaults match pre-Phase-4 behaviour
+    ...(allocatedOnly ? { allocated_only: true } : {}),
+    ...(params.assignment_date ? { assignment_date: params.assignment_date } : {}),
+    ...(params.shift_name ? { shift_name: params.shift_name } : {}),
   }, token);
   return mapBedPatientsResponse(raw);
+}
+
+/** Additive Phase 4 — nurse shift bed assignment summary. */
+export async function getBedAllocationSummary(params = {}, token) {
+  const raw = await nurseApi.getBedAllocationSummary({
+    ...(params.assignment_date ? { assignment_date: params.assignment_date } : {}),
+    ...(params.shift_name ? { shift_name: params.shift_name } : {}),
+  }, token);
+  return mapBedAllocationSummary(raw);
+}
+
+// —— Nurse self-service: roster + allocated beds span ——
+export async function getMyDuty(token) {
+  return nurseApi.getMyDuty(token);
 }
 
 export async function createVitals(data, token) {
@@ -153,12 +177,14 @@ export async function getVital(vitalId, token) {
 
 export async function listVitals(params = {}, token) {
   const { search, page = 1, page_size = 20, ...rest } = params;
+  const scopeParams = withAllocatedOnly(params);
   if (search?.trim()) {
     const raw = await nurseApi.searchVitals({
       ...mapVitalsNotesSearchToApi(search),
       page,
       page_size,
       ...rest,
+      ...scopeParams,
     }, token);
     const wrapped = wrapPagedArray(raw, { page, page_size }, mapVitalItem);
     return {
@@ -166,7 +192,7 @@ export async function listVitals(params = {}, token) {
       items: await enrichNursePatientRows(wrapped.items, token),
     };
   }
-  const raw = await nurseApi.listVitals({ page, page_size, ...rest }, token);
+  const raw = await nurseApi.listVitals({ page, page_size, ...rest, ...scopeParams }, token);
   const wrapped = wrapPagedArray(raw, { page, page_size }, mapVitalItem);
   return {
     ...wrapped,
@@ -204,12 +230,14 @@ export async function getNote(noteId, token) {
 
 export async function listNotes(params = {}, token) {
   const { search, page = 1, page_size = 20, ...rest } = params;
+  const scopeParams = withAllocatedOnly(params);
   if (search?.trim()) {
     const raw = await nurseApi.searchNotes({
       ...mapVitalsNotesSearchToApi(search),
       page,
       page_size,
       ...rest,
+      ...scopeParams,
     }, token);
     const wrapped = wrapPagedArray(raw, { page, page_size }, mapNoteItem);
     return {
@@ -217,7 +245,7 @@ export async function listNotes(params = {}, token) {
       items: await enrichNursePatientRows(wrapped.items, token),
     };
   }
-  const raw = await nurseApi.listNotes({ page, page_size, ...rest }, token);
+  const raw = await nurseApi.listNotes({ page, page_size, ...rest, ...scopeParams }, token);
   const wrapped = wrapPagedArray(raw, { page, page_size }, mapNoteItem);
   return {
     ...wrapped,
@@ -248,6 +276,7 @@ export async function getMedicationPatients(params = {}, token) {
     page_size,
     ...searchFilters,
     ...rest,
+    ...withAllocatedOnly(params),
   }, token);
   return mapMedicationPatientsResponse(raw, { page, page_size });
 }
@@ -327,7 +356,10 @@ export async function getHandover(id, token) {
 }
 
 export async function getAlerts(params = {}, token) {
-  const raw = await nurseApi.getAlerts(params, token);
+  const raw = await nurseApi.getAlerts({
+    ...params,
+    ...withAllocatedOnly(params),
+  }, token);
   return mapAlertListResponse(raw);
 }
 

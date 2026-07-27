@@ -25,6 +25,16 @@ export function getBedPatients(params, token) {
   return apiClient(appendQuery('/nurse/beds/patients', params), { token });
 }
 
+/** Additive Phase 4 — assignment summary for logged-in nurse. */
+export function getBedAllocationSummary(params, token) {
+  return apiClient(appendQuery('/nurse/beds/allocation-summary', params), { token });
+}
+
+// —— Nurse self-service: roster + allocated beds span ——
+export function getMyDuty(token) {
+  return apiClient('/nurse/my-duty', { token });
+}
+
 // —— Vitals ——
 
 export function createVital(body, token) {

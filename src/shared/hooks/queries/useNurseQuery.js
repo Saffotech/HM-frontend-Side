@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getQueue,
   getBedPatients,
+  getBedAllocationSummary,
+  getMyDuty,
   getVital,
   listVitals,
   searchVitals,
@@ -55,6 +57,30 @@ export function useNurseBedPatientsQuery(filters = {}, options = {}) {
     queryKey: queryKeys.nurse.bedPatients(filters),
     enabled: enabled && Boolean(token),
     queryFn: () => getBedPatients(filters, token),
+    staleTime: 30 * 1000,
+  });
+}
+
+/** Phase 4 — allocation summary for Allocated / All toggle defaults. */
+export function useNurseBedAllocationSummaryQuery(filters = {}, options = {}) {
+  const { enabled = true } = options;
+  const token = useQueryToken();
+  return useQuery({
+    queryKey: queryKeys.nurse.bedAllocationSummary(filters),
+    enabled: enabled && Boolean(token),
+    queryFn: () => getBedAllocationSummary(filters, token),
+    staleTime: 30 * 1000,
+  });
+}
+
+/** Nurse self-service: roster + allocated beds span (read-only). */
+export function useNurseMyDutyQuery(options = {}) {
+  const { enabled = true } = options;
+  const token = useQueryToken();
+  return useQuery({
+    queryKey: queryKeys.nurse.myDuty,
+    enabled: enabled && Boolean(token),
+    queryFn: () => getMyDuty(token),
     staleTime: 30 * 1000,
   });
 }

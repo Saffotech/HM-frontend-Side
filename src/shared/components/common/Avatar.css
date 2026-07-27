@@ -5,6 +5,20 @@
   border-radius: 50%;
   font-weight: 600;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.avatar--image {
+  background: #e2e8f0;
+  color: transparent;
+  padding: 0;
+}
+
+.avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .avatar--blue {
@@ -40,4 +54,8 @@
 .avatar--primary {
   background: var(--color-primary);
   color: #fff;
+}
+
+.avatar--primary.avatar--image {
+  background: #e2e8f0;
 }

@@ -11,6 +11,7 @@ import { useNursePagedListGuard } from '@/features/nurse/hooks/useNursePagedList
 import { getPagedListCount, formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
 import { QueryFeedback } from '@/shared/components/common';
 import { useNurseNotesListQuery } from '@/shared/hooks/queries/useNurseQuery';
+import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
 
 export default function NurseNotesRegistryPage() {
   const navigate = useNavigate();
@@ -18,12 +19,16 @@ export default function NurseNotesRegistryPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search, 400);
+  const { scopeFilters, scopeReady, allocatedOnly } = useNursePatientScope();
 
-  const { data, isLoading, isError, error, refetch } = useNurseNotesListQuery({ search: debouncedSearch, page, page_size: 20 });
+  const { data, isLoading, isError, error, refetch } = useNurseNotesListQuery(
+    { search: debouncedSearch, page, page_size: 20, ...scopeFilters },
+    { enabled: scopeReady },
+  );
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch]);
+  }, [debouncedSearch, allocatedOnly]);
 
   useNursePagedListGuard({
     isLoading,
@@ -118,9 +123,11 @@ export default function NurseNotesRegistryPage() {
                   </>
                 )}
                 {' '}
-                {listCount.count === 1 && !listCount.approximate ? 'note' : 'notes'}
+                {listCount.count === 1 && !listCount.approximate ? 'patient' : 'patients'}
               </p>
-              <p className="nurse-notes-registry__hint">Click a row to view full nursing note</p>
+              <p className="nurse-notes-registry__hint">
+                One row per patient (latest note). Open a row for full history.
+              </p>
             </div>
           </div>
           <div className="nurse-notes-registry__search-wrap">

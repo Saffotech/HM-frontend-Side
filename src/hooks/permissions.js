@@ -135,10 +135,14 @@ export function canAccessAction(user, action) {
 
 /** Direct backend permission check (e.g. patients:create). */
 export function hasBackendPermission(user, permissionName) {
+  const role = user?.role;
+  // Admin / Super Admin get all permissions in seed (__all__). Allow even when
+  // the session JWT still has a stale list from before a permission sync.
+  if (role === 'admin' || role === 'super_admin') return true;
+
   const permissions = user?.permissions;
   if (Array.isArray(permissions) && permissions.length > 0) {
     return permissions.includes(permissionName);
   }
-  if (user?.role === 'admin') return true;
   return false;
 }

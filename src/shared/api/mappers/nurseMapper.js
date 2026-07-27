@@ -74,6 +74,7 @@ export function mergeNursePatientDirectory(...sourceLists) {
         patient_id: id,
         patient_name: row.patient_name || existing?.patient_name || '',
         patientUid: uid || existing?.patientUid || '',
+        bed_id: row.bed_id ?? existing?.bed_id ?? null,
         bed_number: row.bed_number || existing?.bed_number || '',
       };
       byId.set(id, attachPatientUid(merged));
@@ -227,6 +228,35 @@ export function mapBedPatientsResponse(raw) {
     total: raw.total ?? items.length,
     page: raw.page ?? 1,
     page_size: raw.page_size ?? 20,
+  };
+}
+
+/** Phase 4 — GET /nurse/beds/allocation-summary (additive fields only). */
+export function mapBedAllocationSummary(raw) {
+  if (!raw) {
+    return {
+      has_allocations: false,
+      assignment_date: null,
+      shift_name: null,
+      shift_start: null,
+      shift_end: null,
+      assigned_bed_count: 0,
+      occupied_count: 0,
+      vacant_count: 0,
+      allocated_bed_ids: [],
+    };
+  }
+  const allocatedBedIds = (raw.allocated_bed_ids ?? []).map(Number).filter(Number.isFinite);
+  return {
+    has_allocations: Boolean(raw.has_allocations),
+    assignment_date: raw.assignment_date ?? null,
+    shift_name: raw.shift_name ?? null,
+    shift_start: raw.shift_start ?? null,
+    shift_end: raw.shift_end ?? null,
+    assigned_bed_count: Number(raw.assigned_bed_count) || 0,
+    occupied_count: Number(raw.occupied_count) || 0,
+    vacant_count: Number(raw.vacant_count) || 0,
+    allocated_bed_ids: allocatedBedIds,
   };
 }
 

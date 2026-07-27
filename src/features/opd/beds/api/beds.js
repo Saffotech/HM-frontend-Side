@@ -52,6 +52,7 @@ export function apiBedToUi(bed) {
     patientId: bed.patient_uid ?? bed.patient_id ?? bed.patientId,
     patientName: bed.patient_name ?? bed.patientName,
     department: bed.department_name ?? bed.department,
+    departmentId: bed.department_id ?? bed.departmentId ?? null,
     admittedDate: formatOpdDisplayDateTime(bed.admitted_at ?? bed.admittedDate),
     dbId: bed.id ?? bed.dbId,
   };

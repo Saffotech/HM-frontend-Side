@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, ChevronDown } from 'lucide-react';
 import { useAuthStore } from '@/shared/store/useAuthStore';
 import { ROUTES } from '@/shared/constants';
+import { resolveMediaUrl } from '@/shared/utils/resolveMediaUrl';
 import Avatar from './Avatar';
 import './UserProfileMenu.css';
 
@@ -25,6 +26,10 @@ export default function UserProfileMenu({
 
   const displayName = user?.full_name || user?.email || 'User';
   const email = user?.email || '';
+  const avatarSrc = useMemo(
+    () => resolveMediaUrl(user?.profile_image_url),
+    [user?.profile_image_url]
+  );
   const roleLabel =
     user?.department ||
     (user?.role === 'admin'
@@ -37,7 +42,9 @@ export default function UserProfileMenu({
           ? 'Lab Technician'
           : user?.role === 'pharmacist'
             ? 'Pharmacist'
-            : user?.role || 'Staff');
+            : user?.role === 'super_admin'
+              ? 'Super Admin'
+              : user?.role || 'Staff');
 
   useEffect(() => {
     const onDocClick = (e) => {
@@ -73,7 +80,12 @@ export default function UserProfileMenu({
         aria-haspopup={showDropdown || logoutMenuOnly ? 'true' : undefined}
         title={profileHref && !logoutMenuOnly ? 'Open profile' : undefined}
       >
-        <Avatar name={displayName} size={compact ? 32 : 36} className="avatar--primary" />
+        <Avatar
+          name={displayName}
+          src={avatarSrc}
+          size={compact ? 32 : 36}
+          className="avatar--primary"
+        />
         {!compact && (
           <>
             <span className="user-profile-menu__name">{displayName}</span>

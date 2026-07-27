@@ -35,6 +35,7 @@ export function validateRegisterPatient(values, { isRevisit = false } = {}) {
 export const REGISTER_PATIENT_INITIAL_FORM = {
   name: '',
   gender: '',
+  phoneCode: '+91',
   phone: '',
   dob: '',
   address: '',

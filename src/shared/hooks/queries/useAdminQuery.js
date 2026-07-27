@@ -19,6 +19,26 @@ import {
   updateStaff,
 } from '@/features/admin/api/admin';
 import { loadPermissionCatalog } from '@/features/admin/utils/permissionCatalog';
+import {
+  bulkCreateBedAllocations,
+  createBedAllocation,
+  deactivateBedAllocation,
+  deleteBedAllocation,
+  getBedAllocation,
+  listBedAllocations,
+  updateBedAllocation,
+} from '@/shared/api/services/adminBedAllocation';
+import {
+  createWorkforceRoster,
+  bulkCreateWorkforceRoster,
+  createWorkforceShift,
+  deleteWorkforceRoster,
+  deleteWorkforceShift,
+  getWorkforceDashboard,
+  listWorkforceRoster,
+  listWorkforceShifts,
+  updateWorkforceShift,
+} from '@/shared/api/services/adminNurseWorkforce';
 import { queryKeys } from '@/shared/api/queryKeys';
 
 export function useAdminDashboardQuery(options = {}) {
@@ -203,3 +223,157 @@ export function useRegisterStaffMutation() {
     },
   });
 }
+
+/* —— Nurse bed allocation (Phase 3 Admin UI) —— */
+
+export function useAdminBedAllocationsQuery(filters = {}, options = {}) {
+  const { enabled = true } = options;
+  return useQuery({
+    queryKey: queryKeys.admin.bedAllocations(filters),
+    enabled,
+    queryFn: () => listBedAllocations(filters),
+  });
+}
+
+export function useAdminBedAllocationDetailQuery(allocationId, options = {}) {
+  const { enabled = true } = options;
+  return useQuery({
+    queryKey: queryKeys.admin.bedAllocationDetail(allocationId),
+    enabled: enabled && Boolean(allocationId),
+    queryFn: () => getBedAllocation(allocationId),
+  });
+}
+
+function invalidateBedAllocations(queryClient) {
+  queryClient.invalidateQueries({ queryKey: ['admin', 'bed-allocations'] });
+}
+
+export function useCreateBedAllocationMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (form) => createBedAllocation(form),
+    onSuccess: () => invalidateBedAllocations(queryClient),
+  });
+}
+
+export function useBulkCreateBedAllocationsMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (form) => bulkCreateBedAllocations(form),
+    onSuccess: () => invalidateBedAllocations(queryClient),
+  });
+}
+
+export function useUpdateBedAllocationMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, form }) => updateBedAllocation(id, form),
+    onSuccess: (_data, vars) => {
+      invalidateBedAllocations(queryClient);
+      if (vars?.id) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.admin.bedAllocationDetail(vars.id),
+        });
+      }
+    },
+  });
+}
+
+export function useDeactivateBedAllocationMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => deactivateBedAllocation(id),
+    onSuccess: () => invalidateBedAllocations(queryClient),
+  });
+}
+
+export function useDeleteBedAllocationMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => deleteBedAllocation(id),
+    onSuccess: () => invalidateBedAllocations(queryClient),
+  });
+}
+
+/* —— Nurse Workforce (Phase 7) —— */
+
+function invalidateWorkforce(queryClient) {
+  queryClient.invalidateQueries({ queryKey: ['admin', 'workforce'] });
+}
+
+export function useWorkforceDashboardQuery(filters = {}, options = {}) {
+  const { enabled = true } = options;
+  return useQuery({
+    queryKey: queryKeys.admin.workforceDashboard(filters),
+    enabled,
+    queryFn: () => getWorkforceDashboard(filters),
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useWorkforceShiftsQuery(filters = {}, options = {}) {
+  const { enabled = true } = options;
+  return useQuery({
+    queryKey: queryKeys.admin.workforceShifts(filters),
+    enabled,
+    queryFn: () => listWorkforceShifts(filters),
+  });
+}
+
+export function useWorkforceRosterQuery(filters = {}, options = {}) {
+  const { enabled = true } = options;
+  return useQuery({
+    queryKey: queryKeys.admin.workforceRoster(filters),
+    enabled,
+    queryFn: () => listWorkforceRoster(filters),
+  });
+}
+
+export function useCreateWorkforceShiftMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body) => createWorkforceShift(body),
+    onSuccess: () => invalidateWorkforce(queryClient),
+  });
+}
+
+export function useUpdateWorkforceShiftMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }) => updateWorkforceShift(id, body),
+    onSuccess: () => invalidateWorkforce(queryClient),
+  });
+}
+
+export function useDeleteWorkforceShiftMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => deleteWorkforceShift(id),
+    onSuccess: () => invalidateWorkforce(queryClient),
+  });
+}
+
+export function useCreateWorkforceRosterMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body) => createWorkforceRoster(body),
+    onSuccess: () => invalidateWorkforce(queryClient),
+  });
+}
+
+export function useBulkCreateWorkforceRosterMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body) => bulkCreateWorkforceRoster(body),
+    onSuccess: () => invalidateWorkforce(queryClient),
+  });
+}
+
+export function useDeleteWorkforceRosterMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => deleteWorkforceRoster(id),
+    onSuccess: () => invalidateWorkforce(queryClient),
+  });
+}
+

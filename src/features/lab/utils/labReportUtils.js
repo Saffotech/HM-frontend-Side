@@ -382,6 +382,7 @@ export function printReportsSummary(reports, title = 'Lab Reports Summary') {
         <td>${escapeHtml(r.patientId)}</td>
         <td>${escapeHtml(r.testName)}</td>
         <td>${escapeHtml(r.doctorName)}</td>
+        <td>${escapeHtml(r.uploadedByName)}</td>
         <td>${escapeHtml(r.uploadedDate)}</td>
       </tr>`
     )
@@ -408,6 +409,7 @@ export function printReportsSummary(reports, title = 'Lab Reports Summary') {
               <th>Patient ID</th>
               <th>Test</th>
               <th>Doctor</th>
+              <th>Lab Technician</th>
               <th>Uploaded</th>
             </tr>
           </thead>
@@ -421,12 +423,28 @@ export function printReportsSummary(reports, title = 'Lab Reports Summary') {
 
 /** Download archive as CSV (completed reports page only) */
 export function downloadReportsCsv(reports) {
-  const header = ['Report ID', 'Patient Name', 'Patient ID', 'Test', 'Doctor', 'Uploaded'];
+  const header = [
+    'Report ID',
+    'Patient Name',
+    'Patient ID',
+    'Test',
+    'Doctor',
+    'Lab Technician',
+    'Uploaded',
+  ];
   const lines = [
     header.join(','),
     ...reports.map((r) =>
-      [r.reportId, r.patientName, r.patientId, r.testName, r.doctorName, r.uploadedDate]
-        .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+      [
+        r.reportId,
+        r.patientName,
+        r.patientId,
+        r.testName,
+        r.doctorName,
+        r.uploadedByName,
+        r.uploadedDate,
+      ]
+        .map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`)
         .join(',')
     ),
   ];

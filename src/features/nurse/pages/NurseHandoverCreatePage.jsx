@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NursePageHeader from '@/features/nurse/components/NursePageHeader';
-import { useCreateHandoverMutation } from '@/shared/hooks/queries/useNurseQuery';
+import {
+  useCreateHandoverMutation,
+  useNurseBedAllocationSummaryQuery,
+} from '@/shared/hooks/queries/useNurseQuery';
 import { Input } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
 
@@ -14,9 +17,17 @@ const INITIAL = {
   general_notes: '',
 };
 
+function formatShiftLabel(shiftName) {
+  if (!shiftName) return 'Current Shift';
+  const name = String(shiftName).trim();
+  if (!name) return 'Current Shift';
+  return name.toLowerCase().includes('shift') ? name : `${name} Shift`;
+}
+
 export default function NurseHandoverCreatePage() {
   const navigate = useNavigate();
   const createMut = useCreateHandoverMutation();
+  const { data: allocationSummary } = useNurseBedAllocationSummaryQuery();
   const [form, setForm] = useState(INITIAL);
 
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
@@ -49,6 +60,34 @@ export default function NurseHandoverCreatePage() {
     <NurseLayout>
       <div className="nurse-page nurse-max-w-form">
         <NursePageHeader title="New Shift Handover" />
+
+        {allocationSummary?.has_allocations && (
+          <div className="nurse-handover-assignment nurse-handover-assignment--create" aria-live="polite">
+            <div className="nurse-handover-assignment__header">
+              <h2 className="nurse-section-title">Your assignment</h2>
+              <span className="nurse-badge nurse-badge--current-shift">
+                {formatShiftLabel(allocationSummary.shift_name)}
+              </span>
+            </div>
+            <div className="nurse-handover-assignment__stats">
+              <span>
+                Assigned Beds
+                {' '}
+                <strong>{allocationSummary.assigned_bed_count}</strong>
+              </span>
+              <span>
+                Occupied Beds
+                {' '}
+                <strong>{allocationSummary.occupied_count}</strong>
+              </span>
+            </div>
+            <p className="nurse-handover-assignment__hint">
+              After create, occupied patients on your allocated beds are added automatically.
+              You can remove or add more patients on the next screen.
+            </p>
+          </div>
+        )}
+
         <form className="nurse-card nurse-card--padded nurse-form" onSubmit={onSubmit}>
           <div className="nurse-field">
             <label htmlFor="ward_name">Ward *</label>

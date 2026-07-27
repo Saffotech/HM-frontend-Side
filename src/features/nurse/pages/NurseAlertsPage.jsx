@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, Plus } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
@@ -13,6 +13,7 @@ import {
   useNurseAlertsQuery,
   useNurseAlertSummaryQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
+import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
 import { ROUTES } from '@/shared/constants';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
 
@@ -41,6 +42,11 @@ export default function NurseAlertsPage() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const debouncedSearch = useDebouncedValue(search.trim(), 400);
+  const { scopeFilters, scopeReady, allocatedOnly } = useNursePatientScope();
+
+  useEffect(() => {
+    setPage(1);
+  }, [status, severity, unassignedOnly, alertType, wardName, debouncedSearch, fromDate, toDate, allocatedOnly]);
 
   const { data, isLoading, isError, error, refetch } = useNurseAlertsQuery({
     status,
@@ -53,7 +59,8 @@ export default function NurseAlertsPage() {
     to_date: toDate || undefined,
     page,
     limit: 20,
-  });
+    ...scopeFilters,
+  }, { enabled: scopeReady && canViewAlerts });
   const {
     data: summary,
     isLoading: isSummaryLoading,

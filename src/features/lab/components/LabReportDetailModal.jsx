@@ -70,6 +70,10 @@ export default function LabReportDetailModal({ report, onClose }) {
                 <span>{display.doctorName ?? '—'}</span>
               </div>
               <div className="lab-info-item">
+                <label>Lab Technician</label>
+                <span>{display.uploadedByName ?? '—'}</span>
+              </div>
+              <div className="lab-info-item">
                 <label>Uploaded</label>
                 <span>{display.uploadedDate}</span>
               </div>

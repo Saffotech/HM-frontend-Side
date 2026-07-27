@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { useNavigate } from 'react-router-dom';
 import { RefreshCw, Users } from 'lucide-react';
@@ -7,15 +7,21 @@ import NurseDataTable from '@/features/nurse/components/NurseDataTable';
 import NursePagination from '@/features/nurse/components/NursePagination';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
 import { useNurseDocumentedPatients } from '@/features/nurse/hooks/useNurseDocumentedPatients';
+import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
 import { QueryFeedback } from '@/shared/components/common';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
 
 export default function NurseQueuePage() {
   const navigate = useNavigate();
   const { canViewPatients } = useNursePermissionSet();
+  const { scopeReady, allocatedOnly, allocationSummary } = useNursePatientScope();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebouncedValue(search, 400);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, allocatedOnly]);
 
   const { data, isLoading, isError, error, refetch, isFetching } = useNurseDocumentedPatients({
     search: debouncedSearch,
@@ -83,13 +89,16 @@ export default function NurseQueuePage() {
             <div>
               <h1 className="nurse-queue-page__title">Patient</h1>
               <p className="nurse-queue-page__subtitle">
-                {isLoading ? 'Loading patients…' : (
+                {!scopeReady || isLoading ? 'Loading patients…' : (
                   <>
                     <strong>{total}</strong>
                     {' '}
                     {total === 1 ? 'patient' : 'patients'}
                     {' '}
                     with vitals and notes completed
+                    {allocatedOnly && allocationSummary?.has_allocations === false
+                      ? ' (no beds assigned this shift)'
+                      : ''}
                   </>
                 )}
               </p>

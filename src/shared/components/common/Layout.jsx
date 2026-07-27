@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home,
   Users,
@@ -9,13 +9,13 @@ import {
   BedDouble,
   Menu,
   X,
-  Bell,
   History,
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { ROUTES } from '@/shared/constants';
 import { ACTIONS, canAccessAction } from '@/hooks/permissions';
 import { useAuth } from '@/shared/hooks/useAuth';
+import OpdNotificationsBell from '@/features/opd/components/OpdNotificationsBell';
 import BrandLogo from './BrandLogo';
 import BrandName from './BrandName';
 import UserProfileMenu from './UserProfileMenu';
@@ -32,6 +32,8 @@ const NAV_LINKS = [
 ];
 
 const PAGE_TITLES = [
+  { prefix: ROUTES.OPD_NOTIFICATIONS, title: 'Notifications' },
+  { prefix: ROUTES.OPD_PROFILE, title: 'My Profile' },
   { prefix: ROUTES.BILLING_OPD_NEW, title: 'Generate Bill' },
   { prefix: ROUTES.DASHBOARD, title: 'Dashboard' },
   { prefix: ROUTES.PATIENTS, title: 'Patient Management' },
@@ -43,9 +45,11 @@ const PAGE_TITLES = [
 
 export default function Layout({ children }) {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [title, setTitle] = useState('Dashboard');
+  const onProfilePage = pathname === ROUTES.OPD_PROFILE;
 
   const navLinks = useMemo(
     () => NAV_LINKS.filter((link) => canAccessAction(user, link.permission)),
@@ -127,7 +131,11 @@ export default function Layout({ children }) {
         </nav>
 
         <div className="layout-sidebar__user">
-          <UserProfileMenu className="user-profile-menu--sidebar" />
+          <UserProfileMenu
+            className="user-profile-menu--sidebar"
+            profileHref={ROUTES.OPD_PROFILE}
+            logoutMenuOnly={onProfilePage}
+          />
         </div>
       </aside>
 
@@ -136,11 +144,13 @@ export default function Layout({ children }) {
           <h1 className="layout-header__title">{title}</h1>
           <div className="layout-header__actions">
             <span className="layout-header__date">{today}</span>
-            <button type="button" className="layout-header__bell" aria-label="Notifications">
-              <Bell size={20} />
-              <span className="layout-header__bell-dot" />
-            </button>
-            <UserProfileMenu />
+            <OpdNotificationsBell
+              onViewAll={() => navigate(ROUTES.OPD_NOTIFICATIONS)}
+            />
+            <UserProfileMenu
+              profileHref={ROUTES.OPD_PROFILE}
+              logoutMenuOnly={onProfilePage}
+            />
           </div>
         </header>
 

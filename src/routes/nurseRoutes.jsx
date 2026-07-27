@@ -12,6 +12,8 @@ import LazyRoute from '@/routes/LazyRoute';
 
 const NurseDashboardPage = lazy(() => import('@/features/nurse/pages/NurseDashboardPage'));
 
+const NurseMyDutyPage = lazy(() => import('@/features/nurse/pages/NurseMyDutyPage'));
+
 const NurseQueuePage = lazy(() => import('@/features/nurse/pages/NurseQueuePage'));
 
 const NursePatientOverviewPage = lazy(() => import('@/features/nurse/pages/NursePatientOverviewPage'));
@@ -79,6 +81,8 @@ export const nurseRoutes = [
         children: [
 
           { path: ROUTES.NURSE_DASHBOARD, element: <LazyRoute><NurseDashboardPage /></LazyRoute> },
+
+          { path: ROUTES.NURSE_MY_DUTY, element: <LazyRoute><NurseMyDutyPage /></LazyRoute> },
 
           { path: ROUTES.NURSE_QUEUE, element: <LazyRoute><NurseQueuePage /></LazyRoute> },
 

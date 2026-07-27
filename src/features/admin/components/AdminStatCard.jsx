@@ -18,11 +18,22 @@ export default function AdminStatCard({
   icon,
   isLoading = false,
   tone = 'neutral',
+  onClick,
+  isActive = false,
 }) {
-  return (
-    <article
-      className={`ui-stat-card admin-stat-card ${TONE_CLASS[tone] || TONE_CLASS.neutral}`}
-    >
+  const clickable = typeof onClick === 'function';
+  const className = [
+    'ui-stat-card',
+    'admin-stat-card',
+    TONE_CLASS[tone] || TONE_CLASS.neutral,
+    clickable ? 'ui-stat-card--clickable' : '',
+    isActive ? 'ui-stat-card--active' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const content = (
+    <>
       {icon ? (
         <div className="ui-stat-card__icon" aria-hidden>
           {icon}
@@ -39,6 +50,21 @@ export default function AdminStatCard({
           <span className="ui-stat-card__description">{subtitle}</span>
         ) : null}
       </div>
-    </article>
+    </>
   );
+
+  if (clickable) {
+    return (
+      <button
+        type="button"
+        className={className}
+        onClick={onClick}
+        aria-pressed={isActive}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return <article className={className}>{content}</article>;
 }

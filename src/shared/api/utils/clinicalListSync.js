@@ -6,8 +6,6 @@
 import {
   createRecord,
   patchRecord,
-  patchNotification,
-  markAllNotificationsRead,
 } from '@/features/doctor/api/clinical';
 import {
   uiRecordToApiCreate,
@@ -28,21 +26,6 @@ export async function syncRecords(prev, next, token) {
     const old = prev.find((r) => r.id === item.id);
     if (old && itemChanged(old, item)) {
       await patchRecord(item.id, uiRecordToApiPatch(item), token);
-    }
-  }
-}
-
-export async function syncNotifications(prev, next, token) {
-  const allRead = next.length > 0 && next.every((n) => n.read);
-  const hadUnread = prev.some((n) => !n.read);
-  if (allRead && hadUnread && next.length === prev.length) {
-    await markAllNotificationsRead(token);
-    return;
-  }
-  for (const item of next) {
-    const old = prev.find((n) => n.id === item.id);
-    if (old && !old.read && item.read) {
-      await patchNotification(item.id, { read: true }, token);
     }
   }
 }

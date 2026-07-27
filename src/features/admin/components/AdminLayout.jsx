@@ -1,4 +1,4 @@
-import { BarChart3, LayoutDashboard, UserCog, Users } from 'lucide-react';
+import { BarChart3, BedDouble, CalendarDays, LayoutDashboard, UserCog, Users } from 'lucide-react';
 import { ROUTES } from '@/shared/constants';
 import RoleLayout from '@/shared/components/layout/RoleLayout';
 import '../styles/admin.css';
@@ -6,11 +6,15 @@ import '../styles/admin.css';
 const NAV_LINKS = [
   { href: ROUTES.ADMIN_DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
   { href: ROUTES.ADMIN_STAFF, label: 'Staff', icon: Users },
+  { href: ROUTES.ADMIN_BED_ALLOCATION, label: 'Nurse Bed Allocation', icon: BedDouble },
+  { href: ROUTES.ADMIN_NURSE_WORKFORCE, label: 'Nurse Workforce', icon: CalendarDays },
   { href: ROUTES.ADMIN_REPORTS, label: 'Reports', icon: BarChart3 },
   { href: ROUTES.ADMIN_ROLES, label: 'Roles', icon: UserCog },
 ];
 
 const PAGE_TITLES = [
+  { prefix: ROUTES.ADMIN_NURSE_WORKFORCE, title: 'Nurse Workforce' },
+  { prefix: ROUTES.ADMIN_BED_ALLOCATION, title: 'Nurse Bed Allocation' },
   { prefix: ROUTES.ADMIN_STAFF, title: 'Staff' },
   { prefix: ROUTES.ADMIN_REPORTS, title: 'Reports' },
   { prefix: ROUTES.ADMIN_ROLES, title: 'Roles' },
@@ -26,6 +30,15 @@ function resolveTitle(pathname, pageTitleOverride) {
   }
   if (pathname.startsWith(ROUTES.ADMIN_REPORTS)) {
     return pageTitleOverride || 'Reports';
+  }
+  if (pathname === ROUTES.ADMIN_BED_ALLOCATION_NEW) {
+    return 'New Bed Allocation';
+  }
+  if (pathname.includes('/bed-allocation/') && pathname.endsWith('/edit')) {
+    return pageTitleOverride || 'Edit Bed Allocation';
+  }
+  if (pathname.startsWith(`${ROUTES.ADMIN_BED_ALLOCATION}/`)) {
+    return pageTitleOverride || 'Allocation Details';
   }
   const match = PAGE_TITLES.find((p) => pathname.startsWith(p.prefix));
   return pageTitleOverride || match?.title || 'Admin';
@@ -43,6 +56,10 @@ function isRolesActive(pathname) {
   return pathname === ROUTES.ADMIN_ROLES;
 }
 
+function isBedAllocationActive(pathname) {
+  return pathname === ROUTES.ADMIN_BED_ALLOCATION || pathname.startsWith('/admin/bed-allocation');
+}
+
 function isNavLinkActive(pathname, link) {
   if (link.href === ROUTES.ADMIN_STAFF) {
     return isStaffActive(pathname);
@@ -52,6 +69,9 @@ function isNavLinkActive(pathname, link) {
   }
   if (link.href === ROUTES.ADMIN_ROLES) {
     return isRolesActive(pathname);
+  }
+  if (link.href === ROUTES.ADMIN_BED_ALLOCATION) {
+    return isBedAllocationActive(pathname);
   }
   return pathname === link.href || pathname.startsWith(link.href);
 }

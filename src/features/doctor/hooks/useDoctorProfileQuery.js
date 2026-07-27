@@ -13,10 +13,13 @@ import {
 import { queryKeys } from '@/shared/api/queryKeys';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { mutationOnError } from '@/shared/utils/mutationErrors';
+import { syncAuthProfileAvatar } from '@/shared/utils/syncAuthProfileAvatar';
 
 async function fetchDoctorProfile(token) {
   const profile = await getDoctorProfile(token);
-  return { profile };
+  const data = { profile };
+  syncAuthProfileAvatar(data);
+  return data;
 }
 
 export function useDoctorProfileQuery() {
@@ -38,6 +41,7 @@ export function useUpdateDoctorProfileMutation() {
       return fetchDoctorProfile(token);
     },
     onSuccess: (data) => {
+      syncAuthProfileAvatar(data);
       queryClient.setQueryData(queryKeys.doctor.profile, data);
     },
     onError: mutationOnError,
@@ -53,6 +57,7 @@ export function useUploadDoctorProfileImageMutation() {
       return fetchDoctorProfile(token);
     },
     onSuccess: (data) => {
+      syncAuthProfileAvatar(data);
       queryClient.setQueryData(queryKeys.doctor.profile, data);
     },
     onError: mutationOnError,
@@ -68,6 +73,7 @@ export function useDeleteDoctorProfileImageMutation() {
       return fetchDoctorProfile(token);
     },
     onSuccess: (data) => {
+      syncAuthProfileAvatar(data);
       queryClient.setQueryData(queryKeys.doctor.profile, data);
     },
     onError: mutationOnError,

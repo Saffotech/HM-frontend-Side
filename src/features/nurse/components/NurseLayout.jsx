@@ -10,22 +10,23 @@ import {
   Activity,
   FileText,
   Pill,
-  ClipboardList,
   AlertTriangle,
+  CalendarClock,
 } from 'lucide-react';
 import { ROUTES } from '@/shared/constants';
 import RoleLayout from '@/shared/components/layout/RoleLayout';
 import NurseNotificationsBell from '@/features/nurse/components/NurseNotificationsBell';
+import NursePatientScopeBar from '@/features/nurse/components/NursePatientScopeBar';
 import '../styles/nurse.css';
 import '../styles/nurse-alerts.css';
 
 const NAV_LINKS = [
   { href: ROUTES.NURSE_DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
+  { href: ROUTES.NURSE_MY_DUTY, label: 'My Duty', icon: CalendarClock },
   { href: ROUTES.NURSE_QUEUE, label: 'Patient', icon: Users },
   { href: ROUTES.NURSE_VITALS, label: 'Vitals', icon: Activity },
   { href: ROUTES.NURSE_NOTES, label: 'Nursing Notes', icon: FileText },
   { href: ROUTES.NURSE_MEDICATIONS, label: 'Medications', icon: Pill },
-  { href: ROUTES.NURSE_HANDOVER, label: 'Shift Handover', icon: ClipboardList },
   { href: ROUTES.NURSE_ALERTS, label: 'Emergency Alerts', icon: AlertTriangle },
 ];
 
@@ -38,6 +39,7 @@ const PAGE_TITLES = [
   { prefix: '/nurse/vitals', title: 'Vitals' },
   { prefix: ROUTES.NURSE_QUEUE, title: 'Patient' },
   { prefix: ROUTES.NURSE_DASHBOARD, title: 'Dashboard' },
+  { prefix: ROUTES.NURSE_MY_DUTY, title: 'My Duty' },
   { prefix: '/nurse/patients', title: 'Patient' },
   { prefix: ROUTES.NURSE_PROFILE, title: 'My Profile' },
 ];
@@ -68,7 +70,9 @@ export default function NurseLayout({ children }) {
           onViewAll={() => navigate(ROUTES.NURSE_NOTIFICATIONS)}
         />
       }
+      layoutClassName="nurse-layout"
     >
+      <NursePatientScopeBar />
       {children}
     </RoleLayout>
   );

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, memo, useId } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, X } from 'lucide-react';
+import { ChevronDown, Search, X } from 'lucide-react';
 import { highlightMatch } from '@/shared/utils/highlightMatch';
 import './SearchableSelect.css';
 
@@ -271,7 +271,9 @@ function SearchableSelect({
             {filtered.length === 0 ? (
               <div className="searchable-select__empty">
                 <Search size={14} />
-                <span>No results for &quot;{search}&quot;</span>
+                <span>
+                  {search.trim() ? `No results for "${search}"` : 'No options available'}
+                </span>
               </div>
             ) : (
               filtered.map((option, idx) => (

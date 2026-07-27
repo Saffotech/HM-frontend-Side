@@ -20,7 +20,6 @@ const MODE_CLASS = {
   Cash: 'mode-cash',
   Card: 'mode-card',
   UPI: 'mode-upi',
-  Online: 'mode-upi',
   Insurance: 'mode-insurance',
 };
 
@@ -60,7 +59,7 @@ export default function PaymentHistoryPage() {
     },
     {
       key: 'UPI',
-      label: 'Online / UPI',
+      label: 'UPI',
       value: <MoneyAmount amount={summary?.upi ?? 0} exact />,
       icon: Smartphone,
       color: 'purple',
@@ -79,18 +78,15 @@ export default function PaymentHistoryPage() {
       icon: CreditCard,
       color: 'blue',
     },
-  ];
-
-  if ((summary?.insurance ?? 0) > 0) {
-    cards.push({
+    {
       key: 'Insurance',
       label: 'Insurance',
-      value: <MoneyAmount amount={summary.insurance} exact />,
+      value: <MoneyAmount amount={summary?.insurance ?? 0} exact />,
       icon: IndianRupee,
       color: 'blue',
       sub: 'Included in total',
-    });
-  }
+    },
+  ];
 
   const SortTh = ({ label, field, className = '' }) => (
     <th
@@ -127,8 +123,7 @@ export default function PaymentHistoryPage() {
 
         {activeFilter !== 'all' && (
           <p className="filter-hint">
-            Showing <strong>{activeFilter === 'UPI' ? 'Online / UPI' : activeFilter}</strong>{' '}
-            payments only.
+            Showing <strong>{activeFilter}</strong> payments only.
             <button type="button" className="filter-hint__clear" onClick={() => setActiveFilter('all')}>
               Clear filter
             </button>

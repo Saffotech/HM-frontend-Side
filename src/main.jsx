@@ -16,15 +16,27 @@ const queryClient = new QueryClient({
   },
 });
 
-const appErrorFallback = (
-  <div className="app-error-fallback">
-    <h2>Application error</h2>
-    <p>Something went wrong. Please refresh the page.</p>
-    <button type="button" onClick={() => window.location.reload()}>
-      Refresh
-    </button>
-  </div>
-);
+function appErrorFallback(error, reset) {
+  return (
+    <div className="app-error-fallback">
+      <h2>Application error</h2>
+      <p>Something went wrong. Please refresh the page.</p>
+      {import.meta.env.DEV && error?.message ? (
+        <pre style={{ maxWidth: '40rem', whiteSpace: 'pre-wrap', textAlign: 'left' }}>
+          {error.message}
+        </pre>
+      ) : null}
+      <button type="button" onClick={() => window.location.reload()}>
+        Refresh
+      </button>
+      {import.meta.env.DEV ? (
+        <button type="button" onClick={reset} style={{ marginLeft: '0.5rem' }}>
+          Try again
+        </button>
+      ) : null}
+    </div>
+  );
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

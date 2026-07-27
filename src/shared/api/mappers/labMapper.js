@@ -104,7 +104,7 @@ export function apiToUiLabReport(row) {
     patientId: row.patient_uhid ?? row.patient_uid ?? String(row.patient_id ?? ''),
     patientName: row.patient_name ?? row.patientName ?? '—',
     testName: row.test_name ?? row.testName ?? '—',
-    doctorName: row.doctor_name ?? row.doctorName ?? row.uploaded_by_name ?? '—',
+    doctorName: row.doctor_name ?? row.doctorName ?? '—',
     uploadedByName: row.uploaded_by_name ?? row.uploadedByName ?? '—',
     uploadedDate: formatDateTime(row.uploaded_at ?? row.created_at ?? row.uploadedAt),
     uploadedAt: row.uploaded_at ?? row.created_at,

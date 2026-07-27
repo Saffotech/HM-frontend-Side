@@ -18,6 +18,7 @@ const SuperAdminAssignPermissionsPage = lazy(() => import('@/features/super-admi
 const SuperAdminSettingsPage = lazy(() => import('@/features/super-admin/pages/SuperAdminSettingsPage'));
 const SuperAdminReportsPage = lazy(() => import('@/features/super-admin/pages/SuperAdminReportsPage'));
 const SuperAdminAuditLogPage = lazy(() => import('@/features/super-admin/pages/SuperAdminAuditLogPage'));
+const SuperAdminProfilePage = lazy(() => import('@/features/super-admin/pages/SuperAdminProfilePage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 export const superAdminRoutes = [
@@ -133,6 +134,14 @@ export const superAdminRoutes = [
             element: (
               <LazyRoute>
                 <SuperAdminAuditLogPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.SUPER_ADMIN_PROFILE,
+            element: (
+              <LazyRoute>
+                <SuperAdminProfilePage />
               </LazyRoute>
             ),
           },

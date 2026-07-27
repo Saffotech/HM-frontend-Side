@@ -31,7 +31,7 @@ const AuthContext = createContext(null);
 
 const SESSION_RESTORE_TIMEOUT_MS = 15000;
 
-const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000;
+const TOKEN_REFRESH_BUFFER_MS = 60 * 1000;
 
 
 

@@ -248,15 +248,3 @@ export function mapLabTestList(raw) {
   const list = raw?.items ?? (Array.isArray(raw) ? raw : []);
   return list.map(apiToUiLabTest).filter(Boolean);
 }
-
-export function apiToUiNotification(api) {
-  if (!api) return null;
-  return {
-    id: api.id,
-    kind: api.kind,
-    title: api.title,
-    body: api.body,
-    at: api.created_at ?? api.at,
-    read: Boolean(api.read),
-  };
-}

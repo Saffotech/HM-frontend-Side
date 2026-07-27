@@ -10,11 +10,3 @@ export async function getTodayQueue(token) {
   const response = await apiClient('/queue/today', { token });
   return normalizeDoctorList(unwrapDoctorResponse(response, 'queue'));
 }
-
-export async function requestNextPatient(appointmentId, token) {
-  return apiClient('/queue/request-next', {
-    method: 'POST',
-    body: JSON.stringify({ appointment_id: appointmentId }),
-    token,
-  });
-}

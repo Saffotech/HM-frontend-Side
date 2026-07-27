@@ -1,0 +1,135 @@
+.profile-photo-crop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.5);
+  padding: 1rem;
+}
+
+.profile-photo-crop {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: var(--radius-lg, 12px);
+  padding: 1.35rem 1.35rem 1.25rem;
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.18);
+}
+
+.profile-photo-crop__title {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text, #0f172a);
+}
+
+.profile-photo-crop__hint {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #64748b);
+  line-height: 1.45;
+}
+
+.profile-photo-crop__stage {
+  position: relative;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #0f172a;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.08),
+    0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+.profile-photo-crop__stage:active {
+  cursor: grabbing;
+}
+
+.profile-photo-crop__image {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  max-width: none;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.profile-photo-crop__mask {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+}
+
+.profile-photo-crop__zoom {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: var(--color-text-muted, #64748b);
+}
+
+.profile-photo-crop__zoom input[type='range'] {
+  flex: 1;
+  accent-color: var(--color-primary, #1a5c34);
+}
+
+.profile-photo-crop__error {
+  margin: -0.35rem 0 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-danger, #dc2626);
+}
+
+.profile-photo-crop__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.profile-photo-crop__cancel,
+.profile-photo-crop__confirm {
+  min-height: 2.35rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md, 8px);
+  font-weight: 650;
+  font-size: 0.875rem;
+  cursor: pointer;
+  border: 1px solid var(--color-border, #e2e8f0);
+}
+
+.profile-photo-crop__cancel {
+  background: #fff;
+  color: var(--color-text, #1e293b);
+}
+
+.profile-photo-crop__confirm {
+  background: var(--color-primary, #1a5c34);
+  color: #fff;
+  border-color: var(--color-primary, #1a5c34);
+}
+
+.profile-photo-crop__confirm:hover:not(:disabled),
+.profile-photo-crop__cancel:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.profile-photo-crop__confirm:disabled,
+.profile-photo-crop__cancel:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .profile-photo-crop {
+    max-width: none;
+  }
+}

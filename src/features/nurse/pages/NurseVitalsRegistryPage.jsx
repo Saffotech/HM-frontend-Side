@@ -10,6 +10,7 @@ import { useNursePagedListGuard } from '@/features/nurse/hooks/useNursePagedList
 import { getPagedListCount, formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
 import { QueryFeedback } from '@/shared/components/common';
 import { useNurseVitalsListQuery } from '@/shared/hooks/queries/useNurseQuery';
+import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
 
 function formatSince(iso) {
   if (!iso) return '—';
@@ -45,12 +46,16 @@ export default function NurseVitalsRegistryPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search, 400);
+  const { scopeFilters, scopeReady, allocatedOnly } = useNursePatientScope();
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch]);
+  }, [debouncedSearch, allocatedOnly]);
 
-  const { data, isLoading, isError, error, refetch } = useNurseVitalsListQuery({ search: debouncedSearch, page, page_size: 20 });
+  const { data, isLoading, isError, error, refetch } = useNurseVitalsListQuery(
+    { search: debouncedSearch, page, page_size: 20, ...scopeFilters },
+    { enabled: scopeReady },
+  );
 
   useNursePagedListGuard({
     isLoading,
@@ -143,7 +148,9 @@ export default function NurseVitalsRegistryPage() {
                 {' '}
                 {listCount.count === 1 && !listCount.approximate ? 'patient' : 'patients'}
               </p>
-              <p className="nurse-vitals-registry__hint">Click a row to view full vitals history</p>
+              <p className="nurse-vitals-registry__hint">
+                One row per patient (latest vitals). Open a row for full history.
+              </p>
             </div>
           </div>
           <div className="nurse-vitals-registry__search-wrap">

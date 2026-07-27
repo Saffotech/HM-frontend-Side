@@ -7,6 +7,87 @@
   color: var(--color-sidebar-text-active);
 }
 
+/* Global Allocated / All scope bar (all nurse list pages) */
+.nurse-layout .layout-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.nurse-scope-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.875rem;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 10px;
+  background: var(--color-surface, #fff);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.nurse-scope-bar__mode-toggle {
+  display: inline-flex;
+  padding: 0.2rem;
+  border-radius: 10px;
+  background: var(--color-surface-muted, #f1f5f9);
+  border: 1px solid var(--color-border, #e2e8f0);
+}
+
+.nurse-scope-bar__mode-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted, #64748b);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.4rem 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.nurse-scope-bar__mode-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.nurse-scope-bar__mode-btn.is-active {
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #0f172a);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.nurse-scope-bar__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.65rem 1.25rem;
+  min-width: 0;
+}
+
+.nurse-scope-bar__shift {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text, #0f172a);
+}
+
+.nurse-scope-bar__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.nurse-scope-bar__stats strong {
+  color: var(--color-text, #0f172a);
+  font-weight: 700;
+}
+
 /* .nurse-page{
   display: flex;
   flex-direction: column;
@@ -212,6 +293,98 @@
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
+}
+
+.nurse-dashboard-page__toolbar{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.nurse-dashboard-page__mode-toggle{
+  display: inline-flex;
+  padding: 0.2rem;
+  border-radius: 10px;
+  background: var(--color-surface-muted, #f1f5f9);
+  border: 1px solid var(--color-border, #e2e8f0);
+}
+
+.nurse-dashboard-page__mode-btn{
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted, #64748b);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.4rem 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.nurse-dashboard-page__mode-btn:disabled{
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.nurse-dashboard-page__mode-btn.is-active{
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #0f172a);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.nurse-dashboard-page__mode-btn:focus-visible{
+  outline: 2px solid rgba(99, 102, 241, 0.45);
+  outline-offset: 1px;
+}
+
+.nurse-dashboard-page__assignment-summary{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.65rem 1.25rem;
+  min-width: 0;
+}
+
+.nurse-dashboard-page__assignment-shift{
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text, #0f172a);
+}
+
+.nurse-dashboard-page__assignment-stats{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.nurse-dashboard-page__assignment-stats strong{
+  color: var(--color-text, #0f172a);
+  font-weight: 700;
+}
+
+.nurse-dashboard-page__patient-cell{
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+}
+
+.nurse-badge--allocated{
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.nurse-badge--outside-allocation{
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
 }
 
 .nurse-dashboard-page .nurse-kpi-grid{
@@ -496,6 +669,17 @@
   cursor: pointer;
 }
 
+.nurse-table__empty-row td{
+  white-space: normal;
+  text-align: center;
+  padding: 1.5rem 1rem;
+  border-bottom: none;
+}
+
+.nurse-table__empty-row:hover td{
+  background: transparent;
+}
+
 .nurse-table tr.nurse-row--emergency td:first-child{
   box-shadow: inset 4px 0 0 #dc2626;
 }
@@ -671,6 +855,66 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1.25rem;
+}
+
+.nurse-handover-assignment{
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 10px;
+  background: var(--color-surface, #fff);
+}
+
+.nurse-handover-assignment__header{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.nurse-handover-assignment__header .nurse-section-title{
+  margin: 0;
+}
+
+.nurse-handover-assignment__stats{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.15rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.nurse-handover-assignment__stats strong{
+  color: var(--color-text, #0f172a);
+  font-weight: 700;
+}
+
+.nurse-handover-assignment__warning{
+  margin: 0.65rem 0 0;
+  font-size: 0.8125rem;
+  color: #b45309;
+}
+
+.nurse-handover-assignment__hint{
+  margin: 0.65rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.nurse-handover-assignment--create{
+  margin-bottom: 0.85rem;
+}
+
+.nurse-handover-patient-cell{
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+}
+
+.nurse-badge--current-shift{
+  background: #eff6ff;
+  color: #1d4ed8;
 }
 
 .nurse-detail-grid dt{

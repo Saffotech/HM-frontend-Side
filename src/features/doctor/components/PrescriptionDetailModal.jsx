@@ -9,7 +9,6 @@ import { Modal, Button, Input, Label, Textarea } from '@/shared/components/commo
 import { useAuth } from '@/shared/hooks/useAuth';
 import { ACTIONS, canAccessAction } from '@/hooks/permissions';
 import { toast } from '@/shared/utils/toast';
-import StatusPill from './StatusPill';
 import '../styles/doctor-ui.css';
 
 function formatDetailDate(dateStr) {
@@ -85,10 +84,6 @@ function PrescriptionDetailView({ detail }) {
         <div className="doc-rx-detail__summary-item">
           <span className="doc-rx-detail__summary-label">Created</span>
           <strong>{formatDetailDate(detail.date)}</strong>
-        </div>
-        <div className="doc-rx-detail__summary-item doc-rx-detail__summary-item--status">
-          <span className="doc-rx-detail__summary-label">Status</span>
-          {detail.status ? <StatusPill status={detail.status} /> : '—'}
         </div>
       </div>
 

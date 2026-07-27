@@ -197,7 +197,9 @@ export default function StaffDetailPage() {
                       </div>
 
                       <div className="admin-form-section">
-                        <h3 className="admin-form-section__title">Role & department</h3>
+                        <h3 className="admin-form-section__title">
+                          {needsDepartment ? 'Role & department' : 'Role'}
+                        </h3>
                         <div className="admin-form-grid admin-form-grid--2">
                           <div>
                             <Label htmlFor="email">Email (read-only)</Label>
@@ -263,12 +265,14 @@ export default function StaffDetailPage() {
                           {formatRoleLabel(staff.role_name)}
                         </div>
                       </div>
-                      <div className="admin-meta-item">
-                        <div className="admin-meta-list__label">Department</div>
-                        <div className="admin-meta-list__value">
-                          {staff.department_name || 'N/A'}
+                      {staff.role_name === 'doctor' ? (
+                        <div className="admin-meta-item">
+                          <div className="admin-meta-list__label">Department</div>
+                          <div className="admin-meta-list__value">
+                            {staff.department_name || 'N/A'}
+                          </div>
                         </div>
-                      </div>
+                      ) : null}
                     </div>
                   )}
                 </div>

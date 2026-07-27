@@ -8,6 +8,8 @@ const LabDashboardPage = lazy(() => import('@/features/lab/pages/LabDashboardPag
 const LabOrderListPage = lazy(() => import('@/features/lab/pages/LabOrderListPage'));
 const LabUploadReportPage = lazy(() => import('@/features/lab/pages/LabUploadReportPage'));
 const LabCompletedReportsPage = lazy(() => import('@/features/lab/pages/LabCompletedReportsPage'));
+const LabProfilePage = lazy(() => import('@/features/lab/pages/LabProfilePage'));
+const LabNotificationsPage = lazy(() => import('@/features/lab/pages/LabNotificationsPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 export const labRoutes = [
@@ -46,6 +48,22 @@ export const labRoutes = [
             element: (
               <LazyRoute>
                 <LabCompletedReportsPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.LAB_PROFILE,
+            element: (
+              <LazyRoute>
+                <LabProfilePage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.LAB_NOTIFICATIONS,
+            element: (
+              <LazyRoute>
+                <LabNotificationsPage />
               </LazyRoute>
             ),
           },
