@@ -19,6 +19,8 @@ import {
   MoneyAmount,
 } from '@/shared/components/common';
 import CollectPaymentModal from '@/features/opd/billing/components/CollectPaymentModal';
+import AdminGatedDeleteButton from '@/features/opd/components/AdminGatedDeleteButton';
+import { useOpdDeleteControls } from '@/features/opd/hooks/useOpdBillingSettingsQuery';
 import { calcBillTotals, getBillStatus, billItemsWithNonZeroAmount, billLineAmount } from '@/shared/utils/billHelpers';
 import { APP_NAME, ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
@@ -44,6 +46,7 @@ function formatQty(qty) {
 
 export default function ViewBillPage() {
   const { id } = useParams();
+  const { allowUnpaidBillDelete } = useOpdDeleteControls();
   const { data: billsData, isLoading: lb, isError: eb, error: errB } = useBillsQuery({
     fetchAll: false,
     search: id,
@@ -84,9 +87,14 @@ export default function ViewBillPage() {
     bill.doctorName ??
     (bill.doctorId ? `Doctor #${bill.doctorId}` : patient?.doctorId ? `Doctor #${patient.doctorId}` : null);
   const displayItems = billItemsWithNonZeroAmount(bill.items);
-  const { subtotal, tax, grandTotal } = calcBillTotals(
-    displayItems.length ? displayItems : [{ qty: 1, unitPrice: bill.total ?? 0 }]
+  const totalsFromItems = calcBillTotals(
+    displayItems.length ? displayItems : [{ qty: 1, unitPrice: bill.total ?? 0 }],
   );
+  const subtotal = bill.subtotal != null ? Number(bill.subtotal) : totalsFromItems.subtotal;
+  const tax = bill.gstAmount != null ? Number(bill.gstAmount) : totalsFromItems.tax;
+  const grandTotal =
+    bill.total != null ? Number(bill.total) : totalsFromItems.grandTotal;
+  const taxLabel = bill.gstLabel || 'Tax (GST)';
 
   const paymentCards = [...(bill.payments || [])].sort(
     (a, b) => new Date(a.date) - new Date(b.date),
@@ -98,6 +106,12 @@ export default function ViewBillPage() {
     bill.status === 'Paid' ? 'stamp--paid' : bill.status === 'Unpaid' ? 'stamp--unpaid' : 'stamp--partial';
   const stampLabel = bill.status === 'Paid' ? 'PAID' : bill.status === 'Unpaid' ? 'UNPAID' : 'PARTIAL PAYMENT';
   const canDeleteBill = Boolean(bill.visitId) && amountPaid <= 0 && bill.status === 'Unpaid';
+  const deleteDisabledByAdmin = !allowUnpaidBillDelete;
+  const deleteDisabledHint = deleteDisabledByAdmin
+    ? 'Delete disabled by Administrator.'
+    : !canDeleteBill
+      ? 'Only unpaid bills with no payments can be deleted.'
+      : undefined;
 
   return (
     <div className="view-bill page-container">
@@ -111,9 +125,14 @@ export default function ViewBillPage() {
             <Button variant="success" onClick={() => setPaymentModalOpen(true)}><CreditCard size={16} /> Collect Payment</Button>
           )}
           <Button variant="outline" onClick={() => window.print()}><Printer size={16} /> Print</Button>
-          {canDeleteBill && (
-            <Button variant="danger" onClick={() => setDeleteOpen(true)}>Delete Bill</Button>
-          )}
+          <AdminGatedDeleteButton
+            disabledByAdmin={deleteDisabledByAdmin}
+            disabled={!canDeleteBill}
+            disabledHint={deleteDisabledHint}
+            onClick={() => setDeleteOpen(true)}
+          >
+            Delete Bill
+          </AdminGatedDeleteButton>
         </div>
       </div>
 
@@ -237,7 +256,7 @@ export default function ViewBillPage() {
               <thead>
                 <tr>
                   <th>Subtotal</th>
-                  <th>Tax (5% GST)</th>
+                  <th>{taxLabel}</th>
                   <th>Grand Total</th>
                   <th>Amount Paid</th>
                   <th>Balance Due</th>

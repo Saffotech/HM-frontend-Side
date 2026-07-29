@@ -1,23 +1,58 @@
 import { AlertTriangle } from 'lucide-react';
-import { Label, SearchableSelect, TablePagination } from '@/shared/components/common';
+import { Label, SearchableSelect } from '@/shared/components/common';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
+import { patientAgeYears } from '@/features/opd/billing/utils/opdBillContextUtils';
+import OpdBillBillingContextPanel from '@/features/opd/billing/components/OpdBillBillingContextPanel';
+import OpdBillExistingBillAlert from '@/features/opd/billing/components/OpdBillExistingBillAlert';
 
-const PATIENT_PAGE_SIZE = 20;
+function ContextField({ label, children }) {
+  if (children == null || children === '') return null;
+  return (
+    <div>
+      <span>{label}:</span> <strong>{children}</strong>
+    </div>
+  );
+}
 
 export default function OpdBillPatientSection({
   patientOptions,
   patientId,
   onPatientChange,
   onPatientSearchChange,
-  patientPageMeta,
-  onPatientPageChange,
+  patientSearchSynced = false,
   fieldErrors,
   selectedPatient,
   service,
   billAppointment,
   patientApptsFetched,
   serviceReady,
-  openBillToday,
+  departments = [],
+  doctors = [],
+  deptId,
+  doctorId,
+  onDeptChange,
+  onDoctorChange,
+  billingContext,
+  duplicateBills,
+  existingBillAcknowledged,
+  onAcknowledgeExistingBill,
+  onOpenBill,
+  onOpenOutstanding,
 }) {
+  const age = patientAgeYears(selectedPatient);
+  const gender = selectedPatient?.gender;
+  const phone = selectedPatient?.phone;
+  const bloodGroup = selectedPatient?.bloodGroup;
+  const appointmentLabel =
+    billAppointment?.date && billAppointment?.time
+      ? `${billAppointment.date} at ${billAppointment.time}`
+      : billAppointment?.date || billAppointment?.time || null;
+
+  const showExistingWarning =
+    Boolean(billingContext?.openTodayCount) ||
+    Boolean(billingContext?.appointmentHasBill) ||
+    (duplicateBills?.length ?? 0) > 0;
+
   return (
     <>
       <div className="field-block">
@@ -27,17 +62,11 @@ export default function OpdBillPatientSection({
           value={patientId}
           onChange={onPatientChange}
           onSearchChange={onPatientSearchChange}
-          placeholder="Search patient..."
+          serverFiltered={patientSearchSynced}
+          placeholder="Search by name, phone, or Patient ID..."
           className="max-w-lg"
           clearOnEmptyBlur
           error={fieldErrors.patientId}
-        />
-        <TablePagination
-          page={patientPageMeta.page}
-          totalPages={patientPageMeta.totalPages}
-          totalItems={patientPageMeta.total}
-          pageSize={PATIENT_PAGE_SIZE}
-          onPageChange={onPatientPageChange}
         />
         {fieldErrors.amount && (
           <span className="field__error">{fieldErrors.amount}</span>
@@ -47,64 +76,88 @@ export default function OpdBillPatientSection({
       {selectedPatient && (
         <>
           <div className="patient-info-card">
-            <div className="patient-info-card__avatar">{selectedPatient.name.charAt(0)}</div>
+            <div className="patient-info-card__avatar">
+              {(selectedPatient.name || '?').charAt(0)}
+            </div>
             <div className="patient-info-card__grid">
-              <div>
-                <span>Name:</span> <strong>{selectedPatient.name}</strong>
-              </div>
-              <div>
-                <span>ID:</span> <strong>{selectedPatient.id}</strong>
-              </div>
-              <div>
-                <span>Phone:</span> <strong>{selectedPatient.phone}</strong>
-              </div>
-              <div>
-                <span>Blood:</span>{' '}
-                <strong className="text-red">{selectedPatient.bloodGroup}</strong>
-              </div>
-              {service?.doctorName && (
+              <ContextField label="Name">{selectedPatient.name}</ContextField>
+              <ContextField label="Patient ID">{selectedPatient.id}</ContextField>
+              {age != null ? <ContextField label="Age">{age}</ContextField> : null}
+              {gender ? <ContextField label="Gender">{gender}</ContextField> : null}
+              {phone ? <ContextField label="Phone">{phone}</ContextField> : null}
+              {bloodGroup ? (
                 <div>
-                  <span>Doctor:</span> <strong>{service.doctorName}</strong>
+                  <span>Blood:</span>{' '}
+                  <strong className="text-red">{bloodGroup}</strong>
                 </div>
-              )}
-              {service?.deptName && (
-                <div>
-                  <span>Department:</span> <strong>{service.deptName}</strong>
-                </div>
-              )}
-              {billAppointment?.date && billAppointment?.time && (
-                <div>
-                  <span>Appointment:</span>{' '}
-                  <strong>
-                    {billAppointment.date} at {billAppointment.time}
-                  </strong>
-                </div>
-              )}
+              ) : null}
+              <ContextField label="Doctor">{service?.doctorName}</ContextField>
+              <ContextField label="Department">{service?.deptName}</ContextField>
+              <ContextField label="Appointment">{appointmentLabel}</ContextField>
             </div>
           </div>
+
+          <OpdBillBillingContextPanel
+            billingContext={billingContext}
+            onOpenOutstanding={onOpenOutstanding}
+            onOpenBill={onOpenBill}
+          />
 
           {selectedPatient && !patientApptsFetched && (
             <p className="opd-bill__service-hint text-muted">Loading appointment details…</p>
           )}
           {selectedPatient && patientApptsFetched && !serviceReady && (
-            <div className="opd-alert opd-alert--warn" role="status">
-              <AlertTriangle size={18} aria-hidden />
-              <span>
-                No scheduled appointment for this patient. Book an appointment before generating
-                a bill.
-              </span>
-            </div>
+            <>
+              <div className="opd-alert opd-alert--warn" role="status">
+                <AlertTriangle size={18} aria-hidden />
+                <span>
+                  No scheduled appointment for this patient. Select department and doctor below to
+                  generate a bill.
+                </span>
+              </div>
+              <div className="form-grid opd-bill__service-fields">
+                <div className="field-block">
+                  <Label>Department *</Label>
+                  <SearchableSelect
+                    options={departments.map((d) => ({ value: String(d.id), label: d.name }))}
+                    value={deptId}
+                    onChange={onDeptChange}
+                    placeholder="Select department..."
+                    className="max-w-lg"
+                  />
+                </div>
+                <div className="field-block">
+                  <Label>Doctor *</Label>
+                  <SearchableSelect
+                    options={doctors
+                      .filter((d) => !deptId || String(d.deptId) === String(deptId))
+                      .map((d) => ({
+                        value: String(d.id),
+                        label: d.name.startsWith('Dr.') ? d.name : `Dr. ${d.name}`,
+                        sublabel: d.specialization
+                          ? `${d.specialization} — ${formatCurrency(d.fee)}`
+                          : formatCurrency(d.fee),
+                      }))}
+                    value={doctorId}
+                    onChange={onDoctorChange}
+                    disabled={!deptId}
+                    placeholder="Select doctor..."
+                    className="max-w-lg"
+                  />
+                </div>
+              </div>
+            </>
           )}
 
-          {openBillToday && (
-            <div className="opd-alert opd-alert--warn" role="status">
-              <AlertTriangle size={18} aria-hidden />
-              <span>
-                This patient already has an unpaid or partial bill for today. You can still create
-                another bill if needed.
-              </span>
-            </div>
-          )}
+          {showExistingWarning ? (
+            <OpdBillExistingBillAlert
+              billingContext={billingContext}
+              duplicateBills={duplicateBills}
+              acknowledged={existingBillAcknowledged}
+              onAcknowledge={onAcknowledgeExistingBill}
+              onOpenBill={onOpenBill}
+            />
+          ) : null}
         </>
       )}
     </>

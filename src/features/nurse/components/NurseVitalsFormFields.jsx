@@ -1,6 +1,29 @@
-import { Plus, Trash2 } from 'lucide-react';
+import {
+  Activity,
+  Droplets,
+  Eraser,
+  Heart,
+  Plus,
+  Scale,
+  Stethoscope,
+  Thermometer,
+  Trash2,
+  Wind,
+} from 'lucide-react';
+import { NurseClinicalFieldShell } from '@/features/nurse/components/NurseClinicalFieldCard';
 
 const CUSTOM_VITALS_MARKER = '__custom_vitals__';
+
+export const VITAL_FIELDS = [
+  { key: 'temperature', label: 'Temperature (°F)', icon: Thermometer, accent: 'rose', type: 'number', step: '0.1', placeholder: 'e.g. 98.6' },
+  { key: 'blood_pressure', label: 'Blood Pressure', icon: Activity, accent: 'blue', type: 'text', placeholder: 'e.g. 120/80' },
+  { key: 'heart_rate', label: 'Heart Rate (BPM)', icon: Heart, accent: 'red', type: 'number', placeholder: 'e.g. 72' },
+  { key: 'respiratory_rate', label: 'Respiratory Rate (/min)', icon: Wind, accent: 'teal', type: 'number', placeholder: 'e.g. 16' },
+  { key: 'oxygen_saturation', label: 'SpO₂ (%)', icon: Droplets, accent: 'sky', type: 'number', min: 0, max: 100, placeholder: 'e.g. 98' },
+  { key: 'blood_sugar', label: 'Blood Sugar (mg/dL)', icon: Droplets, accent: 'amber', type: 'number', placeholder: 'e.g. 110' },
+  { key: 'weight', label: 'Weight (kg)', icon: Scale, accent: 'slate', type: 'number', step: '0.1', placeholder: 'e.g. 70' },
+  { key: 'pain_level', label: 'Pain Level', icon: Stethoscope, accent: 'purple', type: 'range', min: 0, max: 10 },
+];
 
 export const INITIAL_VITALS_FORM = {
   temperature: '',
@@ -23,7 +46,6 @@ function newCustomVitalRow() {
   };
 }
 
-/** Encode extra vitals into observation_notes for existing API/DB text column. */
 export function encodeCustomVitals(customVitals = []) {
   const cleaned = (customVitals ?? [])
     .map((row) => ({
@@ -36,7 +58,6 @@ export function encodeCustomVitals(customVitals = []) {
   return JSON.stringify({ [CUSTOM_VITALS_MARKER]: cleaned });
 }
 
-/** Parse observation_notes back into custom vital rows (or empty if plain notes). */
 export function decodeCustomVitals(observationNotes) {
   if (!observationNotes || typeof observationNotes !== 'string') return [];
   try {
@@ -69,12 +90,8 @@ export function buildVitalsPayload(form, { appointmentId, patientId } = {}) {
     observation_notes: encodeCustomVitals(form.customVitals),
   };
 
-  if (appointmentId) {
-    payload.appointment_id = Number(appointmentId);
-  }
-  if (patientId) {
-    payload.patient_id = Number(patientId);
-  }
+  if (appointmentId) payload.appointment_id = Number(appointmentId);
+  if (patientId) payload.patient_id = Number(patientId);
 
   return payload;
 }
@@ -92,6 +109,14 @@ export function vitalsToForm(vital) {
     customVitals: decodeCustomVitals(vital.observation_notes),
   };
 }
+
+function formatVitalDisplay(key, value) {
+  if (value === null || value === undefined || value === '') return '—';
+  if (key === 'pain_level') return `${value}/10`;
+  return String(value);
+}
+
+export { formatVitalDisplay };
 
 export default function NurseVitalsFormFields({ form, setForm }) {
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
@@ -123,99 +148,105 @@ export default function NurseVitalsFormFields({ form, setForm }) {
 
   return (
     <>
-      <div className="nurse-form-grid">
-        <div className="nurse-field">
-          <label>Temperature (°F)</label>
-          <input type="number" step="0.1" className="nurse-input" value={form.temperature} onChange={(e) => set('temperature', e.target.value)} />
-        </div>
-        <div className="nurse-field">
-          <label>Blood Pressure</label>
-          <input type="text" className="nurse-input" placeholder="120/80" value={form.blood_pressure} onChange={(e) => set('blood_pressure', e.target.value)} />
-        </div>
-        <div className="nurse-field">
-          <label>Heart Rate (BPM)</label>
-          <input type="number" className="nurse-input" value={form.heart_rate} onChange={(e) => set('heart_rate', e.target.value)} />
-        </div>
-        <div className="nurse-field">
-          <label>Respiratory Rate</label>
-          <input type="number" className="nurse-input" value={form.respiratory_rate} onChange={(e) => set('respiratory_rate', e.target.value)} />
-        </div>
-        <div className="nurse-field">
-          <label>SpO₂ (%)</label>
-          <input type="number" min="0" max="100" className="nurse-input" value={form.oxygen_saturation} onChange={(e) => set('oxygen_saturation', e.target.value)} />
-        </div>
-        <div className="nurse-field">
-          <label>Blood Sugar (mg/dL)</label>
-          <input type="number" className="nurse-input" value={form.blood_sugar} onChange={(e) => set('blood_sugar', e.target.value)} />
-        </div>
-        <div className="nurse-field">
-          <label>Weight (kg)</label>
-          <input type="number" step="0.1" className="nurse-input" value={form.weight} onChange={(e) => set('weight', e.target.value)} />
-        </div>
-        <div className="nurse-field">
-          <label>Pain Level ({form.pain_level}/10)</label>
-          <input type="range" min="0" max="10" className="nurse-input" value={form.pain_level} onChange={(e) => set('pain_level', e.target.value)} />
-        </div>
+      <div className="nurse-clinical-fields nurse-clinical-fields--grid nurse-clinical-fields--vitals">
+        {VITAL_FIELDS.map(({ key, label, icon: Icon, accent, type, placeholder, step, min, max }) => (
+          <NurseClinicalFieldShell
+            key={key}
+            accent={accent}
+            icon={Icon}
+            label={type === 'range' ? `${label} (${form.pain_level}/10)` : label}
+            onClear={() => set(key, type === 'range' ? 0 : '')}
+            clearDisabled={type === 'range' ? Number(form[key]) === 0 : !form[key]}
+            clearContent={
+              <>
+                <Eraser size={14} />
+                Clear
+              </>
+            }
+          >
+            {type === 'range' ? (
+              <input
+                type="range"
+                min={min}
+                max={max}
+                className="nurse-clinical-field__range"
+                value={form[key]}
+                onChange={(e) => set(key, e.target.value)}
+              />
+            ) : (
+              <input
+                type={type}
+                step={step}
+                min={min}
+                max={max}
+                className="nurse-input nurse-clinical-field__input"
+                placeholder={placeholder}
+                value={form[key]}
+                onChange={(e) => set(key, e.target.value)}
+              />
+            )}
+          </NurseClinicalFieldShell>
+        ))}
       </div>
 
       <div className="nurse-custom-vitals">
         <div className="nurse-custom-vitals__head">
           <div>
-            <h3 className="nurse-custom-vitals__title">Other vitals</h3>
-            <p className="nurse-custom-vitals__hint">Add tests that are not in the list above (e.g. BMI, Height, GCS).</p>
+            <h3 className="nurse-custom-vitals__title">Other Vitals</h3>
+            <p className="nurse-custom-vitals__hint">
+              Add tests that are not in the list above (e.g. BMI, Height, GCS).
+            </p>
           </div>
           <button type="button" className="nurse-btn nurse-btn--secondary nurse-custom-vitals__add" onClick={addCustomVital}>
             <Plus size={16} aria-hidden />
-            Add vital
+            Add Vital
           </button>
         </div>
 
-        {customVitals.length > 0 && (
-          <div className="nurse-custom-vitals__list">
+        {customVitals.length > 0 ? (
+          <div className="nurse-clinical-fields nurse-clinical-fields--grid nurse-clinical-fields--vitals">
             {customVitals.map((row) => (
-              <div key={row.id} className="nurse-custom-vitals__row">
-                <div className="nurse-field">
-                  <label>Test name</label>
+              <NurseClinicalFieldShell
+                key={row.id}
+                accent="slate"
+                icon={Activity}
+                label={row.label || 'Custom Vital'}
+                onClear={() => removeCustomVital(row.id)}
+                clearDisabled={false}
+                clearContent={
+                  <>
+                    <Trash2 size={14} />
+                    Remove
+                  </>
+                }
+              >
+                <div className="nurse-clinical-field__inline">
                   <input
                     type="text"
-                    className="nurse-input"
-                    placeholder="e.g. BMI"
+                    className="nurse-input nurse-clinical-field__input"
+                    placeholder="Test name (e.g. BMI)"
                     value={row.label}
                     onChange={(e) => updateCustomVital(row.id, 'label', e.target.value)}
                   />
-                </div>
-                <div className="nurse-field">
-                  <label>Value</label>
                   <input
                     type="text"
-                    className="nurse-input"
-                    placeholder="e.g. 22.5"
+                    className="nurse-input nurse-clinical-field__input"
+                    placeholder="Value"
                     value={row.value}
                     onChange={(e) => updateCustomVital(row.id, 'value', e.target.value)}
                   />
-                </div>
-                <div className="nurse-field">
-                  <label>Unit</label>
                   <input
                     type="text"
-                    className="nurse-input"
-                    placeholder="optional"
+                    className="nurse-input nurse-clinical-field__input"
+                    placeholder="Unit (optional)"
                     value={row.unit}
                     onChange={(e) => updateCustomVital(row.id, 'unit', e.target.value)}
                   />
                 </div>
-                <button
-                  type="button"
-                  className="nurse-btn nurse-btn--ghost nurse-custom-vitals__remove"
-                  onClick={() => removeCustomVital(row.id)}
-                  aria-label={`Remove ${row.label || 'custom vital'}`}
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
+              </NurseClinicalFieldShell>
             ))}
           </div>
-        )}
+        ) : null}
       </div>
     </>
   );

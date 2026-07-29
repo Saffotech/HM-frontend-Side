@@ -1,4 +1,12 @@
-import { BarChart3, BedDouble, CalendarDays, LayoutDashboard, UserCog, Users } from 'lucide-react';
+import {
+  BarChart3,
+  BedDouble,
+  CalendarDays,
+  LayoutDashboard,
+  Settings,
+  UserCog,
+  Users,
+} from 'lucide-react';
 import { ROUTES } from '@/shared/constants';
 import RoleLayout from '@/shared/components/layout/RoleLayout';
 import '../styles/admin.css';
@@ -10,9 +18,11 @@ const NAV_LINKS = [
   { href: ROUTES.ADMIN_NURSE_WORKFORCE, label: 'Nurse Workforce', icon: CalendarDays },
   { href: ROUTES.ADMIN_REPORTS, label: 'Reports', icon: BarChart3 },
   { href: ROUTES.ADMIN_ROLES, label: 'Roles', icon: UserCog },
+  { href: ROUTES.ADMIN_SETTINGS, label: 'Settings', icon: Settings },
 ];
 
 const PAGE_TITLES = [
+  { prefix: ROUTES.ADMIN_SETTINGS, title: 'Settings' },
   { prefix: ROUTES.ADMIN_NURSE_WORKFORCE, title: 'Nurse Workforce' },
   { prefix: ROUTES.ADMIN_BED_ALLOCATION, title: 'Nurse Bed Allocation' },
   { prefix: ROUTES.ADMIN_STAFF, title: 'Staff' },
@@ -60,6 +70,10 @@ function isBedAllocationActive(pathname) {
   return pathname === ROUTES.ADMIN_BED_ALLOCATION || pathname.startsWith('/admin/bed-allocation');
 }
 
+function isSettingsActive(pathname) {
+  return pathname === ROUTES.ADMIN_SETTINGS || pathname.startsWith(`${ROUTES.ADMIN_SETTINGS}/`);
+}
+
 function isNavLinkActive(pathname, link) {
   if (link.href === ROUTES.ADMIN_STAFF) {
     return isStaffActive(pathname);
@@ -72,6 +86,9 @@ function isNavLinkActive(pathname, link) {
   }
   if (link.href === ROUTES.ADMIN_BED_ALLOCATION) {
     return isBedAllocationActive(pathname);
+  }
+  if (link.href === ROUTES.ADMIN_SETTINGS) {
+    return isSettingsActive(pathname);
   }
   return pathname === link.href || pathname.startsWith(link.href);
 }

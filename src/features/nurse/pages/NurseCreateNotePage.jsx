@@ -59,7 +59,7 @@ export default function NurseCreateNotePage() {
   if (!appointmentIdFromUrl && patientIdFromUrl && isResolvingAppointment) {
     return (
       <NurseLayout>
-        <div className="nurse-page nurse-max-w-wide">
+        <div className="nurse-page">
           <QueryFeedback isLoading />
         </div>
       </NurseLayout>
@@ -72,7 +72,7 @@ export default function NurseCreateNotePage() {
 
       <NurseLayout>
 
-        <div className="nurse-page nurse-max-w-wide">
+        <div className="nurse-page">
 
           <div className="nurse-alert nurse-alert--error">
 
@@ -93,7 +93,7 @@ export default function NurseCreateNotePage() {
   if (!canCreateNotes) {
     return (
       <NurseLayout>
-        <div className="nurse-page nurse-max-w-wide">
+        <div className="nurse-page">
           <div className="nurse-alert nurse-alert--error">
             <p>You do not have permission to create nursing notes.</p>
             <Link to={ROUTES.NURSE_DASHBOARD}>Return to Dashboard</Link>
@@ -158,7 +158,7 @@ export default function NurseCreateNotePage() {
 
   return (
     <NurseLayout>
-      <div className="nurse-page nurse-max-w-wide">
+      <div className="nurse-page">
       <div className="nurse-note-detail">
 
         <div className="nurse-vital-detail__top">
@@ -245,7 +245,7 @@ export default function NurseCreateNotePage() {
 
 
 
-          <form className="nurse-note-edit__form nurse-card nurse-card--padded" onSubmit={onSubmit}>
+          <form className="nurse-clinical-panel nurse-card nurse-card--padded" onSubmit={onSubmit}>
 
             <NurseNoteFormFields form={form} onChange={set} idPrefix="create-note" />
 

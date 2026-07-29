@@ -26,6 +26,8 @@ export default function DashboardPage() {
   const todaysAppts = prepareOpdDashboardAppointments(
     enrichAppointmentsWithApiPayment(todayApptPage?.appointments ?? []),
   );
+  const paidCount = todaysAppts.filter((a) => a.payment?.isPaid).length;
+  const unpaidCount = todaysAppts.length - paidCount;
   const recentPatients = recentPage?.patients ?? [];
   const wardBedStats = dashboard?.wardBedStats ?? [];
 
@@ -135,7 +137,17 @@ export default function DashboardPage() {
           <div className="dashboard-panels">
             <div className="card dashboard-panels__appointments">
               <div className="card__header">
-                <h3>Today&apos;s Appointments</h3>
+                <div className="dashboard-appt-title">
+                  <h3>Today&apos;s Appointments</h3>
+                  <div className="dashboard-appt-counts" aria-label="Payment summary">
+                    <span className="dashboard-appt-count dashboard-appt-count--paid">
+                      Paid {paidCount}
+                    </span>
+                    <span className="dashboard-appt-count dashboard-appt-count--unpaid">
+                      Unpaid {unpaidCount}
+                    </span>
+                  </div>
+                </div>
                 <Link to={ROUTES.APPOINTMENTS}>View All</Link>
               </div>
               <div className="table-wrap dashboard-table-wrap">

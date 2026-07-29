@@ -27,12 +27,14 @@ import { Button, QueryFeedback, ConfirmDialog } from '@/shared/components/common
 import { ROUTES } from '@/shared/constants';
 import { billCollectedAmount } from '@/shared/utils/billHelpers';
 import { toast } from '@/shared/utils/toast';
+import { useOpdDeleteControls } from '@/features/opd/hooks/useOpdBillingSettingsQuery';
 import './PatientProfilePage.css';
 
 export default function PatientProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const deletePatient = useDeletePatientMutation();
+  const { allowPatientDelete } = useOpdDeleteControls();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [expandedVisit, setExpandedVisit] = useState(null);
   const [paymentDetailVisit, setPaymentDetailVisit] = useState(null);
@@ -180,6 +182,7 @@ export default function PatientProfilePage() {
         outstanding={outstanding}
         onBack={() => navigate(ROUTES.PATIENTS)}
         onDelete={() => setDeleteOpen(true)}
+        deleteDisabledByAdmin={!allowPatientDelete}
       />
 
       <div className="pp-shell">

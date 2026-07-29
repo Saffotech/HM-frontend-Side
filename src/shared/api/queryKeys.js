@@ -68,6 +68,8 @@ export const queryKeys = {
 
     dashboard: ['opd', 'dashboard'],
 
+    settings: ['opd', 'settings'],
+
     profile: ['opd', 'profile'],
 
     notifications: ['opd', 'notifications'],
@@ -140,6 +142,7 @@ export const queryKeys = {
     notifications: ['admin', 'notifications'],
     notificationsList: (filters) => ['admin', 'notifications', 'list', filters],
     notificationsUnreadCount: ['admin', 'notifications', 'unread-count'],
+    opdSettings: ['admin', 'settings', 'opd'],
   },
 
   doctor: {

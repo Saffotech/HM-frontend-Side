@@ -217,5 +217,10 @@ export function uiToApiGenerateBill(uiBill) {
 
   if (transaction_reference) body.transaction_reference = transaction_reference;
 
+  const appointmentId = uiBill.appointmentDbId ?? uiBill.appointment_id;
+  if (appointmentId != null && appointmentId !== '') {
+    body.appointment_id = Number(appointmentId);
+  }
+
   return body;
 }

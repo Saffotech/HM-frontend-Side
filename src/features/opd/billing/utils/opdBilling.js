@@ -85,6 +85,9 @@ export function createOpdBillRecord({
   appointment,
   visitType,
   paymentRef,
+  registrationFee,
+  consultationFee,
+  gstPercent,
 }) {
   const paid = Math.min(Math.max(0, Number(amountReceived) || 0), grandTotal);
   const { status, balance } = getBillStatus(paid, grandTotal);
@@ -123,5 +126,8 @@ export function createOpdBillRecord({
     doctorName: service.doctorName,
     deptName: service.deptName,
     visitType,
+    registrationFee: registrationFee != null ? Number(registrationFee) : undefined,
+    consultationFee: consultationFee != null ? Number(consultationFee) : undefined,
+    gstPercent: gstPercent != null ? Number(gstPercent) : undefined,
   };
 }

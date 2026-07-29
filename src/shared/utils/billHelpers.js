@@ -1,9 +1,14 @@
 import { TAX_RATE } from '@/shared/constants';
 import { formatOpdDisplayDate } from '@/shared/utils/opdDates';
 
-export function calcBillTotals(items) {
+/**
+ * @param {Array<{ qty: number, unitPrice: number }>} items
+ * @param {number} [taxRate=TAX_RATE] — fraction (e.g. 0.04 for 4%)
+ */
+export function calcBillTotals(items, taxRate = TAX_RATE) {
+  const rate = Number.isFinite(Number(taxRate)) ? Number(taxRate) : TAX_RATE;
   const subtotal = items.reduce((acc, i) => acc + i.qty * i.unitPrice, 0);
-  const tax = Math.round(subtotal * TAX_RATE * 100) / 100;
+  const tax = Math.round(subtotal * rate * 100) / 100;
   const grandTotal = subtotal + tax;
   return { subtotal, tax, grandTotal };
 }

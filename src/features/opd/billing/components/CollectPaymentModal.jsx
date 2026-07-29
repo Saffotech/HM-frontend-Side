@@ -5,6 +5,7 @@ import {
   useBillInvoiceQuery,
   BILLS_PAGE_SIZE,
 } from '@/shared/hooks/queries/useBillingQuery';
+import { useOpdPaymentControls } from '@/features/opd/hooks/useOpdBillingSettingsQuery';
 import { asBillList } from '@/shared/hooks/queries/listDataUtils';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
 import { billItemsWithNonZeroAmount, billLineAmount } from '@/shared/utils/billHelpers';
@@ -21,7 +22,7 @@ import {
 } from '@/shared/components/common';
 import './CollectPaymentModal.css';
 
-const COLLECT_PAYMENT_MODES = ['Cash', 'Card', 'UPI', 'Insurance'];
+const DEFAULT_COLLECT_PAYMENT_MODES = ['Cash', 'Card', 'UPI', 'Insurance'];
 
 function normalizePaymentMode(mode) {
   if (String(mode).toLowerCase() === 'online') return 'Insurance';
@@ -106,7 +107,10 @@ export default function CollectPaymentModal({
   patientDbId,
   appointmentDate,
   onCollected,
+  enabledPaymentModes: enabledPaymentModesProp,
 }) {
+  const { enabledPaymentModes: settingsModes } = useOpdPaymentControls();
+  const enabledPaymentModes = enabledPaymentModesProp || settingsModes;
   const { data: billsData, isLoading: allBillsLoading } = useBillsQuery({
     fetchAll: true,
     enabled: open,
@@ -133,15 +137,25 @@ export default function CollectPaymentModal({
   const unpaidBills = bills.filter((b) => b.status !== 'Paid');
   const billsLoading = allBillsLoading || patientBillsLoading;
 
+  const [formState, setFormState] = useState({
+    selectedBillId: defaultBillId || '',
+    amount: '',
+    mode: 'Cash',
+    refNo: '',
+  });
+
   const bill = useMemo(() => {
     if (prefillBill?.visitId) return prefillBill;
 
     const candidates = uniqueBills(bills, defaultBills, patientBills);
+    const pickerBillId = formState.selectedBillId;
+
     const fromList =
       candidates.find(
         (b) =>
           (defaultBillId && b.id === defaultBillId) ||
-          (defaultVisitId != null && b.visitId === defaultVisitId)
+          (defaultVisitId != null && b.visitId === defaultVisitId) ||
+          (pickerBillId && b.id === pickerBillId)
       ) ?? null;
     if (fromList) return fromList;
 
@@ -166,15 +180,10 @@ export default function CollectPaymentModal({
     patientDbId,
     appointmentDate,
     prefillBill,
+    formState.selectedBillId,
   ]);
 
   const collectPayment = useCollectPaymentMutation();
-  const [formState, setFormState] = useState({
-    selectedBillId: defaultBillId || '',
-    amount: '',
-    mode: 'Cash',
-    refNo: '',
-  });
 
   const { data: invoiceBill, isLoading: invoiceLoading } = useBillInvoiceQuery(
     bill?.visitId,
@@ -398,7 +407,7 @@ export default function CollectPaymentModal({
                     if (!requiresTransactionReference(mode)) set('refNo', '');
                   }}
                 >
-                  {COLLECT_PAYMENT_MODES.map((m) => (
+                  {(enabledPaymentModes && enabledPaymentModes.length ? enabledPaymentModes : DEFAULT_COLLECT_PAYMENT_MODES).map((m) => (
                     <option key={m} value={m}>
                       {m}
                     </option>
@@ -417,7 +426,7 @@ export default function CollectPaymentModal({
               />
             )}
           </>
-        ) : (
+        ) : showBillPicker && !formState.selectedBillId ? null : (
           <p className="collect-payment__muted">
             No unpaid bill found for this appointment. Create a bill from Billing first.
           </p>

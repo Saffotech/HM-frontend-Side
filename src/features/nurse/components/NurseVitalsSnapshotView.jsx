@@ -1,35 +1,15 @@
 import { useState, useEffect, useMemo } from 'react';
-import {
-  Activity,
-  Calendar,
-  Droplets,
-  Heart,
-  Scale,
-  Stethoscope,
-  Thermometer,
-  User,
-  Wind,
-} from 'lucide-react';
+import { Activity, Calendar, Stethoscope, User } from 'lucide-react';
 import NurseHistoryFilter from '@/features/nurse/components/NurseHistoryFilter';
-import { decodeCustomVitals } from '@/features/nurse/components/NurseVitalsFormFields';
-
-const CORE_VITALS = [
-  { key: 'temperature', label: 'Temperature', unit: '°F', icon: Thermometer, accent: 'rose' },
-  { key: 'blood_pressure', label: 'Blood Pressure', unit: '', icon: Activity, accent: 'blue' },
-  { key: 'heart_rate', label: 'Heart Rate', unit: 'BPM', icon: Heart, accent: 'red' },
-  { key: 'respiratory_rate', label: 'Respiratory Rate', unit: '/min', icon: Wind, accent: 'teal' },
-  { key: 'oxygen_saturation', label: 'SpO₂', unit: '%', icon: Droplets, accent: 'sky' },
-  { key: 'blood_sugar', label: 'Blood Sugar', unit: 'mg/dL', icon: Droplets, accent: 'amber' },
-  { key: 'weight', label: 'Weight', unit: 'kg', icon: Scale, accent: 'slate' },
-  { key: 'pain_level', label: 'Pain Level', unit: '', icon: Stethoscope, accent: 'purple' },
-];
-
-function formatVitalValue(key, value) {
-  if (value === null || value === undefined || value === '') return '—';
-  if (key === 'pain_level') return `${value}/10`;
-  return String(value);
-}
-
+import {
+  NurseClinicalFieldShell,
+  NurseClinicalReadonlyValue,
+} from '@/features/nurse/components/NurseClinicalFieldCard';
+import {
+  VITAL_FIELDS,
+  decodeCustomVitals,
+  formatVitalDisplay,
+} from '@/features/nurse/components/NurseVitalsFormFields';
 function formatRecordedAt(iso) {
   if (!iso) return '—';
   return new Date(iso).toLocaleString();
@@ -63,7 +43,6 @@ export default function NurseVitalsSnapshotView({ vital }) {
   const [selectedHistoryId, setSelectedHistoryId] = useState(latestHistoryId);
 
   useEffect(() => {
-    // Prefer newest recording whenever the vital / history set changes
     setSelectedHistoryId(latestHistoryId);
   }, [vital?.id, latestHistoryId]);
 
@@ -77,7 +56,7 @@ export default function NurseVitalsSnapshotView({ vital }) {
 
   const snapshot = useMemo(
     () => historyItems.find((entry) => entry.history_id === activeHistoryId) || historyItems[0],
-    [historyItems, activeHistoryId]
+    [historyItems, activeHistoryId],
   );
 
   const customVitals = useMemo(
@@ -120,57 +99,46 @@ export default function NurseVitalsSnapshotView({ vital }) {
 
       <section className="nurse-vital-detail__section">
         <h2 className="nurse-vital-detail__section-title">Vital Signs</h2>
-        <div className="nurse-vital-metrics">
-          {CORE_VITALS.map(({ key, label, unit, icon: Icon, accent }) => (
-            <div key={key} className={`nurse-vital-metric nurse-vital-metric--${accent}`}>
-              <div className="nurse-vital-metric__icon">
-                <Icon size={20} />
-              </div>
-              <div className="nurse-vital-metric__body">
-                <span className="nurse-vital-metric__label">{label}</span>
-                <span className="nurse-vital-metric__value">
-                  {formatVitalValue(key, snapshot[key])}
-                  {unit && snapshot[key] != null && snapshot[key] !== '' && (
-                    <span className="nurse-vital-metric__unit"> {unit}</span>
-                  )}
-                </span>
-                {key === 'pain_level' && snapshot.pain_level != null && (
-                  <div className="nurse-vital-metric__bar" aria-hidden>
-                    <div
-                      className="nurse-vital-metric__bar-fill"
-                      style={{ width: `${Math.min(100, (Number(snapshot.pain_level) / 10) * 100)}%` }}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+        <div className="nurse-clinical-panel nurse-clinical-panel--compact nurse-card nurse-card--padded">
+          <div className="nurse-clinical-fields nurse-clinical-fields--grid nurse-clinical-fields--vitals">
+            {VITAL_FIELDS.map(({ key, label, icon: Icon, accent }) => (
+              <NurseClinicalFieldShell
+                key={key}
+                accent={accent}
+                icon={Icon}
+                label={label}
+              >
+                <NurseClinicalReadonlyValue>
+                  {formatVitalDisplay(key, snapshot[key])}
+                </NurseClinicalReadonlyValue>
+              </NurseClinicalFieldShell>
+            ))}
+          </div>
         </div>
       </section>
 
-      {customVitals.length > 0 && (
+      {customVitals.length > 0 ? (
         <section className="nurse-vital-detail__section">
           <h2 className="nurse-vital-detail__section-title">Other Vitals</h2>
-          <div className="nurse-vital-metrics">
-            {customVitals.map((row) => (
-              <div key={`${row.label}-${row.value}`} className="nurse-vital-metric nurse-vital-metric--slate">
-                <div className="nurse-vital-metric__icon">
-                  <Activity size={20} />
-                </div>
-                <div className="nurse-vital-metric__body">
-                  <span className="nurse-vital-metric__label">{row.label}</span>
-                  <span className="nurse-vital-metric__value">
+          <div className="nurse-clinical-panel nurse-clinical-panel--compact nurse-card nurse-card--padded">
+            <div className="nurse-clinical-fields nurse-clinical-fields--grid nurse-clinical-fields--vitals">
+              {customVitals.map((row) => (
+                <NurseClinicalFieldShell
+                  key={`${row.label}-${row.value}`}
+                  accent="slate"
+                  icon={Activity}
+                  label={row.label}
+                >
+                  <NurseClinicalReadonlyValue>
                     {row.value}
-                    {row.unit ? (
-                      <span className="nurse-vital-metric__unit"> {row.unit}</span>
-                    ) : null}
-                  </span>
-                </div>
-              </div>
-            ))}
+                    {row.unit ? ` ${row.unit}` : ''}
+                  </NurseClinicalReadonlyValue>
+                </NurseClinicalFieldShell>
+              ))}
+            </div>
           </div>
         </section>
-      )}
+      ) : null}
     </div>
   );
 }

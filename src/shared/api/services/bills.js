@@ -8,6 +8,7 @@ import {
   getVisitInvoice,
   previewBillFees,
   previewBillForRegister,
+  ensureBillForAppointment as ensureBillForAppointmentApi,
 } from '@/features/opd/billing/api/billing';
 import { apiToUiBillPreview } from '@/shared/api/mappers/billPreviewMapper';
 import { asList } from '@/shared/api/dataSource';
@@ -138,6 +139,13 @@ export async function addBill(bill, token) {
       payment_status: response.payment_status,
     })
   );
+}
+
+export async function ensureBillForAppointment(appointmentId, token) {
+  if (appointmentId == null || appointmentId === '') {
+    return Promise.reject(new Error('Appointment id is required to ensure a bill'));
+  }
+  return ensureBillForAppointmentApi(appointmentId, token);
 }
 
 export async function patchBill(visitId, data, token) {

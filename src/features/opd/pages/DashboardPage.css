@@ -279,6 +279,42 @@
   color: var(--color-text);
 }
 
+.dashboard-appt-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  min-width: 0;
+}
+
+.dashboard-appt-counts {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dashboard-appt-count {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.dashboard-appt-count--paid {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.dashboard-appt-count--unpaid {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
 .dashboard .card__header a {
   font-size: 0.875rem;
   font-weight: 500;

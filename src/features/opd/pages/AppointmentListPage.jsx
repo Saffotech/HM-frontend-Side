@@ -35,9 +35,15 @@ import {
   QueryFeedback,
   ConfirmDialog,
 } from '@/shared/components/common';
+import AdminGatedDeleteButton from '@/features/opd/components/AdminGatedDeleteButton';
+import { useOpdDeleteControls } from '@/features/opd/hooks/useOpdBillingSettingsQuery';
 import { toast } from '@/shared/utils/toast';
 import { ROUTES } from '@/shared/constants';
 import CollectPaymentModal from '@/features/opd/billing/components/CollectPaymentModal';
+import { useQueryToken } from '@/shared/hooks/useQueryToken';
+import { useQueryClient } from '@tanstack/react-query';
+import { billsApi } from '@/shared/api/services';
+import { queryKeys } from '@/shared/api/queryKeys';
 import './AppointmentListPage.css';
 
 const STATUS_PILLS = [
@@ -120,6 +126,9 @@ export default function AppointmentListPage() {
   const updateAppointment = useUpdateAppointmentMutation();
   const cancelAppointment = useCancelAppointmentMutation();
   const deleteAppointment = useDeleteAppointmentMutation();
+  const { allowAppointmentDelete } = useOpdDeleteControls();
+  const token = useQueryToken();
+  const queryClient = useQueryClient();
   const [selectedAppt, setSelectedAppt] = useState(null);
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -195,17 +204,33 @@ export default function AppointmentListPage() {
         })
       : '';
 
-  const openCollectPayment = (appt) => {
+  const openCollectPayment = async (appt) => {
     const payment = appt.payment ?? buildPaymentFromApiFields(appt);
-    const visitId = payment?.bill?.visitId ?? appt.billId ?? appt.visitId ?? null;
-    const billNumber = payment?.bill?.billNumber ?? appt.billNumber ?? null;
-    const balance =
+    let visitId = payment?.bill?.visitId ?? appt.billId ?? appt.visitId ?? null;
+    let billNumber = payment?.bill?.billNumber ?? appt.billNumber ?? null;
+    let total = Number(payment?.bill?.total ?? appt.totalAmount ?? 0);
+    let paid = Number(payment?.bill?.paid ?? appt.paidAmount ?? 0);
+    let balance =
       Number(payment?.bill?.balance ?? appt.balanceAmount ?? 0) ||
-      Math.max(
-        0,
-        Number(payment?.bill?.total ?? appt.totalAmount ?? 0) -
-          Number(payment?.bill?.paid ?? appt.paidAmount ?? 0),
-      );
+      Math.max(0, total - paid);
+
+    // Unpaid appointments without a visit: create/link bill so Collect Payment works.
+    if (visitId == null && appt.dbId != null) {
+      try {
+        const ensured = await billsApi.ensureBillForAppointment(appt.dbId, token);
+        visitId = ensured.visit_id ?? ensured.visitId ?? null;
+        billNumber = ensured.bill_number ?? ensured.billNumber ?? billNumber;
+        total = Number(ensured.grand_total ?? total);
+        paid = 0;
+        balance = total;
+        queryClient.invalidateQueries({ queryKey: queryKeys.bills.all });
+        queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+        queryClient.invalidateQueries({ queryKey: ['appointments', 'list'] });
+      } catch (err) {
+        toast.error(err?.message || 'Could not create bill for this appointment');
+        return;
+      }
+    }
 
     setPaymentContext({
       billNumber: billNumber ?? undefined,
@@ -221,9 +246,9 @@ export default function AppointmentListPage() {
               billNumber,
               patientName: appt.patientName,
               patientId: appt.patientUid ?? appt.patientId,
-              total: Number(payment?.bill?.total ?? appt.totalAmount ?? 0),
-              paid: Number(payment?.bill?.paid ?? appt.paidAmount ?? 0),
-              balance: balance || Number(payment?.bill?.total ?? appt.totalAmount ?? 0),
+              total,
+              paid,
+              balance: balance || total,
               status: 'Unpaid',
             }
           : undefined,
@@ -451,13 +476,10 @@ export default function AppointmentListPage() {
                         </Button>
                       )}
                       {isDeletableAppointment(appt) && (
-                        <Button
-                          size="sm"
-                          variant="danger"
+                        <AdminGatedDeleteButton
+                          disabledByAdmin={!allowAppointmentDelete}
                           onClick={() => openDeleteAppointment(appt)}
-                        >
-                          Delete
-                        </Button>
+                        />
                       )}
                     </td>
                   </tr>

@@ -13,11 +13,14 @@ import {
 import { Avatar, Button, DateInput, SearchBar, DataTableShell, QueryFeedback, ConfirmDialog, EmptyState } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
+import AdminGatedDeleteButton from '@/features/opd/components/AdminGatedDeleteButton';
+import { useOpdDeleteControls } from '@/features/opd/hooks/useOpdBillingSettingsQuery';
 import './PatientListPage.css';
 
 export default function PatientListPage() {
   const navigate = useNavigate();
   const deletePatient = useDeletePatientMutation();
+  const { allowPatientDelete } = useOpdDeleteControls();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search.trim(), 300);
   const [dateFilter, setDateFilter] = useState('all');
@@ -170,13 +173,13 @@ export default function PatientListPage() {
                   </td>
                   <td className="col-optional">{p.registeredDate}</td>
                   <td className="actions-cell patients-table__actions">
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      onClick={(e) => { e.stopPropagation(); setDeleteTarget(p); }}
-                    >
-                      Delete
-                    </Button>
+                    <AdminGatedDeleteButton
+                      disabledByAdmin={!allowPatientDelete}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteTarget(p);
+                      }}
+                    />
                   </td>
                 </tr>
               ))}

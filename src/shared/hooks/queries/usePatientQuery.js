@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { patientsApi } from '@/shared/api/services';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
@@ -6,19 +6,41 @@ import { mutationOnError } from '@/shared/utils/mutationErrors';
 
 const DEFAULT_PAGE_SIZE = 20;
 
+function normalizePatientListSearch(search) {
+  const trimmed = search?.trim();
+  return trimmed || undefined;
+}
+
 export function usePatientsQuery(options = {}) {
-  const { fetchAll = true, search, page, limit = DEFAULT_PAGE_SIZE, enabled = true } = options;
+  const {
+    fetchAll = true,
+    search,
+    page,
+    limit = DEFAULT_PAGE_SIZE,
+    enabled = true,
+    staleTime,
+    refetchOnWindowFocus,
+    keepPreviousData: keepPrevious = false,
+  } = options;
   const token = useQueryToken();
-  const filters = { fetchAll, search, page, limit };
+  const normalizedSearch = normalizePatientListSearch(search);
+  const filters = { fetchAll, search: normalizedSearch, page, limit };
 
   return useQuery({
     queryKey: queryKeys.patients.list(filters),
     enabled,
+    staleTime,
+    refetchOnWindowFocus,
+    placeholderData: keepPrevious ? keepPreviousData : undefined,
     queryFn: async () => {
       if (fetchAll) {
-        return patientsApi.listPatientsAll(token, { search });
+        return patientsApi.listPatientsAll(token, { search: normalizedSearch });
       }
-      const result = await patientsApi.listPatientsPage(token, { search, page, limit });
+      const result = await patientsApi.listPatientsPage(token, {
+        search: normalizedSearch,
+        page,
+        limit,
+      });
       return result;
     },
   });

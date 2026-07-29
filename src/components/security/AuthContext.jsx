@@ -14,6 +14,8 @@ import {
 
 } from '@/components/security/authSession';
 
+import { clearAllConsultationDrafts } from '@/shared/utils/consultationDraftStorage';
+
 import { decodeJwt, isTokenExpired, getTokenExpiresInMs } from '@/shared/utils/jwtHelper';
 
 import { normalizeRole, DEPARTMENT_BY_ROLE } from '@/shared/utils/roleUtils';
@@ -176,6 +178,7 @@ export function AuthProvider({ children }) {
     }
 
     clearAuthSession();
+    clearAllConsultationDrafts();
 
     setUser(null);
 

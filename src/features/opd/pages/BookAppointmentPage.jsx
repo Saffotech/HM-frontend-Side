@@ -227,23 +227,6 @@ export default function BookAppointmentPage() {
     }
 
     try {
-      if (selectedDoctor && selectedDept && grandTotal > 0) {
-        await createBill.mutateAsync({
-          patientDbId: selectedPatient.dbId,
-          deptId: selectedDept.id,
-          doctorId: selectedDoctor.id,
-          registrationFee: revisit.registrationFeeApplicable ? REGISTRATION_FEE : 0,
-          consultationFee: selectedDoctor.fee,
-          gstPercent: TAX_RATE * 100,
-          payLater,
-          paymentMode,
-          paid: payLater ? 0 : grandTotal,
-          paymentRef: paymentRef.trim() || undefined,
-          status: payLater ? 'Unpaid' : 'Paid',
-          items: [],
-        });
-      }
-
       const newAppt = {
         id: generateAppointmentId(0),
         patientId: selectedPatient.id,
@@ -268,7 +251,27 @@ export default function BookAppointmentPage() {
         notes: payLater ? APPT_PAY_LATER_NOTE : undefined,
       };
 
-      await bookAppointment.mutateAsync(newAppt);
+      // Book first so generate_bill can link the visit to this appointment.
+      const booked = await bookAppointment.mutateAsync(newAppt);
+
+      if (selectedDoctor && selectedDept && grandTotal > 0) {
+        await createBill.mutateAsync({
+          patientDbId: selectedPatient.dbId,
+          deptId: selectedDept.id,
+          doctorId: selectedDoctor.id,
+          registrationFee: revisit.registrationFeeApplicable ? REGISTRATION_FEE : 0,
+          consultationFee: selectedDoctor.fee,
+          gstPercent: TAX_RATE * 100,
+          payLater,
+          paymentMode,
+          paid: payLater ? 0 : grandTotal,
+          paymentRef: paymentRef.trim() || undefined,
+          status: payLater ? 'Unpaid' : 'Paid',
+          items: [],
+          appointmentDbId: booked?.dbId,
+        });
+      }
+
       toast.success(
         payLater
           ? `Booked for ${selectedPatient.name} — payment pending`

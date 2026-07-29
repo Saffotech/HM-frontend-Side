@@ -22,6 +22,7 @@ const NurseBedAllocationEditPage = lazy(() => import('@/features/admin/pages/Nur
 const NurseWorkforceDashboardPage = lazy(() => import('@/features/admin/pages/NurseWorkforceDashboardPage'));
 const NurseWorkforceShiftsPage = lazy(() => import('@/features/admin/pages/NurseWorkforceShiftsPage'));
 const NurseWorkforceRosterPage = lazy(() => import('@/features/admin/pages/NurseWorkforceRosterPage'));
+const AdminSettingsPage = lazy(() => import('@/features/admin/pages/AdminSettingsPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 export const adminRoutes = [
@@ -164,6 +165,58 @@ export const adminRoutes = [
             element: (
               <LazyRoute>
                 <VisitsReportPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.ADMIN_SETTINGS,
+            element: <Navigate to={ROUTES.ADMIN_SETTINGS_OPD} replace />,
+          },
+          {
+            path: ROUTES.ADMIN_SETTINGS_OPD,
+            element: (
+              <LazyRoute>
+                <AdminSettingsPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.ADMIN_SETTINGS_DOCTOR,
+            element: (
+              <LazyRoute>
+                <AdminSettingsPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.ADMIN_SETTINGS_RECEPTIONIST,
+            element: (
+              <LazyRoute>
+                <AdminSettingsPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.ADMIN_SETTINGS_LAB,
+            element: (
+              <LazyRoute>
+                <AdminSettingsPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.ADMIN_SETTINGS_NURSE,
+            element: (
+              <LazyRoute>
+                <AdminSettingsPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.ADMIN_SETTINGS_PHARMACY,
+            element: (
+              <LazyRoute>
+                <AdminSettingsPage />
               </LazyRoute>
             ),
           },

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, memo, useId } from 'react';
+import { useState, useRef, useEffect, useCallback, memo, useId, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Search, X } from 'lucide-react';
 import { highlightMatch } from '@/shared/utils/highlightMatch';
@@ -34,6 +34,7 @@ function SearchableSelect({
   clearOnEmptyBlur = false,
   clearable,
   onSearchChange,
+  serverFiltered = false,
 }) {
   const showClear = Boolean(value) && !disabled && (clearable ?? clearOnEmptyBlur);
   const [search, setSearch] = useState('');
@@ -42,35 +43,52 @@ function SearchableSelect({
   const containerRef = useRef(null);
   const inputWrapRef = useRef(null);
   const listRef = useRef(null);
+  const lastNotifiedSearchRef = useRef(null);
   const [dropdownStyle, setDropdownStyle] = useState(null);
   const [opensUp, setOpensUp] = useState(false);
   const inputId = useId();
   const errorId = `${inputId}-error`;
 
   const selected = options.find((o) => o.value === value);
+  const selectedLabel = selected?.label ?? '';
 
-  const filtered = options.filter(
-    (o) =>
-      o.label.toLowerCase().includes(search.toLowerCase()) ||
-      o.sublabel?.toLowerCase().includes(search.toLowerCase()) ||
-      o.badge?.toLowerCase().includes(search.toLowerCase()) ||
-      o.searchText?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = useMemo(() => {
+    if (serverFiltered) return options;
+    const q = search.trim().toLowerCase();
+    if (!q) return options;
+    return options.filter(
+      (o) =>
+        o.label.toLowerCase().includes(q) ||
+        o.sublabel?.toLowerCase().includes(q) ||
+        o.badge?.toLowerCase().includes(q) ||
+        o.searchText?.toLowerCase().includes(q)
+    );
+  }, [options, search, serverFiltered]);
 
+  // Sync display text only when closed. Depend on selectedLabel (string), not the
+  // options object identity — otherwise every parent re-render resets search.
   useEffect(() => {
     if (!open) {
-      setSearch(selected ? selected.label : '');
+      setSearch(selectedLabel);
     }
-  }, [value, selected, open]);
+  }, [value, selectedLabel, open]);
 
   useEffect(() => {
     setHighlightIdx(0);
   }, [search, open]);
 
+  // Notify parent only while the user is actively searching (dropdown open).
+  // Pushing the selected label into parent search after close causes a refetch
+  // that briefly removes the option and flickers the closed input value.
   useEffect(() => {
+    if (!open) {
+      lastNotifiedSearchRef.current = null;
+      return;
+    }
+    if (lastNotifiedSearchRef.current === search) return;
+    lastNotifiedSearchRef.current = search;
     onSearchChange?.(search);
-  }, [search, onSearchChange]);
-
+  }, [search, onSearchChange, open]);
   const updateDropdownPosition = useCallback(() => {
     const wrap = inputWrapRef.current;
     if (!wrap) return;
@@ -198,7 +216,11 @@ function SearchableSelect({
           id={inputId}
           className="searchable-select__input"
           placeholder={placeholder}
-          value={open ? search : selected ? selected.label : ''}
+          value={
+            open
+              ? search
+              : selectedLabel || (value ? search : '')
+          }
           disabled={disabled}
           role="combobox"
           aria-expanded={open}

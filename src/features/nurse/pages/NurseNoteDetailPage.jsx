@@ -15,7 +15,7 @@ export default function NurseNoteDetailPage() {
 
   return (
     <NurseLayout>
-      <div className="nurse-page nurse-max-w-wide">
+      <div className="nurse-page">
         <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
           {!note ? (
             <div className="nurse-alert nurse-alert--error">Note not found.</div>

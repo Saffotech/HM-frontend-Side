@@ -1,5 +1,16 @@
 /** App-wide constants — mirrors backend Constants/ */
 
+function isLocalDevApiUrl(url) {
+  if (!url) return true;
+  try {
+    const { hostname, protocol } = new URL(url);
+    if (protocol !== 'https:' && protocol !== 'http:') return false;
+    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
+  } catch {
+    return false;
+  }
+}
+
 if (import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL?.trim()) {
   throw new Error('VITE_API_BASE_URL must be set in production builds');
 }
@@ -11,7 +22,15 @@ if (import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL?.trim()) {
  */
 export const API_BASE_URL = (() => {
   const configured = import.meta.env.VITE_API_BASE_URL?.trim();
-  if (import.meta.env.PROD) return configured;
+  if (import.meta.env.PROD) {
+    if (!configured) return configured;
+    if (!configured.startsWith('https://') && !isLocalDevApiUrl(configured)) {
+      throw new Error(
+        'VITE_API_BASE_URL must use HTTPS in production builds (http allowed only for localhost).'
+      );
+    }
+    return configured;
+  }
   if (configured) return configured;
   return '';
 })();
@@ -132,6 +151,13 @@ export const ROUTES = {
   ADMIN_NURSE_WORKFORCE: '/admin/nurse-workforce',
   ADMIN_NURSE_WORKFORCE_SHIFTS: '/admin/nurse-workforce/shifts',
   ADMIN_NURSE_WORKFORCE_ROSTER: '/admin/nurse-workforce/roster',
+  ADMIN_SETTINGS: '/admin/settings',
+  ADMIN_SETTINGS_OPD: '/admin/settings/opd',
+  ADMIN_SETTINGS_DOCTOR: '/admin/settings/doctor',
+  ADMIN_SETTINGS_RECEPTIONIST: '/admin/settings/receptionist',
+  ADMIN_SETTINGS_LAB: '/admin/settings/lab',
+  ADMIN_SETTINGS_NURSE: '/admin/settings/nurse',
+  ADMIN_SETTINGS_PHARMACY: '/admin/settings/pharmacy',
   ADMIN_PROFILE: '/admin/profile',
   ADMIN_NOTIFICATIONS: '/admin/notifications',
   SUPER_ADMIN_LOGIN: '/super-admin/login',

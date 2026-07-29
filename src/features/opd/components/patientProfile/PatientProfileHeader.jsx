@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Avatar, Button, MoneyAmount } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
+import AdminGatedDeleteButton from '@/features/opd/components/AdminGatedDeleteButton';
 
 export default function PatientProfileHeader({
   patient,
@@ -22,6 +23,7 @@ export default function PatientProfileHeader({
   outstanding,
   onBack,
   onDelete,
+  deleteDisabledByAdmin = false,
 }) {
   return (
     <>
@@ -75,9 +77,12 @@ export default function PatientProfileHeader({
               <Receipt size={15} /> Bill
             </Button>
           </Link>
-          <Button variant="danger" size="sm" onClick={onDelete}>
+          <AdminGatedDeleteButton
+            disabledByAdmin={deleteDisabledByAdmin}
+            onClick={onDelete}
+          >
             <Trash2 size={15} /> Delete
-          </Button>
+          </AdminGatedDeleteButton>
         </div>
       </header>
 

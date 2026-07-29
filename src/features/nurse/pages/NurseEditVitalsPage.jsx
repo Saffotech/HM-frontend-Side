@@ -40,7 +40,7 @@ export default function NurseEditVitalsPage() {
 
   return (
     <NurseLayout>
-      <div className="nurse-page nurse-max-w-wide">
+      <div className="nurse-page">
         <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
           {!vital ? (
             <div className="nurse-alert nurse-alert--error">Vital record not found.</div>
@@ -91,7 +91,7 @@ export default function NurseEditVitalsPage() {
 
               <section className="nurse-vital-detail__section">
                 <h2 className="nurse-vital-detail__section-title">Update Vital Signs</h2>
-                <form className="nurse-card nurse-card--padded nurse-form nurse-vital-edit-form" onSubmit={onSubmit}>
+                <form className="nurse-clinical-panel nurse-clinical-panel--compact nurse-card nurse-card--padded" onSubmit={onSubmit}>
                   <NurseVitalsFormFields form={form} setForm={setForm} />
                   <div className="nurse-form-actions">
                     <button type="button" className="nurse-btn nurse-btn--secondary" onClick={() => navigate(-1)}>

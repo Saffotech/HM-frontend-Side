@@ -16,6 +16,9 @@ export default function Input({
   min,
   max,
   step,
+  maxLength,
+  inputMode,
+  autoComplete,
   readOnly = false,
 }) {
   if (type === 'date') {
@@ -61,6 +64,9 @@ export default function Input({
         min={min}
         max={max}
         step={step}
+        maxLength={maxLength}
+        inputMode={inputMode}
+        autoComplete={autoComplete}
         aria-invalid={!!error}
         aria-describedby={error ? errorId : undefined}
       />

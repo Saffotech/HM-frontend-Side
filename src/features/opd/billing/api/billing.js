@@ -44,6 +44,13 @@ export async function createBill(data, token) {
   });
 }
 
+export async function ensureBillForAppointment(appointmentId, token) {
+  return apiClient(`/opd/appointments/${appointmentId}/ensure-bill`, {
+    method: 'POST',
+    token,
+  });
+}
+
 export async function collectPayment(visitId, data, token) {
   let payload = data;
   if (payload?.payment_mode) {

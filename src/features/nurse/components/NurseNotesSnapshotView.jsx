@@ -1,19 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
-import {
-  Calendar,
-  ClipboardList,
-  FileText,
-  Stethoscope,
-  User,
-} from 'lucide-react';
+import { Calendar, Stethoscope, User } from 'lucide-react';
 import NurseHistoryFilter from '@/features/nurse/components/NurseHistoryFilter';
 import NurseQueueStatusBadge from '@/features/nurse/components/NurseQueueStatusBadge';
-
-const NOTE_SECTIONS = [
-  { key: 'symptoms', label: 'Symptoms', icon: Stethoscope, accent: 'rose' },
-  { key: 'treatment_response', label: 'Treatment Response', icon: ClipboardList, accent: 'blue' },
-  { key: 'additional_notes', label: 'Additional Notes', icon: FileText, accent: 'purple' },
-];
+import {
+  NurseClinicalFieldShell,
+  NurseClinicalReadonlyValue,
+} from '@/features/nurse/components/NurseClinicalFieldCard';
+import { NOTE_FIELDS } from '@/features/nurse/components/NurseNoteFormFields';
 
 function formatCreatedAt(iso) {
   if (!iso) return '—';
@@ -42,7 +35,6 @@ export default function NurseNotesSnapshotView({ note }) {
   const [selectedHistoryId, setSelectedHistoryId] = useState(latestHistoryId);
 
   useEffect(() => {
-    // Prefer newest note whenever the note / history set changes
     setSelectedHistoryId(latestHistoryId);
   }, [note?.id, latestHistoryId]);
 
@@ -56,7 +48,7 @@ export default function NurseNotesSnapshotView({ note }) {
 
   const snapshot = useMemo(
     () => historyItems.find((entry) => entry.history_id === activeHistoryId) || historyItems[0],
-    [historyItems, activeHistoryId]
+    [historyItems, activeHistoryId],
   );
 
   if (!note || !snapshot) return null;
@@ -96,18 +88,21 @@ export default function NurseNotesSnapshotView({ note }) {
 
       <section className="nurse-vital-detail__section">
         <h2 className="nurse-vital-detail__section-title">Nursing Note</h2>
-        <div className="nurse-note-detail__sections">
-          {NOTE_SECTIONS.map(({ key, label, icon: Icon, accent }) => (
-            <div key={key} className={`nurse-note-detail__card nurse-note-detail__card--${accent}`}>
-              <div className="nurse-note-detail__card-header">
-                <div className={`nurse-note-detail__card-icon nurse-note-detail__card-icon--${accent}`}>
-                  <Icon size={18} />
-                </div>
-                <h3>{label}</h3>
-              </div>
-              <p>{snapshot[key] || 'None recorded.'}</p>
-            </div>
-          ))}
+        <div className="nurse-clinical-panel nurse-card nurse-card--padded">
+          <div className="nurse-clinical-fields">
+            {NOTE_FIELDS.map(({ key, label, icon: Icon, accent }) => (
+              <NurseClinicalFieldShell
+                key={key}
+                accent={accent}
+                icon={Icon}
+                label={label}
+              >
+                <NurseClinicalReadonlyValue multiline rows={4}>
+                  {snapshot[key]}
+                </NurseClinicalReadonlyValue>
+              </NurseClinicalFieldShell>
+            ))}
+          </div>
         </div>
       </section>
     </div>

@@ -1,0 +1,257 @@
+/* Shared clinical section cards — notes & vitals view/edit */
+
+.nurse-clinical-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.nurse-clinical-panel--compact {
+  gap: 0.5rem;
+  padding: 0.75rem 1rem !important;
+}
+
+.nurse-clinical-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.nurse-clinical-fields--grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.625rem;
+}
+
+/* Compact vitals grid — more columns, less padding per field */
+.nurse-clinical-fields--vitals {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+@media (max-width: 1200px) {
+  .nurse-clinical-fields--vitals {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .nurse-clinical-fields--vitals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .nurse-clinical-fields--grid,
+  .nurse-clinical-fields--vitals {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Sections inside the main white panel */
+.nurse-clinical-panel .nurse-clinical-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 0 0 1rem 0.875rem;
+  margin: 0;
+  background: transparent;
+  border: none;
+  border-left: 4px solid #e2e8f0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.nurse-clinical-panel .nurse-clinical-field:not(:last-child) {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.nurse-clinical-fields--grid .nurse-clinical-field,
+.nurse-clinical-fields--vitals .nurse-clinical-field {
+  padding: 0.5rem 0.5rem 0.5rem 0.625rem;
+  gap: 0.35rem;
+  border-left-width: 3px;
+  border-bottom: none;
+}
+
+.nurse-clinical-fields--grid .nurse-clinical-field:not(:last-child),
+.nurse-clinical-fields--vitals .nurse-clinical-field:not(:last-child) {
+  padding-bottom: 0.5rem;
+  border-bottom: none;
+}
+
+.nurse-clinical-fields--vitals .nurse-clinical-field__icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.nurse-clinical-fields--vitals .nurse-clinical-field__icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.nurse-clinical-fields--vitals .nurse-clinical-field__label {
+  gap: 0.4rem;
+}
+
+.nurse-clinical-fields--vitals .nurse-clinical-field__title {
+  font-size: 0.8125rem;
+  line-height: 1.25;
+}
+
+.nurse-clinical-fields--vitals .nurse-clinical-field__top {
+  gap: 0.35rem;
+}
+
+.nurse-clinical-fields--vitals .nurse-clinical-field__clear {
+  padding: 0.15rem 0.35rem;
+  font-size: 0.6875rem;
+}
+
+.nurse-clinical-fields--vitals .nurse-clinical-field__input,
+.nurse-clinical-fields--vitals .nurse-input {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8125rem;
+  min-height: 0;
+}
+
+.nurse-clinical-fields--vitals .nurse-clinical-field__range {
+  margin: 0.15rem 0;
+}
+
+.nurse-clinical-panel .nurse-clinical-field--rose { border-left-color: #f43f5e; }
+.nurse-clinical-panel .nurse-clinical-field--blue { border-left-color: var(--color-info, #2563eb); }
+.nurse-clinical-panel .nurse-clinical-field--green { border-left-color: #22c55e; }
+.nurse-clinical-panel .nurse-clinical-field--red { border-left-color: #dc2626; }
+.nurse-clinical-panel .nurse-clinical-field--teal { border-left-color: var(--color-primary, #0d9488); }
+.nurse-clinical-panel .nurse-clinical-field--sky { border-left-color: #0284c7; }
+.nurse-clinical-panel .nurse-clinical-field--amber { border-left-color: #d97706; }
+.nurse-clinical-panel .nurse-clinical-field--slate { border-left-color: #64748b; }
+.nurse-clinical-panel .nurse-clinical-field--purple { border-left-color: #7c3aed; }
+
+.nurse-clinical-field__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.nurse-clinical-field__label {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+.nurse-clinical-field__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.nurse-clinical-field__icon--rose { background: #ffe4e6; color: #e11d48; }
+.nurse-clinical-field__icon--blue { background: var(--color-info-bg, #dbeafe); color: var(--color-info, #2563eb); }
+.nurse-clinical-field__icon--green { background: #dcfce7; color: #16a34a; }
+.nurse-clinical-field__icon--red { background: #fee2e2; color: #dc2626; }
+.nurse-clinical-field__icon--teal { background: var(--color-primary-light, #ccfbf1); color: var(--color-primary, #0d9488); }
+.nurse-clinical-field__icon--sky { background: #e0f2fe; color: #0284c7; }
+.nurse-clinical-field__icon--amber { background: #fef3c7; color: #d97706; }
+.nurse-clinical-field__icon--slate { background: #f1f5f9; color: #475569; }
+.nurse-clinical-field__icon--purple { background: #ede9fe; color: #7c3aed; }
+
+.nurse-clinical-field__title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.nurse-clinical-field__clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.12s, background 0.12s, border-color 0.12s;
+}
+
+.nurse-clinical-field__clear:hover:not(:disabled) {
+  color: #dc2626;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.nurse-clinical-field__clear:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.nurse-clinical-field__input {
+  width: 100%;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  line-height: 1.5;
+}
+
+.nurse-clinical-field__input:focus {
+  border-color: var(--color-primary, #0d9488);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+}
+
+.nurse-clinical-field textarea.nurse-clinical-field__input {
+  min-height: 6.5rem;
+  resize: vertical;
+}
+
+.nurse-clinical-field__input--readonly,
+.nurse-clinical-field__input--readonly:focus {
+  background: #fff;
+  color: #334155;
+  cursor: default;
+  box-shadow: none;
+}
+
+.nurse-clinical-field__input--readonly::placeholder {
+  color: #94a3b8;
+}
+
+.nurse-clinical-field__range {
+  width: 100%;
+  accent-color: var(--color-primary, #0d9488);
+}
+
+.nurse-clinical-field__inline {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.625rem;
+}
+
+@media (max-width: 640px) {
+  .nurse-clinical-field__inline {
+    grid-template-columns: 1fr;
+  }
+}
+
+.nurse-clinical-panel .nurse-form-actions {
+  margin-top: 0.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.nurse-clinical-panel .nurse-custom-vitals {
+  margin-top: 0.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}

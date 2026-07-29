@@ -1,3 +1,4 @@
+import { ArrowLeft } from 'lucide-react';
 import { Label, Input, Button, MoneyAmount } from '@/shared/components/common';
 import { PAYMENT_MODES } from '@/shared/constants';
 import { requiresTransactionReference } from '@/shared/utils/validators';
@@ -15,18 +16,31 @@ export default function OpdBillPaymentFooter({
   subtotal,
   tax,
   grandTotal,
+  gstPercent = 5,
   createBillPending,
   patientId,
   serviceReady,
   selectedPatient,
   patientApptsFetched,
+  enabledPaymentModes,
+  onBack,
 }) {
+  const visibleModes = enabledPaymentModes && enabledPaymentModes.length
+    ? enabledPaymentModes
+    : PAYMENT_MODES;
   return (
-    <div className="opd-form__footer">
+    <div className="opd-form__footer opd-form__footer--payment">
+      {onBack ? (
+        <div className="opd-form__payment-back">
+          <Button type="button" variant="outline" size="sm" onClick={onBack}>
+            <ArrowLeft size={16} /> Back to items
+          </Button>
+        </div>
+      ) : null}
       <div className="opd-form__payment-col">
         <Label>Payment Mode</Label>
         <div className="mode-buttons">
-          {PAYMENT_MODES.map((m) => (
+          {visibleModes.map((m) => (
             <button
               key={m}
               type="button"
@@ -82,7 +96,7 @@ export default function OpdBillPaymentFooter({
           <MoneyAmount amount={subtotal} />
         </div>
         <div className="bill-summary-row">
-          <span>Tax (5%)</span>
+          <span>Tax ({Number.isFinite(Number(gstPercent)) ? Number(gstPercent) : 5}%)</span>
           <MoneyAmount amount={tax} />
         </div>
         <div className="bill-summary-row bill-summary-row--total">

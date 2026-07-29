@@ -11,8 +11,11 @@ export default function OpdBillItemsTable({
   onUpdateItem,
   onRemoveItem,
   onAddItem,
-  billPaid,
+  billItems = QUICK_BILL_ITEMS,
+  allowManualPriceEntry = true,
 }) {
+  const catalog = billItems?.length ? billItems : QUICK_BILL_ITEMS;
+
   return (
     <div className="items-table-wrap">
       <div className="items-table-wrap__top">
@@ -24,7 +27,7 @@ export default function OpdBillItemsTable({
             placeholder="Choose item to add..."
             options={[
               { value: '', label: 'Choose item to add...' },
-              ...QUICK_BILL_ITEMS.map((qi) => ({
+              ...catalog.map((qi) => ({
                 value: qi.name,
                 label: `${qi.name} (${formatCurrency(qi.price)})`,
               })),
@@ -41,7 +44,6 @@ export default function OpdBillItemsTable({
               <th>Item</th>
               <th>Qty</th>
               <th>Unit Price</th>
-              <th>Status</th>
               <th>Subtotal</th>
               <th />
             </tr>
@@ -54,6 +56,7 @@ export default function OpdBillItemsTable({
                     value={item.name}
                     onChange={(e) => onUpdateItem(item.id, 'name', e.target.value)}
                     placeholder="Description"
+                    disabled={!allowManualPriceEntry && Boolean(item.fromCatalog)}
                   />
                 </td>
                 <td>
@@ -69,15 +72,12 @@ export default function OpdBillItemsTable({
                     type="number"
                     min={0}
                     value={item.unitPrice}
-                    onChange={(e) => onUpdateItem(item.id, 'unitPrice', Number(e.target.value))}
+                    onChange={(e) =>
+                      onUpdateItem(item.id, 'unitPrice', Number(e.target.value))
+                    }
+                    disabled={!allowManualPriceEntry}
+                    readOnly={!allowManualPriceEntry}
                   />
-                </td>
-                <td>
-                  <span
-                    className={`bill-line-status ${billPaid ? 'bill-line-status--paid' : 'bill-line-status--unpaid'}`}
-                  >
-                    {billPaid ? 'Paid' : 'Unpaid'}
-                  </span>
                 </td>
                 <td className="col-money">
                   <MoneyAmount amount={item.qty * item.unitPrice} strong />
@@ -100,7 +100,13 @@ export default function OpdBillItemsTable({
       </div>
 
       <div className="items-table-wrap__bottom">
-        <Button type="button" variant="outline" size="sm" onClick={onAddItem}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onAddItem}
+          disabled={!allowManualPriceEntry}
+        >
           <Plus size={16} /> Add Row
         </Button>
       </div>

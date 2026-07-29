@@ -15,7 +15,7 @@ export default function NurseVitalDetailPage() {
 
   return (
     <NurseLayout>
-      <div className="nurse-page nurse-max-w-wide">
+      <div className="nurse-page">
         <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
           {!vital ? (
             <div className="nurse-alert nurse-alert--error">Vital record not found.</div>

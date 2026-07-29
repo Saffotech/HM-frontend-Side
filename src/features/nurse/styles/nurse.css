@@ -1,4 +1,5 @@
 ﻿@import './nurse-layout.css';
+@import './nurse-clinical.css';
 @import './nurse-notes.css';
 @import './nurse-vitals.css';
 @import './nurse-overview.css';

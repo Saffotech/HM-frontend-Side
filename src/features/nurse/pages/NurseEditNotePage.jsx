@@ -42,7 +42,7 @@ export default function NurseEditNotePage() {
 
   return (
     <NurseLayout>
-      <div className="nurse-page nurse-max-w-wide">
+      <div className="nurse-page">
         <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
           {!note ? (
             <div className="nurse-alert nurse-alert--error">Note not found.</div>
@@ -95,7 +95,7 @@ export default function NurseEditNotePage() {
 
               <section className="nurse-vital-detail__section">
                 <h2 className="nurse-vital-detail__section-title">Update Nursing Note</h2>
-                <form className="nurse-note-edit__form nurse-card nurse-card--padded" onSubmit={onSubmit}>
+                <form className="nurse-clinical-panel nurse-card nurse-card--padded" onSubmit={onSubmit}>
                   <NurseNoteFormFields form={form} onChange={set} idPrefix="note" />
                   <div className="nurse-form-actions">
                     <button type="button" className="nurse-btn nurse-btn--secondary" onClick={() => navigate(-1)}>

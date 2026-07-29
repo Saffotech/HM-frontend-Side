@@ -1,9 +1,31 @@
 import { ClipboardList, Eraser, FileText, Stethoscope } from 'lucide-react';
+import { NurseClinicalFieldShell } from '@/features/nurse/components/NurseClinicalFieldCard';
 
-const NOTE_FIELDS = [
-  { key: 'symptoms', label: 'Symptoms', icon: Stethoscope, accent: 'rose', placeholder: 'Describe patient symptoms…' },
-  { key: 'treatment_response', label: 'Treatment Response', icon: ClipboardList, accent: 'blue', placeholder: 'Document treatment given and patient response…' },
-  { key: 'additional_notes', label: 'Additional Notes', icon: FileText, accent: 'purple', placeholder: 'Any other observations or follow-up actions…' },
+export const NOTE_FIELDS = [
+  {
+    key: 'symptoms',
+    label: 'Symptoms',
+    icon: Stethoscope,
+    accent: 'rose',
+    placeholder:
+      'Record all patient-reported symptoms accurately, including onset, duration, severity, and associated complaints. Multiple symptoms may be entered if applicable.',
+  },
+  {
+    key: 'treatment_response',
+    label: 'Treatment Response',
+    icon: ClipboardList,
+    accent: 'blue',
+    placeholder:
+      "Document the patient's response to the prescribed treatment, including improvement, no change, worsening condition, side effects, or any follow-up recommendations.",
+  },
+  {
+    key: 'additional_notes',
+    label: 'Additional Notes',
+    icon: FileText,
+    accent: 'green',
+    placeholder:
+      'Enter any additional clinical observations, special instructions, allergies, follow-up advice, or other relevant information not covered in the previous sections…',
+  },
 ];
 
 export const INITIAL_NOTE_FORM = {
@@ -22,35 +44,31 @@ export function noteToForm(note) {
 
 export default function NurseNoteFormFields({ form, onChange, idPrefix = 'note' }) {
   return (
-    <div className="nurse-note-edit__fields">
+    <div className="nurse-clinical-fields">
       {NOTE_FIELDS.map(({ key, label, icon: Icon, accent, placeholder }) => (
-        <div key={key} className={`nurse-note-edit__field nurse-note-edit__field--${accent}`}>
-          <div className="nurse-note-edit__field-top">
-            <div className="nurse-note-edit__field-label">
-              <div className={`nurse-note-detail__card-icon nurse-note-detail__card-icon--${accent}`}>
-                <Icon size={16} />
-              </div>
-              <label htmlFor={`${idPrefix}-${key}`}>{label}</label>
-            </div>
-            <button
-              type="button"
-              className="nurse-note-edit__clear"
-              onClick={() => onChange(key, '')}
-              disabled={!form[key]}
-            >
+        <NurseClinicalFieldShell
+          key={key}
+          accent={accent}
+          icon={Icon}
+          label={label}
+          onClear={() => onChange(key, '')}
+          clearDisabled={!form[key]}
+          clearContent={
+            <>
               <Eraser size={14} />
               Clear
-            </button>
-          </div>
+            </>
+          }
+        >
           <textarea
             id={`${idPrefix}-${key}`}
             rows={4}
-            className="nurse-textarea nurse-note-edit__textarea"
+            className="nurse-textarea nurse-clinical-field__input"
             placeholder={placeholder}
             value={form[key]}
             onChange={(e) => onChange(key, e.target.value)}
           />
-        </div>
+        </NurseClinicalFieldShell>
       ))}
     </div>
   );
