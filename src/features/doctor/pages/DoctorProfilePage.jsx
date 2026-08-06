@@ -32,6 +32,7 @@ import {
   useUpdateDoctorProfileMutation,
   useUploadDoctorProfileImageMutation,
 } from '@/features/doctor/hooks/useDoctorProfileQuery';
+import { useDoctorPermissionSet } from '@/features/doctor/hooks/useDoctorPermission';
 import { ROUTES } from '@/shared/constants';
 import { Button, ConfirmDialog, EmptyState, ProfilePhotoCropDialog } from '@/shared/components/common';
 import PageSpinner from '@/shared/components/PageSpinner';
@@ -205,7 +206,15 @@ function ReadField({ label, value }) {
 
 export default function DoctorProfilePage() {
   const navigate = useNavigate();
-  const { data, isLoading, isError, error, refetch } = useDoctorProfileQuery();
+  const {
+    canViewProfile,
+    canUpdateProfile,
+    canUploadProfileImage,
+    canDeleteProfileImage,
+  } = useDoctorPermissionSet();
+  const { data, isLoading, isError, error, refetch } = useDoctorProfileQuery({
+    enabled: canViewProfile,
+  });
   const profile = data?.profile;
   const updateProfile = useUpdateDoctorProfileMutation();
   const uploadImage = useUploadDoctorProfileImageMutation();
@@ -224,6 +233,10 @@ export default function DoctorProfilePage() {
   const fileInputRef = useRef(null);
 
   const startEdit = () => {
+    if (!canUpdateProfile) {
+      toast.error('You do not have permission to update profile');
+      return;
+    }
     // Doctor Phase 2 by Atharva — Account is read-only; edit opens Professional
     setEditing(true);
     if (activeTab === 'account') setActiveTab('professional');
@@ -296,6 +309,10 @@ export default function DoctorProfilePage() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    if (!canUpdateProfile) {
+      toast.error('You do not have permission to update profile');
+      return;
+    }
 
     // Doctor Phase 2 by Atharva — phone & emergency_contact_phone must be exactly 10 digits
     const phone = formatPhoneInput(form?.phone);
@@ -349,6 +366,10 @@ export default function DoctorProfilePage() {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
+    if (!canUploadProfileImage) {
+      toast.error('You do not have permission to upload profile image');
+      return;
+    }
     if (!ALLOWED_IMAGE_TYPES.includes(file.type) && !/\.(jpe?g|png|webp)$/i.test(file.name)) {
       toast.error('Use a JPG, PNG, or WebP image');
       return;
@@ -361,6 +382,10 @@ export default function DoctorProfilePage() {
   };
 
   const handleCropConfirm = async (croppedFile) => {
+    if (!canUploadProfileImage) {
+      toast.error('You do not have permission to upload profile image');
+      return;
+    }
     setCropUploading(true);
     try {
       await uploadImage.mutateAsync(croppedFile);
@@ -374,6 +399,10 @@ export default function DoctorProfilePage() {
   };
 
   const handleDeleteImage = async () => {
+    if (!canDeleteProfileImage) {
+      toast.error('You do not have permission to delete profile image');
+      return;
+    }
     try {
       await deleteImage.mutateAsync();
       toast.success('Profile image removed');
@@ -384,12 +413,20 @@ export default function DoctorProfilePage() {
   };
 
   const handleAvatarUploadClick = () => {
+    if (!canUploadProfileImage) {
+      toast.error('You do not have permission to upload profile image');
+      return;
+    }
     setAvatarMenuOpen(false);
     fileInputRef.current?.click();
   };
 
   // Doctor Phase 2 by Atharva — ask confirm before deleting profile photo
   const handleAvatarRemoveClick = () => {
+    if (!canDeleteProfileImage) {
+      toast.error('You do not have permission to delete profile image');
+      return;
+    }
     setAvatarMenuOpen(false);
     setRemovePhotoConfirmOpen(true);
   };
@@ -412,6 +449,23 @@ export default function DoctorProfilePage() {
         .join(', ')
     );
   };
+
+  if (!canViewProfile) {
+    return (
+      <DoctorShell title="Doctor" nav={nav} active="profile" onSelect={handleNav}>
+        <EmptyState
+          icon={User}
+          title="Profile access denied"
+          description="You do not have permission to view the doctor profile."
+        />
+        <div style={{ marginTop: '1rem' }}>
+          <Button variant="outline" onClick={() => navigate(ROUTES.DOCTOR_DASHBOARD)}>
+            <ArrowLeft size={16} /> Back to dashboard
+          </Button>
+        </div>
+      </DoctorShell>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -467,6 +521,7 @@ export default function DoctorProfilePage() {
 
   const saving = updateProfile.isPending;
   const hasProfileImage = Boolean(profile.profile_image_url || imageUrl);
+  const canManageAvatar = canUploadProfileImage || canDeleteProfileImage;
   const departmentName =
     typeof profile.department === 'object' ? profile.department?.name : profile.department;
   const roleName = typeof profile.role === 'object' ? profile.role?.name : profile.role;
@@ -480,10 +535,26 @@ export default function DoctorProfilePage() {
               <button
                 type="button"
                 className="doc-profile-avatar-trigger"
-                onClick={() => setAvatarMenuOpen((open) => !open)}
+                onClick={() => {
+                  if (!canManageAvatar) {
+                    toast.error('You do not have permission to change profile photo');
+                    return;
+                  }
+                  setAvatarMenuOpen((open) => !open);
+                }}
                 aria-expanded={avatarMenuOpen}
                 aria-haspopup="menu"
                 aria-label="Profile photo options"
+                title={
+                  canManageAvatar
+                    ? 'Profile photo options'
+                    : 'You do not have permission to change profile photo'
+                }
+                style={
+                  !canManageAvatar
+                    ? { cursor: 'not-allowed', opacity: 0.85 }
+                    : undefined
+                }
               >
                 {imageUrl ? (
                   <img src={imageUrl} alt="" className="doc-profile-avatar-img" />
@@ -494,14 +565,19 @@ export default function DoctorProfilePage() {
                 )}
               </button>
 
-              {avatarMenuOpen ? (
+              {avatarMenuOpen && canManageAvatar ? (
                 <div className="doc-profile-avatar-menu" role="menu">
                   <button
                     type="button"
                     role="menuitem"
                     className="doc-profile-avatar-menu__item"
                     onClick={handleAvatarUploadClick}
-                    disabled={uploadImage.isPending}
+                    disabled={!canUploadProfileImage || uploadImage.isPending}
+                    title={
+                      canUploadProfileImage
+                        ? 'Upload photo'
+                        : 'You do not have permission'
+                    }
                   >
                     <Upload size={14} aria-hidden />
                     {uploadImage.isPending ? 'Uploading…' : 'Upload'}
@@ -511,7 +587,14 @@ export default function DoctorProfilePage() {
                     role="menuitem"
                     className="doc-profile-avatar-menu__item doc-profile-avatar-menu__item--danger"
                     onClick={handleAvatarRemoveClick}
-                    disabled={deleteImage.isPending || !hasProfileImage}
+                    disabled={
+                      !canDeleteProfileImage || deleteImage.isPending || !hasProfileImage
+                    }
+                    title={
+                      canDeleteProfileImage
+                        ? 'Remove photo'
+                        : 'You do not have permission'
+                    }
                   >
                     <Trash2 size={14} aria-hidden />
                     {deleteImage.isPending ? 'Removing…' : 'Remove'}
@@ -618,14 +701,30 @@ export default function DoctorProfilePage() {
                   <Button
                     size="sm"
                     type="button"
-                    disabled={saving || activeTab === 'account'}
-                    onClick={() => document.getElementById('doctor-profile-form')?.requestSubmit()}
+                    disabled={saving || activeTab === 'account' || !canUpdateProfile}
+                    title={
+                      canUpdateProfile ? 'Save changes' : 'You do not have permission'
+                    }
+                    onClick={() => {
+                      if (!canUpdateProfile) {
+                        toast.error('You do not have permission to update profile');
+                        return;
+                      }
+                      document.getElementById('doctor-profile-form')?.requestSubmit();
+                    }}
                   >
                     {saving ? 'Saving…' : 'Save changes'}
                   </Button>
                 </>
               ) : (
-                <Button size="sm" onClick={startEdit}>
+                <Button
+                  size="sm"
+                  onClick={startEdit}
+                  disabled={!canUpdateProfile}
+                  title={
+                    canUpdateProfile ? 'Edit profile' : 'You do not have permission'
+                  }
+                >
                   <Edit3 size={16} /> Edit profile
                 </Button>
               )}

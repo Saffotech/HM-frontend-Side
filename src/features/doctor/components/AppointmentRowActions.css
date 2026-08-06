@@ -103,3 +103,20 @@
   flex-shrink: 0;
   color: currentColor;
 }
+
+.doc-appt-actions__consult.btn--primary {
+  background: linear-gradient(180deg, #14b8a6 0%, #0f766e 100%);
+  border-color: #0f766e;
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(15, 118, 110, 0.28);
+}
+
+.doc-appt-actions__consult.btn--primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #0d9488 0%, #0d5f5a 100%);
+  border-color: #0d5f5a;
+  color: #fff;
+}
+
+.doc-appt-actions__consult.btn--primary:disabled {
+  opacity: 0.55;
+}

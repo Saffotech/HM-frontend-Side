@@ -16,6 +16,8 @@ import {
 import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
 import { ROUTES } from '@/shared/constants';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
+import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
+import { useAuth } from '@/shared/hooks/useAuth';
 
 const STATUS_TABS = [
   { id: 'active', label: 'Active' },
@@ -30,6 +32,7 @@ const KPI_FILTERS = {
 
 export default function NurseAlertsPage() {
   const navigate = useNavigate();
+  const { refreshPermissions } = useAuth();
   const { canCreateAlerts, canViewAlerts } = useNursePermissionSet();
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState('active');
@@ -42,32 +45,68 @@ export default function NurseAlertsPage() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const debouncedSearch = useDebouncedValue(search.trim(), 400);
-  const { scopeFilters, scopeReady, allocatedOnly } = useNursePatientScope();
+  const {
+    scopeReady,
+    allocatedOnly,
+    listMode,
+    allocationSummary,
+  } = useNursePatientScope();
+
+  useEffect(() => {
+    refreshPermissions?.();
+  }, [refreshPermissions]);
 
   useEffect(() => {
     setPage(1);
   }, [status, severity, unassignedOnly, alertType, wardName, debouncedSearch, fromDate, toDate, allocatedOnly]);
 
-  const { data, isLoading, isError, error, refetch } = useNurseAlertsQuery({
-    status,
-    severity: severity || undefined,
-    unassigned: unassignedOnly || undefined,
-    alert_type: alertType || undefined,
-    ward_name: wardName.trim() || undefined,
-    search: debouncedSearch || undefined,
-    from_date: fromDate || undefined,
-    to_date: toDate || undefined,
-    page,
-    limit: 20,
-    ...scopeFilters,
-  }, { enabled: scopeReady && canViewAlerts });
+  const alertFilters = useMemo(
+    () => ({
+      status,
+      severity: severity || undefined,
+      unassigned: unassignedOnly || undefined,
+      alert_type: alertType.trim() || undefined,
+      ward_name: wardName.trim() || undefined,
+      search: debouncedSearch || undefined,
+      from_date: fromDate || undefined,
+      to_date: toDate || undefined,
+      page,
+      limit: 20,
+      // Explicit scope — drives both API param and React Query cache key.
+      allocated_only: allocatedOnly ? true : undefined,
+      _scopeMode: allocatedOnly ? 'allocated' : 'all',
+    }),
+    [
+      status,
+      severity,
+      unassignedOnly,
+      alertType,
+      wardName,
+      debouncedSearch,
+      fromDate,
+      toDate,
+      page,
+      allocatedOnly,
+    ],
+  );
+
+  const { data, isLoading, isFetching, isError, error, refetch } = useNurseAlertsQuery(
+    alertFilters,
+    { enabled: scopeReady && canViewAlerts },
+  );
   const {
     data: summary,
     isLoading: isSummaryLoading,
     isError: isSummaryError,
     error: summaryError,
     refetch: refetchSummary,
-  } = useNurseAlertSummaryQuery({ enabled: canViewAlerts });
+  } = useNurseAlertSummaryQuery(
+    {
+      allocated_only: allocatedOnly ? true : undefined,
+      _scopeMode: allocatedOnly ? 'allocated' : 'all',
+    },
+    { enabled: canViewAlerts },
+  );
 
   const hasActiveFilters = Boolean(
     severity || unassignedOnly || alertType.trim() || wardName.trim() || search.trim() || fromDate || toDate
@@ -156,6 +195,12 @@ export default function NurseAlertsPage() {
   return (
     <NurseLayout>
       <div className="nurse-page nurse-alerts-page">
+        {!canViewAlerts ? (
+          <div className="nurse-alert nurse-alert--error">
+            You do not have permission to view emergency alerts.
+          </div>
+        ) : (
+          <>
         <div className="nurse-alerts-page__header nurse-card">
           <div className="nurse-alerts-page__header-left">
             <div className="nurse-alerts-page__icon" aria-hidden>
@@ -163,23 +208,25 @@ export default function NurseAlertsPage() {
             </div>
             <div>
               <h1 className="nurse-alerts-page__title">Emergency Alerts</h1>
-              <p className="nurse-alerts-page__subtitle">Monitor and respond to patient emergencies</p>
+              <p className="nurse-alerts-page__subtitle">
+                {allocatedOnly
+                  ? `Allocated filter · ${allocationSummary?.assigned_bed_count ?? 0} beds assigned`
+                  : 'All patients · hospital-wide alerts'}
+              </p>
             </div>
           </div>
-          {canCreateAlerts && (
-            <button
-              type="button"
-              className="nurse-btn nurse-btn--primary nurse-alerts-page__raise"
-              onClick={() => navigate(ROUTES.NURSE_ALERTS_NEW)}
-            >
-              <Plus size={15} />
-              Raise Alert
-            </button>
-          )}
+          <NursePermissionButton
+            allowed={canCreateAlerts}
+            className="nurse-btn nurse-btn--primary nurse-alerts-page__raise"
+            onClick={() => navigate(ROUTES.NURSE_ALERTS_NEW)}
+          >
+            <Plus size={15} />
+            Raise Alert
+          </NursePermissionButton>
         </div>
 
         <QueryFeedback
-          isLoading={isSummaryLoading}
+          isLoading={isSummaryLoading && !summary}
           isError={isSummaryError}
           error={summaryError}
           onRetry={refetchSummary}
@@ -365,14 +412,22 @@ export default function NurseAlertsPage() {
           </div>
         </div>
 
-        <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
-          <div className="nurse-alerts-table">
+        <QueryFeedback
+          isLoading={isLoading && !data}
+          isError={isError}
+          error={error}
+          onRetry={refetch}
+        >
+          <div className={`nurse-alerts-table${isFetching ? ' nurse-alerts-table--fetching' : ''}`}>
             <div className="nurse-alerts-table__head">
               <h2 className="nurse-section-title">
                 {status === 'active' ? 'Active alerts' : 'Resolved alerts'}
+                <span className={`nurse-alerts-scope-pill nurse-alerts-scope-pill--${listMode}`}>
+                  {allocatedOnly ? 'Allocated' : 'All'}
+                </span>
               </h2>
               <p className="nurse-alerts-table__count">
-                {isLoading ? (
+                {isLoading && !data ? (
                   'Loading…'
                 ) : (
                   <>
@@ -389,7 +444,13 @@ export default function NurseAlertsPage() {
               columns={columns}
               data={data?.items || []}
               isLoading={false}
-              emptyMessage="No alerts match the current filters."
+              emptyMessage={
+                allocatedOnly
+                  ? (allocationSummary?.assigned_bed_count
+                    ? 'No alerts for patients on your allocated beds.'
+                    : 'No beds assigned this shift — Allocated filter shows no alerts. Switch to All to see hospital-wide alerts.')
+                  : 'No alerts match the current filters.'
+              }
               rowClassName={alertRowClassName}
             />
 
@@ -402,6 +463,8 @@ export default function NurseAlertsPage() {
             />
           </div>
         </QueryFeedback>
+          </>
+        )}
       </div>
     </NurseLayout>
   );

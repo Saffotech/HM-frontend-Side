@@ -1,7 +1,7 @@
-.landing-page main {
-  scroll-margin-top: 4rem;
+.landing-page main > section[id] {
+  scroll-margin-top: 5rem;
 }
 
-.landing-page html {
-  scroll-behavior: smooth;
+.about-page section[id] {
+  scroll-margin-top: 5rem;
 }

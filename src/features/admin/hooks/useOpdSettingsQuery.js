@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   fetchAdminOpdSettings,
+  saveAdminEditControls,
   saveAdminOpdSettings,
 } from '@/shared/api/services/adminOpdSettings';
 import { queryKeys } from '@/shared/api/queryKeys';
@@ -18,6 +19,17 @@ export function useUpdateAdminOpdSettingsMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (form) => saveAdminOpdSettings(form),
+    onSuccess: (data) => {
+      queryClient.setQueryData(queryKeys.admin.opdSettings, data);
+      queryClient.invalidateQueries({ queryKey: queryKeys.opd.settings });
+    },
+  });
+}
+
+export function useUpdateAdminEditControlsMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (adminEdit) => saveAdminEditControls(adminEdit),
     onSuccess: (data) => {
       queryClient.setQueryData(queryKeys.admin.opdSettings, data);
       queryClient.invalidateQueries({ queryKey: queryKeys.opd.settings });

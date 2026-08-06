@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LabLayout from '@/features/lab/components/LabLayout';
+import { useLabPermissionSet } from '@/features/lab/hooks/useLabPermission';
 import { useLabOrdersQuery } from '@/shared/hooks/queries/useLabQuery';
 import {
   LAB_STATUS_META,
@@ -10,9 +11,10 @@ import {
   statusBadgeClass,
 } from '@/features/lab/utils/labOrderStatus';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
-import { QueryFeedback } from '@/shared/components/common';
+import { EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import { DateInput } from '@/shared/components/common';
+import { ClipboardList } from 'lucide-react';
 import '../styles/lab.css';
 
 const labUploadPath = (id) => `/lab/orders/${id}/upload`;
@@ -31,6 +33,7 @@ const LEGACY_VIEW_MAP = {
 export default function LabOrderListPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { canViewLab } = useLabPermissionSet();
 
   const initialView = searchParams.get('view') || searchParams.get('status') || 'ordered';
   const mappedView = LEGACY_VIEW_MAP[initialView] ?? initialView;
@@ -54,14 +57,17 @@ export default function LabOrderListPage() {
     setSearchParams(params, { replace: true });
   }, [search, view, priority, category, date, setSearchParams]);
 
-  const ordersQuery = useLabOrdersQuery({
-    view,
-    search: debouncedSearch,
-    priority,
-    category,
-    date,
-    pageSize: 100,
-  });
+  const ordersQuery = useLabOrdersQuery(
+    {
+      view,
+      search: debouncedSearch,
+      priority,
+      category,
+      date,
+      pageSize: 100,
+    },
+    { enabled: canViewLab },
+  );
 
   const orders = ordersQuery.data?.data ?? [];
   const total = ordersQuery.data?.total ?? orders.length;
@@ -84,6 +90,18 @@ export default function LabOrderListPage() {
   };
 
   const activeTab = VIEW_TABS.find((t) => t.id === view) ?? VIEW_TABS[0];
+
+  if (!canViewLab) {
+    return (
+      <LabLayout pageTitle="Pending Tests" compact>
+        <EmptyState
+          icon={ClipboardList}
+          title="Lab access denied"
+          description="You do not have permission to view lab orders."
+        />
+      </LabLayout>
+    );
+  }
 
   return (
     <LabLayout pageTitle="Pending Tests" compact>

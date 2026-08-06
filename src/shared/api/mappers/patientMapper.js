@@ -43,6 +43,7 @@ export function apiToUiPatient(apiPatient) {
     registeredDate: formatPatientRegisteredDate(
       apiPatient.created_at ?? apiPatient.registeredDate
     ),
+    createdAt: apiPatient.created_at ?? apiPatient.createdAt ?? null,
     status: apiPatient.is_active === false ? 'inactive' : apiPatient.status ?? 'active',
     deptId: apiPatient.dept_id ?? apiPatient.deptId ?? apiPatient.department_id,
     doctorId: apiPatient.doctor_id ?? apiPatient.doctorId,

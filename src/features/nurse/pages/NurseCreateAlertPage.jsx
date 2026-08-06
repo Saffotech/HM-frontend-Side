@@ -46,6 +46,10 @@ export default function NurseCreateAlertPage() {
 
   const onSubmit = (e) => {
     e.preventDefault();
+    if (!canCreateAlert) {
+      toast.error('You do not have permission');
+      return;
+    }
     const patientId = Number(selectedPatientId);
     if (!patientId) {
       toast.error('Please select a patient');

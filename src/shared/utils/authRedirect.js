@@ -22,6 +22,10 @@ export function getAppEntryForRole(role) {
     return ROUTES.RECEPTIONIST_DASHBOARD;
   }
 
+  if (role === ROLES.IPD) {
+    return ROUTES.IPD_DASHBOARD;
+  }
+
   if (role === ROLES.SUPER_ADMIN) {
     return ROUTES.SUPER_ADMIN_DASHBOARD;
   }

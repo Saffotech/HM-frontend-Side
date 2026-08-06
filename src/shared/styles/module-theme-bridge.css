@@ -341,14 +341,30 @@ label,
   border-color: var(--color-primary) !important;
 }
 
-.rec-btn--primary:hover:not(:disabled),
-.nurse-btn--primary:hover:not(:disabled),
-.doc-btn--primary:hover:not(:disabled),
-.lab-btn--primary:hover:not(:disabled),
-.pharmacy-btn--primary:hover:not(:disabled),
-.admin-btn--primary:hover:not(:disabled) {
+.rec-btn--primary:hover:not(:disabled):not([aria-disabled='true']):not(.nurse-btn--no-permission):not(.nurse-btn--denied),
+.nurse-btn--primary:hover:not(:disabled):not([aria-disabled='true']):not(.nurse-btn--no-permission):not(.nurse-btn--denied),
+.doc-btn--primary:hover:not(:disabled):not([aria-disabled='true']):not(.nurse-btn--no-permission):not(.nurse-btn--denied),
+.lab-btn--primary:hover:not(:disabled):not([aria-disabled='true']):not(.nurse-btn--no-permission):not(.nurse-btn--denied),
+.pharmacy-btn--primary:hover:not(:disabled):not([aria-disabled='true']):not(.nurse-btn--no-permission):not(.nurse-btn--denied),
+.admin-btn--primary:hover:not(:disabled):not([aria-disabled='true']):not(.nurse-btn--no-permission):not(.nurse-btn--denied) {
   background: var(--color-primary-hover) !important;
   border-color: var(--color-primary-hover) !important;
+}
+
+/* Permission-denied / disabled nurse actions (must beat primary !important above) */
+.nurse-btn--primary.nurse-btn--no-permission,
+.nurse-btn--primary.nurse-btn--denied,
+.nurse-btn--primary[aria-disabled='true'],
+.nurse-btn--secondary.nurse-btn--no-permission,
+.nurse-btn--secondary.nurse-btn--denied,
+.nurse-btn--secondary[aria-disabled='true'],
+.nurse-btn.nurse-btn--denied,
+.nurse-btn.nurse-btn--no-permission {
+  background: #E5E7EB !important;
+  color: #9CA3AF !important;
+  border-color: #E5E7EB !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
 }
 
 /* Kill leftover decorative gradients on module shells */

@@ -5,11 +5,20 @@ import {
   useNursePatientScope,
 } from '@/features/nurse/context/NursePatientScopeContext';
 
-const HIDDEN_PREFIXES = [
-  ROUTES.NURSE_PROFILE,
-  ROUTES.NURSE_NOTIFICATIONS,
-  ROUTES.NURSE_MY_DUTY,
-];
+/** Exact list routes where All / Allocated changes the visible patient set. */
+const SCOPE_LIST_PATHS = new Set([
+  ROUTES.NURSE_DASHBOARD,
+  ROUTES.NURSE_QUEUE,
+  ROUTES.NURSE_VITALS,
+  ROUTES.NURSE_NOTES,
+  ROUTES.NURSE_MEDICATIONS,
+  ROUTES.NURSE_MEDICATIONS_HISTORY,
+  ROUTES.NURSE_ALERTS,
+]);
+
+function shouldShowScopeBar(pathname) {
+  return SCOPE_LIST_PATHS.has(pathname);
+}
 
 export default function NursePatientScopeBar() {
   const { pathname } = useLocation();
@@ -19,8 +28,7 @@ export default function NursePatientScopeBar() {
     allocationSummary,
   } = useNursePatientScope();
 
-  const hidden = HIDDEN_PREFIXES.some((prefix) => pathname.startsWith(prefix));
-  if (hidden) return null;
+  if (!shouldShowScopeBar(pathname)) return null;
 
   return (
     <div className="nurse-scope-bar nurse-card">
@@ -33,9 +41,10 @@ export default function NursePatientScopeBar() {
           type="button"
           role="tab"
           aria-selected={listMode === 'allocated'}
-          className={`nurse-scope-bar__mode-btn ${listMode === 'allocated' ? 'is-active' : ''}`}
+          className={`nurse-scope-bar__mode-btn${
+            listMode === 'allocated' ? ' is-active is-active--allocated' : ''
+          }`}
           onClick={() => setListMode('allocated')}
-          disabled={listMode == null}
         >
           Allocated
         </button>
@@ -43,9 +52,10 @@ export default function NursePatientScopeBar() {
           type="button"
           role="tab"
           aria-selected={listMode === 'all'}
-          className={`nurse-scope-bar__mode-btn ${listMode === 'all' ? 'is-active' : ''}`}
+          className={`nurse-scope-bar__mode-btn${
+            listMode === 'all' ? ' is-active is-active--all' : ''
+          }`}
           onClick={() => setListMode('all')}
-          disabled={listMode == null}
         >
           All
         </button>

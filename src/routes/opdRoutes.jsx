@@ -7,6 +7,9 @@ import { OPD_SHELL_ROLES } from '@/shared/utils/authRedirect';
 import LazyRoute from '@/routes/LazyRoute';
 
 const DashboardPage = lazy(() => import('@/features/opd/pages/DashboardPage'));
+const TodayOverviewPage = lazy(() =>
+  import('@/features/opd/today-overview/pages/TodayOverviewPage')
+);
 const PatientListPage = lazy(() => import('@/features/opd/pages/PatientListPage'));
 const RegisterPatientPage = lazy(() => import('@/features/opd/pages/RegisterPatientPage'));
 const UpdatePatientPage = lazy(() => import('@/features/opd/pages/UpdatePatientPage'));
@@ -20,8 +23,6 @@ const ViewBillPage = lazy(() => import('@/features/opd/billing/pages/ViewBillPag
 const PaymentHistoryPage = lazy(() => import('@/features/opd/billing/pages/PaymentHistoryPage'));
 const OpdBillingProfilePage = lazy(() => import('@/features/opd/pages/OpdBillingProfilePage'));
 const OpdBillingNotificationsPage = lazy(() => import('@/features/opd/pages/OpdBillingNotificationsPage'));
-const BedOverviewPage = lazy(() => import('@/features/opd/beds/pages/BedOverviewPage'));
-const WardStatusPage = lazy(() => import('@/features/opd/beds/pages/WardStatusPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 function LayoutShell() {
@@ -44,6 +45,14 @@ export const opdRoutes = [
             element: (
               <LazyRoute>
                 <DashboardPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.OPD_TODAY_OVERVIEW,
+            element: (
+              <LazyRoute>
+                <TodayOverviewPage />
               </LazyRoute>
             ),
           },
@@ -124,22 +133,6 @@ export const opdRoutes = [
             element: (
               <LazyRoute>
                 <BillingListPage />
-              </LazyRoute>
-            ),
-          },
-          {
-            path: ROUTES.BEDS_WARD,
-            element: (
-              <LazyRoute>
-                <WardStatusPage />
-              </LazyRoute>
-            ),
-          },
-          {
-            path: ROUTES.BEDS,
-            element: (
-              <LazyRoute>
-                <BedOverviewPage />
               </LazyRoute>
             ),
           },

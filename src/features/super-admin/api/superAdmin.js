@@ -1,5 +1,5 @@
 /**
- * Super Admin API — settings and audit (live backend).
+ * Super Admin API — audit (live backend).
  */
 
 import { apiClient } from '@/shared/api/client';
@@ -12,19 +12,6 @@ function buildQuery(params = {}) {
   });
   const query = qs.toString();
   return query ? `?${query}` : '';
-}
-
-/** GET /super-admin/settings */
-export async function getHospitalSettings() {
-  return apiClient('/super-admin/settings');
-}
-
-/** PATCH /super-admin/settings */
-export async function updateHospitalSettings(body) {
-  return apiClient('/super-admin/settings', {
-    method: 'PATCH',
-    body: JSON.stringify(body),
-  });
 }
 
 /** GET /super-admin/audit */

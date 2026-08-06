@@ -13,6 +13,7 @@ import {
   useAdminRolesQuery,
   useAdminStaffListQuery,
 } from '@/shared/hooks/queries/useAdminQuery';
+import AdminEditLockToggle from '@/features/admin/components/AdminEditLockToggle';
 import { Button, Input, Label } from '@/shared/components/common';
 
 function Field({ id, label, hint, children }) {
@@ -32,35 +33,47 @@ function SectionCard({
   hint = null,
   defaultOpen = false,
   tone = 'blue',
+  action = null,
+  locked = false,
 }) {
   const [open, setOpen] = useState(defaultOpen);
 
   return (
     <section
-      className={`aos-card aos-card--accordion aos-card--tone-${tone}${open ? ' is-open' : ''}`}
+      className={`aos-card aos-card--accordion aos-card--tone-${tone}${open ? ' is-open' : ''}${
+        locked ? ' aos-card--locked' : ''
+      }`}
     >
-      <button
-        type="button"
-        className="aos-card__head aos-card__head--toggle"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-      >
-        <div className="aos-card__title-wrap">
-          {Icon ? (
-            <span className="aos-card__icon" aria-hidden>
-              <Icon size={16} strokeWidth={2.2} />
-            </span>
-          ) : null}
-          <h3 className="aos-card__title">{title}</h3>
-        </div>
-        <ChevronDown
-          size={18}
-          className={`aos-card__chevron${open ? ' is-open' : ''}`}
-          aria-hidden
-        />
-      </button>
+      <div className="aos-card__head aos-card__head--row">
+        <button
+          type="button"
+          className="aos-card__head-toggle"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+        >
+          <div className="aos-card__title-wrap">
+            {Icon ? (
+              <span className="aos-card__icon" aria-hidden>
+                <Icon size={16} strokeWidth={2.2} />
+              </span>
+            ) : null}
+            <h3 className="aos-card__title">{title}</h3>
+          </div>
+          <ChevronDown
+            size={18}
+            className={`aos-card__chevron${open ? ' is-open' : ''}`}
+            aria-hidden
+          />
+        </button>
+        {action ? <div className="aos-card__head-action">{action}</div> : null}
+      </div>
       {open ? (
         <div className="aos-card__body">
+          {locked ? (
+            <p className="aos-locked-banner">
+              Locked by Super Admin — you can view these settings but cannot change them.
+            </p>
+          ) : null}
           {hint ? <p className="aos-card__hint">{hint}</p> : null}
           {children}
         </div>
@@ -69,7 +82,7 @@ function SectionCard({
   );
 }
 
-function ToggleRow({ id, label, hint, checked, onChange }) {
+function ToggleRow({ id, label, hint, checked, onChange, disabled = false }) {
   return (
     <label className="aos-toggle" htmlFor={id}>
       <span className="aos-toggle__text">
@@ -81,6 +94,7 @@ function ToggleRow({ id, label, hint, checked, onChange }) {
         type="checkbox"
         className="aos-toggle__input"
         checked={Boolean(checked)}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.checked)}
       />
       <span className="aos-toggle__track" aria-hidden />
@@ -88,10 +102,10 @@ function ToggleRow({ id, label, hint, checked, onChange }) {
   );
 }
 
-function CardSaveBar({ onSave, saving, label = 'Save' }) {
+function CardSaveBar({ onSave, saving, label = 'Save', disabled = false }) {
   return (
     <div className="aos-card-save">
-      <Button type="button" onClick={onSave} disabled={saving}>
+      <Button type="button" onClick={onSave} disabled={saving || disabled}>
         <Save size={15} />
         {saving ? 'Saving…' : label}
       </Button>
@@ -156,6 +170,14 @@ export default function AdminOpdPricingSection({
   setNumber,
   onSave,
   isSaving = false,
+  manageAdminEditLocks = false,
+  canEditGlobalFees = true,
+  canEditBedTariff = true,
+  canEditDeptFees = true,
+  canEditDoctorFees = true,
+  adminEdit = {},
+  onAdminEditChange,
+  adminEditSaving = false,
 }) {
   const { data: departments = [] } = useAdminDepartmentsQuery({ is_active: true });
   const { data: roles = [] } = useAdminRolesQuery();
@@ -334,6 +356,17 @@ export default function AdminOpdPricingSection({
         title="Global Fees & Tax"
         icon={CircleDollarSign}
         tone="teal"
+        locked={!canEditGlobalFees}
+        action={
+          manageAdminEditLocks ? (
+            <AdminEditLockToggle
+              id="admin-edit-global_fees_tax"
+              checked={Boolean(adminEdit.global_fees_tax)}
+              disabled={adminEditSaving}
+              onChange={(v) => onAdminEditChange?.('global_fees_tax', v)}
+            />
+          ) : null
+        }
       >
         <p className="aos-card__note">Applies to all departments and doctors</p>
 
@@ -345,6 +378,7 @@ export default function AdminOpdPricingSection({
               min={0}
               step={1}
               value={form.pricing.registration_fee}
+              disabled={!canEditGlobalFees}
               onChange={setNumber('pricing.registration_fee')}
             />
           </Field>
@@ -359,6 +393,7 @@ export default function AdminOpdPricingSection({
               max={100}
               step={0.1}
               value={form.pricing.gst_percent}
+              disabled={!canEditGlobalFees}
               onChange={setNumber('pricing.gst_percent')}
             />
           </Field>
@@ -372,6 +407,7 @@ export default function AdminOpdPricingSection({
               min={0}
               step={1}
               value={form.pricing.consultation_fee}
+              disabled={!canEditGlobalFees}
               onChange={setNumber('pricing.consultation_fee')}
             />
           </Field>
@@ -382,6 +418,7 @@ export default function AdminOpdPricingSection({
             id="allow_manual_price_entry"
             label="Allow staff to type custom prices"
             checked={form.pricing.allow_manual_price_entry}
+            disabled={!canEditGlobalFees}
             onChange={(v) => patch('pricing.allow_manual_price_entry', v)}
           />
         </div>
@@ -390,6 +427,7 @@ export default function AdminOpdPricingSection({
           onSave={handleSaveGlobal}
           saving={cardBusy('global')}
           label="Save global fees"
+          disabled={!canEditGlobalFees}
         />
       </SectionCard>
 
@@ -397,6 +435,17 @@ export default function AdminOpdPricingSection({
         title="Bed Tariff (Per Day)"
         icon={BedDouble}
         tone="amber"
+        locked={!canEditBedTariff}
+        action={
+          manageAdminEditLocks ? (
+            <AdminEditLockToggle
+              id="admin-edit-bed_tariff"
+              checked={Boolean(adminEdit.bed_tariff)}
+              disabled={adminEditSaving}
+              onChange={(v) => onAdminEditChange?.('bed_tariff', v)}
+            />
+          ) : null
+        }
       >
         <p className="aos-card__note">Set default ward charges and optional custom per-bed rates.</p>
 
@@ -577,6 +626,7 @@ export default function AdminOpdPricingSection({
           onSave={handleSaveBedTariff}
           saving={cardBusy('bed-tariff')}
           label="Save bed tariff"
+          disabled={!canEditBedTariff}
         />
       </SectionCard>
 
@@ -584,6 +634,17 @@ export default function AdminOpdPricingSection({
         title="Consultation Fee By Department"
         icon={Stethoscope}
         tone="indigo"
+        locked={!canEditDeptFees}
+        action={
+          manageAdminEditLocks ? (
+            <AdminEditLockToggle
+              id="admin-edit-consultation_fee_by_department"
+              checked={Boolean(adminEdit.consultation_fee_by_department)}
+              disabled={adminEditSaving}
+              onChange={(v) => onAdminEditChange?.('consultation_fee_by_department', v)}
+            />
+          ) : null
+        }
       >
         <div className="aos-fee-row">
           <Field id="dept_fee_select" label="Department">
@@ -591,6 +652,7 @@ export default function AdminOpdPricingSection({
               id="dept_fee_select"
               className="aos-select"
               value={selectedDeptId}
+              disabled={!canEditDeptFees}
               onChange={(e) => setSelectedDeptId(e.target.value)}
             >
               {departments.length === 0 ? (
@@ -617,14 +679,14 @@ export default function AdminOpdPricingSection({
               placeholder={String(hospitalDefault ?? '')}
               value={deptFeeDraft}
               onChange={(e) => setDeptFeeDraft(e.target.value)}
-              disabled={!selectedDepartment}
+              disabled={!selectedDepartment || !canEditDeptFees}
             />
           </Field>
           <div className="aos-fee-row__action">
             <Button
               type="button"
               onClick={handleSaveDepartment}
-              disabled={cardBusy('department')}
+              disabled={cardBusy('department') || !canEditDeptFees}
             >
               <Save size={15} />
               {cardBusy('department') ? 'Saving…' : 'Save'}
@@ -637,6 +699,17 @@ export default function AdminOpdPricingSection({
         title="Consultation Fee By Doctor"
         icon={Stethoscope}
         tone="violet"
+        locked={!canEditDoctorFees}
+        action={
+          manageAdminEditLocks ? (
+            <AdminEditLockToggle
+              id="admin-edit-consultation_fee_by_doctor"
+              checked={Boolean(adminEdit.consultation_fee_by_doctor)}
+              disabled={adminEditSaving}
+              onChange={(v) => onAdminEditChange?.('consultation_fee_by_doctor', v)}
+            />
+          ) : null
+        }
       >
         <div className="aos-fee-row aos-fee-row--doctor">
           <Field id="doctor_fee_dept" label="Department">
@@ -644,6 +717,7 @@ export default function AdminOpdPricingSection({
               id="doctor_fee_dept"
               className="aos-select"
               value={doctorDeptId}
+              disabled={!canEditDoctorFees}
               onChange={(e) => setDoctorDeptId(e.target.value)}
             >
               {departments.length === 0 ? (
@@ -663,7 +737,7 @@ export default function AdminOpdPricingSection({
               className="aos-select"
               value={selectedDoctorId}
               onChange={(e) => setSelectedDoctorId(e.target.value)}
-              disabled={!doctorsInDept.length}
+              disabled={!doctorsInDept.length || !canEditDoctorFees}
             >
               {doctorsInDept.length === 0 ? (
                 <option value="">No doctors in this department</option>
@@ -688,14 +762,14 @@ export default function AdminOpdPricingSection({
               placeholder={String(hospitalDefault ?? '')}
               value={doctorFeeDraft}
               onChange={(e) => setDoctorFeeDraft(e.target.value)}
-              disabled={!selectedDoctor}
+              disabled={!selectedDoctor || !canEditDoctorFees}
             />
           </Field>
           <div className="aos-fee-row__action">
             <Button
               type="button"
               onClick={handleSaveDoctor}
-              disabled={cardBusy('doctor')}
+              disabled={cardBusy('doctor') || !canEditDoctorFees}
             >
               <Save size={15} />
               {cardBusy('doctor') ? 'Saving…' : 'Save'}

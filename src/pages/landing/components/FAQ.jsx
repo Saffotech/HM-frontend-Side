@@ -3,14 +3,40 @@ import { ChevronDown } from 'lucide-react';
 import './FAQ.css';
 
 const FAQS = [
-  { q: 'Is the system cloud-based?', a: 'Yes. SaffoCare is fully cloud-hosted with enterprise-grade security and 99.9% uptime.' },
-  { q: 'Can all hospital departments use the system together?', a: 'Absolutely — admin, doctors, reception, pharmacy, lab and billing all collaborate in real time.' },
-  { q: 'Does it support online appointments?', a: 'Yes, with a patient portal, queue management, SMS/email reminders and rescheduling.' },
-  { q: 'Can doctors access records remotely?', a: 'Yes. EMR access is available securely from any device with role-based permissions.' },
-  { q: 'Is billing integrated?', a: 'Billing, insurance claims, payments, refunds and tax are fully integrated with reporting.' },
-  { q: 'Does it support role-based permissions?', a: 'Yes — granular role permissions ensure each staff member sees only what they need.' },
-  { q: 'Is patient data secure?', a: 'Data is encrypted at rest and in transit, with audit logs, MFA and HIPAA-ready controls.' },
+  {
+    q: 'Which hospital roles does SaffoCare support?',
+    a: 'SaffoCare supports Super Admin, Admin, OPD, Doctor, Nurse, Lab, Receptionist, and Pharmacy — each with a role-specific workspace. Permissions differ by role (for example, OPD has operational powers; Receptionist mainly guides).',
+  },
+  {
+    q: 'Can all departments work in one system?',
+    a: 'Yes. OPD, doctors, nurses, lab, pharmacy, and receptionist share the same hospital data so teams stay in sync without switching tools.',
+  },
+  {
+    q: 'What can the OPD team do?',
+    a: 'OPD handles the operational work — patient registration, appointments, beds, billing, and payments. Receptionist can guide visitors and support queue flow, but does not get OPD permissions for those actions.',
+  },
+  {
+    q: 'Do doctors and nurses get clinical tools?',
+    a: 'Doctors can manage consultations, records, and prescriptions. Nurses can record vitals, nursing notes, medications, and track the patient queue.',
+  },
+  {
+    q: 'Is pharmacy and lab included?',
+    a: 'Yes. Pharmacy supports prescription dispensing and stock workflows. Lab supports order tracking, sample handling, and report uploads for clinicians.',
+  },
+  {
+    q: 'Is billing part of the system?',
+    a: 'Yes. OPD billing and payments are built into the platform so charges stay linked to the patient visit and OPD workflow.',
+  },
+  {
+    q: 'How is access controlled?',
+    a: 'Staff sign in with role-based permissions. For example, OPD can register patients and bill, while Receptionist is limited to guidance and queue support without those OPD powers.',
+  },
+  {
+    q: 'Is patient login available?',
+    a: 'A Patient Portal is planned in the product roadmap. For now, staff modules are available; patient self-login is temporarily disabled on the website.',
+  },
 ];
+
 
 export default function FAQ() {
   const [openIndex, setOpenIndex] = useState(null);

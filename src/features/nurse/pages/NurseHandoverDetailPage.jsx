@@ -271,16 +271,19 @@ export default function NurseHandoverDetailPage() {
     {
       header: 'Actions',
       render: (row) =>
-        isDraft && canUpdateHandovers ? (
+        isDraft ? (
           <button
             type="button"
             className="nurse-btn nurse-btn--ghost nurse-btn--sm"
-            onClick={() =>
+            disabled={!canUpdateHandovers || deleteMut.isPending}
+            title={canUpdateHandovers ? 'Remove patient' : 'You do not have permission'}
+            onClick={() => {
+              if (!canUpdateHandovers) return;
               deleteMut.mutate(row.id, {
                 onSuccess: () => toast.success('Patient removed'),
                 onError: (err) => toast.error(err?.message || 'Failed to remove'),
-              })
-            }
+              });
+            }}
           >
             Remove
           </button>
@@ -383,11 +386,21 @@ export default function NurseHandoverDetailPage() {
           />
         </section>
 
-        {isDraft && canUpdateHandovers && (
+        {isDraft && (
           <>
             <section className="nurse-section">
               <h2 className="nurse-section-title">Add Patient</h2>
-              <form className="nurse-card nurse-card--padded nurse-form" onSubmit={addPatient}>
+              <form
+                className="nurse-card nurse-card--padded nurse-form"
+                onSubmit={(e) => {
+                  if (!canUpdateHandovers) {
+                    e.preventDefault();
+                    toast.error('You do not have permission to update handovers.');
+                    return;
+                  }
+                  addPatient(e);
+                }}
+              >
                 <NursePatientPicker
                   id="handover-patient-picker"
                   value={selectedPatientId}
@@ -397,6 +410,7 @@ export default function NurseHandoverDetailPage() {
                   allocationAware
                   placeholder="Search by patient ID (e.g. P-1014) or name…"
                   hint="Patients already on this handover are hidden from the list"
+                  disabled={!canUpdateHandovers}
                 />
                 {PATIENT_FIELDS.map(({ key, label }) => (
                   <div key={key} className="nurse-field">
@@ -407,10 +421,16 @@ export default function NurseHandoverDetailPage() {
                       rows={2}
                       value={patientForm[key]}
                       onChange={(e) => setPatientForm((p) => ({ ...p, [key]: e.target.value }))}
+                      disabled={!canUpdateHandovers}
                     />
                   </div>
                 ))}
-                <button type="submit" className="nurse-btn nurse-btn--primary" disabled={bulkMut.isPending}>
+                <button
+                  type="submit"
+                  className="nurse-btn nurse-btn--primary"
+                  disabled={!canUpdateHandovers || bulkMut.isPending}
+                  title={canUpdateHandovers ? 'Add patient' : 'You do not have permission'}
+                >
                   {bulkMut.isPending ? 'Adding…' : 'Add Patient'}
                 </button>
               </form>
@@ -420,7 +440,12 @@ export default function NurseHandoverDetailPage() {
               <button
                 type="button"
                 className="nurse-btn nurse-btn--primary"
-                disabled={submitMut.isPending || !(handover.patients?.length > 0) || !canSubmitHandovers}
+                disabled={
+                  submitMut.isPending ||
+                  !(handover.patients?.length > 0) ||
+                  !canSubmitHandovers
+                }
+                title={canSubmitHandovers ? 'Submit handover' : 'You do not have permission'}
                 onClick={handleSubmit}
               >
                 {submitMut.isPending ? 'Submitting…' : 'Submit Handover'}

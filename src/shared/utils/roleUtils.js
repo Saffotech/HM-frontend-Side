@@ -24,4 +24,43 @@ export const DEPARTMENT_BY_ROLE = {
   pharmacist: 'Pharmacy',
   receptionist: 'Reception',
   billing: 'Billing',
+  ipd: 'IPD',
 };
+
+/** Short module label shown next to the avatar in every module shell. */
+export const ROLE_LABELS = {
+  super_admin: 'Super Admin',
+  admin: 'Admin',
+  doctor: 'Doctor',
+  opd: 'OPD Billing',
+  nurse: 'Nurse',
+  lab_technician: 'Lab',
+  pharmacist: 'Pharmacy',
+  receptionist: 'Receptionist',
+  billing: 'Billing',
+  ipd: 'IPD',
+};
+
+/** Abbreviations that stay fully upper-cased when a role has no explicit label. */
+const ACRONYMS = new Set(['opd', 'ipd', 'icu', 'ot', 'hr', 'it']);
+
+function capitalizeWord(word) {
+  if (ACRONYMS.has(word.toLowerCase())) return word.toUpperCase();
+  return word
+    .split('-')
+    .map((part) => (part ? part.charAt(0).toUpperCase() + part.slice(1).toLowerCase() : part))
+    .join('-');
+}
+
+/** Title-cases a raw role/name string: "shivam singh" → "Shivam Singh". */
+export function toTitleCase(value) {
+  if (!value) return '';
+  return String(value).trim().split(/[\s_]+/).filter(Boolean).map(capitalizeWord).join(' ');
+}
+
+/** Role label for a user object, falling back to a title-cased role name. */
+export function getRoleLabel(user) {
+  const role = normalizeRole(user?.role ?? user?.role_name);
+  if (!role) return 'Staff';
+  return ROLE_LABELS[role] || toTitleCase(role) || 'Staff';
+}

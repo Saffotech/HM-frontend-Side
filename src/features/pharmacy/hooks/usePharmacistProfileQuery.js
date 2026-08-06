@@ -21,12 +21,13 @@ async function fetchPharmacistProfile(token) {
   return data;
 }
 
-export function usePharmacistProfileQuery() {
+export function usePharmacistProfileQuery(options = {}) {
+  const { enabled = true } = options;
   const token = useQueryToken();
   return useQuery({
     queryKey: queryKeys.pharmacy.profile,
     queryFn: () => fetchPharmacistProfile(token),
-    enabled: Boolean(token),
+    enabled: Boolean(token) && enabled,
     retry: false,
   });
 }

@@ -2,13 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Activity,
-  Building2,
+  Briefcase,
   Calendar,
+  IdCard,
   Mail,
   Pencil,
-  Phone,
   Save,
-  Shield,
   Trash2,
   User,
   UserCheck,
@@ -31,10 +30,28 @@ import { Button, ConfirmDialog, Input, Label, QueryFeedback, Select } from '@/sh
 import { ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 
+function titleCaseName(value) {
+  if (!value) return '';
+  return String(value)
+    .trim()
+    .split(/\s+/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
+}
+
 function staffName(u) {
   if (!u) return '';
-  if (u.full_name) return u.full_name;
-  return `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email;
+  if (u.full_name) return titleCaseName(u.full_name);
+  const raw = `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email;
+  return u.email && raw === u.email ? raw : titleCaseName(raw);
+}
+
+function staffInitials(u) {
+  const first = (u?.first_name || '').trim().charAt(0);
+  const last = (u?.last_name || '').trim().charAt(0);
+  const letters = `${first}${last}`.toUpperCase();
+  if (letters) return letters;
+  return (u?.email || 'S').charAt(0).toUpperCase();
 }
 
 function formatRoleLabel(name) {
@@ -46,33 +63,49 @@ function formatRoleLabel(name) {
 }
 
 function formatDate(value) {
-  if (!value) return '—';
+  if (!value) return null;
   return new Date(value).toLocaleDateString('en-GB', {
-    day: 'numeric',
+    day: '2-digit',
     month: 'short',
     year: 'numeric',
   });
 }
 
-function InfoRow({ icon: Icon, label, value, emptyLabel = 'Not provided' }) {
+function digitsOnlyMax10(value) {
+  return String(value || '')
+    .replace(/\D/g, '')
+    .slice(0, 10);
+}
+
+function DetailField({ label, value, empty = '—' }) {
   const isEmpty = value == null || String(value).trim() === '';
   return (
-    <div className="sa-staff-detail__info-row">
-      <div className="sa-staff-detail__info-icon" aria-hidden>
-        <Icon size={16} />
-      </div>
-      <div className="sa-staff-detail__info-content">
-        <span className="sa-staff-detail__info-label">{label}</span>
-        <span className={`sa-staff-detail__info-value${isEmpty ? ' sa-staff-detail__info-value--muted' : ''}`}>
-          {isEmpty ? emptyLabel : value}
-        </span>
-      </div>
+    <div className={`sa-staff-detail__field${isEmpty ? ' sa-staff-detail__field--empty' : ''}`}>
+      <dt className="sa-staff-detail__field-label">{label}</dt>
+      <dd
+        className={`sa-staff-detail__field-value${isEmpty ? ' sa-staff-detail__field-value--empty' : ''}`}
+      >
+        {isEmpty ? empty : value}
+      </dd>
     </div>
   );
 }
 
 function roleRequiresDepartment(roleName) {
   return roleName === 'doctor';
+}
+
+function userToForm(user) {
+  if (!user) return {};
+  return {
+    first_name: user.first_name || '',
+    last_name: user.last_name || '',
+    phone: digitsOnlyMax10(user.phone),
+    role_id: user.role_id ? String(user.role_id) : '',
+    department_id: user.department_id ? String(user.department_id) : '',
+    employee_id: user.employee_id || '',
+    joining_date: user.joining_date ? String(user.joining_date).slice(0, 10) : '',
+  };
 }
 
 export default function SuperAdminStaffDetailPage() {
@@ -125,25 +158,13 @@ export default function SuperAdminStaffDetailPage() {
 
   useEffect(() => {
     if (!user || editing) return;
-    setForm({
-      first_name: user.first_name || '',
-      last_name: user.last_name || '',
-      phone: user.phone || '',
-      role_id: user.role_id ? String(user.role_id) : '',
-      department_id: user.department_id ? String(user.department_id) : '',
-    });
+    setForm(userToForm(user));
   }, [user, editing]);
 
   const cancelEdit = () => {
     if (!user) return;
     setEditing(false);
-    setForm({
-      first_name: user.first_name || '',
-      last_name: user.last_name || '',
-      phone: user.phone || '',
-      role_id: user.role_id ? String(user.role_id) : '',
-      department_id: user.department_id ? String(user.department_id) : '',
-    });
+    setForm(userToForm(user));
   };
 
   const handleSave = async () => {
@@ -151,14 +172,21 @@ export default function SuperAdminStaffDetailPage() {
       toast.error('Please select a department for doctor');
       return;
     }
+    const phone = digitsOnlyMax10(form.phone);
+    if (phone && phone.length !== 10) {
+      toast.error('Phone number must be exactly 10 digits');
+      return;
+    }
     try {
       const payload = {
         first_name: form.first_name.trim(),
         last_name: form.last_name.trim() || null,
-        phone: form.phone.trim() || null,
+        phone: phone || null,
         role_id: Number(form.role_id),
         department_id:
           departmentRequired && form.department_id ? Number(form.department_id) : null,
+        employee_id: (form.employee_id || '').trim() || null,
+        joining_date: form.joining_date || null,
       };
       await updateMutation.mutateAsync({ id: userId, data: payload });
       toast.success('Staff profile updated');
@@ -196,13 +224,21 @@ export default function SuperAdminStaffDetailPage() {
         <AdminBackBar onBack={() => navigate(ROUTES.SUPER_ADMIN_STAFF)} label="Back to staff">
           {user && !editing ? (
             <div className="sa-staff-detail__toolbar-actions">
-              <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+              <Button
+                size="sm"
+                className="sa-staff-detail__btn sa-staff-detail__btn--edit"
+                onClick={() => setEditing(true)}
+              >
                 <Pencil size={14} aria-hidden />
                 Edit profile
               </Button>
               <Button
-                variant="outline"
                 size="sm"
+                className={`sa-staff-detail__btn ${
+                  isActive
+                    ? 'sa-staff-detail__btn--deactivate'
+                    : 'sa-staff-detail__btn--activate'
+                }`}
                 onClick={() => setConfirm({ type: 'activate' })}
               >
                 {isActive ? (
@@ -221,11 +257,20 @@ export default function SuperAdminStaffDetailPage() {
           ) : null}
           {editing ? (
             <div className="sa-staff-detail__toolbar-actions">
-              <Button variant="ghost" size="sm" onClick={cancelEdit}>
+              <Button
+                size="sm"
+                className="sa-staff-detail__btn sa-staff-detail__btn--cancel"
+                onClick={cancelEdit}
+              >
                 <X size={14} aria-hidden />
                 Cancel
               </Button>
-              <Button size="sm" onClick={handleSave} disabled={updateMutation.isPending}>
+              <Button
+                size="sm"
+                className="sa-staff-detail__btn sa-staff-detail__btn--save"
+                onClick={handleSave}
+                disabled={updateMutation.isPending}
+              >
                 <Save size={14} aria-hidden />
                 {updateMutation.isPending ? 'Saving…' : 'Save changes'}
               </Button>
@@ -248,43 +293,49 @@ export default function SuperAdminStaffDetailPage() {
               <header className="sa-staff-detail__hero">
                 <div className="sa-staff-detail__hero-main">
                   <div className="sa-staff-detail__avatar" aria-hidden>
-                    {displayName.charAt(0).toUpperCase()}
+                    {staffInitials(user)}
                   </div>
                   <div className="sa-staff-detail__identity">
                     <div className="sa-staff-detail__title-row">
                       <h1 className="sa-staff-detail__name">{displayName}</h1>
                       <AdminRoleBadge roleName={user.role_name || user.role} />
-                    </div>
-                    <div className="sa-staff-detail__sub-row">
-                      <p className="sa-staff-detail__email">
-                        <Mail size={14} aria-hidden />
-                        {user.email}
-                      </p>
                       <AdminStaffStatusBadge isActive={isActive} />
                     </div>
+                    <p className="sa-staff-detail__email">
+                      <Mail size={14} aria-hidden />
+                      <a href={`mailto:${user.email}`}>{user.email}</a>
+                    </p>
                   </div>
                 </div>
-                <div className="sa-staff-detail__hero-footer">
-                  <div className="sa-staff-detail__stat">
-                    <Activity size={15} aria-hidden />
+                <div className="sa-staff-detail__hero-footer" role="list">
+                  <div className="sa-staff-detail__stat sa-staff-detail__stat--logins" role="listitem">
+                    <span className="sa-staff-detail__stat-icon" aria-hidden>
+                      <Activity size={16} />
+                    </span>
                     <div>
                       <span className="sa-staff-detail__stat-value">{user.login_count ?? 0}</span>
-                      <span className="sa-staff-detail__stat-label">Logins</span>
+                      <span className="sa-staff-detail__stat-label">Total logins</span>
                     </div>
                   </div>
-                  <div className="sa-staff-detail__stat">
-                    <Calendar size={15} aria-hidden />
+                  <div className="sa-staff-detail__stat sa-staff-detail__stat--last" role="listitem">
+                    <span className="sa-staff-detail__stat-icon" aria-hidden>
+                      <Calendar size={16} />
+                    </span>
                     <div>
                       <span className="sa-staff-detail__stat-value">
-                        {user.last_login ? formatDate(user.last_login) : 'Never'}
+                        {formatDate(user.last_login) || 'Never'}
                       </span>
                       <span className="sa-staff-detail__stat-label">Last login</span>
                     </div>
                   </div>
-                  <div className="sa-staff-detail__stat">
-                    <User size={15} aria-hidden />
+                  <div className="sa-staff-detail__stat sa-staff-detail__stat--since" role="listitem">
+                    <span className="sa-staff-detail__stat-icon" aria-hidden>
+                      <User size={16} />
+                    </span>
                     <div>
-                      <span className="sa-staff-detail__stat-value">{formatDate(user.created_at)}</span>
+                      <span className="sa-staff-detail__stat-value">
+                        {formatDate(user.created_at) || '—'}
+                      </span>
                       <span className="sa-staff-detail__stat-label">Member since</span>
                     </div>
                   </div>
@@ -292,10 +343,17 @@ export default function SuperAdminStaffDetailPage() {
               </header>
 
               {editing ? (
-                <section className="sa-staff-detail__panel sa-staff-detail__panel--edit">
+                <section className="sa-staff-detail__panel sa-staff-detail__panel--edit sa-staff-detail__panel--personal">
                   <div className="sa-staff-detail__panel-head">
-                    <h2>Edit profile</h2>
-                    <p>Update personal details and role assignment.</p>
+                    <div className="sa-staff-detail__panel-title">
+                      <span className="sa-staff-detail__panel-icon" aria-hidden>
+                        <Briefcase size={18} />
+                      </span>
+                      <div>
+                        <h2>Edit staff profile</h2>
+                        <p>Update contact details, role, and employment record.</p>
+                      </div>
+                    </div>
                   </div>
                   <div className="sa-staff-detail__form-grid">
                     <div className="sa-staff-detail__form-section">
@@ -321,9 +379,14 @@ export default function SuperAdminStaffDetailPage() {
                           <Label htmlFor="sa_staff_phone">Phone</Label>
                           <Input
                             id="sa_staff_phone"
-                            value={form.phone}
-                            onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                            placeholder="+91 …"
+                            type="tel"
+                            inputMode="numeric"
+                            maxLength={10}
+                            value={form.phone || ''}
+                            onChange={(e) =>
+                              setForm((f) => ({ ...f, phone: digitsOnlyMax10(e.target.value) }))
+                            }
+                            placeholder="10-digit number"
                           />
                         </div>
                         <div>
@@ -371,75 +434,91 @@ export default function SuperAdminStaffDetailPage() {
                         </div>
                       </div>
                     </div>
+                    <div className="sa-staff-detail__form-section">
+                      <h3>Employment</h3>
+                      <p className="sa-staff-detail__form-hint">
+                        Visible as read-only on the staff member&apos;s Account tab.
+                      </p>
+                      <div className="sa-staff-detail__fields sa-staff-detail__fields--2">
+                        <div>
+                          <Label htmlFor="sa_staff_emp">Employee ID</Label>
+                          <Input
+                            id="sa_staff_emp"
+                            value={form.employee_id || ''}
+                            onChange={(e) => setForm((f) => ({ ...f, employee_id: e.target.value }))}
+                            placeholder="e.g. EMP-001"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="sa_staff_join">Joining date</Label>
+                          <Input
+                            id="sa_staff_join"
+                            type="date"
+                            value={form.joining_date || ''}
+                            onChange={(e) => setForm((f) => ({ ...f, joining_date: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </section>
               ) : (
                 <div className="sa-staff-detail__grid">
-                  <section className="sa-staff-detail__panel">
+                  <section className="sa-staff-detail__panel sa-staff-detail__panel--personal">
                     <div className="sa-staff-detail__panel-head">
-                      <h2>Profile information</h2>
-                      <p>Personal and contact details on file.</p>
+                      <div className="sa-staff-detail__panel-title">
+                        <span className="sa-staff-detail__panel-icon" aria-hidden>
+                          <User size={18} />
+                        </span>
+                        <div>
+                          <h2>Personal details</h2>
+                          <p>Contact information on record</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="sa-staff-detail__info-list">
-                      <InfoRow icon={User} label="Full name" value={displayName} />
-                      <InfoRow icon={Mail} label="Email address" value={user.email} />
-                      <InfoRow
-                        icon={Phone}
-                        label="Phone number"
-                        value={user.phone}
-                        emptyLabel="Not provided — use Edit profile to add"
+                    <dl className="sa-staff-detail__fields-grid">
+                      <DetailField label="Full name" value={displayName} />
+                      <DetailField label="Email" value={user.email} />
+                      <DetailField label="Phone" value={user.phone} />
+                      <DetailField
+                        label="Account created"
+                        value={formatDate(user.created_at)}
                       />
-                    </div>
+                    </dl>
                   </section>
 
-                  <section className="sa-staff-detail__panel">
+                  <section className="sa-staff-detail__panel sa-staff-detail__panel--employment">
                     <div className="sa-staff-detail__panel-head">
-                      <h2>Role &amp; organization</h2>
-                      <p>Access level and department assignment.</p>
+                      <div className="sa-staff-detail__panel-title">
+                        <span className="sa-staff-detail__panel-icon" aria-hidden>
+                          <IdCard size={18} />
+                        </span>
+                        <div>
+                          <h2>Employment</h2>
+                          <p>Role, department, and staff identifiers</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="sa-staff-detail__info-list">
-                      <InfoRow
-                        icon={Shield}
+                    <dl className="sa-staff-detail__fields-grid">
+                      <DetailField
                         label="System role"
                         value={formatRoleLabel(user.role_name || user.role)}
                       />
-                      <InfoRow
-                        icon={Building2}
+                      <DetailField
                         label="Department"
                         value={user.department_name || user.department}
-                        emptyLabel={
+                        empty={
                           roleRequiresDepartment(user.role_name || user.role)
-                            ? 'Not assigned — use Edit profile to set'
-                            : 'Not assigned (optional for this role)'
+                            ? 'Required — not assigned'
+                            : '—'
                         }
                       />
-                      <InfoRow icon={Calendar} label="Account created" value={formatDate(user.created_at)} />
-                    </div>
-                  </section>
-
-                  <section className="sa-staff-detail__panel sa-staff-detail__panel--activity">
-                    <div className="sa-staff-detail__panel-head">
-                      <h2>Account activity</h2>
-                      <p>Login history and engagement.</p>
-                    </div>
-                    <div className="sa-staff-detail__activity-grid">
-                      <div className="sa-staff-detail__activity-card">
-                        <Activity size={18} aria-hidden />
-                        <div>
-                          <span className="sa-staff-detail__activity-value">{user.login_count ?? 0}</span>
-                          <span className="sa-staff-detail__activity-label">Total logins</span>
-                        </div>
-                      </div>
-                      <div className="sa-staff-detail__activity-card">
-                        <Calendar size={18} aria-hidden />
-                        <div>
-                          <span className="sa-staff-detail__activity-value">
-                            {user.last_login ? formatDate(user.last_login) : 'Never'}
-                          </span>
-                          <span className="sa-staff-detail__activity-label">Last sign-in</span>
-                        </div>
-                      </div>
-                    </div>
+                      <DetailField label="Employee ID" value={user.employee_id} />
+                      <DetailField
+                        label="Joining date"
+                        value={formatDate(user.joining_date)}
+                      />
+                    </dl>
                   </section>
                 </div>
               )}
@@ -447,9 +526,9 @@ export default function SuperAdminStaffDetailPage() {
               {!editing ? (
                 <section className="sa-staff-detail__danger">
                   <div className="sa-staff-detail__danger-copy">
-                    <h3>Remove staff member</h3>
+                    <h3>Delete staff account</h3>
                     <p>
-                      Permanently deletes this account and revokes access. This action cannot be undone.
+                      Permanently removes access for {displayName}. This cannot be undone.
                     </p>
                   </div>
                   <Button

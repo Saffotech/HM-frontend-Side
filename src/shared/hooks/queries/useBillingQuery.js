@@ -42,9 +42,14 @@ export function useBillsQuery(options = {}) {
   });
 }
 
-export function usePaymentHistoryQuery({ search = '', modeFilter = 'all', page = 1 } = {}) {
+export function usePaymentHistoryQuery({
+  search = '',
+  modeFilter = 'all',
+  page = 1,
+  limit = PAYMENT_HISTORY_PAGE_SIZE,
+} = {}) {
   const token = useQueryToken();
-  const filters = { search, modeFilter, page, limit: PAYMENT_HISTORY_PAGE_SIZE };
+  const filters = { search, modeFilter, page, limit };
   return useQuery({
     queryKey: queryKeys.bills.paymentHistory(filters),
     queryFn: () => billsApi.listPaymentHistory(token, filters),

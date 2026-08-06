@@ -1,13 +1,25 @@
+import { useMemo } from 'react';
 import { ClipboardList, History } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/shared/constants';
 import RoleLayout from '@/shared/components/layout/RoleLayout';
 import PharmacyNotificationsBell from '@/features/pharmacy/components/PharmacyNotificationsBell';
+import { usePharmacyPermissionSet } from '@/features/pharmacy/hooks/usePharmacyPermission';
 import '../styles/pharmacy.css';
 
 const NAV_LINKS = [
-  { href: ROUTES.PHARMACY_PRESCRIPTIONS, label: 'Prescriptions', icon: ClipboardList },
-  { href: ROUTES.PHARMACY_HISTORY, label: 'History', icon: History },
+  {
+    href: ROUTES.PHARMACY_PRESCRIPTIONS,
+    label: 'Prescriptions',
+    icon: ClipboardList,
+    requires: 'prescriptions',
+  },
+  {
+    href: ROUTES.PHARMACY_HISTORY,
+    label: 'History',
+    icon: History,
+    requires: 'prescriptions',
+  },
 ];
 
 const PAGE_TITLES = [
@@ -43,25 +55,39 @@ export default function PharmacyLayout({ children, pageTitle: pageTitleProp, com
   const navigate = useNavigate();
   const location = useLocation();
   const onProfilePage = location.pathname === ROUTES.PHARMACY_PROFILE;
+  const { canViewPrescriptions, canViewNotifications } = usePharmacyPermissionSet();
+
+  const navLinks = useMemo(
+    () =>
+      NAV_LINKS.filter((link) => {
+        if (link.requires === 'prescriptions') return canViewPrescriptions;
+        return true;
+      }),
+    [canViewPrescriptions],
+  );
 
   return (
     <RoleLayout
-      navLinks={NAV_LINKS}
+      navLinks={navLinks}
       resolveTitle={resolveTitle}
-      homeRoute={ROUTES.PHARMACY_PRESCRIPTIONS}
+      homeRoute={
+        canViewPrescriptions ? ROUTES.PHARMACY_PRESCRIPTIONS : ROUTES.PHARMACY_PROFILE
+      }
       roleLabel="Pharmacy"
       roleLabelClassName="pharmacy-role-label"
       defaultTitle="Prescriptions"
       pageTitleOverride={pageTitleProp}
       compact={compact}
       isNavLinkActive={isNavLinkActive}
-      showBell
+      showBell={canViewNotifications}
       profileHref={ROUTES.PHARMACY_PROFILE}
       logoutMenuOnly={onProfilePage}
       headerBell={
-        <PharmacyNotificationsBell
-          onViewAll={() => navigate(ROUTES.PHARMACY_NOTIFICATIONS)}
-        />
+        canViewNotifications ? (
+          <PharmacyNotificationsBell
+            onViewAll={() => navigate(ROUTES.PHARMACY_NOTIFICATIONS)}
+          />
+        ) : null
       }
     >
       {children}

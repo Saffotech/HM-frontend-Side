@@ -1423,6 +1423,80 @@ button.admin-bar-chart__row--clickable {
   background: #fef2f2;
 }
 
+.admin-staff-list__actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.admin-staff-list__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  background: transparent;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.admin-staff-list__action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.admin-staff-list__action--view {
+  color: var(--admin-primary-dark);
+  background: var(--admin-primary-soft);
+  border-color: var(--admin-primary-border);
+}
+
+.admin-staff-list__action--view:hover:not(:disabled) {
+  filter: brightness(0.97);
+}
+
+.admin-staff-list__action--edit {
+  color: #1d4ed8;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.admin-staff-list__action--edit:hover:not(:disabled) {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.admin-staff-list__action--deactivate {
+  color: #b45309;
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.admin-staff-list__action--deactivate:hover:not(:disabled) {
+  background: #fef3c7;
+  border-color: #fcd34d;
+}
+
+.admin-staff-list__action--activate {
+  color: #15803d;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.admin-staff-list__action--activate:hover:not(:disabled) {
+  background: #dcfce7;
+  border-color: #86efac;
+}
+
 .admin-alert {
   padding: 1rem 1.1rem;
   border-radius: var(--admin-radius-md);

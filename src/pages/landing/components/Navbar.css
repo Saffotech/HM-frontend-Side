@@ -47,6 +47,11 @@
   color: var(--color-text);
 }
 
+.landing-nav__link--active {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
 .landing-nav__actions {
   display: none;
   align-items: center;

@@ -12,6 +12,7 @@ import {
   useMarkAllLabTechnicianNotificationsReadMutation,
   useMarkLabTechnicianNotificationReadMutation,
 } from '@/features/lab/hooks/useLabTechnicianNotificationsQuery';
+import { useLabPermissionSet } from '@/features/lab/hooks/useLabPermission';
 import { Button, EmptyState } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
 import LabNotificationRow from './LabNotificationRow';
@@ -37,6 +38,7 @@ const PRIORITY_FILTER_VALUES = new Set(
 const SEARCH_DEBOUNCE_MS = 300;
 
 export default function LabNotificationsSection({ onDeepLink }) {
+  const { canViewNotifications, canUpdateNotifications } = useLabPermissionSet();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -73,7 +75,10 @@ export default function LabNotificationsSection({ onDeepLink }) {
     return next;
   }, [page, debouncedSearch, readFilter, notificationType, startDate, endDate]);
 
-  const { data, isLoading, isError, error, refetch } = useLabTechnicianNotificationsListQuery(filters);
+  const { data, isLoading, isError, error, refetch } = useLabTechnicianNotificationsListQuery(
+    filters,
+    { enabled: canViewNotifications },
+  );
   const markOne = useMarkLabTechnicianNotificationReadMutation();
   const markAll = useMarkAllLabTechnicianNotificationsReadMutation();
 
@@ -98,6 +103,10 @@ export default function LabNotificationsSection({ onDeepLink }) {
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   const handleMarkAll = async () => {
+    if (!canUpdateNotifications) {
+      toast.error('You do not have permission to update notifications');
+      return;
+    }
     try {
       await markAll.mutateAsync();
       toast.success('All marked as read');
@@ -125,6 +134,10 @@ export default function LabNotificationsSection({ onDeepLink }) {
 
   const handleRowClick = async (n) => {
     if (isLabTechnicianNotificationUnread(n)) {
+      if (!canUpdateNotifications) {
+        toast.error('You do not have permission to update notifications');
+        return;
+      }
       try {
         await markOne.mutateAsync(n.id);
       } catch {
@@ -133,6 +146,16 @@ export default function LabNotificationsSection({ onDeepLink }) {
     }
     onDeepLink?.(n);
   };
+
+  if (!canViewNotifications) {
+    return (
+      <EmptyState
+        icon={Bell}
+        title="Notifications access denied"
+        description="You do not have permission to view notifications."
+      />
+    );
+  }
 
   return (
     <div className="lab-notif-page">
@@ -175,7 +198,12 @@ export default function LabNotificationsSection({ onDeepLink }) {
             variant="outline"
             className="lab-notif-mark-all"
             onClick={handleMarkAll}
-            disabled={markAll.isPending}
+            disabled={markAll.isPending || !canUpdateNotifications}
+            title={
+              canUpdateNotifications
+                ? 'Mark all as read'
+                : 'You do not have permission to update notifications'
+            }
           >
             Mark all read
           </Button>

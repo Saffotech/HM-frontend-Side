@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
-import { Rows3 } from 'lucide-react';
+import { History, Rows3 } from 'lucide-react';
 import PharmacyLayout from '@/features/pharmacy/components/PharmacyLayout';
 import PharmacyStatusBadge from '@/features/pharmacy/components/PharmacyStatusBadge';
+import { usePharmacyPermissionSet } from '@/features/pharmacy/hooks/usePharmacyPermission';
 import {
   DataTableShell,
   DateInput,
@@ -47,6 +48,7 @@ function matchesHistorySearch(row, search) {
 }
 
 export default function DispenseHistoryPage() {
+  const { canViewPrescriptions } = usePharmacyPermissionSet();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState('');
@@ -59,6 +61,7 @@ export default function DispenseHistoryPage() {
     limit: pageSize,
     date_from: dateFrom || undefined,
     date_to: dateTo || undefined,
+    enabled: canViewPrescriptions,
   });
 
   const allRows = data?.data ?? [];
@@ -84,6 +87,18 @@ export default function DispenseHistoryPage() {
     setDateTo('');
     setPage(1);
   };
+
+  if (!canViewPrescriptions) {
+    return (
+      <PharmacyLayout compact>
+        <EmptyState
+          icon={History}
+          title="History access denied"
+          description="You do not have permission to view dispense history."
+        />
+      </PharmacyLayout>
+    );
+  }
 
   return (
     <PharmacyLayout compact>

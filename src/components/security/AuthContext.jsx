@@ -67,7 +67,10 @@ function buildUserProfile(me, loginData, accessToken) {
 
   profile.role = normalizeRole(profile.role ?? loginData?.role);
 
-  profile.permissions = resolvePermissions(loginData, accessToken);
+  profile.permissions =
+    Array.isArray(me?.permissions)
+      ? me.permissions
+      : resolvePermissions(loginData, accessToken);
 
   profile.full_name =
 
@@ -220,15 +223,39 @@ export function AuthProvider({ children }) {
 
     setToken(accessToken);
 
+    const tokenPermissions = resolvePermissions(data, accessToken);
+
     setUser((prev) => {
 
-      const nextUser = prev ?? session.user;
+      const base = prev ?? session.user;
 
-      if (nextUser) saveAuthSession(accessToken, nextUser, refreshToken);
+      if (!base) return base;
+
+      const nextUser = {
+        ...base,
+        permissions: tokenPermissions.length > 0 ? tokenPermissions : base.permissions,
+      };
+
+      saveAuthSession(accessToken, nextUser, refreshToken);
 
       return nextUser;
 
     });
+
+    // Prefer live DB permissions over JWT after refresh.
+    try {
+      const me = await getCurrentUser(accessToken);
+      if (Array.isArray(me?.permissions)) {
+        setUser((prev) => {
+          if (!prev) return prev;
+          const nextUser = { ...prev, permissions: me.permissions };
+          saveAuthSession(accessToken, nextUser, refreshToken);
+          return nextUser;
+        });
+      }
+    } catch {
+      /* keep token permissions */
+    }
 
     return accessToken;
 
@@ -263,6 +290,36 @@ export function AuthProvider({ children }) {
     [token]
 
   );
+
+  /** Pull live role permissions from GET /auth/me so Admin toggles apply without re-login. */
+  const refreshPermissions = useCallback(async () => {
+    const accessToken = token || loadAuthSession()?.token;
+    if (!accessToken || isTokenExpired(accessToken)) return null;
+    try {
+      const me = await getCurrentUser(accessToken);
+      if (!Array.isArray(me?.permissions)) return null;
+      const permissions = me.permissions;
+      let changed = false;
+      setUser((prev) => {
+        if (!prev) return prev;
+        const prevList = Array.isArray(prev.permissions) ? prev.permissions : [];
+        const prevSet = new Set(prevList.map(String));
+        const nextSet = new Set(permissions.map(String));
+        const same =
+          prevSet.size === nextSet.size &&
+          [...nextSet].every((p) => prevSet.has(p));
+        if (same) return prev;
+        changed = true;
+        const next = { ...prev, permissions };
+        const session = loadAuthSession();
+        saveAuthSession(accessToken, next, session?.refreshToken);
+        return next;
+      });
+      return changed ? permissions : null;
+    } catch {
+      return null;
+    }
+  }, [token]);
 
 
 
@@ -518,6 +575,8 @@ export function AuthProvider({ children }) {
 
       updateUser,
 
+      refreshPermissions,
+
       refreshSession,
 
       applyTokens,
@@ -534,6 +593,7 @@ export function AuthProvider({ children }) {
       login,
       logout,
       updateUser,
+      refreshPermissions,
       refreshSession,
       applyTokens,
     ]

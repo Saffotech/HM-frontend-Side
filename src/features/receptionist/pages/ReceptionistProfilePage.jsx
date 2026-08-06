@@ -36,6 +36,8 @@ import {
   displayProfileText,
   parseProfileLanguages,
 } from '@/shared/utils/profileTextFormat';
+import { useReceptionistPermissionSet } from '@/features/receptionist/hooks/useReceptionistPermission';
+import ReceptionistPermissionButton from '@/features/receptionist/components/ReceptionistPermissionButton';
 import './ReceptionistProfilePage.css';
 
 const GENDER_OPTIONS = [
@@ -206,7 +208,15 @@ function ReadField({ label, value }) {
 export default function ReceptionistProfilePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { data, isLoading, isError, error, refetch } = useReceptionistProfileQuery();
+  const {
+    canViewProfile,
+    canUpdateProfile,
+    canUploadProfileImage,
+    canDeleteProfileImage,
+  } = useReceptionistPermissionSet();
+  const { data, isLoading, isError, error, refetch } = useReceptionistProfileQuery({
+    enabled: canViewProfile,
+  });
   const profile = data?.profile;
   const updateProfile = useUpdateReceptionistProfileMutation();
   const uploadImage = useUploadReceptionistProfileImageMutation();
@@ -229,6 +239,10 @@ export default function ReceptionistProfilePage() {
   const fileInputRef = useRef(null);
 
   const startEdit = () => {
+    if (!canUpdateProfile) {
+      toast.error('You do not have permission to update profile');
+      return;
+    }
     // Nurse Phase 2 by Atharva — Account is read-only; edit opens Professional
     setEditing(true);
     if (activeTab === 'account') setActiveTab('professional');
@@ -294,6 +308,10 @@ export default function ReceptionistProfilePage() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    if (!canUpdateProfile) {
+      toast.error('You do not have permission to update profile');
+      return;
+    }
 
     // Nurse Phase 2 by Atharva — phone & emergency_contact.phone must be exactly 10 digits
     const phone = formatPhoneInput(form?.phone);
@@ -347,6 +365,10 @@ export default function ReceptionistProfilePage() {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
+    if (!canUploadProfileImage) {
+      toast.error('You do not have permission to upload profile image');
+      return;
+    }
     if (!ALLOWED_IMAGE_TYPES.includes(file.type) && !/\.(jpe?g|png|webp)$/i.test(file.name)) {
       toast.error('Use a JPG, PNG, or WebP image');
       return;
@@ -359,6 +381,10 @@ export default function ReceptionistProfilePage() {
   };
 
   const handleCropConfirm = async (croppedFile) => {
+    if (!canUploadProfileImage) {
+      toast.error('You do not have permission to upload profile image');
+      return;
+    }
     setCropUploading(true);
     try {
       await uploadImage.mutateAsync(croppedFile);
@@ -372,6 +398,10 @@ export default function ReceptionistProfilePage() {
   };
 
   const handleDeleteImage = async () => {
+    if (!canDeleteProfileImage) {
+      toast.error('You do not have permission to delete profile image');
+      return;
+    }
     try {
       await deleteImage.mutateAsync();
       toast.success('Profile image removed');
@@ -382,12 +412,20 @@ export default function ReceptionistProfilePage() {
   };
 
   const handleAvatarUploadClick = () => {
+    if (!canUploadProfileImage) {
+      toast.error('You do not have permission to upload profile image');
+      return;
+    }
     setAvatarMenuOpen(false);
     fileInputRef.current?.click();
   };
 
   // Nurse Phase 2 by Atharva — ask confirm before deleting profile photo
   const handleAvatarRemoveClick = () => {
+    if (!canDeleteProfileImage) {
+      toast.error('You do not have permission to delete profile image');
+      return;
+    }
     setAvatarMenuOpen(false);
     setRemovePhotoConfirmOpen(true);
   };
@@ -410,6 +448,23 @@ export default function ReceptionistProfilePage() {
         .join(', ')
     );
   };
+
+  if (!canViewProfile) {
+    return (
+      <>
+        <EmptyState
+          icon={User}
+          title="Profile access denied"
+          description="You do not have permission to view the receptionist profile."
+        />
+        <div style={{ marginTop: '1rem' }}>
+          <Button variant="outline" onClick={() => navigate(ROUTES.RECEPTIONIST_DASHBOARD)}>
+            <ArrowLeft size={16} /> Back to dashboard
+          </Button>
+        </div>
+      </>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -466,6 +521,7 @@ export default function ReceptionistProfilePage() {
   const saving = updateProfile.isPending;
   const hasProfileImage = Boolean(profile.profile_image_url || imageUrl);
   const roleName = typeof profile.role === 'object' ? profile.role?.name : profile.role;
+  const canManageAvatar = canUploadProfileImage || canDeleteProfileImage;
 
   return (
     <>
@@ -476,10 +532,26 @@ export default function ReceptionistProfilePage() {
               <button
                 type="button"
                 className="receptionist-profile-avatar-trigger"
-                onClick={() => setAvatarMenuOpen((open) => !open)}
+                onClick={() => {
+                  if (!canManageAvatar) {
+                    toast.error('You do not have permission to change profile photo');
+                    return;
+                  }
+                  setAvatarMenuOpen((open) => !open);
+                }}
                 aria-expanded={avatarMenuOpen}
                 aria-haspopup="menu"
                 aria-label="Profile photo options"
+                title={
+                  canManageAvatar
+                    ? 'Profile photo options'
+                    : 'You do not have permission to change profile photo'
+                }
+                style={
+                  !canManageAvatar
+                    ? { cursor: 'not-allowed', opacity: 0.85 }
+                    : undefined
+                }
               >
                 {imageUrl ? (
                   <img src={imageUrl} alt="" className="receptionist-profile-avatar-img" />
@@ -490,10 +562,11 @@ export default function ReceptionistProfilePage() {
                 )}
               </button>
 
-              {avatarMenuOpen ? (
+              {avatarMenuOpen && canManageAvatar ? (
                 <div className="receptionist-profile-avatar-menu" role="menu">
-                  <button
-                    type="button"
+                  <ReceptionistPermissionButton
+                    allowed={canUploadProfileImage}
+                    deniedMessage="You do not have permission to upload profile image"
                     role="menuitem"
                     className="receptionist-profile-avatar-menu__item"
                     onClick={handleAvatarUploadClick}
@@ -501,9 +574,14 @@ export default function ReceptionistProfilePage() {
                   >
                     <Upload size={14} aria-hidden />
                     {uploadImage.isPending ? 'Uploading…' : 'Upload'}
-                  </button>
-                  <button
-                    type="button"
+                  </ReceptionistPermissionButton>
+                  <ReceptionistPermissionButton
+                    allowed={canDeleteProfileImage && hasProfileImage}
+                    deniedMessage={
+                      !hasProfileImage
+                        ? 'No profile photo to remove'
+                        : 'You do not have permission to delete profile image'
+                    }
                     role="menuitem"
                     className="receptionist-profile-avatar-menu__item receptionist-profile-avatar-menu__item--danger"
                     onClick={handleAvatarRemoveClick}
@@ -511,7 +589,7 @@ export default function ReceptionistProfilePage() {
                   >
                     <Trash2 size={14} aria-hidden />
                     {deleteImage.isPending ? 'Removing…' : 'Remove'}
-                  </button>
+                  </ReceptionistPermissionButton>
                 </div>
               ) : null}
 
@@ -605,19 +683,27 @@ export default function ReceptionistProfilePage() {
                   <Button variant="outline" size="sm" onClick={handleCancel} disabled={saving}>
                     <X size={16} /> Cancel
                   </Button>
-                  <Button
-                    size="sm"
-                    type="button"
+                  <ReceptionistPermissionButton
+                    allowed={canUpdateProfile}
+                    deniedMessage="You do not have permission to update profile"
+                    className="btn btn--sm btn--primary"
                     disabled={saving || activeTab === 'account'}
-                    onClick={() => document.getElementById('receptionist-profile-form')?.requestSubmit()}
+                    onClick={() =>
+                      document.getElementById('receptionist-profile-form')?.requestSubmit()
+                    }
                   >
                     {saving ? 'Saving…' : 'Save changes'}
-                  </Button>
+                  </ReceptionistPermissionButton>
                 </>
               ) : (
-                <Button size="sm" onClick={startEdit}>
+                <ReceptionistPermissionButton
+                  allowed={canUpdateProfile}
+                  deniedMessage="You do not have permission to update profile"
+                  className="btn btn--sm btn--primary"
+                  onClick={startEdit}
+                >
                   <Edit3 size={16} /> Edit profile
-                </Button>
+                </ReceptionistPermissionButton>
               )}
             </div>
           </div>

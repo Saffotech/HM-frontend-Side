@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { ROUTES } from '@/shared/constants';
 import '@/features/admin/styles/nurseWorkforce.css';
 
-const LINKS = [
+const DEFAULT_LINKS = [
   { to: ROUTES.ADMIN_SETTINGS_OPD, label: 'OPD', end: true },
   { to: ROUTES.ADMIN_SETTINGS_DOCTOR, label: 'Doctor' },
   { to: ROUTES.ADMIN_SETTINGS_RECEPTIONIST, label: 'Receptionist' },
@@ -11,11 +11,11 @@ const LINKS = [
   { to: ROUTES.ADMIN_SETTINGS_PHARMACY, label: 'Pharmacy' },
 ];
 
-export default function AdminSettingsNav() {
+export default function AdminSettingsNav({ links = DEFAULT_LINKS }) {
   return (
     <div className="nwf-subnav-row">
       <nav className="nwf-subnav" aria-label="Settings modules">
-        {LINKS.map((link) => (
+        {links.map((link) => (
           <NavLink
             key={link.to}
             to={link.to}

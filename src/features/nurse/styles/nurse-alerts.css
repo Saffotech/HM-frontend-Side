@@ -295,6 +295,42 @@
   color: #64748b;
 }
 
+.nurse-alerts-table--fetching{
+  opacity: 0.72;
+  transition: opacity 0.15s ease;
+}
+
+.nurse-alerts-table__head .nurse-section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.nurse-alerts-scope-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.nurse-alerts-scope-pill--allocated {
+  background: #ccfbf1;
+  color: #0f766e;
+  border: 1px solid #99f6e4;
+}
+
+.nurse-alerts-scope-pill--all {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
 .nurse-alerts-table__count strong{
   color: #334155;
   font-weight: 700;

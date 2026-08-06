@@ -113,7 +113,7 @@ export const queryKeys = {
     handovers: (filters) => ['nurse', 'handovers', filters],
     handover: (id) => ['nurse', 'handover', id],
     alerts: (filters) => ['nurse', 'alerts', filters],
-    alertSummary: ['nurse', 'alert-summary'],
+    alertSummary: (filters = {}) => ['nurse', 'alert-summary', filters],
     alert: (id) => ['nurse', 'alert', id],
     // Nurse Phase 2 by Atharva — profile + notifications cache keys
     profile: ['nurse', 'profile'],
@@ -227,6 +227,21 @@ export const queryKeys = {
     notifications: ['receptionist', 'notifications'],
     notificationsList: (filters) => ['receptionist', 'notifications', 'list', filters],
     notificationsUnreadCount: ['receptionist', 'notifications', 'unread-count'],
+  },
+
+  ipd: {
+    all: ['ipd'],
+    dashboard: ['ipd', 'dashboard'],
+    patients: (filters) => ['ipd', 'patients', filters],
+    admission: (id) => ['ipd', 'admission', id],
+    beds: (filters) => ['ipd', 'beds', filters],
+    wards: ['ipd', 'beds', 'wards'],
+    runningBills: (filters) => ['ipd', 'billing', 'running', filters],
+    billPreview: (admissionId) => ['ipd', 'billing', 'preview', admissionId],
+    paymentHistory: (filters) => ['ipd', 'payments', 'history', filters],
+    profile: ['ipd', 'profile'],
+    departments: ['ipd', 'reference', 'departments'],
+    doctors: (departmentId) => ['ipd', 'reference', 'doctors', departmentId],
   },
 
   superAdmin: {

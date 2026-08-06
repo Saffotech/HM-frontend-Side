@@ -1,62 +1,49 @@
-import { Facebook, Instagram, Linkedin, Twitter } from 'lucide-react';
-import { APP_NAME } from '@/shared/constants';
+import { Link } from 'react-router-dom';
+import { APP_NAME, ROUTES } from '@/shared/constants';
 import { BrandLogo, BrandName } from '@/shared/components/common';
 import './Footer.css';
 
-const COLS = [
-  { title: 'Company', links: ['About Us', 'Careers', 'Blog', 'Contact'] },
-  { title: 'Product', links: ['Features', 'Pricing', 'Modules', 'Security'] },
-  { title: 'Support', links: ['Help Center', 'Documentation', 'FAQ', 'Technical Support'] },
+const PAGE_LINKS = [
+  { to: ROUTES.HOME, label: 'Home' },
+  { to: ROUTES.ABOUT, label: 'About Us' },
+  { to: `${ROUTES.HOME}#features`, label: 'Features' },
+  { to: `${ROUTES.HOME}#modules`, label: 'Modules' },
+  { to: `${ROUTES.HOME}#contact`, label: 'Contact Us' },
 ];
 
-const SOCIAL = [
-  { Icon: Linkedin, label: 'LinkedIn' },
-  { Icon: Facebook, label: 'Facebook' },
-  { Icon: Instagram, label: 'Instagram' },
-  { Icon: Twitter, label: 'Twitter' },
-];
+function FooterLink({ to, label }) {
+  if (to.includes('#')) {
+    return <a href={to}>{label}</a>;
+  }
+  return <Link to={to}>{label}</Link>;
+}
 
 export default function Footer() {
   return (
     <footer className="landing-footer">
-      <div className="landing-container">
-        <div className="landing-footer__grid">
-          <div className="landing-footer__brand-col">
-            <div className="landing-footer__brand">
-              <BrandLogo size={32} className="landing-footer__logo-img" />
-              <BrandName className="landing-footer__title" />
-            </div>
-            <p className="landing-footer__desc">
-              A modern hospital management system to run patient care, doctors, billing and operations from one secure platform.
-            </p>
-            <div className="landing-footer__social">
-              {SOCIAL.map(({ Icon, label }) => (
-                <a key={label} href="#home" className="landing-footer__social-link" aria-label={label}>
-                  <Icon size={16} aria-hidden />
-                </a>
-              ))}
-            </div>
+      <div className="landing-container landing-footer__inner">
+        <div className="landing-footer__row">
+          <div className="landing-footer__brand">
+            <BrandLogo size={28} className="landing-footer__logo-img" />
+            <BrandName className="landing-footer__title" />
           </div>
-          {COLS.map((c) => (
-            <div key={c.title}>
-              <h4>{c.title}</h4>
-              <ul>
-                {c.links.map((l) => (
-                  <li key={l}>
-                    <a href="#home">{l}</a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <nav className="landing-footer__links" aria-label="Footer">
+            {PAGE_LINKS.map((l) => (
+              <FooterLink key={l.label} to={l.to} label={l.label} />
+            ))}
+            <Link to={`${ROUTES.LOGIN}?switch=1`}>Staff Login</Link>
+          </nav>
         </div>
-        <div className="landing-footer__bottom">
-          <p>© {new Date().getFullYear()} {APP_NAME}. All rights reserved.</p>
-          <div className="landing-footer__legal">
-            <a href="#home">Privacy</a>
-            <a href="#home">Terms</a>
-            <a href="#home">Cookies</a>
-          </div>
+        <div className="landing-footer__row landing-footer__row--copyright">
+          <p>
+            © {new Date().getFullYear()} {APP_NAME}. All rights reserved.
+            <span className="landing-footer__sep" aria-hidden>·</span>
+            Navi Mumbai, India
+            <span className="landing-footer__sep" aria-hidden>·</span>
+            <a href="tel:+912240163618">+91 22 40163618</a>
+            <span className="landing-footer__sep" aria-hidden>·</span>
+            <a href="mailto:sales@saffotech.com">sales@saffotech.com</a>
+          </p>
         </div>
       </div>
     </footer>

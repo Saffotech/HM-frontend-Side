@@ -10,9 +10,11 @@ import { QueryFeedback } from '@/shared/components/common';
 import {
   useNursePatientMedicationsQuery,
   useAdministerMedicationMutation,
+  useUpdateAdministrationMutation,
 } from '@/shared/hooks/queries/useNurseQuery';
 import { ROUTES } from '@/shared/constants';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
+import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
 import { toast } from '@/shared/utils/toast';
 import './NursePatientMedicationsPage.css';
 
@@ -136,7 +138,9 @@ export default function NursePatientMedicationsPage() {
   const { data: patientData, isLoading, isError, error, refetch } =
     useNursePatientMedicationsQuery(patientId);
   const adminMut = useAdministerMedicationMutation(patientId);
+  const updateAdminMut = useUpdateAdministrationMutation(patientId);
   const [selected, setSelected] = useState(null);
+  const [adminMode, setAdminMode] = useState('create'); // 'create' | 'update'
   const [adminData, setAdminData] = useState({
     status: 'given',
     remarks: '',
@@ -160,11 +164,12 @@ export default function NursePatientMedicationsPage() {
     [prescriptions],
   );
 
-  const openAdmin = useCallback((rx) => {
+  const openAdmin = useCallback((rx, mode) => {
     setSelected(rx);
+    setAdminMode(mode);
     setAdminData({
-      status: 'given',
-      remarks: '',
+      status: mode === 'update' ? (rx.status || 'given') : 'given',
+      remarks: mode === 'update' ? (rx.administration?.remarks || '') : '',
       scheduled_time: '',
     });
   }, []);
@@ -174,22 +179,54 @@ export default function NursePatientMedicationsPage() {
       toast.error('Status is required');
       return;
     }
+
+    const payload = {
+      status: adminData.status,
+      remarks: adminData.remarks || null,
+      scheduled_time: adminData.scheduled_time
+        ? new Date(adminData.scheduled_time).toISOString()
+        : null,
+    };
+
+    if (adminMode === 'update') {
+      const administrationId = selected?.administration?.id;
+      if (!canUpdateMedication) {
+        toast.error('You do not have permission to update medication logs.');
+        return;
+      }
+      if (!administrationId) {
+        toast.error('No administration record to update.');
+        return;
+      }
+      updateAdminMut.mutate(
+        { administrationId, data: payload },
+        {
+          onSuccess: () => {
+            toast.success('Medication log updated');
+            setSelected(null);
+          },
+          onError: (err) => toast.error(err?.message || 'Failed to update medication log'),
+        },
+      );
+      return;
+    }
+
+    if (!canCreateMedication) {
+      toast.error('You do not have permission to create medication logs.');
+      return;
+    }
     adminMut.mutate(
       {
         prescription_item_id: selected.id,
-        status: adminData.status,
-        remarks: adminData.remarks || null,
-        scheduled_time: adminData.scheduled_time
-          ? new Date(adminData.scheduled_time).toISOString()
-          : null,
+        ...payload,
       },
       {
         onSuccess: () => {
           toast.success(`Dose recorded as ${adminData.status}`);
           setSelected(null);
         },
-        onError: () => toast.error('Failed to record administration'),
-      }
+        onError: (err) => toast.error(err?.message || 'Failed to record administration'),
+      },
     );
   };
 
@@ -214,18 +251,34 @@ export default function NursePatientMedicationsPage() {
       header: 'Action',
       render: (p) => {
         const hasRecord = Boolean(p.administration?.id);
-        const canManageMedication = canCreateMedication || canUpdateMedication;
-        if (!canManageMedication) return '—';
+        if (!hasRecord) {
+          return (
+            <NursePermissionButton
+              allowed={canCreateMedication}
+              className="nurse-btn nurse-btn--sm nurse-btn--primary nurse-patient-meds__action-btn"
+              onClick={() => openAdmin(p, 'create')}
+            >
+              Administer
+            </NursePermissionButton>
+          );
+        }
         return (
-          <button
-            type="button"
-            className={`nurse-btn nurse-btn--sm nurse-patient-meds__action-btn${
-              hasRecord ? ' nurse-btn--secondary' : ' nurse-btn--primary'
-            }`}
-            onClick={() => openAdmin(p)}
-          >
-            {hasRecord ? 'Record dose' : 'Administer'}
-          </button>
+          <div className="nurse-table__actions">
+            <NursePermissionButton
+              allowed={canUpdateMedication}
+              className="nurse-btn nurse-btn--sm nurse-btn--secondary nurse-patient-meds__action-btn"
+              onClick={() => openAdmin(p, 'update')}
+            >
+              Update
+            </NursePermissionButton>
+            <NursePermissionButton
+              allowed={canCreateMedication}
+              className="nurse-btn nurse-btn--sm nurse-btn--primary nurse-patient-meds__action-btn"
+              onClick={() => openAdmin(p, 'create')}
+            >
+              Record dose
+            </NursePermissionButton>
+          </div>
         );
       },
     },
@@ -338,7 +391,7 @@ export default function NursePatientMedicationsPage() {
             open={!!selected}
             className="nurse-confirm--med-admin"
             title={selected?.medicine_name}
-            subtitle={selected?.administration?.id ? 'Record new dose' : 'Record administration'}
+            subtitle={adminMode === 'update' ? 'Update medication log' : 'Record administration'}
             description={
               <div className="nurse-patient-meds-admin-form">
                 <div className="nurse-patient-meds-admin-form__row">
@@ -386,7 +439,9 @@ export default function NursePatientMedicationsPage() {
                 </div>
               </div>
             }
-            confirmLabel={adminMut.isPending ? 'Saving…' : 'Save record'}
+            confirmLabel={
+              adminMut.isPending || updateAdminMut.isPending ? 'Saving…' : 'Save record'
+            }
             onConfirm={handleConfirm}
             onCancel={() => setSelected(null)}
           />

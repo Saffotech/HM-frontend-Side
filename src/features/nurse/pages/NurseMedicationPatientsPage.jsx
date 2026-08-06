@@ -20,6 +20,7 @@ import { QueryFeedback } from '@/shared/components/common';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
 import { useNurseMedicationPatientsQuery } from '@/shared/hooks/queries/useNurseQuery';
 import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
+import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
 import './NurseMedicationPatientsPage.css';
 
 const WARD_OPTIONS = [
@@ -139,6 +140,7 @@ export default function NurseMedicationPatientsPage() {
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebouncedValue(search, 400);
   const { scopeFilters, scopeReady, allocatedOnly } = useNursePatientScope();
+  const { canViewMedication } = useNursePermissionSet();
   const { data, isLoading, isError, error, refetch } = useNurseMedicationPatientsQuery(
     {
       search: debouncedSearch,
@@ -146,7 +148,7 @@ export default function NurseMedicationPatientsPage() {
       page_size: 20,
       ...scopeFilters,
     },
-    { enabled: scopeReady },
+    { enabled: scopeReady && canViewMedication },
   );
   const patients = data?.items ?? [];
   const filteredPatients = useMemo(
@@ -212,6 +214,13 @@ export default function NurseMedicationPatientsPage() {
 
   return (
     <NurseLayout>
+      {!canViewMedication ? (
+        <div className="nurse-page">
+          <div className="nurse-alert nurse-alert--error">
+            You do not have permission to view medications.
+          </div>
+        </div>
+      ) : (
       <div className="nurse-page nurse-med-patients-page">
         <header className="nurse-med-patients-page__hero">
           <div className="nurse-med-patients-page__hero-icon" aria-hidden>
@@ -331,6 +340,7 @@ export default function NurseMedicationPatientsPage() {
           </QueryFeedback>
         </div>
       </div>
+      )}
     </NurseLayout>
   );
 }

@@ -14,10 +14,12 @@ import { pharmacyRoutes } from '@/routes/pharmacyRoutes';
 import { nurseRoutes } from '@/routes/nurseRoutes';
 import { opdRoutes } from '@/routes/opdRoutes';
 import { receptionistRoutes } from '@/routes/receptionistRoutes';
+import { ipdRoutes } from '@/routes/ipdRoutes';
 import { adminRoutes } from '@/routes/adminRoutes';
 import { superAdminRoutes } from '@/routes/superAdminRoutes';
 
 const LandingPage = lazy(() => import('@/pages/landing/LandingPage'));
+const AboutPage = lazy(() => import('@/pages/landing/AboutPage'));
 const LoginPage = lazy(() => import('@/pages/landing/LoginPage'));
 const PatientLoginPage = lazy(() => import('@/pages/landing/PatientLoginPage'));
 const PharmacyLoginPage = lazy(() => import('@/features/pharmacy/pages/PharmacyLoginPage'));
@@ -42,6 +44,17 @@ export default function App() {
             <LazyRoute>
               <GuestRoute>
                 <LandingPage />
+              </GuestRoute>
+            </LazyRoute>
+          }
+        />
+
+        <Route
+          path={ROUTES.ABOUT}
+          element={
+            <LazyRoute>
+              <GuestRoute>
+                <AboutPage />
               </GuestRoute>
             </LazyRoute>
           }
@@ -135,6 +148,7 @@ export default function App() {
           {renderRoutes(pharmacyRoutes)}
           {renderRoutes(nurseRoutes)}
           {renderRoutes(receptionistRoutes)}
+          {renderRoutes(ipdRoutes)}
           {renderRoutes(opdRoutes)}
           {renderRoutes(adminRoutes)}
           {renderRoutes(superAdminRoutes)}

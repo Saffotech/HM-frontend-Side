@@ -1,0 +1,788 @@
+/* IPD module — tokens from shared design system */
+
+.ipd-role-label {
+  margin: 0.5rem 1rem 0.35rem;
+  padding: 0 0.125rem;
+  font-size: var(--text-small);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-sidebar-text-active);
+}
+
+.ipd-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ipd-page__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.ipd-page__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text, #111827);
+}
+
+.ipd-page__subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ipd-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 1024px) {
+  .ipd-stat-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .ipd-stat-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+.ipd-stat-card {
+  /* Per-card palette; overridden by the tone modifiers below.
+     `ink` is the darkened tone used for text so contrast stays readable. */
+  --ipd-tone-soft: #eff6ff;
+  --ipd-tone-strong: #2563eb;
+  --ipd-tone-border: #bfdbfe;
+  --ipd-tone-ink: #1e40af;
+
+  position: relative;
+  background: var(--ipd-tone-soft);
+  padding: 0.875rem 1rem 0.875rem 1.15rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--ipd-tone-border);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 4.5rem;
+  overflow: hidden;
+}
+
+.ipd-stat-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--ipd-tone-strong);
+}
+
+.ipd-stat-card--green {
+  --ipd-tone-soft: #ecfdf5;
+  --ipd-tone-strong: #059669;
+  --ipd-tone-border: #a7f3d0;
+  --ipd-tone-ink: #065f46;
+}
+
+.ipd-stat-card--amber {
+  --ipd-tone-soft: #fffbeb;
+  --ipd-tone-strong: #d97706;
+  --ipd-tone-border: #fde68a;
+  --ipd-tone-ink: #92400e;
+}
+
+.ipd-stat-card--rose {
+  --ipd-tone-soft: #fff1f2;
+  --ipd-tone-strong: #e11d48;
+  --ipd-tone-border: #fecdd3;
+  --ipd-tone-ink: #9f1239;
+}
+
+.ipd-stat-card--violet {
+  --ipd-tone-soft: #f5f3ff;
+  --ipd-tone-strong: #7c3aed;
+  --ipd-tone-border: #ddd6fe;
+  --ipd-tone-ink: #5b21b6;
+}
+
+.ipd-stat-card--teal {
+  --ipd-tone-soft: #f0fdfa;
+  --ipd-tone-strong: #0d9488;
+  --ipd-tone-border: #99f6e4;
+  --ipd-tone-ink: #115e59;
+}
+
+.ipd-stat-card__icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #fff;
+  color: var(--ipd-tone-strong);
+  border: 1px solid var(--ipd-tone-border);
+}
+
+.ipd-stat-card__label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ipd-stat-card__value {
+  margin: 0.15rem 0 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.ipd-stat-card__value--muted {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.ipd-stat-card--action,
+.ipd-stat-card--action:hover,
+.ipd-stat-card--action:focus,
+.ipd-stat-card--action:focus-visible,
+.ipd-stat-card--action:active,
+.ipd-stat-card--action * {
+  text-decoration: none;
+}
+
+.ipd-stat-card--action {
+  color: inherit;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.ipd-stat-card--action:hover,
+.ipd-stat-card--action:focus-visible {
+  border-color: var(--ipd-tone-strong);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
+  transform: translateY(-1px);
+}
+
+.ipd-stat-card__go {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  color: var(--ipd-tone-strong);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.ipd-stat-card--action:hover .ipd-stat-card__go,
+.ipd-stat-card--action:focus-visible .ipd-stat-card__go {
+  opacity: 1;
+}
+
+.ipd-stat-card__action-text {
+  margin: 0.15rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--ipd-tone-ink);
+  line-height: 1.2;
+}
+
+.ipd-card {
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.ipd-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+.ipd-card__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.ipd-card__hint {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ipd-step-badge {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Admit page: form column + sticky summary rail */
+.ipd-admit-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (min-width: 1100px) {
+  .ipd-admit-layout {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+  }
+}
+
+.ipd-admit-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+@media (min-width: 1100px) {
+  .ipd-admit-rail {
+    position: sticky;
+    top: 1rem;
+  }
+}
+
+.ipd-summary-list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.ipd-summary-list__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px dashed var(--color-border, #e5e7eb);
+}
+
+.ipd-summary-list__row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.ipd-summary-list dt {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.ipd-summary-list dd {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0f172a;
+  text-align: right;
+  word-break: break-word;
+}
+
+.ipd-summary-list__empty {
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.ipd-ready-pill {
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.ipd-ready-pill--ok {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.ipd-admit-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.ipd-admit-actions .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.ipd-card__body {
+  padding: 1rem;
+}
+
+.ipd-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.ipd-toolbar__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 10rem;
+  flex: 1;
+}
+
+.ipd-toolbar__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ipd-input,
+.ipd-select,
+.ipd-textarea {
+  width: 100%;
+  border: 1px solid var(--color-border, #d1d5db);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  background: #fff;
+  color: inherit;
+}
+
+.ipd-input:focus,
+.ipd-select:focus,
+.ipd-textarea:focus {
+  outline: 2px solid rgba(37, 99, 235, 0.25);
+  border-color: #2563eb;
+}
+
+.ipd-textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.ipd-field-error {
+  font-size: 0.75rem;
+  color: #dc2626;
+}
+
+.ipd-table-wrap {
+  overflow-x: auto;
+}
+
+.ipd-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.ipd-table th,
+.ipd-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+  white-space: nowrap;
+}
+
+.ipd-table th {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted, #6b7280);
+  background: #f9fafb;
+}
+
+.ipd-table__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.ipd-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.ipd-badge--admitted {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.ipd-badge--discharged {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.ipd-badge--available {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.ipd-badge--occupied {
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.ipd-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .ipd-form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ipd-form-grid--full {
+    grid-column: 1 / -1;
+  }
+}
+
+.ipd-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ipd-form-section__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.ipd-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  padding-top: 0.5rem;
+}
+
+.ipd-mode-toggle {
+  display: inline-flex;
+  padding: 0.2rem;
+  border-radius: 0.5rem;
+  background: #f3f4f6;
+  border: 1px solid var(--color-border, #e5e7eb);
+}
+
+.ipd-mode-toggle__btn {
+  border: none;
+  background: transparent;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #6b7280);
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.ipd-mode-toggle__btn--active {
+  background: #fff;
+  color: var(--color-text, #111827);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.ipd-mode-toggle__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ipd-selected-patient {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.5rem;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 0.875rem;
+}
+
+.ipd-selected-patient--confirmed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0;
+  border: 1px solid #bfdbfe;
+}
+
+.ipd-selected-patient__label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  margin-bottom: 0.15rem;
+}
+
+.ipd-text-link {
+  border: none;
+  background: none;
+  padding: 0;
+  color: #2563eb;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.ipd-ward-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .ipd-ward-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .ipd-ward-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.ipd-ward-card {
+  padding: 1rem;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.ipd-ward-card__name {
+  margin: 0;
+  font-weight: 700;
+}
+
+.ipd-ward-card__meta {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ipd-bed-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: 0.75rem;
+}
+
+.ipd-bed-card {
+  padding: 0.875rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border, #e5e7eb);
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ipd-bed-card--occupied {
+  border-color: #fecdd3;
+  background: #fff7f8;
+}
+
+.ipd-bed-card--available {
+  border-color: #bfdbfe;
+  background: #f8fbff;
+}
+
+.ipd-bed-card__no {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.ipd-bed-card__patient {
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ipd-section-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ipd-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 900px) {
+  .ipd-detail-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.ipd-kv {
+  display: grid;
+  grid-template-columns: 8rem 1fr;
+  gap: 0.35rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.ipd-kv__label {
+  color: var(--color-text-muted, #6b7280);
+  font-weight: 600;
+}
+
+.ipd-kv__value {
+  color: var(--color-text, #111827);
+}
+
+.ipd-wizard-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.ipd-wizard-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border, #e5e7eb);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #6b7280);
+  background: #fff;
+}
+
+.ipd-wizard-step--active {
+  border-color: #2563eb;
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.ipd-wizard-step--done {
+  border-color: #059669;
+  color: #047857;
+  background: #ecfdf5;
+}
+
+.ipd-wizard-step__num {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  background: currentColor;
+  color: #fff;
+}
+
+.ipd-wizard-step--active .ipd-wizard-step__num,
+.ipd-wizard-step--done .ipd-wizard-step__num {
+  background: currentColor;
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}
+
+.ipd-wizard-step__label {
+  color: inherit;
+}
+
+.ipd-totals {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: flex-end;
+  padding-top: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.ipd-totals__row {
+  display: flex;
+  gap: 1.5rem;
+  min-width: 14rem;
+  justify-content: space-between;
+}
+
+.ipd-totals__row--grand {
+  font-weight: 700;
+  font-size: 1rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--color-border, #e5e7eb);
+}
+
+.ipd-skeleton {
+  height: 1.25rem;
+  border-radius: 0.35rem;
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: ipd-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes ipd-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.ipd-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .ipd-kv {
+    grid-template-columns: 1fr;
+  }
+
+  .ipd-stat-grid {
+    grid-template-columns: 1fr;
+  }
+}

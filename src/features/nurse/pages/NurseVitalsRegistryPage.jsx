@@ -11,6 +11,8 @@ import { getPagedListCount, formatPatientIdDisplay } from '@/shared/api/mappers/
 import { QueryFeedback } from '@/shared/components/common';
 import { useNurseVitalsListQuery } from '@/shared/hooks/queries/useNurseQuery';
 import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
+import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
+import { useAuth } from '@/shared/hooks/useAuth';
 
 function formatSince(iso) {
   if (!iso) return '—';
@@ -42,11 +44,16 @@ function sinceTone(iso) {
 
 export default function NurseVitalsRegistryPage() {
   const navigate = useNavigate();
-  const { canUpdateVitals } = useNursePermissionSet();
+  const { refreshPermissions } = useAuth();
+  const { canUpdateVitals, canViewVitals } = useNursePermissionSet();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search, 400);
   const { scopeFilters, scopeReady, allocatedOnly } = useNursePatientScope();
+
+  useEffect(() => {
+    refreshPermissions?.();
+  }, [refreshPermissions]);
 
   useEffect(() => {
     setPage(1);
@@ -54,7 +61,7 @@ export default function NurseVitalsRegistryPage() {
 
   const { data, isLoading, isError, error, refetch } = useNurseVitalsListQuery(
     { search: debouncedSearch, page, page_size: 20, ...scopeFilters },
-    { enabled: scopeReady },
+    { enabled: scopeReady && canViewVitals },
   );
 
   useNursePagedListGuard({
@@ -113,18 +120,13 @@ export default function NurseVitalsRegistryPage() {
       header: 'Actions',
       render: (row) => (
         <div className="nurse-table__actions">
-          {canUpdateVitals ? (
-            <button
-              type="button"
-              className="nurse-btn nurse-btn--primary nurse-btn--sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                updateVitals(row);
-              }}
-            >
-              Update
-            </button>
-          ) : null}
+          <NursePermissionButton
+            allowed={canUpdateVitals}
+            className="nurse-btn nurse-btn--primary nurse-btn--sm"
+            onClick={() => updateVitals(row)}
+          >
+            Update
+          </NursePermissionButton>
         </div>
       ),
     },
@@ -133,6 +135,10 @@ export default function NurseVitalsRegistryPage() {
   return (
     <NurseLayout>
       <div className="nurse-page nurse-vitals-registry">
+        {!canViewVitals ? (
+          <div className="nurse-alert nurse-alert--error">You do not have permission to view vitals.</div>
+        ) : (
+          <>
         <div className="nurse-vitals-registry__toolbar nurse-card">
           <div className="nurse-vitals-registry__toolbar-left">
             <div className="nurse-vitals-registry__icon" aria-hidden>
@@ -184,6 +190,8 @@ export default function NurseVitalsRegistryPage() {
           onChange={setPage}
         />
         </QueryFeedback>
+          </>
+        )}
       </div>
     </NurseLayout>
   );

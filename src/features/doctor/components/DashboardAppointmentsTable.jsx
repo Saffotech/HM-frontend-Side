@@ -51,6 +51,7 @@ function DashboardAppointmentsTable({
   title = 'Patient Queue',
   emptyMessage = 'No patients scheduled for today.',
   headerActions,
+  titleExtra = null,
   filteredAppointments,
   showActions = false,
   actionMode = 'waiting',
@@ -67,7 +68,10 @@ function DashboardAppointmentsTable({
   return (
     <div className="doc-card doc-card__body--flush">
       <div className="doc-card__head doc-queue-card__head">
-        <h3 className="doc-card__title">{title}</h3>
+        <div className="doc-queue-card__title-group">
+          <h3 className="doc-card__title">{title}</h3>
+          {titleExtra}
+        </div>
         {headerActions ? (
           <div className="doc-queue-card__actions">{headerActions}</div>
         ) : null}

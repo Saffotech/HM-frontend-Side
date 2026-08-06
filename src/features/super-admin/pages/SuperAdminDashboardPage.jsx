@@ -48,10 +48,10 @@ const QUICK_ACTIONS = [
     tone: 'success',
   },
   {
-    to: ROUTES.SUPER_ADMIN_SETTINGS,
+    to: ROUTES.SUPER_ADMIN_SETTINGS_OPD,
     icon: Settings,
     title: 'Settings',
-    description: 'Hospital configuration',
+    description: 'Module role permissions',
     tone: 'info',
   },
   {

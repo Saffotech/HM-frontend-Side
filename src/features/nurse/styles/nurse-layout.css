@@ -39,14 +39,14 @@
   appearance: none;
   border: 0;
   background: transparent;
-  color: var(--color-text-muted, #64748b);
+  color: #64748b;
   font: inherit;
   font-size: 0.8125rem;
   font-weight: 600;
-  padding: 0.4rem 0.9rem;
+  padding: 0.4rem 0.95rem;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .nurse-scope-bar__mode-btn:disabled {
@@ -55,9 +55,21 @@
 }
 
 .nurse-scope-bar__mode-btn.is-active {
-  background: var(--color-surface, #fff);
-  color: var(--color-text, #0f172a);
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+}
+
+.nurse-scope-bar__mode-btn.is-active--allocated {
+  background: #0f766e;
+}
+
+.nurse-scope-bar__mode-btn.is-active--all {
+  background: #166534;
+}
+
+.nurse-scope-bar__mode-btn:not(.is-active):hover {
+  background: #e2e8f0;
+  color: #0f172a;
 }
 
 .nurse-scope-bar__summary {
@@ -157,8 +169,13 @@
 }
 
 .nurse-btn:disabled{
-  opacity: 0.55;
+  opacity: 1;
   cursor: not-allowed;
+  box-shadow: none;
+  filter: none;
+  background: #E5E7EB;
+  color: #9CA3AF;
+  border-color: #E5E7EB;
 }
 
 .nurse-btn--primary{
@@ -166,8 +183,82 @@
   color: #fff;
 }
 
-.nurse-btn--primary:hover:not(:disabled){
+.nurse-btn--primary:hover:not(:disabled):not([aria-disabled='true']):not(.nurse-btn--no-permission){
   background: var(--color-primary-hover);
+}
+
+.nurse-btn.nurse-btn--no-permission,
+.nurse-btn[aria-disabled='true']{
+  background: #E5E7EB !important;
+  color: #9CA3AF !important;
+  border-color: #E5E7EB !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+}
+
+.nurse-btn--primary:disabled,
+.nurse-btn--primary[aria-disabled='true'],
+.nurse-btn--primary.nurse-btn--no-permission{
+  background: #E5E7EB !important;
+  color: #9CA3AF !important;
+  border-color: #E5E7EB !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  filter: none;
+}
+
+.nurse-btn--secondary:disabled,
+.nurse-btn--secondary[aria-disabled='true'],
+.nurse-btn--secondary.nurse-btn--no-permission,
+.nurse-btn--ghost:disabled,
+.nurse-btn--ghost[aria-disabled='true'],
+.nurse-btn--ghost.nurse-btn--no-permission{
+  background: #E5E7EB !important;
+  color: #9CA3AF !important;
+  border-color: #E5E7EB !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+}
+
+.nurse-permission-hint{
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+  cursor: not-allowed;
+}
+
+.nurse-permission-hint > :disabled,
+.nurse-permission-hint > [aria-disabled='true']{
+  pointer-events: none;
+}
+
+.nurse-permission-hint__tooltip{
+  position: fixed;
+  z-index: 10000;
+  transform: translate(-50%, -100%);
+  width: max-content;
+  max-width: 14rem;
+  padding: 0.4rem 0.55rem;
+  border-radius: 6px;
+  background: #0f172a;
+  color: #f8fafc;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.3;
+  text-align: center;
+  white-space: normal;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.22);
+  pointer-events: none;
+}
+
+.nurse-permission-hint__tooltip::after{
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #0f172a;
 }
 
 .nurse-btn--secondary{
@@ -571,7 +662,7 @@
   border-color: #93c5fd;
 }
 
-.nurse-dashboard-page__action-btn--vitals:hover{
+.nurse-dashboard-page__action-btn--vitals:hover:not(:disabled){
   color: #1e3a8a;
   background: var(--color-surface);
   border-color: #60a5fa;
@@ -584,7 +675,7 @@
   border-color: #6ee7b7;
 }
 
-.nurse-dashboard-page__action-btn--note:hover{
+.nurse-dashboard-page__action-btn--note:hover:not(:disabled){
   color: #065f46;
   background: var(--color-surface);
   border-color: #34d399;
@@ -594,6 +685,17 @@
 .nurse-dashboard-page__action-btn:focus-visible{
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+}
+
+.nurse-dashboard-page__action-btn:disabled,
+.nurse-dashboard-page__action-btn[aria-disabled='true'],
+.nurse-dashboard-page__action-btn.nurse-btn--no-permission{
+  opacity: 1;
+  cursor: not-allowed;
+  box-shadow: none;
+  color: #9CA3AF !important;
+  background: #E5E7EB !important;
+  border-color: #E5E7EB !important;
 }
 
 .nurse-dashboard-page__table .nurse-table tbody tr.nurse-row--clickable{

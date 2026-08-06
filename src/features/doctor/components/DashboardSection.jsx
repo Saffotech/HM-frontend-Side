@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   Check,
   Clock,
+  Search,
   XCircle,
 } from 'lucide-react';
 
@@ -111,6 +112,8 @@ function DashboardSection({ onViewAllPatients }) {
   const [startingConsult, setStartingConsult] = useState(false);
 
   const [activeFilter, setActiveFilter] = useState(DASHBOARD_FILTER.SCHEDULED);
+  const [patientIdSearch, setPatientIdSearch] = useState('');
+  const patientIdQuery = patientIdSearch.trim().toLowerCase();
 
 
 
@@ -196,6 +199,9 @@ function DashboardSection({ onViewAllPatients }) {
   }, [activeFilter]);
 
   const queueEmptyMessage = useMemo(() => {
+    if (patientIdQuery) {
+      return `No appointments match patient ID "${patientIdSearch.trim()}".`;
+    }
     switch (activeFilter) {
       case DASHBOARD_FILTER.COMPLETED:
         return 'No completed consultations today.';
@@ -205,8 +211,21 @@ function DashboardSection({ onViewAllPatients }) {
       default:
         return 'No scheduled appointments for today.';
     }
-  }, [activeFilter]);
+  }, [activeFilter, patientIdQuery, patientIdSearch]);
 
+  const patientIdSearchField = (
+    <label className="doc-queue-card__patient-search">
+      <Search size={14} className="doc-queue-card__patient-search-icon" aria-hidden />
+      <input
+        type="search"
+        className="doc-queue-card__patient-search-input"
+        value={patientIdSearch}
+        onChange={(e) => setPatientIdSearch(e.target.value)}
+        placeholder="Search patient ID…"
+        aria-label="Search today's appointments by patient ID"
+      />
+    </label>
+  );
 
 
   const recentPatients = useMemo(() => {
@@ -249,9 +268,21 @@ function DashboardSection({ onViewAllPatients }) {
 
 
 
+  const searchedByPatientId = useMemo(() => {
+    if (!patientIdQuery) return filteredByCard;
+    return filteredByCard.filter((appt) => {
+      const uid = String(appt.patientUid ?? '').toLowerCase();
+      const id = String(appt.patientId ?? '').toLowerCase();
+      return uid.includes(patientIdQuery) || id.includes(patientIdQuery);
+    });
+  }, [filteredByCard, patientIdQuery]);
+
   const dashboardQueuePreview = useMemo(
-    () => filteredByCard.slice(0, DASHBOARD_PREVIEW_LIMIT),
-    [filteredByCard]
+    () =>
+      patientIdQuery
+        ? searchedByPatientId
+        : searchedByPatientId.slice(0, DASHBOARD_PREVIEW_LIMIT),
+    [searchedByPatientId, patientIdQuery]
   );
 
   const dashboardRecentPreview = useMemo(
@@ -405,6 +436,8 @@ function DashboardSection({ onViewAllPatients }) {
             title={queueTableTitle}
 
             emptyMessage={queueEmptyMessage}
+
+            titleExtra={patientIdSearchField}
 
             headerActions={queueHeaderActions}
 

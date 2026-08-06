@@ -1,25 +1,31 @@
 import { useState, useMemo } from 'react';
+import { FileCheck } from 'lucide-react';
 import LabLayout from '@/features/lab/components/LabLayout';
 import LabReportDetailModal from '@/features/lab/components/LabReportDetailModal';
+import { useLabPermissionSet } from '@/features/lab/hooks/useLabPermission';
 import { useLabReportsQuery } from '@/shared/hooks/queries/useLabQuery';
 import { printLabReport } from '@/features/lab/utils/labReportUtils';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
-import { QueryFeedback } from '@/shared/components/common';
+import { EmptyState, QueryFeedback } from '@/shared/components/common';
 import { DateInput } from '@/shared/components/common';
 import '../styles/lab.css';
 
 export default function LabCompletedReportsPage() {
+  const { canViewLab } = useLabPermissionSet();
   const [search, setSearch] = useState('');
   const [filterDate, setFilterDate] = useState('');
   const [selectedReport, setSelectedReport] = useState(null);
 
   const debouncedSearch = useDebouncedValue(search, 300);
 
-  const reportsQuery = useLabReportsQuery({
-    search: debouncedSearch,
-    date: filterDate || undefined,
-    pageSize: 100,
-  });
+  const reportsQuery = useLabReportsQuery(
+    {
+      search: debouncedSearch,
+      date: filterDate || undefined,
+      pageSize: 100,
+    },
+    { enabled: canViewLab },
+  );
 
   const reports = reportsQuery.data?.data ?? [];
   const total = reportsQuery.data?.total ?? reports.length;
@@ -42,6 +48,18 @@ export default function LabCompletedReportsPage() {
     setFilterDate('');
     setFilterDoctor('all');
   };
+
+  if (!canViewLab) {
+    return (
+      <LabLayout pageTitle="Completed Reports">
+        <EmptyState
+          icon={FileCheck}
+          title="Lab access denied"
+          description="You do not have permission to view lab reports."
+        />
+      </LabLayout>
+    );
+  }
 
   return (
     <LabLayout pageTitle="Completed Reports">

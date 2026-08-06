@@ -59,13 +59,6 @@ function isRegistrationLine(name) {
   return n === 'registration fee' || n === 'registration';
 }
 
-function isBedChargeLine(name) {
-  return String(name || '')
-    .trim()
-    .toLowerCase()
-    .startsWith('bed charge (');
-}
-
 export default function OpdBillPage() {
   const [patientSearch, setPatientSearch] = useState('');
   const debouncedPatientSearch = useDebouncedValue(patientSearch.trim(), 300);
@@ -88,8 +81,6 @@ export default function OpdBillPage() {
     taxRate,
     allowManualPriceEntry,
     billItems: pricingBillItems,
-    resolveBedRate,
-    calculateBedDays,
   } = useOpdPricingControls();
   const { enabledPaymentModes } = useOpdPaymentControls();
   const isLoading = lp;
@@ -333,70 +324,6 @@ export default function OpdBillPage() {
       ];
     });
   }, [deptId, doctorId, pricing]);
-
-  // Keep bed charge line in sync with active assigned bed.
-  useEffect(() => {
-    const activeBed = patientProfile?.active_bed ?? null;
-    setItems((prev) => {
-      const existingIdx = prev.findIndex((row) => isBedChargeLine(row.name));
-
-      if (!activeBed) {
-        if (existingIdx < 0) return prev;
-        const next = [...prev];
-        next.splice(existingIdx, 1);
-        return next.length ? next : [createEmptyBillLineRow()];
-      }
-
-      const label = activeBed.bed_number || activeBed.ward_name || 'Assigned Bed';
-      const rate = resolveBedRate(activeBed.bed_number, activeBed.ward_name);
-      const days = calculateBedDays(activeBed.admitted_at);
-      const bedName = `Bed Charge (${label})`;
-
-      if (existingIdx >= 0) {
-        const current = prev[existingIdx];
-        if (
-          String(current.name) === bedName &&
-          Number(current.qty) === Number(days) &&
-          Number(current.unitPrice) === Number(rate)
-        ) {
-          return prev;
-        }
-        const next = [...prev];
-        next[existingIdx] = {
-          ...current,
-          name: bedName,
-          qty: days,
-          unitPrice: rate,
-          fromCatalog: true,
-        };
-        return next;
-      }
-
-      const emptyIdx = prev.findIndex((row) => !row.name && Number(row.unitPrice) === 0);
-      if (emptyIdx >= 0) {
-        const next = [...prev];
-        next[emptyIdx] = {
-          ...next[emptyIdx],
-          name: bedName,
-          qty: days,
-          unitPrice: rate,
-          fromCatalog: true,
-        };
-        return next;
-      }
-
-      return [
-        ...prev,
-        {
-          ...createEmptyBillLineRow(),
-          name: bedName,
-          qty: days,
-          unitPrice: rate,
-          fromCatalog: true,
-        },
-      ];
-    });
-  }, [patientProfile?.active_bed, resolveBedRate, calculateBedDays]);
 
   const handlePatientChange = useCallback((id) => {
     setPatientId(id);

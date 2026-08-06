@@ -14,6 +14,7 @@ import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseQueueStatusBadge from '@/features/nurse/components/NurseQueueStatusBadge';
 import NurseNotesSnapshotView from '@/features/nurse/components/NurseNotesSnapshotView';
 import NurseVitalsSnapshotView from '@/features/nurse/components/NurseVitalsSnapshotView';
+import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
 import { QueryFeedback } from '@/shared/components/common';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
@@ -152,25 +153,37 @@ export default function NursePatientOverviewPage() {
   });
 
   const tabAction = useMemo(() => {
-    if (activeTab === 'vitals' && latestVital && canUpdateVitals) {
+    if (activeTab === 'vitals' && latestVital) {
       return {
         label: 'Update',
         icon: Pencil,
-        onClick: () => navigate(`/nurse/vitals/${latestVital.id}/edit`),
+        disabled: !canUpdateVitals,
+        onClick: () => {
+          if (!canUpdateVitals) return;
+          navigate(`/nurse/vitals/${latestVital.id}/edit`);
+        },
       };
     }
-    if (activeTab === 'notes' && latestNote && canUpdateNotes) {
+    if (activeTab === 'notes' && latestNote) {
       return {
         label: 'Update',
         icon: Pencil,
-        onClick: () => navigate(`/nurse/notes/${latestNote.id}/edit`),
+        disabled: !canUpdateNotes,
+        onClick: () => {
+          if (!canUpdateNotes) return;
+          navigate(`/nurse/notes/${latestNote.id}/edit`);
+        },
       };
     }
-    if (activeTab === 'meds' && canCreateMedication) {
+    if (activeTab === 'meds') {
       return {
         label: 'Administer',
         icon: ClipboardList,
-        onClick: () => navigate(`/nurse/medications/patient/${patientId}`),
+        disabled: !canCreateMedication,
+        onClick: () => {
+          if (!canCreateMedication) return;
+          navigate(`/nurse/medications/patient/${patientId}`);
+        },
       };
     }
     return null;
@@ -228,14 +241,14 @@ export default function NursePatientOverviewPage() {
               ))}
             </div>
             {tabAction && TabActionIcon && (
-              <button
-                type="button"
+              <NursePermissionButton
+                allowed={!tabAction.disabled}
                 className="nurse-btn nurse-btn--secondary nurse-patient-overview__tab-action"
                 onClick={tabAction.onClick}
               >
                 <TabActionIcon size={16} />
                 {tabAction.label}
-              </button>
+              </NursePermissionButton>
             )}
           </div>
 

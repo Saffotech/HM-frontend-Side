@@ -51,16 +51,19 @@ export default function NurseHandoverListPage() {
         <NursePageHeader
           title="Shift Handover"
           actions={
-            canCreateHandovers ? (
-              <button
-                type="button"
-                className="nurse-btn nurse-btn--primary"
-                onClick={() => navigate(ROUTES.NURSE_HANDOVER_NEW)}
-              >
-                <Plus size={16} />
-                New Handover
-              </button>
-            ) : null
+            <button
+              type="button"
+              className="nurse-btn nurse-btn--primary"
+              disabled={!canCreateHandovers}
+              title={canCreateHandovers ? 'New handover' : 'You do not have permission'}
+              onClick={() => {
+                if (!canCreateHandovers) return;
+                navigate(ROUTES.NURSE_HANDOVER_NEW);
+              }}
+            >
+              <Plus size={16} />
+              New Handover
+            </button>
           }
         />
         <div className="nurse-card nurse-card--padded">

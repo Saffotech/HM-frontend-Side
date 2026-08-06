@@ -12,6 +12,7 @@ import {
   useMarkAllPharmacistNotificationsReadMutation,
   useMarkPharmacistNotificationReadMutation,
 } from '@/features/pharmacy/hooks/usePharmacistNotificationsQuery';
+import { usePharmacyPermissionSet } from '@/features/pharmacy/hooks/usePharmacyPermission';
 import { Button, EmptyState } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
 import PharmacyNotificationRow from './PharmacyNotificationRow';
@@ -37,6 +38,7 @@ const PRIORITY_FILTER_VALUES = new Set(
 const SEARCH_DEBOUNCE_MS = 300;
 
 export default function PharmacyNotificationsSection({ onDeepLink }) {
+  const { canViewNotifications, canUpdateNotifications } = usePharmacyPermissionSet();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -73,7 +75,10 @@ export default function PharmacyNotificationsSection({ onDeepLink }) {
     return next;
   }, [page, debouncedSearch, readFilter, notificationType, startDate, endDate]);
 
-  const { data, isLoading, isError, error, refetch } = usePharmacistNotificationsListQuery(filters);
+  const { data, isLoading, isError, error, refetch } = usePharmacistNotificationsListQuery(
+    filters,
+    { enabled: canViewNotifications },
+  );
   const markOne = useMarkPharmacistNotificationReadMutation();
   const markAll = useMarkAllPharmacistNotificationsReadMutation();
 
@@ -98,6 +103,10 @@ export default function PharmacyNotificationsSection({ onDeepLink }) {
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   const handleMarkAll = async () => {
+    if (!canUpdateNotifications) {
+      toast.error('You do not have permission to update notifications');
+      return;
+    }
     try {
       await markAll.mutateAsync();
       toast.success('All marked as read');
@@ -125,6 +134,10 @@ export default function PharmacyNotificationsSection({ onDeepLink }) {
 
   const handleRowClick = async (n) => {
     if (isPharmacistNotificationUnread(n)) {
+      if (!canUpdateNotifications) {
+        toast.error('You do not have permission to update notifications');
+        return;
+      }
       try {
         await markOne.mutateAsync(n.id);
       } catch {
@@ -133,6 +146,16 @@ export default function PharmacyNotificationsSection({ onDeepLink }) {
     }
     onDeepLink?.(n);
   };
+
+  if (!canViewNotifications) {
+    return (
+      <EmptyState
+        icon={Bell}
+        title="Notifications access denied"
+        description="You do not have permission to view notifications."
+      />
+    );
+  }
 
   return (
     <div className="pharmacy-notif-page">
@@ -175,7 +198,12 @@ export default function PharmacyNotificationsSection({ onDeepLink }) {
             variant="outline"
             className="pharmacy-notif-mark-all"
             onClick={handleMarkAll}
-            disabled={markAll.isPending}
+            disabled={markAll.isPending || !canUpdateNotifications}
+            title={
+              canUpdateNotifications
+                ? 'Mark all as read'
+                : 'You do not have permission to update notifications'
+            }
           >
             Mark all read
           </Button>

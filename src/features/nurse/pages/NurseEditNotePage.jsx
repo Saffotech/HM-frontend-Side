@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, User } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseNoteFormFields, { noteToForm } from '@/features/nurse/components/NurseNoteFormFields';
 import { useNursePermission } from '@/features/nurse/hooks/useNursePermission';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { QueryFeedback } from '@/shared/components/common';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
 import { useNurseNoteQuery, useUpdateNoteMutation } from '@/shared/hooks/queries/useNurseQuery';
@@ -12,10 +13,26 @@ import { toast } from '@/shared/utils/toast';
 export default function NurseEditNotePage() {
   const { noteId } = useParams();
   const navigate = useNavigate();
+  const { refreshPermissions } = useAuth();
   const canUpdateNotes = useNursePermission('nurse_notes:update');
+  const [permReady, setPermReady] = useState(false);
   const { data: note, isLoading, isError, error, refetch } = useNurseNoteQuery(noteId);
   const updateMut = useUpdateNoteMutation(noteId);
   const [form, setForm] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        await refreshPermissions?.();
+      } finally {
+        if (!cancelled) setPermReady(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshPermissions]);
 
   useEffect(() => {
     if (note) {
@@ -27,26 +44,35 @@ export default function NurseEditNotePage() {
 
   const onSubmit = (e) => {
     e.preventDefault();
+    if (!canUpdateNotes) {
+      toast.error('You do not have permission to update notes.');
+      return;
+    }
     updateMut.mutate(form, {
       onSuccess: (updated) => {
         toast.success('Note updated');
-        // Update creates a new note — open that so Created At shows the latest time
         const nextId = updated?.id ?? noteId;
         navigate(`/nurse/notes/${nextId}`);
       },
-      onError: () => toast.error('Failed to update note'),
+      onError: (err) => toast.error(err?.message || 'Failed to update note'),
     });
   };
 
   const createdAt = note?.created_at ? new Date(note.created_at).toLocaleString() : '—';
+  const blockByPermission = permReady && !canUpdateNotes;
 
   return (
     <NurseLayout>
       <div className="nurse-page">
-        <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
+        <QueryFeedback
+          isLoading={isLoading || !permReady}
+          isError={isError}
+          error={error}
+          onRetry={refetch}
+        >
           {!note ? (
             <div className="nurse-alert nurse-alert--error">Note not found.</div>
-          ) : !canUpdateNotes ? (
+          ) : blockByPermission ? (
             <div className="nurse-alert nurse-alert--error">You do not have permission to update notes.</div>
           ) : !form ? (
             <div className="nurse-card nurse-card--padded nurse-vital-detail__loading">Preparing form…</div>

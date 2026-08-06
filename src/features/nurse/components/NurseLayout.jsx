@@ -3,6 +3,7 @@
  * Nurse shell: nav, titles, profile menu, notifications bell.
  */
 
+import { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -17,18 +18,9 @@ import { ROUTES } from '@/shared/constants';
 import RoleLayout from '@/shared/components/layout/RoleLayout';
 import NurseNotificationsBell from '@/features/nurse/components/NurseNotificationsBell';
 import NursePatientScopeBar from '@/features/nurse/components/NursePatientScopeBar';
+import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
 import '../styles/nurse.css';
 import '../styles/nurse-alerts.css';
-
-const NAV_LINKS = [
-  { href: ROUTES.NURSE_DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
-  { href: ROUTES.NURSE_MY_DUTY, label: 'My Duty', icon: CalendarClock },
-  { href: ROUTES.NURSE_QUEUE, label: 'Patient', icon: Users },
-  { href: ROUTES.NURSE_VITALS, label: 'Vitals', icon: Activity },
-  { href: ROUTES.NURSE_NOTES, label: 'Nursing Notes', icon: FileText },
-  { href: ROUTES.NURSE_MEDICATIONS, label: 'Medications', icon: Pill },
-  { href: ROUTES.NURSE_ALERTS, label: 'Emergency Alerts', icon: AlertTriangle },
-];
 
 const PAGE_TITLES = [
   { prefix: ROUTES.NURSE_NOTIFICATIONS, title: 'Notifications' },
@@ -53,10 +45,40 @@ export default function NurseLayout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const onProfilePage = location.pathname === ROUTES.NURSE_PROFILE;
+  const {
+    canViewPatients,
+    canViewVitals,
+    canViewNotes,
+    canViewMedication,
+    canViewAlerts,
+  } = useNursePermissionSet();
+
+  const navLinks = useMemo(() => {
+    const links = [
+      { href: ROUTES.NURSE_DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
+      { href: ROUTES.NURSE_MY_DUTY, label: 'My Duty', icon: CalendarClock },
+    ];
+    if (canViewPatients) {
+      links.push({ href: ROUTES.NURSE_QUEUE, label: 'Patient', icon: Users });
+    }
+    if (canViewVitals) {
+      links.push({ href: ROUTES.NURSE_VITALS, label: 'Vitals', icon: Activity });
+    }
+    if (canViewNotes) {
+      links.push({ href: ROUTES.NURSE_NOTES, label: 'Nursing Notes', icon: FileText });
+    }
+    if (canViewMedication) {
+      links.push({ href: ROUTES.NURSE_MEDICATIONS, label: 'Medications', icon: Pill });
+    }
+    if (canViewAlerts) {
+      links.push({ href: ROUTES.NURSE_ALERTS, label: 'Emergency Alerts', icon: AlertTriangle });
+    }
+    return links;
+  }, [canViewPatients, canViewVitals, canViewNotes, canViewMedication, canViewAlerts]);
 
   return (
     <RoleLayout
-      navLinks={NAV_LINKS}
+      navLinks={navLinks}
       resolveTitle={resolveTitle}
       homeRoute={ROUTES.NURSE_DASHBOARD}
       roleLabel="Nursing"

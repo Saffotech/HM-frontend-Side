@@ -28,6 +28,7 @@ import {
   useUpdateNurseProfileMutation,
   useUploadNurseProfileImageMutation,
 } from '@/features/nurse/hooks/useNurseProfileQuery';
+import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
 import { ROUTES } from '@/shared/constants';
 import { Button, ConfirmDialog, EmptyState, ProfilePhotoCropDialog } from '@/shared/components/common';
 import PageSpinner from '@/shared/components/PageSpinner';
@@ -202,10 +203,25 @@ function ReadField({ label, value }) {
   );
 }
 
+function isPermissionDenied(error) {
+  if (!error) return false;
+  if (error.status === 403) return true;
+  const msg = String(error.message || '').toLowerCase();
+  return msg.includes('permission denied') || msg.includes('permission');
+}
+
 export default function NurseProfilePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { data, isLoading, isError, error, refetch } = useNurseProfileQuery();
+  const {
+    canViewProfile,
+    canUpdateProfile,
+    canUploadProfileImage,
+    canDeleteProfileImage,
+  } = useNursePermissionSet();
+  const { data, isLoading, isError, error, refetch } = useNurseProfileQuery({
+    enabled: canViewProfile,
+  });
   const profile = data?.profile;
   const updateProfile = useUpdateNurseProfileMutation();
   const uploadImage = useUploadNurseProfileImageMutation();
@@ -228,6 +244,10 @@ export default function NurseProfilePage() {
   const fileInputRef = useRef(null);
 
   const startEdit = () => {
+    if (!canUpdateProfile) {
+      toast.error('You do not have permission to edit profile.');
+      return;
+    }
     // Nurse Phase 2 by Atharva — Account is read-only; edit opens Professional
     setEditing(true);
     if (activeTab === 'account') setActiveTab('professional');
@@ -293,6 +313,10 @@ export default function NurseProfilePage() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    if (!canUpdateProfile) {
+      toast.error('You do not have permission to edit profile.');
+      return;
+    }
 
     // Nurse Phase 2 by Atharva — phone & emergency_contact.phone must be exactly 10 digits
     const phone = formatPhoneInput(form?.phone);
@@ -346,6 +370,10 @@ export default function NurseProfilePage() {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
+    if (!canUploadProfileImage) {
+      toast.error('You do not have permission to upload profile image.');
+      return;
+    }
     if (!ALLOWED_IMAGE_TYPES.includes(file.type) && !/\.(jpe?g|png|webp)$/i.test(file.name)) {
       toast.error('Use a JPG, PNG, or WebP image');
       return;
@@ -358,6 +386,10 @@ export default function NurseProfilePage() {
   };
 
   const handleCropConfirm = async (croppedFile) => {
+    if (!canUploadProfileImage) {
+      toast.error('You do not have permission to upload profile image.');
+      return;
+    }
     setCropUploading(true);
     try {
       await uploadImage.mutateAsync(croppedFile);
@@ -371,6 +403,11 @@ export default function NurseProfilePage() {
   };
 
   const handleDeleteImage = async () => {
+    if (!canDeleteProfileImage) {
+      toast.error('You do not have permission to remove profile image.');
+      setRemovePhotoConfirmOpen(false);
+      return;
+    }
     try {
       await deleteImage.mutateAsync();
       toast.success('Profile image removed');
@@ -382,12 +419,20 @@ export default function NurseProfilePage() {
 
   const handleAvatarUploadClick = () => {
     setAvatarMenuOpen(false);
+    if (!canUploadProfileImage) {
+      toast.error('You do not have permission to upload profile image.');
+      return;
+    }
     fileInputRef.current?.click();
   };
 
   // Nurse Phase 2 by Atharva — ask confirm before deleting profile photo
   const handleAvatarRemoveClick = () => {
     setAvatarMenuOpen(false);
+    if (!canDeleteProfileImage) {
+      toast.error('You do not have permission to remove profile image.');
+      return;
+    }
     setRemovePhotoConfirmOpen(true);
   };
 
@@ -410,6 +455,23 @@ export default function NurseProfilePage() {
     );
   };
 
+  if (!canViewProfile) {
+    return (
+      <NurseLayout>
+        <EmptyState
+          icon={User}
+          title="Profile access denied"
+          description="You do not have permission to view the nurse profile."
+        />
+        <div style={{ marginTop: '1rem' }}>
+          <Button variant="outline" onClick={() => navigate(ROUTES.NURSE_DASHBOARD)}>
+            <ArrowLeft size={16} /> Back to dashboard
+          </Button>
+        </div>
+      </NurseLayout>
+    );
+  }
+
   if (isLoading) {
     return (
       <NurseLayout>
@@ -419,24 +481,33 @@ export default function NurseProfilePage() {
   }
 
   if (isError) {
+    const isForbidden = error?.status === 403 || isPermissionDenied(error);
+    const isNotFound = error?.status === 404;
     return (
       <NurseLayout>
         <EmptyState
           icon={User}
-          title="Could not load profile"
+          title={
+            isForbidden
+              ? 'Profile access denied'
+              : isNotFound
+                ? 'Nurse profile not found'
+                : 'Could not load profile'
+          }
           description={
-            error?.message
-            || (error?.status === 403
-              ? "You don't have permission to view this profile."
-              : error?.status === 404
-                ? 'Nurse profile not found. Contact admin to create your nurse profile.'
-                : 'Something went wrong. Please try again.')
+            isForbidden
+              ? 'You do not have permission to view the nurse profile.'
+              : isNotFound
+                ? 'Contact admin to create your nurse profile.'
+                : 'Something went wrong. Please try again.'
           }
         />
         <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <Button variant="primary" onClick={() => refetch()}>
-            Try again
-          </Button>
+          {!isForbidden ? (
+            <Button variant="primary" onClick={() => refetch()}>
+              Try again
+            </Button>
+          ) : null}
           <Button variant="outline" onClick={() => navigate(ROUTES.NURSE_DASHBOARD)}>
             <ArrowLeft size={16} /> Back to dashboard
           </Button>
@@ -498,7 +569,8 @@ export default function NurseProfilePage() {
                     role="menuitem"
                     className="nurse-profile-avatar-menu__item"
                     onClick={handleAvatarUploadClick}
-                    disabled={uploadImage.isPending}
+                    disabled={!canUploadProfileImage || uploadImage.isPending}
+                    title={canUploadProfileImage ? 'Upload photo' : 'You do not have permission'}
                   >
                     <Upload size={14} aria-hidden />
                     {uploadImage.isPending ? 'Uploading…' : 'Upload'}
@@ -508,7 +580,8 @@ export default function NurseProfilePage() {
                     role="menuitem"
                     className="nurse-profile-avatar-menu__item nurse-profile-avatar-menu__item--danger"
                     onClick={handleAvatarRemoveClick}
-                    disabled={deleteImage.isPending || !hasProfileImage}
+                    disabled={!canDeleteProfileImage || deleteImage.isPending || !hasProfileImage}
+                    title={canDeleteProfileImage ? 'Remove photo' : 'You do not have permission'}
                   >
                     <Trash2 size={14} aria-hidden />
                     {deleteImage.isPending ? 'Removing…' : 'Remove'}
@@ -612,14 +685,19 @@ export default function NurseProfilePage() {
                   <Button
                     size="sm"
                     type="button"
-                    disabled={saving || activeTab === 'account'}
+                    disabled={saving || activeTab === 'account' || !canUpdateProfile}
                     onClick={() => document.getElementById('nurse-profile-form')?.requestSubmit()}
                   >
                     {saving ? 'Saving…' : 'Save changes'}
                   </Button>
                 </>
               ) : (
-                <Button size="sm" onClick={startEdit}>
+                <Button
+                  size="sm"
+                  onClick={startEdit}
+                  disabled={!canUpdateProfile}
+                  title={canUpdateProfile ? 'Edit profile' : 'You do not have permission'}
+                >
                   <Edit3 size={16} /> Edit profile
                 </Button>
               )}

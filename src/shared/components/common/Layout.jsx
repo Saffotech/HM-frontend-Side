@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home,
@@ -6,12 +6,10 @@ import {
   Calendar,
   CreditCard,
   Receipt,
-  BedDouble,
   Menu,
   X,
   History,
 } from 'lucide-react';
-import { useMemo } from 'react';
 import { ROUTES } from '@/shared/constants';
 import { ACTIONS, canAccessAction } from '@/hooks/permissions';
 import { useAuth } from '@/shared/hooks/useAuth';
@@ -27,11 +25,11 @@ const NAV_LINKS = [
   { href: ROUTES.APPOINTMENTS, label: 'Appointments', icon: Calendar, permission: ACTIONS.MANAGE_APPOINTMENTS },
   { href: ROUTES.PATIENTS, label: 'Patient Management', icon: Users, permission: ACTIONS.MANAGE_PATIENTS },
   { href: ROUTES.BILLING_OPD_NEW, label: 'Generate Bill', icon: Receipt, permission: ACTIONS.CREATE_BILL },
-  { href: ROUTES.BEDS, label: 'Bed Management', icon: BedDouble, permission: ACTIONS.MANAGE_BEDS },
   { href: ROUTES.PAYMENT_HISTORY, label: 'Payment History', icon: History, permission: ACTIONS.VIEW_PAYMENT_HISTORY },
 ];
 
 const PAGE_TITLES = [
+  { prefix: ROUTES.OPD_TODAY_OVERVIEW, title: "Today's Overview" },
   { prefix: ROUTES.OPD_NOTIFICATIONS, title: 'Notifications' },
   { prefix: ROUTES.OPD_PROFILE, title: 'My Profile' },
   { prefix: ROUTES.BILLING_OPD_NEW, title: 'Generate Bill' },
@@ -39,7 +37,6 @@ const PAGE_TITLES = [
   { prefix: ROUTES.PATIENTS, title: 'Patient Management' },
   { prefix: ROUTES.APPOINTMENTS, title: 'Appointments' },
   { prefix: ROUTES.BILLING, title: 'Billing & Payments' },
-  { prefix: ROUTES.BEDS, title: 'Bed Management' },
   { prefix: ROUTES.PAYMENT_HISTORY, title: 'Payment History' },
 ];
 

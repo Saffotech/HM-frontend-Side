@@ -61,9 +61,11 @@ export const ROLES = {
   LAB_TECHNICIAN: 'lab_technician',
   PHARMACIST: 'pharmacist',
   BILLING: 'billing',
-  /** OPD front desk — patients, appointments, beds, billing, payments */
+  /** OPD front desk — patients, appointments, visit billing, payments */
   OPD: 'opd',
   NURSE: 'nurse',
+  /** IPD front desk — admissions, beds, stay billing, discharge */
+  IPD: 'ipd',
 };
 
 export const REGISTRATION_FEE = 200;
@@ -76,6 +78,7 @@ export const WARDS = ['General', 'ICU', 'Private', 'Pediatric'];
 
 export const ROUTES = {
   HOME: '/',
+  ABOUT: '/about',
   LOGIN: '/login',
   PATIENT_LOGIN: '/patient-login',
   /** Default page after login — OPD / admin home */
@@ -133,6 +136,18 @@ export const ROUTES = {
   RECEPTIONIST_QUEUE_HISTORY: '/receptionist/queue-history',
   RECEPTIONIST_PROFILE: '/receptionist/profile',
   RECEPTIONIST_NOTIFICATIONS: '/receptionist/notifications',
+  IPD_DASHBOARD: '/ipd/dashboard',
+  IPD_PATIENTS: '/ipd/patients',
+  IPD_PATIENT_DETAIL: '/ipd/patients/:admissionId',
+  IPD_ADMIT: '/ipd/admit',
+  IPD_BEDS: '/ipd/beds',
+  IPD_BED_TRANSFER: '/ipd/beds/transfer',
+  IPD_BILLING: '/ipd/billing',
+  IPD_BILL_PREVIEW: '/ipd/billing/preview/:admissionId',
+  IPD_PAYMENT_HISTORY: '/ipd/payment-history',
+  IPD_DISCHARGE: '/ipd/discharge',
+  IPD_DISCHARGE_ADMISSION: '/ipd/discharge/:admissionId',
+  IPD_PROFILE: '/ipd/profile',
   ADMIN_LOGIN: '/admin/login',
   ADMIN_DASHBOARD: '/admin/dashboard',
   ADMIN_STAFF: '/admin/staff',
@@ -172,12 +187,19 @@ export const ROUTES = {
   SUPER_ADMIN_ROLES_NEW: '/super-admin/roles/new',
   SUPER_ADMIN_ROLES_ASSIGN: '/super-admin/roles/:roleId/permissions',
   SUPER_ADMIN_SETTINGS: '/super-admin/settings',
+  SUPER_ADMIN_SETTINGS_OPD: '/super-admin/settings/opd',
+  SUPER_ADMIN_SETTINGS_DOCTOR: '/super-admin/settings/doctor',
+  SUPER_ADMIN_SETTINGS_RECEPTIONIST: '/super-admin/settings/receptionist',
+  SUPER_ADMIN_SETTINGS_LAB: '/super-admin/settings/lab',
+  SUPER_ADMIN_SETTINGS_NURSE: '/super-admin/settings/nurse',
+  SUPER_ADMIN_SETTINGS_PHARMACY: '/super-admin/settings/pharmacy',
   SUPER_ADMIN_REPORTS: '/super-admin/reports',
   SUPER_ADMIN_AUDIT: '/super-admin/audit',
   SUPER_ADMIN_PROFILE: '/super-admin/profile',
   DASHBOARD: '/dashboard',
   OPD_PROFILE: '/opd/profile',
   OPD_NOTIFICATIONS: '/opd/notifications',
+  OPD_TODAY_OVERVIEW: '/opd/today-overview',
   BILLING: '/billing',
   BILLING_OPD_NEW: '/billing/opd/new',
   BILLING_VIEW: '/billing/:id',

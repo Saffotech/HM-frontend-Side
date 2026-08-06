@@ -21,12 +21,13 @@ async function fetchLabTechnicianProfile(token) {
   return data;
 }
 
-export function useLabTechnicianProfileQuery() {
+export function useLabTechnicianProfileQuery(options = {}) {
+  const { enabled = true } = options;
   const token = useQueryToken();
   return useQuery({
     queryKey: queryKeys.lab.profile,
     queryFn: () => fetchLabTechnicianProfile(token),
-    enabled: Boolean(token),
+    enabled: Boolean(token) && enabled,
     retry: false,
   });
 }

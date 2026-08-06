@@ -125,7 +125,8 @@ export default function AppointmentRowActions({
             <Button
               type="button"
               size="sm"
-              variant="outline"
+              variant="primary"
+              className="doc-appt-actions__consult"
               disabled={disabled}
               onClick={() => onConsult(appointment)}
             >

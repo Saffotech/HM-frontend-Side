@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FlaskConical } from 'lucide-react';
 import LabLayout from '@/features/lab/components/LabLayout';
+import { useLabPermissionSet } from '@/features/lab/hooks/useLabPermission';
 import {
   useLabOrderQuery,
   useSubmitLabWorkflowMutation,
 } from '@/shared/hooks/queries/useLabQuery';
 import { LAB_ORDER_STATUS, statusBadgeClass, statusLabel } from '@/features/lab/utils/labOrderStatus';
-import { DateInput, QueryFeedback } from '@/shared/components/common';
+import { DateInput, EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 import '../styles/lab.css';
@@ -24,7 +25,11 @@ export default function LabUploadReportPage() {
   const { id } = useParams();
   const orderId = Number(id);
   const navigate = useNavigate();
-  const orderQuery = useLabOrderQuery(orderId, { enabled: Number.isFinite(orderId) });
+  const { canViewLab, canUpdateLab, canUploadReport } = useLabPermissionSet();
+  const canRunWorkflow = canUpdateLab && canUploadReport;
+  const orderQuery = useLabOrderQuery(orderId, {
+    enabled: Number.isFinite(orderId) && canViewLab,
+  });
   const submitWorkflow = useSubmitLabWorkflowMutation();
 
   const order = orderQuery.data;
@@ -63,6 +68,10 @@ export default function LabUploadReportPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!canRunWorkflow) {
+      toast.error('You do not have permission to update lab results or upload reports');
+      return;
+    }
 
     if (order?.status === LAB_ORDER_STATUS.COMPLETED) {
       toast.error('This test is already completed');
@@ -98,6 +107,35 @@ export default function LabUploadReportPage() {
       // mutationOnError handles toast
     }
   };
+
+  if (!canViewLab) {
+    return (
+      <LabLayout pageTitle="Upload Report">
+        <EmptyState
+          icon={FlaskConical}
+          title="Lab access denied"
+          description="You do not have permission to view this lab order."
+        />
+      </LabLayout>
+    );
+  }
+
+  if (!canRunWorkflow) {
+    return (
+      <LabLayout pageTitle="Upload Report">
+        <EmptyState
+          icon={FlaskConical}
+          title="Results access denied"
+          description="You do not have permission to update workflow or upload lab reports."
+        />
+        <div style={{ marginTop: '1rem' }}>
+          <Link to={ROUTES.LAB_ORDERS} className="lab-btn lab-btn-secondary">
+            ← Back to Orders
+          </Link>
+        </div>
+      </LabLayout>
+    );
+  }
 
   if (!Number.isFinite(orderId)) {
     return (

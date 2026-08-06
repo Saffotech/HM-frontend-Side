@@ -11,9 +11,11 @@
 
 .landing-dashboard__tabs {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.35rem;
   margin: 2.5rem auto 0;
+  max-width: 56rem;
   width: fit-content;
   padding: 0.375rem;
   border-radius: 999px;
@@ -24,13 +26,14 @@
 .landing-dashboard__tab {
   border: none;
   border-radius: 999px;
-  padding: 0.5rem 1.25rem;
-  font-size: 0.875rem;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   background: transparent;
   color: var(--color-text-muted);
   cursor: pointer;
   font-family: inherit;
+  white-space: nowrap;
   transition: background 0.15s, color 0.15s;
 }
 
@@ -54,39 +57,28 @@
   border-radius: 1rem;
 }
 
-.landing-dashboard__widgets {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.landing-dashboard__widget {
-  padding: 1rem;
+.landing-dashboard__coming-soon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 18rem;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
   border-radius: 1rem;
 }
 
-.landing-dashboard__widget-icon {
+.landing-dashboard__coming-soon-title {
+  margin: 0;
+  font-family: var(--landing-font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
   color: var(--color-primary);
 }
 
-.landing-dashboard__widget-value {
-  margin: 0.75rem 0 0;
-  font-family: var(--landing-font-display);
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-
-.landing-dashboard__widget-label {
-  margin: 0.25rem 0 0;
-  font-size: 0.75rem;
+.landing-dashboard__coming-soon-sub {
+  margin: 0.5rem 0 0;
+  font-size: 0.9375rem;
   color: var(--color-text-muted);
-}
-
-@media (min-width: 640px) {
-  .landing-dashboard__widgets { grid-template-columns: repeat(3, 1fr); }
-}
-
-@media (min-width: 1024px) {
-  .landing-dashboard__widgets { grid-template-columns: repeat(6, 1fr); }
 }

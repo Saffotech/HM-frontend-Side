@@ -6,7 +6,6 @@ import PatientProfileHeader from '@/features/opd/components/patientProfile/Patie
 import PatientProfileOverviewTab from '@/features/opd/components/patientProfile/PatientProfileOverviewTab';
 import PatientProfileVisitsTab from '@/features/opd/components/patientProfile/PatientProfileVisitsTab';
 import PatientProfileBillingTab from '@/features/opd/components/patientProfile/PatientProfileBillingTab';
-import PatientProfileAdmissionTab from '@/features/opd/components/patientProfile/PatientProfileAdmissionTab';
 import PatientProfileMedicalTab from '@/features/opd/components/patientProfile/PatientProfileMedicalTab';
 import {
   usePatientQuery,
@@ -20,7 +19,6 @@ import {
   BILLS_PAGE_SIZE,
 } from '@/shared/hooks/queries/useBillingQuery';
 import { asAppointmentList, asBillList, asBillPageMeta, asAppointmentPageMeta } from '@/shared/hooks/queries/listDataUtils';
-import { useBedsQuery } from '@/shared/hooks/queries/useBedsQuery';
 import { useDepartmentsQuery } from '@/shared/hooks/queries/useOpdReferenceQuery';
 import { opdReferenceApi } from '@/shared/api/services';
 import { Button, QueryFeedback, ConfirmDialog } from '@/shared/components/common';
@@ -69,11 +67,7 @@ export default function PatientProfilePage() {
       limit: BILLS_PAGE_SIZE,
       enabled: activeTab === 'visits' && Boolean(patient),
     });
-  const { data: bedData, isLoading: lb, isError: eb, error: errB } = useBedsQuery({
-    enabled: activeTab === 'admission',
-  });
   const { data: departments = [] } = useDepartmentsQuery();
-  const beds = bedData?.beds ?? [];
   const paymentVisitId = paymentDetailVisit?.visit?.visitId ?? null;
   const {
     data: paymentInvoice,
@@ -109,7 +103,6 @@ export default function PatientProfilePage() {
   const apptPageMeta = asAppointmentPageMeta(apptsData);
   const patientBills = asBillList(billsData);
   const billPageMeta = asBillPageMeta(billsData);
-  const patientBeds = beds.filter((b) => b.patientId === id);
   const uniqueDepts = [...new Set(opdVisits.map((v) => v.department).filter(Boolean))];
   const deptFromPatient = opdReferenceApi.findDepartment(departments, patient.deptId);
   const primaryDeptName =
@@ -144,7 +137,6 @@ export default function PatientProfilePage() {
   const tabCounts = {
     visits: profile?.summary?.totalVisits ?? opdVisits.length,
     billing: billPageMeta.total || profile?.summary?.totalVisits,
-    admission: patientBeds.length,
   };
 
   return (
@@ -229,15 +221,6 @@ export default function PatientProfilePage() {
               lbi={lbi}
               ebi={ebi}
               errBi={errBi}
-            />
-          )}
-
-          {activeTab === 'admission' && (
-            <PatientProfileAdmissionTab
-              patientBeds={patientBeds}
-              lb={lb}
-              eb={eb}
-              errB={errB}
             />
           )}
 

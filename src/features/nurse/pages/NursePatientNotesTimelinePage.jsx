@@ -12,6 +12,7 @@ import {
   useNurseQueueQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
 import { toast } from '@/shared/utils/toast';
+import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
 
 export default function NursePatientNotesTimelinePage() {
   const { patientId } = useParams();
@@ -48,17 +49,18 @@ export default function NursePatientNotesTimelinePage() {
         <NursePageHeader
           title={`Notes Timeline — ${patientDisplayId}`}
           actions={
-            canCreateNotes ? (
-              <button
-                type="button"
-                className="nurse-btn nurse-btn--primary"
-                onClick={handleCreateNote}
-                disabled={createDisabled}
-                title={createDisabled && !isAppointmentLoading ? 'Patient must be in today\'s queue' : undefined}
-              >
-                <Plus size={16} /> Add Note
-              </button>
-            ) : null
+            <NursePermissionButton
+              allowed={canCreateNotes && !createDisabled}
+              deniedMessage={
+                !canCreateNotes
+                  ? 'You do not have permission'
+                  : "Patient must be in today's queue"
+              }
+              className="nurse-btn nurse-btn--primary"
+              onClick={handleCreateNote}
+            >
+              <Plus size={16} /> Add Note
+            </NursePermissionButton>
           }
         />
         <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>

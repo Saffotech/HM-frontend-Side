@@ -66,17 +66,19 @@ function invalidateNotificationQueries(queryClient) {
   });
 }
 
-export function usePharmacistNotificationsListQuery(filters = {}) {
+export function usePharmacistNotificationsListQuery(filters = {}, options = {}) {
+  const { enabled = true } = options;
   const token = useQueryToken();
   return useQuery({
     queryKey: queryKeys.pharmacy.notificationsList(filters),
     queryFn: () => getPharmacistNotifications(filters, token),
-    enabled: Boolean(token),
+    enabled: Boolean(token) && enabled,
     retry: false,
   });
 }
 
-export function usePharmacistNotificationsUnreadCountQuery() {
+export function usePharmacistNotificationsUnreadCountQuery(options = {}) {
+  const { enabled = true } = options;
   const token = useQueryToken();
   return useQuery({
     queryKey: queryKeys.pharmacy.notificationsUnreadCount,
@@ -84,8 +86,8 @@ export function usePharmacistNotificationsUnreadCountQuery() {
       const data = await getPharmacistNotificationsUnreadCount(token);
       return { count: data?.count ?? 0 };
     },
-    enabled: Boolean(token),
-    refetchInterval: UNREAD_POLL_MS,
+    enabled: Boolean(token) && enabled,
+    refetchInterval: enabled ? UNREAD_POLL_MS : false,
     refetchOnWindowFocus: true,
     retry: false,
     select: (data) => data?.count ?? 0,

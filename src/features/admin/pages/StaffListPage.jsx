@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { Eye, MoreHorizontal, Pencil, Plus, RotateCcw, Search, Trash2, UserCheck, UserX } from 'lucide-react';
+import { Eye, Plus, RotateCcw, Search } from 'lucide-react';
 
 import AdminLayout from '@/features/admin/components/AdminLayout';
 
@@ -18,25 +18,17 @@ import AdminUserCell from '@/features/admin/components/AdminUserCell';
 
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 
-import { useAuth } from '@/shared/hooks/useAuth';
-
 import {
-
-  useActivateStaffMutation,
 
   useAdminRolesQuery,
 
   useAdminStaffListQuery,
-
-  useDeleteStaffMutation,
 
 } from '@/shared/hooks/queries/useAdminQuery';
 
 import {
 
   Button,
-
-  ConfirmDialog,
 
   QueryFeedback,
 
@@ -49,8 +41,6 @@ import {
 } from '@/shared/components/common';
 
 import { ROUTES } from '@/shared/constants';
-
-import { toast } from '@/shared/utils/toast';
 
 
 
@@ -87,10 +77,6 @@ export default function StaffListPage() {
   const navigate = useNavigate();
 
   const [searchParams] = useSearchParams();
-
-  const { user } = useAuth();
-
-  const currentUserId = user?.user_id ?? user?.id;
 
 
 
@@ -152,22 +138,6 @@ export default function StaffListPage() {
 
 
 
-  const activateMutation = useActivateStaffMutation();
-
-  const deleteMutation = useDeleteStaffMutation();
-
-
-
-  const [confirmOpen, setConfirmOpen] = useState(false);
-
-  const [confirmMode, setConfirmMode] = useState('delete');
-
-  const [selectedStaff, setSelectedStaff] = useState(null);
-
-  const [openMenuId, setOpenMenuId] = useState(null);
-
-
-
   const staff = data?.staff ?? [];
 
   const total = data?.total ?? 0;
@@ -190,7 +160,12 @@ export default function StaffListPage() {
 
         value: String(role.id),
 
-        label: role.name === 'opd_billing' ? 'OPD Billing' : role.name.replace(/_/g, ' '),
+        label:
+          role.name === 'opd_billing'
+            ? 'OPD Billing'
+            : role.name === 'ipd'
+              ? 'IPD'
+              : role.name.replace(/_/g, ' '),
 
       })) ?? []),
 
@@ -202,27 +177,15 @@ export default function StaffListPage() {
 
 
 
-  const openDeleteConfirm = (member) => {
+  const showDepartmentColumn = useMemo(() => {
 
-    setSelectedStaff(member);
+    if (roleFilter === 'all') return false;
 
-    setConfirmMode('delete');
+    const selected = roles?.find((role) => String(role.id) === String(roleFilter));
 
-    setConfirmOpen(true);
+    return selected?.name === 'doctor';
 
-  };
-
-
-
-  const openActivateConfirm = (member) => {
-
-    setSelectedStaff(member);
-
-    setConfirmMode('activate');
-
-    setConfirmOpen(true);
-
-  };
+  }, [roleFilter, roles]);
 
 
 
@@ -235,52 +198,6 @@ export default function StaffListPage() {
     setStatusFilter('all');
 
     setPage(1);
-
-  };
-
-
-
-  const handleConfirm = async () => {
-
-    if (!selectedStaff) return;
-
-    try {
-
-      if (confirmMode === 'delete') {
-
-        await deleteMutation.mutateAsync({ id: selectedStaff.id });
-
-        toast.success('Staff member deleted successfully');
-
-      } else {
-
-        await activateMutation.mutateAsync({
-
-          id: selectedStaff.id,
-
-          is_active: !selectedStaff.is_active,
-
-        });
-
-        toast.success(
-
-          `Staff member ${selectedStaff.is_active ? 'deactivated' : 'activated'} successfully`
-
-        );
-
-      }
-
-    } catch (err) {
-
-      toast.error(err?.message || 'Action failed');
-
-    } finally {
-
-      setConfirmOpen(false);
-
-      setSelectedStaff(null);
-
-    }
 
   };
 
@@ -436,7 +353,7 @@ export default function StaffListPage() {
 
                           <th>Role</th>
 
-                          <th>Department</th>
+                          {showDepartmentColumn ? <th>Department</th> : null}
 
                           <th>Status</th>
 
@@ -449,8 +366,6 @@ export default function StaffListPage() {
                       <tbody>
 
                         {staff.map((member) => {
-
-                          const isSelf = Number(currentUserId) === Number(member.id);
 
                           const fullName = `${member.first_name} ${member.last_name || ''}`.trim();
 
@@ -470,11 +385,15 @@ export default function StaffListPage() {
 
                               </td>
 
-                              <td className="admin-table__muted">
+                              {showDepartmentColumn ? (
 
-                                {member.department_name || '—'}
+                                <td className="admin-table__muted">
 
-                              </td>
+                                  {member.department_name || '—'}
+
+                                </td>
+
+                              ) : null}
 
                               <td>
 
@@ -484,13 +403,13 @@ export default function StaffListPage() {
 
                               <td className="admin-table__actions">
 
-                                <div className="admin-table__actions-inner">
+                                <div className="admin-table__actions-inner admin-staff-list__actions">
 
-                                  <Button
+                                  <button
 
-                                    variant="ghost"
+                                    type="button"
 
-                                    size="sm"
+                                    className="admin-staff-list__action admin-staff-list__action--view"
 
                                     onClick={() => navigate(`/admin/staff/${member.id}`)}
 
@@ -500,123 +419,7 @@ export default function StaffListPage() {
 
                                     View
 
-                                  </Button>
-
-                                  <div className="admin-dropdown-wrap">
-
-                                    <Button
-
-                                      variant="ghost"
-
-                                      size="sm"
-
-                                      onClick={() =>
-
-                                        setOpenMenuId((prev) =>
-
-                                          prev === member.id ? null : member.id
-
-                                        )
-
-                                      }
-
-                                      aria-label={`More actions for ${fullName}`}
-
-                                    >
-
-                                      <MoreHorizontal size={16} />
-
-                                    </Button>
-
-                                    {openMenuId === member.id && (
-
-                                      <div className="admin-dropdown admin-card admin-card--flat">
-
-                                        <button
-
-                                          type="button"
-
-                                          className="admin-menu-item"
-
-                                          onClick={() => {
-
-                                            setOpenMenuId(null);
-
-                                            navigate(`/admin/staff/${member.id}?edit=1`);
-
-                                          }}
-
-                                        >
-
-                                          <Pencil size={14} /> Edit
-
-                                        </button>
-
-                                        <button
-
-                                          type="button"
-
-                                          className="admin-menu-item"
-
-                                          disabled={isSelf}
-
-                                          onClick={() => {
-
-                                            setOpenMenuId(null);
-
-                                            openActivateConfirm(member);
-
-                                          }}
-
-                                        >
-
-                                          {member.is_active ? (
-
-                                            <>
-
-                                              <UserX size={14} /> Deactivate
-
-                                            </>
-
-                                          ) : (
-
-                                            <>
-
-                                              <UserCheck size={14} /> Activate
-
-                                            </>
-
-                                          )}
-
-                                        </button>
-
-                                        <button
-
-                                          type="button"
-
-                                          className="admin-menu-item admin-menu-item--danger"
-
-                                          disabled={isSelf}
-
-                                          onClick={() => {
-
-                                            setOpenMenuId(null);
-
-                                            openDeleteConfirm(member);
-
-                                          }}
-
-                                        >
-
-                                          <Trash2 size={14} /> Delete
-
-                                        </button>
-
-                                      </div>
-
-                                    )}
-
-                                  </div>
+                                  </button>
 
                                 </div>
 
@@ -661,40 +464,6 @@ export default function StaffListPage() {
         </div>
 
       </div>
-
-
-
-      <ConfirmDialog
-
-        isOpen={confirmOpen}
-
-        title={
-
-          confirmMode === 'delete'
-
-            ? 'Delete staff member'
-
-            : `${selectedStaff?.is_active ? 'Deactivate' : 'Activate'} staff member`
-
-        }
-
-        message={
-
-          confirmMode === 'delete'
-
-            ? `Are you sure you want to delete ${selectedStaff?.first_name ?? 'this user'}?`
-
-            : `Are you sure you want to ${selectedStaff?.is_active ? 'deactivate' : 'activate'} ${selectedStaff?.first_name ?? 'this user'}?`
-
-        }
-
-        confirmLabel={confirmMode === 'delete' ? 'Delete' : 'Confirm'}
-
-        onConfirm={handleConfirm}
-
-        onCancel={() => setConfirmOpen(false)}
-
-      />
 
     </AdminLayout>
 

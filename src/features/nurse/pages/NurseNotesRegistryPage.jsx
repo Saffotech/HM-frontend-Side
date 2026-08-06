@@ -12,10 +12,17 @@ import { getPagedListCount, formatPatientIdDisplay } from '@/shared/api/mappers/
 import { QueryFeedback } from '@/shared/components/common';
 import { useNurseNotesListQuery } from '@/shared/hooks/queries/useNurseQuery';
 import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
+import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
+import { useAuth } from '@/shared/hooks/useAuth';
 
 export default function NurseNotesRegistryPage() {
   const navigate = useNavigate();
-  const { canUpdateNotes } = useNursePermissionSet();
+  const { refreshPermissions } = useAuth();
+  const { canUpdateNotes, canViewNotes } = useNursePermissionSet();
+
+  useEffect(() => {
+    refreshPermissions?.();
+  }, [refreshPermissions]);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search, 400);
@@ -23,7 +30,7 @@ export default function NurseNotesRegistryPage() {
 
   const { data, isLoading, isError, error, refetch } = useNurseNotesListQuery(
     { search: debouncedSearch, page, page_size: 20, ...scopeFilters },
-    { enabled: scopeReady },
+    { enabled: scopeReady && canViewNotes },
   );
 
   useEffect(() => {
@@ -90,18 +97,13 @@ export default function NurseNotesRegistryPage() {
       header: 'Actions',
       render: (row) => (
         <div className="nurse-table__actions">
-          {canUpdateNotes ? (
-            <button
-              type="button"
-              className="nurse-btn nurse-btn--primary nurse-btn--sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                updateNote(row);
-              }}
-            >
-              Update
-            </button>
-          ) : null}
+          <NursePermissionButton
+            allowed={canUpdateNotes}
+            className="nurse-btn nurse-btn--primary nurse-btn--sm"
+            onClick={() => updateNote(row)}
+          >
+            Update
+          </NursePermissionButton>
         </div>
       ),
     },
@@ -110,6 +112,10 @@ export default function NurseNotesRegistryPage() {
   return (
     <NurseLayout>
       <div className="nurse-page nurse-notes-registry">
+        {!canViewNotes ? (
+          <div className="nurse-alert nurse-alert--error">You do not have permission to view notes.</div>
+        ) : (
+          <>
         <div className="nurse-notes-registry__toolbar nurse-card">
           <div className="nurse-notes-registry__toolbar-left">
             <div className="nurse-notes-registry__icon" aria-hidden>
@@ -161,6 +167,8 @@ export default function NurseNotesRegistryPage() {
           onChange={setPage}
         />
         </QueryFeedback>
+          </>
+        )}
       </div>
     </NurseLayout>
   );

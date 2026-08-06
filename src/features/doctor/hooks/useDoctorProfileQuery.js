@@ -22,12 +22,13 @@ async function fetchDoctorProfile(token) {
   return data;
 }
 
-export function useDoctorProfileQuery() {
+export function useDoctorProfileQuery(options = {}) {
+  const { enabled = true } = options;
   const token = useQueryToken();
   return useQuery({
     queryKey: queryKeys.doctor.profile,
     queryFn: () => fetchDoctorProfile(token),
-    enabled: Boolean(token),
+    enabled: Boolean(token) && enabled,
     retry: false,
   });
 }

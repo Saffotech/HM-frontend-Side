@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ClipboardList } from 'lucide-react';
 import PharmacyLayout from '@/features/pharmacy/components/PharmacyLayout';
 import PharmacyStatusBadge from '@/features/pharmacy/components/PharmacyStatusBadge';
 import AllergyBanner from '@/features/pharmacy/components/AllergyBanner';
 import PharmacyDetailListModal from '@/features/pharmacy/components/PharmacyDetailListModal';
-import { Button, DataTableShell, QueryFeedback } from '@/shared/components/common';
+import { usePharmacyPermissionSet } from '@/features/pharmacy/hooks/usePharmacyPermission';
+import { Button, DataTableShell, EmptyState, QueryFeedback } from '@/shared/components/common';
 import {
   usePharmacyPrescriptionQuery,
   usePrescriptionDispenseHistoryQuery,
@@ -15,6 +17,7 @@ import {
 } from '@/features/pharmacy/utils/prescriptionMeta';
 import { formatHumanInstructions, formatQuantityLabel } from '@/features/pharmacy/utils/prescriptionQuantity';
 import { ROUTES } from '@/shared/constants';
+import { toast } from '@/shared/utils/toast';
 import './PrescriptionDetailPage.css';
 
 function fmt(d) {
@@ -65,14 +68,29 @@ function MultiFieldValue({ count, label, onView, singleValue }) {
 export default function PrescriptionDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data: rx, isLoading, isError, error } = usePharmacyPrescriptionQuery(id);
+  const { canViewPrescriptions, canDispense } = usePharmacyPermissionSet();
+  const { data: rx, isLoading, isError, error } = usePharmacyPrescriptionQuery(id, {
+    enabled: canViewPrescriptions,
+  });
   const { data: previousDispensing = [] } = usePrescriptionDispenseHistoryQuery(id, {
-    enabled: Boolean(id),
+    enabled: Boolean(id) && canViewPrescriptions,
   });
   const [listModal, setListModal] = useState(null);
 
   const doctors = rx ? getPrescriptionDoctors(rx) : [];
   const diagnoses = rx ? getPrescriptionDiagnoses(rx) : [];
+
+  if (!canViewPrescriptions) {
+    return (
+      <PharmacyLayout compact>
+        <EmptyState
+          icon={ClipboardList}
+          title="Prescriptions access denied"
+          description="You do not have permission to view pharmacy prescriptions."
+        />
+      </PharmacyLayout>
+    );
+  }
 
   return (
     <PharmacyLayout compact>
@@ -84,7 +102,21 @@ export default function PrescriptionDetailPage() {
                 Back to list
               </Button>
               {(rx.status === 'pending' || rx.status === 'partially_dispensed') && (
-                <Button onClick={() => navigate(`/pharmacy/dispense/${id}`)}>
+                <Button
+                  disabled={!canDispense}
+                  title={
+                    canDispense
+                      ? 'Dispense medicine'
+                      : 'You do not have permission to dispense'
+                  }
+                  onClick={() => {
+                    if (!canDispense) {
+                      toast.error('You do not have permission to dispense medicines');
+                      return;
+                    }
+                    navigate(`/pharmacy/dispense/${id}`);
+                  }}
+                >
                   Dispense medicine
                 </Button>
               )}

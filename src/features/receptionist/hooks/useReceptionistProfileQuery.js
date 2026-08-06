@@ -21,12 +21,13 @@ async function fetchReceptionistProfile(token) {
   return data;
 }
 
-export function useReceptionistProfileQuery() {
+export function useReceptionistProfileQuery(options = {}) {
+  const { enabled = true } = options;
   const token = useQueryToken();
   return useQuery({
     queryKey: queryKeys.receptionist.profile,
     queryFn: () => fetchReceptionistProfile(token),
-    enabled: Boolean(token),
+    enabled: Boolean(token) && enabled,
     retry: false,
   });
 }

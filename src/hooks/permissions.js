@@ -140,9 +140,17 @@ export function hasBackendPermission(user, permissionName) {
   // the session JWT still has a stale list from before a permission sync.
   if (role === 'admin' || role === 'super_admin') return true;
 
+  if (!permissionName) return false;
+
   const permissions = user?.permissions;
-  if (Array.isArray(permissions) && permissions.length > 0) {
-    return permissions.includes(permissionName);
-  }
-  return false;
+  if (!Array.isArray(permissions) || permissions.length === 0) return false;
+
+  const wanted = String(permissionName).trim();
+  return permissions.some((perm) => {
+    if (typeof perm === 'string') return perm.trim() === wanted;
+    if (perm && typeof perm === 'object' && perm.name != null) {
+      return String(perm.name).trim() === wanted;
+    }
+    return false;
+  });
 }

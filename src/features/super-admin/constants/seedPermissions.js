@@ -50,7 +50,6 @@ export const SEED_PERMISSION_NAMES = [
   'emergency_alerts:view',
   'emergency_alerts:create',
   'emergency_alerts:update',
-  'emergency_alerts:escalate',
   'receptionist:view_doctor_schedule',
 ];
 

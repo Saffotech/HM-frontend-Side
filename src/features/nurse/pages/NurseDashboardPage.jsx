@@ -12,6 +12,7 @@ import {
   formatPatientIdDisplay,
 } from '@/shared/api/mappers/nurseMapper';
 import { useNurseBedPatientsQuery } from '@/shared/hooks/queries/useNurseQuery';
+import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
 
 const KPI_FILTERS = {
   all: (row) => true,
@@ -135,32 +136,26 @@ export default function NurseDashboardPage() {
       header: 'Actions',
       render: (row) => (
         <div className="nurse-table__actions nurse-dashboard-page__actions">
-          {canCreateVitals && (
-            <button
-              type="button"
-              className="nurse-dashboard-page__action-btn nurse-dashboard-page__action-btn--vitals"
-              onClick={(e) => {
-                e.stopPropagation();
-                const url = buildNurseVitalsUrl(row);
-                if (url) navigate(url);
-              }}
-            >
-              Vitals
-            </button>
-          )}
-          {canCreateNotes && (
-            <button
-              type="button"
-              className="nurse-dashboard-page__action-btn nurse-dashboard-page__action-btn--note"
-              onClick={(e) => {
-                e.stopPropagation();
-                const url = buildNurseNotesUrl(row);
-                if (url) navigate(url);
-              }}
-            >
-              Note
-            </button>
-          )}
+          <NursePermissionButton
+            allowed={canCreateVitals}
+            className="nurse-dashboard-page__action-btn nurse-dashboard-page__action-btn--vitals"
+            onClick={() => {
+              const url = buildNurseVitalsUrl(row);
+              if (url) navigate(url);
+            }}
+          >
+            Vitals
+          </NursePermissionButton>
+          <NursePermissionButton
+            allowed={canCreateNotes}
+            className="nurse-dashboard-page__action-btn nurse-dashboard-page__action-btn--note"
+            onClick={() => {
+              const url = buildNurseNotesUrl(row);
+              if (url) navigate(url);
+            }}
+          >
+            Note
+          </NursePermissionButton>
         </div>
       ),
     },

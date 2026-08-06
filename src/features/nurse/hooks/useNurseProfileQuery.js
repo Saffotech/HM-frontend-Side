@@ -22,12 +22,13 @@ async function fetchNurseProfile(token) {
   return data;
 }
 
-export function useNurseProfileQuery() {
+export function useNurseProfileQuery(options = {}) {
+  const { enabled = true } = options;
   const token = useQueryToken();
   return useQuery({
     queryKey: queryKeys.nurse.profile,
     queryFn: () => fetchNurseProfile(token),
-    enabled: Boolean(token),
+    enabled: Boolean(token) && enabled,
     retry: false,
   });
 }

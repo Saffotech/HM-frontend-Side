@@ -1,0 +1,193 @@
+/**
+ * IPD Dashboard — live `/ipd/dashboard`.
+ */
+
+import { useMemo } from "react";
+import { Link } from "react-router-dom";
+import {
+  BedDouble,
+  Bed,
+  UserPlus,
+  LogOut,
+  Receipt,
+  PlusCircle,
+} from "lucide-react";
+import { EmptyState, QueryFeedback } from "@/shared/components/common";
+import { ROUTES } from "@/shared/constants";
+import IpdActionCard from "@/features/ipd/components/IpdActionCard";
+import IpdPageHeader from "@/features/ipd/components/IpdPageHeader";
+import IpdStatCard from "@/features/ipd/components/IpdStatCard";
+import IpdStatusBadge from "@/features/ipd/components/IpdStatusBadge";
+import { useIpdDashboardQuery } from "@/features/ipd/hooks/useIpdQuery";
+import { useIpdPermissionSet } from "@/features/ipd/hooks/useIpdPermission";
+import { formatIpdDateTime } from "@/features/ipd/utils/ipdFormat";
+
+const todayIso = () => new Date().toISOString().slice(0, 10);
+
+/**
+ * Each metric drills into the list it counts, pre-filtered to match the number
+ * the backend returned (see `ipd_service.get_dashboard`).
+ */
+function buildStats(permissions) {
+  const { canViewBeds, canListPatients, canViewBilling } = permissions;
+  return [
+    {
+      key: "occupied_beds",
+      label: "Occupied Beds",
+      icon: BedDouble,
+      tone: "ipd-stat-card--rose",
+      to: canViewBeds ? `${ROUTES.IPD_BEDS}?status=occupied` : null,
+    },
+    {
+      key: "available_beds",
+      label: "Available Beds",
+      icon: Bed,
+      tone: "ipd-stat-card--green",
+      to: canViewBeds ? `${ROUTES.IPD_BEDS}?status=available` : null,
+    },
+    {
+      key: "admissions_today",
+      label: "Admissions Today",
+      icon: UserPlus,
+      tone: "",
+      to: canListPatients
+        ? `${ROUTES.IPD_PATIENTS}?admissionDate=${todayIso()}`
+        : null,
+    },
+    {
+      key: "pending_discharges",
+      label: "Pending Discharges",
+      icon: LogOut,
+      tone: "ipd-stat-card--amber",
+      to: canListPatients ? `${ROUTES.IPD_PATIENTS}?status=admitted` : null,
+    },
+    {
+      key: "running_bills",
+      label: "Running Bills",
+      icon: Receipt,
+      tone: "ipd-stat-card--teal",
+      to: canViewBilling ? ROUTES.IPD_BILLING : null,
+    },
+  ];
+}
+
+export default function IpdDashboardPage() {
+  const { data, isLoading, isError, error, refetch } = useIpdDashboardQuery();
+  const permissions = useIpdPermissionSet();
+  const { canAdmit } = permissions;
+  const stats = useMemo(() => buildStats(permissions), [permissions]);
+  const recentAdmissions = data?.recent_admissions ?? [];
+
+  return (
+    <div className="ipd-page">
+      <IpdPageHeader title="IPD Dashboard" />
+
+      {isError ? (
+        <div className="ipd-card">
+          <div className="ipd-card__body">
+            <QueryFeedback isError error={error} onRetry={refetch} />
+          </div>
+        </div>
+      ) : null}
+
+      <div className="ipd-stat-grid">
+        {canAdmit ? (
+          <IpdActionCard
+            label="Admit Patient"
+            description="Start admission"
+            to={ROUTES.IPD_ADMIT}
+            icon={PlusCircle}
+            tone="ipd-stat-card--violet"
+          />
+        ) : null}
+        {stats.map((card) => (
+          <IpdStatCard
+            key={card.key}
+            label={card.label}
+            value={data?.[card.key] ?? "—"}
+            icon={card.icon}
+            tone={card.tone}
+            to={card.to}
+            loading={isLoading}
+          />
+        ))}
+      </div>
+
+      <div className="ipd-card">
+        <div className="ipd-card__head">
+          <h2 className="ipd-card__title">Recent Admissions</h2>
+          <Link to={ROUTES.IPD_PATIENTS} className="ipd-page__subtitle">
+            View all
+          </Link>
+        </div>
+        <div className="ipd-card__body">
+          {isLoading ? (
+            <div style={{ display: "grid", gap: "0.5rem" }}>
+              <div className="ipd-skeleton" />
+              <div className="ipd-skeleton" />
+              <div className="ipd-skeleton" />
+            </div>
+          ) : (
+            <div className="ipd-table-wrap">
+              <table className="ipd-table">
+                <thead>
+                  <tr>
+                    <th>Admission</th>
+                    <th>Patient</th>
+                    <th>Ward / Bed</th>
+                    <th>Doctor</th>
+                    <th>Status</th>
+                    <th>Admitted</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentAdmissions.length === 0 ? (
+                    <tr>
+                      <td colSpan={6}>
+                        <EmptyState
+                          title="No recent admissions"
+                          description="New admissions will appear here as patients are admitted."
+                        />
+                      </td>
+                    </tr>
+                  ) : (
+                    recentAdmissions.map((row) => (
+                      <tr key={row.id}>
+                        <td>
+                          <Link
+                            to={ROUTES.IPD_PATIENT_DETAIL.replace(
+                              ":admissionId",
+                              String(row.id),
+                            )}
+                          >
+                            {row.admission_no || `#${row.id}`}
+                          </Link>
+                        </td>
+                        <td>
+                          <strong>{row.patient_name || "—"}</strong>
+                          {row.patient_uid ? (
+                            <div className="ipd-page__subtitle">
+                              {row.patient_uid}
+                            </div>
+                          ) : null}
+                        </td>
+                        <td>
+                          {row.ward_name || "—"} / {row.bed_number || "—"}
+                        </td>
+                        <td>{row.doctor_name || "—"}</td>
+                        <td>
+                          <IpdStatusBadge status={row.status} />
+                        </td>
+                        <td>{formatIpdDateTime(row.admitted_at)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -14,6 +14,8 @@ import {
 import { Button, EmptyState } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
 import ReceptionistNotificationRow from './ReceptionistNotificationRow';
+import { useReceptionistPermissionSet } from '@/features/receptionist/hooks/useReceptionistPermission';
+import ReceptionistPermissionButton from '@/features/receptionist/components/ReceptionistPermissionButton';
 import './ReceptionistNotificationsBell.css';
 import './ReceptionistNotificationsSection.css';
 
@@ -33,6 +35,7 @@ const PRIORITY_FILTER_VALUES = new Set(
 const SEARCH_DEBOUNCE_MS = 300;
 
 export default function ReceptionistNotificationsSection({ onDeepLink }) {
+  const { canViewNotifications, canUpdateNotifications } = useReceptionistPermissionSet();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -94,6 +97,10 @@ export default function ReceptionistNotificationsSection({ onDeepLink }) {
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   const handleMarkAll = async () => {
+    if (!canUpdateNotifications) {
+      toast.error('You do not have permission to update notifications');
+      return;
+    }
     try {
       await markAll.mutateAsync();
       toast.success('All marked as read');
@@ -121,6 +128,10 @@ export default function ReceptionistNotificationsSection({ onDeepLink }) {
 
   const handleRowClick = async (n) => {
     if (isReceptionistNotificationUnread(n)) {
+      if (!canUpdateNotifications) {
+        toast.error('You do not have permission to update notifications');
+        return;
+      }
       try {
         await markOne.mutateAsync(n.id);
       } catch {
@@ -129,6 +140,16 @@ export default function ReceptionistNotificationsSection({ onDeepLink }) {
     }
     onDeepLink?.(n);
   };
+
+  if (!canViewNotifications) {
+    return (
+      <EmptyState
+        icon={Bell}
+        title="Notifications access denied"
+        description="You do not have permission to view notifications."
+      />
+    );
+  }
 
   return (
     <div className="receptionist-notif-page">
@@ -166,15 +187,15 @@ export default function ReceptionistNotificationsSection({ onDeepLink }) {
               </button>
             ))}
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="receptionist-notif-mark-all"
-            onClick={handleMarkAll}
+          <ReceptionistPermissionButton
+            allowed={canUpdateNotifications}
+            deniedMessage="You do not have permission to update notifications"
+            className="btn btn--sm btn--outline receptionist-notif-mark-all"
             disabled={markAll.isPending}
+            onClick={handleMarkAll}
           >
             Mark all read
-          </Button>
+          </ReceptionistPermissionButton>
           <select
             className="receptionist-notif-select"
             value={notificationType}

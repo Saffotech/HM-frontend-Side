@@ -26,6 +26,7 @@ const EMPTY_FORM = {
 function formatRoleLabel(name) {
   if (!name) return '—';
   if (name === 'opd_billing') return 'OPD Billing';
+  if (name === 'ipd') return 'IPD';
   if (name === 'lab_technician') return 'Lab Technician';
   if (name === 'receptionist') return 'Receptionist';
   return name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());

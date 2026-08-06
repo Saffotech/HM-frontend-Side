@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { BedDouble, Building2, Calendar, FileText, CheckCircle2 } from 'lucide-react';
 import { usePatientsQuery, usePatientQuery, usePatientProfileQuery } from '@/shared/hooks/queries/usePatientQuery';
 import { asPatientList, asPatientPageMeta } from '@/shared/hooks/queries/listDataUtils';
 import { useBedsQuery, useAssignBedMutation } from '@/shared/hooks/queries/useBedsQuery';
 import { useDepartmentsQuery } from '@/shared/hooks/queries/useOpdReferenceQuery';
 import { opdReferenceApi } from '@/shared/api/services';
-import { WARDS } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 import { trimForm } from '@/shared/utils/trimForm';
 import { useFormValidation } from '@/shared/hooks/useFormValidation';
@@ -32,7 +31,7 @@ function validateAssignBed(values) {
 
 const initialValues = {
   patientId: '',
-  ward: 'General',
+  ward: '',
   bedNo: '',
   date: new Date().toISOString().split('T')[0],
   notes: '',
@@ -56,6 +55,11 @@ export default function AssignBedModal({ open, onClose, defaultBed = null }) {
   const { data: departments = [] } = useDepartmentsQuery();
   const { data: bedData } = useBedsQuery();
   const beds = bedData?.beds ?? [];
+  const wardOptions = useMemo(() => {
+    return [...new Set(beds.map((b) => b.ward).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b))
+      .map((w) => ({ value: w, label: w }));
+  }, [beds]);
   const assignBed = useAssignBedMutation();
   const { values, errors, handleChange, handleSubmit, setValues } = useFormValidation(
     initialValues,
@@ -98,8 +102,19 @@ export default function AssignBedModal({ open, onClose, defaultBed = null }) {
       });
       return;
     }
-    setValues({ ...initialValues, date: today });
-  }, [open, defaultBed?.ward, defaultBed?.bedNo, setValues]);
+    setValues({
+      ...initialValues,
+      ward: '',
+      date: today,
+    });
+  }, [open, defaultBed, setValues]);
+
+  useEffect(() => {
+    if (!open || defaultBed?.ward) return;
+    if (!ward && wardOptions[0]?.value) {
+      set('ward', wardOptions[0].value);
+    }
+  }, [open, defaultBed, ward, wardOptions, set]);
 
   const resetForm = () => {
     setValues({ ...initialValues, date: new Date().toISOString().split('T')[0] });
@@ -222,7 +237,7 @@ export default function AssignBedModal({ open, onClose, defaultBed = null }) {
                   set('ward', v);
                   set('bedNo', '');
                 }}
-                options={WARDS.map((w) => ({ value: w, label: w }))}
+                options={wardOptions}
               />
               {errors.ward && <span className="field__error">{errors.ward}</span>}
             </div>

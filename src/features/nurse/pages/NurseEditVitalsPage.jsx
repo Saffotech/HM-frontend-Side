@@ -4,6 +4,7 @@ import { ArrowLeft, Calendar, User } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseVitalsFormFields, { buildVitalsPayload, vitalsToForm } from '@/features/nurse/components/NurseVitalsFormFields';
 import { useNursePermission } from '@/features/nurse/hooks/useNursePermission';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { QueryFeedback } from '@/shared/components/common';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
 import { useNurseVitalQuery, useUpdateVitalsMutation } from '@/shared/hooks/queries/useNurseQuery';
@@ -12,10 +13,26 @@ import { toast } from '@/shared/utils/toast';
 export default function NurseEditVitalsPage() {
   const { vitalId } = useParams();
   const navigate = useNavigate();
+  const { refreshPermissions } = useAuth();
   const canUpdateVitals = useNursePermission('nurse_vitals:update');
+  const [permReady, setPermReady] = useState(false);
   const { data: vital, isLoading, isError, error, refetch } = useNurseVitalQuery(vitalId);
   const updateMut = useUpdateVitalsMutation(vitalId);
   const [form, setForm] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        await refreshPermissions?.();
+      } finally {
+        if (!cancelled) setPermReady(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshPermissions]);
 
   useEffect(() => {
     if (vital) {
@@ -25,26 +42,35 @@ export default function NurseEditVitalsPage() {
 
   const onSubmit = (e) => {
     e.preventDefault();
+    if (!canUpdateVitals) {
+      toast.error('You do not have permission to update vitals.');
+      return;
+    }
     updateMut.mutate(buildVitalsPayload(form), {
       onSuccess: (updated) => {
         toast.success('Vitals updated');
-        // Update creates a new recording — open that so Recorded At shows the latest time
         const nextId = updated?.id ?? vitalId;
         navigate(`/nurse/vitals/${nextId}`);
       },
-      onError: () => toast.error('Failed to update vitals'),
+      onError: (err) => toast.error(err?.message || 'Failed to update vitals'),
     });
   };
 
   const recordedAt = vital?.recorded_at ? new Date(vital.recorded_at).toLocaleString() : '—';
+  const blockByPermission = permReady && !canUpdateVitals;
 
   return (
     <NurseLayout>
       <div className="nurse-page">
-        <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
+        <QueryFeedback
+          isLoading={isLoading || !permReady}
+          isError={isError}
+          error={error}
+          onRetry={refetch}
+        >
           {!vital ? (
             <div className="nurse-alert nurse-alert--error">Vital record not found.</div>
-          ) : !canUpdateVitals ? (
+          ) : blockByPermission ? (
             <div className="nurse-alert nurse-alert--error">You do not have permission to update vitals.</div>
           ) : !form ? (
             <div className="nurse-card nurse-card--padded nurse-vital-detail__loading">Preparing form…</div>

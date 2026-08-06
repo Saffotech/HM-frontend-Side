@@ -1,8 +1,7 @@
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
-  Calendar,
-  PlayCircle,
+  ClipboardList,
   ShieldCheck,
   Sparkles,
   Stethoscope,
@@ -13,9 +12,9 @@ import heroDashboard from '@/assets/hero-dashboard.png';
 import './Hero.css';
 
 const TRUST_ITEMS = [
-  { icon: ShieldCheck, label: 'HIPAA-Ready' },
-  { icon: Users, label: 'Multi-Role' },
-  { icon: Calendar, label: '24/7 Support' },
+  { icon: Users, label: '8 Staff Roles' },
+  { icon: ClipboardList, label: 'OPD to Pharmacy' },
+  { icon: ShieldCheck, label: 'Role-Based Access' },
 ];
 
 export default function Hero() {
@@ -32,22 +31,28 @@ export default function Hero() {
             <span className="landing-text-gradient">Smart Healthcare Operations</span>
           </h1>
           <p className="landing-hero__lead">
-            Manage patients, doctors, appointments, billing, pharmacy, medical records, staff, and
-            hospital operations from one secure platform.
+            Manage patients, appointments, billing, clinical care, pharmacy, lab, and hospital
+            operations from one secure platform.
           </p>
           <p className="landing-hero__sub">
-            A centralized platform designed for a single hospital to streamline every department —
-            from reception to laboratory — with real-time insights and HIPAA-ready security.
+            Built for a single hospital — with dedicated workspaces for Super Admin, Admin, OPD,
+            Doctor, Nurse, Lab, Receptionist, and Pharmacy, each with the right permissions.
           </p>
           <div className="landing-hero__actions">
-            <Link to={ROUTES.PATIENT_LOGIN} className="landing-btn landing-btn--primary landing-btn--lg">
+            <button
+              type="button"
+              className="landing-btn landing-btn--primary landing-btn--lg landing-btn--disabled"
+              disabled
+              title="Patient login is temporarily unavailable"
+              aria-disabled="true"
+            >
               Get Started <ArrowRight size={16} aria-hidden />
-            </Link>
-            <a href="#contact" className="landing-btn landing-btn--outline landing-btn--lg">
-              <PlayCircle size={16} aria-hidden /> Book Demo
-            </a>
+            </button>
             <Link to={`${ROUTES.LOGIN}?switch=1`} className="landing-btn landing-btn--ghost landing-btn--lg">
               Staff Login
+            </Link>
+            <Link to={ROUTES.ABOUT} className="landing-btn landing-btn--outline landing-btn--lg">
+              About Us
             </Link>
           </div>
           <div className="landing-hero__trust">
@@ -76,8 +81,8 @@ export default function Hero() {
                   <Stethoscope size={20} aria-hidden />
                 </span>
                 <div>
-                  <p className="landing-hero__float-label">Available Doctors</p>
-                  <p className="landing-hero__float-value">52 Online</p>
+                  <p className="landing-hero__float-label">Staff Roles</p>
+                  <p className="landing-hero__float-value">9 Modules</p>
                 </div>
               </div>
             </div>
@@ -85,13 +90,8 @@ export default function Hero() {
               className="landing-hero__float landing-hero__float--right landing-glass-card landing-animate-float"
               style={{ animationDelay: '1.5s' }}
             >
-              <p className="landing-hero__float-label">Today&apos;s Appointments</p>
-              <p className="landing-hero__float-value landing-hero__float-value--primary">128</p>
-              <div className="landing-hero__chart">
-                {[40, 70, 55, 85, 60, 90].map((h, i) => (
-                  <span key={i} style={{ height: `${h / 4}px` }} />
-                ))}
-              </div>
+              <p className="landing-hero__float-label">Hospital Coverage</p>
+              <p className="landing-hero__float-value landing-hero__float-value--primary">OPD → Pharmacy</p>
             </div>
           </div>
         </div>

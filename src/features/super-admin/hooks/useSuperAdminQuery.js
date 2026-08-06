@@ -1,48 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  getHospitalSettings,
-  listAuditLogs,
-  updateHospitalSettings,
-} from '@/features/super-admin/api/superAdmin';
+import { useQuery } from '@tanstack/react-query';
+import { listAuditLogs } from '@/features/super-admin/api/superAdmin';
 import { mapAuditResponse } from '@/features/super-admin/utils/auditMapper';
-import {
-  settingsApiToForm,
-  settingsFormToApi,
-} from '@/features/super-admin/utils/hospitalSettingsMapper';
 import { loadSuperAdminPermissionCatalog } from '@/features/super-admin/utils/superAdminPermissionCatalog';
 
 const superAdminKeys = {
   all: ['super-admin'],
-  settings: ['super-admin', 'settings'],
   audit: (filters) => ['super-admin', 'audit', filters],
   permissionCatalog: ['super-admin', 'permission-catalog'],
 };
-
-export function useSuperAdminSettingsQuery(options = {}) {
-  const { enabled = true } = options;
-  return useQuery({
-    queryKey: superAdminKeys.settings,
-    enabled,
-    queryFn: async () => {
-      const data = await getHospitalSettings();
-      return settingsApiToForm(data);
-    },
-  });
-}
-
-export function useUpdateSuperAdminSettingsMutation() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (form) => {
-      const payload = settingsFormToApi(form);
-      const data = await updateHospitalSettings(payload);
-      return settingsApiToForm(data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: superAdminKeys.settings });
-    },
-  });
-}
 
 export function useSuperAdminAuditQuery(filters = {}, options = {}) {
   const { enabled = true } = options;

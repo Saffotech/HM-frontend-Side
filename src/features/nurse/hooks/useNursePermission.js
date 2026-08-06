@@ -19,7 +19,10 @@ const NURSE_PERMISSIONS = {
   alertsView: 'emergency_alerts:view',
   alertsCreate: 'emergency_alerts:create',
   alertsUpdate: 'emergency_alerts:update',
-  alertsEscalate: 'emergency_alerts:escalate',
+  profileView: 'nurse_profile:view',
+  profileUpdate: 'nurse_profile:update',
+  profileUploadImage: 'nurse_profile:upload_image',
+  profileDeleteImage: 'nurse_profile:delete_image',
 };
 
 export function useNursePermission(permission) {
@@ -47,7 +50,10 @@ export function useNursePermissionSet() {
     canViewAlerts: hasBackendPermission(user, NURSE_PERMISSIONS.alertsView),
     canCreateAlerts: hasBackendPermission(user, NURSE_PERMISSIONS.alertsCreate),
     canUpdateAlerts: hasBackendPermission(user, NURSE_PERMISSIONS.alertsUpdate),
-    canEscalateAlerts: hasBackendPermission(user, NURSE_PERMISSIONS.alertsEscalate),
+    canViewProfile: hasBackendPermission(user, NURSE_PERMISSIONS.profileView),
+    canUpdateProfile: hasBackendPermission(user, NURSE_PERMISSIONS.profileUpdate),
+    canUploadProfileImage: hasBackendPermission(user, NURSE_PERMISSIONS.profileUploadImage),
+    canDeleteProfileImage: hasBackendPermission(user, NURSE_PERMISSIONS.profileDeleteImage),
   };
 }
 

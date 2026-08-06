@@ -183,8 +183,12 @@ export function getAlerts(params, token) {
   return apiClient(appendQuery('/nurse/alerts', params), { token });
 }
 
-export function getAlertSummary(token) {
-  return apiClient('/nurse/alerts/summary', { token });
+export function getAlertSummary(params, token) {
+  // Back-compat: getAlertSummary(token) still works.
+  if (typeof params === 'string' || params == null) {
+    return apiClient('/nurse/alerts/summary', { token: params });
+  }
+  return apiClient(appendQuery('/nurse/alerts/summary', params), { token });
 }
 
 export function createAlert(body, token) {
@@ -199,24 +203,8 @@ export function getAlertById(alertId, token) {
   return apiClient(`/nurse/alerts/${alertId}`, { token });
 }
 
-export function assignAlert(alertId, body, token) {
-  return apiClient(`/nurse/alerts/${alertId}/assign`, {
-    method: 'PUT',
-    body: JSON.stringify(body),
-    token,
-  });
-}
-
 export function resolveAlert(alertId, body, token) {
   return apiClient(`/nurse/alerts/${alertId}/resolve`, {
-    method: 'PUT',
-    body: JSON.stringify(body),
-    token,
-  });
-}
-
-export function escalateAlert(alertId, body, token) {
-  return apiClient(`/nurse/alerts/${alertId}/escalate`, {
     method: 'PUT',
     body: JSON.stringify(body),
     token,

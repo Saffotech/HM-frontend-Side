@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { usePharmacyPrescriptionsQuery } from '@/shared/hooks/queries/usePharmacyQuery';
 import { useNavigate } from 'react-router-dom';
+import { ClipboardList } from 'lucide-react';
 import PharmacyLayout from '@/features/pharmacy/components/PharmacyLayout';
 import PharmacyStatusBadge from '@/features/pharmacy/components/PharmacyStatusBadge';
+import { usePharmacyPermissionSet } from '@/features/pharmacy/hooks/usePharmacyPermission';
 import {
   DataTableShell,
   EmptyState,
@@ -41,16 +43,20 @@ function toLocalDateKey(d) {
 
 export default function PrescriptionListPage() {
   const navigate = useNavigate();
+  const { canViewPrescriptions } = usePharmacyPermissionSet();
   const [statusFilter, setStatusFilter] = useState('pending');
   const [dateFilter, setDateFilter] = useState('');
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search.trim(), 300);
   const status = statusFilter === 'all' ? undefined : statusFilter;
 
-  const { data, isLoading, isError, error } = usePharmacyPrescriptionsQuery({
-    status,
-    search: debouncedSearch || undefined,
-  });
+  const { data, isLoading, isError, error } = usePharmacyPrescriptionsQuery(
+    {
+      status,
+      search: debouncedSearch || undefined,
+    },
+    { enabled: canViewPrescriptions },
+  );
 
   const allPrescriptions = data?.data ?? [];
   const prescriptions = dateFilter
@@ -58,6 +64,18 @@ export default function PrescriptionListPage() {
     : allPrescriptions;
   const statusLabel = STATUS_LABELS[statusFilter] ?? 'All';
   const hasActiveFilters = Boolean(debouncedSearch) || Boolean(dateFilter);
+
+  if (!canViewPrescriptions) {
+    return (
+      <PharmacyLayout compact>
+        <EmptyState
+          icon={ClipboardList}
+          title="Prescriptions access denied"
+          description="You do not have permission to view pharmacy prescriptions."
+        />
+      </PharmacyLayout>
+    );
+  }
 
   return (
     <PharmacyLayout compact>

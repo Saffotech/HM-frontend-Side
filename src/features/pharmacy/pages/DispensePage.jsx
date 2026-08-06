@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { PackageCheck } from 'lucide-react';
 import PharmacyLayout from '@/features/pharmacy/components/PharmacyLayout';
 import PharmacyStatusBadge from '@/features/pharmacy/components/PharmacyStatusBadge';
 import AllergyBanner from '@/features/pharmacy/components/AllergyBanner';
-import { Button, QueryFeedback, Textarea } from '@/shared/components/common';
+import { usePharmacyPermissionSet } from '@/features/pharmacy/hooks/usePharmacyPermission';
+import { Button, EmptyState, QueryFeedback, Textarea } from '@/shared/components/common';
 import {
   usePharmacyPrescriptionQuery,
   useDispenseMutation,
@@ -47,7 +49,10 @@ export default function DispensePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const token = useQueryToken();
-  const { data: rx, isLoading, isError, error } = usePharmacyPrescriptionQuery(id);
+  const { canViewPrescriptions, canDispense } = usePharmacyPermissionSet();
+  const { data: rx, isLoading, isError, error } = usePharmacyPrescriptionQuery(id, {
+    enabled: canViewPrescriptions,
+  });
   const dispenseMutation = useDispenseMutation();
 
   const enrichedItems = useMemo(
@@ -89,6 +94,10 @@ export default function DispensePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!canDispense) {
+      toast.error('You do not have permission to dispense medicines');
+      return;
+    }
     const validation = validateItemDispenseInputs(enrichedItems, quantities);
     setRowErrors(validation.rowErrors);
     setFormError(validation.formError);
@@ -137,15 +146,31 @@ export default function DispensePage() {
 
   return (
     <PharmacyLayout compact>
-      <QueryFeedback isLoading={isLoading} isError={isError} error={error}>
-        {rx && (
-          <div className="pharmacy-dispense-page page-container">
-            <header className="pharmacy-dispense-header">
-              <Button variant="ghost" onClick={() => navigate(`/pharmacy/prescriptions/${id}`)}>
-                Back to prescription
-              </Button>
-              <PharmacyStatusBadge status={rx.status} />
-            </header>
+      {!canViewPrescriptions || !canDispense ? (
+        <EmptyState
+          icon={PackageCheck}
+          title={
+            !canViewPrescriptions
+              ? 'Prescriptions access denied'
+              : 'Dispense access denied'
+          }
+          description={
+            !canViewPrescriptions
+              ? 'You do not have permission to view pharmacy prescriptions.'
+              : 'You do not have permission to dispense medicines.'
+          }
+        />
+      ) : (
+        <>
+          <QueryFeedback isLoading={isLoading} isError={isError} error={error}>
+            {rx && (
+              <div className="pharmacy-dispense-page page-container">
+                <header className="pharmacy-dispense-header">
+                  <Button variant="ghost" onClick={() => navigate(`/pharmacy/prescriptions/${id}`)}>
+                    Back to prescription
+                  </Button>
+                  <PharmacyStatusBadge status={rx.status} />
+                </header>
 
             <AllergyBanner allergies={rx.patient?.allergies} className="pharmacy-dispense-allergy" />
 
@@ -297,7 +322,15 @@ export default function DispensePage() {
                         </p>
                       )}
                       <div className="pharmacy-dispense-actions__buttons">
-                        <Button type="submit" disabled={dispenseMutation.isPending}>
+                        <Button
+                          type="submit"
+                          disabled={dispenseMutation.isPending || !canDispense}
+                          title={
+                            canDispense
+                              ? 'Confirm dispense'
+                              : 'You do not have permission to dispense'
+                          }
+                        >
                           {dispenseMutation.isPending ? 'Dispensing…' : 'Confirm dispense'}
                         </Button>
                         <Button
@@ -316,10 +349,12 @@ export default function DispensePage() {
           </div>
         )}
       </QueryFeedback>
-      {isError && (
-        <Button variant="ghost" onClick={() => navigate(`/pharmacy/prescriptions/${id}`)}>
-          Back
-        </Button>
+          {isError && (
+            <Button variant="ghost" onClick={() => navigate(`/pharmacy/prescriptions/${id}`)}>
+              Back
+            </Button>
+          )}
+        </>
       )}
     </PharmacyLayout>
   );

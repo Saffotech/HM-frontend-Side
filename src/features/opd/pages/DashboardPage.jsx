@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom';
-import { UserPlus, CalendarPlus, BedDouble, Receipt, Clock } from 'lucide-react';
+import { UserPlus, CalendarPlus, Receipt, Clock } from 'lucide-react';
 import { usePatientsQuery, PATIENTS_PAGE_SIZE } from '@/shared/hooks/queries/usePatientQuery';
 import { useTodayAppointmentsQuery } from '@/shared/hooks/queries/useAppointmentQuery';
 import { useOpdDashboardQuery } from '@/shared/hooks/queries/useOpdDashboardQuery';
 import { enrichAppointmentsWithApiPayment, prepareOpdDashboardAppointments } from '@/features/opd/utils/appointmentPaymentUtils';
 import { Avatar, StatusBadge, QueryFeedback } from '@/shared/components/common';
+import TodayOverviewCard from '@/features/opd/today-overview/components/TodayOverviewCard';
 import { ROUTES } from '@/shared/constants';
 import './DashboardPage.css';
 
@@ -29,7 +30,6 @@ export default function DashboardPage() {
   const paidCount = todaysAppts.filter((a) => a.payment?.isPaid).length;
   const unpaidCount = todaysAppts.length - paidCount;
   const recentPatients = recentPage?.patients ?? [];
-  const wardBedStats = dashboard?.wardBedStats ?? [];
 
   const hasShellData = Boolean(dashboard || recentPage || todayApptPage);
   const isInitialLoading = !hasShellData && (ld || lp);
@@ -47,13 +47,10 @@ export default function DashboardPage() {
     year: 'numeric',
   });
 
-  const availableBeds = dashboard?.bedsFree ?? 0;
-
   const stats = {
     patients: dashboard?.patientsTotal ?? recentPage?.total ?? recentPatients.length,
     appointmentsToday: dashboard?.appointmentsToday ?? todaysAppts.length,
     pendingBills: dashboard?.pendingBills ?? 0,
-    bedsFree: availableBeds,
   };
 
   if (isInitialLoading) {
@@ -85,10 +82,6 @@ export default function DashboardPage() {
             <span className="chip">
               <span className="chip__dot chip__dot--purple" />
               {stats.appointmentsToday} Appointments Today
-            </span>
-            <span className="chip">
-              <span className="chip__dot chip__dot--green" />
-              {stats.bedsFree} Beds Free
             </span>
             <span className="chip">
               <span className="chip__dot chip__dot--amber" />
@@ -123,15 +116,7 @@ export default function DashboardPage() {
               href={ROUTES.APPOINTMENTS_BOOK}
               label="Book"
             />
-            <QuickAction
-              color="purple"
-              icon={BedDouble}
-              title="Assign Bed"
-              desc="Allocate bed to patient"
-              href={ROUTES.BEDS}
-              label="Assign"
-            />
-            <BedStatusQuickAction wardStats={wardBedStats} href={ROUTES.BEDS} />
+            <TodayOverviewCard />
           </div>
 
           <div className="dashboard-panels">
@@ -263,66 +248,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-  );
-}
-
-function BedStatusQuickAction({ wardStats, href }) {
-  const totalOccupied = wardStats.reduce((sum, ward) => sum + ward.occupied, 0);
-  const totalBeds = wardStats.reduce((sum, ward) => sum + ward.total, 0);
-
-  return (
-    <div className="quick-action quick-action--green ui-interactive bed-status-quick">
-      <div className="quick-action__bar" />
-      <div className="quick-action__body bed-status-quick__body">
-        <div className="bed-status-quick__split">
-          <div className="bed-status-quick__brand">
-            <div className="quick-action__icon">
-              <BedDouble size={22} />
-            </div>
-            <h3>Bed Status</h3>
-          </div>
-          <div className="bed-status-quick__wards" aria-label="Bed status by ward">
-            <div className="bed-status-quick__ward-line bed-status-quick__ward-line--total">
-              <span className="bed-status-quick__ward-label">Total</span>
-              <span className="bed-status-quick__ward-ratio">
-                {totalBeds ? `${totalOccupied}/${totalBeds}` : '—'}
-              </span>
-            </div>
-            {wardStats.map((ward) => (
-              <div
-                key={ward.ward}
-                className="bed-status-quick__ward"
-                aria-label={
-                  ward.total
-                    ? `${ward.ward}: ${ward.occupied} occupied of ${ward.total} beds`
-                    : `${ward.ward}: no beds`
-                }
-              >
-                <div className="bed-status-quick__ward-line">
-                  <span className="bed-status-quick__ward-label">{ward.ward}</span>
-                  <span className="bed-status-quick__ward-ratio">
-                    {ward.total ? `${ward.occupied}/${ward.total}` : '—'}
-                  </span>
-                </div>
-                <div className="bed-bar bed-bar--compact" aria-hidden>
-                  <div
-                    style={{ width: `${ward.percent}%` }}
-                    className="bed-bar__occupied"
-                  />
-                  <div
-                    style={{ width: `${100 - ward.percent}%` }}
-                    className="bed-bar__free"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <Link to={href} className="quick-action__btn bed-status-quick__btn">
-          Manage
-        </Link>
-      </div>
-    </div>
   );
 }
 

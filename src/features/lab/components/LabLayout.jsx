@@ -1,14 +1,31 @@
+import { useMemo } from 'react';
 import { LayoutDashboard, ClipboardList, FileCheck } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/shared/constants';
 import RoleLayout from '@/shared/components/layout/RoleLayout';
 import LabNotificationsBell from '@/features/lab/components/LabNotificationsBell';
+import { useLabPermissionSet } from '@/features/lab/hooks/useLabPermission';
 import '../styles/lab.css';
 
 const NAV_LINKS = [
-  { label: 'Dashboard', href: ROUTES.LAB_DASHBOARD, icon: LayoutDashboard },
-  { label: 'Pending Tests', href: ROUTES.LAB_ORDERS, icon: ClipboardList },
-  { label: 'Report Archive', href: ROUTES.LAB_REPORTS, icon: FileCheck },
+  {
+    label: 'Dashboard',
+    href: ROUTES.LAB_DASHBOARD,
+    icon: LayoutDashboard,
+    requires: 'labView',
+  },
+  {
+    label: 'Pending Tests',
+    href: ROUTES.LAB_ORDERS,
+    icon: ClipboardList,
+    requires: 'labView',
+  },
+  {
+    label: 'Report Archive',
+    href: ROUTES.LAB_REPORTS,
+    icon: FileCheck,
+    requires: 'labView',
+  },
 ];
 
 const PAGE_TITLES = [
@@ -37,22 +54,34 @@ export default function LabLayout({ children, pageTitle, compact = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const onProfilePage = location.pathname === ROUTES.LAB_PROFILE;
+  const { canViewLab, canViewNotifications } = useLabPermissionSet();
+
+  const navLinks = useMemo(
+    () =>
+      NAV_LINKS.filter((link) => {
+        if (link.requires === 'labView') return canViewLab;
+        return true;
+      }),
+    [canViewLab],
+  );
 
   return (
     <RoleLayout
-      navLinks={NAV_LINKS}
+      navLinks={navLinks}
       resolveTitle={resolveTitle}
-      homeRoute={ROUTES.LAB_DASHBOARD}
+      homeRoute={canViewLab ? ROUTES.LAB_DASHBOARD : ROUTES.LAB_PROFILE}
       roleLabel="Lab Technician"
       roleLabelClassName="lab-role-label"
       defaultTitle="Dashboard"
       pageTitleOverride={pageTitle}
       isNavLinkActive={isNavLinkActive}
-      showBell
+      showBell={canViewNotifications}
       profileHref={ROUTES.LAB_PROFILE}
       logoutMenuOnly={onProfilePage}
       headerBell={
-        <LabNotificationsBell onViewAll={() => navigate(ROUTES.LAB_NOTIFICATIONS)} />
+        canViewNotifications ? (
+          <LabNotificationsBell onViewAll={() => navigate(ROUTES.LAB_NOTIFICATIONS)} />
+        ) : null
       }
       compact={compact}
     >

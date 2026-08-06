@@ -6,6 +6,7 @@ import { useNursePermission } from '@/features/nurse/hooks/useNursePermission';
 import { QueryFeedback } from '@/shared/components/common';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
 import { useNurseVitalQuery } from '@/shared/hooks/queries/useNurseQuery';
+import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
 
 export default function NurseVitalDetailPage() {
   const { vitalId } = useParams();
@@ -40,19 +41,17 @@ export default function NurseVitalDetailPage() {
                     <ArrowLeft size={16} />
                     Back
                   </button>
-                  {canUpdateVitals && (
-                    <button
-                      type="button"
-                      className="nurse-btn nurse-btn--primary"
-                      onClick={() => {
-                        const latestId = vital.history?.[0]?.history_id ?? vital.id;
-                        navigate(`/nurse/vitals/${latestId}/edit`);
-                      }}
-                    >
-                      <Pencil size={16} />
-                      Update
-                    </button>
-                  )}
+                  <NursePermissionButton
+                    allowed={canUpdateVitals}
+                    className="nurse-btn nurse-btn--primary"
+                    onClick={() => {
+                      const latestId = vital.history?.[0]?.history_id ?? vital.id;
+                      navigate(`/nurse/vitals/${latestId}/edit`);
+                    }}
+                  >
+                    <Pencil size={16} />
+                    Update
+                  </NursePermissionButton>
                 </div>
               </div>
               <NurseVitalsSnapshotView vital={vital} />

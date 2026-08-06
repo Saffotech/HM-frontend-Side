@@ -13,7 +13,6 @@ import {
 } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
 import AssignBedModal from '@/features/opd/beds/components/AssignBedModal';
-import { WARDS } from '@/shared/constants';
 import './BedOverviewPage.css';
 
 const STATUS_FILTERS = [
@@ -62,14 +61,20 @@ export default function BedOverviewPage() {
   const occupied = allBeds.filter((b) => b.status === 'Occupied').length;
   const available = allBeds.length - occupied;
 
+  const wardNames = useMemo(() => {
+    return [...new Set(allBeds.map((b) => b.ward).filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b)
+    );
+  }, [allBeds]);
+
   const wardCounts = useMemo(() => {
     const scoped = applyStatusFilter(allBeds, statusFilter);
     const counts = { All: scoped.length };
-    WARDS.forEach((w) => {
+    wardNames.forEach((w) => {
       counts[w] = scoped.filter((b) => b.ward === w).length;
     });
     return counts;
-  }, [allBeds, statusFilter]);
+  }, [allBeds, statusFilter, wardNames]);
 
   const statusCounts = useMemo(() => {
     const byWard = wardFilter === 'All' ? allBeds : allBeds.filter((b) => b.ward === wardFilter);
@@ -162,7 +167,7 @@ export default function BedOverviewPage() {
               All Wards
               <span className="bed-filter-tab__count">{wardCounts.All}</span>
             </button>
-            {WARDS.map((w) => (
+            {wardNames.map((w) => (
               <button
                 key={w}
                 type="button"

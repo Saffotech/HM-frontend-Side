@@ -9,18 +9,25 @@ import {
   usePharmacistNotificationsListQuery,
   usePharmacistNotificationsUnreadCountQuery,
 } from '@/features/pharmacy/hooks/usePharmacistNotificationsQuery';
+import { usePharmacyPermissionSet } from '@/features/pharmacy/hooks/usePharmacyPermission';
 import PharmacyNotificationRow from './PharmacyNotificationRow';
 import './PharmacyNotificationsBell.css';
 
 export default function PharmacyNotificationsBell({ onViewAll }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
-  const { data: unread = 0 } = usePharmacistNotificationsUnreadCountQuery();
-  const { data: preview } = usePharmacistNotificationsListQuery({
-    page: 1,
-    limit: 8,
-    is_read: false,
+  const { canViewNotifications } = usePharmacyPermissionSet();
+  const { data: unread = 0 } = usePharmacistNotificationsUnreadCountQuery({
+    enabled: canViewNotifications,
   });
+  const { data: preview } = usePharmacistNotificationsListQuery(
+    {
+      page: 1,
+      limit: 8,
+      is_read: false,
+    },
+    { enabled: canViewNotifications && open },
+  );
   const notifications = preview?.items ?? [];
   const showBadge = unread > 0;
 

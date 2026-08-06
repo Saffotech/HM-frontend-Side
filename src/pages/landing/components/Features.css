@@ -24,30 +24,9 @@
   display: block;
   padding: 1.5rem;
   border-radius: 1rem;
-  text-decoration: none;
   color: inherit;
   overflow: hidden;
-  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-}
-
-.landing-features__card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(29, 111, 164, 0.4);
-  box-shadow: var(--landing-shadow-glow);
-}
-
-.landing-features__arrow {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  color: var(--color-text-muted);
-  opacity: 0;
-  transition: opacity 0.2s, color 0.2s;
-}
-
-.landing-features__card:hover .landing-features__arrow {
-  opacity: 1;
-  color: var(--color-primary);
+  cursor: default;
 }
 
 .landing-features__icon {

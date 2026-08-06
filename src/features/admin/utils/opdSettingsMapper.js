@@ -1,4 +1,5 @@
 import { QUICK_BILL_ITEMS } from '@/shared/constants/billing';
+import { normalizeAdminEdit } from '@/features/admin/constants/adminEditLocks';
 
 const LOCAL_STORAGE_KEY = 'hms_admin_opd_settings_v1';
 
@@ -46,6 +47,7 @@ export function createEmptyInsuranceProvider() {
 /** Defaults matching current hardcoded OPD behaviour. */
 export function getDefaultOpdSettings() {
   return {
+    admin_edit: normalizeAdminEdit(),
     delete_controls: {
       allow_patient_delete: true,
       allow_appointment_delete: true,
@@ -221,6 +223,7 @@ export function opdSettingsApiToForm(api = {}) {
   const bank = payment.bank_details ?? {};
 
   return {
+    admin_edit: normalizeAdminEdit(api.admin_edit),
     delete_controls: {
       allow_patient_delete: asBool(
         deleteControls.allow_patient_delete,
@@ -353,6 +356,7 @@ export function opdSettingsApiToForm(api = {}) {
 /** Strip UI-only fields before PATCH. */
 export function opdSettingsFormToApi(form = {}) {
   return {
+    admin_edit: normalizeAdminEdit(form.admin_edit),
     delete_controls: { ...form.delete_controls },
     pricing: {
       gst_percent: asNumber(form.pricing?.gst_percent, 0),

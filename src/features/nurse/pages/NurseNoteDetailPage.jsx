@@ -6,6 +6,7 @@ import { useNursePermission } from '@/features/nurse/hooks/useNursePermission';
 import { QueryFeedback } from '@/shared/components/common';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
 import { useNurseNoteQuery } from '@/shared/hooks/queries/useNurseQuery';
+import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
 
 export default function NurseNoteDetailPage() {
   const { noteId } = useParams();
@@ -40,19 +41,17 @@ export default function NurseNoteDetailPage() {
                     <ArrowLeft size={16} />
                     Back
                   </button>
-                  {canUpdateNotes && (
-                    <button
-                      type="button"
-                      className="nurse-btn nurse-btn--primary"
-                      onClick={() => {
-                        const latestId = note.history?.[0]?.history_id ?? note.id;
-                        navigate(`/nurse/notes/${latestId}/edit`);
-                      }}
-                    >
-                      <Pencil size={16} />
-                      Update
-                    </button>
-                  )}
+                  <NursePermissionButton
+                    allowed={canUpdateNotes}
+                    className="nurse-btn nurse-btn--primary"
+                    onClick={() => {
+                      const latestId = note.history?.[0]?.history_id ?? note.id;
+                      navigate(`/nurse/notes/${latestId}/edit`);
+                    }}
+                  >
+                    <Pencil size={16} />
+                    Update
+                  </NursePermissionButton>
                 </div>
               </div>
               <NurseNotesSnapshotView note={note} />

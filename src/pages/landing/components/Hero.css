@@ -14,7 +14,7 @@
   position: relative;
   display: grid;
   gap: 3rem;
-  padding: 5rem 0 4rem;
+  padding: 2.5rem 0 4rem;
 }
 
 .landing-hero__title {
@@ -167,7 +167,7 @@
   .landing-hero__inner {
     grid-template-columns: 1fr 1fr;
     align-items: center;
-    padding: 7rem 0 5rem;
+    padding: 3.5rem 0 5rem;
     gap: 2rem;
   }
 

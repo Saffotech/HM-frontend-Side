@@ -15,7 +15,7 @@ const SuperAdminDepartmentsListPage = lazy(() => import('@/features/super-admin/
 const SuperAdminRolesListPage = lazy(() => import('@/features/super-admin/pages/SuperAdminRolesListPage'));
 const SuperAdminRoleCreatePage = lazy(() => import('@/features/super-admin/pages/SuperAdminRoleCreatePage'));
 const SuperAdminAssignPermissionsPage = lazy(() => import('@/features/super-admin/pages/SuperAdminAssignPermissionsPage'));
-const SuperAdminSettingsPage = lazy(() => import('@/features/super-admin/pages/SuperAdminSettingsPage'));
+const SuperAdminModuleSettingsPage = lazy(() => import('@/features/super-admin/pages/SuperAdminModuleSettingsPage'));
 const SuperAdminReportsPage = lazy(() => import('@/features/super-admin/pages/SuperAdminReportsPage'));
 const SuperAdminAuditLogPage = lazy(() => import('@/features/super-admin/pages/SuperAdminAuditLogPage'));
 const SuperAdminProfilePage = lazy(() => import('@/features/super-admin/pages/SuperAdminProfilePage'));
@@ -115,9 +115,53 @@ export const superAdminRoutes = [
           },
           {
             path: ROUTES.SUPER_ADMIN_SETTINGS,
+            element: <Navigate to={ROUTES.SUPER_ADMIN_SETTINGS_OPD} replace />,
+          },
+          {
+            path: ROUTES.SUPER_ADMIN_SETTINGS_OPD,
             element: (
               <LazyRoute>
-                <SuperAdminSettingsPage />
+                <SuperAdminModuleSettingsPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.SUPER_ADMIN_SETTINGS_DOCTOR,
+            element: (
+              <LazyRoute>
+                <SuperAdminModuleSettingsPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.SUPER_ADMIN_SETTINGS_RECEPTIONIST,
+            element: (
+              <LazyRoute>
+                <SuperAdminModuleSettingsPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.SUPER_ADMIN_SETTINGS_LAB,
+            element: (
+              <LazyRoute>
+                <SuperAdminModuleSettingsPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.SUPER_ADMIN_SETTINGS_NURSE,
+            element: (
+              <LazyRoute>
+                <SuperAdminModuleSettingsPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.SUPER_ADMIN_SETTINGS_PHARMACY,
+            element: (
+              <LazyRoute>
+                <SuperAdminModuleSettingsPage />
               </LazyRoute>
             ),
           },

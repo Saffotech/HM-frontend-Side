@@ -14,6 +14,7 @@ import {
 import LabLayout from '@/features/lab/components/LabLayout';
 import LabDashboardRecentReports from '@/features/lab/components/LabDashboardRecentReports';
 import LabDashboardReportFinder from '@/features/lab/components/LabDashboardReportFinder';
+import { useLabPermissionSet } from '@/features/lab/hooks/useLabPermission';
 import {
   useLabDashboardQuery,
   useLabOrdersQuery,
@@ -21,7 +22,7 @@ import {
 } from '@/shared/hooks/queries/useLabQuery';
 import { isOpenStatus } from '@/features/lab/utils/labOrderStatus';
 import { printReportsSummary } from '@/features/lab/utils/labReportUtils';
-import { QueryFeedback } from '@/shared/components/common';
+import { EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import './LabDashboardPage.css';
 
@@ -54,17 +55,18 @@ function Ring({ pct, size = 72, stroke = 7, color = '#1A5C34' }) {
 
 export default function LabDashboardPage() {
   const navigate = useNavigate();
+  const { canViewLab } = useLabPermissionSet();
   const [ready, setReady] = useState(false);
   const [reportFinderOpen, setReportFinderOpen] = useState(false);
 
-  const dashboardQuery = useLabDashboardQuery();
+  const dashboardQuery = useLabDashboardQuery({ enabled: canViewLab });
   const stats = dashboardQuery.data;
   const urgentQuery = useLabOrdersQuery(
     { priority: 'urgent', pageSize: 10 },
-    { enabled: !dashboardQuery.isError }
+    { enabled: canViewLab && !dashboardQuery.isError }
   );
-  const reportsQuery = useLabReportsQuery({ pageSize: 10 });
-  const reportsTotalQuery = useLabReportsQuery({ pageSize: 1 });
+  const reportsQuery = useLabReportsQuery({ pageSize: 10 }, { enabled: canViewLab });
+  const reportsTotalQuery = useLabReportsQuery({ pageSize: 1 }, { enabled: canViewLab });
 
   const reports = reportsQuery.data?.data ?? [];
   const totalReportsDone = reportsTotalQuery.data?.total ?? 0;
@@ -96,6 +98,18 @@ export default function LabDashboardPage() {
       document.getElementById('lab-report-finder')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 50);
   };
+
+  if (!canViewLab) {
+    return (
+      <LabLayout pageTitle="Dashboard">
+        <EmptyState
+          icon={FlaskConical}
+          title="Lab access denied"
+          description="You do not have permission to view lab orders and reports."
+        />
+      </LabLayout>
+    );
+  }
 
   return (
     <LabLayout pageTitle="Dashboard">

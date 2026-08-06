@@ -47,6 +47,17 @@
   border-color: var(--color-primary);
 }
 
+.nurse-btn.nurse-btn--denied,
+.nurse-btn.nurse-btn--no-permission,
+.nurse-btn--primary[aria-disabled='true'],
+.nurse-btn--secondary[aria-disabled='true'] {
+  background: #E5E7EB;
+  color: #9CA3AF;
+  border-color: #E5E7EB;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .rec-btn--secondary,
 .nurse-btn--secondary,
 .lab-btn-secondary,

@@ -9,18 +9,25 @@ import {
   useLabTechnicianNotificationsListQuery,
   useLabTechnicianNotificationsUnreadCountQuery,
 } from '@/features/lab/hooks/useLabTechnicianNotificationsQuery';
+import { useLabPermissionSet } from '@/features/lab/hooks/useLabPermission';
 import LabNotificationRow from './LabNotificationRow';
 import './LabNotificationsBell.css';
 
 export default function LabNotificationsBell({ onViewAll }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
-  const { data: unread = 0 } = useLabTechnicianNotificationsUnreadCountQuery();
-  const { data: preview } = useLabTechnicianNotificationsListQuery({
-    page: 1,
-    limit: 8,
-    is_read: false,
+  const { canViewNotifications } = useLabPermissionSet();
+  const { data: unread = 0 } = useLabTechnicianNotificationsUnreadCountQuery({
+    enabled: canViewNotifications,
   });
+  const { data: preview } = useLabTechnicianNotificationsListQuery(
+    {
+      page: 1,
+      limit: 8,
+      is_read: false,
+    },
+    { enabled: canViewNotifications && open },
+  );
   const notifications = preview?.items ?? [];
   const showBadge = unread > 0;
 

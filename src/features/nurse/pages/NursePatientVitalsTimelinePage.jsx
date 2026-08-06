@@ -12,10 +12,13 @@ import {
 } from '@/shared/hooks/queries/useNurseQuery';
 import { ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
+import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
+import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
 
 export default function NursePatientVitalsTimelinePage() {
   const { patientId } = useParams();
   const navigate = useNavigate();
+  const { canCreateVitals } = useNursePermissionSet();
   const { data, isLoading, isError, error, refetch } = useNurseVitalsSearchQuery({ patient_id: patientId });
   const { data: queueData } = useNurseQueueQuery({ page: 1, page_size: 100 });
   const { appointmentId, isLoading: isAppointmentLoading } = useNursePatientQueueAppointmentId(patientId);
@@ -29,6 +32,10 @@ export default function NursePatientVitalsTimelinePage() {
   }, [data?.items, queueData?.items, patientId]);
 
   const handleRecordVitals = () => {
+    if (!canCreateVitals) {
+      toast.error('You do not have permission to record vitals.');
+      return;
+    }
     if (!appointmentId) {
       toast.error('This patient is not in today\'s queue. Record vitals from the queue or dashboard.');
       return;
@@ -36,7 +43,7 @@ export default function NursePatientVitalsTimelinePage() {
     navigate(`${ROUTES.NURSE_VITALS_NEW}?appointmentId=${appointmentId}`);
   };
 
-  const recordDisabled = isAppointmentLoading || !appointmentId;
+  const recordDisabled = !canCreateVitals || isAppointmentLoading || !appointmentId;
 
   return (
     <NurseLayout>
@@ -44,15 +51,18 @@ export default function NursePatientVitalsTimelinePage() {
         <NursePageHeader
           title={`Vitals Timeline — ${patientDisplayId}`}
           actions={
-            <button
-              type="button"
+            <NursePermissionButton
+              allowed={canCreateVitals && !recordDisabled}
+              deniedMessage={
+                !canCreateVitals
+                  ? 'You do not have permission'
+                  : "Patient must be in today's queue"
+              }
               className="nurse-btn nurse-btn--primary"
               onClick={handleRecordVitals}
-              disabled={recordDisabled}
-              title={recordDisabled && !isAppointmentLoading ? 'Patient must be in today\'s queue' : undefined}
             >
               <Plus size={16} /> Record Vitals
-            </button>
+            </NursePermissionButton>
           }
         />
         <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>

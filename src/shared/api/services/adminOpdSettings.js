@@ -45,3 +45,9 @@ export async function saveAdminOpdSettings(form) {
     return opdSettingsApiToForm(saved);
   }
 }
+
+/** Super Admin: PATCH only admin_edit gates. */
+export async function saveAdminEditControls(adminEdit) {
+  const data = await updateOpdSettingsApi({ admin_edit: adminEdit });
+  return opdSettingsApiToForm({ ...data, _source: 'api' });
+}

@@ -3,20 +3,61 @@ import { Clock, Mail, MapPin, Phone } from 'lucide-react';
 import { toast } from '@/shared/utils/toast';
 import './Contact.css';
 
+/**
+ * Landing contact block — product inquiry for hospitals evaluating SaffoCare.
+ * Form opens the visitor’s email client (no backend API yet).
+ */
 const CONTACT_INFO = [
-  { icon: Mail, label: 'Email', value: 'sales@saffocare.com' },
-  { icon: Phone, label: 'Phone', value: '+1 (800) 555-0119' },
-  { icon: MapPin, label: 'Address', value: '120 Health Plaza, Suite 400, San Francisco, CA' },
-  { icon: Clock, label: 'Support Hours', value: '24 / 7 — every day of the year' },
+  { icon: Mail, label: 'Email', value: 'sales@saffotech.com', href: 'mailto:sales@saffotech.com' },
+  { icon: Phone, label: 'Phone', value: '+91 22 40163618', href: 'tel:+912240163618' },
+  { icon: MapPin, label: 'Address', value: 'Navi Mumbai, India' },
+  { icon: Clock, label: 'Support Hours', value: 'Mon–Sat, 10:00 AM – 6:00 PM IST' },
 ];
 
+const ROLE_OPTIONS = [
+  'Hospital Admin / Decision Maker',
+  'OPD / Front Office',
+  'Doctor',
+  'Nurse',
+  'Lab',
+  'Receptionist',
+  'Pharmacy',
+  'IT / Super Admin',
+  'Other',
+];
+
+const CONTACT_EMAIL = 'sales@saffotech.com';
+
 export default function Contact() {
-  const [form, setForm] = useState({ name: '', hospital: '', email: '', phone: '', message: '' });
+  const [form, setForm] = useState({
+    name: '',
+    hospital: '',
+    role: '',
+    email: '',
+    phone: '',
+    message: '',
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    toast.success('Thanks! Our team will reach out within 24 hours.');
-    setForm({ name: '', hospital: '', email: '', phone: '', message: '' });
+
+    const subject = encodeURIComponent(`SaffoCare inquiry — ${form.hospital || 'Hospital'}`);
+    const body = encodeURIComponent(
+      [
+        `Name: ${form.name}`,
+        `Hospital / Clinic: ${form.hospital}`,
+        `Role: ${form.role || '—'}`,
+        `Email: ${form.email}`,
+        `Phone: ${form.phone}`,
+        '',
+        'Message:',
+        form.message,
+      ].join('\n'),
+    );
+
+    window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
+    toast.success('Opening your email app to send the message…');
+    setForm({ name: '', hospital: '', role: '', email: '', phone: '', message: '' });
   };
 
   const update = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -25,9 +66,10 @@ export default function Contact() {
     <section id="contact" className="landing-contact">
       <div className="landing-container landing-contact__grid">
         <div>
-          <h2 className="landing-section-title">Let&apos;s transform your hospital</h2>
+          <h2 className="landing-section-title">Contact Us</h2>
           <p className="landing-section-sub">
-            Talk to our team for a personalized demo of SaffoCare.
+            Interested in deploying SaffoCare HMS for your hospital? Ask about modules,
+            roles (OPD, Doctor, Nurse, Lab, Pharmacy, and more), or a walkthrough with our team.
           </p>
           <ul className="landing-contact__info">
             {CONTACT_INFO.map((c) => (
@@ -37,7 +79,9 @@ export default function Contact() {
                 </span>
                 <div>
                   <p className="landing-contact__label">{c.label}</p>
-                  <p className="landing-contact__value">{c.value}</p>
+                  <p className="landing-contact__value">
+                    {c.href ? <a href={c.href}>{c.value}</a> : c.value}
+                  </p>
                 </div>
               </li>
             ))}
@@ -51,28 +95,47 @@ export default function Contact() {
               <input
                 id="contact-name"
                 required
-                placeholder="Jane Doe"
+                placeholder="Your name"
                 value={form.name}
                 onChange={update('name')}
               />
             </div>
             <div className="landing-contact__field landing-contact__field--full">
-              <label htmlFor="contact-hospital">Hospital Name</label>
+              <label htmlFor="contact-hospital">Hospital / Clinic Name</label>
               <input
                 id="contact-hospital"
                 required
-                placeholder="St. Mary's Hospital"
+                placeholder="Your hospital or clinic"
                 value={form.hospital}
                 onChange={update('hospital')}
               />
             </div>
+            <div className="landing-contact__field landing-contact__field--full">
+              <label htmlFor="contact-role">Your Role</label>
+              <select
+                id="contact-role"
+                required
+                className="landing-contact__select"
+                value={form.role}
+                onChange={update('role')}
+              >
+                <option value="" disabled>
+                  Select your role
+                </option>
+                {ROLE_OPTIONS.map((role) => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="landing-contact__field">
-              <label htmlFor="contact-email">Email</label>
+              <label htmlFor="contact-email">Work Email</label>
               <input
                 id="contact-email"
                 type="email"
                 required
-                placeholder="jane@hospital.com"
+                placeholder="you@hospital.com"
                 value={form.email}
                 onChange={update('email')}
               />
@@ -82,17 +145,17 @@ export default function Contact() {
               <input
                 id="contact-phone"
                 required
-                placeholder="+1 555 000 0000"
+                placeholder="+91 98765 43210"
                 value={form.phone}
                 onChange={update('phone')}
               />
             </div>
             <div className="landing-contact__field landing-contact__field--full">
-              <label htmlFor="contact-message">Message</label>
+              <label htmlFor="contact-message">How can we help?</label>
               <textarea
                 id="contact-message"
                 required
-                placeholder="Tell us about your hospital..."
+                placeholder="Tell us about your hospital size, modules you need (OPD, Nurse, Lab, Pharmacy…), or schedule a product walkthrough."
                 rows={5}
                 value={form.message}
                 onChange={update('message')}
@@ -100,7 +163,7 @@ export default function Contact() {
             </div>
           </div>
           <button type="submit" className="landing-btn landing-btn--primary landing-btn--lg landing-contact__submit">
-            Request Demo
+            Send Message
           </button>
         </form>
       </div>

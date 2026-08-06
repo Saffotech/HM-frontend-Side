@@ -356,15 +356,31 @@ export async function getHandover(id, token) {
 }
 
 export async function getAlerts(params = {}, token) {
-  const raw = await nurseApi.getAlerts({
-    ...params,
-    ...withAllocatedOnly(params),
-  }, token);
+  const {
+    _scopeMode,
+    allocated_only: allocatedOnlyFlag,
+    ...rest
+  } = params;
+  const allocatedOnly = allocatedOnlyFlag === true || _scopeMode === 'allocated';
+  const apiParams = { ...rest };
+  // Never leave a stale allocated_only on "All" — omit the flag entirely.
+  if (allocatedOnly) {
+    apiParams.allocated_only = true;
+  }
+  const raw = await nurseApi.getAlerts(apiParams, token);
   return mapAlertListResponse(raw);
 }
 
-export async function getAlertSummary(token) {
-  return nurseApi.getAlertSummary(token);
+export async function getAlertSummary(params = {}, token) {
+  // Back-compat: getAlertSummary(token)
+  if (typeof params === 'string' || params == null) {
+    return nurseApi.getAlertSummary({}, params);
+  }
+  const allocatedOnly = params.allocated_only === true || params._scopeMode === 'allocated';
+  return nurseApi.getAlertSummary(
+    allocatedOnly ? { allocated_only: true } : {},
+    token,
+  );
 }
 
 export async function createAlert(data, token) {
@@ -377,14 +393,6 @@ export async function getAlert(id, token) {
   return mapAlertDetail(raw);
 }
 
-export async function assignAlert(alertId, data, token) {
-  return nurseApi.assignAlert(alertId, data, token);
-}
-
 export async function resolveAlert(alertId, data, token) {
   return nurseApi.resolveAlert(alertId, data, token);
-}
-
-export async function escalateAlert(alertId, data, token) {
-  return nurseApi.escalateAlert(alertId, data, token);
 }

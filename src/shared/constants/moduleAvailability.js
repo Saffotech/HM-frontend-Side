@@ -20,6 +20,7 @@ export const STAFF_MODULE_AVAILABILITY = {
   Pharmacy: MODULE_STATUS.LIVE,
   Nursing: MODULE_STATUS.LIVE,
   Reception: MODULE_STATUS.LIVE,
+  IPD: MODULE_STATUS.LIVE,
   Billing: MODULE_STATUS.COMING_SOON,
 };
 
@@ -30,6 +31,7 @@ const ALWAYS_LIVE_ROLES = new Set([
   ROLES.OPD,
   ROLES.DOCTOR,
   ROLES.RECEPTIONIST,
+  ROLES.IPD,
 ]);
 
 export function getStaffModuleStatus(department) {

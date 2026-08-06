@@ -26,6 +26,14 @@ function readStoredListMode() {
   return null;
 }
 
+function writeStoredListMode(mode) {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, mode);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function formatNurseShiftLabel(shiftName) {
   if (!shiftName) return 'Current Shift';
   const name = String(shiftName).trim();
@@ -34,8 +42,11 @@ export function formatNurseShiftLabel(shiftName) {
 }
 
 export function NursePatientScopeProvider({ children }) {
-  const [listMode, setListModeState] = useState(() => readStoredListMode());
-  const defaultModeApplied = useRef(Boolean(readStoredListMode()));
+  const stored = readStoredListMode();
+  // Never leave mode null — disabled All/Allocated buttons were breaking after navigation.
+  const [listMode, setListModeState] = useState(() => stored ?? 'all');
+  const userChosenRef = useRef(Boolean(stored));
+  const autoDefaultAppliedRef = useRef(Boolean(stored));
 
   const {
     data: allocationSummary,
@@ -44,38 +55,36 @@ export function NursePatientScopeProvider({ children }) {
   } = useNurseBedAllocationSummaryQuery();
 
   useEffect(() => {
-    if (defaultModeApplied.current) return;
+    if (userChosenRef.current || autoDefaultAppliedRef.current) return;
     if (summaryLoading) return;
-    if (summaryError) {
-      setListModeState('all');
-      defaultModeApplied.current = true;
-      return;
+
+    let next = 'all';
+    if (!summaryError && allocationSummary?.has_allocations) {
+      next = 'allocated';
     }
-    if (allocationSummary == null) return;
-    setListModeState(allocationSummary.has_allocations ? 'allocated' : 'all');
-    defaultModeApplied.current = true;
+
+    setListModeState(next);
+    writeStoredListMode(next);
+    autoDefaultAppliedRef.current = true;
   }, [allocationSummary, summaryLoading, summaryError]);
 
   const setListMode = useCallback((mode) => {
     if (mode !== 'allocated' && mode !== 'all') return;
+    userChosenRef.current = true;
+    autoDefaultAppliedRef.current = true;
     setListModeState(mode);
-    defaultModeApplied.current = true;
-    try {
-      sessionStorage.setItem(STORAGE_KEY, mode);
-    } catch {
-      /* ignore */
-    }
+    writeStoredListMode(mode);
   }, []);
 
   const allocatedOnly = listMode === 'allocated';
-  const scopeReady = listMode != null;
+  const scopeReady = true;
 
   const {
     data: allocatedBedPatients,
     isLoading: allocatedPatientsLoading,
   } = useNurseBedPatientsQuery(
     { allocated_only: true, page: 1, page_size: 100 },
-    { enabled: scopeReady && allocatedOnly },
+    { enabled: allocatedOnly },
   );
 
   const allocatedBedIdSet = useMemo(

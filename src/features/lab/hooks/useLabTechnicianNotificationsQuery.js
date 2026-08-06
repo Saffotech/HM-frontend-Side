@@ -64,17 +64,19 @@ function invalidateNotificationQueries(queryClient) {
   queryClient.invalidateQueries({ queryKey: queryKeys.lab.notificationsUnreadCount });
 }
 
-export function useLabTechnicianNotificationsListQuery(filters = {}) {
+export function useLabTechnicianNotificationsListQuery(filters = {}, options = {}) {
+  const { enabled = true } = options;
   const token = useQueryToken();
   return useQuery({
     queryKey: queryKeys.lab.notificationsList(filters),
     queryFn: () => getLabTechnicianNotifications(filters, token),
-    enabled: Boolean(token),
+    enabled: Boolean(token) && enabled,
     retry: false,
   });
 }
 
-export function useLabTechnicianNotificationsUnreadCountQuery() {
+export function useLabTechnicianNotificationsUnreadCountQuery(options = {}) {
+  const { enabled = true } = options;
   const token = useQueryToken();
   return useQuery({
     queryKey: queryKeys.lab.notificationsUnreadCount,
@@ -82,8 +84,8 @@ export function useLabTechnicianNotificationsUnreadCountQuery() {
       const data = await getLabTechnicianNotificationsUnreadCount(token);
       return { count: data?.count ?? 0 };
     },
-    enabled: Boolean(token),
-    refetchInterval: UNREAD_POLL_MS,
+    enabled: Boolean(token) && enabled,
+    refetchInterval: enabled ? UNREAD_POLL_MS : false,
     refetchOnWindowFocus: true,
     retry: false,
     select: (data) => data?.count ?? 0,

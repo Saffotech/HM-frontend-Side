@@ -17,6 +17,7 @@ import {
   getMedicationPatients,
   getPatientMedications,
   administerMedication,
+  updateAdministration,
   getMedicationHistory,
   getPatientMedicationHistory,
   listHandovers,
@@ -30,9 +31,7 @@ import {
   getAlertSummary,
   getAlert,
   createAlert,
-  assignAlert,
   resolveAlert,
-  escalateAlert,
 } from '@/shared/api/services/nurse';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
@@ -304,18 +303,24 @@ export function useNurseAlertsQuery(filters = {}, options = {}) {
     queryKey: queryKeys.nurse.alerts(filters),
     enabled,
     queryFn: () => getAlerts(filters, token),
-    staleTime: 30 * 1000,
+    staleTime: 15 * 1000,
   });
 }
 
-export function useNurseAlertSummaryQuery(options = {}) {
+export function useNurseAlertSummaryQuery(filters = {}, options = {}) {
   const { enabled = true } = options;
   const token = useQueryToken();
+  const summaryFilters = {
+    allocated_only: filters.allocated_only === true ? true : undefined,
+    _scopeMode: filters.allocated_only === true || filters._scopeMode === 'allocated'
+      ? 'allocated'
+      : 'all',
+  };
   return useQuery({
-    queryKey: queryKeys.nurse.alertSummary,
+    queryKey: queryKeys.nurse.alertSummary(summaryFilters),
     enabled,
-    queryFn: () => getAlertSummary(token),
-    staleTime: 30 * 1000,
+    queryFn: () => getAlertSummary(summaryFilters, token),
+    staleTime: 15 * 1000,
   });
 }
 
@@ -405,6 +410,20 @@ export function useAdministerMedicationMutation(patientId) {
   });
 }
 
+export function useUpdateAdministrationMutation(patientId) {
+  const token = useQueryToken();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ administrationId, data }) => updateAdministration(administrationId, data, token),
+    onSuccess: () => {
+      if (patientId) queryClient.invalidateQueries({ queryKey: queryKeys.nurse.patientMedications(patientId) });
+      if (patientId) queryClient.invalidateQueries({ queryKey: queryKeys.nurse.patientMedHistory(patientId) });
+      queryClient.invalidateQueries({ queryKey: ['nurse', 'medication-history'] });
+      queryClient.invalidateQueries({ queryKey: ['nurse', 'medication-patients'] });
+    },
+  });
+}
+
 export function useCreateHandoverMutation() {
   const token = useQueryToken();
   const queryClient = useQueryClient();
@@ -466,20 +485,7 @@ export function useCreateAlertMutation() {
     mutationFn: (data) => createAlert(data, token),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nurse', 'alerts'] });
-      queryClient.invalidateQueries({ queryKey: queryKeys.nurse.alertSummary });
-    },
-  });
-}
-
-export function useAssignAlertMutation(alertId) {
-  const token = useQueryToken();
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (data) => assignAlert(alertId, data, token),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['nurse', 'alerts'] });
-      queryClient.invalidateQueries({ queryKey: queryKeys.nurse.alertSummary });
-      if (alertId) queryClient.invalidateQueries({ queryKey: queryKeys.nurse.alert(alertId) });
+      queryClient.invalidateQueries({ queryKey: ['nurse', 'alert-summary'] });
     },
   });
 }
@@ -491,20 +497,7 @@ export function useResolveAlertMutation(alertId) {
     mutationFn: (data) => resolveAlert(alertId, data, token),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nurse', 'alerts'] });
-      queryClient.invalidateQueries({ queryKey: queryKeys.nurse.alertSummary });
-      if (alertId) queryClient.invalidateQueries({ queryKey: queryKeys.nurse.alert(alertId) });
-    },
-  });
-}
-
-export function useEscalateAlertMutation(alertId) {
-  const token = useQueryToken();
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (data) => escalateAlert(alertId, data, token),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['nurse', 'alerts'] });
-      queryClient.invalidateQueries({ queryKey: queryKeys.nurse.alertSummary });
+      queryClient.invalidateQueries({ queryKey: ['nurse', 'alert-summary'] });
       if (alertId) queryClient.invalidateQueries({ queryKey: queryKeys.nurse.alert(alertId) });
     },
   });
