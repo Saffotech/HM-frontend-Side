@@ -1,15 +1,16 @@
 /**
  * Charge line table for IPD billing / discharge.
- * Renders empty state when there are no rows.
  */
 
 import { EmptyState } from '@/shared/components/common';
+import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
 
 export default function ChargeTable({
   rows = [],
   loading = false,
   emptyTitle = 'No charges yet',
   emptyDescription = 'Charges will appear here when billing is connected.',
+  compact = false,
 }) {
   if (loading) {
     return (
@@ -29,22 +30,26 @@ export default function ChargeTable({
 
   return (
     <div className="ipd-table-wrap">
-      <table className="ipd-table">
+      <table className={`ipd-table${compact ? ' ipd-table--dense' : ''} ipd-table--charges`}>
         <thead>
           <tr>
             <th>Description</th>
-            <th>Qty</th>
-            <th>Unit</th>
-            <th>Amount</th>
+            <th className="ipd-num">Qty</th>
+            <th className="ipd-num">Unit</th>
+            <th className="ipd-num">Amount</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => (
             <tr key={row.id || `${row.description}-${row.amount}`}>
               <td>{row.description || '—'}</td>
-              <td>{row.qty ?? '—'}</td>
-              <td>{row.unit_price != null ? row.unit_price : '—'}</td>
-              <td>{row.amount != null ? row.amount : '—'}</td>
+              <td className="ipd-num">{row.qty ?? '—'}</td>
+              <td className="ipd-num">
+                {row.unit_price != null ? formatIpdMoney(row.unit_price) : '—'}
+              </td>
+              <td className="ipd-num ipd-num--strong">
+                {row.amount != null ? formatIpdMoney(row.amount) : '—'}
+              </td>
             </tr>
           ))}
         </tbody>

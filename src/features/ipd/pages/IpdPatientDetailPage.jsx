@@ -1,5 +1,5 @@
 /**
- * IPD Patient Detail — live `/ipd/admissions/{id}`.
+ * IPD Patient Detail — admission overview (`/ipd/admissions/{id}`).
  */
 
 import { useParams, useNavigate, Link } from 'react-router-dom';
@@ -9,35 +9,27 @@ import IpdPageHeader from '@/features/ipd/components/IpdPageHeader';
 import IpdStatusBadge from '@/features/ipd/components/IpdStatusBadge';
 import ChargeTable from '@/features/ipd/components/ChargeTable';
 import BillSummary from '@/features/ipd/components/BillSummary';
+import AdmissionCareTeamEditor from '@/features/ipd/components/AdmissionCareTeamEditor';
 import { useIpdAdmissionDetailQuery } from '@/features/ipd/hooks/useIpdQuery';
+import { useIpdPermissionSet } from '@/features/ipd/hooks/useIpdPermission';
 import {
   formatIpdDateTime,
   formatIpdMoney,
 } from '@/features/ipd/utils/ipdFormat';
 
-function DetailSection({ title, children }) {
+function Field({ label, children, wide = false }) {
   return (
-    <div className="ipd-card">
-      <div className="ipd-card__head">
-        <h2 className="ipd-card__title">{title}</h2>
-      </div>
-      <div className="ipd-card__body">{children}</div>
+    <div className={`ipd-pd-field${wide ? ' ipd-pd-field--wide' : ''}`}>
+      <dt>{label}</dt>
+      <dd>{children ?? '—'}</dd>
     </div>
-  );
-}
-
-function Kv({ label, value }) {
-  return (
-    <>
-      <span className="ipd-kv__label">{label}</span>
-      <span className="ipd-kv__value">{value ?? '—'}</span>
-    </>
   );
 }
 
 export default function IpdPatientDetailPage() {
   const { admissionId } = useParams();
   const navigate = useNavigate();
+  const { canAdmit } = useIpdPermissionSet();
   const { data, isLoading, isError, error, refetch } =
     useIpdAdmissionDetailQuery(admissionId);
 
@@ -45,28 +37,41 @@ export default function IpdPatientDetailPage() {
   const visits = data?.doctor_visits ?? [];
   const bills = data?.bills ?? [];
   const running = data?.running_bill;
+  const admitted = admission?.status === 'admitted';
 
   return (
-    <div className="ipd-page">
+    <div className="ipd-page ipd-page--compact">
       <IpdPageHeader
-        title="Patient Detail"
+        title={admission?.patient_name || 'Patient Detail'}
         subtitle={
           admission
-            ? `${admission.admission_no || `Admission #${admissionId}`} · ${admission.patient_name || ''}`
+            ? [
+                admission.admission_no,
+                admission.patient_uid,
+                admission.ward_name && admission.bed_number
+                  ? `${admission.ward_name} / ${admission.bed_number}`
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')
             : admissionId
               ? `Admission #${admissionId}`
-              : 'IPD stay overview'
+              : undefined
         }
         actions={
           <div className="ipd-form-actions">
-            {admission?.status === 'admitted' ? (
+            {admitted ? (
               <>
                 <Button
                   type="button"
                   variant="secondary"
+                  size="sm"
                   onClick={() =>
                     navigate(
-                      ROUTES.IPD_BILL_PREVIEW.replace(':admissionId', String(admissionId))
+                      ROUTES.IPD_BILL_PREVIEW.replace(
+                        ':admissionId',
+                        String(admissionId)
+                      )
                     )
                   }
                 >
@@ -74,6 +79,7 @@ export default function IpdPatientDetailPage() {
                 </Button>
                 <Button
                   type="button"
+                  size="sm"
                   onClick={() =>
                     navigate(
                       ROUTES.IPD_DISCHARGE_ADMISSION.replace(
@@ -90,9 +96,10 @@ export default function IpdPatientDetailPage() {
             <Button
               type="button"
               variant="secondary"
+              size="sm"
               onClick={() => navigate(ROUTES.IPD_PATIENTS)}
             >
-              Back to list
+              Back
             </Button>
           </div>
         }
@@ -107,9 +114,12 @@ export default function IpdPatientDetailPage() {
       ) : null}
 
       {isLoading ? (
-        <div className="ipd-section-stack">
-          <div className="ipd-skeleton" style={{ height: '6rem' }} />
-          <div className="ipd-skeleton" style={{ height: '6rem' }} />
+        <div className="ipd-card">
+          <div className="ipd-card__body" style={{ display: 'grid', gap: '0.4rem' }}>
+            <div className="ipd-skeleton" />
+            <div className="ipd-skeleton" />
+            <div className="ipd-skeleton" />
+          </div>
         </div>
       ) : !admission ? (
         <EmptyState
@@ -117,148 +127,155 @@ export default function IpdPatientDetailPage() {
           description="This admission may have been removed or you may not have access."
         />
       ) : (
-        <div className="ipd-section-stack">
-          <div className="ipd-detail-grid">
-            <DetailSection title="Patient Summary">
-              <div className="ipd-kv">
-                <Kv label="Name" value={admission.patient_name} />
-                <Kv label="UHID" value={admission.patient_uid} />
-                <Kv label="Status" value={<IpdStatusBadge status={admission.status} />} />
+        <div className="ipd-pd-stack">
+          <div className="ipd-card">
+            <div className="ipd-card__head ipd-pd-head">
+              <div className="ipd-pd-head__left">
+                <h2 className="ipd-card__title">Admission</h2>
+                <IpdStatusBadge status={admission.status} />
               </div>
-            </DetailSection>
-            <DetailSection title="Admission Information">
-              <div className="ipd-kv">
-                <Kv label="Admission No." value={admission.admission_no} />
-                <Kv label="Doctor" value={admission.doctor_name} />
-                <Kv label="Department" value={admission.department_name} />
-                <Kv label="Diagnosis" value={admission.diagnosis} />
-                <Kv label="Notes" value={admission.notes} />
-                <Kv label="Admitted" value={formatIpdDateTime(admission.admitted_at)} />
-              </div>
-            </DetailSection>
-            <DetailSection title="Current Bed">
-              <div className="ipd-kv">
-                <Kv label="Ward" value={admission.ward_name} />
-                <Kv label="Bed" value={admission.bed_number} />
-              </div>
-            </DetailSection>
-            <DetailSection title="Length of Stay">
-              <div className="ipd-kv">
-                <Kv
-                  label="Days"
-                  value={
-                    admission.length_of_stay_days != null
-                      ? `${admission.length_of_stay_days} day(s)`
-                      : '—'
-                  }
-                />
-                <Kv
-                  label="Discharged"
-                  value={
-                    admission.discharged_at
-                      ? formatIpdDateTime(admission.discharged_at)
-                      : 'Still admitted'
-                  }
+            </div>
+            <div className="ipd-card__body ipd-pd-body">
+              <dl className="ipd-pd-grid">
+                <Field label="Admission No.">{admission.admission_no}</Field>
+                <Field label="UHID">{admission.patient_uid}</Field>
+                <Field label="Ward / Bed">
+                  {admission.ward_name || '—'} / {admission.bed_number || '—'}
+                </Field>
+                <Field label="Length of stay">
+                  {admission.length_of_stay_days != null
+                    ? `${admission.length_of_stay_days} day(s)`
+                    : '—'}
+                </Field>
+                <Field label="Admitted">
+                  {formatIpdDateTime(admission.admitted_at)}
+                </Field>
+                <Field label="Discharged">
+                  {admission.discharged_at
+                    ? formatIpdDateTime(admission.discharged_at)
+                    : 'Still admitted'}
+                </Field>
+                <Field label="Diagnosis">{admission.diagnosis || '—'}</Field>
+                <Field label="Notes" wide>
+                  {admission.notes || '—'}
+                </Field>
+              </dl>
+
+              <div className="ipd-pd-care">
+                <div className="ipd-pd-care__label">Care team</div>
+                <AdmissionCareTeamEditor
+                  admission={admission}
+                  canEdit={canAdmit}
+                  compact
                 />
               </div>
-            </DetailSection>
+            </div>
           </div>
 
-          <DetailSection title="Doctor Visits">
-            {visits.length === 0 ? (
-              <EmptyState
-                title="No doctor visits"
-                description="Visit charges recorded against this stay will appear here."
-              />
-            ) : (
-              <div className="ipd-table-wrap">
-                <table className="ipd-table">
-                  <thead>
-                    <tr>
-                      <th>Doctor</th>
-                      <th>Visited</th>
-                      <th>Charge</th>
-                      <th>Notes</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visits.map((visit) => (
-                      <tr key={visit.id}>
-                        <td>{visit.doctor_name || '—'}</td>
-                        <td>{formatIpdDateTime(visit.visited_at)}</td>
-                        <td>{formatIpdMoney(visit.charge)}</td>
-                        <td>{visit.notes || '—'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          <div className="ipd-pd-split">
+            <div className="ipd-card">
+              <div className="ipd-card__head">
+                <h2 className="ipd-card__title">Doctor visits</h2>
+                {visits.length > 0 ? (
+                  <span className="ipd-page__subtitle">{visits.length}</span>
+                ) : null}
               </div>
-            )}
-          </DetailSection>
+              {visits.length === 0 ? (
+                <div className="ipd-card__body">
+                  <p className="ipd-pd-muted">No doctor visits recorded.</p>
+                </div>
+              ) : (
+                <div className="ipd-table-wrap">
+                  <table className="ipd-table ipd-table--dense">
+                    <thead>
+                      <tr>
+                        <th>Doctor</th>
+                        <th>Visited</th>
+                        <th>Charge</th>
+                        <th>Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visits.map((visit) => (
+                        <tr key={visit.id}>
+                          <td>{visit.doctor_name || '—'}</td>
+                          <td>{formatIpdDateTime(visit.visited_at)}</td>
+                          <td>{formatIpdMoney(visit.charge)}</td>
+                          <td>{visit.notes || '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
 
-          <DetailSection title="Billing Summary">
-            <ChargeTable
-              rows={running?.items ?? []}
-              emptyTitle="No running charges"
-              emptyDescription="Bed-day and visit charges will appear once the stay is active."
-            />
-            <BillSummary
-              subtotal={formatIpdMoney(running?.subtotal)}
-              tax={formatIpdMoney(running?.gst_amount)}
-              total={formatIpdMoney(running?.grand_total)}
-            />
-            {bills.length > 0 ? (
-              <div className="ipd-table-wrap" style={{ marginTop: '1rem' }}>
-                <table className="ipd-table">
-                  <thead>
-                    <tr>
-                      <th>Bill</th>
-                      <th>Status</th>
-                      <th>Total</th>
-                      <th>Paid</th>
-                      <th>Balance</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+            <div className="ipd-card">
+              <div className="ipd-card__head">
+                <h2 className="ipd-card__title">Billing</h2>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() =>
+                    navigate(
+                      ROUTES.IPD_BILL_PREVIEW.replace(
+                        ':admissionId',
+                        String(admissionId)
+                      )
+                    )
+                  }
+                >
+                  Open bill
+                </Button>
+              </div>
+              <div className="ipd-card__body ipd-pd-billing">
+                {(running?.items ?? []).length === 0 ? (
+                  <p className="ipd-pd-muted">No running charges yet.</p>
+                ) : (
+                  <ChargeTable rows={running.items} compact />
+                )}
+                <BillSummary
+                  subtotal={formatIpdMoney(running?.subtotal)}
+                  tax={formatIpdMoney(running?.gst_amount)}
+                  total={formatIpdMoney(running?.grand_total)}
+                />
+                {bills.length > 0 ? (
+                  <div className="ipd-pd-bill-list">
+                    <div className="ipd-pd-bill-list__title">Generated bills</div>
                     {bills.map((bill) => (
-                      <tr key={bill.id}>
-                        <td>
-                          <Link
-                            to={ROUTES.IPD_BILL_PREVIEW.replace(
-                              ':admissionId',
-                              String(admissionId)
-                            )}
-                          >
+                      <Link
+                        key={bill.id}
+                        to={ROUTES.IPD_BILL_PREVIEW.replace(
+                          ':admissionId',
+                          String(admissionId)
+                        )}
+                        className="ipd-pd-bill-row"
+                      >
+                        <div className="ipd-pd-bill-row__main">
+                          <span className="ipd-pd-bill-row__no">
                             {bill.bill_number}
-                          </Link>
-                        </td>
-                        <td>
+                          </span>
                           <IpdStatusBadge status={bill.payment_status} />
-                        </td>
-                        <td>{formatIpdMoney(bill.grand_total)}</td>
-                        <td>{formatIpdMoney(bill.paid_amount)}</td>
-                        <td>{formatIpdMoney(bill.balance_due)}</td>
-                      </tr>
+                        </div>
+                        <div className="ipd-pd-bill-row__amounts">
+                          <span>
+                            <em>Total</em> {formatIpdMoney(bill.grand_total)}
+                          </span>
+                          <span>
+                            <em>Paid</em> {formatIpdMoney(bill.paid_amount)}
+                          </span>
+                          <span>
+                            <em>Due</em> {formatIpdMoney(bill.balance_due)}
+                          </span>
+                        </div>
+                      </Link>
                     ))}
-                  </tbody>
-                </table>
+                  </div>
+                ) : null}
               </div>
-            ) : null}
-          </DetailSection>
-
-          <DetailSection title="Discharge Information">
-            {admission.status === 'discharged' ? (
-              <div className="ipd-kv">
-                <Kv label="Discharged at" value={formatIpdDateTime(admission.discharged_at)} />
-                <Kv label="Notes" value={admission.notes} />
-              </div>
-            ) : (
-              <EmptyState
-                title="Not discharged"
-                description="Discharge details will appear after the stay is closed."
-              />
-            )}
-          </DetailSection>
+            </div>
+          </div>
         </div>
       )}
     </div>

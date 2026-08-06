@@ -174,7 +174,21 @@ export default function IpdDashboardPage() {
                         <td>
                           {row.ward_name || "—"} / {row.bed_number || "—"}
                         </td>
-                        <td>{row.doctor_name || "—"}</td>
+                        <td>
+                          {row.doctor_name ||
+                            (row.status === "admitted" ? (
+                              <Link
+                                to={ROUTES.IPD_PATIENT_DETAIL.replace(
+                                  ":admissionId",
+                                  String(row.id),
+                                )}
+                              >
+                                Assign doctor
+                              </Link>
+                            ) : (
+                              "—"
+                            ))}
+                        </td>
                         <td>
                           <IpdStatusBadge status={row.status} />
                         </td>

@@ -1,11 +1,12 @@
 /**
- * IPD Beds overview — live `/ipd/beds` + `/ipd/beds/wards`.
+ * IPD Beds — dense directory with contextual row actions.
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button, EmptyState, QueryFeedback } from "@/shared/components/common";
 import { ROUTES, WARDS } from "@/shared/constants";
+import { toast } from "@/shared/utils/toast";
 import IpdPageHeader from "@/features/ipd/components/IpdPageHeader";
 import IpdStatusBadge from "@/features/ipd/components/IpdStatusBadge";
 import BedAssignModal from "@/features/ipd/components/BedAssignModal";
@@ -14,16 +15,26 @@ import { useIpdPermissionSet } from "@/features/ipd/hooks/useIpdPermission";
 import IpdPermissionButton from "@/features/ipd/components/IpdPermissionButton";
 import {
   useIpdBedsQuery,
+  useIpdPatientsQuery,
   useIpdWardStatsQuery,
 } from "@/features/ipd/hooks/useIpdQuery";
+import { IPD_ADMISSION_STATUS } from "@/features/ipd/utils/constants";
+
+const PAGE_SIZE = 25;
 
 export default function IpdBedsPage() {
   const navigate = useNavigate();
-  const { canAssignBed, canTransferBed, canAdmit } = useIpdPermissionSet();
-  const [assignOpen, setAssignOpen] = useState(false);
-  const [transferOpen, setTransferOpen] = useState(false);
+  const { canAssignBed, canTransferBed, canAdmit, canDischarge } =
+    useIpdPermissionSet();
 
-  // Filters live in the URL so dashboard drill-downs land on a filtered view.
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [assignSeed, setAssignSeed] = useState({ ward: "", bedId: "" });
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [transferAdmissionId, setTransferAdmissionId] = useState("");
+  const [transferBed, setTransferBed] = useState(null);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+
   const [searchParams, setSearchParams] = useSearchParams();
   const statusFilter = searchParams.get("status") ?? "";
   const wardFilter = searchParams.get("ward") ?? "";
@@ -33,12 +44,16 @@ export default function IpdBedsPage() {
     if (value) next.set(key, value);
     else next.delete(key);
     setSearchParams(next, { replace: true });
+    setPage(1);
   };
 
   const wardsQuery = useIpdWardStatsQuery();
   const bedsQuery = useIpdBedsQuery({
-    status: statusFilter || undefined,
     ward: wardFilter || undefined,
+  });
+  const admissionsQuery = useIpdPatientsQuery({
+    status: IPD_ADMISSION_STATUS.ADMITTED,
+    limit: 100,
   });
 
   const loading = wardsQuery.isLoading || bedsQuery.isLoading;
@@ -48,8 +63,7 @@ export default function IpdBedsPage() {
     available: ward.available ?? 0,
     total: (ward.occupied ?? 0) + (ward.available ?? 0),
   }));
-  const beds = bedsQuery.data?.beds ?? [];
-  // Bed stats follow the active filter, so headline totals come from ward stats.
+
   const totals = wards.reduce(
     (acc, ward) => ({
       occupied: acc.occupied + ward.occupied,
@@ -58,7 +72,147 @@ export default function IpdBedsPage() {
     }),
     { occupied: 0, available: 0, total: 0 },
   );
-  const hasFilter = Boolean(statusFilter || wardFilter);
+
+  /** Resolve active admission id from bed occupancy fields. */
+  const admissionLookup = useMemo(() => {
+    const byBed = new Map();
+    const byPatient = new Map();
+    const byBedNumber = new Map();
+    const byPatientUid = new Map();
+    for (const row of admissionsQuery.data?.items ?? []) {
+      if (row.bed_id != null) byBed.set(String(row.bed_id), row.id);
+      if (row.patient_id != null) byPatient.set(String(row.patient_id), row.id);
+      if (row.bed_number) {
+        const key = `${String(row.ward_name || "").toLowerCase()}::${String(row.bed_number).toLowerCase()}`;
+        byBedNumber.set(key, row.id);
+      }
+      if (row.patient_uid) {
+        byPatientUid.set(String(row.patient_uid).toLowerCase(), row.id);
+      }
+    }
+    return { byBed, byPatient, byBedNumber, byPatientUid };
+  }, [admissionsQuery.data]);
+
+  const resolveAdmissionId = (bed) => {
+    if (!bed) return null;
+    const bedKey = `${String(bed.ward_name || "").toLowerCase()}::${String(bed.bed_number || "").toLowerCase()}`;
+    return (
+      admissionLookup.byBed.get(String(bed.id)) ??
+      (bed.patient_id != null
+        ? admissionLookup.byPatient.get(String(bed.patient_id))
+        : null) ??
+      (bed.bed_number ? admissionLookup.byBedNumber.get(bedKey) : null) ??
+      (bed.patient_uid
+        ? admissionLookup.byPatientUid.get(String(bed.patient_uid).toLowerCase())
+        : null) ??
+      null
+    );
+  };
+
+  const filteredBeds = useMemo(() => {
+    let list = bedsQuery.data?.beds ?? [];
+    if (statusFilter) {
+      list = list.filter((b) => b.status === statusFilter);
+    }
+    const q = search.trim().toLowerCase();
+    if (q) {
+      list = list.filter((b) => {
+        const hay = [b.bed_number, b.ward_name, b.patient_name, b.patient_uid]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return hay.includes(q);
+      });
+    }
+    return list;
+  }, [bedsQuery.data, statusFilter, search]);
+
+  const totalFiltered = filteredBeds.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageStart = (safePage - 1) * PAGE_SIZE;
+  const pageBeds = filteredBeds.slice(pageStart, pageStart + PAGE_SIZE);
+  const hasFilter = Boolean(statusFilter || wardFilter || search.trim());
+
+  const openAssign = (bed = null) => {
+    setAssignSeed({
+      ward: bed?.ward_name || "",
+      bedId: bed?.id ? String(bed.id) : "",
+    });
+    setAssignOpen(true);
+  };
+
+  const openTransfer = async (bed) => {
+    let admissionId = resolveAdmissionId(bed);
+
+    // Admissions list may still be loading / stale — refresh once.
+    if (!admissionId) {
+      try {
+        const fresh = await admissionsQuery.refetch();
+        const items = fresh.data?.items ?? [];
+        const match = items.find(
+          (row) =>
+            (bed.id != null && String(row.bed_id) === String(bed.id)) ||
+            (bed.patient_id != null &&
+              String(row.patient_id) === String(bed.patient_id)) ||
+            (bed.bed_number &&
+              String(row.bed_number).toLowerCase() ===
+                String(bed.bed_number).toLowerCase() &&
+              String(row.ward_name || "").toLowerCase() ===
+                String(bed.ward_name || "").toLowerCase()) ||
+            (bed.patient_uid &&
+              String(row.patient_uid).toLowerCase() ===
+                String(bed.patient_uid).toLowerCase()),
+        );
+        admissionId = match?.id ?? null;
+      } catch {
+        admissionId = null;
+      }
+    }
+
+    setTransferAdmissionId(admissionId ? String(admissionId) : "");
+    setTransferBed(bed || null);
+    setTransferOpen(true);
+  };
+
+  const openRelease = async (bed) => {
+    let admissionId = resolveAdmissionId(bed);
+    if (!admissionId) {
+      try {
+        const fresh = await admissionsQuery.refetch();
+        const items = fresh.data?.items ?? [];
+        const match = items.find(
+          (row) =>
+            (bed.id != null && String(row.bed_id) === String(bed.id)) ||
+            (bed.patient_id != null &&
+              String(row.patient_id) === String(bed.patient_id)) ||
+            (bed.patient_uid &&
+              String(row.patient_uid).toLowerCase() ===
+                String(bed.patient_uid).toLowerCase()) ||
+            (bed.bed_number &&
+              String(row.bed_number).toLowerCase() ===
+                String(bed.bed_number).toLowerCase() &&
+              String(row.ward_name || "").toLowerCase() ===
+                String(bed.ward_name || "").toLowerCase()),
+        );
+        admissionId = match?.id ?? null;
+      } catch {
+        admissionId = null;
+      }
+    }
+    if (!admissionId) {
+      toast.error(
+        "Could not find an active admission for this bed. Open Discharge from the patient list.",
+      );
+      return;
+    }
+    navigate(
+      ROUTES.IPD_DISCHARGE_ADMISSION.replace(
+        ":admissionId",
+        String(admissionId),
+      ),
+    );
+  };
 
   return (
     <div className="ipd-page">
@@ -67,34 +221,17 @@ export default function IpdBedsPage() {
         subtitle={
           totals.total
             ? `${totals.occupied} occupied · ${totals.available} available · ${totals.total} total`
-            : "Ward occupancy and bed directory"
+            : undefined
         }
         actions={
-          <>
-            <IpdPermissionButton
-              allowed={canAssignBed || canAdmit}
-              type="button"
-              className="btn btn--primary btn--md"
-              onClick={() => setAssignOpen(true)}
-            >
-              Assign bed
-            </IpdPermissionButton>
-            <IpdPermissionButton
-              allowed={canTransferBed}
-              type="button"
-              className="btn btn--secondary btn--md"
-              onClick={() => setTransferOpen(true)}
-            >
-              Transfer
-            </IpdPermissionButton>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => navigate(ROUTES.IPD_BED_TRANSFER)}
-            >
-              Transfer page
-            </Button>
-          </>
+          <IpdPermissionButton
+            allowed={canAssignBed || canAdmit}
+            type="button"
+            className="btn btn--primary btn--md"
+            onClick={() => openAssign()}
+          >
+            Assign Bed
+          </IpdPermissionButton>
         }
       />
 
@@ -113,44 +250,78 @@ export default function IpdBedsPage() {
         </div>
       )}
 
-      <div className="ipd-card">
-        <div className="ipd-card__head">
-          <h2 className="ipd-card__title">Wards</h2>
-        </div>
-        <div className="ipd-card__body">
-          {loading ? (
-            <div className="ipd-ward-grid">
-              <div className="ipd-skeleton" style={{ height: "5rem" }} />
-              <div className="ipd-skeleton" style={{ height: "5rem" }} />
-            </div>
-          ) : wards.length === 0 ? (
-            <EmptyState
-              title="No ward data"
-              description="Ward occupancy will appear once beds are configured in inventory."
-            />
-          ) : (
-            <div className="ipd-ward-grid">
-              {wards.map((ward) => (
-                <div key={ward.name} className="ipd-ward-card">
-                  <p className="ipd-ward-card__name">{ward.name}</p>
-                  <p className="ipd-ward-card__meta">
-                    Occupied {ward.occupied} · Available {ward.available} ·
-                    Total {ward.total}
-                  </p>
+      {!loading && wards.length > 0 ? (
+        <div className="ipd-beds-summary" aria-label="Ward occupancy">
+          {wards.map((ward) => {
+            const pct =
+              ward.total > 0
+                ? Math.round((ward.occupied / ward.total) * 100)
+                : 0;
+            const active = wardFilter === ward.name;
+            return (
+              <button
+                type="button"
+                key={ward.name}
+                className={`ipd-beds-summary__item${
+                  active ? " ipd-beds-summary__item--active" : ""
+                }`}
+                onClick={() => setFilter("ward", active ? "" : ward.name)}
+              >
+                <div className="ipd-beds-summary__top">
+                  <span className="ipd-beds-summary__name">{ward.name}</span>
                 </div>
-              ))}
-            </div>
-          )}
+                <div className="ipd-occ-bar" aria-hidden>
+                  <div
+                    className="ipd-occ-bar__fill"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <div className="ipd-beds-summary__stats">
+                  <span>
+                    Occupied: <strong>{ward.occupied}</strong>
+                  </span>
+                  <span>
+                    Available: <strong>{ward.available}</strong>
+                  </span>
+                  <span>
+                    Total: <strong>{ward.total}</strong>
+                  </span>
+                </div>
+              </button>
+            );
+          })}
         </div>
-      </div>
+      ) : null}
 
       <div className="ipd-card">
         <div className="ipd-card__head">
-          <h2 className="ipd-card__title">Bed directory</h2>
+          <h2 className="ipd-card__title">Bed list</h2>
+          {!loading ? (
+            <span className="ipd-page__subtitle">
+              {totalFiltered} bed{totalFiltered === 1 ? "" : "s"}
+              {hasFilter ? " matched" : ""}
+            </span>
+          ) : null}
         </div>
+
         <div className="ipd-card__body">
-          <div className="ipd-toolbar" style={{ marginBottom: "1rem" }}>
-            <div className="ipd-toolbar__field">
+          <div className="ipd-beds-filters">
+            <div className="ipd-toolbar__field ipd-beds-filters__search">
+              <label className="ipd-toolbar__label" htmlFor="ipd-beds-search">
+                Search
+              </label>
+              <input
+                id="ipd-beds-search"
+                className="ipd-input"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Bed no, ward, or patient…"
+              />
+            </div>
+            <div className="ipd-toolbar__field ipd-toolbar__field--sm">
               <label className="ipd-toolbar__label" htmlFor="ipd-beds-status">
                 Status
               </label>
@@ -160,12 +331,12 @@ export default function IpdBedsPage() {
                 value={statusFilter}
                 onChange={(e) => setFilter("status", e.target.value)}
               >
-                <option value="">All beds</option>
+                <option value="">All</option>
                 <option value="available">Available</option>
                 <option value="occupied">Occupied</option>
               </select>
             </div>
-            <div className="ipd-toolbar__field">
+            <div className="ipd-toolbar__field ipd-toolbar__field--sm">
               <label className="ipd-toolbar__label" htmlFor="ipd-beds-ward">
                 Ward
               </label>
@@ -184,50 +355,170 @@ export default function IpdBedsPage() {
               </select>
             </div>
           </div>
+
           {loading ? (
-            <div className="ipd-bed-grid">
-              <div className="ipd-skeleton" style={{ height: "4.5rem" }} />
-              <div className="ipd-skeleton" style={{ height: "4.5rem" }} />
+            <div style={{ display: "grid", gap: "0.4rem" }}>
+              <div className="ipd-skeleton" />
+              <div className="ipd-skeleton" />
+              <div className="ipd-skeleton" />
             </div>
-          ) : beds.length === 0 ? (
+          ) : totalFiltered === 0 ? (
             <EmptyState
               title={
                 hasFilter ? "No beds match these filters" : "No beds to show"
               }
               description={
                 hasFilter
-                  ? "Try a different status or ward."
+                  ? "Clear search or change ward / status."
                   : "Add beds from hospital bed inventory to see them here."
               }
             />
           ) : (
-            <div className="ipd-bed-grid">
-              {beds.map((bed) => (
-                <div
-                  key={bed.id}
-                  className={`ipd-bed-card ipd-bed-card--${
-                    bed.status === "occupied" ? "occupied" : "available"
-                  }`}
-                >
-                  <div className="ipd-bed-card__no">
-                    {bed.ward_name ? `${bed.ward_name} · ` : ""}
-                    {bed.bed_number || bed.id}
-                  </div>
-                  <IpdStatusBadge status={bed.status} />
-                  <div className="ipd-bed-card__patient">
-                    {bed.patient_name || "Unassigned"}
-                  </div>
+            <>
+              <div className="ipd-table-wrap">
+                <table className="ipd-table ipd-table--beds">
+                  <thead>
+                    <tr>
+                      <th>Ward</th>
+                      <th>Bed</th>
+                      <th>Status</th>
+                      <th>Patient</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pageBeds.map((bed) => {
+                      const occupied = bed.status === "occupied";
+                      return (
+                        <tr
+                          key={bed.id}
+                          className={
+                            occupied
+                              ? "ipd-bed-row--occupied"
+                              : "ipd-bed-row--available"
+                          }
+                        >
+                          <td>{bed.ward_name || "—"}</td>
+                          <td>
+                            <strong>{bed.bed_number || bed.id}</strong>
+                          </td>
+                          <td>
+                            <IpdStatusBadge status={bed.status} />
+                          </td>
+                          <td>
+                            {occupied ? (
+                              <>
+                                {bed.patient_name || "—"}
+                                {bed.patient_uid ? (
+                                  <span className="ipd-page__subtitle">
+                                    {" "}
+                                    · {bed.patient_uid}
+                                  </span>
+                                ) : null}
+                              </>
+                            ) : (
+                              <span className="ipd-page__subtitle">Free</span>
+                            )}
+                          </td>
+                          <td>
+                            <div className="ipd-table__actions">
+                              {occupied ? (
+                                <>
+                                  <IpdPermissionButton
+                                    allowed={canTransferBed}
+                                    deniedMessage="You do not have permission to transfer beds"
+                                    type="button"
+                                    className="btn btn--sm ipd-action-btn ipd-action-btn--transfer"
+                                    onClick={() => openTransfer(bed)}
+                                  >
+                                    Transfer
+                                  </IpdPermissionButton>
+                                  <IpdPermissionButton
+                                    allowed={canDischarge}
+                                    deniedMessage="You do not have permission to release / discharge"
+                                    type="button"
+                                    className="btn btn--sm ipd-action-btn ipd-action-btn--release"
+                                    onClick={() => openRelease(bed)}
+                                  >
+                                    Release
+                                  </IpdPermissionButton>
+                                </>
+                              ) : (
+                                <IpdPermissionButton
+                                  allowed={canAssignBed || canAdmit}
+                                  deniedMessage="You do not have permission to assign beds"
+                                  type="button"
+                                  className="btn btn--sm ipd-action-btn ipd-action-btn--assign"
+                                  onClick={() => openAssign(bed)}
+                                >
+                                  Assign Bed
+                                </IpdPermissionButton>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="ipd-beds-pager">
+                <span className="ipd-page__subtitle">
+                  Showing {pageStart + 1}–
+                  {Math.min(pageStart + PAGE_SIZE, totalFiltered)} of{" "}
+                  {totalFiltered}
+                </span>
+                <div className="ipd-beds-pager__controls">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    disabled={safePage <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  >
+                    Previous
+                  </Button>
+                  <span className="ipd-page__subtitle">
+                    Page {safePage} / {totalPages}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    disabled={safePage >= totalPages}
+                    onClick={() =>
+                      setPage((p) => Math.min(totalPages, p + 1))
+                    }
+                  >
+                    Next
+                  </Button>
                 </div>
-              ))}
-            </div>
+              </div>
+            </>
           )}
         </div>
       </div>
 
-      <BedAssignModal open={assignOpen} onClose={() => setAssignOpen(false)} />
+      <BedAssignModal
+        open={assignOpen}
+        onClose={() => {
+          setAssignOpen(false);
+          setAssignSeed({ ward: "", bedId: "" });
+        }}
+        initialWard={assignSeed.ward}
+        initialBedId={assignSeed.bedId}
+      />
       <BedTransferModal
         open={transferOpen}
-        onClose={() => setTransferOpen(false)}
+        onClose={() => {
+          setTransferOpen(false);
+          setTransferAdmissionId("");
+          setTransferBed(null);
+        }}
+        initialAdmissionId={transferAdmissionId}
+        initialBed={transferBed}
+        lockAdmission={Boolean(transferAdmissionId || transferBed?.id)}
       />
     </div>
   );

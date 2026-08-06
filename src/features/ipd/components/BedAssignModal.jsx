@@ -2,7 +2,7 @@
  * Assign bed modal — admits patient onto an available bed (POST /ipd/admissions).
  */
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal, Button } from '@/shared/components/common';
 import { ROUTES, WARDS } from '@/shared/constants';
@@ -13,6 +13,8 @@ import { toast } from '@/shared/utils/toast';
 import {
   useCreateIpdAdmissionMutation,
   useIpdBedsQuery,
+  useIpdDepartmentsQuery,
+  useIpdDoctorsByDepartmentQuery,
 } from '@/features/ipd/hooks/useIpdQuery';
 import { toIsoAdmissionDate } from '@/features/ipd/utils/ipdFormat';
 
@@ -21,14 +23,31 @@ const INITIAL = {
   patientDbId: '',
   ward: '',
   bedId: '',
+  departmentId: '',
+  doctorId: '',
   admissionDate: new Date().toISOString().slice(0, 10),
 };
 
-export default function BedAssignModal({ open, onClose }) {
+export default function BedAssignModal({
+  open,
+  onClose,
+  initialWard = '',
+  initialBedId = '',
+}) {
   const navigate = useNavigate();
   const [values, setValues] = useState(INITIAL);
   const [error, setError] = useState('');
   const admitMutation = useCreateIpdAdmissionMutation();
+
+  useEffect(() => {
+    if (!open) return;
+    setValues((prev) => ({
+      ...prev,
+      ward: initialWard || '',
+      bedId: initialBedId ? String(initialBedId) : '',
+    }));
+    setError('');
+  }, [open, initialWard, initialBedId]);
 
   const debouncedSearch = useDebouncedValue(values.patientSearch, 300);
   const patientsQuery = usePatientsQuery({
@@ -48,6 +67,8 @@ export default function BedAssignModal({ open, onClose }) {
     (bed) => bed.status === 'available'
   );
   const wardOptions = useMemo(() => WARDS ?? [], []);
+  const departmentsQuery = useIpdDepartmentsQuery();
+  const doctorsQuery = useIpdDoctorsByDepartmentQuery(values.departmentId || null);
 
   const reset = () => {
     setValues(INITIAL);
@@ -64,6 +85,7 @@ export default function BedAssignModal({ open, onClose }) {
       const next = { ...prev, [key]: value };
       if (key === 'ward') next.bedId = '';
       if (key === 'patientSearch') next.patientDbId = '';
+      if (key === 'departmentId') next.doctorId = '';
       return next;
     });
     setError('');
@@ -84,6 +106,8 @@ export default function BedAssignModal({ open, onClose }) {
       const created = await admitMutation.mutateAsync({
         patient_id: Number(values.patientDbId),
         bed_id: Number(values.bedId),
+        department_id: values.departmentId ? Number(values.departmentId) : null,
+        doctor_id: values.doctorId ? Number(values.doctorId) : null,
         admission_date: toIsoAdmissionDate(values.admissionDate),
       });
       toast.success('Bed assigned and patient admitted');
@@ -190,6 +214,53 @@ export default function BedAssignModal({ open, onClose }) {
             {availableBeds.map((bed) => (
               <option key={bed.id} value={bed.id}>
                 {bed.bed_number}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="ipd-toolbar__field">
+          <label className="ipd-toolbar__label" htmlFor="ipd-assign-dept">
+            Department
+          </label>
+          <select
+            id="ipd-assign-dept"
+            className="ipd-select"
+            value={values.departmentId}
+            onChange={(e) => set('departmentId', e.target.value)}
+          >
+            <option value="">
+              {departmentsQuery.isLoading ? 'Loading…' : 'Optional…'}
+            </option>
+            {(departmentsQuery.data ?? []).map((dept) => (
+              <option key={dept.id} value={dept.id}>
+                {dept.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="ipd-toolbar__field">
+          <label className="ipd-toolbar__label" htmlFor="ipd-assign-doctor">
+            Doctor
+          </label>
+          <select
+            id="ipd-assign-doctor"
+            className="ipd-select"
+            value={values.doctorId}
+            onChange={(e) => set('doctorId', e.target.value)}
+            disabled={!values.departmentId || doctorsQuery.isLoading}
+          >
+            <option value="">
+              {!values.departmentId
+                ? 'Select department first…'
+                : doctorsQuery.isLoading
+                  ? 'Loading doctors…'
+                  : (doctorsQuery.data ?? []).length === 0
+                    ? 'No doctors in department'
+                    : 'Optional…'}
+            </option>
+            {(doctorsQuery.data ?? []).map((doc) => (
+              <option key={doc.id} value={doc.id}>
+                {doc.name}
               </option>
             ))}
           </select>

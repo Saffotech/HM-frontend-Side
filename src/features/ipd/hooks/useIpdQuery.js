@@ -15,6 +15,7 @@ import {
   getIpdDepartments,
   getIpdDoctorsByDepartment,
   createIpdAdmission,
+  updateIpdAdmission,
   getIpdBeds,
   getIpdWardStats,
   transferIpdBed,
@@ -182,6 +183,24 @@ export function useCreateIpdAdmissionMutation() {
   return useMutation({
     mutationFn: (payload) => createIpdAdmission(payload, token),
     onSuccess: () => invalidateIpdDomain(queryClient),
+    onError: mutationOnError,
+  });
+}
+
+export function useUpdateIpdAdmissionMutation() {
+  const token = useQueryToken();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ admissionId, payload }) =>
+      updateIpdAdmission(admissionId, payload, token),
+    onSuccess: (_data, variables) => {
+      invalidateIpdDomain(queryClient);
+      if (variables?.admissionId) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.ipd.admission(variables.admissionId),
+        });
+      }
+    },
     onError: mutationOnError,
   });
 }

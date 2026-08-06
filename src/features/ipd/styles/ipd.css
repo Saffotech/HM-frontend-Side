@@ -366,6 +366,16 @@
   flex: 1;
 }
 
+.ipd-toolbar__field--sm {
+  flex: 0 1 12rem;
+  min-width: 9rem;
+  max-width: 14rem;
+}
+
+.ipd-toolbar--filters {
+  margin-bottom: 0.75rem;
+}
+
 .ipd-toolbar__label {
   font-size: 0.75rem;
   font-weight: 600;
@@ -432,6 +442,182 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
+}
+
+.ipd-action-btn {
+  border: 1px solid transparent;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.ipd-action-btn--assign {
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+  color: #047857;
+}
+
+.ipd-action-btn--assign:hover:not([aria-disabled="true"]):not(:disabled) {
+  background: #d1fae5;
+  border-color: #34d399;
+  color: #065f46;
+}
+
+.ipd-action-btn--transfer {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+.ipd-action-btn--transfer:hover:not([aria-disabled="true"]):not(:disabled) {
+  background: #dbeafe;
+  border-color: #60a5fa;
+  color: #1e40af;
+}
+
+.ipd-action-btn--release {
+  background: #fff1f2;
+  border-color: #fda4af;
+  color: #be123c;
+}
+
+.ipd-action-btn--release:hover:not([aria-disabled="true"]):not(:disabled) {
+  background: #ffe4e6;
+  border-color: #fb7185;
+  color: #9f1239;
+}
+
+.ipd-action-btn--view {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.ipd-action-btn--view:hover:not([aria-disabled="true"]):not(:disabled) {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.ipd-action-btn--billing {
+  background: #f0fdfa;
+  border-color: #99f6e4;
+  color: #115e59;
+}
+
+.ipd-action-btn--billing:hover:not([aria-disabled="true"]):not(:disabled) {
+  background: #ccfbf1;
+  border-color: #5eead4;
+  color: #0f766e;
+}
+
+/* ── IPD patient list (compact) ───────────────────────────── */
+
+.ipd-page--compact {
+  gap: 0.5rem;
+}
+
+.ipd-page--compact .ipd-card__body {
+  padding: 0.75rem;
+}
+
+.ipd-pl-card__head {
+  padding: 0.5rem 0.85rem;
+}
+
+.ipd-pl-filters {
+  margin-bottom: 0.65rem;
+}
+
+.ipd-pl-skeletons {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.ipd-table--patients th,
+.ipd-table--patients td {
+  padding: 0.4rem 0.65rem;
+  font-size: 0.8125rem;
+  vertical-align: middle;
+}
+
+.ipd-table--patients tbody tr:hover td {
+  background: #f8fafc;
+}
+
+.ipd-table--patients .ipd-table__col-actions {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.ipd-table--patients .ipd-table__col-actions .ipd-table__actions {
+  justify-content: center;
+}
+
+.ipd-pl-row--admitted td:first-child {
+  box-shadow: inset 3px 0 0 #10b981;
+}
+
+.ipd-pl-row--discharged td:first-child {
+  box-shadow: inset 3px 0 0 #94a3b8;
+}
+
+.ipd-pl-patient__id {
+  font-size: 0.72rem;
+  color: #64748b;
+  line-height: 1.2;
+}
+
+.ipd-pl-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ipd-pl-chip--green {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.ipd-pl-chip--rose {
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.ipd-pl-chip--violet {
+  background: #f5f3ff;
+  color: #6d28d9;
+}
+
+.ipd-pl-chip--slate {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.ipd-pl-chip--bed {
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-family: ui-monospace, monospace;
+}
+
+.ipd-pl-assign-link {
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: #7c3aed;
+  text-decoration: none;
+}
+
+.ipd-pl-assign-link:hover {
+  text-decoration: underline;
+}
+
+.ipd-pl-date {
+  color: #64748b;
+  white-space: nowrap;
+  font-size: 0.75rem;
 }
 
 .ipd-badge {
@@ -606,20 +792,199 @@
   color: var(--color-text-muted, #6b7280);
 }
 
-.ipd-bed-grid {
+/* ── Beds page: summary strip + dense paginated list ──────── */
+
+.ipd-beds-summary {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .ipd-beds-summary {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.ipd-beds-summary__item {
+  text-align: left;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.6rem;
+  border: 1px solid var(--color-border, #e5e7eb);
+  background: #fff;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.ipd-beds-summary__item:hover,
+.ipd-beds-summary__item--active {
+  border-color: #2563eb;
+  box-shadow: 0 1px 4px rgba(37, 99, 235, 0.12);
+}
+
+.ipd-beds-summary__item--active {
+  background: #eff6ff;
+}
+
+.ipd-beds-summary__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.ipd-beds-summary__name {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.ipd-beds-summary__count {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #1e40af;
+}
+
+.ipd-beds-summary__meta {
+  margin-top: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.ipd-beds-summary__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  margin-top: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.ipd-beds-summary__stats strong {
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.ipd-occ-bar {
+  height: 0.3rem;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.ipd-occ-bar__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #fb7185, #e11d48);
+  transition: width 0.2s ease;
+}
+
+.ipd-beds-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+  margin-bottom: 0.85rem;
+}
+
+.ipd-beds-filters__search {
+  flex: 1 1 14rem;
+  min-width: 12rem;
+  max-width: 22rem;
+}
+
+.ipd-table--beds th,
+.ipd-table--beds td {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.ipd-table--beds tbody tr:hover td {
+  background: #f8fafc;
+}
+
+.ipd-bed-row--occupied td:first-child {
+  box-shadow: inset 3px 0 0 #e11d48;
+}
+
+.ipd-bed-row--available td:first-child {
+  box-shadow: inset 3px 0 0 #16a34a;
+}
+
+.ipd-beds-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border, #e5e7eb);
+}
+
+.ipd-beds-pager__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ipd-ward-grid {
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 0.75rem;
 }
 
-.ipd-bed-card {
-  padding: 0.875rem;
+@media (min-width: 768px) {
+  .ipd-ward-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .ipd-ward-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.ipd-ward-card {
+  padding: 1rem;
+  border: 1px solid var(--color-border, #e5e7eb);
   border-radius: 0.75rem;
+  background: #fff;
+}
+
+.ipd-ward-card__name {
+  margin: 0;
+  font-weight: 700;
+}
+
+.ipd-ward-card__meta {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ipd-bed-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  gap: 0.5rem;
+}
+
+.ipd-bed-card {
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.5rem;
   border: 1px solid var(--color-border, #e5e7eb);
   background: #fff;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.2rem;
+  min-height: 0;
 }
 
 .ipd-bed-card--occupied {
@@ -634,12 +999,16 @@
 
 .ipd-bed-card__no {
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
+  line-height: 1.25;
 }
 
 .ipd-bed-card__patient {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   color: var(--color-text-muted, #6b7280);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ipd-section-stack {
@@ -732,26 +1101,135 @@
 }
 
 .ipd-totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0.5rem;
+  background: #f8fafc;
+}
+
+.ipd-totals--with-extra {
+  grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+}
+
+.ipd-totals__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0 0.35rem;
+}
+
+.ipd-totals__cell + .ipd-totals__cell {
+  border-left: 1px solid var(--color-border, #e5e7eb);
+}
+
+.ipd-totals__label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ipd-totals__value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-text, #111827);
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.ipd-totals__cell--grand .ipd-totals__value {
+  color: var(--color-primary, #1a5c34);
+}
+
+.ipd-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ipd-num--strong {
+  font-weight: 700;
+}
+
+.ipd-table--charges th.ipd-num,
+.ipd-table--charges td.ipd-num {
+  width: 1%;
+}
+
+.ipd-pd-billing {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.ipd-pd-bill-list {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border, #e5e7eb);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.ipd-pd-bill-list__title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ipd-pd-bill-row {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  align-items: flex-end;
-  padding-top: 0.75rem;
-  font-size: 0.875rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0.5rem;
+  background: #fff;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-.ipd-totals__row {
+.ipd-pd-bill-row:hover {
+  border-color: var(--color-primary-border, #a7d4b8);
+  background: var(--color-primary-light, #e8f5ee);
+}
+
+.ipd-pd-bill-row__main {
   display: flex;
-  gap: 1.5rem;
-  min-width: 14rem;
+  align-items: center;
   justify-content: space-between;
+  gap: 0.5rem;
 }
 
-.ipd-totals__row--grand {
+.ipd-pd-bill-row__no {
+  font-size: 0.8125rem;
   font-weight: 700;
-  font-size: 1rem;
-  padding-top: 0.35rem;
-  border-top: 1px solid var(--color-border, #e5e7eb);
+  color: var(--color-primary, #1a5c34);
+}
+
+.ipd-pd-bill-row__amounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.85rem;
+  font-size: 0.75rem;
+  color: var(--color-text, #111827);
+  font-weight: 600;
+}
+
+.ipd-pd-bill-row__amounts em {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--color-text-muted, #6b7280);
+  margin-right: 0.2rem;
 }
 
 .ipd-skeleton {
@@ -785,4 +1263,144 @@
   .ipd-stat-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ── Patient detail ───────────────────────────────────────── */
+
+.ipd-pd-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.ipd-pd-head {
+  padding: 0.55rem 0.85rem;
+}
+
+.ipd-pd-head__left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ipd-pd-body {
+  padding: 0.85rem;
+}
+
+.ipd-pd-grid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+@media (min-width: 900px) {
+  .ipd-pd-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.ipd-pd-grid--care {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 28rem;
+}
+
+.ipd-pd-field dt {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ipd-pd-field dd {
+  margin: 0.15rem 0 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text, #111827);
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.ipd-pd-field--wide {
+  grid-column: 1 / -1;
+}
+
+.ipd-pd-care {
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--color-border, #e5e7eb);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.ipd-pd-care__label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ipd-pd-muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ipd-pd-split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+}
+
+@media (min-width: 960px) {
+  .ipd-pd-split {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+.ipd-pd-bills {
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--color-border, #e5e7eb);
+}
+
+.ipd-table--dense th,
+.ipd-table--dense td {
+  padding: 0.4rem 0.65rem;
+  font-size: 0.8125rem;
+}
+
+.ipd-care-team-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.ipd-care-team-form--row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 0.65rem;
+}
+
+.ipd-care-team-form--row .ipd-toolbar__field {
+  flex: 0 1 14rem;
+  min-width: 11rem;
+  max-width: 16rem;
+}
+
+.ipd-care-team-form--row .ipd-field-error {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
+.ipd-care-team-form__save {
+  flex: 0 0 auto;
 }
