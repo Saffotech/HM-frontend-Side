@@ -1,9 +1,29 @@
 /**
- * IPD profile API — live backend `/ipd/profile*`.
+ * IPD self-service profile API client (GET/PUT /ipd/profile + image).
  */
 
 import { apiClient } from '@/shared/api/client';
 import { API_BASE_URL, API_PREFIX } from '@/shared/constants';
+
+export const IPD_PROFILE_EDITABLE_TOP_KEYS = [
+  'qualification',
+  'experience_years',
+  'bio',
+  'languages',
+  'phone',
+  'phone_code',
+  'date_of_birth',
+  'gender',
+];
+
+export function resolveIpdProfileImageUrl(profileImageUrl) {
+  if (!profileImageUrl) return null;
+  if (/^(https?:|blob:)/i.test(profileImageUrl)) return profileImageUrl;
+  const base =
+    API_BASE_URL ||
+    (import.meta.env.DEV ? 'http://127.0.0.1:8000' : '');
+  return `${base}${profileImageUrl}`;
+}
 
 export async function getIpdProfile(token) {
   return apiClient('/ipd/profile', { token });

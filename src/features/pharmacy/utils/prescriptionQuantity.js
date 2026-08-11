@@ -163,11 +163,6 @@ export function formatHumanInstructions(item) {
   return parts.length ? parts.join(', ') : 'As directed';
 }
 
-/** @deprecated Use formatHumanInstructions for dispense UI. */
-export function formatMedicineSchedule(item) {
-  return formatHumanInstructions(item);
-}
-
 /** Summary label for footer totals across one or more medicines. */
 export function formatSummaryQuantity(count, medicineNames = []) {
   const n = Number(count);

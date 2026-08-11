@@ -95,7 +95,7 @@ export default function TodayQueuePage() {
             <div className="rec-search" style={{ maxWidth: '20rem' }}>
               <input
                 type="text"
-                placeholder="Search patient name, ID or UHID..."
+                placeholder="Search patient"
                 className="rec-input"
                 value={search}
                 onChange={(e) => {

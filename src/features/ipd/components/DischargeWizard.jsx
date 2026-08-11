@@ -31,8 +31,8 @@ export default function DischargeWizard({ admissionId }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [payMode, setPayMode] = useState('Cash');
   const [payAmount, setPayAmount] = useState('');
-  const [force, setForce] = useState(false);
   const [notes, setNotes] = useState('');
+  const [paymentReady, setPaymentReady] = useState(false);
 
   const detailQuery = useIpdAdmissionDetailQuery(admissionId);
   const previewQuery = useIpdBillPreviewQuery(admissionId);
@@ -42,17 +42,29 @@ export default function DischargeWizard({ admissionId }) {
 
   const admission = detailQuery.data?.admission;
   const preview = previewQuery.data;
-  const openBill = (detailQuery.data?.bills ?? []).find(
+  const bills = detailQuery.data?.bills ?? [];
+  const openBill = bills.find(
     (bill) =>
       bill.status !== 'void' &&
       Number(bill.balance_due ?? 0) > 0.01
   );
+  const hasFinalBill = bills.some((bill) => bill.status !== 'void');
+
+  // Unpaid open bill → balance due; no bill yet → provisional total; already paid → 0
+  const exactAmount = openBill
+    ? Number(openBill.balance_due)
+    : hasFinalBill
+      ? 0
+      : Number(preview?.grand_total ?? 0);
+  const savingDischarge =
+    dischargeMutation.isPending ||
+    payMutation.isPending ||
+    generateMutation.isPending;
 
   useEffect(() => {
-    if (openBill?.balance_due != null && !payAmount) {
-      setPayAmount(String(openBill.balance_due));
-    }
-  }, [openBill?.id, openBill?.balance_due, payAmount]);
+    if (exactAmount == null || Number.isNaN(Number(exactAmount))) return;
+    setPayAmount(String(Number(exactAmount)));
+  }, [exactAmount, openBill?.id, stepIndex]);
 
   const step = IPD_DISCHARGE_STEPS[stepIndex];
   const goNext = () => setStepIndex((i) => Math.min(i + 1, IPD_DISCHARGE_STEPS.length - 1));
@@ -69,34 +81,45 @@ export default function DischargeWizard({ admissionId }) {
     });
   };
 
-  const onCollect = async () => {
-    try {
-      const bill = await ensureBill();
-      const amount = Number(payAmount || bill.balance_due || preview?.grand_total || 0);
-      if (!(amount > 0)) {
-        toast.error('Enter a valid payment amount');
-        return;
-      }
-      await payMutation.mutateAsync({
-        billId: bill.id,
-        payload: {
-          amount,
-          payment_mode: payMode.toLowerCase(),
-        },
-      });
-      toast.success('Payment recorded');
-      await detailQuery.refetch();
-      goNext();
-    } catch (err) {
-      toast.error(err?.message || 'Payment failed');
+  /** Payment step only locks details — no money is saved until Confirm discharge. */
+  const onPaymentContinue = () => {
+    const amount = Number(exactAmount ?? payAmount ?? 0);
+    if (amount > 0.01 && !canPayBill) {
+      toast.error('You do not have permission to collect payment');
+      return;
     }
+    if (!(amount >= 0) || Number.isNaN(amount)) {
+      toast.error('Invalid payment amount');
+      return;
+    }
+    setPaymentReady(true);
+    goNext();
   };
 
   const onConfirmDischarge = async () => {
     try {
+      const amount = Number(exactAmount ?? payAmount ?? 0);
+      if (amount > 0.01) {
+        if (!paymentReady) {
+          toast.error('Complete the payment step before confirming discharge');
+          return;
+        }
+        const bill = await ensureBill();
+        const due = Number(bill.balance_due ?? amount);
+        if (due > 0.01) {
+          await payMutation.mutateAsync({
+            billId: bill.id,
+            payload: {
+              amount: due,
+              payment_mode: payMode.toLowerCase(),
+            },
+          });
+        }
+      }
+
       const result = await dischargeMutation.mutateAsync({
         admissionId,
-        payload: { force, notes: notes.trim() || null },
+        payload: { force: false, notes: notes.trim() || null },
       });
       toast.success(result?.message || 'Patient discharged');
       navigate(ROUTES.IPD_PATIENTS);
@@ -118,143 +141,219 @@ export default function DischargeWizard({ admissionId }) {
     return <QueryFeedback isError error={detailQuery.error} onRetry={detailQuery.refetch} />;
   }
 
-  return (
-    <div className="ipd-section-stack">
-      <div className="ipd-wizard-steps" role="list" aria-label="Discharge steps">
-        {IPD_DISCHARGE_STEPS.map((s, index) => (
-          <div
-            key={s.id}
-            role="listitem"
-            className={cn(
-              'ipd-wizard-step',
-              index === stepIndex && 'ipd-wizard-step--active',
-              index < stepIndex && 'ipd-wizard-step--done'
-            )}
-          >
-            <span className="ipd-wizard-step__num">{index + 1}</span>
-            <span className="ipd-wizard-step__label">{s.label}</span>
-          </div>
-        ))}
-      </div>
+  const stayFields = admission
+    ? [
+        { label: 'Patient', value: admission.patient_name || '—', tone: 'teal' },
+        {
+          label: 'Patient ID',
+          value: admission.patient_uid || '—',
+          tone: 'slate',
+        },
+        {
+          label: 'Ward / Bed',
+          value: `${admission.ward_name || '—'} / ${admission.bed_number || '—'}`,
+          tone: 'green',
+        },
+        { label: 'Doctor', value: admission.doctor_name || '—', tone: 'violet' },
+        {
+          label: 'Admitted',
+          value: formatIpdDateTime(admission.admitted_at),
+          tone: 'blue',
+        },
+        {
+          label: 'Length of stay',
+          value:
+            admission.length_of_stay_days != null
+              ? `${admission.length_of_stay_days} day(s)`
+              : '—',
+          tone: 'amber',
+        },
+        {
+          label: 'Diagnosis',
+          value: admission.diagnosis || '—',
+          tone: 'rose',
+          wide: true,
+        },
+      ]
+    : [];
 
-      <div className="ipd-card">
-        <div className="ipd-card__head">
-          <h2 className="ipd-card__title">{step.label}</h2>
-          {admission ? (
-            <span className="ipd-page__subtitle">
-              {admission.admission_no} · {admission.patient_name}
+  return (
+    <div className="ipd-discharge-wizard">
+      <nav className="ipd-dw-steps" aria-label="Discharge steps">
+        {IPD_DISCHARGE_STEPS.map((s, index) => {
+          const done = index < stepIndex;
+          const active = index === stepIndex;
+          return (
+            <div
+              key={s.id}
+              className={cn(
+                'ipd-dw-step',
+                active && 'ipd-dw-step--active',
+                done && 'ipd-dw-step--done',
+              )}
+            >
+              {index > 0 ? <span className="ipd-dw-step__rail" aria-hidden /> : null}
+              <div className="ipd-dw-step__node">
+                <span className="ipd-dw-step__num" aria-hidden>
+                  {done ? '✓' : index + 1}
+                </span>
+                <span className="ipd-dw-step__label">{s.label}</span>
+              </div>
+            </div>
+          );
+        })}
+      </nav>
+
+      <section className="ipd-dw-panel">
+        <header className="ipd-dw-panel__head">
+          <div className="ipd-dw-panel__head-text">
+            <p className="ipd-dw-panel__eyebrow">
+              Step {stepIndex + 1} of {IPD_DISCHARGE_STEPS.length}
+            </p>
+            <h2 className="ipd-dw-panel__title">{step.label}</h2>
+          </div>
+          <div className="ipd-dw-patient-chip">
+            <span className="ipd-dw-patient-chip__no">
+              {admission?.admission_no || `Admission #${admissionId}`}
             </span>
-          ) : (
-            <span className="ipd-page__subtitle">Admission #{admissionId}</span>
-          )}
-        </div>
-        <div className="ipd-card__body">
+            {admission?.patient_name ? (
+              <span className="ipd-dw-patient-chip__name">{admission.patient_name}</span>
+            ) : null}
+          </div>
+        </header>
+
+        <div className="ipd-dw-panel__body">
           {detailQuery.isLoading || previewQuery.isLoading ? (
-            <div style={{ display: 'grid', gap: '0.5rem' }}>
+            <div className="ipd-dw-skeleton">
+              <div className="ipd-skeleton" />
               <div className="ipd-skeleton" />
               <div className="ipd-skeleton" />
             </div>
           ) : null}
 
           {step.id === 'review_stay' && admission ? (
-            <div className="ipd-kv">
-              <span className="ipd-kv__label">Patient</span>
-              <span className="ipd-kv__value">{admission.patient_name}</span>
-              <span className="ipd-kv__label">Ward / Bed</span>
-              <span className="ipd-kv__value">
-                {admission.ward_name} / {admission.bed_number}
-              </span>
-              <span className="ipd-kv__label">Doctor</span>
-              <span className="ipd-kv__value">{admission.doctor_name || '—'}</span>
-              <span className="ipd-kv__label">Admitted</span>
-              <span className="ipd-kv__value">{formatIpdDateTime(admission.admitted_at)}</span>
-              <span className="ipd-kv__label">Length of stay</span>
-              <span className="ipd-kv__value">
-                {admission.length_of_stay_days != null
-                  ? `${admission.length_of_stay_days} day(s)`
-                  : '—'}
-              </span>
-              <span className="ipd-kv__label">Diagnosis</span>
-              <span className="ipd-kv__value">{admission.diagnosis || '—'}</span>
+            <div className="ipd-dw-grid">
+              {stayFields.map((field) => (
+                <div
+                  key={field.label}
+                  className={cn(
+                    'ipd-dw-field',
+                    field.tone && `ipd-dw-field--${field.tone}`,
+                    field.wide && 'ipd-dw-field--wide',
+                  )}
+                >
+                  <dt>{field.label}</dt>
+                  <dd>{field.value}</dd>
+                </div>
+              ))}
             </div>
           ) : null}
 
           {step.id === 'review_charges' ? (
-            <>
-              <ChargeTable rows={preview?.items ?? []} />
+            <div className="ipd-dw-charges">
+              <ChargeTable
+                rows={preview?.items ?? []}
+                compact
+                emptyTitle="No charges yet"
+                emptyDescription="Bed and visit charges will appear here."
+              />
               <BillSummary
                 subtotal={formatIpdMoney(preview?.subtotal)}
                 tax={formatIpdMoney(preview?.gst_amount)}
+                taxPercent={preview?.gst_percent}
                 total={formatIpdMoney(preview?.grand_total)}
                 paid={openBill ? formatIpdMoney(openBill.paid_amount) : null}
                 balance={openBill ? formatIpdMoney(openBill.balance_due) : null}
               />
-            </>
+            </div>
           ) : null}
 
           {step.id === 'payment' ? (
-            <div className="ipd-form-grid">
-              <div className="ipd-toolbar__field">
-                <label className="ipd-toolbar__label" htmlFor="ipd-dis-pay-mode">
-                  Payment mode
-                </label>
-                <select
-                  id="ipd-dis-pay-mode"
-                  className="ipd-select"
-                  value={payMode}
-                  onChange={(e) => setPayMode(e.target.value)}
-                >
-                  {PAYMENT_MODES.map((mode) => (
-                    <option key={mode} value={mode}>
-                      {mode}
-                    </option>
-                  ))}
-                </select>
+            <div className="ipd-dw-pay">
+              <div className="ipd-dw-pay__summary">
+                <span className="ipd-dw-pay__summary-label">Outstanding balance</span>
+                <strong className="ipd-dw-pay__summary-value">
+                  {formatIpdMoney(exactAmount)}
+                </strong>
+                <p className="ipd-dw-pay__hint">
+                  Review the exact amount and payment mode. Money is saved only when you
+                  confirm discharge on the next step.
+                </p>
               </div>
-              <div className="ipd-toolbar__field">
-                <label className="ipd-toolbar__label" htmlFor="ipd-dis-pay-amount">
-                  Amount
-                </label>
-                <input
-                  id="ipd-dis-pay-amount"
-                  className="ipd-input"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={payAmount}
-                  onChange={(e) => setPayAmount(e.target.value)}
-                  placeholder={String(
-                    openBill?.balance_due ?? preview?.grand_total ?? ''
-                  )}
-                />
+              <div className="ipd-dw-pay__form">
+                <div className="ipd-toolbar__field">
+                  <label className="ipd-toolbar__label" htmlFor="ipd-dis-pay-mode">
+                    Payment mode
+                  </label>
+                  <select
+                    id="ipd-dis-pay-mode"
+                    className="ipd-select"
+                    value={payMode}
+                    onChange={(e) => {
+                      setPayMode(e.target.value);
+                      setPaymentReady(false);
+                    }}
+                  >
+                    {PAYMENT_MODES.map((mode) => (
+                      <option key={mode} value={mode}>
+                        {mode}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="ipd-toolbar__field">
+                  <label className="ipd-toolbar__label" htmlFor="ipd-dis-pay-amount">
+                    Amount (exact)
+                  </label>
+                  <input
+                    id="ipd-dis-pay-amount"
+                    className="ipd-input"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={
+                      exactAmount != null && !Number.isNaN(Number(exactAmount))
+                        ? String(Number(exactAmount))
+                        : payAmount
+                    }
+                    readOnly
+                    aria-readonly="true"
+                  />
+                </div>
               </div>
-              <p className="ipd-page__subtitle ipd-form-grid--full">
-                Outstanding:{' '}
-                {formatIpdMoney(openBill?.balance_due ?? preview?.grand_total)}
-                . You can skip payment and force discharge on the next step if needed.
-              </p>
-              <div className="ipd-form-actions ipd-form-grid--full">
+              <div className="ipd-dw-pay__actions">
                 <IpdPermissionButton
-                  allowed={canPayBill}
+                  allowed={canPayBill || !(Number(exactAmount) > 0.01)}
                   type="button"
                   className="btn btn--primary"
-                  disabled={payMutation.isPending || generateMutation.isPending}
-                  onClick={onCollect}
+                  onClick={onPaymentContinue}
                 >
-                  {payMutation.isPending || generateMutation.isPending
-                    ? 'Processing…'
-                    : 'Collect & continue'}
+                  Continue
                 </IpdPermissionButton>
-                <Button type="button" variant="secondary" onClick={goNext}>
-                  Skip payment
-                </Button>
               </div>
             </div>
           ) : null}
 
           {step.id === 'confirmation' ? (
-            <div className="ipd-form-grid">
-              <div className="ipd-toolbar__field ipd-form-grid--full">
+            <div className="ipd-dw-confirm">
+              <div className="ipd-dw-confirm__banner">
+                <h3 className="ipd-dw-confirm__title">Ready to confirm discharge</h3>
+                <p className="ipd-dw-confirm__text">
+                  This will record payment
+                  {Number(exactAmount) > 0.01 ? (
+                    <>
+                      {' '}
+                      of <strong>{formatIpdMoney(exactAmount)}</strong> via{' '}
+                      <strong>{payMode}</strong>,{' '}
+                    </>
+                  ) : (
+                    ' '
+                  )}
+                  free the bed, and close the admission for{' '}
+                  <strong>{admission?.patient_name || 'this patient'}</strong>.
+                </p>
+              </div>
+              <div className="ipd-toolbar__field">
                 <label className="ipd-toolbar__label" htmlFor="ipd-dis-notes">
                   Discharge notes
                 </label>
@@ -264,47 +363,41 @@ export default function DischargeWizard({ admissionId }) {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Optional discharge notes"
+                  rows={4}
                 />
               </div>
-              <label className="ipd-toolbar__field ipd-form-grid--full" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <input
-                  type="checkbox"
-                  checked={force}
-                  onChange={(e) => setForce(e.target.checked)}
-                />
-                <span>Force discharge even if balance is unpaid</span>
-              </label>
-              <EmptyState
-                title="Ready to confirm discharge"
-                description="This will free the bed and close the admission."
-              />
             </div>
           ) : null}
         </div>
-      </div>
 
-      <div className="ipd-form-actions">
-        <Button type="button" variant="secondary" onClick={goBack} disabled={stepIndex === 0}>
-          Back
-        </Button>
-        {stepIndex < IPD_DISCHARGE_STEPS.length - 1 && step.id !== 'payment' ? (
-          <Button type="button" onClick={goNext}>
-            Continue
-          </Button>
-        ) : null}
-        {step.id === 'confirmation' ? (
-          <IpdPermissionButton
-            allowed={canDischarge}
-            deniedMessage="You do not have permission to complete discharge"
+        <footer className="ipd-dw-panel__footer">
+          <Button
             type="button"
-            className="btn btn--primary"
-            disabled={dischargeMutation.isPending}
-            onClick={onConfirmDischarge}
+            variant="secondary"
+            onClick={goBack}
+            disabled={stepIndex === 0 || savingDischarge}
           >
-            {dischargeMutation.isPending ? 'Discharging…' : 'Confirm discharge'}
-          </IpdPermissionButton>
-        ) : null}
-      </div>
+            Back
+          </Button>
+          {stepIndex < IPD_DISCHARGE_STEPS.length - 1 && step.id !== 'payment' ? (
+            <Button type="button" onClick={goNext} disabled={savingDischarge}>
+              Continue
+            </Button>
+          ) : null}
+          {step.id === 'confirmation' ? (
+            <IpdPermissionButton
+              allowed={canDischarge}
+              deniedMessage="You do not have permission to complete discharge"
+              type="button"
+              className="btn btn--primary"
+              disabled={savingDischarge}
+              onClick={onConfirmDischarge}
+            >
+              {savingDischarge ? 'Saving…' : 'Confirm discharge'}
+            </IpdPermissionButton>
+          ) : null}
+        </footer>
+      </section>
     </div>
   );
 }

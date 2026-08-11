@@ -230,16 +230,24 @@
   min-width: 10.5rem;
 }
 
-.billing-list-toolbar__status.searchable-select {
-  flex: 0 0 13.4rem;
-  width: 13.4rem;
-  min-width: 12rem;
+.billing-list-toolbar__status {
+  flex: 0 0 11.5rem;
+  width: 11.5rem;
+  min-width: 10rem;
+  height: 2.5rem;
+  font-size: 0.93rem;
+  font-weight: 600;
+  cursor: pointer;
 }
 
-.billing-list-toolbar__date-scope.searchable-select {
+.billing-list-toolbar__date-scope {
   flex: 0 0 11.5rem;
   width: 11.5rem;
   min-width: 10.5rem;
+  height: 2.5rem;
+  font-size: 0.93rem;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .billing-list-toolbar__date-input.field {
@@ -255,20 +263,6 @@
   height: 2.375rem;
 }
 
-.billing-list-toolbar__status .searchable-select__input,
-.billing-list-toolbar__date-scope .searchable-select__input {
-  height: 2.5rem;
-  font-size: 0.93rem;
-  font-weight: 600;
-}
-
-.billing-list-toolbar__status .searchable-select__label {
-  display: none;
-}
-
-.billing-list-toolbar__date-scope .searchable-select__label {
-  display: none;
-}
 
 /* Compact KPI cards */
 .billing-list-page .stat-grid.stat-grid--4 {
@@ -308,12 +302,12 @@
     margin-left: 0;
   }
 
-  .billing-list-toolbar__status.searchable-select {
+  .billing-list-toolbar__status {
     flex: 0 0 12rem;
     width: 12rem;
   }
 
-  .billing-list-toolbar__date-scope.searchable-select,
+  .billing-list-toolbar__date-scope,
   .billing-list-toolbar__date-input.field {
     flex: 0 0 11rem;
     width: 11rem;
@@ -327,9 +321,9 @@
   }
 
   .billing-list-toolbar__search.search-bar,
-  .billing-list-toolbar__date-scope.searchable-select,
+  .billing-list-toolbar__date-scope,
   .billing-list-toolbar__date-input.field,
-  .billing-list-toolbar__status.searchable-select {
+  .billing-list-toolbar__status {
     flex: 1 1 100%;
     width: 100%;
   }

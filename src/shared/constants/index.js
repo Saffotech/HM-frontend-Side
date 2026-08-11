@@ -144,6 +144,7 @@ export const ROUTES = {
   IPD_BED_TRANSFER: '/ipd/beds/transfer',
   IPD_BILLING: '/ipd/billing',
   IPD_BILL_PREVIEW: '/ipd/billing/preview/:admissionId',
+  IPD_BILL_VIEW: '/ipd/billing/bills/:billId',
   IPD_PAYMENT_HISTORY: '/ipd/payment-history',
   IPD_DISCHARGE: '/ipd/discharge',
   IPD_DISCHARGE_ADMISSION: '/ipd/discharge/:admissionId',
@@ -199,7 +200,6 @@ export const ROUTES = {
   DASHBOARD: '/dashboard',
   OPD_PROFILE: '/opd/profile',
   OPD_NOTIFICATIONS: '/opd/notifications',
-  OPD_TODAY_OVERVIEW: '/opd/today-overview',
   BILLING: '/billing',
   BILLING_OPD_NEW: '/billing/opd/new',
   BILLING_VIEW: '/billing/:id',
@@ -210,12 +210,10 @@ export const ROUTES = {
   PATIENTS_REGISTER: '/patients/register',
   PATIENT_PROFILE: '/patients/:id/profile',
   PATIENT_UPDATE: '/patients/:id/update',
-  BEDS: '/beds',
-  BEDS_WARD: '/beds/ward/:wardName',
   PAYMENT_HISTORY: '/payment-history',
   UNAUTHORIZED: '/unauthorized',
 };
 
 export const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
-export const GENDERS = ['Male', 'Female', 'Other'];
+export const GENDERS = ['Male', 'Female', 'Other', 'Prefer not to say'];

@@ -12,11 +12,6 @@ export const PHARMACY_PERMISSIONS = {
   notificationsUpdate: 'notifications:update',
 };
 
-export function usePharmacyPermission(permission) {
-  const { user } = useAuth();
-  return hasBackendPermission(user, permission);
-}
-
 export function usePharmacyPermissionSet() {
   const { user } = useAuth();
   return {

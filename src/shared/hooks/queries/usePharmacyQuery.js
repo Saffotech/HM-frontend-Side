@@ -5,7 +5,6 @@ import {
   submitDispense,
   fetchDispenseHistory,
   fetchPrescriptionDispenseHistory,
-  fetchPharmacyDashboardStats,
 } from '@/shared/api/services/pharmacy';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
@@ -55,16 +54,6 @@ export function usePrescriptionDispenseHistoryQuery(prescriptionId, options = {}
     queryKey: queryKeys.pharmacy.prescriptionHistory(prescriptionId),
     enabled: enabled && Boolean(prescriptionId),
     queryFn: () => fetchPrescriptionDispenseHistory(prescriptionId, token),
-  });
-}
-
-export function usePharmacyDashboardStatsQuery(options = {}) {
-  const { enabled = true } = options;
-  const token = useQueryToken();
-  return useQuery({
-    queryKey: queryKeys.pharmacy.dashboard,
-    enabled,
-    queryFn: () => fetchPharmacyDashboardStats(token),
   });
 }
 

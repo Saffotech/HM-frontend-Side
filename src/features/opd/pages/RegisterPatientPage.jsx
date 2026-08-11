@@ -93,18 +93,38 @@ export default function RegisterPatientPage() {
           <form onSubmit={getOnSubmit(selectedDoctor)} className="register-form">
             <div className="form-grid">
               <Input
+                id="register-name"
                 label="Full Name"
                 value={form.name}
                 onChange={(e) => set('name', formatPersonName(e.target.value))}
                 error={errors.name}
               />
-              <Select
-                label="Gender"
-                value={form.gender}
-                onChange={(v) => set('gender', v)}
-                options={GENDERS.map((g) => ({ value: g, label: g }))}
-              />
+              <div className="field">
+                <label className="field__label" htmlFor="register-gender">
+                  Gender
+                </label>
+                <select
+                  id="register-gender"
+                  className="field__input"
+                  value={form.gender || ''}
+                  onChange={(e) => set('gender', e.target.value)}
+                  aria-invalid={!!errors.gender}
+                >
+                  <option value="" disabled>
+                    Select gender
+                  </option>
+                  {GENDERS.map((g) => (
+                    <option key={g} value={g}>
+                      {g}
+                    </option>
+                  ))}
+                </select>
+                {errors.gender ? (
+                  <span className="field__error">{errors.gender}</span>
+                ) : null}
+              </div>
               <RegisterPhoneField
+                id="register-phone"
                 phoneCode={form.phoneCode}
                 phone={form.phone}
                 onPhoneCodeChange={(code) => set('phoneCode', code)}
@@ -143,6 +163,7 @@ export default function RegisterPatientPage() {
                 </p>
               )}
               <Input
+                id="register-dob"
                 type="date"
                 label="Date of Birth"
                 value={form.dob}
@@ -170,6 +191,7 @@ export default function RegisterPatientPage() {
               </div>
               <Input label="State" value={form.state} onChange={(e) => set('state', e.target.value)} />
               <Input
+                id="register-aadhaar"
                 label="Aadhaar"
                 value={form.aadhaar}
                 onChange={(e) => set('aadhaar', formatAadhaarInput(e.target.value))}
@@ -183,6 +205,7 @@ export default function RegisterPatientPage() {
             <h3>Department & Doctor</h3>
             <div className="form-grid">
               <Select
+                id="register-dept"
                 label="Department"
                 value={form.deptId}
                 onChange={(v) => {
@@ -190,13 +213,16 @@ export default function RegisterPatientPage() {
                   set('doctorId', '');
                   resetAppointmentSlot();
                 }}
+                error={errors.deptId}
                 options={departments.map((d) => ({ value: d.id, label: d.name }))}
               />
               <Select
+                id="register-doctor"
                 label="Doctor"
                 value={form.doctorId}
                 onChange={handleDoctorChange}
                 disabled={!form.deptId}
+                error={errors.doctorId}
                 options={doctors.map((d) => ({ value: d.id, label: `Dr. ${d.name} — ₹${d.fee}` }))}
               />
             </div>
@@ -226,6 +252,7 @@ export default function RegisterPatientPage() {
 
                   <div className="register-appointment__controls">
                     <Input
+                      id="register-appointment-date"
                       type="date"
                       label="Appointment Date *"
                       value={appointmentDateStr}
@@ -234,6 +261,7 @@ export default function RegisterPatientPage() {
                         setAppointmentTime('');
                       }}
                       min={todayIso()}
+                      error={errors.appointmentDate}
                       className="register-appointment__date"
                     />
                     {appointmentTime && (
@@ -245,7 +273,11 @@ export default function RegisterPatientPage() {
                   </div>
 
                   {appointmentDateStr && (
-                    <div className="register-appointment__slots">
+                    <div
+                      id="register-appointment-slots"
+                      className="register-appointment__slots"
+                      data-field="appointmentTime"
+                    >
                       <div className="register-appointment__slots-head">
                         <Label>Available Time Slots *</Label>
                         <span className="register-appointment__date-label text-muted">
@@ -263,6 +295,11 @@ export default function RegisterPatientPage() {
                         slotsLoading={slotsLoading}
                         slotsError={slotsError}
                       />
+                      {errors.appointmentTime ? (
+                        <p className="field__error" role="alert">
+                          {errors.appointmentTime}
+                        </p>
+                      ) : null}
                     </div>
                   )}
                 </section>
@@ -271,7 +308,7 @@ export default function RegisterPatientPage() {
 
             <Button
               type="submit"
-              disabled={!selectedDoctor || !appointmentTime || isSaving}
+              disabled={isSaving}
               className="btn--block"
               size="lg"
             >

@@ -12,6 +12,7 @@ const IpdBedsPage = lazy(() => import('@/features/ipd/pages/IpdBedsPage'));
 const IpdBedTransferPage = lazy(() => import('@/features/ipd/pages/IpdBedTransferPage'));
 const IpdBillingPage = lazy(() => import('@/features/ipd/pages/IpdBillingPage'));
 const IpdBillPreviewPage = lazy(() => import('@/features/ipd/pages/IpdBillPreviewPage'));
+const IpdViewBillPage = lazy(() => import('@/features/ipd/pages/IpdViewBillPage'));
 const IpdPaymentHistoryPage = lazy(() => import('@/features/ipd/pages/IpdPaymentHistoryPage'));
 const IpdDischargePage = lazy(() => import('@/features/ipd/pages/IpdDischargePage'));
 const IpdProfilePage = lazy(() => import('@/features/ipd/pages/IpdProfilePage'));
@@ -82,6 +83,14 @@ export const ipdRoutes = [
             element: (
               <LazyRoute>
                 <IpdBillPreviewPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.IPD_BILL_VIEW,
+            element: (
+              <LazyRoute>
+                <IpdViewBillPage />
               </LazyRoute>
             ),
           },

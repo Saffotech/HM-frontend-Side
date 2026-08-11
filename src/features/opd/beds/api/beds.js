@@ -1,4 +1,4 @@
-/** Bed / ward API — used by features/opd/beds */
+/** Bed API — list/map helpers used by dashboard and admin bed queries */
 
 import { apiClient } from '@/shared/api/client';
 import { buildQueryString } from '@/shared/utils/buildQueryString';
@@ -15,30 +15,6 @@ export async function getBeds(token, params = {}) {
     beds: (response.beds ?? response).map(apiBedToUi),
     stats: response.stats ?? null,
   };
-}
-
-export async function getBedsByWard(wardName, token) {
-  return apiClient(`/opd/beds/ward/${encodeURIComponent(wardName)}`, { token });
-}
-
-export async function assignBed(data, token) {
-  const body = {
-    bed_id: data.bed_id ?? data.bedId,
-    patient_id: data.patient_id ?? data.patientId,
-    department_id: data.department_id ?? data.departmentId,
-  };
-  return apiClient('/opd/beds/assign', {
-    method: 'POST',
-    body: JSON.stringify(body),
-    token,
-  });
-}
-
-export async function releaseBed(bedId, token) {
-  return apiClient(`/opd/beds/${bedId}/release`, {
-    method: 'POST',
-    token,
-  });
 }
 
 export function apiBedToUi(bed) {

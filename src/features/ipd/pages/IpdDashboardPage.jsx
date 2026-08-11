@@ -76,7 +76,13 @@ export default function IpdDashboardPage() {
   const permissions = useIpdPermissionSet();
   const { canAdmit } = permissions;
   const stats = useMemo(() => buildStats(permissions), [permissions]);
-  const recentAdmissions = data?.recent_admissions ?? [];
+  const recentAdmissions = useMemo(
+    () =>
+      (data?.recent_admissions ?? []).filter(
+        (row) => row.status === "admitted",
+      ),
+    [data?.recent_admissions],
+  );
 
   return (
     <div className="ipd-page">

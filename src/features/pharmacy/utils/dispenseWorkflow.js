@@ -34,17 +34,6 @@ export function enrichPrescriptionItems(rx) {
   });
 }
 
-export function computePrescriptionStatus(enrichedItems) {
-  if (!enrichedItems.length) return 'pending';
-  const hasAnyDispensed = enrichedItems.some((i) => i.quantity_dispensed > 0);
-  const allComplete = enrichedItems.every(
-    (i) => i.quantity_remaining <= 0 && i.quantity_prescribed > 0
-  );
-  if (allComplete) return 'dispensed';
-  if (hasAnyDispensed) return 'partially_dispensed';
-  return 'pending';
-}
-
 export function validateItemDispenseInputs(enrichedItems, quantitiesByItemId) {
   const rowErrors = {};
   let totalNow = 0;
@@ -100,16 +89,4 @@ export function buildDispensePayload(enrichedItems, quantitiesByItemId, remarks)
   const payload = { items };
   if (remarks?.trim()) payload.remarks = remarks.trim();
   return payload;
-}
-
-export function computeDispenseEventStatus(enrichedItems, quantitiesByItemId) {
-  const nextItems = enrichedItems.map((item) => {
-    const now = parseDispenseQuantityInput(quantitiesByItemId[item.id]) ?? 0;
-    return {
-      ...item,
-      quantity_dispensed: item.quantity_dispensed + now,
-      quantity_remaining: Math.max(0, item.quantity_remaining - now),
-    };
-  });
-  return computePrescriptionStatus(nextItems);
 }

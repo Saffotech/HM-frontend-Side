@@ -5,6 +5,7 @@ import SearchableSelect from './SearchableSelect';
  */
 export default function Select({
   label,
+  id,
   value,
   onChange,
   options = [],
@@ -17,6 +18,7 @@ export default function Select({
 }) {
   return (
     <SearchableSelect
+      id={id}
       label={label}
       value={value}
       onChange={onChange}

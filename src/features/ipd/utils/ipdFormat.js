@@ -13,17 +13,6 @@ export function formatIpdDateTime(raw) {
   });
 }
 
-export function formatIpdDate(raw) {
-  if (!raw) return '—';
-  const date = new Date(raw);
-  if (Number.isNaN(date.getTime())) return String(raw);
-  return date.toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-}
-
 export function formatIpdMoney(amount) {
   if (amount == null || amount === '') return '—';
   const n = Number(amount);

@@ -20,6 +20,7 @@ export const REGISTER_PHONE_COUNTRY_CODES = [
  * National number stays 10 digits for existing OPD search/register APIs.
  */
 export default function RegisterPhoneField({
+  id,
   phoneCode,
   phone,
   onPhoneCodeChange,
@@ -29,7 +30,7 @@ export default function RegisterPhoneField({
   disabled = false,
 }) {
   const autoId = useId();
-  const inputId = `register-phone-${autoId}`;
+  const inputId = id || `register-phone-${autoId}`;
   const errorId = `${inputId}-error`;
 
   return (

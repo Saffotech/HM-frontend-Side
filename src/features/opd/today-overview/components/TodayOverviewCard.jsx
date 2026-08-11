@@ -1,43 +1,46 @@
 import { Link } from 'react-router-dom';
 import { ChevronRight, CalendarClock } from 'lucide-react';
 import { useOpdDashboardQuery } from '@/shared/hooks/queries/useOpdDashboardQuery';
-import { asBillList } from '@/shared/hooks/queries/listDataUtils';
 import { MoneyAmount, Skeleton } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
-import { useTodayBillsQuery } from '../hooks/useTodayBillsQuery';
 import './TodayOverviewCard.css';
 
 /**
- * Dashboard entry point for the Today's Overview page.
- * Reads the same cached queries the overview page uses.
+ * Dashboard summary card. Each row opens the matching main page.
+ * Numbers come from GET /opd/dashboard (shared with DashboardPage).
  */
 export default function TodayOverviewCard() {
-  const { data: dashboard, isLoading: dashboardLoading } = useOpdDashboardQuery();
-  const { data: billsData, isLoading: billsLoading } = useTodayBillsQuery();
-
-  const bills = asBillList(billsData);
-  const collected = billsData?.summary?.total_collected
-    ?? bills.reduce((total, bill) => total + (Number(bill.paid) || 0), 0);
-  const pendingPayments = bills.filter((bill) => Number(bill.balance ?? 0) > 0.01).length;
-  const isLoading = dashboardLoading || billsLoading;
+  const { data: dashboard, isLoading } = useOpdDashboardQuery();
 
   const rows = [
-    { key: 'visits', label: "Today's Visits", value: dashboard?.visitsToday ?? 0 },
-    { key: 'bills', label: 'Bills Generated', value: bills.length },
+    {
+      key: 'visits',
+      label: "Today's Visits",
+      value: dashboard?.visitsToday ?? 0,
+      to: `${ROUTES.PATIENTS}?registered=today`,
+    },
+    {
+      key: 'bills',
+      label: 'Bills Generated',
+      value: dashboard?.todayBillsCount ?? 0,
+      to: ROUTES.BILLING,
+    },
     {
       key: 'collected',
       label: 'Collected Today',
-      value: <MoneyAmount amount={collected} exact />,
+      value: <MoneyAmount amount={dashboard?.todayCollected ?? 0} exact />,
+      to: ROUTES.PAYMENT_HISTORY,
     },
-    { key: 'pending', label: 'Pending Payments', value: pendingPayments },
+    {
+      key: 'pending',
+      label: 'Pending Payments',
+      value: dashboard?.todayPendingPayments ?? 0,
+      to: `${ROUTES.BILLING}?status=Unpaid`,
+    },
   ];
 
   return (
-    <Link
-      to={ROUTES.OPD_TODAY_OVERVIEW}
-      className="today-overview-card ui-interactive"
-      aria-label="Open today's overview"
-    >
+    <section className="today-overview-card" aria-label="Today's overview">
       <div className="today-overview-card__bar" />
       <div className="today-overview-card__body">
         <div className="today-overview-card__head">
@@ -45,24 +48,26 @@ export default function TodayOverviewCard() {
             <CalendarClock size={18} />
           </span>
           <h3>Today&apos;s Overview</h3>
-          <span className="today-overview-card__cta">
-            View
-            <ChevronRight size={16} aria-hidden />
-          </span>
         </div>
 
         <ul className="today-overview-card__rows">
           {rows.map((row) => (
-            <li key={row.key} className="today-overview-card__row">
-              <span className="today-overview-card__label">{row.label}</span>
-              <span className="today-overview-card__value">
-                {isLoading ? <Skeleton width={48} height={14} /> : row.value}
-              </span>
-              <ChevronRight size={14} className="today-overview-card__chevron" aria-hidden />
+            <li key={row.key}>
+              <Link
+                to={row.to}
+                className="today-overview-card__row"
+                aria-label={`Open ${row.label}`}
+              >
+                <span className="today-overview-card__label">{row.label}</span>
+                <span className="today-overview-card__value">
+                  {isLoading ? <Skeleton width={48} height={14} /> : row.value}
+                </span>
+                <ChevronRight size={14} className="today-overview-card__chevron" aria-hidden />
+              </Link>
             </li>
           ))}
         </ul>
       </div>
-    </Link>
+    </section>
   );
 }

@@ -179,8 +179,10 @@ export default function BedTransferModal({
       isOpen={open}
       onClose={handleClose}
       title="Transfer Bed"
+      size="md"
+      panelClassName="ipd-xfer-modal"
       footer={
-        <div className="ipd-form-actions">
+        <div className="ipd-xfer-modal__actions">
           <Button type="button" variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
@@ -194,8 +196,8 @@ export default function BedTransferModal({
         </div>
       }
     >
-      <form id="ipd-xfer-form" className="ipd-modal-form" onSubmit={onSubmit}>
-        <p className="ipd-page__subtitle">
+      <form id="ipd-xfer-form" className="ipd-modal-form ipd-xfer-modal__form" onSubmit={onSubmit}>
+        <p className="ipd-xfer-modal__desc">
           Move an admitted patient to another available bed.
         </p>
 

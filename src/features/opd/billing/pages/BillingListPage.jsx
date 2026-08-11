@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Printer } from 'lucide-react';
 import { useBillsQuery, BILLS_PAGE_SIZE } from '@/shared/hooks/queries/useBillingQuery';
 import { asBillList } from '@/shared/hooks/queries/listDataUtils';
@@ -9,7 +9,6 @@ import { useTableSort } from '@/shared/hooks/useTableSort';
 import {
   Button,
   Input,
-  Select,
   StatusBadge,
   SearchBar,
   DataTableShell,
@@ -25,6 +24,7 @@ import { ROUTES } from '@/shared/constants';
 import './BillingListPage.css';
 
 const STATUS_TO_API = { Unpaid: 'pending', Partial: 'partial', Paid: 'paid' };
+const STATUS_FILTERS = ['All', 'Paid', 'Unpaid', 'Partial'];
 
 function groupBillsByPatient(bills) {
   const map = new Map();
@@ -74,9 +74,13 @@ function groupBillsByPatient(bills) {
 
 export default function BillingListPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search.trim(), 300);
-  const [statusFilter, setStatusFilter] = useState('All');
+  const statusParam = searchParams.get('status');
+  const [statusFilter, setStatusFilter] = useState(() =>
+    STATUS_FILTERS.includes(statusParam) ? statusParam : 'All'
+  );
   const [dateScope, setDateScope] = useState('All');
   const [customDate, setCustomDate] = useState('');
   const [dateFrom, setDateFrom] = useState('');
@@ -198,21 +202,21 @@ export default function BillingListPage() {
           <SearchBar
             value={search}
             onChange={setSearch}
-            placeholder="Search patient or bill ID..."
+            placeholder="Search patient"
             className="billing-list-toolbar__search"
           />
-          <Select
+          <select
+            className="field__input billing-list-toolbar__date-scope"
             value={dateScope}
-            onChange={setDateScope}
-            className="billing-list-toolbar__date-scope"
-            options={[
-              { value: 'All', label: 'All Dates' },
-              { value: 'Today', label: 'Today' },
-              { value: 'Yesterday', label: 'Yesterday' },
-              { value: 'Custom', label: 'Custom Date' },
-              { value: 'Range', label: 'Date Range' },
-            ]}
-          />
+            onChange={(e) => setDateScope(e.target.value)}
+            aria-label="Date filter"
+          >
+            <option value="All">All Dates</option>
+            <option value="Today">Today</option>
+            <option value="Yesterday">Yesterday</option>
+            <option value="Custom">Custom Date</option>
+            <option value="Range">Date Range</option>
+          </select>
           {dateScope === 'Custom' && (
             <Input
               type="date"
@@ -239,17 +243,17 @@ export default function BillingListPage() {
               />
             </>
           )}
-          <Select
+          <select
+            className="field__input billing-list-toolbar__status"
             value={statusFilter}
-            onChange={setStatusFilter}
-            className="billing-list-toolbar__status"
-            options={[
-              { value: 'All', label: 'All Statuses' },
-              { value: 'Paid', label: 'Paid' },
-              { value: 'Unpaid', label: 'Unpaid' },
-              { value: 'Partial', label: 'Partial' },
-            ]}
-          />
+            onChange={(e) => setStatusFilter(e.target.value)}
+            aria-label="Status filter"
+          >
+            <option value="All">All Statuses</option>
+            <option value="Paid">Paid</option>
+            <option value="Unpaid">Unpaid</option>
+            <option value="Partial">Partial</option>
+          </select>
         </div>
 
         <DataTableShell

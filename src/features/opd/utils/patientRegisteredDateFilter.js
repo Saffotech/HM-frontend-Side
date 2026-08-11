@@ -4,7 +4,6 @@ export const REGISTRATION_DATE_FILTER_OPTIONS = [
   { id: 'all', label: 'All' },
   { id: 'today', label: 'Today' },
   { id: 'yesterday', label: 'Yesterday' },
-  { id: 'before_yesterday', label: 'Before yesterday' },
   { id: 'custom', label: 'Custom' },
 ];
 
@@ -47,8 +46,6 @@ export function matchesRegistrationDateFilter(patient, filterId, customDate) {
       return regKey === todayKey;
     case 'yesterday':
       return regKey === yesterdayKey;
-    case 'before_yesterday':
-      return regKey < yesterdayKey;
     case 'custom': {
       if (!customDate) return true;
       const custom = parseRegisteredDate(customDate);

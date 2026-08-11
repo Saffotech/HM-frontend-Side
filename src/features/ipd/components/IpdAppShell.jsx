@@ -3,8 +3,6 @@ import { Outlet } from 'react-router-dom';
 import { useAuth } from '@/shared/hooks/useAuth';
 import IpdLayout from './IpdLayout';
 
-export const IPD_PERMISSIONS_BUMP_KEY = 'hms:ipd-permissions-bump';
-
 function IpdPermissionSync({ children }) {
   const { refreshPermissions, isAuthenticated } = useAuth();
 
@@ -21,22 +19,14 @@ function IpdPermissionSync({ children }) {
     const onVisibility = () => {
       if (document.visibilityState === 'visible') sync();
     };
-    const onStorage = (event) => {
-      if (event.key === IPD_PERMISSIONS_BUMP_KEY) sync();
-    };
-    const onBump = () => sync();
 
     window.addEventListener('focus', onFocus);
     document.addEventListener('visibilitychange', onVisibility);
-    window.addEventListener('storage', onStorage);
-    window.addEventListener('hms:ipd-permissions-bump', onBump);
     const id = window.setInterval(sync, 15_000);
 
     return () => {
       window.removeEventListener('focus', onFocus);
       document.removeEventListener('visibilitychange', onVisibility);
-      window.removeEventListener('storage', onStorage);
-      window.removeEventListener('hms:ipd-permissions-bump', onBump);
       window.clearInterval(id);
     };
   }, [isAuthenticated, refreshPermissions]);

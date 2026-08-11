@@ -70,23 +70,9 @@ const NAV_LINKS = [
   },
 ];
 
-const PAGE_TITLES = [
-  { prefix: ROUTES.IPD_PROFILE, title: 'My Profile' },
-  { prefix: ROUTES.IPD_DISCHARGE, title: 'Discharge' },
-  { prefix: ROUTES.IPD_PAYMENT_HISTORY, title: 'Payment History' },
-  { prefix: '/ipd/billing/preview', title: 'Bill Preview' },
-  { prefix: ROUTES.IPD_BILLING, title: 'Billing' },
-  { prefix: ROUTES.IPD_BED_TRANSFER, title: 'Bed Transfer' },
-  { prefix: ROUTES.IPD_BEDS, title: 'Beds' },
-  { prefix: ROUTES.IPD_ADMIT, title: 'Admit Patient' },
-  { prefix: ROUTES.IPD_PATIENTS, title: 'IPD Patients' },
-  { prefix: ROUTES.IPD_DASHBOARD, title: 'IPD Dashboard' },
-];
-
-function resolveTitle(pathname, pageTitleOverride) {
-  if (pageTitleOverride) return pageTitleOverride;
-  const match = PAGE_TITLES.find((entry) => pathname.startsWith(entry.prefix));
-  return match?.title || 'IPD';
+/** Top shell title stays "IPD"; page names live in each screen header. */
+function resolveTitle(_pathname, pageTitleOverride) {
+  return pageTitleOverride || 'IPD';
 }
 
 export default function IpdLayout({ children }) {
@@ -134,7 +120,7 @@ export default function IpdLayout({ children }) {
       homeRoute={homeRoute}
       roleLabel="IPD"
       roleLabelClassName="ipd-role-label"
-      defaultTitle="IPD Dashboard"
+      defaultTitle="IPD"
       showBell={false}
       profileHref={ROUTES.IPD_PROFILE}
       logoutMenuOnly={onProfilePage}

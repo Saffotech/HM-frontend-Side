@@ -138,7 +138,7 @@ export default function IpdPatientDetailPage() {
             <div className="ipd-card__body ipd-pd-body">
               <dl className="ipd-pd-grid">
                 <Field label="Admission No.">{admission.admission_no}</Field>
-                <Field label="UHID">{admission.patient_uid}</Field>
+                <Field label="Patient ID">{admission.patient_uid}</Field>
                 <Field label="Ward / Bed">
                   {admission.ward_name || '—'} / {admission.bed_number || '—'}
                 </Field>
@@ -238,6 +238,7 @@ export default function IpdPatientDetailPage() {
                 <BillSummary
                   subtotal={formatIpdMoney(running?.subtotal)}
                   tax={formatIpdMoney(running?.gst_amount)}
+                  taxPercent={running?.gst_percent}
                   total={formatIpdMoney(running?.grand_total)}
                 />
                 {bills.length > 0 ? (

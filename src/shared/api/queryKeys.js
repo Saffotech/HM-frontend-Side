@@ -54,10 +54,6 @@ export const queryKeys = {
 
     list: (filters) => ['beds', 'list', filters],
 
-    wards: ['beds', 'wards'],
-
-    ward: (name) => ['beds', 'ward', name],
-
   },
 
   opd: {
@@ -82,7 +78,6 @@ export const queryKeys = {
 
   pharmacy: {
     all: ['pharmacy'],
-    dashboard: ['pharmacy', 'dashboard'],
     prescriptions: (filters) => ['pharmacy', 'prescriptions', filters],
     prescription: (id) => ['pharmacy', 'prescription', id],
     history: (params) => ['pharmacy', 'history', params],
@@ -238,6 +233,7 @@ export const queryKeys = {
     wards: ['ipd', 'beds', 'wards'],
     runningBills: (filters) => ['ipd', 'billing', 'running', filters],
     billPreview: (admissionId) => ['ipd', 'billing', 'preview', admissionId],
+    billInvoice: (billId) => ['ipd', 'billing', 'invoice', billId],
     paymentHistory: (filters) => ['ipd', 'payments', 'history', filters],
     profile: ['ipd', 'profile'],
     departments: ['ipd', 'reference', 'departments'],

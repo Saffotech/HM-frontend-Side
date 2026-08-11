@@ -85,44 +85,6 @@ export function useOpdPaymentControls() {
   };
 }
 
-export function resolveBedRate(pricing, { bedNumber, wardName } = {}) {
-  const bedTariff = pricing?.bed_tariff ?? {};
-  const specialRates = bedTariff.special_bed_rates ?? [];
-  const wardRates = bedTariff.ward_rates ?? [];
-  const bedKey = String(bedNumber || '').trim().toLowerCase();
-  const wardKey = String(wardName || '').trim().toLowerCase();
-
-  if (bedKey) {
-    const special = specialRates.find(
-      (row) => String(row?.bed_number || '').trim().toLowerCase() === bedKey,
-    );
-    if (special && Number.isFinite(Number(special.charge_per_day))) {
-      return Number(special.charge_per_day);
-    }
-  }
-
-  if (wardKey) {
-    const ward = wardRates.find(
-      (row) => String(row?.ward_name || '').trim().toLowerCase() === wardKey,
-    );
-    if (ward && Number.isFinite(Number(ward.charge_per_day))) {
-      return Number(ward.charge_per_day);
-    }
-  }
-
-  if (wardKey.includes('icu')) return Number(bedTariff.icu_charge ?? 5000);
-  if (wardKey.includes('private')) return Number(bedTariff.private_ward_charge ?? 2000);
-  return Number(bedTariff.general_ward_charge ?? 500);
-}
-
-export function calculateBedDays(admittedAtIso) {
-  if (!admittedAtIso) return 1;
-  const admittedAt = new Date(admittedAtIso);
-  if (Number.isNaN(admittedAt.getTime())) return 1;
-  const diffMs = Math.max(0, Date.now() - admittedAt.getTime());
-  return Math.max(1, Math.ceil(diffMs / (24 * 60 * 60 * 1000)));
-}
-
 export function useOpdPricingControls() {
   const query = useOpdBillingSettingsQuery();
   const pricing = query.data?.pricing;
@@ -158,7 +120,5 @@ export function useOpdPricingControls() {
     billItems,
     resolveConsultationFee: (doctorId, departmentId) =>
       resolveConsultationFee(pricing, { doctorId, departmentId }),
-    resolveBedRate: (bedNumber, wardName) => resolveBedRate(pricing, { bedNumber, wardName }),
-    calculateBedDays,
   };
 }

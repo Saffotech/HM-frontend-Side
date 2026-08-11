@@ -131,6 +131,7 @@ export default function IpdBillPreviewPage() {
           <BillSummary
             subtotal={formatIpdMoney(preview?.subtotal)}
             tax={formatIpdMoney(preview?.gst_amount)}
+            taxPercent={preview?.gst_percent}
             total={formatIpdMoney(preview?.grand_total)}
             paid={openBill ? formatIpdMoney(openBill.paid_amount) : null}
             balance={openBill ? formatIpdMoney(openBill.balance_due) : null}

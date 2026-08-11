@@ -2,9 +2,11 @@
  * Running bills list — live `/ipd/billing/running`.
  */
 
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import IpdPageHeader from '@/features/ipd/components/IpdPageHeader';
 import { useIpdPermissionSet } from '@/features/ipd/hooks/useIpdPermission';
 import IpdPermissionButton from '@/features/ipd/components/IpdPermissionButton';
@@ -14,22 +16,43 @@ import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
 export default function IpdBillingPage() {
   const navigate = useNavigate();
   const { canViewBilling } = useIpdPermissionSet();
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 300);
   const { data, isLoading, isError, error, refetch } = useIpdRunningBillsQuery();
 
-  const rows = (data?.items ?? []).map((item) => {
-    const admission = item.admission ?? {};
-    return {
-      id: admission.id,
-      admission_no: admission.admission_no,
-      patient_name: admission.patient_name,
-      ward: admission.ward_name,
-      bed: admission.bed_number,
-      days: admission.length_of_stay_days,
-      balance: item.balance,
-      running_total: item.running_total,
-      open_bill_id: item.open_bill_id,
-    };
-  });
+  const rows = useMemo(() => {
+    const mapped = (data?.items ?? []).map((item) => {
+      const admission = item.admission ?? {};
+      return {
+        id: admission.id,
+        admission_no: admission.admission_no,
+        patient_name: admission.patient_name,
+        ward: admission.ward_name,
+        bed: admission.bed_number,
+        days: admission.length_of_stay_days,
+        balance: item.balance,
+        running_total: item.running_total,
+        open_bill_id: item.open_bill_id,
+      };
+    });
+
+    const q = debouncedSearch.trim().toLowerCase();
+    if (!q) return mapped;
+
+    return mapped.filter((row) => {
+      const hay = [
+        row.admission_no,
+        row.id,
+        row.patient_name,
+        row.ward,
+        row.bed,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [data?.items, debouncedSearch]);
 
   return (
     <div className="ipd-page">
@@ -39,8 +62,18 @@ export default function IpdBillingPage() {
       />
 
       <div className="ipd-card">
-        <div className="ipd-card__head">
+        <div className="ipd-card__head ipd-billing-card__head">
           <h2 className="ipd-card__title">Bill list</h2>
+          <div className="ipd-toolbar__field ipd-billing-search">
+            <input
+              id="ipd-billing-search"
+              className="ipd-input"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search patient, admission, ward…"
+              aria-label="Search bills"
+            />
+          </div>
         </div>
         {isError ? (
           <div className="ipd-card__body">
@@ -50,13 +83,6 @@ export default function IpdBillingPage() {
           <div className="ipd-card__body" style={{ display: 'grid', gap: '0.5rem' }}>
             <div className="ipd-skeleton" />
             <div className="ipd-skeleton" />
-          </div>
-        ) : rows.length === 0 ? (
-          <div className="ipd-card__body">
-            <EmptyState
-              title="No running bills"
-              description="Admitted patients with open charges will appear here."
-            />
           </div>
         ) : (
           <div className="ipd-table-wrap">
@@ -73,35 +99,54 @@ export default function IpdBillingPage() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row) => (
-                  <tr key={row.id}>
-                    <td>{row.admission_no || row.id}</td>
-                    <td>{row.patient_name || '—'}</td>
-                    <td>
-                      {row.ward || '—'} / {row.bed || '—'}
-                    </td>
-                    <td>{row.days ?? '—'}</td>
-                    <td>{formatIpdMoney(row.running_total)}</td>
-                    <td>{formatIpdMoney(row.balance)}</td>
-                    <td>
-                      <IpdPermissionButton
-                        allowed={canViewBilling}
-                        type="button"
-                        className="btn btn--secondary btn--sm"
-                        onClick={() =>
-                          navigate(
-                            ROUTES.IPD_BILL_PREVIEW.replace(
-                              ':admissionId',
-                              String(row.id)
-                            )
-                          )
+                {rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={7}>
+                      <EmptyState
+                        title={
+                          debouncedSearch.trim()
+                            ? 'No matching bills'
+                            : 'No running bills'
                         }
-                      >
-                        Preview
-                      </IpdPermissionButton>
+                        description={
+                          debouncedSearch.trim()
+                            ? 'Try a different patient, admission, or ward.'
+                            : 'Admitted patients with open charges will appear here.'
+                        }
+                      />
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  rows.map((row) => (
+                    <tr key={row.id}>
+                      <td>{row.admission_no || row.id}</td>
+                      <td>{row.patient_name || '—'}</td>
+                      <td>
+                        {row.ward || '—'} / {row.bed || '—'}
+                      </td>
+                      <td>{row.days ?? '—'}</td>
+                      <td>{formatIpdMoney(row.running_total)}</td>
+                      <td>{formatIpdMoney(row.balance)}</td>
+                      <td>
+                        <IpdPermissionButton
+                          allowed={canViewBilling}
+                          type="button"
+                          className="btn btn--secondary btn--sm"
+                          onClick={() =>
+                            navigate(
+                              ROUTES.IPD_BILL_PREVIEW.replace(
+                                ':admissionId',
+                                String(row.id)
+                              )
+                            )
+                          }
+                        >
+                          Preview
+                        </IpdPermissionButton>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

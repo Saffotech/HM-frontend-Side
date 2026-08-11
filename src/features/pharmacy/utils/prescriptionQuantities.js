@@ -26,7 +26,3 @@ export function resolveItemQuantities(item) {
     quantity_remaining: quantity_prescribed,
   };
 }
-
-export function getQuantityPrescribed(item) {
-  return resolveItemQuantities(item).quantity_prescribed;
-}

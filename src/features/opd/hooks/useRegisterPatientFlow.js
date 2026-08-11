@@ -20,12 +20,35 @@ import {
 } from '@/shared/utils/billHelpers';
 import { requiresTransactionReference, validatePaymentTransactionRef } from '@/shared/utils/validators';
 import { toast } from '@/shared/utils/toast';
+import { scrollAndFocusInvalidField } from '@/shared/utils/formFocus';
 import {
   formatAppointmentDisplay,
   REGISTER_PATIENT_INITIAL_FORM,
   todayIso,
   validateRegisterPatient,
 } from '@/features/opd/utils/registerPatientUtils';
+
+export const REGISTER_FIELD_IDS = {
+  name: 'register-name',
+  phone: 'register-phone',
+  dob: 'register-dob',
+  aadhaar: 'register-aadhaar',
+  deptId: 'register-dept',
+  doctorId: 'register-doctor',
+  appointmentDate: 'register-appointment-date',
+  appointmentTime: 'register-appointment-slots',
+};
+
+const REGISTER_FIELD_ORDER = [
+  'name',
+  'phone',
+  'dob',
+  'aadhaar',
+  'deptId',
+  'doctorId',
+  'appointmentDate',
+  'appointmentTime',
+];
 
 export function useRegisterPatientFlow() {
   const token = useQueryToken();
@@ -48,7 +71,7 @@ export function useRegisterPatientFlow() {
   const [revisitConfirmed, setRevisitConfirmed] = useState(false);
 
   const isRevisitPatient = Boolean(revisitConfirmed && existingPatient?.found);
-  const { values: form, errors, handleChange, handleSubmit } = useFormValidation(
+  const { values: form, errors, handleChange, setErrors } = useFormValidation(
     REGISTER_PATIENT_INITIAL_FORM,
     (values) => validateRegisterPatient(values, { isRevisit: isRevisitPatient })
   );
@@ -140,10 +163,27 @@ export function useRegisterPatientFlow() {
     return search?.dbId ?? search?.patient?.dbId ?? null;
   };
 
-  const getOnSubmit = (selectedDoctor) => handleSubmit(async (rawValues) => {
+  const getOnSubmit = (selectedDoctor) => (e) => {
+    e?.preventDefault?.();
+    const nextErrors = validateRegisterPatient(form, { isRevisit: isRevisitPatient });
+    if (!form.deptId) nextErrors.deptId = 'Department is required';
+    if (!form.doctorId) nextErrors.doctorId = 'Doctor is required';
+    if (form.doctorId) {
+      if (!appointmentDateStr) nextErrors.appointmentDate = 'Appointment date is required';
+      if (!appointmentTime) nextErrors.appointmentTime = 'Please select a time slot';
+    }
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      requestAnimationFrame(() => {
+        scrollAndFocusInvalidField(nextErrors, REGISTER_FIELD_IDS, REGISTER_FIELD_ORDER);
+      });
+      return;
+    }
+    void (async () => {
     if (!selectedDoctor || !validateAppointmentSlot()) return;
 
-    const formData = trimForm(rawValues);
+    try {
+    const formData = trimForm(form);
     const docFee = selectedDoctor.fee || 0;
     const regFee = isRevisitPatient ? 0 : REGISTRATION_FEE;
     const items = [
@@ -207,7 +247,11 @@ export function useRegisterPatientFlow() {
 
     setPaymentAmount(String(grandTotal));
     setStage('bill');
-  });
+    } catch (err) {
+      toast.error(err?.message || 'Could not generate bill');
+    }
+    })();
+  };
 
   const confirmPayment = async (selectedDoctor, selectedDept) => {
     if (!billPreview || isSaving) return;

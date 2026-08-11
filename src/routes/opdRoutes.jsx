@@ -7,9 +7,6 @@ import { OPD_SHELL_ROLES } from '@/shared/utils/authRedirect';
 import LazyRoute from '@/routes/LazyRoute';
 
 const DashboardPage = lazy(() => import('@/features/opd/pages/DashboardPage'));
-const TodayOverviewPage = lazy(() =>
-  import('@/features/opd/today-overview/pages/TodayOverviewPage')
-);
 const PatientListPage = lazy(() => import('@/features/opd/pages/PatientListPage'));
 const RegisterPatientPage = lazy(() => import('@/features/opd/pages/RegisterPatientPage'));
 const UpdatePatientPage = lazy(() => import('@/features/opd/pages/UpdatePatientPage'));
@@ -45,14 +42,6 @@ export const opdRoutes = [
             element: (
               <LazyRoute>
                 <DashboardPage />
-              </LazyRoute>
-            ),
-          },
-          {
-            path: ROUTES.OPD_TODAY_OVERVIEW,
-            element: (
-              <LazyRoute>
-                <TodayOverviewPage />
               </LazyRoute>
             ),
           },

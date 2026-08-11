@@ -64,15 +64,6 @@ export default function IpdBedsPage() {
     total: (ward.occupied ?? 0) + (ward.available ?? 0),
   }));
 
-  const totals = wards.reduce(
-    (acc, ward) => ({
-      occupied: acc.occupied + ward.occupied,
-      available: acc.available + ward.available,
-      total: acc.total + ward.total,
-    }),
-    { occupied: 0, available: 0, total: 0 },
-  );
-
   /** Resolve active admission id from bed occupancy fields. */
   const admissionLookup = useMemo(() => {
     const byBed = new Map();
@@ -215,13 +206,52 @@ export default function IpdBedsPage() {
   };
 
   return (
-    <div className="ipd-page">
+    <div className="ipd-page ipd-page--compact">
       <IpdPageHeader
         title="Beds"
-        subtitle={
-          totals.total
-            ? `${totals.occupied} occupied · ${totals.available} available · ${totals.total} total`
-            : undefined
+        middle={
+          !loading && wards.length > 0 ? (
+            <div className="ipd-beds-summary" aria-label="Ward occupancy">
+              {wards.map((ward) => {
+                const pct =
+                  ward.total > 0
+                    ? Math.round((ward.occupied / ward.total) * 100)
+                    : 0;
+                const active = wardFilter === ward.name;
+                return (
+                  <button
+                    type="button"
+                    key={ward.name}
+                    className={`ipd-beds-summary__item${
+                      active ? " ipd-beds-summary__item--active" : ""
+                    }`}
+                    onClick={() => setFilter("ward", active ? "" : ward.name)}
+                  >
+                    <div className="ipd-beds-summary__top">
+                      <span className="ipd-beds-summary__name">{ward.name}</span>
+                    </div>
+                    <div className="ipd-occ-bar" aria-hidden>
+                      <div
+                        className="ipd-occ-bar__fill"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <div className="ipd-beds-summary__stats">
+                      <span>
+                        Occupied: <strong>{ward.occupied}</strong>
+                      </span>
+                      <span>
+                        Available: <strong>{ward.available}</strong>
+                      </span>
+                      <span>
+                        Total: <strong>{ward.total}</strong>
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : null
         }
         actions={
           <IpdPermissionButton
@@ -250,51 +280,8 @@ export default function IpdBedsPage() {
         </div>
       )}
 
-      {!loading && wards.length > 0 ? (
-        <div className="ipd-beds-summary" aria-label="Ward occupancy">
-          {wards.map((ward) => {
-            const pct =
-              ward.total > 0
-                ? Math.round((ward.occupied / ward.total) * 100)
-                : 0;
-            const active = wardFilter === ward.name;
-            return (
-              <button
-                type="button"
-                key={ward.name}
-                className={`ipd-beds-summary__item${
-                  active ? " ipd-beds-summary__item--active" : ""
-                }`}
-                onClick={() => setFilter("ward", active ? "" : ward.name)}
-              >
-                <div className="ipd-beds-summary__top">
-                  <span className="ipd-beds-summary__name">{ward.name}</span>
-                </div>
-                <div className="ipd-occ-bar" aria-hidden>
-                  <div
-                    className="ipd-occ-bar__fill"
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-                <div className="ipd-beds-summary__stats">
-                  <span>
-                    Occupied: <strong>{ward.occupied}</strong>
-                  </span>
-                  <span>
-                    Available: <strong>{ward.available}</strong>
-                  </span>
-                  <span>
-                    Total: <strong>{ward.total}</strong>
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
-
       <div className="ipd-card">
-        <div className="ipd-card__head">
+        <div className="ipd-card__head ipd-beds-card__head">
           <h2 className="ipd-card__title">Bed list</h2>
           {!loading ? (
             <span className="ipd-page__subtitle">

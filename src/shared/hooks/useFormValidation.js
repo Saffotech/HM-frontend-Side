@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
+import { scrollAndFocusInvalidField } from '@/shared/utils/formFocus';
 
 export function useFormValidation(initialValues, validate) {
   const [values, setValues] = useState(initialValues);
@@ -15,13 +16,17 @@ export function useFormValidation(initialValues, validate) {
   }, []);
 
   const handleSubmit = useCallback(
-    (onValid) => (e) => {
+    (onValid, options = {}) => (e) => {
       e?.preventDefault?.();
       const nextErrors = validate(values);
       setErrors(nextErrors);
       if (Object.keys(nextErrors).length === 0) {
         onValid(values);
+        return;
       }
+      requestAnimationFrame(() => {
+        scrollAndFocusInvalidField(nextErrors, options.fieldIds, options.fieldOrder);
+      });
     },
     [validate, values]
   );

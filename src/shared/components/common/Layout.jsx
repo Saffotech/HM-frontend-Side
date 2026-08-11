@@ -29,7 +29,6 @@ const NAV_LINKS = [
 ];
 
 const PAGE_TITLES = [
-  { prefix: ROUTES.OPD_TODAY_OVERVIEW, title: "Today's Overview" },
   { prefix: ROUTES.OPD_NOTIFICATIONS, title: 'Notifications' },
   { prefix: ROUTES.OPD_PROFILE, title: 'My Profile' },
   { prefix: ROUTES.BILLING_OPD_NEW, title: 'Generate Bill' },

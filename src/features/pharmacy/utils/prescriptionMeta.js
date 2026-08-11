@@ -23,17 +23,3 @@ export function getPrescriptionDiagnoses(rx) {
   const single = rx?.diagnosis;
   return single ? [{ id: 'primary', label: single, noted_at: null }] : [];
 }
-
-export function formatDoctorListSummary(rx) {
-  const doctors = getPrescriptionDoctors(rx);
-  if (doctors.length === 0) return '—';
-  if (doctors.length === 1) return doctors[0].name;
-  return `${doctors[0].name} +${doctors.length - 1} more`;
-}
-
-export function formatDiagnosisListSummary(rx) {
-  const diagnoses = getPrescriptionDiagnoses(rx);
-  if (diagnoses.length === 0) return '—';
-  if (diagnoses.length === 1) return diagnoses[0].label;
-  return `${diagnoses[0].label} +${diagnoses.length - 1} more`;
-}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, Users } from 'lucide-react';
 import { usePatientsQuery, useDeletePatientMutation } from '@/shared/hooks/queries/usePatientQuery';
 import { asPatientList, asPatientPageMeta } from '@/shared/hooks/queries/listDataUtils';
@@ -19,11 +19,17 @@ import './PatientListPage.css';
 
 export default function PatientListPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const deletePatient = useDeletePatientMutation();
   const { allowPatientDelete } = useOpdDeleteControls();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search.trim(), 300);
-  const [dateFilter, setDateFilter] = useState('all');
+  const registeredParam = searchParams.get('registered');
+  const [dateFilter, setDateFilter] = useState(() =>
+    REGISTRATION_DATE_FILTER_OPTIONS.some((option) => option.id === registeredParam)
+      ? registeredParam
+      : 'all'
+  );
   const [customDate, setCustomDate] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [serverPage, setServerPage] = useState(1);
@@ -112,12 +118,6 @@ export default function PatientListPage() {
               />
             )}
           </div>
-          {(debouncedSearch || dateFilter !== 'all') && (
-            <span className="result-count">
-              {totalItems} patient{totalItems !== 1 ? 's' : ''}
-              {useClientDateFilter ? ' (date filter on loaded records)' : ''}
-            </span>
-          )}
           <Link to={ROUTES.PATIENTS_REGISTER} className="patients-page__register-link">
             <Button>
               <Plus size={16} /> Register New Patient

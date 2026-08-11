@@ -14,25 +14,8 @@ export async function getIpdWardStats(token) {
   return apiClient('/ipd/beds/wards', { token });
 }
 
-export async function assignIpdBed(payload, token) {
-  // Admission creates occupancy — use admit endpoint
-  return apiClient('/ipd/admissions', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-    token,
-  });
-}
-
 export async function transferIpdBed(payload, token) {
   return apiClient('/ipd/beds/transfer', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-    token,
-  });
-}
-
-export async function releaseIpdBed(admissionId, payload = {}, token) {
-  return apiClient(`/ipd/admissions/${admissionId}/discharge`, {
     method: 'POST',
     body: JSON.stringify(payload),
     token,

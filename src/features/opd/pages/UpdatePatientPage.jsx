@@ -67,8 +67,30 @@ export default function UpdatePatientPage() {
         <form onSubmit={onSubmit}>
           <div className="form-grid">
             <Input label="Full Name" value={form.name || ''} onChange={(e) => set('name', e.target.value)} error={errors.name} />
-            <Select label="Gender" value={form.gender || ''} onChange={(v) => set('gender', v)} options={GENDERS.map((g) => ({ value: g, label: g }))} />
-            {errors.gender && <span className="field__error">{errors.gender}</span>}
+            <div className="field">
+              <label className="field__label" htmlFor="update-gender">
+                Gender
+              </label>
+              <select
+                id="update-gender"
+                className="field__input"
+                value={form.gender || ''}
+                onChange={(e) => set('gender', e.target.value)}
+                aria-invalid={!!errors.gender}
+              >
+                <option value="" disabled>
+                  Select gender
+                </option>
+                {GENDERS.map((g) => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
+                ))}
+              </select>
+              {errors.gender ? (
+                <span className="field__error">{errors.gender}</span>
+              ) : null}
+            </div>
             <Input
               label="Phone"
               value={form.phone || ''}

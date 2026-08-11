@@ -16,6 +16,5 @@ export * as doctorQueueApi from './doctorQueue';
 export * as doctorPatientsApi from './doctorPatients';
 export * as doctorPrescriptionsApi from './doctorPrescriptions';
 export * as doctorLabsApi from './doctorLabs';
-export * as pharmacyApi from './pharmacy';
 export * as labApi from './lab';
 export * as adminOpdSettingsApi from './adminOpdSettings';

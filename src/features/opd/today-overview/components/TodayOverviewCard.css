@@ -8,16 +8,6 @@
   text-decoration: none;
   color: inherit;
   min-width: 0;
-  transition:
-    transform var(--duration-fast, 0.2s) var(--ease-standard, ease),
-    box-shadow var(--duration-fast, 0.2s) var(--ease-standard, ease);
-}
-
-.today-overview-card:hover,
-.today-overview-card:focus-visible {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  text-decoration: none;
 }
 
 .today-overview-card__bar {
@@ -80,17 +70,34 @@
   flex-direction: column;
 }
 
+.today-overview-card__rows > li {
+  border-bottom: 1px solid var(--color-border-light, #f0f4f8);
+}
+
+.today-overview-card__rows > li:last-child {
+  border-bottom: none;
+}
+
 .today-overview-card__row {
   display: grid;
   grid-template-columns: 1fr auto 1rem;
   align-items: center;
   gap: 0.5rem;
   padding: 0.28rem 0;
-  border-bottom: 1px solid var(--color-border-light, #f0f4f8);
+  color: inherit;
+  text-decoration: none;
+  border-radius: 0.35rem;
 }
 
-.today-overview-card__row:last-child {
-  border-bottom: none;
+.today-overview-card__row:hover,
+.today-overview-card__row:focus-visible {
+  text-decoration: none;
+}
+
+.today-overview-card__row:hover .today-overview-card__chevron,
+.today-overview-card__row:focus-visible .today-overview-card__chevron {
+  transform: translateX(2px);
+  color: var(--color-primary);
 }
 
 .today-overview-card__label {
@@ -113,11 +120,6 @@
 .today-overview-card__chevron {
   color: var(--color-text-lighter, #94a3b8);
   transition: transform var(--duration-fast, 0.2s) var(--ease-standard, ease);
-}
-
-.today-overview-card:hover .today-overview-card__chevron {
-  transform: translateX(2px);
-  color: var(--color-primary);
 }
 
 /* Column width for this card is set by the dashboard quick-action grid. */

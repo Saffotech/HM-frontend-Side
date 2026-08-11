@@ -1,10 +1,10 @@
 /**
- * Dedicated bed transfer page — live transfer modal.
+ * Dedicated bed transfer page — opens the transfer modal, then returns to Beds.
  */
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Button, EmptyState } from '@/shared/components/common';
+import { Button } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import IpdPageHeader from '@/features/ipd/components/IpdPageHeader';
 import BedTransferModal from '@/features/ipd/components/BedTransferModal';
@@ -16,7 +16,7 @@ export default function IpdBedTransferPage() {
   const [searchParams] = useSearchParams();
   const { canTransferBed } = useIpdPermissionSet();
   const initialAdmissionId = searchParams.get('admissionId') || '';
-  const [modalOpen, setModalOpen] = useState(Boolean(initialAdmissionId));
+  const [modalOpen, setModalOpen] = useState(true);
 
   const subtitle = useMemo(
     () =>
@@ -26,6 +26,15 @@ export default function IpdBedTransferPage() {
     [initialAdmissionId]
   );
 
+  useEffect(() => {
+    setModalOpen(true);
+  }, [initialAdmissionId]);
+
+  const goBackToBeds = () => {
+    setModalOpen(false);
+    navigate(ROUTES.IPD_BEDS);
+  };
+
   return (
     <div className="ipd-page">
       <IpdPageHeader
@@ -33,7 +42,7 @@ export default function IpdBedTransferPage() {
         subtitle={subtitle}
         actions={
           <>
-            <Button type="button" variant="secondary" onClick={() => navigate(ROUTES.IPD_BEDS)}>
+            <Button type="button" variant="secondary" onClick={goBackToBeds}>
               Back to beds
             </Button>
             <IpdPermissionButton
@@ -48,20 +57,9 @@ export default function IpdBedTransferPage() {
         }
       />
 
-      <div className="ipd-card">
-        <div className="ipd-card__body">
-          <EmptyState
-            title="Transfer a patient"
-            description="Choose an admitted patient and an available bed, then confirm the transfer."
-            actionLabel="Open transfer"
-            onAction={() => setModalOpen(true)}
-          />
-        </div>
-      </div>
-
       <BedTransferModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={goBackToBeds}
         initialAdmissionId={initialAdmissionId}
       />
     </div>

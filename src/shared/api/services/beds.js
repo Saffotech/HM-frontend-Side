@@ -1,4 +1,4 @@
-import { getBeds, getBedsByWard, assignBed, releaseBed, apiBedToUi } from '@/features/opd/beds/api/beds';
+import { getBeds, apiBedToUi } from '@/features/opd/beds/api/beds';
 import { apiClient } from '@/shared/api/client';
 import { getPatient, getPatientProfileById } from '@/shared/api/services/patients';
 
@@ -36,26 +36,6 @@ export async function listBeds(token, params = {}) {
     beds,
     stats: r.stats ?? null,
   };
-}
-
-export async function listBedsByWard(wardName, token) {
-  const raw = await getBedsByWard(wardName, token);
-  let beds = (raw.beds ?? []).map(apiBedToUi);
-  beds = await enrichBedsWithPatientDepartment(beds, token);
-  return {
-    wardName: raw.ward_name ?? wardName,
-    beds,
-    stats: raw.stats ?? null,
-    occupancyPercent: raw.occupancy_percent ?? 0,
-  };
-}
-
-export async function assignBedToPatient(payload, token) {
-  return assignBed(payload, token);
-}
-
-export async function releaseBedById(bedId, token) {
-  return releaseBed(bedId, token);
 }
 
 /** Occupied beds keyed by internal patient DB id — for nurse queue enrichment. */

@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tansta
 import { queryKeys } from '@/shared/api/queryKeys';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { mutationOnError } from '@/shared/utils/mutationErrors';
+import { syncAuthProfileAvatar } from '@/shared/utils/syncAuthProfileAvatar';
 import {
   getIpdDashboardStats,
   getIpdPatients,
@@ -22,6 +23,7 @@ import {
   getIpdRunningBills,
   getIpdBillPreview,
   generateIpdBill,
+  getIpdBillInvoice,
   getIpdPaymentHistory,
   payIpdBill,
   completeIpdDischarge,
@@ -34,6 +36,13 @@ import { IPD_PAGE_SIZE } from '@/features/ipd/utils/constants';
 
 function invalidateIpdDomain(queryClient) {
   queryClient.invalidateQueries({ queryKey: queryKeys.ipd.all });
+}
+
+async function fetchIpdProfile(token) {
+  const profile = await getIpdProfile(token);
+  const data = { profile };
+  syncAuthProfileAvatar(data);
+  return data;
 }
 
 export function useIpdDashboardQuery() {
@@ -121,10 +130,23 @@ export function useIpdBillPreviewQuery(admissionId) {
   });
 }
 
+export function useIpdBillInvoiceQuery(billId, options = {}) {
+  const token = useQueryToken();
+  return useQuery({
+    queryKey: queryKeys.ipd.billInvoice(billId),
+    queryFn: () => getIpdBillInvoice(billId, token),
+    enabled: options.enabled !== false && Boolean(billId),
+  });
+}
+
 export function useIpdPaymentHistoryQuery(filters = {}) {
   const token = useQueryToken();
   const params = {
     search: filters.search?.trim() || undefined,
+    payment_mode:
+      filters.modeFilter && filters.modeFilter !== 'all'
+        ? String(filters.modeFilter).toLowerCase()
+        : undefined,
     page: filters.page ?? 1,
     limit: filters.limit ?? IPD_PAGE_SIZE,
   };
@@ -139,8 +161,8 @@ export function useIpdProfileQuery(options = {}) {
   const token = useQueryToken();
   return useQuery({
     queryKey: queryKeys.ipd.profile,
-    queryFn: () => getIpdProfile(token),
-    enabled: options.enabled !== false,
+    queryFn: () => fetchIpdProfile(token),
+    enabled: options.enabled !== false && Boolean(token),
     retry: 1,
   });
 }
@@ -260,9 +282,13 @@ export function useUpdateIpdProfileMutation() {
   const token = useQueryToken();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload) => updateIpdProfile(payload, token),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.ipd.profile });
+    mutationFn: async (payload) => {
+      await updateIpdProfile(payload, token);
+      return fetchIpdProfile(token);
+    },
+    onSuccess: (data) => {
+      syncAuthProfileAvatar(data);
+      queryClient.setQueryData(queryKeys.ipd.profile, data);
     },
     onError: mutationOnError,
   });
@@ -272,9 +298,13 @@ export function useUploadIpdProfileImageMutation() {
   const token = useQueryToken();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (file) => uploadIpdProfileImage(file, token),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.ipd.profile });
+    mutationFn: async (file) => {
+      await uploadIpdProfileImage(file, token);
+      return fetchIpdProfile(token);
+    },
+    onSuccess: (data) => {
+      syncAuthProfileAvatar(data);
+      queryClient.setQueryData(queryKeys.ipd.profile, data);
     },
     onError: mutationOnError,
   });
@@ -284,9 +314,13 @@ export function useDeleteIpdProfileImageMutation() {
   const token = useQueryToken();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => deleteIpdProfileImage(token),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.ipd.profile });
+    mutationFn: async () => {
+      await deleteIpdProfileImage(token);
+      return fetchIpdProfile(token);
+    },
+    onSuccess: (data) => {
+      syncAuthProfileAvatar(data);
+      queryClient.setQueryData(queryKeys.ipd.profile, data);
     },
     onError: mutationOnError,
   });

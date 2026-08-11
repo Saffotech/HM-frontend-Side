@@ -25,14 +25,7 @@ export const IPD_PERMISSIONS = {
   profileUpdate: 'ipd_profile:update',
   profileUploadImage: 'ipd_profile:upload_image',
   profileDeleteImage: 'ipd_profile:delete_image',
-  notificationsView: 'notifications:view',
-  notificationsUpdate: 'notifications:update',
 };
-
-export function useIpdPermission(permission) {
-  const { user } = useAuth();
-  return hasBackendPermission(user, permission);
-}
 
 export function useIpdPermissionSet() {
   const { user } = useAuth();
@@ -59,7 +52,5 @@ export function useIpdPermissionSet() {
     canUpdateProfile: check(IPD_PERMISSIONS.profileUpdate) || isIpdRole,
     canUploadProfileImage: check(IPD_PERMISSIONS.profileUploadImage) || isIpdRole,
     canDeleteProfileImage: check(IPD_PERMISSIONS.profileDeleteImage) || isIpdRole,
-    canViewNotifications: check(IPD_PERMISSIONS.notificationsView),
-    canUpdateNotifications: check(IPD_PERMISSIONS.notificationsUpdate),
   };
 }

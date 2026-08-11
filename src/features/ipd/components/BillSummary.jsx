@@ -6,12 +6,17 @@
 export default function BillSummary({
   subtotal = null,
   tax = null,
+  taxPercent = null,
   total = null,
   paid = null,
   balance = null,
 }) {
   const fmt = (v) => (v == null || v === '' ? '—' : v);
   const showExtra = paid != null || balance != null;
+  const percentLabel =
+    taxPercent != null && taxPercent !== '' && !Number.isNaN(Number(taxPercent))
+      ? `Tax (${Number(taxPercent)}%)`
+      : 'Tax';
 
   return (
     <div className={`ipd-totals${showExtra ? ' ipd-totals--with-extra' : ''}`}>
@@ -20,7 +25,7 @@ export default function BillSummary({
         <span className="ipd-totals__value">{fmt(subtotal)}</span>
       </div>
       <div className="ipd-totals__cell">
-        <span className="ipd-totals__label">Tax</span>
+        <span className="ipd-totals__label">{percentLabel}</span>
         <span className="ipd-totals__value">{fmt(tax)}</span>
       </div>
       <div className="ipd-totals__cell ipd-totals__cell--grand">

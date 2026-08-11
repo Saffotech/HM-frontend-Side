@@ -1,7 +1,5 @@
 import { Link } from 'react-router-dom';
 import { UserPlus, CalendarPlus, Receipt, Clock } from 'lucide-react';
-import { usePatientsQuery, PATIENTS_PAGE_SIZE } from '@/shared/hooks/queries/usePatientQuery';
-import { useTodayAppointmentsQuery } from '@/shared/hooks/queries/useAppointmentQuery';
 import { useOpdDashboardQuery } from '@/shared/hooks/queries/useOpdDashboardQuery';
 import { enrichAppointmentsWithApiPayment, prepareOpdDashboardAppointments } from '@/features/opd/utils/appointmentPaymentUtils';
 import { Avatar, StatusBadge, QueryFeedback } from '@/shared/components/common';
@@ -10,33 +8,14 @@ import { ROUTES } from '@/shared/constants';
 import './DashboardPage.css';
 
 export default function DashboardPage() {
-  const { data: dashboard, isLoading: ld, isError: ed, error: errD } = useOpdDashboardQuery();
-  const {
-    data: todayApptPage,
-    isLoading: la,
-    isError: ea,
-    error: errA,
-  } = useTodayAppointmentsQuery();
-  const {
-    data: recentPage,
-    isLoading: lp,
-    isError: ep,
-    error: errP,
-  } = usePatientsQuery({ fetchAll: false, page: 1, limit: PATIENTS_PAGE_SIZE });
+  const { data: dashboard, isLoading, isError, error } = useOpdDashboardQuery();
 
   const todaysAppts = prepareOpdDashboardAppointments(
-    enrichAppointmentsWithApiPayment(todayApptPage?.appointments ?? []),
+    enrichAppointmentsWithApiPayment(dashboard?.todayAppointments ?? []),
   );
   const paidCount = todaysAppts.filter((a) => a.payment?.isPaid).length;
   const unpaidCount = todaysAppts.length - paidCount;
-  const recentPatients = recentPage?.patients ?? [];
-
-  const hasShellData = Boolean(dashboard || recentPage || todayApptPage);
-  const isInitialLoading = !hasShellData && (ld || lp);
-  const showPartialWarning = (ed || ea || ep) && hasShellData;
-  const showFatalError =
-    !isInitialLoading && !hasShellData && (ed || ea || ep);
-  const error = errD || errA || errP;
+  const recentPatients = dashboard?.recentPatients ?? [];
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
@@ -48,27 +27,21 @@ export default function DashboardPage() {
   });
 
   const stats = {
-    patients: dashboard?.patientsTotal ?? recentPage?.total ?? recentPatients.length,
-    appointmentsToday: dashboard?.appointmentsToday ?? todaysAppts.length,
+    patients: dashboard?.patientsTotal ?? 0,
+    appointmentsToday: dashboard?.appointmentsToday ?? 0,
     pendingBills: dashboard?.pendingBills ?? 0,
   };
 
-  if (isInitialLoading) {
+  if (isLoading) {
     return <QueryFeedback isLoading />;
   }
 
-  if (showFatalError) {
+  if (isError) {
     return <QueryFeedback isError error={error} />;
   }
 
   return (
     <div className="dashboard stagger-reveal">
-        {showPartialWarning && (
-          <p className="dashboard-partial-warning" role="status">
-            Some dashboard data could not be refreshed. Showing the latest available
-            information.
-          </p>
-        )}
         <section className="dashboard-banner">
           <div>
             <h2 className="dashboard-banner__title">{greeting}, Billing Counter</h2>
@@ -148,13 +121,7 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {la ? (
-                      <tr>
-                        <td colSpan={6} className="dashboard-empty-row">
-                          Loading appointments…
-                        </td>
-                      </tr>
-                    ) : todaysAppts.length === 0 ? (
+                    {todaysAppts.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="dashboard-empty-row">
                           No appointments scheduled for today.

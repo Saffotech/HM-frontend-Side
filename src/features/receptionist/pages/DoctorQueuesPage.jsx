@@ -335,7 +335,7 @@ export default function DoctorQueuesPage() {
               <div className="rec-search rec-doctor-detail__search">
                 <input
                   type="text"
-                  placeholder="Search patient name, ID or UHID..."
+                  placeholder="Search patient"
                   className="rec-input"
                   value={queueSearch}
                   onChange={(e) => {
@@ -463,7 +463,7 @@ export default function DoctorQueuesPage() {
             <div className="rec-filter-group__field rec-search">
               <input
                 type="text"
-                placeholder="Search doctor name, department or room..."
+                placeholder="Search doctor"
                 className="rec-input"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}

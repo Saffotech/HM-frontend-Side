@@ -75,14 +75,3 @@ export async function fetchDispenseHistory(
     totalPages: Math.max(1, Math.ceil((raw?.total ?? data.length) / (limit || 1))),
   };
 }
-
-export async function fetchPharmacyDashboardStats(token) {
-  const raw = await getPrescriptions({ status: 'all' }, token);
-  const prescriptions = raw?.prescriptions ?? [];
-  return {
-    pending: prescriptions.filter((r) => r.status === 'pending').length,
-    partially_dispensed: prescriptions.filter((r) => r.status === 'partially_dispensed').length,
-    dispensed: prescriptions.filter((r) => r.status === 'dispensed').length,
-    total: prescriptions.length,
-  };
-}

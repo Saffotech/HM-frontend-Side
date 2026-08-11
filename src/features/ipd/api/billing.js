@@ -27,6 +27,10 @@ export async function getIpdPaymentHistory(params = {}, token) {
   return apiClient(`/ipd/payments/history${query}`, { token });
 }
 
+export async function getIpdBillInvoice(billId, token) {
+  return apiClient(`/ipd/billing/${billId}/invoice`, { token });
+}
+
 export async function payIpdBill(billId, payload, token) {
   return apiClient(`/ipd/billing/${billId}/pay`, {
     method: 'POST',

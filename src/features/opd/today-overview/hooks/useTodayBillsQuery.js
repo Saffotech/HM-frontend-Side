@@ -2,10 +2,7 @@ import { useBillsQuery } from '@/shared/hooks/queries/useBillingQuery';
 
 const TODAY_BILLS_LIMIT = 100;
 
-/**
- * Today's OPD bills — shared by the dashboard card and the Today's Overview page
- * so both read from the same cache entry.
- */
+/** Today's OPD bills for the dashboard card. */
 export function useTodayBillsQuery() {
   return useBillsQuery({
     fetchAll: false,
@@ -14,5 +11,3 @@ export function useTodayBillsQuery() {
     limit: TODAY_BILLS_LIMIT,
   });
 }
-
-export { TODAY_BILLS_LIMIT };

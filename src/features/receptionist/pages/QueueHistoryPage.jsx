@@ -18,7 +18,8 @@ export default function QueueHistoryPage() {
   const [search, setSearch] = useState('');
   const [deptId, setDeptId] = useState('all');
   const [docId, setDocId] = useState('all');
-  const [paymentStatus, setPaymentStatus] = useState('all');
+  /** all | paid | cancelled — Cancel replaces Unpaid on this history screen */
+  const [historyFilter, setHistoryFilter] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -27,13 +28,14 @@ export default function QueueHistoryPage() {
   const load = () => {
     setLoading(true);
     setError('');
+    const isCancelled = historyFilter === 'cancelled';
     receptionistApi
       .getQueueHistory({
         search: debouncedSearch.trim() || undefined,
         doctor_id: docId !== 'all' ? Number(docId) : undefined,
         department_id: deptId !== 'all' ? Number(deptId) : undefined,
-        status: 'completed',
-        payment_status: paymentStatus !== 'all' ? paymentStatus : undefined,
+        status: isCancelled ? 'cancelled' : 'completed',
+        payment_status: historyFilter === 'paid' ? 'paid' : undefined,
         ...buildQueueHistoryDateParams(dateFrom, dateTo),
         page: currentPage,
         limit: PAGE_SIZE_LIST,
@@ -50,7 +52,7 @@ export default function QueueHistoryPage() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, deptId, docId, paymentStatus, dateFrom, dateTo, currentPage]);
+  }, [debouncedSearch, deptId, docId, historyFilter, dateFrom, dateTo, currentPage]);
 
   const getDoctorName = (p) => p.doctor_name || (p.doctor_id ? `Doctor #${p.doctor_id}` : '—');
 
@@ -76,7 +78,7 @@ export default function QueueHistoryPage() {
             <div className="rec-search rec-queue-history__search">
               <input
                 type="text"
-                placeholder="Search patient name, ID or UHID..."
+                placeholder="Search patient"
                 className="rec-input"
                 value={search}
                 onChange={(e) => {
@@ -131,16 +133,16 @@ export default function QueueHistoryPage() {
 
             <select
               className="rec-select rec-select--compact rec-queue-history__select"
-              value={paymentStatus}
+              value={historyFilter}
               onChange={(e) => {
-                setPaymentStatus(e.target.value);
+                setHistoryFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              aria-label="Payment status"
+              aria-label="History filter"
             >
-              <option value="all">All Payments</option>
+              <option value="all">All</option>
               <option value="paid">Paid</option>
-              <option value="unpaid">Unpaid</option>
+              <option value="cancelled">Cancel</option>
             </select>
           </div>
         </div>
@@ -174,7 +176,11 @@ export default function QueueHistoryPage() {
                     <div className="rec-table__empty-icon">
                       <Search size={24} />
                     </div>
-                    <p>No completed consultations found for the selected filters</p>
+                    <p>
+                      {historyFilter === 'cancelled'
+                        ? 'No cancelled consultations found for the selected filters'
+                        : 'No completed consultations found for the selected filters'}
+                    </p>
                   </td>
                 </tr>
               ) : (

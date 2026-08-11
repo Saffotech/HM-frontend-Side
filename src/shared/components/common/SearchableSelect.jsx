@@ -30,6 +30,7 @@ function SearchableSelect({
   disabled = false,
   className = '',
   label,
+  id,
   error,
   clearOnEmptyBlur = false,
   clearable,
@@ -46,7 +47,8 @@ function SearchableSelect({
   const lastNotifiedSearchRef = useRef(null);
   const [dropdownStyle, setDropdownStyle] = useState(null);
   const [opensUp, setOpensUp] = useState(false);
-  const inputId = useId();
+  const autoId = useId();
+  const inputId = id || autoId;
   const errorId = `${inputId}-error`;
 
   const selected = options.find((o) => o.value === value);

@@ -44,6 +44,93 @@ function pad2(n) {
   return String(n).padStart(2, '0');
 }
 
+function daysInMonth(month, year) {
+  const m = Number(month);
+  if (!Number.isFinite(m) || m < 1 || m > 12) return 31;
+  const y = String(year ?? '').length === 4 ? Number(year) : 2024;
+  if (!Number.isFinite(y)) return 31;
+  return new Date(y, m, 0).getDate();
+}
+
+/**
+ * Digits only → DD/MM/YYYY.
+ * Day cannot exceed 31 (or that month’s last day); month cannot exceed 12.
+ */
+function maskDateInput(raw) {
+  let digits = String(raw ?? '').replace(/\D/g, '').slice(0, 8);
+  if (!digits) return '';
+
+  let day = digits[0];
+  let rest = digits.slice(1);
+  if (Number(day) > 3) {
+    day = pad2(Number(day));
+  } else if (rest.length) {
+    day += rest[0];
+    rest = rest.slice(1);
+    let n = Number(day);
+    if (!Number.isFinite(n) || n < 1) n = 1;
+    if (n > 31) n = 31;
+    day = pad2(n);
+  }
+  if (!rest.length) return day;
+
+  let month = rest[0];
+  rest = rest.slice(1);
+  if (Number(month) > 1) {
+    month = pad2(Number(month));
+  } else if (rest.length) {
+    month += rest[0];
+    rest = rest.slice(1);
+    let n = Number(month);
+    if (!Number.isFinite(n) || n < 1) n = 1;
+    if (n > 12) n = 12;
+    month = pad2(n);
+  }
+
+  const year = rest.slice(0, 4);
+  if (day.length === 2 && month.length === 2) {
+    const maxDay = daysInMonth(month, year);
+    let n = Number(day);
+    if (n > maxDay) day = pad2(maxDay);
+  }
+
+  if (month.length === 1) return `${day}/${month}`;
+  if (!year) return `${day}/${month}`;
+  return `${day}/${month}/${year}`;
+}
+
+/** Digits only → DD/MM/YYYY HH:mm (hours 0–23, minutes 0–59). */
+function maskDatetimeInput(raw) {
+  const digits = String(raw ?? '').replace(/\D/g, '').slice(0, 12);
+  const datePart = maskDateInput(digits.slice(0, 8));
+  const dateDigitCount = datePart.replace(/\D/g, '').length;
+  const timeDigits = digits.slice(dateDigitCount);
+  if (!timeDigits) return datePart;
+
+  let hour = timeDigits[0];
+  let rest = timeDigits.slice(1);
+  if (Number(hour) > 2) {
+    hour = pad2(Number(hour));
+  } else if (rest.length) {
+    hour += rest[0];
+    rest = rest.slice(1);
+    let n = Number(hour);
+    if (!Number.isFinite(n) || n < 0) n = 0;
+    if (n > 23) n = 23;
+    hour = pad2(n);
+  }
+  if (!rest.length) return `${datePart} ${hour}`;
+
+  let minute = rest.slice(0, 2);
+  if (minute.length === 2) {
+    let n = Number(minute);
+    if (!Number.isFinite(n) || n < 0) n = 0;
+    if (n > 59) n = 59;
+    minute = pad2(n);
+  }
+  return `${datePart} ${hour}:${minute}`;
+}
+
 function currentTimeHm() {
   const now = new Date();
   return `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
@@ -471,7 +558,19 @@ export default function DateInput({
 
   const handleTextChange = (e) => {
     isTypingRef.current = true;
-    setTextValue(e.target.value);
+    const masked = withTime
+      ? maskDatetimeInput(e.target.value)
+      : maskDateInput(e.target.value);
+    setTextValue(masked);
+
+    if (withTime) return;
+    const digits = masked.replace(/\D/g, '');
+    if (digits.length !== 8) return;
+    const parsed = parseTypedDate(masked);
+    if (!parsed) return;
+    const date = parseYmd(parsed);
+    if (!date || isBeforeDay(date, min) || isAfterDay(date, max)) return;
+    emitChange(parsed);
   };
 
   const handleTextFocus = () => {
@@ -579,6 +678,7 @@ export default function DateInput({
           disabled={disabled}
           autoComplete="off"
           inputMode="numeric"
+          maxLength={withTime ? 16 : 10}
           aria-invalid={!!error}
           aria-describedby={error ? errorId : undefined}
           aria-label={ariaLabel || (typeof label === 'string' ? label : undefined)}
