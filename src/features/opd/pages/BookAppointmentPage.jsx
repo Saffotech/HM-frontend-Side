@@ -61,6 +61,7 @@ export default function BookAppointmentPage() {
     search: debouncedPatientSearch || undefined,
     limit: 50,
     page: 1,
+    keepPreviousData: true,
   });
   const patients = asPatientList(patientsData);
 
@@ -315,8 +316,12 @@ export default function BookAppointmentPage() {
         .toUpperCase()
     : '';
 
+  const pageLoading =
+    (loadingScheduledAppts && !scheduledAppointmentsData)
+    || (isLoading && !patientsData && !patientSearch);
+
   return (
-    <QueryFeedback isLoading={isLoading || loadingScheduledAppts} isError={isError} error={error}>
+    <QueryFeedback isLoading={pageLoading} isError={isError && !patientsData} error={error}>
       <div className="book-appointment book-appointment-page page-container page-stack">
         <header className="book-appointment-page__header">
           <Button variant="outline" size="sm" type="button" onClick={() => navigate(ROUTES.APPOINTMENTS)}>
@@ -342,7 +347,7 @@ export default function BookAppointmentPage() {
                   onSearchChange={setPatientSearch}
                   onChange={handlePatientSelectChange}
                   placeholder="Type ID, name or phone..."
-                  clearOnEmptyBlur
+                  keepQueryOnEmpty
                   error={errors.patientId}
                 />
 

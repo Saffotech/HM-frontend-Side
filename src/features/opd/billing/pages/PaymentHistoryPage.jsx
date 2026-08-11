@@ -5,6 +5,7 @@ import {
   usePaymentHistoryQuery,
   PAYMENT_HISTORY_PAGE_SIZE,
 } from '@/shared/hooks/queries/useBillingQuery';
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { useTableSort } from '@/shared/hooks/useTableSort';
 import {
   Button,
@@ -27,9 +28,10 @@ export default function PaymentHistoryPage() {
   const [activeFilter, setActiveFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const debouncedSearch = useDebouncedValue(search, 300);
 
   const { data, isLoading, isError, error } = usePaymentHistoryQuery({
-    search,
+    search: debouncedSearch,
     modeFilter: activeFilter,
     page,
   });
@@ -42,7 +44,7 @@ export default function PaymentHistoryPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [search, activeFilter]);
+  }, [debouncedSearch, activeFilter]);
 
   const totalPages = pagination?.totalPages ?? 1;
   const totalItems = pagination?.totalItems ?? sorted.length;
@@ -104,8 +106,7 @@ export default function PaymentHistoryPage() {
     row.billId && row.billId !== '—' ? `/billing/${row.billId}` : null;
 
   return (
-    <QueryFeedback isLoading={isLoading} isError={isError} error={error}>
-      <div className="payment-history page-stack">
+    <div className="payment-history page-stack">
         <div className="analytics-grid payment-history__cards">
           {cards.map((c) => (
             <AnalyticsCard
@@ -140,6 +141,7 @@ export default function PaymentHistoryPage() {
             />
           </div>
 
+          <QueryFeedback isLoading={isLoading && !data} isError={isError && !data} error={error}>
           <DataTableShell
             className="payment-history-table-shell"
             maxHeight="420px"
@@ -220,8 +222,8 @@ export default function PaymentHistoryPage() {
               </tbody>
             </table>
           </DataTableShell>
+          </QueryFeedback>
         </div>
       </div>
-    </QueryFeedback>
   );
 }

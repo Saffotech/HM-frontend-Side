@@ -36,6 +36,7 @@ function SearchableSelect({
   clearable,
   onSearchChange,
   serverFiltered = false,
+  keepQueryOnEmpty = false,
 }) {
   const showClear = Boolean(value) && !disabled && (clearable ?? clearOnEmptyBlur);
   const [search, setSearch] = useState('');
@@ -71,9 +72,13 @@ function SearchableSelect({
   // options object identity — otherwise every parent re-render resets search.
   useEffect(() => {
     if (!open) {
-      setSearch(selectedLabel);
+      if (selectedLabel) {
+        setSearch(selectedLabel);
+      } else if (!keepQueryOnEmpty) {
+        setSearch('');
+      }
     }
-  }, [value, selectedLabel, open]);
+  }, [value, selectedLabel, open, keepQueryOnEmpty]);
 
   useEffect(() => {
     setHighlightIdx(0);
@@ -145,22 +150,28 @@ function SearchableSelect({
           setSearch('');
         } else {
           const current = options.find((o) => o.value === value);
-          setSearch(current ? current.label : '');
+          if (current) {
+            setSearch(current.label);
+          } else if (!keepQueryOnEmpty) {
+            setSearch('');
+          }
         }
         setOpen(false);
       }
     };
     document.addEventListener('mousedown', handleOutside);
     return () => document.removeEventListener('mousedown', handleOutside);
-  }, [value, search, clearOnEmptyBlur, onChange, options]);
+  }, [value, search, clearOnEmptyBlur, keepQueryOnEmpty, onChange, options]);
 
   const openDropdown = useCallback(() => {
     if (disabled || open) return;
     const selectedIdx = value ? options.findIndex((o) => o.value === value) : 0;
     setOpen(true);
-    setSearch('');
+    if (value || !keepQueryOnEmpty) {
+      setSearch('');
+    }
     setHighlightIdx(selectedIdx >= 0 ? selectedIdx : 0);
-  }, [disabled, open, value, options]);
+  }, [disabled, open, value, options, keepQueryOnEmpty]);
 
   const selectOption = useCallback(
     (option) => {
@@ -176,7 +187,9 @@ function SearchableSelect({
       if (e.key === 'ArrowDown' || e.key === 'Enter') {
         const selectedIdx = value ? options.findIndex((o) => o.value === value) : 0;
         setOpen(true);
-        setSearch('');
+        if (value || !keepQueryOnEmpty) {
+          setSearch('');
+        }
         setHighlightIdx(selectedIdx >= 0 ? selectedIdx : 0);
         e.preventDefault();
       }
@@ -194,7 +207,11 @@ function SearchableSelect({
     } else if (e.key === 'Escape') {
       setOpen(false);
       const current = options.find((o) => o.value === value);
-      setSearch(current ? current.label : '');
+      if (current) {
+        setSearch(current.label);
+      } else if (!keepQueryOnEmpty) {
+        setSearch('');
+      }
     }
   };
 
@@ -221,7 +238,7 @@ function SearchableSelect({
           value={
             open
               ? search
-              : selectedLabel || (value ? search : '')
+              : selectedLabel || (keepQueryOnEmpty ? search : value ? search : '')
           }
           disabled={disabled}
           role="combobox"
@@ -296,7 +313,7 @@ function SearchableSelect({
               <div className="searchable-select__empty">
                 <Search size={14} />
                 <span>
-                  {search.trim() ? `No results for "${search}"` : 'No options available'}
+                  {search.trim() ? 'No record found' : 'No options available'}
                 </span>
               </div>
             ) : (

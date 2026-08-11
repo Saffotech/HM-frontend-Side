@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { billsApi } from '@/shared/api/services';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
@@ -53,6 +53,7 @@ export function usePaymentHistoryQuery({
   return useQuery({
     queryKey: queryKeys.bills.paymentHistory(filters),
     queryFn: () => billsApi.listPaymentHistory(token, filters),
+    placeholderData: keepPreviousData,
   });
 }
 
