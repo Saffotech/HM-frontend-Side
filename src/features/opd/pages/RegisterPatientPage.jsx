@@ -4,7 +4,7 @@ import {
   useDoctorsByDepartmentQuery,
 } from '@/shared/hooks/queries/useOpdReferenceQuery';
 import { useDoctorSlotsQuery } from '@/shared/hooks/queries/useAppointmentQuery';
-import { BLOOD_GROUPS, GENDERS, REGISTRATION_FEE, ROUTES } from '@/shared/constants';
+import { BLOOD_GROUPS, GENDERS, ROUTES } from '@/shared/constants';
 import {
   Button,
   Input,
@@ -52,6 +52,10 @@ export default function RegisterPatientPage() {
     setRevisitConfirmed,
     isRevisitPatient,
     isSaving,
+    billedRegistrationFee,
+    billedConsultationFee,
+    billedTotal,
+    resolveConsultationFee,
     handlePhoneBlur,
     resetAppointmentSlot,
     handleDoctorChange,
@@ -77,9 +81,7 @@ export default function RegisterPatientPage() {
     enabled: Boolean(appointmentDateStr && form.doctorId && form.deptId),
   });
 
-  const feeTotal = selectedDoctor
-    ? REGISTRATION_FEE + selectedDoctor.fee + Math.round((REGISTRATION_FEE + selectedDoctor.fee) * 0.05)
-    : 0;
+  const feeTotal = selectedDoctor ? billedTotal : 0;
 
   const appointmentDateObj = appointmentDateStr
     ? new Date(`${appointmentDateStr}T12:00:00`)
@@ -223,7 +225,10 @@ export default function RegisterPatientPage() {
                 onChange={handleDoctorChange}
                 disabled={!form.deptId}
                 error={errors.doctorId}
-                options={doctors.map((d) => ({ value: d.id, label: `Dr. ${d.name} — ₹${d.fee}` }))}
+                options={doctors.map((d) => ({
+                  value: d.id,
+                  label: `Dr. ${d.name} — ${formatCurrency(resolveConsultationFee(d.id, form.deptId))}`,
+                }))}
               />
             </div>
 
@@ -231,11 +236,11 @@ export default function RegisterPatientPage() {
               <div className="register-booking">
                 <div className="fee-box fee-box--compact">
                   <p className="fee-box__line">
-                    Registration: {formatCurrency(REGISTRATION_FEE)} + Consultation:{' '}
-                    {formatCurrency(selectedDoctor.fee)}
+                    Registration: {formatCurrency(billedRegistrationFee)} + Consultation:{' '}
+                    {formatCurrency(billedConsultationFee)}
                   </p>
                   <p className="fee-box__total">
-                    Estimated Total: <MoneyAmount amount={feeTotal} strong />
+                    Total: <MoneyAmount amount={feeTotal} strong />
                   </p>
                 </div>
 

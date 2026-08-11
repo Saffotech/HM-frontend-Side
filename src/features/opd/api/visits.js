@@ -18,6 +18,7 @@ export async function createOpdVisit(data, token, queryString = '') {
     appointmentId: response.appointment_id ?? null,
     appointmentUid: response.appointment_uid ?? null,
     scheduledAt: response.scheduled_at ?? null,
+    grandTotal: response.grand_total != null ? Number(response.grand_total) : null,
     raw: response,
   };
 }

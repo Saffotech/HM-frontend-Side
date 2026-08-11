@@ -84,6 +84,8 @@ export async function createPatient(data, token, queryString = '') {
 
     scheduledAt: response.scheduled_at ?? null,
 
+    grandTotal: response.grand_total != null ? Number(response.grand_total) : null,
+
     raw: response,
 
   };
