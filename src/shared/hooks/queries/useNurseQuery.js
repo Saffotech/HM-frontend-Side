@@ -185,12 +185,14 @@ export function useNurseVitalQuery(vitalId, options = {}) {
 }
 
 export function useNurseVitalsListQuery(filters = {}, options = {}) {
-  const { enabled = true } = options;
+  const { enabled = true, ...queryOptions } = options;
   const token = useQueryToken();
   return useQuery({
     queryKey: queryKeys.nurse.vitals(filters),
     enabled,
     queryFn: () => listVitals(filters, token),
+    placeholderData: keepPreviousData,
+    ...queryOptions,
   });
 }
 
@@ -215,12 +217,14 @@ export function useNurseNoteQuery(noteId, options = {}) {
 }
 
 export function useNurseNotesListQuery(filters = {}, options = {}) {
-  const { enabled = true } = options;
+  const { enabled = true, ...queryOptions } = options;
   const token = useQueryToken();
   return useQuery({
     queryKey: queryKeys.nurse.notes(filters),
     enabled,
     queryFn: () => listNotes(filters, token),
+    placeholderData: keepPreviousData,
+    ...queryOptions,
   });
 }
 
@@ -235,13 +239,15 @@ export function useNurseNotesSearchQuery(filters = {}, options = {}) {
 }
 
 export function useNurseMedicationPatientsQuery(filters = {}, options = {}) {
-  const { enabled = true } = options;
+  const { enabled = true, ...queryOptions } = options;
   const token = useQueryToken();
   return useQuery({
     queryKey: queryKeys.nurse.medicationPatients(filters),
     enabled,
     queryFn: () => getMedicationPatients(filters, token),
     staleTime: 30 * 1000,
+    placeholderData: keepPreviousData,
+    ...queryOptions,
   });
 }
 

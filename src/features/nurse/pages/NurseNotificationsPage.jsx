@@ -16,11 +16,7 @@ export default function NurseNotificationsPage() {
     const refId = n?.reference_id;
     switch (n?.reference_type) {
       case 'ALERT':
-        if (refId != null && refId !== '' && Number(refId) !== 0) {
-          navigate(generatePath(ROUTES.NURSE_ALERT_DETAIL, { alertId: String(refId) }));
-        } else {
-          navigate(ROUTES.NURSE_ALERTS);
-        }
+        navigate(ROUTES.NURSE_DASHBOARD);
         break;
       case 'HANDOVER':
         if (refId != null && refId !== '' && Number(refId) !== 0) {

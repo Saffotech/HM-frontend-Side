@@ -169,7 +169,10 @@ export default function NurseMyDutyPage() {
     <NurseLayout>
       <div className="nurse-page nurse-my-duty">
         <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
-          <section className="nurse-my-duty__hero" aria-label="Current shift">
+          <section
+            className={`nurse-my-duty__hero nurse-my-duty__hero--${tone}`}
+            aria-label="Current shift"
+          >
             <div className="nurse-my-duty__hero-main">
               <div className="nurse-my-duty__hero-topline">
                 <p className="nurse-my-duty__hero-label">
@@ -239,7 +242,12 @@ export default function NurseMyDutyPage() {
                   const until = formatAssignedUntil(bed.assigned_until);
                   const occupied = Boolean(bed.is_occupied || bed.patient_name);
                   return (
-                    <article key={bed.id ?? `${bed.ward_name}-${bed.bed_number}`} className="nurse-my-duty__bed">
+                    <article
+                      key={bed.id ?? `${bed.ward_name}-${bed.bed_number}`}
+                      className={`nurse-my-duty__bed${
+                        occupied ? ' nurse-my-duty__bed--occupied' : ' nurse-my-duty__bed--vacant'
+                      }`}
+                    >
                       <div className="nurse-my-duty__bed-top">
                         <div className="nurse-my-duty__bed-id">
                           <span className="nurse-my-duty__bed-icon">

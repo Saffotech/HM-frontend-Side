@@ -17,7 +17,10 @@ import NurseVitalsSnapshotView from '@/features/nurse/components/NurseVitalsSnap
 import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
 import { QueryFeedback } from '@/shared/components/common';
-import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
+import {
+  formatPatientIdDisplay,
+  withAssembledVitalHistory,
+} from '@/shared/api/mappers/nurseMapper';
 import {
   useNurseVitalsSearchQuery,
   useNurseNotesSearchQuery,
@@ -60,7 +63,7 @@ export default function NursePatientOverviewPage() {
     error: vitalsError,
     refetch: refetchVitals,
   } = useNurseVitalsSearchQuery(
-    { patient_id: patientId },
+    { patient_id: patientId, page: 1, page_size: 100 },
     { enabled: canViewVitals && activeTab === 'vitals' }
   );
   const {
@@ -140,11 +143,21 @@ export default function NursePatientOverviewPage() {
     );
   }, [medHistory?.items]);
 
-  // Newest recording is the source of truth; its `history` powers date filters
+  // Newest recording + assembled history powers Recorded At dropdown
   const latestVital = vitalsItems[0] || null;
+  const vitalForSnapshot = useMemo(
+    () => withAssembledVitalHistory(latestVital, vitalsItems),
+    [latestVital, vitalsItems],
+  );
   const latestNote = notesItems[0] || null;
-  const vitalsTabCount = latestVital?.history?.length || vitalsItems.length;
-  const notesTabCount = latestNote?.history?.length || notesItems.length;
+  const vitalsTabCount = Math.max(
+    vitalForSnapshot?.history?.length ?? 0,
+    vitalsItems.length,
+  );
+  const notesTabCount = Math.max(
+    latestNote?.history?.length ?? 0,
+    notesItems.length,
+  );
 
   const tabsWithCounts = tabs.map((tab) => {
     if (tab.id === 'vitals') return { ...tab, count: vitalsTabCount };
@@ -263,7 +276,7 @@ export default function NursePatientOverviewPage() {
                 {vitalsItems.length === 0 ? (
                   <div className="nurse-patient-overview__empty">No vitals recorded for this patient.</div>
                 ) : (
-                  <NurseVitalsSnapshotView vital={latestVital} />
+                  <NurseVitalsSnapshotView vital={vitalForSnapshot} />
                 )}
               </QueryFeedback>
             )}

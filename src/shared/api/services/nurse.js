@@ -3,18 +3,19 @@
  */
 
 import * as nurseApi from '@/features/nurse/api/nurse';
-import { getOccupiedBedMapByPatientDbId } from '@/shared/api/services/beds';
 import {
   mapQueueResponse,
   mapBedPatientsResponse,
   mapBedAllocationSummary,
   mapQueueFiltersToApi,
   enrichQueueItemsWithBeds,
-  mapVitalsNotesSearchToApi,
-  mapMedicationPatientsSearchToApi,
+  filterNursePatientRegistryItems,
+  paginateClientItems,
   mapMedicationHistoryFiltersToApi,
   mapVitalItem,
   mapNoteItem,
+  assembleVitalHistoryFromItems,
+  withAssembledVitalHistory,
   wrapPagedArray,
   mapMedicationPatientsResponse,
   mapPatientMedicationsResponse,
@@ -38,8 +39,27 @@ import {
 /** Backend GET /nurse/queue/today enforces page_size <= 100. */
 export const NURSE_QUEUE_MAX_PAGE_SIZE = 100;
 
+/** Cap nurse registry client-search fetches (100 rows per page). */
+const NURSE_REGISTRY_SEARCH_MAX_PAGES = 10;
+
 function withAllocatedOnly(params = {}) {
   return params.allocated_only === true ? { allocated_only: true } : {};
+}
+
+/** Occupied bed/ward by patient_id from nurse-accessible beds API (not admin /opd/beds). */
+function bedMapFromNurseBedPatients(bedItems = []) {
+  const map = new Map();
+  for (const row of bedItems) {
+    const pid = Number(row?.patient_id);
+    if (!Number.isSafeInteger(pid) || pid < 1 || map.has(pid)) continue;
+    const bedNumber = row.bed_number ?? '';
+    if (!bedNumber || bedNumber === '—') continue;
+    map.set(pid, {
+      bed_number: bedNumber,
+      ward_name: row.ward_name ?? '',
+    });
+  }
+  return map;
 }
 
 async function fetchTodayQueueItems(token) {
@@ -61,31 +81,32 @@ async function fetchPatientUidSources(token) {
   ]);
   const medRows = Array.isArray(rawMeds) ? rawMeds : rawMeds?.items ?? rawMeds?.data ?? [];
   const medItems = medRows.map(mapMedicationPatientRow).filter(Boolean);
-  return [...bedItems, ...medItems];
+  return { bedItems, uidSources: [...bedItems, ...medItems] };
 }
 
 async function enrichRowsWithQueueUid(items, token) {
   const rows = (items ?? []).map((item) => attachPatientUid(item));
-  const uidSources = await fetchPatientUidSources(token);
+  const { uidSources } = await fetchPatientUidSources(token);
   return applyQueuePatientUidLookup(rows, uidSources);
 }
 
-async function enrichRowsWithOccupiedBeds(items, token) {
+function enrichRowsWithOccupiedBeds(items, bedItems) {
   if (!items?.length) return items;
   const needsBed = items.some((item) => !item.bed_number || item.bed_number === '—');
   if (!needsBed) return items;
-  const bedMap = await getOccupiedBedMapByPatientDbId(token);
-  return enrichQueueItemsWithBeds(items, bedMap);
+  return enrichQueueItemsWithBeds(items, bedMapFromNurseBedPatients(bedItems));
 }
 
 async function enrichNursePatientRows(items, token) {
-  const withMeta = await enrichRowsWithQueueUid(items, token);
-  return enrichRowsWithOccupiedBeds(withMeta, token);
+  const rows = (items ?? []).map((item) => attachPatientUid(item));
+  const { bedItems, uidSources } = await fetchPatientUidSources(token);
+  const withMeta = applyQueuePatientUidLookup(rows, uidSources);
+  return enrichRowsWithOccupiedBeds(withMeta, bedItems);
 }
 
 async function enrichHandoverDetail(handover, token) {
   if (!handover?.patients?.length) return handover;
-  const uidSources = await fetchPatientUidSources(token);
+  const { uidSources } = await fetchPatientUidSources(token);
   return {
     ...handover,
     patients: applyQueuePatientUidLookup(handover.patients, uidSources),
@@ -104,10 +125,10 @@ async function enrichQueueResponse(mapped, token) {
     (item) => !item.bed_number || item.bed_number === '—',
   );
   if (!needsBed) return mapped;
-  const bedMap = await getOccupiedBedMapByPatientDbId(token);
+  const bedItems = await fetchBedPatientItems(token);
   return {
     ...mapped,
-    items: enrichQueueItemsWithBeds(mapped.items, bedMap),
+    items: enrichQueueItemsWithBeds(mapped.items, bedMapFromNurseBedPatients(bedItems)),
   };
 }
 
@@ -172,26 +193,99 @@ export async function updateVitals(vitalId, data, token) {
 export async function getVital(vitalId, token) {
   const raw = await nurseApi.getVitalById(vitalId, token);
   const [mapped] = await enrichNursePatientRows([mapVitalItem(raw)], token);
+  const patientId = mapped?.patient_id;
+  // Always merge patient recordings so Recorded At can list past entries.
+  if (patientId) {
+    try {
+      const siblings = await searchVitals(
+        { patient_id: patientId, page: 1, page_size: NURSE_QUEUE_MAX_PAGE_SIZE },
+        token,
+      );
+      return withAssembledVitalHistory(mapped, siblings?.items ?? []) || mapped;
+    } catch {
+      return mapped;
+    }
+  }
   return mapped;
+}
+
+async function fetchAllRegistryItems(params, token, { listFn, mapItem }) {
+  const scopeParams = withAllocatedOnly(params);
+  const { search: _search, page: _page, page_size: _pageSize, ...rest } = params;
+  const mapped = [];
+
+  for (let page = 1; page <= NURSE_REGISTRY_SEARCH_MAX_PAGES; page += 1) {
+    const raw = await listFn({
+      page,
+      page_size: NURSE_QUEUE_MAX_PAGE_SIZE,
+      ...rest,
+      ...scopeParams,
+    }, token);
+    const wrapped = wrapPagedArray(raw, { page, page_size: NURSE_QUEUE_MAX_PAGE_SIZE }, mapItem);
+    mapped.push(...(wrapped.items ?? []));
+    if (!wrapped.hasNextPage) break;
+  }
+
+  return enrichNursePatientRows(mapped, token);
+}
+
+async function fetchAllVitalsRegistryItems(params, token) {
+  return fetchAllRegistryItems(params, token, {
+    listFn: nurseApi.listVitals,
+    mapItem: mapVitalItem,
+  });
+}
+
+async function fetchAllNotesRegistryItems(params, token) {
+  return fetchAllRegistryItems(params, token, {
+    listFn: nurseApi.listNotes,
+    mapItem: mapNoteItem,
+  });
+}
+
+async function fetchAllMedicationPatientsRegistryItems(params, token) {
+  return fetchAllRegistryItems(params, token, {
+    listFn: nurseApi.getMedicationPatients,
+    mapItem: mapMedicationPatientRow,
+  });
+}
+
+function listVitalsWithClientSearch(params, token) {
+  const { search, page = 1, page_size = 20 } = params;
+  const term = String(search ?? '').trim();
+  return fetchAllVitalsRegistryItems(params, token).then((enriched) => {
+    const filtered = filterNursePatientRegistryItems(enriched, term);
+    return paginateClientItems(filtered, { page, page_size });
+  });
+}
+
+function listNotesWithClientSearch(params, token) {
+  const { search, page = 1, page_size = 20 } = params;
+  const term = String(search ?? '').trim();
+  return fetchAllNotesRegistryItems(params, token).then((enriched) => {
+    const filtered = filterNursePatientRegistryItems(enriched, term);
+    return paginateClientItems(filtered, { page, page_size });
+  });
+}
+
+function listMedicationPatientsWithClientSearch(params, token) {
+  const { search, page = 1, page_size = 20 } = params;
+  const term = String(search ?? '').trim();
+  return fetchAllMedicationPatientsRegistryItems(params, token).then((enriched) => {
+    const filtered = filterNursePatientRegistryItems(enriched, term);
+    return paginateClientItems(filtered, { page, page_size });
+  });
 }
 
 export async function listVitals(params = {}, token) {
   const { search, page = 1, page_size = 20, ...rest } = params;
   const scopeParams = withAllocatedOnly(params);
-  if (search?.trim()) {
-    const raw = await nurseApi.searchVitals({
-      ...mapVitalsNotesSearchToApi(search),
-      page,
-      page_size,
-      ...rest,
-      ...scopeParams,
-    }, token);
-    const wrapped = wrapPagedArray(raw, { page, page_size }, mapVitalItem);
-    return {
-      ...wrapped,
-      items: await enrichNursePatientRows(wrapped.items, token),
-    };
+  const term = String(search ?? '').trim();
+
+  if (term) {
+    return listVitalsWithClientSearch(params, token);
   }
+
   const raw = await nurseApi.listVitals({ page, page_size, ...rest, ...scopeParams }, token);
   const wrapped = wrapPagedArray(raw, { page, page_size }, mapVitalItem);
   return {
@@ -204,9 +298,14 @@ export async function searchVitals(params = {}, token) {
   const { page = 1, page_size = 20, ...rest } = params;
   const raw = await nurseApi.searchVitals({ page, page_size, ...rest }, token);
   const wrapped = wrapPagedArray(raw, { page, page_size }, mapVitalItem);
+  const items = await enrichNursePatientRows(wrapped.items, token);
+  // Patient-scoped search returns one row per recording — assemble Recorded At history.
+  const withHistory = rest.patient_id != null && rest.patient_id !== ''
+    ? assembleVitalHistoryFromItems(items)
+    : items;
   return {
     ...wrapped,
-    items: await enrichNursePatientRows(wrapped.items, token),
+    items: withHistory,
   };
 }
 
@@ -231,20 +330,12 @@ export async function getNote(noteId, token) {
 export async function listNotes(params = {}, token) {
   const { search, page = 1, page_size = 20, ...rest } = params;
   const scopeParams = withAllocatedOnly(params);
-  if (search?.trim()) {
-    const raw = await nurseApi.searchNotes({
-      ...mapVitalsNotesSearchToApi(search),
-      page,
-      page_size,
-      ...rest,
-      ...scopeParams,
-    }, token);
-    const wrapped = wrapPagedArray(raw, { page, page_size }, mapNoteItem);
-    return {
-      ...wrapped,
-      items: await enrichNursePatientRows(wrapped.items, token),
-    };
+  const term = String(search ?? '').trim();
+
+  if (term) {
+    return listNotesWithClientSearch(params, token);
   }
+
   const raw = await nurseApi.listNotes({ page, page_size, ...rest, ...scopeParams }, token);
   const wrapped = wrapPagedArray(raw, { page, page_size }, mapNoteItem);
   return {
@@ -265,18 +356,18 @@ export async function searchNotes(params = {}, token) {
 
 export async function getMedicationPatients(params = {}, token) {
   const { page = 1, page_size = 100, search, ...rest } = params;
-  const mapped = search?.trim() ? mapMedicationPatientsSearchToApi(search) : {};
-  const searchFilters = {
-    ...('patient_id' in mapped ? { patient_id: mapped.patient_id } : {}),
-    ...('patient_uid' in mapped ? { patient_uid: mapped.patient_uid } : {}),
-    ...('patient_name' in mapped ? { patient_name: mapped.patient_name } : {}),
-  };
+  const scopeParams = withAllocatedOnly(params);
+  const term = String(search ?? '').trim();
+
+  if (term) {
+    return listMedicationPatientsWithClientSearch(params, token);
+  }
+
   const raw = await nurseApi.getMedicationPatients({
     page,
     page_size,
-    ...searchFilters,
     ...rest,
-    ...withAllocatedOnly(params),
+    ...scopeParams,
   }, token);
   return mapMedicationPatientsResponse(raw, { page, page_size });
 }

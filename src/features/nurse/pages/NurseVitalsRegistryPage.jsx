@@ -59,7 +59,7 @@ export default function NurseVitalsRegistryPage() {
     setPage(1);
   }, [debouncedSearch, allocatedOnly]);
 
-  const { data, isLoading, isError, error, refetch } = useNurseVitalsListQuery(
+  const { data, isLoading, isFetching, isError, error, refetch } = useNurseVitalsListQuery(
     { search: debouncedSearch, page, page_size: 20, ...scopeFilters },
     { enabled: scopeReady && canViewVitals },
   );
@@ -146,7 +146,7 @@ export default function NurseVitalsRegistryPage() {
             </div>
             <div>
               <p className="nurse-vitals-registry__count">
-                {isLoading ? '…' : (
+                {isLoading && !data ? '…' : (
                   <>
                     {listCount.approximate ? `${listCount.count}+` : listCount.count}
                   </>
@@ -165,13 +165,18 @@ export default function NurseVitalsRegistryPage() {
               className="nurse-input nurse-vitals-registry__search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name, patient ID, or phone…"
+              placeholder="Search by name, patient ID, or bed number…"
             />
           </div>
         </div>
 
-        <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
-        <div className="nurse-vitals-registry__table">
+        <QueryFeedback
+          isLoading={isLoading && !data}
+          isError={isError}
+          error={error}
+          onRetry={refetch}
+        >
+        <div className={`nurse-vitals-registry__table${isFetching ? ' nurse-vitals-registry__table--fetching' : ''}`}>
           <NurseDataTable
             columns={columns}
             data={data?.items || []}

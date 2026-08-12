@@ -14,14 +14,41 @@ import { NurseClinicalFieldShell } from '@/features/nurse/components/NurseClinic
 
 const CUSTOM_VITALS_MARKER = '__custom_vitals__';
 
+/** Digits only (no letters). */
+function digitsOnly(value) {
+  return String(value ?? '').replace(/\D/g, '');
+}
+
+/** Digits + one decimal point (for temperature / weight). */
+function decimalDigitsOnly(value) {
+  const cleaned = String(value ?? '').replace(/[^\d.]/g, '');
+  const [whole, ...rest] = cleaned.split('.');
+  if (rest.length === 0) return whole;
+  return `${whole}.${rest.join('').replace(/\./g, '')}`;
+}
+
+/** Blood pressure: digits and `/` only (e.g. 120/80). */
+function bloodPressureDigitsOnly(value) {
+  const cleaned = String(value ?? '').replace(/[^\d/]/g, '');
+  const parts = cleaned.split('/');
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]}/${parts.slice(1).join('').replace(/\//g, '')}`;
+}
+
+function sanitizeVitalInput(key, value) {
+  if (key === 'blood_pressure') return bloodPressureDigitsOnly(value);
+  if (key === 'temperature' || key === 'weight') return decimalDigitsOnly(value);
+  return digitsOnly(value);
+}
+
 export const VITAL_FIELDS = [
-  { key: 'temperature', label: 'Temperature (°F)', icon: Thermometer, accent: 'rose', type: 'number', step: '0.1', placeholder: 'e.g. 98.6' },
-  { key: 'blood_pressure', label: 'Blood Pressure', icon: Activity, accent: 'blue', type: 'text', placeholder: 'e.g. 120/80' },
-  { key: 'heart_rate', label: 'Heart Rate (BPM)', icon: Heart, accent: 'red', type: 'number', placeholder: 'e.g. 72' },
-  { key: 'respiratory_rate', label: 'Respiratory Rate (/min)', icon: Wind, accent: 'teal', type: 'number', placeholder: 'e.g. 16' },
-  { key: 'oxygen_saturation', label: 'SpO₂ (%)', icon: Droplets, accent: 'sky', type: 'number', min: 0, max: 100, placeholder: 'e.g. 98' },
-  { key: 'blood_sugar', label: 'Blood Sugar (mg/dL)', icon: Droplets, accent: 'amber', type: 'number', placeholder: 'e.g. 110' },
-  { key: 'weight', label: 'Weight (kg)', icon: Scale, accent: 'slate', type: 'number', step: '0.1', placeholder: 'e.g. 70' },
+  { key: 'temperature', label: 'Temperature (°F)', icon: Thermometer, accent: 'rose', inputMode: 'decimal', placeholder: 'e.g. 98.6' },
+  { key: 'blood_pressure', label: 'Blood Pressure', icon: Activity, accent: 'blue', inputMode: 'numeric', placeholder: 'e.g. 120/80' },
+  { key: 'heart_rate', label: 'Heart Rate (BPM)', icon: Heart, accent: 'red', inputMode: 'numeric', placeholder: 'e.g. 72' },
+  { key: 'respiratory_rate', label: 'Respiratory Rate (/min)', icon: Wind, accent: 'teal', inputMode: 'numeric', placeholder: 'e.g. 16' },
+  { key: 'oxygen_saturation', label: 'SpO₂ (%)', icon: Droplets, accent: 'sky', inputMode: 'numeric', min: 0, max: 100, placeholder: 'e.g. 98' },
+  { key: 'blood_sugar', label: 'Blood Sugar (mg/dL)', icon: Droplets, accent: 'amber', inputMode: 'numeric', placeholder: 'e.g. 110' },
+  { key: 'weight', label: 'Weight (kg)', icon: Scale, accent: 'slate', inputMode: 'decimal', placeholder: 'e.g. 70' },
   { key: 'pain_level', label: 'Pain Level', icon: Stethoscope, accent: 'purple', type: 'range', min: 0, max: 10 },
 ];
 
@@ -149,7 +176,7 @@ export default function NurseVitalsFormFields({ form, setForm }) {
   return (
     <>
       <div className="nurse-clinical-fields nurse-clinical-fields--grid nurse-clinical-fields--vitals">
-        {VITAL_FIELDS.map(({ key, label, icon: Icon, accent, type, placeholder, step, min, max }) => (
+        {VITAL_FIELDS.map(({ key, label, icon: Icon, accent, type, placeholder, inputMode, min, max }) => (
           <NurseClinicalFieldShell
             key={key}
             accent={accent}
@@ -175,14 +202,27 @@ export default function NurseVitalsFormFields({ form, setForm }) {
               />
             ) : (
               <input
-                type={type}
-                step={step}
+                type="text"
+                inputMode={inputMode || 'numeric'}
+                autoComplete="off"
                 min={min}
                 max={max}
                 className="nurse-input nurse-clinical-field__input"
                 placeholder={placeholder}
                 value={form[key]}
-                onChange={(e) => set(key, e.target.value)}
+                onChange={(e) => set(key, sanitizeVitalInput(key, e.target.value))}
+                onKeyDown={(e) => {
+                  if (e.ctrlKey || e.metaKey || e.altKey) return;
+                  const allowedKeys = [
+                    'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+                    'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End',
+                  ];
+                  if (allowedKeys.includes(e.key)) return;
+                  if (key === 'blood_pressure' && e.key === '/') return;
+                  if ((key === 'temperature' || key === 'weight') && e.key === '.') return;
+                  if (/^\d$/.test(e.key)) return;
+                  e.preventDefault();
+                }}
               />
             )}
           </NurseClinicalFieldShell>
@@ -230,10 +270,14 @@ export default function NurseVitalsFormFields({ form, setForm }) {
                   />
                   <input
                     type="text"
+                    inputMode="decimal"
+                    autoComplete="off"
                     className="nurse-input nurse-clinical-field__input"
                     placeholder="Value"
                     value={row.value}
-                    onChange={(e) => updateCustomVital(row.id, 'value', e.target.value)}
+                    onChange={(e) =>
+                      updateCustomVital(row.id, 'value', decimalDigitsOnly(e.target.value))
+                    }
                   />
                   <input
                     type="text"

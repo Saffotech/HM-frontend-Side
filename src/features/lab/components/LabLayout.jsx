@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { LayoutDashboard, ClipboardList, FileCheck } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/shared/constants';
@@ -7,7 +7,11 @@ import LabNotificationsBell from '@/features/lab/components/LabNotificationsBell
 import { useLabPermissionSet } from '@/features/lab/hooks/useLabPermission';
 import { useLabTechnicianProfileQuery } from '@/features/lab/hooks/useLabTechnicianProfileQuery';
 import { useAuth } from '@/shared/hooks/useAuth';
-import { labDepartmentLabelFromUser } from '@/shared/utils/labDepartments';
+import {
+  labDepartmentLabelFromUser,
+  departmentCode,
+  LAB_DEPT_CODE,
+} from '@/shared/utils/labDepartments';
 import '../styles/lab.css';
 
 const NAV_LINKS = [
@@ -46,6 +50,20 @@ function resolveTitle(pathname, pageTitleOverride) {
   return match?.title || 'Lab Portal';
 }
 
+function resolveLabDepartmentHeaderTitle(user, profile) {
+  const profileRow = profile?.profile ?? profile;
+  const label = labDepartmentLabelFromUser(profileRow) || labDepartmentLabelFromUser(user);
+  if (label === 'Radiology' || label === 'Laboratory') return label;
+
+  const sources = [profileRow, profileRow?.department, user, user?.department];
+  for (const src of sources) {
+    const code = departmentCode(src);
+    if (code === LAB_DEPT_CODE.RAD) return 'Radiology';
+    if (code === LAB_DEPT_CODE.LAB) return 'Laboratory';
+  }
+  return '';
+}
+
 function isNavLinkActive(pathname, link) {
   if (link.href === ROUTES.LAB_ORDERS) {
     return pathname === ROUTES.LAB_ORDERS || pathname.startsWith('/lab/orders/');
@@ -65,6 +83,19 @@ export default function LabLayout({ children, pageTitle, compact = false }) {
     return labDepartmentLabelFromUser(profile) || labDepartmentLabelFromUser(user);
   }, [profileQuery.data, user]);
 
+  const departmentHeaderTitle = useMemo(
+    () => resolveLabDepartmentHeaderTitle(user, profileQuery.data),
+    [user, profileQuery.data],
+  );
+
+  const resolveLayoutTitle = useCallback(
+    (pathname, pageTitleOverride) => {
+      if (departmentHeaderTitle) return departmentHeaderTitle;
+      return resolveTitle(pathname, pageTitleOverride);
+    },
+    [departmentHeaderTitle],
+  );
+
   const navLinks = useMemo(
     () =>
       NAV_LINKS.filter((link) => {
@@ -77,7 +108,7 @@ export default function LabLayout({ children, pageTitle, compact = false }) {
   return (
     <RoleLayout
       navLinks={navLinks}
-      resolveTitle={resolveTitle}
+      resolveTitle={resolveLayoutTitle}
       homeRoute={canViewLab ? ROUTES.LAB_DASHBOARD : ROUTES.LAB_PROFILE}
       roleLabel={
         departmentLabel ? (
@@ -90,7 +121,7 @@ export default function LabLayout({ children, pageTitle, compact = false }) {
         )
       }
       roleLabelClassName="lab-role-label"
-      defaultTitle="Dashboard"
+      defaultTitle={departmentHeaderTitle || 'Dashboard'}
       pageTitleOverride={pageTitle}
       isNavLinkActive={isNavLinkActive}
       showBell={canViewNotifications}

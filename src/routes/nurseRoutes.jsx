@@ -52,12 +52,6 @@ const NurseHandoverCreatePage = lazy(() => import('@/features/nurse/pages/NurseH
 
 const NurseHandoverDetailPage = lazy(() => import('@/features/nurse/pages/NurseHandoverDetailPage'));
 
-const NurseAlertsPage = lazy(() => import('@/features/nurse/pages/NurseAlertsPage'));
-
-const NurseCreateAlertPage = lazy(() => import('@/features/nurse/pages/NurseCreateAlertPage'));
-
-const NurseAlertDetailPage = lazy(() => import('@/features/nurse/pages/NurseAlertDetailPage'));
-
 const NurseProfilePage = lazy(() => import('@/features/nurse/pages/NurseProfilePage'));
 
 const NurseNotificationsPage = lazy(() => import('@/features/nurse/pages/NurseNotificationsPage'));
@@ -121,12 +115,6 @@ export const nurseRoutes = [
           { path: ROUTES.NURSE_HANDOVER_NEW, element: <LazyRoute><NurseHandoverCreatePage /></LazyRoute> },
 
           { path: ROUTES.NURSE_HANDOVER_DETAIL, element: <LazyRoute><NurseHandoverDetailPage /></LazyRoute> },
-
-          { path: ROUTES.NURSE_ALERTS, element: <LazyRoute><NurseAlertsPage /></LazyRoute> },
-
-          { path: ROUTES.NURSE_ALERTS_NEW, element: <LazyRoute><NurseCreateAlertPage /></LazyRoute> },
-
-          { path: ROUTES.NURSE_ALERT_DETAIL, element: <LazyRoute><NurseAlertDetailPage /></LazyRoute> },
 
           { path: ROUTES.NURSE_PROFILE, element: <LazyRoute><NurseProfilePage /></LazyRoute> },
 

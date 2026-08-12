@@ -141,7 +141,7 @@ export default function NurseMedicationPatientsPage() {
   const debouncedSearch = useDebouncedValue(search, 400);
   const { scopeFilters, scopeReady, allocatedOnly } = useNursePatientScope();
   const { canViewMedication } = useNursePermissionSet();
-  const { data, isLoading, isError, error, refetch } = useNurseMedicationPatientsQuery(
+  const { data, isLoading, isFetching, isError, error, refetch } = useNurseMedicationPatientsQuery(
     {
       search: debouncedSearch,
       page,
@@ -250,7 +250,7 @@ export default function NurseMedicationPatientsPage() {
                         setSearch(e.target.value);
                         setPage(1);
                       }}
-                      placeholder="Patient name or patient ID…"
+                      placeholder="Search by name, patient ID, or bed number…"
                     />
                   </div>
                 </div>
@@ -282,7 +282,7 @@ export default function NurseMedicationPatientsPage() {
             </div>
 
             <div className="nurse-med-patients-page__summary" aria-label="Patient summary">
-              {isLoading ? (
+              {isLoading && !data ? (
                 <span className="nurse-med-patients-page__summary-loading">Loading…</span>
               ) : (
                 <>
@@ -315,8 +315,17 @@ export default function NurseMedicationPatientsPage() {
             </div>
           </div>
 
-          <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
-            <div className="nurse-med-patients-page__table">
+          <QueryFeedback
+            isLoading={isLoading && !data}
+            isError={isError}
+            error={error}
+            onRetry={refetch}
+          >
+            <div
+              className={`nurse-med-patients-page__table${
+                isFetching ? ' nurse-med-patients-page__table--fetching' : ''
+              }`}
+            >
               <NurseDataTable
                 columns={columns}
                 data={filteredPatients}

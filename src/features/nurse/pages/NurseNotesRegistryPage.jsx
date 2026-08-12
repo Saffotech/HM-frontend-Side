@@ -28,7 +28,7 @@ export default function NurseNotesRegistryPage() {
   const debouncedSearch = useDebouncedValue(search, 400);
   const { scopeFilters, scopeReady, allocatedOnly } = useNursePatientScope();
 
-  const { data, isLoading, isError, error, refetch } = useNurseNotesListQuery(
+  const { data, isLoading, isFetching, isError, error, refetch } = useNurseNotesListQuery(
     { search: debouncedSearch, page, page_size: 20, ...scopeFilters },
     { enabled: scopeReady && canViewNotes },
   );
@@ -123,7 +123,7 @@ export default function NurseNotesRegistryPage() {
             </div>
             <div>
               <p className="nurse-notes-registry__count">
-                {isLoading ? '…' : (
+                {isLoading && !data ? '…' : (
                   <>
                     {listCount.approximate ? `${listCount.count}+` : listCount.count}
                   </>
@@ -142,13 +142,18 @@ export default function NurseNotesRegistryPage() {
               className="nurse-input nurse-notes-registry__search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name, patient ID, or phone…"
+              placeholder="Search by name, patient ID, or bed number…"
             />
           </div>
         </div>
 
-        <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
-        <div className="nurse-notes-registry__table">
+        <QueryFeedback
+          isLoading={isLoading && !data}
+          isError={isError}
+          error={error}
+          onRetry={refetch}
+        >
+        <div className={`nurse-notes-registry__table${isFetching ? ' nurse-notes-registry__table--fetching' : ''}`}>
           <NurseDataTable
             columns={columns}
             data={data?.items || []}
