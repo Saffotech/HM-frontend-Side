@@ -51,11 +51,10 @@ export default function LabDashboardPage() {
     return [...rows]
       .filter((o) => isOpenStatus(o.status))
       .sort((a, b) => {
-        const pr = priorityRank(a.priority) - priorityRank(b.priority);
-        if (pr !== 0) return pr;
         const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return ta - tb;
+        if (tb !== ta) return tb - ta; // newest first
+        return priorityRank(a.priority) - priorityRank(b.priority);
       });
   }, [remainingQuery.data?.data]);
 
