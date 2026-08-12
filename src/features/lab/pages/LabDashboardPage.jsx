@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FlaskConical,
@@ -7,16 +7,24 @@ import {
   ListTodo,
 } from 'lucide-react';
 import LabLayout from '@/features/lab/components/LabLayout';
-import LabDashboardRecentReports from '@/features/lab/components/LabDashboardRecentReports';
+import LabDashboardRemainingTests from '@/features/lab/components/LabDashboardRemainingTests';
 import { useLabPermissionSet } from '@/features/lab/hooks/useLabPermission';
 import {
   useLabDashboardQuery,
   useLabOrdersQuery,
   useLabReportsQuery,
 } from '@/shared/hooks/queries/useLabQuery';
+import { isOpenStatus } from '@/features/lab/utils/labOrderStatus';
 import { EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import './LabDashboardPage.css';
+
+function priorityRank(priority) {
+  const key = String(priority || '').toLowerCase();
+  if (key === 'stat') return 0;
+  if (key === 'urgent') return 1;
+  return 2;
+}
 
 export default function LabDashboardPage() {
   const navigate = useNavigate();
@@ -29,12 +37,27 @@ export default function LabDashboardPage() {
     { priority: 'urgent', view: 'ordered', pageSize: 1 },
     { enabled: canViewLab && !dashboardQuery.isError }
   );
-  const reportsQuery = useLabReportsQuery({ pageSize: 10 }, { enabled: canViewLab });
+  const remainingQuery = useLabOrdersQuery(
+    { view: 'all', pageSize: 50 },
+    { enabled: canViewLab && !dashboardQuery.isError }
+  );
   const reportsTotalQuery = useLabReportsQuery({ pageSize: 1 }, { enabled: canViewLab });
 
-  const reports = reportsQuery.data?.data ?? [];
   const totalReportsDone = reportsTotalQuery.data?.total ?? 0;
   const urgentWaitingCount = urgentQuery.data?.total ?? 0;
+
+  const remainingOrders = useMemo(() => {
+    const rows = remainingQuery.data?.data ?? [];
+    return [...rows]
+      .filter((o) => isOpenStatus(o.status))
+      .sort((a, b) => {
+        const pr = priorityRank(a.priority) - priorityRank(b.priority);
+        if (pr !== 0) return pr;
+        const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return ta - tb;
+      });
+  }, [remainingQuery.data?.data]);
 
   useEffect(() => {
     const t = setTimeout(() => setReady(true), 350);
@@ -157,7 +180,14 @@ export default function LabDashboardPage() {
         </div>
 
         <div className="lab-dash-bottom">
-          <LabDashboardRecentReports reports={reports} />
+          <QueryFeedback
+            isLoading={remainingQuery.isLoading}
+            isError={remainingQuery.isError}
+            error={remainingQuery.error}
+            onRetry={remainingQuery.refetch}
+          >
+            <LabDashboardRemainingTests orders={remainingOrders} />
+          </QueryFeedback>
         </div>
       </div>
       </QueryFeedback>

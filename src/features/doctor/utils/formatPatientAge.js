@@ -1,5 +1,9 @@
 /**
  * Doctor UI patient age display: years (y), months (m), or days (d).
+ *
+ * Note: some doctor list APIs embed the age label inside `patient_gender`
+ * (e.g. "15d · Male") when patient_age is null for infants. Strip that so
+ * Age/Gender does not show the day/month label twice.
  */
 
 function parseDob(dob) {
@@ -42,6 +46,35 @@ export function getAgePartsFromDob(dob, now = new Date()) {
   return { years, months, days, totalDays: Math.max(totalDays, 0) };
 }
 
+const AGE_LABEL_RE = /^(<\s*1y|\d+\s*[ymd])$/i;
+
+/**
+ * Split API gender values that already include an age label:
+ * - "15d · Male" → { embeddedAge: "15d", gender: "Male" }
+ * - "3m" → { embeddedAge: "3m", gender: null }
+ * - "Male" → { embeddedAge: null, gender: "Male" }
+ */
+export function splitEmbeddedAgeGender(gender) {
+  if (gender == null || gender === '' || gender === '—') {
+    return { embeddedAge: null, gender: null };
+  }
+  const raw = String(gender).trim();
+  const withSep = raw.match(/^(<\s*1y|\d+\s*[ymd])\s*[·•|]\s*(.+)$/i);
+  if (withSep) {
+    return {
+      embeddedAge: withSep[1].replace(/\s+/g, '').toLowerCase(),
+      gender: withSep[2].trim() || null,
+    };
+  }
+  if (AGE_LABEL_RE.test(raw)) {
+    return {
+      embeddedAge: raw.replace(/\s+/g, '').toLowerCase(),
+      gender: null,
+    };
+  }
+  return { embeddedAge: null, gender: raw };
+}
+
 /**
  * Format age for doctor UI.
  * - ≥ 1 year → `2y`
@@ -59,6 +92,9 @@ export function formatPatientAge({ age, dob } = {}, now = new Date()) {
   }
 
   if (age == null || age === '') return null;
+  if (typeof age === 'string' && AGE_LABEL_RE.test(age.trim())) {
+    return age.trim().replace(/\s+/g, '').toLowerCase();
+  }
   const years = Number(age);
   if (!Number.isFinite(years) || years < 0) return null;
   if (years >= 1) return `${Math.floor(years)}y`;
@@ -67,9 +103,10 @@ export function formatPatientAge({ age, dob } = {}, now = new Date()) {
 }
 
 /** Age · Gender cell helper */
-export function formatPatientAgeGender({ age, dob, gender } = {}) {
-  const agePart = formatPatientAge({ age, dob });
-  const genderPart = gender && gender !== '—' ? gender : null;
+export function formatPatientAgeGender({ age, dob, gender } = {}, now = new Date()) {
+  const split = splitEmbeddedAgeGender(gender);
+  const agePart = formatPatientAge({ age, dob }, now) || split.embeddedAge;
+  const genderPart = split.gender;
   if (agePart && genderPart) return `${agePart} · ${genderPart}`;
   if (agePart) return agePart;
   if (genderPart) return genderPart;

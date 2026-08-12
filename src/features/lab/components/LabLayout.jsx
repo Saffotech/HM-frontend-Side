@@ -50,6 +50,7 @@ function resolveTitle(pathname, pageTitleOverride) {
   return match?.title || 'Lab Portal';
 }
 
+/** Header only — Radiology / Laboratory from tech department. */
 function resolveLabDepartmentHeaderTitle(user, profile) {
   const profileRow = profile?.profile ?? profile;
   const label = labDepartmentLabelFromUser(profileRow) || labDepartmentLabelFromUser(user);
@@ -78,10 +79,6 @@ export default function LabLayout({ children, pageTitle, compact = false }) {
   const onProfilePage = location.pathname === ROUTES.LAB_PROFILE;
   const { canViewLab, canViewNotifications } = useLabPermissionSet();
   const profileQuery = useLabTechnicianProfileQuery();
-  const departmentLabel = useMemo(() => {
-    const profile = profileQuery.data?.profile ?? profileQuery.data;
-    return labDepartmentLabelFromUser(profile) || labDepartmentLabelFromUser(user);
-  }, [profileQuery.data, user]);
 
   const departmentHeaderTitle = useMemo(
     () => resolveLabDepartmentHeaderTitle(user, profileQuery.data),
@@ -110,16 +107,7 @@ export default function LabLayout({ children, pageTitle, compact = false }) {
       navLinks={navLinks}
       resolveTitle={resolveLayoutTitle}
       homeRoute={canViewLab ? ROUTES.LAB_DASHBOARD : ROUTES.LAB_PROFILE}
-      roleLabel={
-        departmentLabel ? (
-          <>
-            Lab Technician
-            <span className="lab-role-dept">{departmentLabel}</span>
-          </>
-        ) : (
-          'Lab Technician'
-        )
-      }
+      roleLabel="Lab Technician"
       roleLabelClassName="lab-role-label"
       defaultTitle={departmentHeaderTitle || 'Dashboard'}
       pageTitleOverride={pageTitle}

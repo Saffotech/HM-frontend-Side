@@ -126,6 +126,87 @@ export function inferLabDeptCodeFromOrder(order, departments = []) {
   return '';
 }
 
+/** Pending-tests Category filter options by lab tech department. */
+export const LAB_ORDER_CATEGORY_OPTIONS_BY_DEPT = {
+  [LAB_DEPT_CODE.LAB]: [
+    'Blood Test',
+    'Urine Test',
+    'Stool Test',
+    'Biochemistry',
+    'Hematology',
+    'Microbiology',
+    'Histopathology',
+    'CBC',
+    'Lipid Profile',
+    'Blood Sugar',
+    'Urine Routine',
+  ],
+  [LAB_DEPT_CODE.RAD]: [
+    'X-Ray',
+    'Ultrasound (USG)',
+    'CT Scan',
+    'MRI',
+    'Mammography',
+    'X-Ray Chest',
+    'MRI Brain',
+    'CT Scan Abdomen',
+  ],
+};
+
+/** Values that match LabTestOrder.category on the API (not individual test names). */
+const API_CATEGORY_VALUES = new Set([
+  'Blood Test',
+  'Blood',
+  'Urine',
+  'Microbiology',
+  'Biochemistry',
+  'Radiology',
+]);
+
+export function isApiLabOrderCategory(value) {
+  return API_CATEGORY_VALUES.has(String(value ?? '').trim());
+}
+
+/**
+ * Match pending-tests Category filter against order category or test name.
+ * Radiology options include specific tests (X-Ray, MRI, …) which live on test_name.
+ */
+export function orderMatchesCategoryFilter(order, category) {
+  if (!category || category === 'all') return true;
+  const needle = String(category).trim().toLowerCase();
+  if (!needle) return true;
+  const cat = String(order?.category ?? '').trim().toLowerCase();
+  const test = String(order?.testName ?? '').trim().toLowerCase();
+  if (cat === needle || test === needle) return true;
+  if (test.includes(needle) || (needle.length >= 3 && needle.includes(test) && test)) {
+    return true;
+  }
+  return false;
+}
+
+export function labOrderCategoryOptionsForDept(deptCode) {
+  const code = departmentCode(deptCode);
+  if (code === LAB_DEPT_CODE.RAD) return [...LAB_ORDER_CATEGORY_OPTIONS_BY_DEPT.RAD];
+  if (code === LAB_DEPT_CODE.LAB) return [...LAB_ORDER_CATEGORY_OPTIONS_BY_DEPT.LAB];
+  // Unknown dept: show both until profile loads
+  return [
+    ...LAB_ORDER_CATEGORY_OPTIONS_BY_DEPT.LAB,
+    ...LAB_ORDER_CATEGORY_OPTIONS_BY_DEPT.RAD,
+  ];
+}
+
+export function isOrderForLabDept(order, deptCode) {
+  const tech = departmentCode(deptCode);
+  if (!isLabOrRadCode(tech)) return true;
+  const orderDept = inferLabDeptCodeFromOrder(order);
+  if (isLabOrRadCode(orderDept)) return orderDept === tech;
+  // Fallback when order has no department fields
+  if (tech === LAB_DEPT_CODE.RAD) {
+    return String(order?.category ?? '').toLowerCase() === 'radiology';
+  }
+  return String(order?.category ?? '').toLowerCase() !== 'radiology';
+}
+
 export function roleRequiresDepartment(roleName) {
   return roleName === 'doctor' || roleName === 'lab_technician';
 }
