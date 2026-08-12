@@ -5,7 +5,7 @@
 
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/shared/components/common";
+import { Button, DateInput } from "@/shared/components/common";
 import { BLOOD_GROUPS, GENDERS, ROUTES, WARDS } from "@/shared/constants";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { usePatientsQuery } from "@/shared/hooks/queries/usePatientQuery";
@@ -50,6 +50,11 @@ const INITIAL = {
   doctorId: "",
 };
 
+function toIsoDateParam(value) {
+  const s = String(value || "").trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : "";
+}
+
 function validateAdmission(values) {
   const errors = {};
   if (!values.patientDbId) {
@@ -60,7 +65,7 @@ function validateAdmission(values) {
   }
   if (!values.ward) errors.ward = "Ward is required";
   if (!values.bedId) errors.bed = "Bed is required";
-  if (!values.admissionDate)
+  if (!toIsoDateParam(values.admissionDate))
     errors.admissionDate = "Admission date is required";
   return errors;
 }
@@ -468,12 +473,13 @@ export default function AdmitPatientForm() {
                   <label className="ipd-toolbar__label" htmlFor="ipd-reg-dob">
                     Date of birth *
                   </label>
-                  <input
+                  <DateInput
                     id="ipd-reg-dob"
-                    type="date"
-                    className="ipd-input"
-                    value={values.dob}
-                    onChange={(e) => set("dob", e.target.value)}
+                    className="ipd-date-input"
+                    value={toIsoDateParam(values.dob)}
+                    onChange={(e) => set("dob", toIsoDateParam(e.target.value))}
+                    placeholder="DD/MM/YYYY"
+                    aria-label="Date of birth"
                   />
                   {errors.dob ? (
                     <span className="ipd-field-error">{errors.dob}</span>
@@ -635,12 +641,15 @@ export default function AdmitPatientForm() {
               <label className="ipd-toolbar__label" htmlFor="ipd-admit-date">
                 Admission date
               </label>
-              <input
+              <DateInput
                 id="ipd-admit-date"
-                type="date"
-                className="ipd-input"
-                value={values.admissionDate}
-                onChange={(e) => set("admissionDate", e.target.value)}
+                className="ipd-date-input"
+                value={toIsoDateParam(values.admissionDate)}
+                onChange={(e) =>
+                  set("admissionDate", toIsoDateParam(e.target.value))
+                }
+                placeholder="DD/MM/YYYY"
+                aria-label="Admission date"
               />
               {show("admissionDate") ? (
                 <span className="ipd-field-error">{errors.admissionDate}</span>

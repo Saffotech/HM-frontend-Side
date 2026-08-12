@@ -22,18 +22,9 @@ const NAV_LINKS = [
   },
 ];
 
-const PAGE_TITLES = [
-  { prefix: ROUTES.PHARMACY_NOTIFICATIONS, title: 'Notifications' },
-  { prefix: ROUTES.PHARMACY_PROFILE, title: 'My Profile' },
-  { prefix: '/pharmacy/dispense', title: 'Dispense Medicine' },
-  { prefix: ROUTES.PHARMACY_HISTORY, title: 'History' },
-  { prefix: ROUTES.PHARMACY_PRESCRIPTIONS, title: 'Prescriptions' },
-];
-
-function resolveTitle(pathname, pageTitleOverride) {
-  if (pageTitleOverride) return pageTitleOverride;
-  const match = PAGE_TITLES.find((p) => pathname.startsWith(p.prefix));
-  return match?.title || 'Prescriptions';
+function resolveTitle() {
+  // Header title stays "Pharmacy" on every pharmacy page.
+  return 'Pharmacy';
 }
 
 function isPrescriptionsActive(pathname) {
@@ -51,7 +42,7 @@ function isNavLinkActive(pathname, link) {
   return pathname === link.href || pathname.startsWith(link.href);
 }
 
-export default function PharmacyLayout({ children, pageTitle: pageTitleProp, compact = false }) {
+export default function PharmacyLayout({ children, compact = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const onProfilePage = location.pathname === ROUTES.PHARMACY_PROFILE;
@@ -75,8 +66,8 @@ export default function PharmacyLayout({ children, pageTitle: pageTitleProp, com
       }
       roleLabel="Pharmacy"
       roleLabelClassName="pharmacy-role-label"
-      defaultTitle="Prescriptions"
-      pageTitleOverride={pageTitleProp}
+      defaultTitle="Pharmacy"
+      pageTitleOverride={undefined}
       compact={compact}
       isNavLinkActive={isNavLinkActive}
       showBell={canViewNotifications}
