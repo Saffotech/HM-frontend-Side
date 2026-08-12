@@ -2,7 +2,7 @@
  * IPD Dashboard — live `/ipd/dashboard`.
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   BedDouble,
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { EmptyState, QueryFeedback } from "@/shared/components/common";
 import { ROUTES } from "@/shared/constants";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import IpdActionCard from "@/features/ipd/components/IpdActionCard";
 import IpdPageHeader from "@/features/ipd/components/IpdPageHeader";
 import IpdStatCard from "@/features/ipd/components/IpdStatCard";
@@ -75,14 +76,32 @@ export default function IpdDashboardPage() {
   const { data, isLoading, isError, error, refetch } = useIpdDashboardQuery();
   const permissions = useIpdPermissionSet();
   const { canAdmit } = permissions;
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 300);
   const stats = useMemo(() => buildStats(permissions), [permissions]);
-  const recentAdmissions = useMemo(
-    () =>
-      (data?.recent_admissions ?? []).filter(
-        (row) => row.status === "admitted",
-      ),
-    [data?.recent_admissions],
-  );
+  const recentAdmissions = useMemo(() => {
+    const rows = (data?.recent_admissions ?? []).filter(
+      (row) => row.status === "admitted",
+    );
+    const q = debouncedSearch.trim().toLowerCase();
+    if (!q) return rows;
+
+    return rows.filter((row) => {
+      const hay = [
+        row.patient_name,
+        row.patient_uid,
+        row.admission_no,
+        row.id,
+        row.ward_name,
+        row.bed_number,
+        row.doctor_name,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [data?.recent_admissions, debouncedSearch]);
 
   return (
     <div className="ipd-page">
@@ -120,8 +139,20 @@ export default function IpdDashboardPage() {
       </div>
 
       <div className="ipd-card">
-        <div className="ipd-card__head">
-          <h2 className="ipd-card__title">Recent Admissions</h2>
+        <div className="ipd-card__head ipd-dash-recent__head">
+          <div className="ipd-dash-recent__left">
+            <h2 className="ipd-card__title">Recent Admissions</h2>
+            <div className="ipd-toolbar__field ipd-dash-recent__search">
+              <input
+                id="ipd-dash-recent-search"
+                className="ipd-input"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search patient…"
+                aria-label="Search recent admissions"
+              />
+            </div>
+          </div>
           <Link to={ROUTES.IPD_PATIENTS} className="ipd-page__subtitle">
             View all
           </Link>
@@ -151,8 +182,16 @@ export default function IpdDashboardPage() {
                     <tr>
                       <td colSpan={6}>
                         <EmptyState
-                          title="No recent admissions"
-                          description="New admissions will appear here as patients are admitted."
+                          title={
+                            debouncedSearch.trim()
+                              ? "No matching admissions"
+                              : "No recent admissions"
+                          }
+                          description={
+                            debouncedSearch.trim()
+                              ? "Try a different patient name, ID, or admission."
+                              : "New admissions will appear here as patients are admitted."
+                          }
                         />
                       </td>
                     </tr>

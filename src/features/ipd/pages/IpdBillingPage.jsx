@@ -1,5 +1,5 @@
 /**
- * Running bills list — live `/ipd/billing/running`.
+ * Bills list — live `/ipd/billing/running`.
  */
 
 import { useMemo, useState } from 'react';
@@ -23,6 +23,15 @@ export default function IpdBillingPage() {
   const rows = useMemo(() => {
     const mapped = (data?.items ?? []).map((item) => {
       const admission = item.admission ?? {};
+      const total = Number(item.running_total ?? 0);
+      const dueBalance = Math.max(0, Number(item.balance ?? 0));
+      const paidRaw = Number(
+        item.paid_amount != null
+          ? item.paid_amount
+          : Math.max(0, total - dueBalance),
+      );
+      // Keep Total = Paid Balance + Due Balance (cap paid if historical overpay)
+      const paidBalance = Math.min(Math.max(0, paidRaw), total);
       return {
         id: admission.id,
         admission_no: admission.admission_no,
@@ -30,8 +39,9 @@ export default function IpdBillingPage() {
         ward: admission.ward_name,
         bed: admission.bed_number,
         days: admission.length_of_stay_days,
-        balance: item.balance,
-        running_total: item.running_total,
+        total,
+        paid_balance: paidBalance,
+        due_balance: dueBalance,
         open_bill_id: item.open_bill_id,
       };
     });
@@ -57,7 +67,7 @@ export default function IpdBillingPage() {
   return (
     <div className="ipd-page">
       <IpdPageHeader
-        title="Running Bills"
+        title="Bills"
         subtitle="Open IPD stays with outstanding charges"
       />
 
@@ -93,20 +103,21 @@ export default function IpdBillingPage() {
                   <th>Patient</th>
                   <th>Ward / Bed</th>
                   <th>Days</th>
-                  <th>Running total</th>
-                  <th>Balance</th>
+                  <th>Total</th>
+                  <th>Paid Balance</th>
+                  <th>Due Balance</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={7}>
+                    <td colSpan={8}>
                       <EmptyState
                         title={
                           debouncedSearch.trim()
                             ? 'No matching bills'
-                            : 'No running bills'
+                            : 'No bills'
                         }
                         description={
                           debouncedSearch.trim()
@@ -125,8 +136,9 @@ export default function IpdBillingPage() {
                         {row.ward || '—'} / {row.bed || '—'}
                       </td>
                       <td>{row.days ?? '—'}</td>
-                      <td>{formatIpdMoney(row.running_total)}</td>
-                      <td>{formatIpdMoney(row.balance)}</td>
+                      <td>{formatIpdMoney(row.total)}</td>
+                      <td>{formatIpdMoney(row.paid_balance)}</td>
+                      <td>{formatIpdMoney(row.due_balance)}</td>
                       <td>
                         <IpdPermissionButton
                           allowed={canViewBilling}

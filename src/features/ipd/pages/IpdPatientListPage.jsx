@@ -5,7 +5,7 @@
 
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Button, EmptyState, QueryFeedback } from '@/shared/components/common';
+import { Button, DateInput, EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES, WARDS } from '@/shared/constants';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import IpdPageHeader from '@/features/ipd/components/IpdPageHeader';
@@ -28,6 +28,12 @@ const STAY_FILTER = {
   COMPLETED: IPD_ADMISSION_STATUS.DISCHARGED,
   ALL: 'all',
 };
+
+/** Accept only ISO YYYY-MM-DD (DateInput stores this; display is DD/MM/YYYY). */
+function toIsoAdmissionDateParam(value) {
+  const s = String(value || '').trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
+}
 
 function wardChipClass(ward) {
   return WARD_CHIP[ward] || 'ipd-pl-chip--slate';
@@ -56,7 +62,7 @@ export default function IpdPatientListPage() {
   const [search, setSearch] = useState(() => searchParams.get('search') ?? '');
   const [ward, setWard] = useState(() => searchParams.get('ward') ?? '');
   const [admissionDate, setAdmissionDate] = useState(
-    () => searchParams.get('admissionDate') ?? ''
+    () => toIsoAdmissionDateParam(searchParams.get('admissionDate'))
   );
   const [stay, setStay] = useState(() =>
     parseStayFilter(searchParams.get('status') ?? STAY_FILTER.ADMITTED)
@@ -65,12 +71,13 @@ export default function IpdPatientListPage() {
   const debouncedSearch = useDebouncedValue(search, 300);
 
   const statusParam = stay === STAY_FILTER.ALL ? undefined : stay;
+  const admissionDateParam = toIsoAdmissionDateParam(admissionDate);
 
   const { data, isLoading, isError, error, refetch, isFetching } = useIpdPatientsQuery({
     search: debouncedSearch,
     status: statusParam,
     ward,
-    admissionDate,
+    admissionDate: admissionDateParam,
     page,
   });
 
@@ -96,6 +103,16 @@ export default function IpdPatientListPage() {
     const next = new URLSearchParams(searchParams);
     if (value) next.set(paramKey, value);
     else next.delete(paramKey);
+    setSearchParams(next, { replace: true });
+  };
+
+  const onAdmissionDateChange = (e) => {
+    const value = toIsoAdmissionDateParam(e.target.value);
+    setAdmissionDate(value);
+    setPage(1);
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set('admissionDate', value);
+    else next.delete('admissionDate');
     setSearchParams(next, { replace: true });
   };
 
@@ -191,12 +208,13 @@ export default function IpdPatientListPage() {
               <label className="ipd-toolbar__label" htmlFor="ipd-pl-date">
                 Admission date
               </label>
-              <input
+              <DateInput
                 id="ipd-pl-date"
-                type="date"
-                className="ipd-input"
+                className="ipd-date-input"
                 value={admissionDate}
-                onChange={onFilterChange(setAdmissionDate, 'admissionDate')}
+                onChange={onAdmissionDateChange}
+                placeholder="DD/MM/YYYY"
+                aria-label="Admission date"
               />
             </div>
           </div>

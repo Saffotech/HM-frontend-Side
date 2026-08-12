@@ -2,6 +2,7 @@
  * IPD Patient Detail — admission overview (`/ipd/admissions/{id}`).
  */
 
+import { useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button, EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
@@ -16,6 +17,7 @@ import {
   formatIpdDateTime,
   formatIpdMoney,
 } from '@/features/ipd/utils/ipdFormat';
+import { resolveIpdBillPreviewPayment } from '@/features/ipd/utils/resolveIpdBillPreviewPayment';
 
 function Field({ label, children, wide = false }) {
   return (
@@ -38,6 +40,22 @@ export default function IpdPatientDetailPage() {
   const bills = data?.bills ?? [];
   const running = data?.running_bill;
   const admitted = admission?.status === 'admitted';
+
+  const paymentView = useMemo(
+    () =>
+      resolveIpdBillPreviewPayment({
+        bills,
+        preview: running,
+      }),
+    [bills, running],
+  );
+  const paymentStatusLabel =
+    paymentView.paymentStatusKey === 'paid'
+      ? 'Paid'
+      : paymentView.paymentStatusKey === 'partial'
+        ? 'Partial'
+        : 'Unpaid';
+  const billActionLabel = paymentView.canCollectPayment ? 'Collect / Open bill' : 'View bill';
 
   return (
     <div className="ipd-page ipd-page--compact">
@@ -155,10 +173,6 @@ export default function IpdPatientDetailPage() {
                     ? formatIpdDateTime(admission.discharged_at)
                     : 'Still admitted'}
                 </Field>
-                <Field label="Diagnosis">{admission.diagnosis || '—'}</Field>
-                <Field label="Notes" wide>
-                  {admission.notes || '—'}
-                </Field>
               </dl>
 
               <div className="ipd-pd-care">
@@ -212,7 +226,13 @@ export default function IpdPatientDetailPage() {
 
             <div className="ipd-card">
               <div className="ipd-card__head">
-                <h2 className="ipd-card__title">Billing</h2>
+                <h2 className="ipd-card__title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  Billing
+                  <IpdStatusBadge
+                    status={paymentView.paymentStatusKey}
+                    label={paymentStatusLabel}
+                  />
+                </h2>
                 <Button
                   type="button"
                   variant="secondary"
@@ -226,7 +246,7 @@ export default function IpdPatientDetailPage() {
                     )
                   }
                 >
-                  Open bill
+                  {billActionLabel}
                 </Button>
               </div>
               <div className="ipd-card__body ipd-pd-billing">
@@ -240,6 +260,8 @@ export default function IpdPatientDetailPage() {
                   tax={formatIpdMoney(running?.gst_amount)}
                   taxPercent={running?.gst_percent}
                   total={formatIpdMoney(running?.grand_total)}
+                  paid={formatIpdMoney(paymentView.paid)}
+                  balance={formatIpdMoney(paymentView.balance)}
                 />
                 {bills.length > 0 ? (
                   <div className="ipd-pd-bill-list">
@@ -247,9 +269,9 @@ export default function IpdPatientDetailPage() {
                     {bills.map((bill) => (
                       <Link
                         key={bill.id}
-                        to={ROUTES.IPD_BILL_PREVIEW.replace(
-                          ':admissionId',
-                          String(admissionId)
+                        to={ROUTES.IPD_BILL_VIEW.replace(
+                          ':billId',
+                          String(bill.id)
                         )}
                         className="ipd-pd-bill-row"
                       >

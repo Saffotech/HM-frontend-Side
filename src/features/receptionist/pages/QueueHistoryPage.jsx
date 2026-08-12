@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Search } from 'lucide-react';
+import { DateInput } from '@/shared/components/common';
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { receptionistApi } from '../api/receptionist';
 import DepartmentDoctorFilter from '../components/DepartmentDoctorFilter';
 import PaginationBar from '../components/PaginationBar';
 import StatusBadge from '../components/StatusBadge';
-import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { PAGE_SIZE_LIST } from '../utils/params';
 import { buildQueueHistoryDateParams } from '../utils/queueStatus';
 
@@ -104,30 +105,30 @@ export default function QueueHistoryPage() {
             />
 
             <div className="rec-queue-history__date-range">
-              <input
-                type="date"
-                className="rec-input rec-input--plain rec-input--compact rec-queue-history__date"
+              <DateInput
+                id="queue-history-date-from"
+                className="rec-queue-history__date"
                 value={dateFrom}
                 onChange={(e) => {
                   setDateFrom(e.target.value);
                   setCurrentPage(1);
                 }}
+                placeholder="DD/MM/YYYY"
                 aria-label="From date"
-                title="From date"
               />
               <span className="rec-queue-history__date-sep" aria-hidden>
                 to
               </span>
-              <input
-                type="date"
-                className="rec-input rec-input--plain rec-input--compact rec-queue-history__date"
+              <DateInput
+                id="queue-history-date-to"
+                className="rec-queue-history__date"
                 value={dateTo}
                 onChange={(e) => {
                   setDateTo(e.target.value);
                   setCurrentPage(1);
                 }}
+                placeholder="DD/MM/YYYY"
                 aria-label="To date"
-                title="To date"
               />
             </div>
 

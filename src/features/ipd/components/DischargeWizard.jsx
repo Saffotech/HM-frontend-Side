@@ -2,7 +2,7 @@
  * Multi-step discharge wizard — live preview, pay, and discharge APIs.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, EmptyState, QueryFeedback } from '@/shared/components/common';
 import { PAYMENT_MODES, ROUTES } from '@/shared/constants';
@@ -24,6 +24,7 @@ import {
   formatIpdDateTime,
   formatIpdMoney,
 } from '@/features/ipd/utils/ipdFormat';
+import { resolveIpdBillPreviewPayment } from '@/features/ipd/utils/resolveIpdBillPreviewPayment';
 
 export default function DischargeWizard({ admissionId }) {
   const navigate = useNavigate();
@@ -43,19 +44,17 @@ export default function DischargeWizard({ admissionId }) {
   const admission = detailQuery.data?.admission;
   const preview = previewQuery.data;
   const bills = detailQuery.data?.bills ?? [];
-  const openBill = bills.find(
-    (bill) =>
-      bill.status !== 'void' &&
-      Number(bill.balance_due ?? 0) > 0.01
+  const paymentView = useMemo(
+    () =>
+      resolveIpdBillPreviewPayment({
+        bills,
+        preview,
+      }),
+    [bills, preview],
   );
-  const hasFinalBill = bills.some((bill) => bill.status !== 'void');
-
-  // Unpaid open bill → balance due; no bill yet → provisional total; already paid → 0
-  const exactAmount = openBill
-    ? Number(openBill.balance_due)
-    : hasFinalBill
-      ? 0
-      : Number(preview?.grand_total ?? 0);
+  const openBill = paymentView.openBill;
+  const exactAmount = Number(paymentView.balance ?? 0);
+  const canCollectPayment = paymentView.canCollectPayment;
   const savingDischarge =
     dischargeMutation.isPending ||
     payMutation.isPending ||
@@ -74,6 +73,9 @@ export default function DischargeWizard({ admissionId }) {
     if (openBill) return openBill;
     if (!canGenerateBill) {
       throw new Error('No open bill and you cannot generate one');
+    }
+    if (!canCollectPayment || exactAmount <= 0.01) {
+      throw new Error('No due balance to bill');
     }
     return generateMutation.mutateAsync({
       admission_id: Number(admissionId),
@@ -99,7 +101,7 @@ export default function DischargeWizard({ admissionId }) {
   const onConfirmDischarge = async () => {
     try {
       const amount = Number(exactAmount ?? payAmount ?? 0);
-      if (amount > 0.01) {
+      if (amount > 0.01 && canCollectPayment) {
         if (!paymentReady) {
           toast.error('Complete the payment step before confirming discharge');
           return;
@@ -262,8 +264,8 @@ export default function DischargeWizard({ admissionId }) {
                 tax={formatIpdMoney(preview?.gst_amount)}
                 taxPercent={preview?.gst_percent}
                 total={formatIpdMoney(preview?.grand_total)}
-                paid={openBill ? formatIpdMoney(openBill.paid_amount) : null}
-                balance={openBill ? formatIpdMoney(openBill.balance_due) : null}
+                paid={formatIpdMoney(paymentView.paid)}
+                balance={formatIpdMoney(paymentView.balance)}
               />
             </div>
           ) : null}

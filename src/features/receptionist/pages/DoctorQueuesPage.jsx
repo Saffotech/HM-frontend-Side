@@ -33,7 +33,6 @@ export default function DoctorQueuesPage() {
 
   const [queueSearch, setQueueSearch] = useState('');
   const [queueStatus, setQueueStatus] = useState('all');
-  const [queuePayment, setQueuePayment] = useState('all');
   const [queueDate, setQueueDate] = useState(() => formatDate(new Date()));
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const debouncedQueueSearch = useDebouncedValue(queueSearch, 400);
@@ -77,7 +76,6 @@ export default function DoctorQueuesPage() {
       receptionistApi.getDoctorQueue(Number(doctorParam), {
         search: debouncedQueueSearch.trim() || undefined,
         status: queueStatus !== 'all' ? queueStatus : undefined,
-        payment_status: queuePayment !== 'all' ? queuePayment : undefined,
         date: queueDate || undefined,
         page: queuePage,
         limit: PAGE_SIZE_LIST,
@@ -101,7 +99,7 @@ export default function DoctorQueuesPage() {
     return () => {
       cancelled = true;
     };
-  }, [doctorParam, debouncedQueueSearch, queueStatus, queuePayment, queueDate, queuePage]);
+  }, [doctorParam, debouncedQueueSearch, queueStatus, queueDate, queuePage]);
 
   useEffect(() => {
     setScheduleOpen(false);
@@ -366,19 +364,6 @@ export default function DoctorQueuesPage() {
                 <option value="all">All Statuses</option>
                 <option value="scheduled">Scheduled</option>
                 <option value="completed">Completed</option>
-              </select>
-              <select
-                className="rec-select rec-select--compact rec-doctor-detail__filter-select"
-                value={queuePayment}
-                onChange={(e) => {
-                  setQueuePayment(e.target.value);
-                  setQueuePage(1);
-                }}
-                aria-label="Payment status"
-              >
-                <option value="all">All Payments</option>
-                <option value="paid">Paid</option>
-                <option value="unpaid">Unpaid</option>
               </select>
             </div>
           </div>

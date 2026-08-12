@@ -18,7 +18,7 @@ import {
   useDoctorsByDepartmentQuery,
 } from '@/shared/hooks/queries/useOpdReferenceQuery';
 
-import { REGISTRATION_FEE, ROUTES, TAX_RATE, PAYMENT_MODES } from '@/shared/constants';
+import { ROUTES, PAYMENT_MODES } from '@/shared/constants';
 
 import { Button, Input, Label, SearchableSelect, TimeSlotGrid, QueryFeedback } from '@/shared/components/common';
 
@@ -37,6 +37,7 @@ import { toast } from '@/shared/utils/toast';
 
 import { validatePaymentTransactionRef, requiresTransactionReference } from '@/shared/utils/validators';
 import { APPT_PAY_LATER_NOTE } from '@/features/opd/utils/appointmentPaymentUtils';
+import { useOpdPricingControls } from '@/features/opd/hooks/useOpdBillingSettingsQuery';
 import {
   BOOK_APPOINTMENT_INITIAL_VALUES,
   validateAppointment,
@@ -84,6 +85,11 @@ export default function BookAppointmentPage() {
 
   const bookAppointment = useBookAppointmentMutation();
   const createBill = useCreateBillMutation();
+  const {
+    registrationFee,
+    taxRate,
+    resolveConsultationFee,
+  } = useOpdPricingControls();
 
   const navigate = useNavigate();
 
@@ -141,6 +147,12 @@ export default function BookAppointmentPage() {
   });
 
   const revisit = getRevisitInfoFromVisits(profileVisits);
+  const billedConsultationFee = selectedDoctor
+    ? Number(resolveConsultationFee(selectedDoctor.id, deptId)) || 0
+    : 0;
+  const billedRegistrationFee = revisit.registrationFeeApplicable
+    ? Number(registrationFee) || 0
+    : 0;
 
   const patientOptions = useMemo(() => {
     const opts = bookablePatients.map((p) => ({
@@ -208,7 +220,7 @@ export default function BookAppointmentPage() {
     }
 
     const subtotal = fee;
-    const tax = Math.round(subtotal * TAX_RATE * 100) / 100;
+    const tax = Math.round(subtotal * taxRate * 100) / 100;
     const grandTotal = subtotal + tax;
 
     if (!payLater) {
@@ -260,9 +272,9 @@ export default function BookAppointmentPage() {
           patientDbId: selectedPatient.dbId,
           deptId: selectedDept.id,
           doctorId: selectedDoctor.id,
-          registrationFee: revisit.registrationFeeApplicable ? REGISTRATION_FEE : 0,
-          consultationFee: selectedDoctor.fee,
-          gstPercent: TAX_RATE * 100,
+          registrationFee: billedRegistrationFee,
+          consultationFee: billedConsultationFee,
+          gstPercent: taxRate * 100,
           payLater,
           paymentMode,
           paid: payLater ? 0 : grandTotal,
@@ -284,11 +296,9 @@ export default function BookAppointmentPage() {
     }
   });
 
-  const fee = selectedDoctor
-    ? selectedDoctor.fee + (revisit.registrationFeeApplicable ? REGISTRATION_FEE : 0)
-    : 0;
+  const fee = selectedDoctor ? billedConsultationFee + billedRegistrationFee : 0;
 
-  const tax = Math.round(fee * TAX_RATE * 100) / 100;
+  const tax = Math.round(fee * taxRate * 100) / 100;
   const grandTotal = fee + tax;
   const isSaving = bookAppointment.isPending || createBill.isPending;
 
@@ -434,12 +444,18 @@ export default function BookAppointmentPage() {
                     <Label>Doctor *</Label>
                     <SearchableSelect
                       options={doctors
-                        .filter((d) => !deptId || d.deptId === deptId)
-                        .map((d) => ({
-                          value: d.id,
-                          label: d.name.startsWith('Dr.') ? d.name : `Dr. ${d.name}`,
-                          sublabel: `${d.specialization} — ${formatCurrency(d.fee)}`,
-                        }))}
+                        .filter((d) => !deptId || String(d.deptId) === String(deptId))
+                        .map((d) => {
+                          const consultFee = Number(resolveConsultationFee(d.id, deptId)) || 0;
+                          const specialization = String(d.specialization || '').trim();
+                          return {
+                            value: d.id,
+                            label: d.name.startsWith('Dr.') ? d.name : `Dr. ${d.name}`,
+                            sublabel: specialization
+                              ? `${specialization} — ${formatCurrency(consultFee)}`
+                              : formatCurrency(consultFee),
+                          };
+                        })}
                       value={doctorId}
                       onChange={handleDoctorSelectChange}
                       disabled={!deptId}
@@ -505,15 +521,15 @@ export default function BookAppointmentPage() {
                 </header>
                 <div className="book-panel__body book-payment">
                   <div className="book-fee-box">
-                    {revisit.registrationFeeApplicable && (
+                    {billedRegistrationFee > 0 && (
                       <div className="book-fee-box__row">
                         <span>Registration fee</span>
-                        <span>{formatCurrency(REGISTRATION_FEE)}</span>
+                        <span>{formatCurrency(billedRegistrationFee)}</span>
                       </div>
                     )}
                     <div className="book-fee-box__row">
                       <span>Consultation fee</span>
-                      <span>{formatCurrency(selectedDoctor.fee)}</span>
+                      <span>{formatCurrency(billedConsultationFee)}</span>
                     </div>
                     <div className="book-fee-box__row book-fee-box__row--total">
                       <span>Estimated total</span>

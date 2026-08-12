@@ -565,6 +565,17 @@
   margin-bottom: 0.65rem;
 }
 
+.ipd-pl-filters .ipd-date-input,
+.ipd-pl-filters .ipd-date-input .date-input__wrap {
+  margin: 0;
+  width: 100%;
+}
+
+.ipd-pl-filters .ipd-date-input .date-input__text {
+  min-height: 2.25rem;
+  width: 100%;
+}
+
 .ipd-page--compact .ipd-beds-filters {
   margin-bottom: 0.65rem;
 }
@@ -1854,6 +1865,28 @@
 }
 
 .ipd-billing-search .ipd-input {
+  width: 100%;
+}
+
+.ipd-dash-recent__head {
+  gap: 0.75rem;
+}
+
+.ipd-dash-recent__left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.ipd-dash-recent__search {
+  flex: 0 0 auto;
+  width: 14rem;
+  max-width: min(14rem, 100%);
+}
+
+.ipd-dash-recent__search .ipd-input {
   width: 100%;
 }
 

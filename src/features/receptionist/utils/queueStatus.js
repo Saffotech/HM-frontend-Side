@@ -39,13 +39,20 @@ export function buildTodayQueueFilterParams(statusFilter) {
   return {};
 }
 
+/** Accept only ISO YYYY-MM-DD (same as OPD DateInput value). */
+function toIsoDateParam(value) {
+  const s = String(value || '').trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
+}
+
 /**
  * Map From/To date inputs → backend queue-history params.
  * One date only → single-day filter; both → inclusive range.
+ * Values must be ISO YYYY-MM-DD (OPD DateInput stores this).
  */
 export function buildQueueHistoryDateParams(dateFrom, dateTo) {
-  const from = (dateFrom || '').trim();
-  const to = (dateTo || '').trim();
+  const from = toIsoDateParam(dateFrom);
+  const to = toIsoDateParam(dateTo);
 
   if (from && to) {
     const start = from <= to ? from : to;
