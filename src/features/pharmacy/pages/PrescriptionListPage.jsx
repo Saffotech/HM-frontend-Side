@@ -8,6 +8,7 @@ import PharmacyStatusBadge from '@/features/pharmacy/components/PharmacyStatusBa
 import { usePharmacyPermissionSet } from '@/features/pharmacy/hooks/usePharmacyPermission';
 import {
   DataTableShell,
+  DateInput,
   EmptyState,
   QueryFeedback,
   SearchBar,
@@ -32,7 +33,13 @@ const STATUS_OPTIONS = [
 
 const STATUS_LABELS = Object.fromEntries(STATUS_OPTIONS.map((o) => [o.value, o.label]));
 
-/** YYYY-MM-DD in local time for <input type="date"> comparison. */
+/** Accept only ISO YYYY-MM-DD (DateInput stores this; display is DD/MM/YYYY). */
+function toIsoDateParam(value) {
+  const s = String(value || '').trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
+}
+
+/** YYYY-MM-DD in local time for date filter comparison. */
 function toLocalDateKey(d) {
   const dt = new Date(d);
   if (Number.isNaN(dt.getTime())) return '';
@@ -49,8 +56,9 @@ export default function PrescriptionListPage() {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search.trim(), 300);
   const status = statusFilter === 'all' ? undefined : statusFilter;
+  const dateFilterIso = toIsoDateParam(dateFilter);
 
-  const { data, isLoading, isError, error } = usePharmacyPrescriptionsQuery(
+  const { data, isLoading, isError, error, isFetching, refetch } = usePharmacyPrescriptionsQuery(
     {
       status,
       search: debouncedSearch || undefined,
@@ -59,11 +67,12 @@ export default function PrescriptionListPage() {
   );
 
   const allPrescriptions = data?.data ?? [];
-  const prescriptions = dateFilter
-    ? allPrescriptions.filter((rx) => toLocalDateKey(rx.created_at) === dateFilter)
+  const prescriptions = dateFilterIso
+    ? allPrescriptions.filter((rx) => toLocalDateKey(rx.created_at) === dateFilterIso)
     : allPrescriptions;
   const statusLabel = STATUS_LABELS[statusFilter] ?? 'All';
-  const hasActiveFilters = Boolean(debouncedSearch) || Boolean(dateFilter);
+  const hasActiveFilters = Boolean(debouncedSearch) || Boolean(dateFilterIso);
+  const showInitialLoading = isLoading && !data;
 
   if (!canViewPrescriptions) {
     return (
@@ -80,91 +89,106 @@ export default function PrescriptionListPage() {
   return (
     <PharmacyLayout compact>
       <div className="pharmacy-rx-page">
-        <QueryFeedback isLoading={isLoading} isError={isError} error={error}>
-          <div
-            className={`pharmacy-rx-card${
-              prescriptions.length === 0 ? ' pharmacy-rx-card--empty' : ''
-            }`}
-          >
-            <div className="pharmacy-rx-card__toolbar">
-              <div className="pharmacy-rx-toolbar-strip">
-                <SearchBar
-                  value={search}
-                  onChange={setSearch}
-                  placeholder="Search…"
-                  className="pharmacy-rx-card__search"
-                />
-                <span className="pharmacy-rx-toolbar-strip__divider" aria-hidden />
-                <label className="pharmacy-rx-filter">
-                  <span
-                    className={`pharmacy-rx-filter__dot pharmacy-rx-filter__dot--${statusFilter}`}
-                    aria-hidden
-                  />
-                  <select
-                    className="pharmacy-rx-filter__select"
-                    aria-label="Filter by status"
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                  >
-                    {STATUS_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <span className="pharmacy-rx-toolbar-strip__divider" aria-hidden />
-                <label className="pharmacy-rx-date-filter">
-                  <input
-                    type="date"
-                    className="pharmacy-rx-date-filter__input"
-                    aria-label="Filter by date"
-                    value={dateFilter}
-                    onChange={(e) => setDateFilter(e.target.value)}
-                  />
-                  {dateFilter && (
-                    <button
-                      type="button"
-                      className="pharmacy-rx-date-filter__clear"
-                      aria-label="Show all time"
-                      title="Show all time"
-                      onClick={() => setDateFilter('')}
-                    >
-                      ×
-                    </button>
-                  )}
-                </label>
-              </div>
-              <span className="pharmacy-rx-card__meta">
-                <strong>{prescriptions.length}</strong> · {statusLabel}
-                {dateFilter ? ` · ${formatDate(dateFilter)}` : ' · All time'}
-              </span>
-            </div>
-
-            {prescriptions.length === 0 ? (
-              <EmptyState
-                title={hasActiveFilters ? 'No matching prescriptions' : 'No prescriptions found'}
-                description={
-                  hasActiveFilters
-                    ? 'Try a different search term, status or date filter.'
-                    : `No ${statusLabel.toLowerCase()} prescriptions at the moment.`
-                }
+        <div
+          className={`pharmacy-rx-card${
+            prescriptions.length === 0 ? ' pharmacy-rx-card--empty' : ''
+          }`}
+        >
+          <div className="pharmacy-rx-card__toolbar">
+            <div className="pharmacy-rx-toolbar-strip">
+              <SearchBar
+                value={search}
+                onChange={setSearch}
+                placeholder="Search patient"
+                className="pharmacy-rx-card__search"
               />
-            ) : (
-              <DataTableShell>
-                <table className="data-table pharmacy-rx-table">
-                  <thead>
+              <span className="pharmacy-rx-toolbar-strip__divider" aria-hidden />
+              <label className="pharmacy-rx-filter">
+                <span
+                  className={`pharmacy-rx-filter__dot pharmacy-rx-filter__dot--${statusFilter}`}
+                  aria-hidden
+                />
+                <select
+                  className="pharmacy-rx-filter__select"
+                  aria-label="Filter by status"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  {STATUS_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <span className="pharmacy-rx-toolbar-strip__divider" aria-hidden />
+              <div className="pharmacy-rx-date-filter">
+                <DateInput
+                  id="pharmacy-rx-date"
+                  className="pharmacy-rx-date-filter__input"
+                  value={dateFilterIso}
+                  onChange={(e) => setDateFilter(toIsoDateParam(e.target.value))}
+                  placeholder="DD/MM/YYYY"
+                  aria-label="Filter by date"
+                />
+                {dateFilterIso ? (
+                  <button
+                    type="button"
+                    className="pharmacy-rx-date-filter__clear"
+                    aria-label="Show all time"
+                    title="Show all time"
+                    onClick={() => setDateFilter('')}
+                  >
+                    ×
+                  </button>
+                ) : null}
+              </div>
+            </div>
+            <span className="pharmacy-rx-card__meta">
+              <strong>{prescriptions.length}</strong> · {statusLabel}
+              {dateFilterIso ? ` · ${formatDate(dateFilterIso)}` : ' · All time'}
+              {isFetching && data ? ' · Updating…' : ''}
+            </span>
+          </div>
+
+          <QueryFeedback
+            isLoading={showInitialLoading}
+            isError={isError && !data}
+            error={error}
+            onRetry={refetch}
+          >
+            <DataTableShell>
+              <table className="data-table pharmacy-rx-table">
+                <thead>
+                  <tr>
+                    <th>Patient ID</th>
+                    <th>Patient</th>
+                    <th>Doctor</th>
+                    <th>Diagnosis</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {prescriptions.length === 0 ? (
                     <tr>
-                      <th>Patient ID</th>
-                      <th>Patient</th>
-                      <th>Doctor</th>
-                      <th>Diagnosis</th>
-                      <th>Status</th>
-                      <th>Date</th>
+                      <td colSpan={6} className="pharmacy-table-empty">
+                        <EmptyState
+                          title={
+                            hasActiveFilters
+                              ? 'No matching prescriptions'
+                              : 'No prescriptions found'
+                          }
+                          description={
+                            hasActiveFilters
+                              ? 'Try a different search term, status or date filter.'
+                              : `No ${statusLabel.toLowerCase()} prescriptions at the moment.`
+                          }
+                        />
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {prescriptions.map((rx) => (
+                  ) : (
+                    prescriptions.map((rx) => (
                       <tr
                         key={rx.id}
                         className="pharmacy-rx-table__row"
@@ -190,13 +214,13 @@ export default function PrescriptionListPage() {
                         </td>
                         <td className="pharmacy-rx-table__date">{formatDate(rx.created_at)}</td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </DataTableShell>
-            )}
-          </div>
-        </QueryFeedback>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </DataTableShell>
+          </QueryFeedback>
+        </div>
       </div>
     </PharmacyLayout>
   );

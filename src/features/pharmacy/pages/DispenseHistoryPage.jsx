@@ -114,7 +114,7 @@ export default function DispenseHistoryPage() {
                 <SearchBar
                   value={search}
                   onChange={setSearch}
-                  placeholder="Search…"
+                  placeholder="Search patient"
                   className="pharmacy-history-card__search"
                 />
                 <span className="pharmacy-history-toolbar-strip__divider" aria-hidden />
@@ -127,7 +127,7 @@ export default function DispenseHistoryPage() {
                       setPage(1);
                     }}
                     aria-label="From date"
-                    placeholder="From"
+                    placeholder="DD/MM/YYYY"
                   />
                   <span className="pharmacy-history-date-range__sep" aria-hidden>
                     to
@@ -140,7 +140,7 @@ export default function DispenseHistoryPage() {
                       setPage(1);
                     }}
                     aria-label="To date"
-                    placeholder="To"
+                    placeholder="DD/MM/YYYY"
                   />
                   {hasDateFilter && (
                     <button
@@ -185,40 +185,50 @@ export default function DispenseHistoryPage() {
               </span>
             </div>
 
-            {rows.length === 0 ? (
-              <EmptyState
-                title={
-                  hasActiveFilters ? 'No matching dispensing records' : 'No dispensing records yet'
-                }
-                description={
-                  hasActiveFilters
-                    ? 'Try a different search term or date range.'
-                    : 'Completed dispense records will appear here.'
-                }
-              />
-            ) : (
-              <DataTableShell
-                pagination={{
-                  page,
-                  totalPages,
-                  totalItems: total,
-                  pageSize,
-                  onPageChange: setPage,
-                }}
-              >
-                <table className="data-table pharmacy-history-table">
-                  <thead>
+            <DataTableShell
+              pagination={
+                rows.length === 0
+                  ? undefined
+                  : {
+                      page,
+                      totalPages,
+                      totalItems: total,
+                      pageSize,
+                      onPageChange: setPage,
+                    }
+              }
+            >
+              <table className="data-table pharmacy-history-table">
+                <thead>
+                  <tr>
+                    <th>Patient ID</th>
+                    <th>Patient</th>
+                    <th>Medicines</th>
+                    <th className="pharmacy-history-table__col-qty">Qty</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.length === 0 ? (
                     <tr>
-                      <th>Patient ID</th>
-                      <th>Patient</th>
-                      <th>Medicines</th>
-                      <th className="pharmacy-history-table__col-qty">Qty</th>
-                      <th>Status</th>
-                      <th>Date</th>
+                      <td colSpan={6} className="pharmacy-table-empty">
+                        <EmptyState
+                          title={
+                            hasActiveFilters
+                              ? 'No matching dispensing records'
+                              : 'No dispensing records yet'
+                          }
+                          description={
+                            hasActiveFilters
+                              ? 'Try a different search term or date range.'
+                              : 'Completed dispense records will appear here.'
+                          }
+                        />
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row) => (
+                  ) : (
+                    rows.map((row) => (
                       <tr key={row.id} className="pharmacy-history-table__row">
                         <td>
                           <span className="pharmacy-history-table__id">
@@ -236,17 +246,21 @@ export default function DispenseHistoryPage() {
                             maxLength={MEDICINES_TEXT_MAX}
                           />
                         </td>
-                        <td className="pharmacy-history-table__qty">{row.quantity_dispensed ?? '—'}</td>
+                        <td className="pharmacy-history-table__qty">
+                          {row.quantity_dispensed ?? '—'}
+                        </td>
                         <td className="pharmacy-history-table__status">
                           <PharmacyStatusBadge status={row.status} />
                         </td>
-                        <td className="pharmacy-history-table__date">{fmtDt(row.dispensed_at)}</td>
+                        <td className="pharmacy-history-table__date">
+                          {fmtDt(row.dispensed_at)}
+                        </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </DataTableShell>
-            )}
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </DataTableShell>
           </div>
         </QueryFeedback>
       </div>

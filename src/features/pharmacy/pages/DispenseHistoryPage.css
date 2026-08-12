@@ -12,8 +12,38 @@
   box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
 }
 
-.pharmacy-history-card--empty .empty-state {
-  padding: 1.25rem 1rem 1.75rem;
+.pharmacy-history-card--empty .empty-state,
+.pharmacy-history-card--empty .ui-empty-state {
+  padding: 2.5rem 1.25rem 3rem;
+}
+
+.pharmacy-table-empty {
+  padding: 2rem 1rem !important;
+  border-bottom: none !important;
+  background: #fff !important;
+  text-align: center;
+  vertical-align: middle;
+  min-height: 14rem;
+}
+
+.pharmacy-table-empty .empty-state,
+.pharmacy-table-empty .ui-empty-state {
+  margin: 0;
+  box-shadow: none;
+  border: none;
+  background: transparent;
+  padding: 2rem 1rem 2.5rem;
+  min-height: 12rem;
+}
+
+.pharmacy-table-empty .ui-empty-state__title {
+  font-size: 1.2rem;
+  line-height: 1.35;
+}
+
+.pharmacy-table-empty .ui-empty-state__description {
+  font-size: 0.975rem;
+  max-width: 28rem;
 }
 
 /* ── Toolbar (matches prescriptions page) ─────────── */
@@ -78,57 +108,105 @@
 .pharmacy-history-date-range {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.35rem;
   flex-shrink: 0;
   padding: 0 0.15rem;
 }
 
 .pharmacy-history-date-range__sep {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--color-text-muted);
   text-transform: lowercase;
+  flex-shrink: 0;
 }
 
 .pharmacy-history-date {
   margin: 0;
-  width: 8.75rem;
+  width: 11rem;
+  max-width: 11rem;
+  flex: 0 0 11rem;
 }
 
-.pharmacy-history-date .field,
-.pharmacy-history-date.field {
+.pharmacy-history-date.field,
+.pharmacy-history-date.date-input {
   margin: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 .pharmacy-history-date .field__label {
   display: none;
 }
 
-.pharmacy-history-date .field__input,
-.pharmacy-history-date input {
-  height: 2rem;
-  min-height: 2rem;
-  padding: 0 0.45rem;
-  border: none;
-  border-radius: 0.45rem;
+.pharmacy-history-date .date-input__wrap {
+  margin: 0;
+  width: 100%;
+  min-height: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md, 0.5rem);
   background: #fff;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
-  font-size: 0.75rem;
-  font-weight: 600;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.pharmacy-history-date .date-input__wrap--filled {
+  background: #fff;
+  border-color: var(--color-primary-border, #a7d4b8);
+}
+
+.pharmacy-history-date .date-input__wrap:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(26, 92, 52, 0.14);
+}
+
+.pharmacy-history-date .date-input__text {
+  height: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0 0.55rem;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.pharmacy-history-date .date-input__wrap--filled .date-input__text {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.pharmacy-history-date .date-input__calendar-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-left: 1px solid var(--color-border);
+  background: rgba(230, 244, 236, 0.35);
+  color: var(--color-primary);
+}
+
+.pharmacy-history-date .date-input__calendar-btn svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.pharmacy-history-date .date-input__calendar-btn:hover:not(:disabled) {
+  background: rgba(230, 244, 236, 0.65);
 }
 
 .pharmacy-history-date-range__clear {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.35rem;
+  height: 1.35rem;
   padding: 0;
   border: none;
   border-radius: 50%;
   background: #e2e8f0;
   color: #475569;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   line-height: 1;
   cursor: pointer;
 }
@@ -225,10 +303,10 @@
 .pharmacy-history-page .data-table-shell__scroll .data-table.pharmacy-history-table thead th {
   background: #fff;
   border-bottom: 1px solid var(--color-border);
-  font-size: 0.625rem;
+  font-size: 0.8125rem;
   font-weight: 700;
-  letter-spacing: 0.05em;
-  padding: 0.45rem 0.65rem;
+  letter-spacing: 0.02em;
+  padding: 0.65rem 0.75rem;
   white-space: nowrap;
 }
 
