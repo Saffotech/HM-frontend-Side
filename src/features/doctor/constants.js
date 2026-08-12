@@ -36,7 +36,7 @@ export const LAB_TEST_OPTIONS = [
 
 export const LAB_CATEGORIES = ['Blood', 'Radiology', 'Urine', 'Other'];
 
-export const LAB_PRIORITIES = ['Normal', 'Urgent', 'STAT'];
+export const LAB_PRIORITIES = ['Normal', 'Urgent'];
 
 export function testsForLabDepartment(code) {
   const key = String(code ?? '').toUpperCase();

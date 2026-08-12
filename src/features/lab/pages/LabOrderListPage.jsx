@@ -79,7 +79,10 @@ export default function LabOrderListPage() {
 
   const [search, setSearch] = useState(searchParams.get('q') || '');
   const [view, setView] = useState(normalizedView);
-  const [priority, setPriority] = useState(searchParams.get('priority') || 'all');
+  const [priority, setPriority] = useState(() => {
+    const raw = searchParams.get('priority') || 'all';
+    return raw === 'stat' ? 'all' : raw;
+  });
   const [category, setCategory] = useState(searchParams.get('category') || 'all');
   const [date, setDate] = useState(searchParams.get('date') || '');
 
@@ -195,7 +198,6 @@ export default function LabOrderListPage() {
             <select id="lab-orders-priority" value={priority} onChange={(e) => setPriority(e.target.value)}>
               <option value="all">All</option>
               <option value="urgent">Urgent</option>
-              <option value="stat">STAT</option>
               <option value="normal">Normal</option>
             </select>
           </div>
