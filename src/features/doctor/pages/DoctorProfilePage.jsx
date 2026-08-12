@@ -348,9 +348,9 @@ export default function DoctorProfilePage() {
     }
     if (
       payload.experience_years != null &&
-      (payload.experience_years < 0 || payload.experience_years > 60)
+      (payload.experience_years < 0 || payload.experience_years > 99)
     ) {
-      toast.error('Experience years must be between 0 and 60');
+      toast.error('Experience years must be between 0 and 99');
       return;
     }
     try {
@@ -793,11 +793,16 @@ export default function DoctorProfilePage() {
                       <span className="doc-profile-field__label">Experience (years)</span>
                       <input
                         className="doc-input"
-                        type="number"
-                        min={0}
-                        max={60}
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={2}
+                        placeholder="e.g. 05"
                         value={form.experience_years}
-                        onChange={(e) => setField('experience_years', e.target.value)}
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/\D/g, '').slice(0, 2);
+                          setField('experience_years', digits);
+                        }}
                       />
                     </label>
                     <div className="doc-profile-field doc-profile-field--span">
@@ -871,7 +876,7 @@ export default function DoctorProfilePage() {
               <h3 className="doc-profile-section__title">
                 <Phone size={16} aria-hidden /> Contact
               </h3>
-              <div className="doc-profile-grid">
+              <div className="doc-profile-grid doc-profile-grid--contact">
                 {editing && form ? (
                   <>
                     <label className="doc-profile-field">
@@ -995,7 +1000,9 @@ export default function DoctorProfilePage() {
                     <ReadField label="Date of birth" value={profile.date_of_birth} />
                     <ReadField label="City" value={profile.address?.city} />
                     <ReadField label="State" value={profile.address?.state} />
-                    <ReadField label="Address" value={profile.address?.line} />
+                    <div className="doc-profile-field--span">
+                      <ReadField label="Address" value={profile.address?.line} />
+                    </div>
                   </>
                 )}
               </div>

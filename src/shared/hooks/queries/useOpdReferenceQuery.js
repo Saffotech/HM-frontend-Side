@@ -11,6 +11,18 @@ export function useDepartmentsQuery() {
   });
 }
 
+export function useLabRoutingDepartmentsQuery(options = {}) {
+  const token = useQueryToken();
+  const { enabled = true } = options;
+  return useQuery({
+    queryKey: queryKeys.opd.labDepartments,
+    queryFn: () => opdReferenceApi.listLabRoutingDepartments(token),
+    enabled: Boolean(token) && enabled,
+    staleTime: 1000 * 60 * 10,
+    retry: false,
+  });
+}
+
 export function useDoctorsByDepartmentQuery(departmentId) {
   const token = useQueryToken();
   return useQuery({

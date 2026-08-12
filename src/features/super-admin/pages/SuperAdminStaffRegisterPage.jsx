@@ -10,6 +10,14 @@ import {
 import { Button, Input, Label, QueryFeedback, Select } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
+import { ensureLabTechDepartmentId } from '@/features/admin/utils/ensureLabTechDepartment';
+import {
+  isLabTechnicianRole,
+  resolveStaffDepartmentPayloadId,
+  roleRequiresDepartment,
+  staffDepartmentSelectOptions,
+  staffDepartmentSelectValue,
+} from '@/shared/utils/labDepartments';
 
 const EMPTY_FORM = {
   first_name: '',
@@ -56,8 +64,8 @@ export default function SuperAdminStaffRegisterPage() {
   const departmentsError = departmentsQuery.isError;
 
   const selectedRole = roles?.find((r) => String(r.id) === String(form.role_id));
-  // Department applies only to doctors (clinical specialty assignment)
-  const departmentEnabled = selectedRole?.name === 'doctor';
+  const departmentEnabled = roleRequiresDepartment(selectedRole?.name);
+  const isLabTech = isLabTechnicianRole(selectedRole?.name);
 
   const roleOptions = useMemo(
     () =>
@@ -69,12 +77,8 @@ export default function SuperAdminStaffRegisterPage() {
   );
 
   const departmentOptions = useMemo(
-    () =>
-      departments?.map((dept) => ({
-        value: String(dept.id),
-        label: dept.name,
-      })) ?? [],
-    [departments],
+    () => staffDepartmentSelectOptions(departments, selectedRole?.name),
+    [departments, selectedRole?.name],
   );
 
   const handleChange = (field) => (e) => {
@@ -86,8 +90,7 @@ export default function SuperAdminStaffRegisterPage() {
     setForm((prev) => ({
       ...prev,
       role_id: value,
-      // Clear department when switching away from doctor
-      department_id: nextRole?.name === 'doctor' ? prev.department_id : '',
+      department_id: nextRole?.name === selectedRole?.name ? prev.department_id : '',
     }));
   };
 
@@ -105,7 +108,25 @@ export default function SuperAdminStaffRegisterPage() {
     }
 
     if (departmentEnabled && !form.department_id) {
-      toast.error('Please select a department for doctor');
+      toast.error(
+        isLabTech
+          ? 'Please select Laboratory or Radiology for lab technician'
+          : 'Please select a department for doctor',
+      );
+      return;
+    }
+
+    const departmentId = departmentEnabled
+      ? isLabTech
+        ? await ensureLabTechDepartmentId(departments, form.department_id)
+        : resolveStaffDepartmentPayloadId(departments, selectedRole?.name, form.department_id)
+      : null;
+    if (departmentEnabled && departmentId == null) {
+      toast.error(
+        isLabTech
+          ? 'Please select Laboratory or Radiology for lab technician'
+          : 'Please select a department for doctor',
+      );
       return;
     }
 
@@ -115,8 +136,7 @@ export default function SuperAdminStaffRegisterPage() {
       email: form.email.trim(),
       password: form.password,
       role_id: Number(form.role_id),
-      department_id:
-        departmentEnabled && form.department_id ? Number(form.department_id) : null,
+      department_id: departmentId,
     };
 
     try {
@@ -224,17 +244,23 @@ export default function SuperAdminStaffRegisterPage() {
                       </p>
                     ) : null}
                     <Select
-                      value={form.department_id}
+                      value={staffDepartmentSelectValue(
+                        departments,
+                        selectedRole?.name,
+                        form.department_id,
+                      )}
                       onChange={(value) =>
                         setForm((prev) => ({ ...prev, department_id: value }))
                       }
                       options={departmentOptions}
                       placeholder={
                         !departmentEnabled
-                          ? 'Only for doctor role'
+                          ? 'Only for doctor / lab technician'
                           : departmentsLoading
                             ? 'Loading…'
-                            : 'Select department'
+                            : isLabTech
+                              ? 'Laboratory or Radiology'
+                              : 'Select department'
                       }
                       disabled={
                         !departmentEnabled || departmentsLoading || departmentsError

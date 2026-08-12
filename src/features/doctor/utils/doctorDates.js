@@ -68,8 +68,8 @@ function parseAppointmentTimeString(timeStr) {
   return { hours: 0, minutes: 0 };
 }
 
-/** Combined appointment date + time for sorting */
-function getAppointmentDateTime(appt) {
+/** Combined appointment date + time for sorting (epoch ms). */
+export function getAppointmentSortTime(appt) {
   if (appt?.scheduledAt) {
     const scheduled = new Date(appt.scheduledAt).getTime();
     if (!Number.isNaN(scheduled)) return scheduled;
@@ -80,8 +80,12 @@ function getAppointmentDateTime(appt) {
   return base.getTime();
 }
 
+function getAppointmentDateTime(appt) {
+  return getAppointmentSortTime(appt);
+}
+
 export function compareAppointmentsByDateTime(a, b) {
-  return getAppointmentDateTime(a) - getAppointmentDateTime(b);
+  return getAppointmentSortTime(a) - getAppointmentSortTime(b);
 }
 
 /** Display as 08:30 AM, 09:00 AM */

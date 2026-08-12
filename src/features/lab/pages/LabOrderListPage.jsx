@@ -82,6 +82,7 @@ export default function LabOrderListPage() {
   };
 
   const handleRowAction = (order) => {
+    if (order.status === LAB_ORDER_STATUS.CANCELLED) return;
     if (order.status === LAB_ORDER_STATUS.COMPLETED) {
       navigate(ROUTES.LAB_REPORTS);
       return;
@@ -138,6 +139,7 @@ export default function LabOrderListPage() {
             <select id="lab-orders-priority" value={priority} onChange={(e) => setPriority(e.target.value)}>
               <option value="all">All</option>
               <option value="urgent">Urgent</option>
+              <option value="stat">STAT</option>
               <option value="normal">Normal</option>
             </select>
           </div>
@@ -194,7 +196,6 @@ export default function LabOrderListPage() {
                     <th>Patient ID</th>
                     <th>Doctor</th>
                     <th>Test</th>
-                    <th>Category</th>
                     <th>Priority</th>
                     <th>Requested</th>
                     <th>Status</th>
@@ -212,11 +213,8 @@ export default function LabOrderListPage() {
                       <td>{o.doctorName}</td>
                       <td>{o.testName}</td>
                       <td>
-                        <span className={`lab-badge ${(o.category ?? '').toLowerCase()}`}>{o.category}</span>
-                      </td>
-                      <td>
                         <span className={`lab-badge ${o.priority}`}>
-                          {o.priority === 'urgent' ? '⚠ ' : ''}
+                          {o.priority === 'urgent' || o.priority === 'stat' ? '⚠ ' : ''}
                           {o.priorityLabel ?? o.priority}
                         </span>
                       </td>
@@ -232,7 +230,17 @@ export default function LabOrderListPage() {
                       <td>
                         <button
                           type="button"
-                          className={`lab-btn lab-btn-sm ${o.status === LAB_ORDER_STATUS.COMPLETED ? 'lab-btn-secondary' : 'lab-btn-primary'}`}
+                          className={`lab-btn lab-btn-sm ${
+                            o.status === LAB_ORDER_STATUS.COMPLETED || o.status === LAB_ORDER_STATUS.CANCELLED
+                              ? 'lab-btn-secondary'
+                              : 'lab-btn-primary'
+                          }`}
+                          disabled={o.status === LAB_ORDER_STATUS.CANCELLED}
+                          title={
+                            o.status === LAB_ORDER_STATUS.CANCELLED
+                              ? 'This test was cancelled. Start / Upload is not available.'
+                              : undefined
+                          }
                           onClick={() => handleRowAction(o)}
                         >
                           {uploadActionLabel(o.status)}

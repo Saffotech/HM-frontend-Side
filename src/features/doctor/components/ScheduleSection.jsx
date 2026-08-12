@@ -7,17 +7,15 @@ import {
 import {
   todayOpdDate,
   parseOpdDateString,
-  compareAppointmentsByDateTime,
   uiDateToIsoInput,
   isoInputToUiDate,
 } from '@/features/doctor/utils/doctorDates';
-import { isCalendarVisible } from '@/features/doctor/utils/appointmentWorkflow';
+import { isCalendarVisible, getDoctorDisplayStatus, compareCalendarDayAppointments } from '@/features/doctor/utils/appointmentWorkflow';
 import { appointmentToPatientSummary } from '@/shared/api/mappers/doctorPatientMapper';
 import { Button, DateInput } from '@/shared/components/common';
 import AppointmentDetailModal from './AppointmentDetailModal';
 import PatientHistoryProfile from './PatientHistoryProfile';
 import StatusPill from './StatusPill';
-import { getDoctorDisplayStatus } from '@/features/doctor/utils/appointmentWorkflow';
 import '../styles/doctor-ui.css';
 
 function dedupeAppointments(items) {
@@ -58,10 +56,10 @@ export default function ScheduleSection() {
 
   const selectedDayAppointments = useMemo(() => {
     const source = byDate[selectedDay] ?? dateAppointments;
-    return dedupeAppointments(source.filter(isCalendarVisible)).sort(
-      compareAppointmentsByDateTime
+    return dedupeAppointments(source.filter(isCalendarVisible)).sort((a, b) =>
+      compareCalendarDayAppointments(a, b, { selectedDay, today })
     );
-  }, [selectedDay, byDate, dateAppointments]);
+  }, [selectedDay, byDate, dateAppointments, today]);
 
   const selectedDayLoading = weekDaySet.has(selectedDay) ? weekLoading : dateLoading;
 
@@ -91,6 +89,16 @@ export default function ScheduleSection() {
         </div>
         <div className="doc-card__body">
           <div className="doc-week-toolbar">
+            <div className="doc-week-date-picker">
+              <CalendarDays size={14} aria-hidden className="doc-week-date-picker__icon" />
+              <span className="doc-week-date-picker__label">Pick date</span>
+              <DateInput
+                className="doc-week-date-picker__date"
+                value={uiDateToIsoInput(selectedDay)}
+                onChange={(e) => handleCustomDateChange(e.target.value)}
+                placeholder="Date"
+              />
+            </div>
             {loading ? (
               <p className="text-muted doc-week-toolbar__loading">Loading schedule…</p>
             ) : (
@@ -120,16 +128,6 @@ export default function ScheduleSection() {
                 })}
               </div>
             )}
-            <div className="doc-week-date-picker">
-              <CalendarDays size={14} aria-hidden className="doc-week-date-picker__icon" />
-              <span className="doc-week-date-picker__label">Pick date</span>
-              <DateInput
-                className="doc-week-date-picker__date"
-                value={uiDateToIsoInput(selectedDay)}
-                onChange={(e) => handleCustomDateChange(e.target.value)}
-                placeholder="Date"
-              />
-            </div>
           </div>
         </div>
       </div>

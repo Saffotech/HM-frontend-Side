@@ -6,6 +6,7 @@ import SuperAdminPageHeader from '@/features/super-admin/components/SuperAdminPa
 import AdminStaffStatusBadge from '@/features/admin/components/AdminStaffStatusBadge';
 import { useDepartmentDoctorsData } from '@/features/super-admin/hooks/useDepartmentDoctors';
 import { useAdminDepartmentsQuery } from '@/shared/hooks/queries/useAdminQuery';
+import { isLabOrRadDepartment } from '@/shared/utils/labDepartments';
 import {
   Button,
   QueryFeedback,
@@ -30,6 +31,7 @@ export default function SuperAdminDepartmentsListPage() {
 
   const {
     doctorCountByDepartment,
+    labTechCountByDepartment,
     isLoading: doctorsLoading,
     isError: doctorsError,
     error: doctorsErrorObj,
@@ -133,7 +135,7 @@ export default function SuperAdminDepartmentsListPage() {
                       <tr>
                         <th>Name</th>
                         <th>Code</th>
-                        <th>Doctors</th>
+                        <th>Assigned</th>
                         <th>Status</th>
                         <th className="admin-table__actions">Actions</th>
                       </tr>
@@ -145,7 +147,9 @@ export default function SuperAdminDepartmentsListPage() {
                           <td className="admin-table__muted">{dept.code || '—'}</td>
                           <td>
                             <span className="sa-dept-list__doctor-count">
-                              {doctorCountByDepartment[dept.id] ?? 0}
+                              {isLabOrRadDepartment(dept)
+                                ? (labTechCountByDepartment[dept.id] ?? 0)
+                                : (doctorCountByDepartment[dept.id] ?? 0)}
                             </span>
                           </td>
                           <td>

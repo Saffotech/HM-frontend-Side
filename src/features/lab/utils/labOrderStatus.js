@@ -86,6 +86,7 @@ export function viewToApiStatus(view) {
 
 /** Action button on orders table */
 export function uploadActionLabel(status) {
+  if (status === LAB_ORDER_STATUS.CANCELLED) return 'Cancelled';
   if (status === LAB_ORDER_STATUS.COMPLETED) return 'View Report';
   if (status === LAB_ORDER_STATUS.PROCESSING) return 'Complete Report';
   if (status === LAB_ORDER_STATUS.SAMPLE_COLLECTED) return 'Continue';

@@ -11,7 +11,19 @@ import {
   filterDoctorLabTests,
 } from '@/shared/utils/doctorLabView';
 import { useDoctorPatientVisitsQuery } from '@/features/doctor/hooks/useDoctorPatientQuery';
-import { LAB_CATEGORIES, LAB_PRIORITIES } from '@/features/doctor/constants';
+import {
+  LAB_DEPARTMENTS,
+  LAB_PRIORITIES,
+  inferLabCategory,
+  testsForLabDepartment,
+} from '@/features/doctor/constants';
+import { useLabRoutingDepartmentsQuery } from '@/shared/hooks/queries/useOpdReferenceQuery';
+import {
+  departmentCode,
+  inferLabDeptCodeFromOrder,
+  labDepartmentLabel,
+  resolveLabDepartmentId,
+} from '@/shared/utils/labDepartments';
 import PatientHistoryProfile from './PatientHistoryProfile';
 import { resolveDoctorPatient } from '@/features/doctor/utils/patientHistory';
 import { Button, Input, Label, Select, Modal } from '@/shared/components/common';
@@ -20,32 +32,61 @@ import StatusPill from './StatusPill';
 import DoctorLabReportModal from './DoctorLabReportModal';
 import '../styles/doctor-ui.css';
 
-function CategoryCell({ category }) {
-  const isRad = category === 'Radiology';
+function CategoryCell({ category, departmentName }) {
+  const dept = departmentName || (category === 'Radiology' ? 'Radiology' : 'Laboratory');
+  const isRad = /radio/i.test(dept) || category === 'Radiology';
   const Icon = isRad ? Scan : Beaker;
   return (
     <span className="doc-labs-category">
       <Icon size={14} aria-hidden />
       {category}
+      {dept ? (
+        <span className={`doc-labs-dept-badge${isRad ? ' doc-labs-dept-badge--rad' : ''}`}>
+          {dept}
+        </span>
+      ) : null}
     </span>
   );
 }
 
 function LabEditModal({ test, open, onClose, onSave, saving }) {
+  const labRoutingQuery = useLabRoutingDepartmentsQuery({ enabled: open });
+  const labRoutingDepts = labRoutingQuery.data ?? [];
+  const [deptCode, setDeptCode] = useState('');
   const [testName, setTestName] = useState(test?.testName ?? '');
-  const [category, setCategory] = useState(test?.category ?? 'Blood');
   const [priority, setPriority] = useState(test?.priority ?? 'Normal');
   const [clinicalNotes, setClinicalNotes] = useState(test?.clinicalNotes ?? '');
 
   useEffect(() => {
     if (!open || !test) return;
+    setDeptCode(inferLabDeptCodeFromOrder(test, labRoutingQuery.data ?? []));
     setTestName(test.testName);
-    setCategory(test.category);
     setPriority(test.priority);
     setClinicalNotes(test.clinicalNotes);
-  }, [open, test]);
+  }, [open, test, labRoutingQuery.data]);
 
   if (!test) return null;
+
+  const testOptions = testsForLabDepartment(deptCode);
+
+  const handleSave = () => {
+    if (!deptCode) {
+      toast.error('Please select Laboratory or Radiology');
+      return;
+    }
+    if (!testName) {
+      toast.error('Please select a test');
+      return;
+    }
+    const departmentId = resolveLabDepartmentId(labRoutingDepts, deptCode);
+    onSave({
+      testName,
+      category: inferLabCategory(testName, deptCode),
+      departmentId: departmentId ?? undefined,
+      priority,
+      clinicalNotes,
+    });
+  };
 
   return (
     <Modal
@@ -55,18 +96,41 @@ function LabEditModal({ test, open, onClose, onSave, saving }) {
       footer={
         <>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button disabled={saving} onClick={() => onSave({ testName, category, priority, clinicalNotes })}>
+          <Button disabled={saving} onClick={handleSave}>
             {saving ? 'Saving...' : 'Save'}
           </Button>
         </>
       }
     >
-      <Input label="Test name" value={testName} onChange={(e) => setTestName(e.target.value)} />
       <Select
-        label="Category *"
-        value={category}
-        onChange={setCategory}
-        options={LAB_CATEGORIES.map((c) => ({ value: c, label: c }))}
+        label="Lab Department *"
+        value={deptCode}
+        onChange={(code) => {
+          setDeptCode(code);
+          setTestName('');
+        }}
+        placeholder={labRoutingQuery.isLoading ? 'Loading…' : 'Laboratory or Radiology'}
+        options={
+          labRoutingDepts.length
+            ? labRoutingDepts.map((d) => ({
+                value: departmentCode(d),
+                label: d.name || labDepartmentLabel(d),
+              }))
+            : LAB_DEPARTMENTS.map((d) => ({ value: d.code, label: d.label }))
+        }
+      />
+      <Select
+        label="Test name"
+        value={testName}
+        onChange={setTestName}
+        placeholder={deptCode ? 'Select test' : 'Select department first'}
+        disabled={!deptCode}
+        options={[
+          ...(testName && !testOptions.includes(testName)
+            ? [{ value: testName, label: testName }]
+            : []),
+          ...testOptions.map((t) => ({ value: t, label: t })),
+        ]}
       />
       <Select
         label="Priority"
@@ -179,7 +243,7 @@ function LabTestsList({
                   </td>
                   <td>{t.testName}</td>
                   <td>
-                    <CategoryCell category={t.category} />
+                    <CategoryCell category={t.category} departmentName={t.departmentName} />
                   </td>
                   <td>{t.orderedDisplay}</td>
                   <td>

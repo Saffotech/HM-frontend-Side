@@ -32,6 +32,10 @@ import { ROUTES } from '@/shared/constants';
 import { Button, ConfirmDialog, EmptyState, ProfilePhotoCropDialog } from '@/shared/components/common';
 import PageSpinner from '@/shared/components/PageSpinner';
 import { toast } from '@/shared/utils/toast';
+import {
+  isLabDepartmentUnassignedError,
+  LAB_DEPT_UNASSIGNED_MESSAGE,
+} from '@/shared/utils/labDepartments';
 import { formatPhoneInput } from '@/shared/utils/validators';
 import {
   capitalizeFirst,
@@ -322,22 +326,21 @@ export default function LabProfilePage() {
       return;
     }
 
-    // Nurse Phase 2 by Atharva — phone & emergency_contact.phone must be exactly 10 digits
+    // Phone is optional; if entered it must be exactly 10 digits.
     const phone = formatPhoneInput(form?.phone);
     const emergencyPhone = formatPhoneInput(form?.emergency_contact_phone);
-    if (!isStrictTenDigitPhone(phone)) {
+    if (phone && !isStrictTenDigitPhone(phone)) {
       toast.error('Phone must be a 10-digit number');
       setActiveTab('contact');
       return;
     }
-    if (!isStrictTenDigitPhone(emergencyPhone)) {
+    if (emergencyPhone && !isStrictTenDigitPhone(emergencyPhone)) {
       toast.error('Emergency phone must be a 10-digit number');
       setActiveTab('contact');
       return;
     }
-    // Nurse Phase 2 by Atharva — gender must be one of the four options (not blank Select)
-    if (!isValidGender(form?.gender)) {
-      toast.error('Please select a gender');
+    if (form?.gender !== '' && form?.gender != null && !isValidGender(form.gender)) {
+      toast.error('Please select a valid gender');
       setActiveTab('contact');
       return;
     }
@@ -346,7 +349,7 @@ export default function LabProfilePage() {
       ...form,
       phone,
       emergency_contact_phone: emergencyPhone,
-      gender: Number(form.gender),
+      gender: form.gender === '' || form.gender == null ? '' : Number(form.gender),
     };
     const payload = buildDirtyPayload(formForSave, profile);
     if (Object.keys(payload).length === 0) {
@@ -490,12 +493,14 @@ export default function LabProfilePage() {
           icon={User}
           title="Could not load profile"
           description={
-            error?.message
-            || (error?.status === 403
-              ? "You don't have permission to view this profile."
-              : error?.status === 404
-                ? 'Lab technician profile not found. Contact admin to create your lab technician profile.'
-                : 'Something went wrong. Please try again.')
+            isLabDepartmentUnassignedError(error)
+              ? LAB_DEPT_UNASSIGNED_MESSAGE
+              : error?.message
+                || (error?.status === 403
+                  ? "You don't have permission to view this profile."
+                  : error?.status === 404
+                    ? 'Could not load your account details. Try again.'
+                    : 'Something went wrong. Please try again.')
           }
         />
         <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -747,13 +752,14 @@ export default function LabProfilePage() {
                   <Shield size={16} aria-hidden /> Account
                 </h3>
                 <p className="lab-profile-hint">
-                  Employee ID, department, and shift are managed by admin.
+                  Employee ID, license number, department, and shift are managed by admin.
                 </p>
                 <div className="lab-profile-grid">
                   <ReadField label="First name" value={profile.first_name} />
                   <ReadField label="Last name" value={profile.last_name} />
                   <ReadField label="Email" value={profile.email} />
                   <ReadField label="Employee ID" value={profile.employee_id} />
+                  <ReadField label="License number" value={profile.license_number} />
                   <ReadField label="Joining date" value={profile.joining_date} />
                   <ReadField label="Department" value={departmentName} />
                   <ReadField label="Role" value={roleName} />
@@ -786,23 +792,20 @@ export default function LabProfilePage() {
                         />
                       </label>
                       <label className="lab-profile-field">
-                        <span className="lab-profile-field__label">License number</span>
-                        <input
-                          className="lab-profile-input"
-                          value={form.license_number}
-                          maxLength={100}
-                          onChange={(e) => setTextField('license_number', e.target.value)}
-                        />
-                      </label>
-                      <label className="lab-profile-field">
                         <span className="lab-profile-field__label">Experience (years)</span>
                         <input
                           className="lab-profile-input"
-                          type="number"
-                          min={0}
-                          max={60}
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={2}
+                          placeholder="e.g. 05"
                           value={form.experience_years}
-                          onChange={(e) => setField('experience_years', e.target.value)}
+                          onChange={(e) => {
+                            const digits = e.target.value.replace(/\D/g, '').slice(0, 2);
+                            if (digits !== '' && Number(digits) > 60) return;
+                            setField('experience_years', digits);
+                          }}
                         />
                       </label>
                       <div className="lab-profile-field lab-profile-field--span">
@@ -855,7 +858,6 @@ export default function LabProfilePage() {
                   ) : (
                     <>
                       <ReadField label="Qualification" value={profile.qualification} />
-                      <ReadField label="License number" value={profile.license_number} />
                       <ReadField
                         label="Experience (years)"
                         value={
@@ -944,16 +946,18 @@ export default function LabProfilePage() {
                         <span className="lab-profile-field__label">Gender</span>
                         <select
                           className="lab-profile-input"
-                          required
                           value={form.gender === '' || form.gender == null ? '' : form.gender}
                           onChange={(e) => {
-                            // Nurse Phase 2 by Atharva — only allow the four gender options
+                            if (e.target.value === '') {
+                              setField('gender', '');
+                              return;
+                            }
                             const next = Number(e.target.value);
                             if (!isValidGender(next)) return;
                             setField('gender', next);
                           }}
                         >
-                          <option value="" disabled>
+                          <option value="">
                             Select gender
                           </option>
                           {GENDER_OPTIONS.map((o) => (

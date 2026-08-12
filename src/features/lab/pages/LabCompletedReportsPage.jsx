@@ -65,7 +65,7 @@ export default function LabCompletedReportsPage() {
     <LabLayout pageTitle="Completed Reports">
       <LabReportDetailModal report={selectedReport} onClose={() => setSelectedReport(null)} />
 
-      <div className="lab-card">
+      <div className="lab-card lab-card--archive">
         <div className="lab-filters">
           <div className="lab-filter-group" style={{ flex: 2, minWidth: 200 }}>
             <label htmlFor="reports-search">Search</label>
@@ -124,8 +124,8 @@ export default function LabCompletedReportsPage() {
               <p>No completed reports match your filters.</p>
             </div>
           ) : (
-            <div className="lab-table-wrap">
-              <table className="lab-table">
+            <div className="lab-table-wrap lab-table-wrap--archive">
+              <table className="lab-table lab-table--archive">
                 <thead>
                   <tr>
                     <th>Report ID</th>
@@ -136,7 +136,7 @@ export default function LabCompletedReportsPage() {
                     <th>Lab Technician</th>
                     <th>Uploaded Date</th>
                     <th>Status</th>
-                    <th>Actions</th>
+                    <th className="lab-archive-actions-head">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -146,26 +146,26 @@ export default function LabCompletedReportsPage() {
                         <strong>{report.reportId}</strong>
                       </td>
                       <td>{report.patientName}</td>
-                      <td style={{ color: '#6b7f99', fontFamily: 'monospace', fontSize: '12.5px' }}>{report.patientId}</td>
+                      <td className="lab-archive-meta">{report.patientId}</td>
                       <td>{report.testName}</td>
                       <td>{report.doctorName}</td>
                       <td>{report.uploadedByName}</td>
-                      <td style={{ whiteSpace: 'nowrap', color: '#6b7f99' }}>{report.uploadedDate}</td>
+                      <td className="lab-archive-meta lab-archive-meta--nowrap">{report.uploadedDate}</td>
                       <td>
-                        <span className="lab-badge completed">✓ Completed</span>
+                        <span className="lab-badge completed">Completed</span>
                       </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      <td className="lab-archive-actions-cell">
+                        <div className="lab-archive-actions">
                           <button
                             type="button"
-                            className="lab-btn lab-btn-primary lab-btn-sm"
+                            className="lab-btn lab-btn-sm lab-archive-btn lab-archive-btn--view"
                             onClick={() => setSelectedReport(report)}
                           >
                             View
                           </button>
                           <button
                             type="button"
-                            className="lab-btn lab-btn-secondary lab-btn-sm"
+                            className="lab-btn lab-btn-sm lab-archive-btn lab-archive-btn--print"
                             onClick={() => printLabReport(report)}
                           >
                             Print

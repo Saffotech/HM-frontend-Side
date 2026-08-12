@@ -38,6 +38,7 @@ import {
 import { findQueueRowForAppointment } from '@/features/doctor/utils/queueWorkflow';
 
 import { Avatar } from '@/shared/components/common';
+import { formatPatientAge } from '@/features/doctor/utils/formatPatientAge';
 import Skeleton from '@/shared/components/common/Skeleton';
 
 import { toast } from '@/shared/utils/toast';
@@ -57,6 +58,8 @@ import { doctorConsultationsApi } from '@/shared/api/services';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { prefetchPatientProfileData } from '@/features/doctor/utils/doctorPatientProfileCache';
+import { invalidateDoctorAppointmentStatusChange } from '@/features/doctor/utils/doctorDashboardCache';
+import { useCancelAppointmentMutation } from '@/shared/hooks/queries/useAppointmentQuery';
 
 import '../styles/doctor-ui.css';
 
@@ -110,6 +113,8 @@ function DashboardSection({ onViewAllPatients }) {
   const [viewAppointmentDbId, setViewAppointmentDbId] = useState(null);
 
   const [startingConsult, setStartingConsult] = useState(false);
+
+  const cancelAppointment = useCancelAppointmentMutation();
 
   const [activeFilter, setActiveFilter] = useState(DASHBOARD_FILTER.SCHEDULED);
   const [patientIdSearch, setPatientIdSearch] = useState('');
@@ -331,7 +336,24 @@ function DashboardSection({ onViewAllPatients }) {
     }
   }, [todayQueue, queryClient, token]);
 
+  const handleCancelAppointment = useCallback(
+    (appt) => {
+      const appointmentId = appt.dbId ?? appt.id;
+      if (appointmentId == null) {
+        toast.error('Appointment id missing — cannot cancel');
+        return;
+      }
+      if (!window.confirm(`Cancel appointment for ${appt.patientName}?`)) return;
 
+      cancelAppointment.mutate(appointmentId, {
+        onSuccess: () => {
+          invalidateDoctorAppointmentStatusChange(queryClient, appointmentId);
+          toast.success('Appointment cancelled');
+        },
+      });
+    },
+    [cancelAppointment, queryClient],
+  );
 
   const handleOpenPatient = useCallback((patientSummary) => {
     void prefetchPatientProfileData(queryClient, token, {
@@ -450,7 +472,11 @@ function DashboardSection({ onViewAllPatients }) {
 
             startingConsult={startingConsult}
 
+            cancellingAppointment={cancelAppointment.isPending}
+
             onBeginConsultation={beginConsultation}
+
+            onCancelAppointment={handleCancelAppointment}
 
             onOpenPatient={handleOpenPatient}
 
@@ -524,7 +550,7 @@ function DashboardSection({ onViewAllPatients }) {
 
                       <span className="text-muted">
 
-                        {p.patientUid ?? p.id} · {p.age ?? '—'}y · {p.gender}
+                        {p.patientUid ?? p.id} · {formatPatientAge({ age: p.age, dob: p.dob }) ?? '—'} · {p.gender}
 
                       </span>
 

@@ -27,6 +27,17 @@ export function hasConsultationDraftContent(draft) {
     return true;
   }
 
+  if (
+    (draft.labOrders ?? []).some(
+      (row) =>
+        hasText(row?.deptCode) ||
+        hasText(row?.testName) ||
+        hasText(row?.clinicalNotes),
+    )
+  ) {
+    return true;
+  }
+
   return (draft.meds ?? []).some(
     (med) =>
       hasText(med?.name) ||

@@ -3,6 +3,7 @@ import {
   useDoctorPrescriptionDetailQuery,
   useReplacePrescriptionMutation,
 } from '@/features/doctor/hooks/useDoctorPrescriptionQuery';
+import { useDoctorAppointmentDetailQuery } from '@/features/doctor/hooks/useDoctorAppointmentQuery';
 import { DEFAULT_MEDICINE } from '@/features/doctor/constants';
 import { parseEmbeddedClinicalNotes } from '@/features/doctor/utils/clinicalNotesParse';
 import { Modal, Button, Input, Label, Textarea } from '@/shared/components/common';
@@ -37,34 +38,78 @@ function formatFollowUpLabel(value) {
   return String(value);
 }
 
-/** Split legacy "Symptoms: … Follow-up: …" blobs into dedicated display fields. */
-function clinicalFieldsFromDetail(detail) {
+function pickClinicalText(value) {
+  if (value == null) return null;
+  const text = String(value).trim();
+  return text && text !== '—' ? text : null;
+}
+
+/**
+ * Clinical fields for prescription View.
+ * Prefer appointment symptoms / follow-up (where consultation saves them);
+ * fall back to legacy "Symptoms: … Follow-up: …" blobs in notes.
+ */
+function clinicalFieldsFromDetail(detail, appointmentClinical = null) {
   const parsed = parseEmbeddedClinicalNotes(detail?.notes);
   const rawNotes = detail?.notes;
   const isEmbeddedBlob = rawNotes && /^\s*symptoms\s*:/i.test(String(rawNotes));
+  const symptoms =
+    pickClinicalText(appointmentClinical?.symptoms) ||
+    pickClinicalText(parsed.symptoms) ||
+    '—';
+  const followUp =
+    formatFollowUpLabel(
+      pickClinicalText(appointmentClinical?.followUp) ||
+        pickClinicalText(appointmentClinical?.followUpDate) ||
+        pickClinicalText(parsed.followUp),
+    ) || '—';
   return {
     diagnosis: detail?.diagnosis || '—',
-    symptoms: parsed.symptoms || '—',
-    followUp: formatFollowUpLabel(parsed.followUp) || '—',
+    symptoms,
+    followUp,
     notes: parsed.notes || (isEmbeddedBlob ? '—' : rawNotes) || '—',
   };
 }
 
-function medicinesFromDetail(detail) {
-  if (!detail?.medicines?.length) {
-    return [{ ...DEFAULT_MEDICINE }];
-  }
-  return detail.medicines.map((m) => ({
-    name: m.name ?? '',
-    dosage: m.dosage ?? '',
-    frequency: m.frequency ?? '',
-    duration: m.duration != null ? String(m.duration) : '',
-    instructions: m.instructions ?? '',
-  }));
+function emptyMedicineRow() {
+  return { ...DEFAULT_MEDICINE, durationValue: '', durationUnit: 'Days' };
 }
 
-function PrescriptionDetailView({ detail }) {
-  const clinical = clinicalFieldsFromDetail(detail);
+function parseDurationFields(raw) {
+  const text = String(raw ?? '').trim();
+  if (!text) return { durationValue: '', durationUnit: 'Days' };
+  const match = text.match(/^(\d+)\s*(days?|weeks?|months?)?$/i);
+  if (match) {
+    const unitRaw = (match[2] || 'Days').toLowerCase();
+    let durationUnit = 'Days';
+    if (unitRaw.startsWith('week')) durationUnit = 'Weeks';
+    else if (unitRaw.startsWith('month')) durationUnit = 'Months';
+    return { durationValue: match[1], durationUnit };
+  }
+  const digits = text.match(/(\d+)/);
+  return { durationValue: digits ? digits[1] : '', durationUnit: 'Days' };
+}
+
+function medicinesFromDetail(detail) {
+  if (!detail?.medicines?.length) {
+    return [emptyMedicineRow()];
+  }
+  return detail.medicines.map((m) => {
+    const { durationValue, durationUnit } = parseDurationFields(m.duration);
+    return {
+      name: m.name ?? '',
+      dosage: m.dosage ?? '',
+      frequency: m.frequency ?? '',
+      duration: m.duration != null ? String(m.duration) : '',
+      durationValue,
+      durationUnit,
+      instructions: m.instructions ?? '',
+    };
+  });
+}
+
+function PrescriptionDetailView({ detail, appointmentClinical }) {
+  const clinical = clinicalFieldsFromDetail(detail, appointmentClinical);
 
   return (
     <div className="doc-rx-detail doc-rx-detail--modal">
@@ -174,37 +219,75 @@ function PrescriptionEditForm({
       <Label>Medicines</Label>
       {fieldErrors.medicines && <p className="field__error">{fieldErrors.medicines}</p>}
       {meds.map((m, i) => (
-        <div key={i} className="doc-med-row">
-          <Input
-            placeholder="Name"
-            value={m.name}
-            onChange={(e) => setMeds(meds.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))}
-          />
-          <Input
-            placeholder="Dosage"
-            value={m.dosage}
-            onChange={(e) => setMeds(meds.map((x, j) => (j === i ? { ...x, dosage: e.target.value } : x)))}
-          />
-          <Input
-            placeholder="1-0-1"
-            value={m.frequency}
-            onChange={(e) => setMeds(meds.map((x, j) => (j === i ? { ...x, frequency: e.target.value } : x)))}
-          />
-          <Input
-            placeholder="Duration"
-            value={m.duration}
-            onChange={(e) => setMeds(meds.map((x, j) => (j === i ? { ...x, duration: e.target.value } : x)))}
-          />
-          <Input
-            placeholder="Instructions"
-            value={m.instructions}
-            onChange={(e) =>
-              setMeds(meds.map((x, j) => (j === i ? { ...x, instructions: e.target.value } : x)))
-            }
-          />
+        <div key={i} className="doc-med-row doc-med-row--consult">
+          <div className="doc-med-row__pair">
+            <Input
+              className="doc-med-row__cell"
+              placeholder="Name"
+              value={m.name}
+              onChange={(e) => setMeds(meds.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))}
+            />
+            <Input
+              className="doc-med-row__cell"
+              placeholder="Dosage"
+              value={m.dosage}
+              onChange={(e) => setMeds(meds.map((x, j) => (j === i ? { ...x, dosage: e.target.value } : x)))}
+            />
+          </div>
+          <div className="doc-med-row__pair">
+            <Input
+              className="doc-med-row__cell"
+              placeholder="1-0-1"
+              value={m.frequency}
+              onChange={(e) => setMeds(meds.map((x, j) => (j === i ? { ...x, frequency: e.target.value } : x)))}
+            />
+            <Input
+              className="doc-med-row__cell"
+              placeholder="Instructions"
+              value={m.instructions}
+              onChange={(e) =>
+                setMeds(meds.map((x, j) => (j === i ? { ...x, instructions: e.target.value } : x)))
+              }
+            />
+          </div>
+          <div className="doc-med-row__pair">
+            <Input
+              className="doc-med-row__cell doc-med-row__duration-value"
+              type="number"
+              min={1}
+              max={365}
+              placeholder="e.g. 5"
+              value={m.durationValue ?? ''}
+              onChange={(e) => {
+                setMeds(
+                  meds.map((x, j) => (j === i ? { ...x, durationValue: e.target.value } : x)),
+                );
+                if (fieldErrors[`medDuration_${i}`]) {
+                  setFieldErrors((prev) => {
+                    const next = { ...prev };
+                    delete next[`medDuration_${i}`];
+                    return next;
+                  });
+                }
+              }}
+              error={fieldErrors[`medDuration_${i}`]}
+            />
+            <select
+              className="doc-med-row__duration-unit"
+              value={m.durationUnit ?? 'Days'}
+              onChange={(e) =>
+                setMeds(meds.map((x, j) => (j === i ? { ...x, durationUnit: e.target.value } : x)))
+              }
+              aria-label="Duration unit"
+            >
+              <option value="Days">Days</option>
+              <option value="Weeks">Weeks</option>
+              <option value="Months">Months</option>
+            </select>
+          </div>
         </div>
       ))}
-      <Button type="button" size="sm" variant="outline" onClick={() => setMeds([...meds, { ...DEFAULT_MEDICINE }])}>
+      <Button type="button" size="sm" variant="outline" onClick={() => setMeds([...meds, emptyMedicineRow()])}>
         + Add medicine
       </Button>
     </form>
@@ -219,13 +302,15 @@ export default function PrescriptionDetailModal({
   patientUid,
   patientName: patientNameProp,
   doctorName: doctorNameProp,
+  /** Optional visit-history clinical keyed by appointment id (instant while appointment loads). */
+  clinicalByAppointmentId,
 }) {
   const { user } = useAuth();
   const canEdit = canAccessAction(user, ACTIONS.UPDATE_PRESCRIPTION);
   const [editing, setEditing] = useState(false);
   const [diagnosis, setDiagnosis] = useState('');
   const [notes, setNotes] = useState('');
-  const [meds, setMeds] = useState([{ ...DEFAULT_MEDICINE }]);
+  const [meds, setMeds] = useState([emptyMedicineRow()]);
   const [fieldErrors, setFieldErrors] = useState({});
 
   const {
@@ -237,7 +322,25 @@ export default function PrescriptionDetailModal({
     enabled: open && prescriptionId != null,
   });
 
+  const appointmentId = detail?.appointmentId ?? null;
+  const { data: appointment } = useDoctorAppointmentDetailQuery(appointmentId, {
+    enabled: open && appointmentId != null,
+  });
+
   const replacePrescription = useReplacePrescriptionMutation();
+
+  const appointmentClinical = useMemo(() => {
+    const fromVisits =
+      appointmentId != null && clinicalByAppointmentId
+        ? clinicalByAppointmentId.get(Number(appointmentId)) ??
+          clinicalByAppointmentId.get(String(appointmentId))
+        : null;
+    return {
+      symptoms: appointment?.symptoms ?? fromVisits?.symptoms ?? null,
+      followUp: appointment?.followUpDate ?? fromVisits?.followUp ?? null,
+      followUpDate: appointment?.followUpDate ?? fromVisits?.followUp ?? null,
+    };
+  }, [appointment, appointmentId, clinicalByAppointmentId]);
 
   const displayDetail = useMemo(() => {
     if (!detail) return null;
@@ -258,13 +361,13 @@ export default function PrescriptionDetailModal({
 
   useEffect(() => {
     if (!editing || !detail) return;
-    const clinical = clinicalFieldsFromDetail(detail);
+    const clinical = clinicalFieldsFromDetail(detail, appointmentClinical);
     setDiagnosis(detail.diagnosis ?? '');
     // Edit form keeps real notes only — not the legacy Symptoms/Follow-up blob
     setNotes(clinical.notes === '—' ? '' : clinical.notes);
     setMeds(medicinesFromDetail(detail));
     setFieldErrors({});
-  }, [editing, detail]);
+  }, [editing, detail, appointmentClinical]);
 
   const handleClose = () => {
     setEditing(false);
@@ -276,6 +379,14 @@ export default function PrescriptionDetailModal({
     if (!diagnosis.trim()) errs.diagnosis = 'Diagnosis is required';
     const validMeds = meds.filter((m) => m.name.trim());
     if (!validMeds.length) errs.medicines = 'Add at least one medicine';
+    meds.forEach((m, i) => {
+      if (m.name.trim()) {
+        const durationValue = parseInt(m.durationValue, 10);
+        if (!durationValue || durationValue <= 0) {
+          errs[`medDuration_${i}`] = 'Duration must be a number greater than 0';
+        }
+      }
+    });
     setFieldErrors(errs);
     if (Object.keys(errs).length) return;
 
@@ -313,6 +424,7 @@ export default function PrescriptionDetailModal({
       onClose={handleClose}
       title={title}
       size="lg"
+      panelClassName="doc-rx-detail-modal"
       footer={
         <>
           <Button variant="outline" onClick={handleClose}>
@@ -346,7 +458,10 @@ export default function PrescriptionDetailModal({
         <p className="field__error">{error?.message || 'Unable to load prescription'}</p>
       )}
       {!isLoading && !isError && displayDetail && !editing && (
-        <PrescriptionDetailView detail={displayDetail} />
+        <PrescriptionDetailView
+          detail={displayDetail}
+          appointmentClinical={appointmentClinical}
+        />
       )}
       {!isLoading && !isError && detail && editing && (
         <PrescriptionEditForm

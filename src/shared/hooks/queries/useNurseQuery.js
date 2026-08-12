@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import {
   getQueue,
   getBedPatients,
@@ -50,13 +50,15 @@ export function useNurseQueueQuery(filters = {}, options = {}) {
 
 /** Bed-assigned patients — primary nurse dashboard list. */
 export function useNurseBedPatientsQuery(filters = {}, options = {}) {
-  const { enabled = true } = options;
+  const { enabled = true, ...queryOptions } = options;
   const token = useQueryToken();
   return useQuery({
     queryKey: queryKeys.nurse.bedPatients(filters),
     enabled: enabled && Boolean(token),
     queryFn: () => getBedPatients(filters, token),
     staleTime: 30 * 1000,
+    placeholderData: keepPreviousData,
+    ...queryOptions,
   });
 }
 

@@ -5,6 +5,9 @@ import { ROUTES } from '@/shared/constants';
 import RoleLayout from '@/shared/components/layout/RoleLayout';
 import LabNotificationsBell from '@/features/lab/components/LabNotificationsBell';
 import { useLabPermissionSet } from '@/features/lab/hooks/useLabPermission';
+import { useLabTechnicianProfileQuery } from '@/features/lab/hooks/useLabTechnicianProfileQuery';
+import { useAuth } from '@/shared/hooks/useAuth';
+import { labDepartmentLabelFromUser } from '@/shared/utils/labDepartments';
 import '../styles/lab.css';
 
 const NAV_LINKS = [
@@ -53,8 +56,14 @@ function isNavLinkActive(pathname, link) {
 export default function LabLayout({ children, pageTitle, compact = false }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const onProfilePage = location.pathname === ROUTES.LAB_PROFILE;
   const { canViewLab, canViewNotifications } = useLabPermissionSet();
+  const profileQuery = useLabTechnicianProfileQuery();
+  const departmentLabel = useMemo(() => {
+    const profile = profileQuery.data?.profile ?? profileQuery.data;
+    return labDepartmentLabelFromUser(profile) || labDepartmentLabelFromUser(user);
+  }, [profileQuery.data, user]);
 
   const navLinks = useMemo(
     () =>
@@ -70,7 +79,16 @@ export default function LabLayout({ children, pageTitle, compact = false }) {
       navLinks={navLinks}
       resolveTitle={resolveTitle}
       homeRoute={canViewLab ? ROUTES.LAB_DASHBOARD : ROUTES.LAB_PROFILE}
-      roleLabel="Lab Technician"
+      roleLabel={
+        departmentLabel ? (
+          <>
+            Lab Technician
+            <span className="lab-role-dept">{departmentLabel}</span>
+          </>
+        ) : (
+          'Lab Technician'
+        )
+      }
       roleLabelClassName="lab-role-label"
       defaultTitle="Dashboard"
       pageTitleOverride={pageTitle}

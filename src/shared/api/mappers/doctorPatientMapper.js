@@ -60,6 +60,12 @@ export function apiToUiPatientVisitRow(api) {
     patientId: patientId != null ? Number(patientId) : null,
     name: api.patient_name ?? api.patientName ?? '',
     age: api.patient_age ?? api.patientAge ?? null,
+    dob:
+      api.date_of_birth
+      ?? api.patient_date_of_birth
+      ?? api.dob
+      ?? api.patientDob
+      ?? null,
     gender: normalizeGender(api.patient_gender ?? api.patientGender),
     phone: api.patient_phone ?? api.patientPhone ?? null,
     scheduledAt,
@@ -84,6 +90,7 @@ export function appointmentToVisitRow(appt) {
     patientId: appt.patientDbId ?? null,
     name: appt.patientName ?? '',
     age: appt.patientAge ?? null,
+    dob: appt.dob ?? appt.dateOfBirth ?? appt.date_of_birth ?? null,
     gender: appt.patientGender ?? '—',
     phone: appt.patientPhone ?? null,
     scheduledAt,
@@ -110,6 +117,7 @@ export function visitRowToPatientSummary(row) {
     patientId: row.patientId,
     name: row.name,
     age: row.age,
+    dob: row.dob ?? null,
     gender: row.gender,
     phone: row.phone || '—',
     bloodGroup: row.bloodGroup || '—',
@@ -127,6 +135,7 @@ export function appointmentToPatientSummary(appt) {
     patientId: numericId != null ? Number(numericId) : null,
     name: appt.patientName ?? '',
     age: appt.patientAge ?? null,
+    dob: appt.dob ?? appt.dateOfBirth ?? appt.date_of_birth ?? null,
     gender: appt.patientGender ?? '—',
     phone: appt.patientPhone ?? '—',
     bloodGroup: appt.bloodGroup ?? '—',

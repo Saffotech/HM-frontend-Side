@@ -356,18 +356,23 @@ async function resolveReportForPrint(report) {
   }
 }
 
+/** HTML for the in-app lab report print page. */
+export async function getLabReportPrintHtml(report) {
+  const fullReport = await resolveReportForPrint(report);
+  if (!fullReport) return null;
+  return buildPrintHtml(fullReport, APP_NAME || 'SaffoCare');
+}
+
 /** Print a single lab report in a real laboratory layout. */
 export async function printLabReport(report) {
   if (!report) return;
 
-  const fullReport = await resolveReportForPrint(report);
-  if (!fullReport) {
+  const content = await getLabReportPrintHtml(report);
+  if (!content) {
     toast.error('Report data not available');
     return;
   }
 
-  const hospitalName = APP_NAME || 'SaffoCare';
-  const content = buildPrintHtml(fullReport, hospitalName);
   openPrintWindow(content);
 }
 
@@ -458,37 +463,44 @@ export function downloadReportsCsv(reports) {
 }
 
 function openPrintWindow(html) {
-  // Use a blob URL so Chrome/Edge print headers do not show the app route
-  // (e.g. /lab/dashboard). Browser "Headers and footers" can still be turned
-  // off fully from the print dialog if needed.
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-  const win = window.open(url, '_blank', 'noopener,noreferrer');
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('aria-hidden', 'true');
+  iframe.setAttribute('title', 'Print report');
+  iframe.style.cssText =
+    'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none;';
 
-  if (!win) {
-    URL.revokeObjectURL(url);
-    toast.error('Pop-up blocked. Allow pop-ups to print the report.');
-    return;
-  }
-
+  let cleaned = false;
   const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
     URL.revokeObjectURL(url);
+    iframe.remove();
   };
 
-  const triggerPrint = () => {
-    try {
-      win.focus();
-      win.print();
-    } finally {
-      // Keep blob until print dialog closes so content stays available.
+  iframe.addEventListener(
+    'load',
+    () => {
+      const win = iframe.contentWindow;
+      if (!win) {
+        cleanup();
+        toast.error('Could not open printer');
+        return;
+      }
       win.addEventListener('afterprint', cleanup, { once: true });
-      setTimeout(cleanup, 60_000);
-    }
-  };
+      setTimeout(cleanup, 120_000);
+      try {
+        win.focus();
+        win.print();
+      } catch {
+        cleanup();
+        toast.error('Could not open printer');
+      }
+    },
+    { once: true },
+  );
 
-  if (win.document.readyState === 'complete') {
-    triggerPrint();
-  } else {
-    win.addEventListener('load', triggerPrint, { once: true });
-  }
+  iframe.src = url;
+  document.body.appendChild(iframe);
 }

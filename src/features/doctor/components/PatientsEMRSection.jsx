@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQueries } from '@tanstack/react-query';
 
 import { Users, Filter, ChevronRight, ChevronDown, CalendarDays, RotateCcw, Check } from 'lucide-react';
 
@@ -17,7 +17,13 @@ import StatusPill from './StatusPill';
 
 import { prefetchPatientProfileData } from '@/features/doctor/utils/doctorPatientProfileCache';
 
+import { formatPatientAgeGender } from '@/features/doctor/utils/formatPatientAge';
+
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
+
+import { patientsApi } from '@/shared/api/services';
+
+import { queryKeys } from '@/shared/api/queryKeys';
 
 import {
 
@@ -26,6 +32,8 @@ import {
   MONTH_FILTER_OPTIONS,
 
   YEAR_FILTER_OPTIONS,
+
+  CUSTOM_YEAR_OPTIONS,
 
   DEFAULT_DATE_FILTERS,
 
@@ -138,19 +146,11 @@ function PatientCategorySelect({ value, onChange }) {
 
 
 function formatAgeGender(row) {
-
-  const agePart = row.age != null && row.age !== '' ? `${row.age}y` : null;
-
-  const genderPart = row.gender && row.gender !== '—' ? row.gender : null;
-
-  if (agePart && genderPart) return `${agePart} · ${genderPart}`;
-
-  if (agePart) return agePart;
-
-  if (genderPart) return genderPart;
-
-  return '—';
-
+  return formatPatientAgeGender({
+    age: row.age,
+    dob: row.dob,
+    gender: row.gender,
+  });
 }
 
 
@@ -217,7 +217,17 @@ function PatientDateFilters({ filters, onChange, onReset, disabled }) {
         <select
           value={filters.year}
           disabled={disabled}
-          onChange={(e) => onChange({ ...filters, year: e.target.value })}
+          onChange={(e) => {
+            const year = e.target.value;
+            onChange({
+              ...filters,
+              year,
+              customYear:
+                year === 'custom'
+                  ? filters.customYear || String(new Date().getFullYear())
+                  : filters.customYear,
+            });
+          }}
         >
           {YEAR_FILTER_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
@@ -229,14 +239,22 @@ function PatientDateFilters({ filters, onChange, onReset, disabled }) {
       {filters.year === 'custom' && (
         <label className="doc-patient-filters__field doc-patient-filters__field--year">
           <span>Year</span>
-          <input
-            type="number"
-            min="1990"
-            max="2100"
-            disabled={disabled}
+          <select
             value={filters.customYear}
+            disabled={disabled}
             onChange={(e) => onChange({ ...filters, customYear: e.target.value })}
-          />
+            aria-label="Custom year"
+          >
+            {!CUSTOM_YEAR_OPTIONS.some((o) => o.value === String(filters.customYear)) &&
+            filters.customYear ? (
+              <option value={filters.customYear}>{filters.customYear}</option>
+            ) : null}
+            {CUSTOM_YEAR_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
         </label>
       )}
       <button
@@ -324,7 +342,7 @@ export default function PatientsEMRSection({
 
   }, [visitsData?.visits, dateFilters]);
 
-
+  const dateFiltersDisabled = DATE_FILTER_DISABLED_CATEGORIES.has(categoryFilter);
 
   const list = useMemo(() => {
 
@@ -341,15 +359,15 @@ export default function PatientsEMRSection({
 
     });
 
-
+    const dateFiltered = dateFiltersDisabled
+      ? rows
+      : rows.filter((row) => matchesPatientDateFilters(row, dateFilters));
 
     const term = q.trim().toLowerCase();
 
-    if (!term) return rows;
+    if (!term) return dateFiltered;
 
-
-
-    return rows.filter((row) => {
+    return dateFiltered.filter((row) => {
 
       const name = (row.name ?? '').toLowerCase();
 
@@ -359,13 +377,59 @@ export default function PatientsEMRSection({
 
     });
 
-  }, [categoryFilter, completedVisits, todayAppointments, needsTodayApi, q]);
+  }, [
+    categoryFilter,
+    completedVisits,
+    todayAppointments,
+    needsTodayApi,
+    q,
+    dateFilters,
+    dateFiltersDisabled,
+  ]);
 
+  // Doctor list APIs only send whole-year age; fetch DOB for infants so Age/Gender can show m/d.
+  const infantPatientIds = useMemo(() => {
+    const ids = new Set();
+    for (const row of list) {
+      if (row.dob) continue;
+      const years = Number(row.age);
+      if (!Number.isFinite(years) || years >= 1) continue;
+      const id = row.patientId;
+      if (id == null || Number.isNaN(Number(id))) continue;
+      ids.add(Number(id));
+    }
+    return [...ids];
+  }, [list]);
 
+  const infantProfileQueries = useQueries({
+    queries: infantPatientIds.map((patientId) => ({
+      queryKey: queryKeys.patients.profile(patientId),
+      queryFn: () => patientsApi.getPatientProfileById(patientId, token),
+      enabled: Boolean(token) && patientId != null,
+      staleTime: 1000 * 60 * 5,
+      refetchOnWindowFocus: false,
+    })),
+  });
 
-  const dateFiltersDisabled = DATE_FILTER_DISABLED_CATEGORIES.has(categoryFilter);
+  const dobByPatientId = useMemo(() => {
+    const map = new Map();
+    infantProfileQueries.forEach((query, index) => {
+      const patientId = infantPatientIds[index];
+      const dob = query.data?.patient?.dob ?? null;
+      if (patientId != null && dob) map.set(patientId, dob);
+    });
+    return map;
+  }, [infantProfileQueries, infantPatientIds]);
 
-
+  const displayList = useMemo(
+    () =>
+      list.map((row) => {
+        if (row.dob || row.patientId == null) return row;
+        const dob = dobByPatientId.get(Number(row.patientId));
+        return dob ? { ...row, dob } : row;
+      }),
+    [list, dobByPatientId],
+  );
 
   const isLoading =
 
@@ -383,8 +447,8 @@ export default function PatientsEMRSection({
   const tableColumnCount = showPatientActions ? 6 : 5;
 
   const profilePlaceholderVisits = useMemo(
-    () => (view ? list.filter((row) => row.patientUid === view.patientUid) : []),
-    [view, list],
+    () => (view ? displayList.filter((row) => row.patientUid === view.patientUid) : []),
+    [view, displayList],
   );
 
   const openPatient = (row) => {
@@ -434,7 +498,7 @@ export default function PatientsEMRSection({
 
             <p className="doc-patients-page__subtitle">
 
-              {list.length} record{list.length === 1 ? '' : 's'} · {activeCategoryLabel}
+              {displayList.length} record{displayList.length === 1 ? '' : 's'} · {activeCategoryLabel}
 
             </p>
 
@@ -510,7 +574,7 @@ export default function PatientsEMRSection({
                     Loading patients…
                   </td>
                 </tr>
-              ) : list.length === 0 ? (
+              ) : displayList.length === 0 ? (
                 <tr>
                   <td colSpan={tableColumnCount} className="doc-patient-table__empty-cell">
                     <EmptyState
@@ -521,7 +585,7 @@ export default function PatientsEMRSection({
                   </td>
                 </tr>
               ) : (
-                list.map((row) => (
+                displayList.map((row) => (
                   <tr
                     key={row.id}
                     className="doc-patient-row"

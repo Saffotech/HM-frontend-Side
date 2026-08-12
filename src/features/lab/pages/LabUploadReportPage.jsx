@@ -11,6 +11,10 @@ import { LAB_ORDER_STATUS, statusBadgeClass, statusLabel } from '@/features/lab/
 import { DateInput, EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
+import {
+  isLabDepartmentUnassignedError,
+  LAB_DEPT_UNASSIGNED_MESSAGE,
+} from '@/shared/utils/labDepartments';
 import '../styles/lab.css';
 
 function makeId() {
@@ -19,6 +23,23 @@ function makeId() {
 
 function emptyParameterRow() {
   return { id: makeId(), parameter_name: '', value: '', unit: '', normal_range: '', flag: 'normal' };
+}
+
+/** Digits + optional decimal only (e.g. 13.5). */
+function sanitizeParameterValue(raw) {
+  const cleaned = String(raw ?? '').replace(/[^\d.]/g, '');
+  const [whole, ...rest] = cleaned.split('.');
+  if (rest.length === 0) return whole;
+  return `${whole}.${rest.join('').replace(/\./g, '')}`;
+}
+
+/** Accepts formats like 12-16 or 12.5 - 16.0 */
+function isValidNormalRange(raw) {
+  return /^\d+(\.\d+)?\s*-\s*\d+(\.\d+)?$/.test(String(raw ?? '').trim());
+}
+
+function isNamedParameter(param) {
+  return Boolean(String(param?.parameter_name ?? '').trim());
 }
 
 export default function LabUploadReportPage() {
@@ -63,7 +84,24 @@ export default function LabUploadReportPage() {
   };
 
   const updateParam = (rowId, field, val) => {
-    setParameters((prev) => prev.map((p) => (p.id === rowId ? { ...p, [field]: val } : p)));
+    const nextVal = field === 'value' ? sanitizeParameterValue(val) : val;
+    setParameters((prev) => prev.map((p) => (p.id === rowId ? { ...p, [field]: nextVal } : p)));
+    setErrors((prev) => {
+      if (!prev?.parameters?.[rowId]?.[field] && !prev?.parametersGeneral) return prev;
+      const next = { ...prev };
+      if (next.parameters?.[rowId]) {
+        const rowErrs = { ...next.parameters[rowId] };
+        delete rowErrs[field];
+        if (Object.keys(rowErrs).length === 0) {
+          const { [rowId]: _removed, ...rest } = next.parameters;
+          next.parameters = Object.keys(rest).length ? rest : undefined;
+        } else {
+          next.parameters = { ...next.parameters, [rowId]: rowErrs };
+        }
+      }
+      if (next.parametersGeneral) delete next.parametersGeneral;
+      return next;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -85,8 +123,53 @@ export default function LabUploadReportPage() {
     const errs = {};
     if (!sampleCollectedAt) errs.sampleCollectedAt = 'Required';
     if (!testPerformedAt) errs.testPerformedAt = 'Required';
+    if (!reportFile) errs.reportFile = 'Report file is required';
+
+    const paramErrors = {};
+    parameters.forEach((param) => {
+      if (!isNamedParameter(param)) return;
+      const rowErrs = {};
+      const value = String(param.value ?? '').trim();
+      const unit = String(param.unit ?? '').trim();
+      const range = String(param.normal_range ?? '').trim();
+      const flag = String(param.flag ?? '').trim();
+
+      if (!value) rowErrs.value = 'Required';
+      else if (!/^\d+(\.\d+)?$/.test(value)) rowErrs.value = 'Digits only';
+
+      if (!unit) rowErrs.unit = 'Required';
+
+      if (!range) rowErrs.normal_range = 'Required';
+      else if (!isValidNormalRange(range)) rowErrs.normal_range = 'Use format like 12-16';
+
+      if (!flag) rowErrs.flag = 'Required';
+
+      if (Object.keys(rowErrs).length) paramErrors[param.id] = rowErrs;
+    });
+
+    if (Object.keys(paramErrors).length) {
+      errs.parameters = paramErrors;
+      errs.parametersGeneral =
+        'When a parameter name is entered, value, unit, normal range, and flag are required';
+    }
+
     setErrors(errs);
-    if (Object.keys(errs).length) return;
+    if (Object.keys(errs).length) {
+      toast.error(
+        errs.reportFile || errs.parametersGeneral || 'Please fix the highlighted fields',
+      );
+      return;
+    }
+
+    const filledParameters = parameters
+      .filter(isNamedParameter)
+      .map((param) => ({
+        parameter_name: String(param.parameter_name).trim(),
+        value: String(param.value).trim(),
+        unit: String(param.unit).trim(),
+        normal_range: String(param.normal_range).trim().replace(/\s*-\s*/, '-'),
+        flag: param.flag,
+      }));
 
     try {
       await submitWorkflow.mutateAsync({
@@ -96,7 +179,7 @@ export default function LabUploadReportPage() {
           sampleCollectedAt,
           testPerformedAt,
           remarks,
-          parameters: parameters.map(({ id: rowId, ...rest }) => rest),
+          parameters: filledParameters,
         },
         file: reportFile,
       });
@@ -152,13 +235,29 @@ export default function LabUploadReportPage() {
   }
 
   if (orderQuery.isError || (!orderQuery.isLoading && !order)) {
+    const unassigned = isLabDepartmentUnassignedError(orderQuery.error);
+    const forbidden = orderQuery.error?.status === 403;
     return (
       <LabLayout pageTitle="Upload Report">
         <div className="lab-empty">
           <div className="lab-empty-icon">⚠️</div>
-          <h3>Order Not Found</h3>
+          <h3>
+            {unassigned
+              ? 'Department not assigned'
+              : forbidden
+                ? 'Access denied'
+                : 'Order Not Found'}
+          </h3>
           <p>
-            The requested order ID <strong>{id}</strong> does not exist.
+            {unassigned
+              ? LAB_DEPT_UNASSIGNED_MESSAGE
+              : forbidden
+                ? 'This order is not in your lab department.'
+                : (
+                  <>
+                    The requested order ID <strong>{id}</strong> does not exist.
+                  </>
+                )}
           </p>
           <Link to={ROUTES.LAB_ORDERS} className="lab-btn lab-btn-secondary" style={{ marginTop: 14 }}>
             ← Back to Orders
@@ -241,6 +340,10 @@ export default function LabUploadReportPage() {
               <span className={`lab-badge ${statusBadgeClass(order.status)}`}>{statusLabel(order.status)}</span>
             </span>
           </div>
+          <div className="lab-info-item lab-info-item--notes">
+            <label>Clinical notes</label>
+            <span>{order.clinicalNotes?.trim() || '—'}</span>
+          </div>
         </div>
       </div>
 
@@ -301,20 +404,36 @@ export default function LabUploadReportPage() {
               <div className="lab-field">
                 <label htmlFor="report-file">
                   Report File
-                  <small style={{ fontWeight: 400, color: '#8a9ab5', marginLeft: 6 }}>(PDF, PNG, JPG — uploaded after complete)</small>
+                  <span className="required"> *</span>
+                  <small style={{ fontWeight: 400, color: '#8a9ab5', marginLeft: 6 }}>(PDF, PNG, JPG — required)</small>
                 </label>
                 <input
                   id="report-file"
                   type="file"
                   accept=".pdf,image/*"
-                  onChange={(e) => setReportFile(e.target.files?.[0] ?? null)}
+                  required
+                  aria-required="true"
+                  onChange={(e) => {
+                    setReportFile(e.target.files?.[0] ?? null);
+                    setErrors((prev) => {
+                      if (!prev.reportFile) return prev;
+                      const next = { ...prev };
+                      delete next.reportFile;
+                      return next;
+                    });
+                  }}
                   disabled={order.status === LAB_ORDER_STATUS.COMPLETED}
+                  aria-invalid={Boolean(errors.reportFile)}
+                  className={errors.reportFile ? 'is-invalid' : undefined}
                 />
-                {(reportFile || order.reportFileName) && (
+                {errors.reportFile ? (
+                  <small className="lab-param-field-error">{errors.reportFile}</small>
+                ) : null}
+                {reportFile ? (
                   <small style={{ color: '#059669', fontSize: '12px' }}>
-                    ✓ {reportFile?.name ?? order.reportFileName}
+                    ✓ {reportFile.name}
                   </small>
-                )}
+                ) : null}
               </div>
             </div>
 
@@ -334,11 +453,17 @@ export default function LabUploadReportPage() {
 
             <div>
               <div className="lab-params-header">
-                <h3>Test Parameters</h3>
+                <h3>
+                  Test Parameters
+                  <small style={{ fontWeight: 400, color: '#8a9ab5', marginLeft: 8 }}>(optional)</small>
+                </h3>
                 <button type="button" className="lab-btn lab-btn-secondary lab-btn-sm" onClick={addRow}>
                   + Add Parameter
                 </button>
               </div>
+              {errors.parametersGeneral ? (
+                <p className="lab-params-error">{errors.parametersGeneral}</p>
+              ) : null}
               <div className="lab-params-table-wrap">
                 <table className="lab-params-table">
                   <thead>
@@ -352,62 +477,81 @@ export default function LabUploadReportPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {parameters.map((param) => (
-                      <tr key={param.id}>
-                        <td>
-                          <input
-                            type="text"
-                            value={param.parameter_name}
-                            onChange={(e) => updateParam(param.id, 'parameter_name', e.target.value)}
-                            placeholder="e.g. Hemoglobin"
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="text"
-                            value={param.value}
-                            onChange={(e) => updateParam(param.id, 'value', e.target.value)}
-                            placeholder="13.5"
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="text"
-                            value={param.unit}
-                            onChange={(e) => updateParam(param.id, 'unit', e.target.value)}
-                            placeholder="g/dL"
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="text"
-                            value={param.normal_range}
-                            onChange={(e) => updateParam(param.id, 'normal_range', e.target.value)}
-                            placeholder="12–16"
-                          />
-                        </td>
-                        <td>
-                          <select
-                            value={param.flag}
-                            onChange={(e) => updateParam(param.id, 'flag', e.target.value)}
-                          >
-                            <option value="normal">Normal</option>
-                            <option value="low">Low</option>
-                            <option value="high">High</option>
-                          </select>
-                        </td>
-                        <td>
-                          <button
-                            type="button"
-                            className="lab-btn lab-btn-danger lab-btn-sm"
-                            onClick={() => removeRow(param.id)}
-                            disabled={parameters.length === 1}
-                          >
-                            ✕
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {parameters.map((param) => {
+                      const rowErrs = errors.parameters?.[param.id] ?? {};
+                      return (
+                        <tr key={param.id}>
+                          <td>
+                            <input
+                              type="text"
+                              value={param.parameter_name}
+                              onChange={(e) => updateParam(param.id, 'parameter_name', e.target.value)}
+                              placeholder="e.g. Hemoglobin"
+                              aria-invalid={Boolean(rowErrs.parameter_name)}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              inputMode="decimal"
+                              value={param.value}
+                              onChange={(e) => updateParam(param.id, 'value', e.target.value)}
+                              placeholder="13.5"
+                              aria-invalid={Boolean(rowErrs.value)}
+                              className={rowErrs.value ? 'is-invalid' : undefined}
+                            />
+                            {rowErrs.value ? <small className="lab-param-field-error">{rowErrs.value}</small> : null}
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              value={param.unit}
+                              onChange={(e) => updateParam(param.id, 'unit', e.target.value)}
+                              placeholder="g/dL"
+                              aria-invalid={Boolean(rowErrs.unit)}
+                              className={rowErrs.unit ? 'is-invalid' : undefined}
+                            />
+                            {rowErrs.unit ? <small className="lab-param-field-error">{rowErrs.unit}</small> : null}
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              value={param.normal_range}
+                              onChange={(e) => updateParam(param.id, 'normal_range', e.target.value)}
+                              placeholder="12-16"
+                              aria-invalid={Boolean(rowErrs.normal_range)}
+                              className={rowErrs.normal_range ? 'is-invalid' : undefined}
+                            />
+                            {rowErrs.normal_range ? (
+                              <small className="lab-param-field-error">{rowErrs.normal_range}</small>
+                            ) : null}
+                          </td>
+                          <td>
+                            <select
+                              value={param.flag}
+                              onChange={(e) => updateParam(param.id, 'flag', e.target.value)}
+                              aria-invalid={Boolean(rowErrs.flag)}
+                              className={rowErrs.flag ? 'is-invalid' : undefined}
+                            >
+                              <option value="normal">Normal</option>
+                              <option value="low">Low</option>
+                              <option value="high">High</option>
+                            </select>
+                            {rowErrs.flag ? <small className="lab-param-field-error">{rowErrs.flag}</small> : null}
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              className="lab-btn lab-btn-danger lab-btn-sm"
+                              onClick={() => removeRow(param.id)}
+                              disabled={parameters.length === 1}
+                            >
+                              ✕
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

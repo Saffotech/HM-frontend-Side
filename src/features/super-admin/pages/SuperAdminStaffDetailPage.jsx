@@ -29,6 +29,14 @@ import {
 import { Button, ConfirmDialog, Input, Label, QueryFeedback, Select } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
+import { ensureLabTechDepartmentId } from '@/features/admin/utils/ensureLabTechDepartment';
+import {
+  isLabTechnicianRole,
+  resolveStaffDepartmentPayloadId,
+  roleRequiresDepartment,
+  staffDepartmentSelectOptions,
+  staffDepartmentSelectValue,
+} from '@/shared/utils/labDepartments';
 
 function titleCaseName(value) {
   if (!value) return '';
@@ -91,10 +99,6 @@ function DetailField({ label, value, empty = '—' }) {
   );
 }
 
-function roleRequiresDepartment(roleName) {
-  return roleName === 'doctor';
-}
-
 function userToForm(user) {
   if (!user) return {};
   return {
@@ -148,12 +152,8 @@ export default function SuperAdminStaffDetailPage() {
   );
 
   const departmentOptions = useMemo(
-    () =>
-      departments?.map((dept) => ({
-        value: String(dept.id),
-        label: dept.name,
-      })) ?? [],
-    [departments],
+    () => staffDepartmentSelectOptions(departments, selectedRoleName),
+    [departments, selectedRoleName],
   );
 
   useEffect(() => {
@@ -169,7 +169,24 @@ export default function SuperAdminStaffDetailPage() {
 
   const handleSave = async () => {
     if (departmentRequired && !form.department_id) {
-      toast.error('Please select a department for doctor');
+      toast.error(
+        isLabTechnicianRole(selectedRoleName)
+          ? 'Please select Laboratory or Radiology for lab technician'
+          : 'Please select a department for doctor',
+      );
+      return;
+    }
+    const departmentId = departmentRequired
+      ? isLabTechnicianRole(selectedRoleName)
+        ? await ensureLabTechDepartmentId(departments, form.department_id)
+        : resolveStaffDepartmentPayloadId(departments, selectedRoleName, form.department_id)
+      : null;
+    if (departmentRequired && departmentId == null) {
+      toast.error(
+        isLabTechnicianRole(selectedRoleName)
+          ? 'Please select Laboratory or Radiology for lab technician'
+          : 'Please select a department for doctor',
+      );
       return;
     }
     const phone = digitsOnlyMax10(form.phone);
@@ -183,8 +200,7 @@ export default function SuperAdminStaffDetailPage() {
         last_name: form.last_name.trim() || null,
         phone: phone || null,
         role_id: Number(form.role_id),
-        department_id:
-          departmentRequired && form.department_id ? Number(form.department_id) : null,
+        department_id: departmentId,
         employee_id: (form.employee_id || '').trim() || null,
         joining_date: form.joining_date || null,
       };
@@ -408,7 +424,7 @@ export default function SuperAdminStaffDetailPage() {
                                 ...f,
                                 role_id: value,
                                 department_id:
-                                  nextRole?.name === 'doctor' ? f.department_id : '',
+                                  nextRole?.name === selectedRoleName ? f.department_id : '',
                               }));
                             }}
                             options={roleOptions}
@@ -423,11 +439,19 @@ export default function SuperAdminStaffDetailPage() {
                             ) : null}
                           </Label>
                           <Select
-                            value={form.department_id}
+                            value={staffDepartmentSelectValue(
+                              departments,
+                              selectedRoleName,
+                              form.department_id,
+                            )}
                             onChange={(value) => setForm((f) => ({ ...f, department_id: value }))}
                             options={departmentOptions}
                             placeholder={
-                              departmentRequired ? 'Select department' : 'Only for doctor role'
+                              departmentRequired
+                                ? isLabTechnicianRole(selectedRoleName)
+                                  ? 'Laboratory or Radiology'
+                                  : 'Select department'
+                                : 'Only for doctor / lab technician'
                             }
                             disabled={!departmentRequired}
                           />

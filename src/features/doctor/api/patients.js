@@ -11,6 +11,8 @@ export async function getPatients(token, params = {}) {
   if (params.filter_date) qs.set('filter_date', params.filter_date);
   if (params.month != null) qs.set('month', String(params.month));
   if (params.year != null) qs.set('year', String(params.year));
+  if (params.page_size != null) qs.set('page_size', String(params.page_size));
+  else if (params.limit != null) qs.set('page_size', String(params.limit));
   const query = qs.toString();
   const path = query ? `/patients?${query}` : '/patients';
   const response = await apiClient(path, { token });

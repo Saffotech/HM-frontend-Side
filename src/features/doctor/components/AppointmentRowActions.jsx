@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { MoreHorizontal, FileText, Pill, StickyNote, Stethoscope } from 'lucide-react';
+import { MoreHorizontal, FileText, Pill, StickyNote, Stethoscope, XCircle } from 'lucide-react';
 import { Button } from '@/shared/components/common';
 import { usePermission } from '@/hooks/usePermission';
 import { ACTIONS } from '@/hooks/permissions';
@@ -14,10 +14,12 @@ export default function AppointmentRowActions({
   appointment,
   patient,
   onConsult,
+  onCancel,
   onEmr,
   onPrescribe,
   onNotes,
   disabled = false,
+  cancelDisabled = false,
   mode = 'full',
 }) {
   const [open, setOpen] = useState(false);
@@ -113,6 +115,11 @@ export default function AppointmentRowActions({
     canConsult
     && canStartConsult
     && (mode === 'full' || mode === 'consult' || mode === 'waiting' || mode === 'in_progress');
+  const showCancel =
+    canConsult
+    && canStartConsult
+    && onCancel
+    && (mode === 'full' || mode === 'consult' || mode === 'waiting' || mode === 'in_progress');
   const showEmr = canEmr && mode === 'full';
   const showPrescribe = canPrescribe && mode === 'full';
   const showNotes = canNotes && mode === 'full';
@@ -127,11 +134,24 @@ export default function AppointmentRowActions({
               size="sm"
               variant="primary"
               className="doc-appt-actions__consult"
-              disabled={disabled}
+              disabled={disabled || cancelDisabled}
               onClick={() => onConsult(appointment)}
             >
               <Stethoscope size={14} aria-hidden />
               Consult
+            </Button>
+          ) : null}
+          {showCancel ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="doc-appt-actions__cancel"
+              disabled={disabled || cancelDisabled}
+              onClick={() => onCancel(appointment)}
+            >
+              <XCircle size={14} aria-hidden />
+              Cancel
             </Button>
           ) : null}
           {showNotes ? (

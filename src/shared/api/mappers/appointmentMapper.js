@@ -157,6 +157,11 @@ export function apiToUiAppointment(apiAppt) {
       null,
     patientName: apiAppt.patient_name ?? apiAppt.patientName,
     patientAge: apiAppt.patient_age ?? apiAppt.patientAge ?? null,
+    dob:
+      apiAppt.date_of_birth
+      ?? apiAppt.patient_date_of_birth
+      ?? apiAppt.dob
+      ?? null,
     patientGender: apiAppt.patient_gender ?? apiAppt.patientGender ?? null,
     doctorId: apiAppt.doctor_id ?? apiAppt.doctorId,
     doctorName: apiAppt.doctor_name ?? apiAppt.doctorName,

@@ -2,6 +2,8 @@
  * Lab technician order/report ↔ UI mapping.
  */
 
+import { labDepartmentLabel } from '@/shared/utils/labDepartments';
+
 const IST_OFFSET = '+05:30';
 
 function formatDateTime(raw) {
@@ -26,12 +28,18 @@ function formatDateOnly(raw) {
 
 function normalizePriority(priority) {
   if (!priority) return 'normal';
-  return String(priority).toLowerCase() === 'urgent' ? 'urgent' : 'normal';
+  const key = String(priority).trim().toLowerCase();
+  if (key === 'urgent') return 'urgent';
+  if (key === 'stat') return 'stat';
+  return 'normal';
 }
 
 function priorityToApi(priority) {
   if (!priority || priority === 'all') return undefined;
-  return priority === 'urgent' ? 'Urgent' : 'Normal';
+  const key = String(priority).trim().toLowerCase();
+  if (key === 'urgent') return 'Urgent';
+  if (key === 'stat') return 'STAT';
+  return 'Normal';
 }
 
 export function apiToUiLabOrder(row) {
@@ -46,6 +54,12 @@ export function apiToUiLabOrder(row) {
     doctorName: row.doctor_name ?? row.doctorName ?? '—',
     testName: row.test_name ?? row.testName ?? '—',
     category: row.category ?? '—',
+    departmentId: row.department_id ?? row.departmentId ?? null,
+    departmentName:
+      row.department_name
+      || row.departmentName
+      || labDepartmentLabel(row.department_code ?? row.departmentCode)
+      || null,
     priority: normalizePriority(row.priority),
     priorityLabel: row.priority ?? 'Normal',
     clinicalNotes: row.clinical_notes ?? row.clinicalNotes ?? '',
@@ -239,7 +253,7 @@ export function viewToApiStatus(view) {
   }
 }
 
-export function uiToApiLabReportBody(form) {
+export function uiToApiLabReportBody(form, file) {
   const parameters = (form.parameters ?? [])
     .filter((p) => p.parameter_name?.trim())
     .map((p) => ({
@@ -250,12 +264,20 @@ export function uiToApiLabReportBody(form) {
       flag: p.flag && p.flag !== 'critical' ? p.flag : p.flag === 'critical' ? 'high' : undefined,
     }));
 
-  return {
+  const body = {
     sample_collected_at: datetimeLocalToApi(form.sampleCollectedAt),
     test_performed_at: datetimeLocalToApi(form.testPerformedAt),
     remarks: form.remarks?.trim() || undefined,
     parameters,
   };
+
+  // POST /report requires report_file OR parameters. The real file is uploaded
+  // after complete; send the filename so a file-only report is accepted.
+  if (file?.name) {
+    body.report_file = file.name;
+  }
+
+  return body;
 }
 
 export function datetimeLocalToApi(value) {

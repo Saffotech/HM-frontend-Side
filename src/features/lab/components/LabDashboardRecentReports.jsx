@@ -1,18 +1,19 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ChevronDown, Printer } from 'lucide-react';
 import { printLabReport } from '@/features/lab/utils/labReportUtils';
+import { ROUTES } from '@/shared/constants';
 
 const PREVIEW_COUNT = 4;
 
 /**
- * Dashboard-only: expand rows in place to read & print — no navigation, no modal.
+ * Dashboard-only: expand rows in place to read & print.
+ * "Show all" opens Report Archive.
  */
 export default function LabDashboardRecentReports({ reports }) {
   const [expandedId, setExpandedId] = useState(null);
-  const [showAll, setShowAll] = useState(false);
 
-  const visible = showAll ? reports : reports.slice(0, PREVIEW_COUNT);
-  const hiddenCount = reports.length - PREVIEW_COUNT;
+  const visible = reports.slice(0, PREVIEW_COUNT);
 
   const toggle = (id) => {
     setExpandedId((prev) => (prev === id ? null : id));
@@ -24,15 +25,9 @@ export default function LabDashboardRecentReports({ reports }) {
         <div>
           <h2>Recently Completed Reports</h2>
         </div>
-        {hiddenCount > 0 && (
-          <button
-            type="button"
-            className="lab-dash-ghost-btn"
-            onClick={() => setShowAll((v) => !v)}
-          >
-            {showAll ? 'Show less' : `Show all ${reports.length} on dashboard`}
-          </button>
-        )}
+        <Link to={ROUTES.LAB_REPORTS} className="lab-dash-ghost-btn">
+          Show all
+        </Link>
       </div>
 
       <ul className="lab-dash-accordion">

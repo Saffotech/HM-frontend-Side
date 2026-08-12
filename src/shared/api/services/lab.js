@@ -55,12 +55,18 @@ export async function downloadLabReportFile(reportId, token) {
 }
 
 /**
- * Full backend workflow: sample → processing → report → complete → optional file.
+ * Full backend workflow: sample → processing → report → complete → required file.
  */
 export async function submitLabOrderWorkflow(orderId, { currentStatus, form, file }, token) {
+  if (!file) {
+    const err = new Error('Report file is required');
+    err.status = 400;
+    throw err;
+  }
+
   const sampleAt = datetimeLocalToApi(form.sampleCollectedAt);
   const performedAt = datetimeLocalToApi(form.testPerformedAt);
-  const reportBody = uiToApiLabReportBody(form);
+  const reportBody = uiToApiLabReportBody(form, file);
 
   if (currentStatus === 'ordered') {
     await patchSampleCollected(orderId, { sample_collected_at: sampleAt }, token);
