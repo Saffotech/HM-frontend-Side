@@ -32,6 +32,57 @@ export async function getLabTechnicianProfile(token) {
   return apiClient('/lab/profile', { token });
 }
 
+/** Build a display profile from /auth/me when GET /lab/profile is 404. */
+export function mapAuthMeToLabProfile(me) {
+  if (!me) return null;
+  const roleName = me.role ?? me.role_name ?? 'lab_technician';
+  const department =
+    me.department && typeof me.department === 'object'
+      ? me.department
+      : me.department_name
+        ? { id: me.department_id ?? null, name: me.department_name }
+        : null;
+  return {
+    user_id: me.user_id ?? me.id,
+    first_name: me.first_name ?? '',
+    last_name: me.last_name ?? '',
+    email: me.email ?? '',
+    phone: me.phone ?? null,
+    phone_code: me.phone_code ?? '+91',
+    address: {
+      line: me.address ?? null,
+      city: me.city ?? null,
+      state: me.state ?? null,
+      country: me.country ?? null,
+      postal_code: me.postal_code ?? null,
+    },
+    date_of_birth: me.date_of_birth ?? null,
+    gender: me.gender ?? null,
+    emergency_contact: {
+      name: me.emergency_contact_name ?? null,
+      phone: me.emergency_contact_phone ?? null,
+    },
+    department,
+    role: { id: me.role_id ?? null, name: roleName },
+    qualification: null,
+    license_number: null,
+    employee_id: me.employee_id ?? null,
+    experience_years: null,
+    joining_date: null,
+    bio: null,
+    languages: [],
+    shift: null,
+    profile_image_url: me.profile_image_url ?? null,
+    is_profile_completed: false,
+    profile_completion_percentage: 0,
+    is_active: me.is_active !== false,
+    last_login: me.last_login ?? null,
+    created_at: me.created_at ?? null,
+    updated_at: null,
+    isFallback: true,
+  };
+}
+
 export async function updateLabTechnicianProfile(payload, token) {
   return apiClient('/lab/profile', {
     method: 'PUT',

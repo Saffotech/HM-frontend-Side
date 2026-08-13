@@ -13,6 +13,14 @@ import { Button, Input, Label, QueryFeedback, Select } from '@/shared/components
 import { ROUTES } from '@/shared/constants';
 import { filterHospitalAdminRegisterRoles } from '@/features/admin/utils/hospitalAdminRoles';
 import { toast } from '@/shared/utils/toast';
+import { ensureLabTechDepartmentId } from '@/features/admin/utils/ensureLabTechDepartment';
+import {
+  isLabTechnicianRole,
+  resolveStaffDepartmentPayloadId,
+  roleRequiresDepartment,
+  staffDepartmentSelectOptions,
+  staffDepartmentSelectValue,
+} from '@/shared/utils/labDepartments';
 
 const EMPTY_FORM = {
   first_name: '',
@@ -53,8 +61,8 @@ export default function StaffRegisterPage() {
   const registerMutation = useRegisterStaffMutation();
 
   const selectedRole = roles?.find((r) => String(r.id) === String(form.role_id));
-  // Department applies only to doctors
-  const needsDepartment = selectedRole?.name === 'doctor';
+  const needsDepartment = roleRequiresDepartment(selectedRole?.name);
+  const isLabTech = isLabTechnicianRole(selectedRole?.name);
 
   const roleOptions = useMemo(
     () =>
@@ -66,12 +74,8 @@ export default function StaffRegisterPage() {
   );
 
   const departmentOptions = useMemo(
-    () =>
-      departments?.map((dept) => ({
-        value: String(dept.id),
-        label: dept.name,
-      })) ?? [],
-    [departments]
+    () => staffDepartmentSelectOptions(departments, selectedRole?.name),
+    [departments, selectedRole?.name]
   );
 
   const handleChange = (field) => (e) => {
@@ -92,7 +96,25 @@ export default function StaffRegisterPage() {
     }
 
     if (needsDepartment && !form.department_id) {
-      toast.error('Please select a department for doctor');
+      toast.error(
+        isLabTech
+          ? 'Please select Laboratory or Radiology for lab technician'
+          : 'Please select a department for doctor',
+      );
+      return;
+    }
+
+    const departmentId = needsDepartment
+      ? isLabTech
+        ? await ensureLabTechDepartmentId(departments, form.department_id)
+        : resolveStaffDepartmentPayloadId(departments, selectedRole?.name, form.department_id)
+      : null;
+    if (needsDepartment && departmentId == null) {
+      toast.error(
+        isLabTech
+          ? 'Please select Laboratory or Radiology for lab technician'
+          : 'Please select a department for doctor',
+      );
       return;
     }
 
@@ -102,8 +124,7 @@ export default function StaffRegisterPage() {
       email: form.email.trim(),
       password: form.password,
       role_id: Number(form.role_id),
-      department_id:
-        needsDepartment && form.department_id ? Number(form.department_id) : null,
+      department_id: departmentId,
     };
 
     try {
@@ -127,7 +148,7 @@ export default function StaffRegisterPage() {
 
         <AdminPageHeader
           title="Register new staff"
-          subtitle="Create a staff account. Department is required for doctors only; nurses use bed allocation for daily responsibility."
+          subtitle="Create a staff account. Department is required for doctors and lab technicians."
         />
 
         <div className="admin-card admin-card--narrow">
@@ -208,7 +229,8 @@ export default function StaffRegisterPage() {
                       setForm((prev) => ({
                         ...prev,
                         role_id: value,
-                        department_id: nextRole?.name === 'doctor' ? prev.department_id : '',
+                        department_id:
+                          nextRole?.name === selectedRole?.name ? prev.department_id : '',
                       }));
                     }}
                     options={roleOptions}
@@ -232,13 +254,21 @@ export default function StaffRegisterPage() {
                       )}
                       <Select
                         label="Department *"
-                        value={form.department_id}
+                        value={staffDepartmentSelectValue(
+                          departments,
+                          selectedRole?.name,
+                          form.department_id,
+                        )}
                         onChange={(value) =>
                           setForm((prev) => ({ ...prev, department_id: value }))
                         }
                         options={departmentOptions}
                         placeholder={
-                          departmentsLoading ? 'Loading departments…' : 'Select department'
+                          departmentsLoading
+                            ? 'Loading departments…'
+                            : isLabTech
+                              ? 'Laboratory or Radiology'
+                              : 'Select department'
                         }
                         disabled={departmentsLoading || departmentsError}
                       />

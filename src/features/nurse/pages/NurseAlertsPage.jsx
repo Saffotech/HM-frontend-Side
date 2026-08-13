@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Plus } from 'lucide-react';
+import { AlertTriangle, Plus, Search } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseDataTable from '@/features/nurse/components/NurseDataTable';
 import NursePagination from '@/features/nurse/components/NursePagination';
@@ -12,6 +12,7 @@ import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import {
   useNurseAlertsQuery,
   useNurseAlertSummaryQuery,
+  useNurseBedPatientsQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
 import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
 import { ROUTES } from '@/shared/constants';
@@ -29,6 +30,17 @@ const KPI_FILTERS = {
   critical: 'critical',
   unassigned: 'unassigned',
 };
+
+const ALERT_TYPES = [
+  { value: 'manual', label: 'Manual emergency' },
+  { value: 'low_bp', label: 'Low blood pressure' },
+  { value: 'high_bp', label: 'High blood pressure' },
+  { value: 'high_fever', label: 'High fever' },
+  { value: 'cardiac', label: 'Cardiac / heart rate' },
+  { value: 'low_spo2', label: 'Low SpO₂' },
+  { value: 'overdue_medication', label: 'Overdue medication' },
+  { value: 'other', label: 'Other' },
+];
 
 export default function NurseAlertsPage() {
   const navigate = useNavigate();
@@ -50,6 +62,7 @@ export default function NurseAlertsPage() {
     allocatedOnly,
     listMode,
     allocationSummary,
+    scopeFilters,
   } = useNursePatientScope();
 
   useEffect(() => {
@@ -94,6 +107,27 @@ export default function NurseAlertsPage() {
     alertFilters,
     { enabled: scopeReady && canViewAlerts },
   );
+
+  const { data: bedPatients } = useNurseBedPatientsQuery(
+    { page: 1, page_size: 100, ...scopeFilters },
+    { enabled: scopeReady && canViewAlerts },
+  );
+
+  const wardOptions = useMemo(() => {
+    const names = new Set();
+    for (const row of bedPatients?.items ?? []) {
+      const name = String(row.ward_name ?? '').trim();
+      if (name) names.add(name);
+    }
+    for (const row of data?.items ?? []) {
+      const name = String(row.ward_name ?? '').trim();
+      if (name) names.add(name);
+    }
+    const selected = wardName.trim();
+    if (selected) names.add(selected);
+    const list = [...names].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    return list.length ? list : ['General', 'ICU', 'Private'];
+  }, [bedPatients?.items, data?.items, wardName]);
   const {
     data: summary,
     isLoading: isSummaryLoading,
@@ -305,10 +339,9 @@ export default function NurseAlertsPage() {
 
           <div className="nurse-alerts-filters__grid">
             <div className="nurse-field nurse-alerts-filters__search">
-              <label htmlFor="nurse-alerts-search" className="nurse-alerts-filters__sr-label">
-                Search
-              </label>
+              <label htmlFor="nurse-alerts-search">Search</label>
               <div className="nurse-alerts-search-wrap">
+                <Search size={16} className="nurse-alerts-search-icon" aria-hidden />
                 <input
                   id="nurse-alerts-search"
                   type="search"
@@ -320,14 +353,13 @@ export default function NurseAlertsPage() {
                   }}
                   placeholder="Alert ID, patient, or notes…"
                   aria-label="Search alerts"
+                  autoComplete="off"
                 />
               </div>
             </div>
 
-            <div className="nurse-field">
-              <label htmlFor="nurse-alerts-severity" className="nurse-alerts-filters__sr-label">
-                Severity
-              </label>
+            <div className="nurse-field nurse-alerts-filters__severity">
+              <label htmlFor="nurse-alerts-severity">Severity</label>
               <select
                 id="nurse-alerts-severity"
                 className="nurse-select nurse-alerts-filters__control"
@@ -348,40 +380,46 @@ export default function NurseAlertsPage() {
               </select>
             </div>
 
-            <div className="nurse-field">
-              <label htmlFor="nurse-alerts-type" className="nurse-alerts-filters__sr-label">
-                Alert type
-              </label>
-              <input
+            <div className="nurse-field nurse-alerts-filters__type">
+              <label htmlFor="nurse-alerts-type">Alert type</label>
+              <select
                 id="nurse-alerts-type"
-                type="text"
-                className="nurse-input nurse-alerts-filters__control"
+                className="nurse-select nurse-alerts-filters__control"
                 value={alertType}
                 onChange={(e) => {
                   setAlertType(e.target.value);
                   setPage(1);
                 }}
-                placeholder="Alert type"
                 aria-label="Filter by alert type"
-              />
+              >
+                <option value="">All types</option>
+                {ALERT_TYPES.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            <div className="nurse-field">
-              <label htmlFor="nurse-alerts-ward" className="nurse-alerts-filters__sr-label">
-                Ward
-              </label>
-              <input
+            <div className="nurse-field nurse-alerts-filters__ward">
+              <label htmlFor="nurse-alerts-ward">Ward</label>
+              <select
                 id="nurse-alerts-ward"
-                type="text"
-                className="nurse-input nurse-alerts-filters__control"
+                className="nurse-select nurse-alerts-filters__control"
                 value={wardName}
                 onChange={(e) => {
                   setWardName(e.target.value);
                   setPage(1);
                 }}
-                placeholder="Ward"
                 aria-label="Filter by ward"
-              />
+              >
+                <option value="">All wards</option>
+                {wardOptions.map((ward) => (
+                  <option key={ward} value={ward}>
+                    {ward}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="nurse-field nurse-alerts-filters__date">

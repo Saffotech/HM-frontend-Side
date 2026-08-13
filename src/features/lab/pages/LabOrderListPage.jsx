@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LabLayout from '@/features/lab/components/LabLayout';
 import { useLabPermissionSet } from '@/features/lab/hooks/useLabPermission';
+import { useLabTechnicianProfileQuery } from '@/features/lab/hooks/useLabTechnicianProfileQuery';
 import { useLabOrdersQuery } from '@/shared/hooks/queries/useLabQuery';
+import { useAuth } from '@/shared/hooks/useAuth';
 import {
   LAB_STATUS_META,
   LAB_ORDER_STATUS,
@@ -10,6 +12,16 @@ import {
   uploadActionLabel,
   statusBadgeClass,
 } from '@/features/lab/utils/labOrderStatus';
+import {
+  departmentCode,
+  isLabOrRadCode,
+  labDepartmentLabelFromUser,
+  labOrderCategoryOptionsForDept,
+  isOrderForLabDept,
+  isApiLabOrderCategory,
+  orderMatchesCategoryFilter,
+  LAB_DEPT_CODE,
+} from '@/shared/utils/labDepartments';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
@@ -30,10 +42,36 @@ const LEGACY_VIEW_MAP = {
   processing: 'ordered',
 };
 
+function resolveTechDeptCode(user, profileData) {
+  const profile = profileData?.profile ?? profileData;
+  const label = labDepartmentLabelFromUser(profile) || labDepartmentLabelFromUser(user);
+  if (label === 'Radiology') return LAB_DEPT_CODE.RAD;
+  if (label === 'Laboratory') return LAB_DEPT_CODE.LAB;
+
+  const sources = [profile, profile?.department, user, user?.department];
+  for (const src of sources) {
+    const code = departmentCode(src);
+    if (isLabOrRadCode(code)) return code;
+  }
+  return '';
+}
+
 export default function LabOrderListPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
   const { canViewLab } = useLabPermissionSet();
+  const profileQuery = useLabTechnicianProfileQuery({ enabled: canViewLab });
+
+  const techDeptCode = useMemo(
+    () => resolveTechDeptCode(user, profileQuery.data),
+    [user, profileQuery.data],
+  );
+
+  const categoryOptions = useMemo(
+    () => labOrderCategoryOptionsForDept(techDeptCode),
+    [techDeptCode],
+  );
 
   const initialView = searchParams.get('view') || searchParams.get('status') || 'ordered';
   const mappedView = LEGACY_VIEW_MAP[initialView] ?? initialView;
@@ -41,11 +79,22 @@ export default function LabOrderListPage() {
 
   const [search, setSearch] = useState(searchParams.get('q') || '');
   const [view, setView] = useState(normalizedView);
-  const [priority, setPriority] = useState(searchParams.get('priority') || 'all');
+  const [priority, setPriority] = useState(() => {
+    const raw = searchParams.get('priority') || 'all';
+    return raw === 'stat' ? 'all' : raw;
+  });
   const [category, setCategory] = useState(searchParams.get('category') || 'all');
   const [date, setDate] = useState(searchParams.get('date') || '');
 
   const debouncedSearch = useDebouncedValue(search, 300);
+
+  // Drop category selections that don't belong to this lab department.
+  useEffect(() => {
+    if (category === 'all') return;
+    if (!categoryOptions.includes(category)) {
+      setCategory('all');
+    }
+  }, [category, categoryOptions]);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -62,15 +111,25 @@ export default function LabOrderListPage() {
       view,
       search: debouncedSearch,
       priority,
-      category,
+      // Only send real API categories; test-name options are filtered client-side.
+      category: category !== 'all' && isApiLabOrderCategory(category) ? category : 'all',
       date,
       pageSize: 100,
     },
     { enabled: canViewLab },
   );
 
-  const orders = ordersQuery.data?.data ?? [];
-  const total = ordersQuery.data?.total ?? orders.length;
+  const orders = useMemo(() => {
+    const rows = ordersQuery.data?.data ?? [];
+    return rows.filter((order) => {
+      if (isLabOrRadCode(techDeptCode) && !isOrderForLabDept(order, techDeptCode)) {
+        return false;
+      }
+      return orderMatchesCategoryFilter(order, category);
+    });
+  }, [ordersQuery.data?.data, techDeptCode, category]);
+
+  const total = orders.length;
 
   const hasExtraFilters = search || priority !== 'all' || category !== 'all' || date;
 
@@ -82,6 +141,7 @@ export default function LabOrderListPage() {
   };
 
   const handleRowAction = (order) => {
+    if (order.status === LAB_ORDER_STATUS.CANCELLED) return;
     if (order.status === LAB_ORDER_STATUS.COMPLETED) {
       navigate(ROUTES.LAB_REPORTS);
       return;
@@ -145,12 +205,11 @@ export default function LabOrderListPage() {
             <label htmlFor="lab-orders-category">Category</label>
             <select id="lab-orders-category" value={category} onChange={(e) => setCategory(e.target.value)}>
               <option value="all">All</option>
-              <option value="Blood Test">Blood Test</option>
-              <option value="Blood">Blood</option>
-              <option value="Radiology">Radiology</option>
-              <option value="Urine">Urine</option>
-              <option value="Microbiology">Microbiology</option>
-              <option value="Biochemistry">Biochemistry</option>
+              {categoryOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
             </select>
           </div>
           <div className="lab-filter-group">
@@ -194,7 +253,6 @@ export default function LabOrderListPage() {
                     <th>Patient ID</th>
                     <th>Doctor</th>
                     <th>Test</th>
-                    <th>Category</th>
                     <th>Priority</th>
                     <th>Requested</th>
                     <th>Status</th>
@@ -212,11 +270,8 @@ export default function LabOrderListPage() {
                       <td>{o.doctorName}</td>
                       <td>{o.testName}</td>
                       <td>
-                        <span className={`lab-badge ${(o.category ?? '').toLowerCase()}`}>{o.category}</span>
-                      </td>
-                      <td>
                         <span className={`lab-badge ${o.priority}`}>
-                          {o.priority === 'urgent' ? '⚠ ' : ''}
+                          {o.priority === 'urgent' || o.priority === 'stat' ? '⚠ ' : ''}
                           {o.priorityLabel ?? o.priority}
                         </span>
                       </td>
@@ -232,7 +287,17 @@ export default function LabOrderListPage() {
                       <td>
                         <button
                           type="button"
-                          className={`lab-btn lab-btn-sm ${o.status === LAB_ORDER_STATUS.COMPLETED ? 'lab-btn-secondary' : 'lab-btn-primary'}`}
+                          className={`lab-btn lab-btn-sm ${
+                            o.status === LAB_ORDER_STATUS.COMPLETED || o.status === LAB_ORDER_STATUS.CANCELLED
+                              ? 'lab-btn-secondary'
+                              : 'lab-btn-primary'
+                          }`}
+                          disabled={o.status === LAB_ORDER_STATUS.CANCELLED}
+                          title={
+                            o.status === LAB_ORDER_STATUS.CANCELLED
+                              ? 'This test was cancelled. Start / Upload is not available.'
+                              : undefined
+                          }
                           onClick={() => handleRowAction(o)}
                         >
                           {uploadActionLabel(o.status)}

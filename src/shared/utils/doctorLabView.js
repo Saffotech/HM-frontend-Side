@@ -46,39 +46,27 @@ export function isReportAvailable(order, report) {
 }
 
 /**
- * Doctor-facing workflow status (distinct from lab portal pending/in_progress/completed).
+ * Doctor-facing workflow status — Ordered / Completed / Cancelled only.
  */
 export function getDoctorDisplayStatus(order, doctorMeta = {}) {
-  if (doctorMeta.reviewedAt || doctorMeta.clinicalNote?.trim()) {
-    return 'Reviewed';
-  }
-  if (order.status === LAB_ORDER_STATUS.COMPLETED) {
-    return 'Completed';
-  }
-  if (order.status === LAB_ORDER_STATUS.IN_PROGRESS) {
-    if (order.sampleCollectedAt && !order.testPerformedAt) {
-      return 'Sample Collected';
-    }
-    return 'Processing';
-  }
-  return 'Pending';
+  const raw = String(order?.status ?? '').toLowerCase();
+  if (raw === 'cancelled') return 'Cancelled';
+  if (raw === LAB_ORDER_STATUS.COMPLETED || raw === 'completed') return 'Completed';
+  // pending / in_progress / ordered / sample_collected / processing → Ordered
+  return 'Ordered';
 }
 
 export function getDoctorFilterKey(displayStatus) {
   switch (displayStatus) {
     case 'Pending':
     case 'Ordered':
-      return 'ordered';
     case 'Sample Collected':
-      return 'sample_collected';
     case 'Processing':
-      return 'processing';
+      return 'ordered';
     case 'Completed':
       return 'completed';
     case 'Cancelled':
       return 'cancelled';
-    case 'Reviewed':
-      return 'reviewed';
     default:
       return 'all';
   }
@@ -88,8 +76,6 @@ export function countDoctorLabFilters(tests) {
   const counts = {
     all: tests.length,
     ordered: 0,
-    sample_collected: 0,
-    processing: 0,
     completed: 0,
     cancelled: 0,
   };

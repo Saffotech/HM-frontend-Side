@@ -59,6 +59,7 @@ export const queryKeys = {
   opd: {
 
     departments: ['opd', 'departments'],
+    labDepartments: ['opd', 'departments', 'lab-routing'],
 
     doctors: (departmentId) => ['opd', 'doctors', departmentId],
 

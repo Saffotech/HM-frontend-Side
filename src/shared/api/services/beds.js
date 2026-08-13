@@ -1,5 +1,4 @@
-import { getBeds, apiBedToUi } from '@/features/opd/beds/api/beds';
-import { apiClient } from '@/shared/api/client';
+import { getBeds, getBedsByWard, assignBed, releaseBed, apiBedToUi } from '@/features/opd/beds/api/beds';
 import { getPatient, getPatientProfileById } from '@/shared/api/services/patients';
 
 /** Registration department lives on OPD visits — fill bed rows when bed.department_id was not set. */
@@ -38,19 +37,23 @@ export async function listBeds(token, params = {}) {
   };
 }
 
-/** Occupied beds keyed by internal patient DB id — for nurse queue enrichment. */
-export async function getOccupiedBedMapByPatientDbId(token) {
-  const response = await apiClient('/opd/beds', { token });
-  const beds = response.beds ?? [];
-  const map = new Map();
-  for (const bed of beds) {
-    if (bed.status !== 'occupied' || bed.patient_id == null) continue;
-    const pid = Number(bed.patient_id);
-    if (!Number.isFinite(pid) || map.has(pid)) continue;
-    map.set(pid, {
-      bed_number: bed.bed_number ?? '',
-      ward_name: bed.ward_name ?? '',
-    });
-  }
-  return map;
+export async function listBedsByWard(wardName, token) {
+  const raw = await getBedsByWard(wardName, token);
+  let beds = (raw.beds ?? []).map(apiBedToUi);
+  beds = await enrichBedsWithPatientDepartment(beds, token);
+  return {
+    wardName: raw.ward_name ?? wardName,
+    beds,
+    stats: raw.stats ?? null,
+    occupancyPercent: raw.occupancy_percent ?? 0,
+  };
 }
+
+export async function assignBedToPatient(payload, token) {
+  return assignBed(payload, token);
+}
+
+export async function releaseBedById(bedId, token) {
+  return releaseBed(bedId, token);
+}
+

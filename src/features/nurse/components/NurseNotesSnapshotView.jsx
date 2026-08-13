@@ -89,7 +89,7 @@ export default function NurseNotesSnapshotView({ note }) {
       <section className="nurse-vital-detail__section">
         <h2 className="nurse-vital-detail__section-title">Nursing Note</h2>
         <div className="nurse-clinical-panel nurse-card nurse-card--padded">
-          <div className="nurse-clinical-fields">
+          <div className="nurse-clinical-fields nurse-clinical-fields--grid nurse-clinical-fields--notes">
             {NOTE_FIELDS.map(({ key, label, icon: Icon, accent }) => (
               <NurseClinicalFieldShell
                 key={key}
@@ -97,7 +97,7 @@ export default function NurseNotesSnapshotView({ note }) {
                 icon={Icon}
                 label={label}
               >
-                <NurseClinicalReadonlyValue multiline rows={4}>
+                <NurseClinicalReadonlyValue multiline rows={5}>
                   {snapshot[key]}
                 </NurseClinicalReadonlyValue>
               </NurseClinicalFieldShell>

@@ -1,4 +1,5 @@
 import { getDepartments, getDoctorsByDepartment } from '@/features/opd/api/reference';
+import { filterClinicalDepartments, filterLabTechDepartments } from '@/shared/utils/labDepartments';
 
 const DEFAULT_CONSULTATION_FEE = 800;
 
@@ -24,9 +25,20 @@ export function apiToUiDoctor(doctor) {
   };
 }
 
-export async function listDepartments(token) {
+async function fetchMappedDepartments(token) {
   const rows = await getDepartments(token);
-  return (Array.isArray(rows) ? rows : []).map(apiToUiDepartment).filter(Boolean);
+  const list = Array.isArray(rows) ? rows : (rows?.departments ?? rows?.items ?? []);
+  return list.map(apiToUiDepartment).filter(Boolean);
+}
+
+/** Clinical visit departments (Cardiology, Pediatrics, …). Hides LAB/RAD. */
+export async function listDepartments(token) {
+  return filterClinicalDepartments(await fetchMappedDepartments(token));
+}
+
+/** Laboratory + Radiology only — doctor lab-order routing. */
+export async function listLabRoutingDepartments(token) {
+  return filterLabTechDepartments(await fetchMappedDepartments(token));
 }
 
 export async function listDoctorsByDepartment(departmentId, token) {

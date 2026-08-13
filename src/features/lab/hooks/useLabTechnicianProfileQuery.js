@@ -6,19 +6,31 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   deleteLabTechnicianProfileImage,
   getLabTechnicianProfile,
+  mapAuthMeToLabProfile,
   updateLabTechnicianProfile,
   uploadLabTechnicianProfileImage,
 } from '@/features/lab/api/profile';
+import { getCurrentUser } from '@/shared/api/auth';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { mutationOnError } from '@/shared/utils/mutationErrors';
 import { syncAuthProfileAvatar } from '@/shared/utils/syncAuthProfileAvatar';
 
 async function fetchLabTechnicianProfile(token) {
-  const profile = await getLabTechnicianProfile(token);
-  const data = { profile };
-  syncAuthProfileAvatar(data);
-  return data;
+  try {
+    const profile = await getLabTechnicianProfile(token);
+    const data = { profile };
+    syncAuthProfileAvatar(data);
+    return data;
+  } catch (err) {
+    if (err?.status !== 404) throw err;
+    const me = await getCurrentUser(token);
+    const profile = mapAuthMeToLabProfile(me);
+    if (!profile) throw err;
+    const data = { profile };
+    syncAuthProfileAvatar(data);
+    return data;
+  }
 }
 
 export function useLabTechnicianProfileQuery(options = {}) {

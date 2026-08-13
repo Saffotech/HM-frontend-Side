@@ -3,6 +3,7 @@
  */
 
 import { asList } from '@/shared/api/dataSource';
+import { labDepartmentLabel } from '@/shared/utils/labDepartments';
 
 /** DB stores duration as integer — send numeric value only. */
 function durationToApiValue(m) {
@@ -115,10 +116,12 @@ export function apiToUiRecord(api) {
 
 /** POST /lab-tests body */
 export function uiToApiLabTestCreate(ui) {
+  const departmentId = ui.departmentId ?? ui.department_id;
   return {
     appointment_id: ui.appointmentDbId,
     test_name: ui.testName ?? ui.test,
     category: ui.category,
+    department_id: departmentId != null && departmentId !== '' ? Number(departmentId) : undefined,
     priority: ui.priority || 'Normal',
     clinical_notes: ui.clinicalNotes ?? ui.clinical_notes ?? '',
   };
@@ -131,19 +134,29 @@ export function uiToApiLabTestUpdate(ui) {
   if (ui.category !== undefined) body.category = ui.category;
   if (ui.priority !== undefined) body.priority = ui.priority;
   if (ui.clinicalNotes !== undefined) body.clinical_notes = ui.clinicalNotes;
+  if (ui.departmentId !== undefined || ui.department_id !== undefined) {
+    const departmentId = ui.departmentId ?? ui.department_id;
+    if (departmentId != null && departmentId !== '') body.department_id = Number(departmentId);
+  }
   return body;
 }
 
+/** Doctor-facing lab status — only Ordered / Completed / Cancelled. */
 export function apiToUiLabStatus(apiStatus) {
-  const map = {
-    ordered: 'Ordered',
-    sample_collected: 'Sample Collected',
-    processing: 'Processing',
-    completed: 'Completed',
-    cancelled: 'Cancelled',
-  };
   const key = String(apiStatus ?? '').toLowerCase();
-  return map[key] ?? apiStatus;
+  if (key === 'completed') return 'Completed';
+  if (key === 'cancelled') return 'Cancelled';
+  // ordered + in-lab progress (sample_collected, processing, pending, …)
+  if (
+    key === 'ordered'
+    || key === 'sample_collected'
+    || key === 'processing'
+    || key === 'pending'
+    || key === 'in_progress'
+  ) {
+    return 'Ordered';
+  }
+  return null;
 }
 
 function formatLabOrderedAt(iso) {
@@ -164,6 +177,7 @@ function formatLabOrderedAt(iso) {
 export function apiToUiLabTest(api) {
   if (!api) return null;
   const status = apiToUiLabStatus(api.status);
+  if (!status) return null;
   const apiStatus = String(api.status ?? '').toLowerCase();
   const patientDbId = api.patient_id ?? api.patientDbId ?? null;
   const patientUid =
@@ -181,6 +195,12 @@ export function apiToUiLabTest(api) {
     patientName: api.patient_name ?? api.patientName,
     testName: api.test_name ?? api.test,
     category: api.category ?? 'Other',
+    departmentId: api.department_id ?? api.departmentId ?? null,
+    departmentName:
+      api.department_name
+      || api.departmentName
+      || labDepartmentLabel(api.department_code ?? api.departmentCode)
+      || null,
     priority: api.priority ?? 'Normal',
     clinicalNotes: api.clinical_notes ?? api.clinicalNotes ?? '',
     status,

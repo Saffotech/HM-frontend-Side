@@ -4,6 +4,8 @@ import {
   useDoctorLabReportQuery,
   useDownloadDoctorLabReportFileMutation,
 } from '@/features/doctor/hooks/useDoctorLabQuery';
+import { doctorLabsApi } from '@/shared/api/services';
+import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { Modal, Button, QueryFeedback } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
 import StatusPill from './StatusPill';
@@ -34,6 +36,7 @@ function isPdfFile(fileName, fileType) {
 }
 
 export default function DoctorLabReportModal({ test, open, onClose }) {
+  const token = useQueryToken();
   const isCompleted = test?.apiStatus === 'completed' || test?.status === 'Completed';
   const reportQuery = useDoctorLabReportQuery(test?.id, {
     enabled: open && isCompleted && test?.id != null,
@@ -41,6 +44,7 @@ export default function DoctorLabReportModal({ test, open, onClose }) {
   const downloadFile = useDownloadDoctorLabReportFileMutation();
   const [previewUrl, setPreviewUrl] = useState(null);
   const [previewError, setPreviewError] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   const report = reportQuery.data;
   const fileName = report?.fileName ?? null;
@@ -49,35 +53,47 @@ export default function DoctorLabReportModal({ test, open, onClose }) {
   const showPdfNote = isPdfFile(fileName, fileType);
 
   useEffect(() => {
-    if (!open || !isCompleted || !test?.id || !report || !showImagePreview) {
+    if (!open || !isCompleted || !test?.id || !report || !showImagePreview || !token) {
       setPreviewUrl(null);
       setPreviewError(null);
+      setPreviewLoading(false);
       return undefined;
     }
 
     let active = true;
     let objectUrl = null;
+    setPreviewLoading(true);
+    setPreviewError(null);
+    setPreviewUrl(null);
 
-    downloadFile
-      .mutateAsync(test.id)
+    // Load preview via stable API call — do not use the mutation object in deps
+    // (mutation identity changes on pending/settled and was cancelling the preview).
+    doctorLabsApi
+      .downloadLabTestReportFile(test.id, token)
       .then(({ blob, contentType }) => {
-        if (!active) return;
         const type = contentType || blob.type || 'image/jpeg';
-        objectUrl = URL.createObjectURL(new Blob([blob], { type }));
-        setPreviewUrl(objectUrl);
+        const url = URL.createObjectURL(new Blob([blob], { type }));
+        if (!active) {
+          URL.revokeObjectURL(url);
+          return;
+        }
+        objectUrl = url;
+        setPreviewUrl(url);
         setPreviewError(null);
+        setPreviewLoading(false);
       })
       .catch((err) => {
         if (!active) return;
         setPreviewError(err?.message ?? 'Could not load image preview');
         setPreviewUrl(null);
+        setPreviewLoading(false);
       });
 
     return () => {
       active = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [open, isCompleted, test?.id, report, showImagePreview, downloadFile]);
+  }, [open, isCompleted, test?.id, report, showImagePreview, token]);
 
   const summary = useMemo(() => {
     if (report) return report;
@@ -219,7 +235,7 @@ export default function DoctorLabReportModal({ test, open, onClose }) {
             {showImagePreview ? (
               <div className="doc-lab-report-modal__section">
                 <h4>Uploaded image</h4>
-                {downloadFile.isPending && !previewUrl ? (
+                {previewLoading && !previewUrl ? (
                   <p className="text-muted">Loading preview…</p>
                 ) : null}
                 {previewError ? (

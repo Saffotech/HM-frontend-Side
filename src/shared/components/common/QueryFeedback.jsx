@@ -1,8 +1,13 @@
 import { PageSkeleton } from './Skeleton';
 import Button from './Button';
+import {
+  isLabDepartmentUnassignedError,
+  LAB_DEPT_UNASSIGNED_MESSAGE,
+} from '@/shared/utils/labDepartments';
 
 function getErrorMessage(error) {
   if (!error) return 'Something went wrong. Please try again.';
+  if (isLabDepartmentUnassignedError(error)) return LAB_DEPT_UNASSIGNED_MESSAGE;
   const status = error.status;
   if (status === 404) return 'Record not found';
   if (status === 403) return "You don't have permission to view this";

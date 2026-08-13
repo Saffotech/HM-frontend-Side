@@ -95,7 +95,7 @@ export function mapQueueFiltersToApi(filters = {}) {
 
 /**
  * Map a single registry search box to vitals/notes search API params.
- * Backend supports patient_id, name, phone, uhid — not bed_number.
+ * Backend supports patient_id, patient_uid, name, phone — not bed_number.
  */
 export function mapVitalsNotesSearchToApi(search) {
   const term = String(search ?? '').trim();
@@ -114,17 +114,53 @@ export function mapVitalsNotesSearchToApi(search) {
   }
 
   if (!/\s/.test(term) && /[A-Za-z]/.test(term) && /\d/.test(term)) {
-    return { uhid: term };
+    return { patient_uid: term };
   }
 
   return { name: term };
+}
+
+/** Client-side nurse registry filter — name, hospital patient ID (UHID), internal id, or bed. */
+export function filterNursePatientRegistryItems(items, search) {
+  const q = String(search ?? '').trim().toLowerCase();
+  if (!q) return items ?? [];
+
+  return (items ?? []).filter((row) => {
+    const name = String(row.patient_name ?? '').toLowerCase();
+    const uid = String(resolvePatientUid(row) ?? '').toLowerCase();
+    const bed = String(row.bed_number ?? '').trim().toLowerCase();
+    const patientId = String(row.patient_id ?? '');
+
+    if (name.includes(q)) return true;
+    if (uid && uid.includes(q)) return true;
+    if (bed && bed !== '—' && bed.includes(q)) return true;
+    if (/^\d+$/.test(q) && patientId === q) return true;
+    return false;
+  });
+}
+
+/** @deprecated Use filterNursePatientRegistryItems */
+export const filterNurseVitalsRegistryItems = filterNursePatientRegistryItems;
+
+export function paginateClientItems(items, { page = 1, page_size = 20 } = {}) {
+  const p = Number(page) || 1;
+  const ps = Number(page_size) || 20;
+  const list = items ?? [];
+  const start = (p - 1) * ps;
+  return {
+    items: list.slice(start, start + ps),
+    page: p,
+    page_size: ps,
+    total: list.length,
+    hasNextPage: start + ps < list.length,
+  };
 }
 
 /** Map search text to GET /nurse/medications/patients query params. */
 export function mapMedicationPatientsSearchToApi(search) {
   const mapped = mapVitalsNotesSearchToApi(search);
   if (mapped.patient_id) return { patient_id: mapped.patient_id };
-  if (mapped.uhid) return { patient_uid: mapped.uhid };
+  if (mapped.patient_uid) return { patient_uid: mapped.patient_uid };
   if (mapped.name) return { patient_name: mapped.name };
   return {};
 }
@@ -312,7 +348,7 @@ export function getPagedListCount({ page = 1, page_size = 20, items, total, hasN
   return { count, approximate: Boolean(hasNextPage) };
 }
 
-function buildVitalHistoryEntry(vital) {
+export function buildVitalHistoryEntry(vital) {
   return {
     history_id: vital.history_id ?? vital.id,
     recorded_at: vital.recorded_at,
@@ -328,6 +364,37 @@ function buildVitalHistoryEntry(vital) {
     pain_level: vital.pain_level,
     observation_notes: vital.observation_notes,
   };
+}
+
+/**
+ * When list/search returns one row per recording without a full nested `history`,
+ * assemble Recorded At options from the flat item list (same patient).
+ */
+export function assembleVitalHistoryFromItems(items = []) {
+  if (!items.length) return items;
+  const maxNested = Math.max(0, ...items.map((item) => item.history?.length ?? 0));
+  if (maxNested >= items.length) return items;
+
+  const history = [...items]
+    .map(buildVitalHistoryEntry)
+    .sort((a, b) => new Date(b.recorded_at) - new Date(a.recorded_at));
+
+  return items.map((item) => ({ ...item, history }));
+}
+
+/**
+ * Prefer nested history when richer; otherwise build from flat patient recordings.
+ */
+export function withAssembledVitalHistory(latest, items = []) {
+  if (!latest) return null;
+  const list = items.length ? items : [latest];
+  const assembledList = assembleVitalHistoryFromItems(list);
+  const assembled = assembledList[0];
+  if (!assembled) return latest;
+  if ((latest.history?.length ?? 0) >= (assembled.history?.length ?? 0)) {
+    return latest;
+  }
+  return { ...latest, history: assembled.history };
 }
 
 export function mapVitalItem(row) {

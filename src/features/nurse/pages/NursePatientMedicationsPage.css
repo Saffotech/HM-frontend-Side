@@ -368,6 +368,11 @@
   border-color: var(--color-primary-light);
 }
 
+.nurse-patient-meds__last-admin-row--notes {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
 .nurse-patient-meds__last-admin-icon {
   display: flex;
   align-items: center;
@@ -386,6 +391,11 @@
 .nurse-patient-meds__last-admin-row--by .nurse-patient-meds__last-admin-icon {
   color: var(--color-primary);
   background: var(--color-primary-light);
+}
+
+.nurse-patient-meds__last-admin-row--notes .nurse-patient-meds__last-admin-icon {
+  color: #64748b;
+  background: #e2e8f0;
 }
 
 .nurse-patient-meds__last-admin-content {
@@ -408,6 +418,12 @@
   font-weight: 600;
   color: #0f172a;
   line-height: 1.35;
+}
+
+.nurse-patient-meds__last-admin-value--notes {
+  font-weight: 500;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .nurse-patient-meds__medicine {

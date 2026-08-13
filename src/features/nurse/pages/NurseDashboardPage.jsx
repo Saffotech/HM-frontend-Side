@@ -66,6 +66,7 @@ export default function NurseDashboardPage() {
   const {
     data: bedPatients,
     isLoading,
+    isFetching,
     isError,
     error,
     refetch,
@@ -168,7 +169,7 @@ export default function NurseDashboardPage() {
         ? 'No occupied patients on your assigned beds match the filters.'
         : 'No admitted patients with an assigned bed match the filters.';
 
-  const pageLoading = !scopeReady || isLoading;
+  const initialLoading = !scopeReady || (isLoading && !bedPatients);
 
   return (
     <NurseLayout>
@@ -185,36 +186,42 @@ export default function NurseDashboardPage() {
             >
               <p className="nurse-kpi__label">{kpi.label}</p>
               <p className="nurse-kpi__value">
-                {pageLoading ? '—' : kpi.value}
+                {initialLoading ? '—' : kpi.value}
               </p>
             </button>
           ))}
         </div>
 
+        <div className="nurse-dashboard-table__header">
+          <h2 className="nurse-section-title">{KPI_TABLE_TITLES[activeKpi]}</h2>
+          <div className="nurse-field nurse-dashboard-table__search">
+            <label htmlFor="nurse-dashboard-search">Search patients</label>
+            <div className="nurse-dashboard-page__search-wrap">
+              <input
+                id="nurse-dashboard-search"
+                type="search"
+                className="nurse-input nurse-dashboard-page__search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Name, UHID, bed, or ward…"
+                aria-label="Search admitted patients"
+                autoComplete="off"
+                spellCheck={false}
+              />
+            </div>
+          </div>
+        </div>
+
         <QueryFeedback
-          isLoading={pageLoading}
+          isLoading={initialLoading}
           isError={isError}
           error={error}
           onRetry={refetch}
         >
-          <div className="nurse-dashboard-table__header">
-            <h2 className="nurse-section-title">{KPI_TABLE_TITLES[activeKpi]}</h2>
-            <div className="nurse-field nurse-dashboard-table__search">
-              <label htmlFor="nurse-dashboard-search">Search patients</label>
-              <div className="nurse-dashboard-page__search-wrap">
-                <input
-                  id="nurse-dashboard-search"
-                  type="search"
-                  className="nurse-input nurse-dashboard-page__search"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Name, UHID, bed, or ward…"
-                  aria-label="Search admitted patients"
-                />
-              </div>
-            </div>
-          </div>
-          <div className="nurse-dashboard-page__table">
+          <div
+            className="nurse-dashboard-page__table"
+            aria-busy={isFetching && !initialLoading}
+          >
             <NurseDataTable
               columns={columns}
               data={filteredPatients}

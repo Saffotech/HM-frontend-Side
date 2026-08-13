@@ -1,10 +1,17 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { LayoutDashboard, ClipboardList, FileCheck } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/shared/constants';
 import RoleLayout from '@/shared/components/layout/RoleLayout';
 import LabNotificationsBell from '@/features/lab/components/LabNotificationsBell';
 import { useLabPermissionSet } from '@/features/lab/hooks/useLabPermission';
+import { useLabTechnicianProfileQuery } from '@/features/lab/hooks/useLabTechnicianProfileQuery';
+import { useAuth } from '@/shared/hooks/useAuth';
+import {
+  labDepartmentLabelFromUser,
+  departmentCode,
+  LAB_DEPT_CODE,
+} from '@/shared/utils/labDepartments';
 import '../styles/lab.css';
 
 const NAV_LINKS = [
@@ -43,6 +50,21 @@ function resolveTitle(pathname, pageTitleOverride) {
   return match?.title || 'Lab Portal';
 }
 
+/** Header only — Radiology / Laboratory from tech department. */
+function resolveLabDepartmentHeaderTitle(user, profile) {
+  const profileRow = profile?.profile ?? profile;
+  const label = labDepartmentLabelFromUser(profileRow) || labDepartmentLabelFromUser(user);
+  if (label === 'Radiology' || label === 'Laboratory') return label;
+
+  const sources = [profileRow, profileRow?.department, user, user?.department];
+  for (const src of sources) {
+    const code = departmentCode(src);
+    if (code === LAB_DEPT_CODE.RAD) return 'Radiology';
+    if (code === LAB_DEPT_CODE.LAB) return 'Laboratory';
+  }
+  return '';
+}
+
 function isNavLinkActive(pathname, link) {
   if (link.href === ROUTES.LAB_ORDERS) {
     return pathname === ROUTES.LAB_ORDERS || pathname.startsWith('/lab/orders/');
@@ -53,8 +75,23 @@ function isNavLinkActive(pathname, link) {
 export default function LabLayout({ children, pageTitle, compact = false }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const onProfilePage = location.pathname === ROUTES.LAB_PROFILE;
   const { canViewLab, canViewNotifications } = useLabPermissionSet();
+  const profileQuery = useLabTechnicianProfileQuery();
+
+  const departmentHeaderTitle = useMemo(
+    () => resolveLabDepartmentHeaderTitle(user, profileQuery.data),
+    [user, profileQuery.data],
+  );
+
+  const resolveLayoutTitle = useCallback(
+    (pathname, pageTitleOverride) => {
+      if (departmentHeaderTitle) return departmentHeaderTitle;
+      return resolveTitle(pathname, pageTitleOverride);
+    },
+    [departmentHeaderTitle],
+  );
 
   const navLinks = useMemo(
     () =>
@@ -68,11 +105,11 @@ export default function LabLayout({ children, pageTitle, compact = false }) {
   return (
     <RoleLayout
       navLinks={navLinks}
-      resolveTitle={resolveTitle}
+      resolveTitle={resolveLayoutTitle}
       homeRoute={canViewLab ? ROUTES.LAB_DASHBOARD : ROUTES.LAB_PROFILE}
       roleLabel="Lab Technician"
       roleLabelClassName="lab-role-label"
-      defaultTitle="Dashboard"
+      defaultTitle={departmentHeaderTitle || 'Dashboard'}
       pageTitleOverride={pageTitle}
       isNavLinkActive={isNavLinkActive}
       showBell={canViewNotifications}

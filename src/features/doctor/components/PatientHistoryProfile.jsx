@@ -10,24 +10,22 @@ import {
   Phone,
   Pill,
   Eye,
-  Trash2,
   User,
 } from 'lucide-react';
 import {
   useDoctorPatientHistoryQuery,
   useDoctorPatientPrescriptionsQuery,
 } from '@/features/doctor/hooks/useDoctorPatientQuery';
-import { useDeletePrescriptionMutation } from '@/features/doctor/hooks/useDoctorPrescriptionQuery';
 import PrescriptionDetailModal from './PrescriptionDetailModal';
 import { useDoctorLabTestsQuery } from '@/features/doctor/hooks/useDoctorLabQuery';
 import { matchesLabTestPatient } from '@/features/doctor/utils/labPatientMatch';
 import DoctorLabReportModal from './DoctorLabReportModal';
 import { mergeVisitTimelineWithPrescriptions } from '@/features/doctor/utils/patientHistory';
+import { formatPatientAge } from '@/features/doctor/utils/formatPatientAge';
 import { patientsApi } from '@/shared/api/services';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { queryKeys } from '@/shared/api/queryKeys';
-import { Button, ConfirmDialog, Skeleton } from '@/shared/components/common';
-import { toast } from '@/shared/utils/toast';
+import { Button, Skeleton } from '@/shared/components/common';
 import StatusPill from './StatusPill';
 import '../styles/doctor-ui.css';
 
@@ -64,8 +62,6 @@ export default function PatientHistoryProfile({
 
   const { data: prescriptions = [] } = useDoctorPatientPrescriptionsQuery(patientId);
 
-  const deletePrescription = useDeletePrescriptionMutation();
-  const [deleteTarget, setDeleteTarget] = useState(null);
   const [viewPrescriptionId, setViewPrescriptionId] = useState(null);
   const [viewLabTest, setViewLabTest] = useState(null);
 
@@ -90,6 +86,7 @@ export default function PatientHistoryProfile({
       ...patient,
       name: patient?.name || opdPatient?.name || '—',
       age: patient?.age ?? opdPatient?.age ?? null,
+      dob: patient?.dob ?? opdPatient?.dob ?? null,
       gender: patient?.gender || opdPatient?.gender || '—',
       phone:
         (patient?.phone && patient.phone !== '—' ? patient.phone : null) ??
@@ -108,6 +105,18 @@ export default function PatientHistoryProfile({
     return mergeVisitTimelineWithPrescriptions(fromApi, prescriptions);
   }, [historyData?.visits, prescriptions]);
 
+  const clinicalByAppointmentId = useMemo(() => {
+    const map = new Map();
+    for (const visit of visits) {
+      if (visit.appointmentDbId == null) continue;
+      map.set(Number(visit.appointmentDbId), {
+        symptoms: visit.symptoms,
+        followUp: visit.followUp,
+      });
+    }
+    return map;
+  }, [visits]);
+
   const showVisitSkeleton = historyPending && visits.length === 0;
 
   const patientLabs = useMemo(
@@ -124,19 +133,6 @@ export default function PatientHistoryProfile({
 
   if (!patient) return null;
 
-  const handleConfirmDelete = () => {
-    if (!deleteTarget?.id) return;
-    deletePrescription.mutate(
-      { id: deleteTarget.id, patientId, patientUid },
-      {
-        onSuccess: () => {
-          toast.success('Prescription deleted successfully');
-          setDeleteTarget(null);
-        },
-      }
-    );
-  };
-
   return (
     <div className="doc-page doc-patient-profile">
       <button type="button" className="doc-labs-back" onClick={onBack}>
@@ -152,7 +148,7 @@ export default function PatientHistoryProfile({
           <div className="doc-profile-hero__identity">
             <h2 className="doc-profile-name">{profile.name}</h2>
             <p className="doc-profile-meta">
-              {patientUid} · {profile.age != null ? `${profile.age} yrs` : '—'} ·{' '}
+              {patientUid} · {formatPatientAge({ age: profile.age, dob: profile.dob }) ?? '—'} ·{' '}
               {profile.gender || '—'}
             </p>
           </div>
@@ -226,16 +222,6 @@ export default function PatientHistoryProfile({
                         <Eye size={14} aria-hidden />
                         View
                       </Button>
-                      <Button
-                        type="button"
-                        variant="danger"
-                        size="sm"
-                        disabled={deletePrescription.isPending && deleteTarget?.id === rx.id}
-                        onClick={() => setDeleteTarget(rx)}
-                      >
-                        <Trash2 size={14} aria-hidden />
-                        Delete
-                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -305,15 +291,6 @@ export default function PatientHistoryProfile({
         </aside>
       </div>
 
-      <ConfirmDialog
-        isOpen={Boolean(deleteTarget)}
-        title="Delete Prescription?"
-        message="This action cannot be undone."
-        confirmLabel="Delete"
-        onCancel={() => setDeleteTarget(null)}
-        onConfirm={handleConfirmDelete}
-      />
-
       <PrescriptionDetailModal
         prescriptionId={viewPrescriptionId}
         open={viewPrescriptionId != null}
@@ -321,6 +298,7 @@ export default function PatientHistoryProfile({
         patientId={patientId}
         patientUid={patientUid}
         patientName={profile.name !== '—' ? profile.name : undefined}
+        clinicalByAppointmentId={clinicalByAppointmentId}
       />
 
       <DoctorLabReportModal

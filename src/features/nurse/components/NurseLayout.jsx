@@ -3,7 +3,7 @@
  * Nurse shell: nav, titles, profile menu, notifications bell.
  */
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -11,7 +11,6 @@ import {
   Activity,
   FileText,
   Pill,
-  AlertTriangle,
   CalendarClock,
 } from 'lucide-react';
 import { ROUTES } from '@/shared/constants';
@@ -20,26 +19,8 @@ import NurseNotificationsBell from '@/features/nurse/components/NurseNotificatio
 import NursePatientScopeBar from '@/features/nurse/components/NursePatientScopeBar';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
 import '../styles/nurse.css';
-import '../styles/nurse-alerts.css';
 
-const PAGE_TITLES = [
-  { prefix: ROUTES.NURSE_NOTIFICATIONS, title: 'Notifications' },
-  { prefix: '/nurse/alerts', title: 'Emergency Alerts' },
-  { prefix: '/nurse/handover', title: 'Shift Handover' },
-  { prefix: '/nurse/medications', title: 'Medications' },
-  { prefix: '/nurse/notes', title: 'Nursing Notes' },
-  { prefix: '/nurse/vitals', title: 'Vitals' },
-  { prefix: ROUTES.NURSE_QUEUE, title: 'Patient' },
-  { prefix: ROUTES.NURSE_DASHBOARD, title: 'Dashboard' },
-  { prefix: ROUTES.NURSE_MY_DUTY, title: 'My Duty' },
-  { prefix: '/nurse/patients', title: 'Patient' },
-  { prefix: ROUTES.NURSE_PROFILE, title: 'My Profile' },
-];
-
-function resolveTitle(pathname) {
-  const match = PAGE_TITLES.find((p) => pathname.startsWith(p.prefix));
-  return match?.title || 'Nursing';
-}
+const NURSE_HEADER_TITLE = 'Nurse';
 
 export default function NurseLayout({ children }) {
   const navigate = useNavigate();
@@ -50,8 +31,9 @@ export default function NurseLayout({ children }) {
     canViewVitals,
     canViewNotes,
     canViewMedication,
-    canViewAlerts,
   } = useNursePermissionSet();
+
+  const resolveLayoutTitle = useCallback(() => NURSE_HEADER_TITLE, []);
 
   const navLinks = useMemo(() => {
     const links = [
@@ -70,20 +52,17 @@ export default function NurseLayout({ children }) {
     if (canViewMedication) {
       links.push({ href: ROUTES.NURSE_MEDICATIONS, label: 'Medications', icon: Pill });
     }
-    if (canViewAlerts) {
-      links.push({ href: ROUTES.NURSE_ALERTS, label: 'Emergency Alerts', icon: AlertTriangle });
-    }
     return links;
-  }, [canViewPatients, canViewVitals, canViewNotes, canViewMedication, canViewAlerts]);
+  }, [canViewPatients, canViewVitals, canViewNotes, canViewMedication]);
 
   return (
     <RoleLayout
       navLinks={navLinks}
-      resolveTitle={resolveTitle}
+      resolveTitle={resolveLayoutTitle}
       homeRoute={ROUTES.NURSE_DASHBOARD}
       roleLabel="Nursing"
       roleLabelClassName="nurse-role-label"
-      defaultTitle="Dashboard"
+      defaultTitle={NURSE_HEADER_TITLE}
       showBell
       profileHref={ROUTES.NURSE_PROFILE}
       logoutMenuOnly={onProfilePage}

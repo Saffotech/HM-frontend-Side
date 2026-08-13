@@ -124,6 +124,18 @@ function LastAdministrationCell({ prescription }) {
                 </span>
               </div>
             </div>
+            <div className="nurse-patient-meds__last-admin-row nurse-patient-meds__last-admin-row--notes">
+              <span className="nurse-patient-meds__last-admin-icon" aria-hidden>
+                <ClipboardList size={14} />
+              </span>
+              <div className="nurse-patient-meds__last-admin-content">
+                <span className="nurse-patient-meds__last-admin-label">Notes</span>
+                <span className="nurse-patient-meds__last-admin-value nurse-patient-meds__last-admin-value--notes">
+                  {prescription.administration?.remarks?.trim()
+                    || '—'}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -263,26 +275,17 @@ export default function NursePatientMedicationsPage() {
           );
         }
         return (
-          <div className="nurse-table__actions">
-            <NursePermissionButton
-              allowed={canUpdateMedication}
-              className="nurse-btn nurse-btn--sm nurse-btn--secondary nurse-patient-meds__action-btn"
-              onClick={() => openAdmin(p, 'update')}
-            >
-              Update
-            </NursePermissionButton>
-            <NursePermissionButton
-              allowed={canCreateMedication}
-              className="nurse-btn nurse-btn--sm nurse-btn--primary nurse-patient-meds__action-btn"
-              onClick={() => openAdmin(p, 'create')}
-            >
-              Record dose
-            </NursePermissionButton>
-          </div>
+          <NursePermissionButton
+            allowed={canCreateMedication}
+            className="nurse-btn nurse-btn--sm nurse-btn--primary nurse-patient-meds__action-btn"
+            onClick={() => openAdmin(p, 'create')}
+          >
+            Record dose
+          </NursePermissionButton>
         );
       },
     },
-  ], [openAdmin, canCreateMedication, canUpdateMedication]);
+  ], [openAdmin, canCreateMedication]);
 
   return (
     <NurseLayout>

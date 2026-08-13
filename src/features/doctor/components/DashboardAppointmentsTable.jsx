@@ -57,7 +57,9 @@ function DashboardAppointmentsTable({
   actionMode = 'waiting',
   isLoading = false,
   startingConsult,
+  cancellingAppointment = false,
   onBeginConsultation,
+  onCancelAppointment,
   onOpenPatient,
   onPrescribe,
   onOpenNotes,
@@ -146,10 +148,12 @@ function DashboardAppointmentsTable({
                               patient={patient}
                               mode={actionMode}
                               onConsult={onBeginConsultation}
+                              onCancel={onCancelAppointment}
                               onEmr={() => onOpenPatient?.(patient)}
                               onPrescribe={onPrescribe}
                               onNotes={onOpenNotes}
                               disabled={startingConsult}
+                              cancelDisabled={cancellingAppointment}
                             />
                         </td>
                       ) : null}

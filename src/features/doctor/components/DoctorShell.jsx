@@ -6,15 +6,11 @@ import { BrandLogo, BrandName, UserProfileMenu } from '@/shared/components/commo
 import DoctorNotificationsBell from './DoctorNotificationsBell';
 import './DoctorShell.css';
 
-export default function DoctorShell({ title, nav, active, onSelect, children }) {
+const DOCTOR_HEADER_TITLE = 'Doctor';
+
+export default function DoctorShell({ title = DOCTOR_HEADER_TITLE, nav, active, onSelect, children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-  // Doctor Phase 2 by Atharva — header title for sections not listed in sidebar (bell → notifications)
-  const sectionLabels = { notifications: 'Notifications', profile: 'My Profile' };
-  const activeLabel =
-    nav.find((n) => n.id === active)?.label ?? sectionLabels[active] ?? title;
-
-  // Doctor Phase 2 by Atharva — on profile page, name click shows logout; elsewhere opens profile
   const onProfilePage = location.pathname === ROUTES.DOCTOR_PROFILE;
 
   return (
@@ -24,7 +20,7 @@ export default function DoctorShell({ title, nav, active, onSelect, children }) 
           <BrandLogo size={28} />
           <BrandName className="doctor-shell__mobile-brand-text" />
         </Link>
-        <p className="doctor-shell__mobile-title">{activeLabel}</p>
+        <p className="doctor-shell__mobile-title">{DOCTOR_HEADER_TITLE}</p>
         <div className="doctor-shell__mobile-actions">
           <DoctorNotificationsBell onViewAll={() => onSelect('notifications')} />
           <button type="button" className="doctor-shell__menu-btn" onClick={() => setMobileOpen(true)} aria-label="Open menu">
@@ -76,7 +72,7 @@ export default function DoctorShell({ title, nav, active, onSelect, children }) 
       <div className="doctor-shell__main">
         <header className="doctor-shell__header no-print">
           <div>
-            <h1 className="doctor-shell__header-title">{activeLabel}</h1>
+            <h1 className="doctor-shell__header-title">{DOCTOR_HEADER_TITLE}</h1>
           </div>
           <div className="doctor-shell__header-actions">
             <DoctorNotificationsBell onViewAll={() => onSelect('notifications')} />

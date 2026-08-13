@@ -318,15 +318,14 @@ export default function NurseProfilePage() {
       return;
     }
 
-    // Nurse Phase 2 by Atharva — phone & emergency_contact.phone must be exactly 10 digits
     const phone = formatPhoneInput(form?.phone);
     const emergencyPhone = formatPhoneInput(form?.emergency_contact_phone);
-    if (!isStrictTenDigitPhone(phone)) {
+    if (phone && !isStrictTenDigitPhone(phone)) {
       toast.error('Phone must be a 10-digit number');
       setActiveTab('contact');
       return;
     }
-    if (!isStrictTenDigitPhone(emergencyPhone)) {
+    if (emergencyPhone && !isStrictTenDigitPhone(emergencyPhone)) {
       toast.error('Emergency phone must be a 10-digit number');
       setActiveTab('contact');
       return;
@@ -761,11 +760,17 @@ export default function NurseProfilePage() {
                         <span className="nurse-profile-field__label">Experience (years)</span>
                         <input
                           className="nurse-profile-input"
-                          type="number"
-                          min={0}
-                          max={60}
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={2}
+                          placeholder="e.g. 05"
                           value={form.experience_years}
-                          onChange={(e) => setField('experience_years', e.target.value)}
+                          onChange={(e) => {
+                            const digits = e.target.value.replace(/\D/g, '').slice(0, 2);
+                            if (digits !== '' && Number(digits) > 60) return;
+                            setField('experience_years', digits);
+                          }}
                         />
                       </label>
                       <div className="nurse-profile-field nurse-profile-field--span">

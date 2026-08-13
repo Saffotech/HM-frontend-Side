@@ -63,6 +63,11 @@
   padding-left: 0.75rem;
 }
 
+.nurse-notes-registry__table--fetching {
+  opacity: 0.72;
+  transition: opacity 0.15s ease;
+}
+
 .nurse-notes-registry__table .nurse-card {
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
@@ -129,7 +134,9 @@
 }
 
 .nurse-note-detail {
-  gap: 0.625rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .nurse-note-detail .nurse-notes-snapshot {
@@ -137,19 +144,32 @@
 }
 
 .nurse-note-detail .nurse-vital-detail__top {
-  gap: 0.625rem;
+  gap: 0.5rem;
+  margin-bottom: 0;
 }
 
 .nurse-note-detail .nurse-vital-detail__identity {
-  gap: 0.75rem;
+  gap: 0.625rem;
+}
+
+.nurse-note-detail .nurse-vital-detail__name {
+  margin: 0;
+  font-size: 1.125rem;
+  line-height: 1.3;
+}
+
+.nurse-note-detail .nurse-vital-detail__meta-line {
+  margin: 0.15rem 0 0;
+  font-size: 0.8125rem;
 }
 
 .nurse-note-detail .nurse-card--padded {
-  padding: 0.75rem 1rem;
+  padding: 0.625rem 0.875rem;
 }
 
 .nurse-note-detail .nurse-vital-detail__info-bar {
-  gap: 0.75rem;
+  gap: 0.75rem 1.25rem;
+  margin: 0;
 }
 
 .nurse-note-detail .nurse-vital-detail__info-item {
@@ -157,29 +177,56 @@
 }
 
 .nurse-note-detail .nurse-vital-detail__section {
-  gap: 0.5rem;
+  gap: 0.4rem;
+  margin: 0;
 }
 
 .nurse-note-detail .nurse-vital-detail__section-title {
-  font-size: 0.9375rem;
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.nurse-note-detail .nurse-clinical-panel {
+  gap: 0.625rem;
+}
+
+.nurse-note-detail .nurse-clinical-panel.nurse-card--padded {
+  padding: 0.75rem 0.875rem;
+}
+
+.nurse-note-detail .nurse-form-actions {
+  margin-top: 0;
+  padding-top: 0.625rem;
 }
 
 .nurse-note-detail__avatar {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 3rem;
-  height: 3rem;
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: 10px;
   background: var(--color-surface);
   color: var(--color-primary);
   flex-shrink: 0;
 }
 
+.nurse-note-detail__avatar svg {
+  width: 22px;
+  height: 22px;
+}
+
 .nurse-note-detail__sections {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.625rem;
+}
+
+@media (max-width: 1100px) {
+  .nurse-note-detail__sections {
+    grid-template-columns: 1fr;
+  }
 }
 
 .nurse-note-detail__card {

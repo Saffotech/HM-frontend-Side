@@ -15,6 +15,10 @@ import {
 import { useLabPermissionSet } from '@/features/lab/hooks/useLabPermission';
 import { Button, EmptyState } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
+import {
+  isLabDepartmentUnassignedError,
+  LAB_DEPT_UNASSIGNED_MESSAGE,
+} from '@/shared/utils/labDepartments';
 import LabNotificationRow from './LabNotificationRow';
 import './LabNotificationsBell.css';
 import './LabNotificationsSection.css';
@@ -272,10 +276,12 @@ export default function LabNotificationsSection({ onDeepLink }) {
               icon={Bell}
               title="Could not load notifications"
               description={
-                error?.message
-                || (error?.status === 403
-                  ? "You don't have permission to view notifications."
-                  : 'Something went wrong. Please try again.')
+                isLabDepartmentUnassignedError(error)
+                  ? LAB_DEPT_UNASSIGNED_MESSAGE
+                  : error?.message
+                    || (error?.status === 403
+                      ? "You don't have permission to view notifications."
+                      : 'Something went wrong. Please try again.')
               }
             />
           ) : items.length === 0 ? (

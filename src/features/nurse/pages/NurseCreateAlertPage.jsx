@@ -107,7 +107,7 @@ export default function NurseCreateAlertPage() {
         ) : (
           <form className="nurse-card nurse-alerts-create__form" onSubmit={onSubmit}>
             <div className="nurse-alerts-create__form-top">
-            <section className="nurse-alerts-create__section">
+            <section className="nurse-alerts-create__section nurse-alerts-create__section--patient">
               <h2 className="nurse-alerts-create__section-title">Patient</h2>
               <NursePatientPicker
                 id="alert-patient-picker"
@@ -126,7 +126,7 @@ export default function NurseCreateAlertPage() {
                   <label htmlFor="alert_type">Alert type</label>
                   <select
                     id="alert_type"
-                    className="nurse-select"
+                    className="nurse-select nurse-alerts-create__select"
                     value={form.alert_type}
                     onChange={(e) => set('alert_type', e.target.value)}
                   >
@@ -175,7 +175,7 @@ export default function NurseCreateAlertPage() {
                   <label htmlFor="title">Short title</label>
                   <input
                     id="title"
-                    className="nurse-input"
+                    className="nurse-input nurse-alerts-create__input"
                     value={form.title}
                     onChange={(e) => set('title', e.target.value)}
                     placeholder="e.g. Patient collapsed in ward"
@@ -186,7 +186,7 @@ export default function NurseCreateAlertPage() {
                   <label htmlFor="description">Description</label>
                   <textarea
                     id="description"
-                    className="nurse-textarea"
+                    className="nurse-textarea nurse-alerts-create__textarea"
                     rows={5}
                     value={form.description}
                     onChange={(e) => set('description', e.target.value)}

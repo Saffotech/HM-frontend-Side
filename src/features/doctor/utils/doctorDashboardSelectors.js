@@ -14,6 +14,7 @@ function toDashboardAppointment(appt) {
     patientDbId: appt.patientDbId,
     patientName: appt.patientName,
     patientAge: appt.patientAge,
+    dob: appt.dob ?? null,
     patientGender: appt.patientGender,
     patientPhone: appt.patientPhone,
     time: appt.time,

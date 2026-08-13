@@ -1,14 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, User } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
+import NurseHistoryFilter from '@/features/nurse/components/NurseHistoryFilter';
 import NurseVitalsFormFields, { buildVitalsPayload, vitalsToForm } from '@/features/nurse/components/NurseVitalsFormFields';
 import { useNursePermission } from '@/features/nurse/hooks/useNursePermission';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { QueryFeedback } from '@/shared/components/common';
-import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
-import { useNurseVitalQuery, useUpdateVitalsMutation } from '@/shared/hooks/queries/useNurseQuery';
+import {
+  formatPatientIdDisplay,
+  withAssembledVitalHistory,
+} from '@/shared/api/mappers/nurseMapper';
+import {
+  useNurseVitalQuery,
+  useNurseVitalsSearchQuery,
+  useUpdateVitalsMutation,
+} from '@/shared/hooks/queries/useNurseQuery';
 import { toast } from '@/shared/utils/toast';
+
+function formatRecordedAt(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString();
+}
+
+function historyIdOf(entry) {
+  if (!entry) return '';
+  return String(entry.history_id ?? entry.id ?? '');
+}
 
 export default function NurseEditVitalsPage() {
   const { vitalId } = useParams();
@@ -17,8 +35,58 @@ export default function NurseEditVitalsPage() {
   const canUpdateVitals = useNursePermission('nurse_vitals:update');
   const [permReady, setPermReady] = useState(false);
   const { data: vital, isLoading, isError, error, refetch } = useNurseVitalQuery(vitalId);
-  const updateMut = useUpdateVitalsMutation(vitalId);
+  const { data: patientVitals } = useNurseVitalsSearchQuery(
+    { patient_id: vital?.patient_id, page: 1, page_size: 100 },
+    { enabled: Boolean(vital?.patient_id) },
+  );
+
+  const vitalWithHistory = useMemo(
+    () => withAssembledVitalHistory(vital, patientVitals?.items ?? []) || vital,
+    [vital, patientVitals?.items],
+  );
+
+  const historyItems = useMemo(() => {
+    const list = vitalWithHistory?.history;
+    if (Array.isArray(list) && list.length) {
+      return [...list].sort((a, b) => new Date(b.recorded_at) - new Date(a.recorded_at));
+    }
+    if (!vitalWithHistory) return [];
+    return [{
+      history_id: vitalWithHistory.id,
+      recorded_at: vitalWithHistory.recorded_at,
+      recorded_by: vitalWithHistory.recorded_by_name ?? vitalWithHistory.recorded_by ?? null,
+      status: vitalWithHistory.status,
+      temperature: vitalWithHistory.temperature,
+      blood_pressure: vitalWithHistory.blood_pressure,
+      heart_rate: vitalWithHistory.heart_rate,
+      respiratory_rate: vitalWithHistory.respiratory_rate,
+      oxygen_saturation: vitalWithHistory.oxygen_saturation,
+      blood_sugar: vitalWithHistory.blood_sugar,
+      weight: vitalWithHistory.weight,
+      pain_level: vitalWithHistory.pain_level,
+      observation_notes: vitalWithHistory.observation_notes,
+    }];
+  }, [vitalWithHistory]);
+
+  const [selectedHistoryId, setSelectedHistoryId] = useState('');
   const [form, setForm] = useState(null);
+
+  const activeHistoryId = useMemo(() => {
+    if (!historyItems.length) return '';
+    if (selectedHistoryId && historyItems.some((e) => historyIdOf(e) === String(selectedHistoryId))) {
+      return String(selectedHistoryId);
+    }
+    const matchRoute = historyItems.find((e) => historyIdOf(e) === String(vitalId));
+    return historyIdOf(matchRoute || historyItems[0]);
+  }, [historyItems, selectedHistoryId, vitalId]);
+
+  const activeSnapshot = useMemo(
+    () => historyItems.find((e) => historyIdOf(e) === activeHistoryId) || historyItems[0],
+    [historyItems, activeHistoryId],
+  );
+
+  const updateTargetId = activeHistoryId || vitalId;
+  const updateMut = useUpdateVitalsMutation(updateTargetId);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,10 +103,26 @@ export default function NurseEditVitalsPage() {
   }, [refreshPermissions]);
 
   useEffect(() => {
-    if (vital) {
-      setForm(vitalsToForm(vital));
+    if (!historyItems.length) return;
+    setSelectedHistoryId((prev) => {
+      if (prev && historyItems.some((e) => historyIdOf(e) === String(prev))) {
+        return String(prev);
+      }
+      const preferred =
+        historyItems.find((e) => historyIdOf(e) === String(vitalId)) || historyItems[0];
+      return historyIdOf(preferred);
+    });
+  }, [vital?.id, vitalId, historyItems]);
+
+  useEffect(() => {
+    if (activeSnapshot) {
+      setForm(vitalsToForm(activeSnapshot));
     }
-  }, [vital]);
+  }, [activeSnapshot]);
+
+  const onHistoryChange = useCallback((id) => {
+    setSelectedHistoryId(String(id));
+  }, []);
 
   const onSubmit = (e) => {
     e.preventDefault();
@@ -49,14 +133,13 @@ export default function NurseEditVitalsPage() {
     updateMut.mutate(buildVitalsPayload(form), {
       onSuccess: (updated) => {
         toast.success('Vitals updated');
-        const nextId = updated?.id ?? vitalId;
+        const nextId = updated?.id ?? updateTargetId;
         navigate(`/nurse/vitals/${nextId}`);
       },
       onError: (err) => toast.error(err?.message || 'Failed to update vitals'),
     });
   };
 
-  const recordedAt = vital?.recorded_at ? new Date(vital.recorded_at).toLocaleString() : '—';
   const blockByPermission = permReady && !canUpdateVitals;
 
   return (
@@ -99,18 +182,25 @@ export default function NurseEditVitalsPage() {
               </div>
 
               <div className="nurse-vital-detail__info-bar nurse-card nurse-card--padded">
-                <div className="nurse-vital-detail__info-item">
+                <div className="nurse-vital-detail__info-item nurse-vital-detail__info-item--filter">
                   <Calendar size={18} aria-hidden />
-                  <div>
-                    <span className="nurse-vital-detail__info-label">Last Recorded</span>
-                    <span className="nurse-vital-detail__info-value">{recordedAt}</span>
-                  </div>
+                  <NurseHistoryFilter
+                    label="Recorded At"
+                    items={historyItems}
+                    value={activeHistoryId}
+                    onChange={onHistoryChange}
+                    getItemId={(item) => historyIdOf(item)}
+                    getItemDate={(item) => item.recorded_at}
+                    formatDate={formatRecordedAt}
+                  />
                 </div>
                 <div className="nurse-vital-detail__info-item">
                   <User size={18} aria-hidden />
                   <div>
                     <span className="nurse-vital-detail__info-label">Recorded By</span>
-                    <span className="nurse-vital-detail__info-value">{vital.recorded_by || '—'}</span>
+                    <span className="nurse-vital-detail__info-value">
+                      {activeSnapshot?.recorded_by || vital.recorded_by || '—'}
+                    </span>
                   </div>
                 </div>
               </div>

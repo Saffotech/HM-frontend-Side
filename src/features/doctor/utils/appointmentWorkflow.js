@@ -1,4 +1,4 @@
-import { compareAppointmentsByDateTime } from './doctorDates';
+import { compareAppointmentsByDateTime, getAppointmentSortTime } from './doctorDates';
 import {
   buildPaymentFromApiFields,
   getAppointmentDisplayStatus,
@@ -73,6 +73,26 @@ export function compareQueueOrder(a, b) {
   };
   const byPriority = rank(a) - rank(b);
   if (byPriority !== 0) return byPriority;
+  return compareAppointmentsByDateTime(a, b);
+}
+
+/** Calendar day list — upcoming first (today), then earliest time first within each group. */
+export function compareCalendarDayAppointments(a, b, { selectedDay, today, now = new Date() } = {}) {
+  const sortTime = (appt) => getAppointmentSortTime(appt);
+  const isToday = selectedDay && today && selectedDay === today;
+
+  if (isToday) {
+    const nowMs = now.getTime();
+    const tier = (appt) => {
+      const status = getAppointmentStatus(appt);
+      if (status === 'Completed') return 1;
+      return sortTime(appt) < nowMs ? 1 : 0;
+    };
+    const aTier = tier(a);
+    const bTier = tier(b);
+    if (aTier !== bTier) return aTier - bTier;
+  }
+
   return compareAppointmentsByDateTime(a, b);
 }
 

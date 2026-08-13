@@ -7,24 +7,21 @@ export const NOTE_FIELDS = [
     label: 'Symptoms',
     icon: Stethoscope,
     accent: 'rose',
-    placeholder:
-      'Record all patient-reported symptoms accurately, including onset, duration, severity, and associated complaints. Multiple symptoms may be entered if applicable.',
+    placeholder: 'Onset, duration, severity, and associated complaints…',
   },
   {
     key: 'treatment_response',
     label: 'Treatment Response',
     icon: ClipboardList,
     accent: 'blue',
-    placeholder:
-      "Document the patient's response to the prescribed treatment, including improvement, no change, worsening condition, side effects, or any follow-up recommendations.",
+    placeholder: 'Improvement, no change, worsening, or side effects…',
   },
   {
     key: 'additional_notes',
     label: 'Additional Notes',
     icon: FileText,
     accent: 'green',
-    placeholder:
-      'Enter any additional clinical observations, special instructions, allergies, follow-up advice, or other relevant information not covered in the previous sections…',
+    placeholder: 'Other observations, allergies, or follow-up advice…',
   },
 ];
 
@@ -44,7 +41,7 @@ export function noteToForm(note) {
 
 export default function NurseNoteFormFields({ form, onChange, idPrefix = 'note' }) {
   return (
-    <div className="nurse-clinical-fields">
+    <div className="nurse-clinical-fields nurse-clinical-fields--grid nurse-clinical-fields--notes">
       {NOTE_FIELDS.map(({ key, label, icon: Icon, accent, placeholder }) => (
         <NurseClinicalFieldShell
           key={key}
@@ -62,8 +59,8 @@ export default function NurseNoteFormFields({ form, onChange, idPrefix = 'note' 
         >
           <textarea
             id={`${idPrefix}-${key}`}
-            rows={4}
-            className="nurse-textarea nurse-clinical-field__input"
+            rows={5}
+            className="nurse-textarea nurse-clinical-field__input nurse-clinical-field__input--notes"
             placeholder={placeholder}
             value={form[key]}
             onChange={(e) => onChange(key, e.target.value)}

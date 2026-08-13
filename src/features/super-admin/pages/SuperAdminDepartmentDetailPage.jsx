@@ -13,6 +13,7 @@ import {
   filterDoctorsByDepartment,
   staffDisplayName,
 } from '@/features/super-admin/utils/departmentDoctors';
+import { isLabOrRadDepartment } from '@/shared/utils/labDepartments';
 import {
   useAdminDepartmentDetailQuery,
   useUpdateDepartmentMutation,
@@ -37,6 +38,7 @@ export default function SuperAdminDepartmentDetailPage() {
   );
   const {
     doctors,
+    labTechnicians,
     isLoading: doctorsLoading,
     isError: doctorsError,
     error: doctorsErrorObj,
@@ -44,9 +46,11 @@ export default function SuperAdminDepartmentDetailPage() {
   } = useDepartmentDoctorsData();
   const updateMutation = useUpdateDepartmentMutation();
 
-  const departmentDoctors = useMemo(
-    () => filterDoctorsByDepartment(doctors, departmentId),
-    [doctors, departmentId],
+  const isLabDept = isLabOrRadDepartment(department);
+  const assignedStaff = useMemo(
+    () =>
+      filterDoctorsByDepartment(isLabDept ? labTechnicians : doctors, departmentId),
+    [isLabDept, labTechnicians, doctors, departmentId],
   );
 
   useEffect(() => {
@@ -162,8 +166,10 @@ export default function SuperAdminDepartmentDetailPage() {
                         </div>
                       </div>
                       <div className="admin-meta-item">
-                        <div className="admin-meta-list__label">Doctors assigned</div>
-                        <div className="admin-meta-list__value">{departmentDoctors.length}</div>
+                        <div className="admin-meta-list__label">
+                          {isLabDept ? 'Lab technicians assigned' : 'Doctors assigned'}
+                        </div>
+                        <div className="admin-meta-list__value">{assignedStaff.length}</div>
                       </div>
                     </div>
                   )}
@@ -172,16 +178,26 @@ export default function SuperAdminDepartmentDetailPage() {
 
               <div className="admin-card sa-panel-card">
                 <div className="admin-card__header">
-                  <h2 className="admin-card__title">Doctors in this department</h2>
+                  <h2 className="admin-card__title">
+                    {isLabDept
+                      ? 'Lab technicians in this department'
+                      : 'Doctors in this department'}
+                  </h2>
                   <p className="admin-card__desc">
-                    Staff with the Doctor role assigned to {department.name}.
+                    {isLabDept
+                      ? `Staff with the Lab Technician role assigned to ${department.name}.`
+                      : `Staff with the Doctor role assigned to ${department.name}.`}
                   </p>
                 </div>
                 <div className="admin-card__body">
-                  {!departmentDoctors.length ? (
+                  {!assignedStaff.length ? (
                     <div className="admin-empty-state sa-dept-detail__empty-doctors">
                       <User size={22} aria-hidden />
-                      <p>No doctors are assigned to this department yet.</p>
+                      <p>
+                        {isLabDept
+                          ? 'No lab technicians are assigned to this department yet.'
+                          : 'No doctors are assigned to this department yet.'}
+                      </p>
                     </div>
                   ) : (
                     <div className="admin-table-wrap">
@@ -193,18 +209,18 @@ export default function SuperAdminDepartmentDetailPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {departmentDoctors.map((doctor) => (
-                            <tr key={doctor.id}>
+                          {assignedStaff.map((member) => (
+                            <tr key={member.id}>
                               <td className="admin-table__primary">
-                                {staffDisplayName(doctor)}
+                                {staffDisplayName(member)}
                               </td>
                               <td>
                                 <a
-                                  href={`mailto:${doctor.email}`}
+                                  href={`mailto:${member.email}`}
                                   className="sa-dept-detail__doctor-email"
                                 >
                                   <Mail size={14} aria-hidden />
-                                  {doctor.email}
+                                  {member.email}
                                 </a>
                               </td>
                             </tr>
