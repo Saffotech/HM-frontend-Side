@@ -1,6 +1,6 @@
 /**
  * Admin OPD bed inventory API — Settings → OPD → Beds & wards.
- * Does not replace OPD assign/release; those stay on /opd/beds/assign|release.
+ * Occupancy / transfer / release is IPD-owned (`/ipd/beds*`).
  */
 
 import { apiClient } from '@/shared/api/client';

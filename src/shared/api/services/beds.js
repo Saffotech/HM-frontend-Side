@@ -1,4 +1,9 @@
-import { getBeds, getBedsByWard, assignBed, releaseBed, apiBedToUi } from '@/features/opd/beds/api/beds';
+/**
+ * Shared bed list helpers for admin inventory / nurse allocation UIs.
+ * Live occupy / transfer / release is IPD-owned (`features/ipd/api/beds.js`).
+ */
+
+import { getBeds, apiBedToUi } from '@/features/opd/beds/api/beds';
 import { getPatient, getPatientProfileById } from '@/shared/api/services/patients';
 
 /** Registration department lives on OPD visits — fill bed rows when bed.department_id was not set. */
@@ -38,22 +43,5 @@ export async function listBeds(token, params = {}) {
 }
 
 export async function listBedsByWard(wardName, token) {
-  const raw = await getBedsByWard(wardName, token);
-  let beds = (raw.beds ?? []).map(apiBedToUi);
-  beds = await enrichBedsWithPatientDepartment(beds, token);
-  return {
-    wardName: raw.ward_name ?? wardName,
-    beds,
-    stats: raw.stats ?? null,
-    occupancyPercent: raw.occupancy_percent ?? 0,
-  };
+  return listBeds(token, { ward: wardName });
 }
-
-export async function assignBedToPatient(payload, token) {
-  return assignBed(payload, token);
-}
-
-export async function releaseBedById(bedId, token) {
-  return releaseBed(bedId, token);
-}
-
