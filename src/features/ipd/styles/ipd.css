@@ -1,15 +1,5 @@
 /* IPD module — tokens from shared design system */
 
-.ipd-role-label {
-  margin: 0.5rem 1rem 0.35rem;
-  padding: 0 0.125rem;
-  font-size: var(--text-small);
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-sidebar-text-active);
-}
-
 .ipd-page {
   display: flex;
   flex-direction: column;
@@ -917,6 +907,13 @@
   font-size: 0.9rem;
   font-weight: 800;
   color: #0f172a;
+}
+
+.ipd-beds-summary__rate {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
 }
 
 .ipd-beds-summary__count {

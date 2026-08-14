@@ -1,15 +1,5 @@
 /* Receptionist module — tokens come from shared design system (module-theme-bridge.css) */
 
-.receptionist-role-label {
-  margin: 0.5rem 1rem 0.35rem;
-  padding: 0 0.125rem;
-  font-size: var(--text-small);
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-sidebar-text-active);
-}
-
 /* Cards & sections */
 .rec-card {
   background: var(--rec-surface);

@@ -5,13 +5,15 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Modal, Button } from '@/shared/components/common';
-import { WARDS } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 import {
   useIpdBedsQuery,
   useIpdPatientsQuery,
   useTransferIpdBedMutation,
 } from '@/features/ipd/hooks/useIpdQuery';
+import { useIpdWardOptions } from '@/features/ipd/hooks/useIpdWardOptions';
+import { useIpdBedRateLookup } from '@/features/ipd/hooks/useIpdBedRateLookup';
+import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
 import { IPD_ADMISSION_STATUS } from '@/features/ipd/utils/constants';
 
 function patientLabel(row) {
@@ -53,7 +55,8 @@ export default function BedTransferModal({
   const availableBeds = (bedsQuery.data?.beds ?? []).filter(
     (bed) => bed.status === 'available'
   );
-  const wardOptions = useMemo(() => WARDS ?? [], []);
+  const { wardOptions, isLoading: wardsLoading } = useIpdWardOptions();
+  const { getRate, ratesAvailable } = useIpdBedRateLookup();
   const transferMutation = useTransferIpdBedMutation();
 
   const seededFromBed = Boolean(initialBed?.id);
@@ -299,13 +302,23 @@ export default function BedTransferModal({
               setWard(e.target.value);
               setNewBedId('');
             }}
+            disabled={wardsLoading}
           >
-            <option value="">Select ward…</option>
-            {wardOptions.map((w) => (
-              <option key={w} value={w}>
-                {w}
-              </option>
-            ))}
+            <option value="">
+              {wardsLoading
+                ? 'Loading wards…'
+                : wardOptions.length === 0
+                  ? 'No wards in inventory'
+                  : 'Select ward…'}
+            </option>
+            {wardOptions.map((w) => {
+              const rate = ratesAvailable ? getRate(w) : null;
+              return (
+                <option key={w} value={w}>
+                  {rate != null ? `${w} · ${formatIpdMoney(rate)}/day` : w}
+                </option>
+              );
+            })}
           </select>
         </div>
         <div className="ipd-toolbar__field">
@@ -320,11 +333,16 @@ export default function BedTransferModal({
             disabled={!ward}
           >
             <option value="">{!ward ? 'Select ward first…' : 'Select bed…'}</option>
-            {availableBeds.map((bed) => (
-              <option key={bed.id} value={bed.id}>
-                {bed.bed_number}
-              </option>
-            ))}
+            {availableBeds.map((bed) => {
+              const rate = ratesAvailable ? getRate(bed) : null;
+              return (
+                <option key={bed.id} value={bed.id}>
+                  {rate != null
+                    ? `${bed.bed_number} · ${formatIpdMoney(rate)}/day`
+                    : bed.bed_number}
+                </option>
+              );
+            })}
           </select>
         </div>
         {error ? (

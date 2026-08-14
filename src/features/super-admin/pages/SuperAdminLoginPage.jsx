@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, Lock, Mail, Shield, ShieldCheck } from 'lucide-r
 import { ROUTES, ROLES } from '@/shared/constants';
 import { BrandLogo, BrandName } from '@/shared/components/common';
 import { useAuthStore } from '@/shared/store/useAuthStore';
-import { trimCredentials, hasCredentials } from '@/shared/utils/credentials';
+import { trimCredentials, hasCredentials, normalizeEmailInput } from '@/shared/utils/credentials';
 import { toast } from '@/shared/utils/toast';
 import '@/features/super-admin/styles/super-admin-login.css';
 
@@ -116,8 +116,10 @@ export default function SuperAdminLoginPage() {
                     type="email"
                     autoComplete="username"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@saffocare.local"
+                    onChange={(e) => setEmail(normalizeEmailInput(e.target.value))}
+                    placeholder="you@saffocare.com"
+                    autoCapitalize="none"
+                    spellCheck={false}
                     required
                   />
                 </div>

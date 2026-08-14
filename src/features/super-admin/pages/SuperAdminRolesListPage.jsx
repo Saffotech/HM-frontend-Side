@@ -9,6 +9,24 @@ import { useAdminDashboardQuery, useAdminRolesQuery } from '@/shared/hooks/queri
 import { Button, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 
+/** Display order for System roles cards (API may return any order). */
+const ROLE_CARD_ORDER = [
+  'super_admin',
+  'admin',
+  'receptionist',
+  'opd_billing',
+  'doctor',
+  'ipd',
+  'nurse',
+  'lab_technician',
+  'pharmacist',
+];
+
+function roleSortIndex(name) {
+  const idx = ROLE_CARD_ORDER.indexOf(String(name || '').toLowerCase());
+  return idx === -1 ? ROLE_CARD_ORDER.length + 1 : idx;
+}
+
 function buildStaffCounts(staffByRole = []) {
   return staffByRole.reduce((acc, row) => {
     if (row.role_name) acc[row.role_name] = row.count ?? 0;
@@ -21,7 +39,15 @@ export default function SuperAdminRolesListPage() {
   const apiQuery = useAdminRolesQuery();
   const dashboardQuery = useAdminDashboardQuery();
 
-  const roles = apiQuery.data;
+  const roles = useMemo(() => {
+    const list = apiQuery.data ?? [];
+    return [...list].sort((a, b) => {
+      const byOrder = roleSortIndex(a.name) - roleSortIndex(b.name);
+      if (byOrder !== 0) return byOrder;
+      return String(a.name || '').localeCompare(String(b.name || ''));
+    });
+  }, [apiQuery.data]);
+
   const staffCounts = useMemo(
     () => buildStaffCounts(dashboardQuery.data?.staff_by_role ?? []),
     [dashboardQuery.data?.staff_by_role],

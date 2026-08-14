@@ -118,8 +118,6 @@ export default function IpdLayout({ children }) {
       navLinks={navLinks}
       resolveTitle={resolveTitle}
       homeRoute={homeRoute}
-      roleLabel="IPD"
-      roleLabelClassName="ipd-role-label"
       defaultTitle="IPD"
       showBell={false}
       profileHref={ROUTES.IPD_PROFILE}

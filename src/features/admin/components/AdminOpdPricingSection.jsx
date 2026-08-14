@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BedDouble,
   ChevronDown,
   CircleDollarSign,
-  Plus,
   Save,
   Stethoscope,
   Trash2,
@@ -13,8 +12,43 @@ import {
   useAdminRolesQuery,
   useAdminStaffListQuery,
 } from '@/shared/hooks/queries/useAdminQuery';
+import { useBedInventoryListQuery, useBedInventorySummaryQuery } from '@/features/admin/hooks/useOpdBedsQuery';
 import AdminEditLockToggle from '@/features/admin/components/AdminEditLockToggle';
 import { Button, Input, Label } from '@/shared/components/common';
+
+/** Backend still stores General/Private/ICU in fixed fields; other wards use ward_rates. */
+const BUILTIN_TARIFF_WARDS = new Set(['general', 'private', 'icu']);
+
+function isBuiltinTariffWard(name) {
+  return BUILTIN_TARIFF_WARDS.has(String(name || '').trim().toLowerCase());
+}
+
+function builtinTariffField(wardName) {
+  const key = String(wardName || '').trim().toLowerCase();
+  if (key === 'general') return 'general_ward_charge';
+  if (key === 'private') return 'private_ward_charge';
+  if (key === 'icu') return 'icu_charge';
+  return null;
+}
+
+function getInventoryWardCharge(bedTariff, wardName) {
+  const field = builtinTariffField(wardName);
+  if (field) {
+    const n = Number(bedTariff?.[field]);
+    return Number.isFinite(n) ? n : 0;
+  }
+  const match = (bedTariff?.ward_rates ?? []).find(
+    (row) =>
+      String(row.ward_name || '').trim().toLowerCase() ===
+      String(wardName || '').trim().toLowerCase(),
+  );
+  if (match && match.charge_per_day !== '' && match.charge_per_day != null) {
+    const n = Number(match.charge_per_day);
+    return Number.isFinite(n) ? n : 0;
+  }
+  const fallback = Number(bedTariff?.general_ward_charge);
+  return Number.isFinite(fallback) ? fallback : 0;
+}
 
 function Field({ id, label, hint, children }) {
   return (
@@ -194,6 +228,41 @@ export default function AdminOpdPricingSection({
     },
     { enabled: Boolean(doctorRoleId) },
   );
+  const inventorySummaryQ = useBedInventorySummaryQuery();
+  const inventoryListQ = useBedInventoryListQuery({});
+  const [specialWardFilter, setSpecialWardFilter] = useState('');
+
+  const inventoryWardNames = useMemo(() => {
+    const rows = inventorySummaryQ.data?.wards ?? [];
+    const fromSummary = rows.map((w) => String(w.ward_name || '').trim()).filter(Boolean);
+    const fromBeds = (inventoryListQ.data?.beds ?? [])
+      .map((b) => String(b.ward_name || '').trim())
+      .filter(Boolean);
+    return [...new Set([...fromSummary, ...fromBeds])].sort((a, b) => a.localeCompare(b));
+  }, [inventorySummaryQ.data?.wards, inventoryListQ.data?.beds]);
+
+  const inventoryBeds = useMemo(
+    () => inventoryListQ.data?.beds ?? [],
+    [inventoryListQ.data?.beds],
+  );
+
+  const bedsInSpecialWard = useMemo(() => {
+    if (!specialWardFilter) return [];
+    const key = specialWardFilter.toLowerCase();
+    return inventoryBeds
+      .filter((b) => String(b.ward_name || '').trim().toLowerCase() === key)
+      .slice()
+      .sort((a, b) =>
+        String(a.bed_number || '').localeCompare(String(b.bed_number || ''), undefined, {
+          numeric: true,
+        }),
+      );
+  }, [inventoryBeds, specialWardFilter]);
+
+  const customInventoryWards = useMemo(
+    () => inventoryWardNames.filter((name) => !isBuiltinTariffWard(name)),
+    [inventoryWardNames],
+  );
 
   const doctors = useMemo(() => {
     const rows = staffData?.staff ?? staffData?.items ?? staffData?.users ?? staffData ?? [];
@@ -320,34 +389,111 @@ export default function AdminOpdPricingSection({
   const bedTariff = form.pricing?.bed_tariff ?? {};
   const wardRates = bedTariff.ward_rates ?? [];
   const specialBedRates = bedTariff.special_bed_rates ?? [];
+  const syncedInventoryKeyRef = useRef('');
 
-  const updateWardRate = (index, key, value) => {
-    const next = wardRates.map((row, i) => (i === index ? { ...row, [key]: value } : row));
+  // Keep ward_rates rows for every non-builtin inventory ward (Maternity, etc.).
+  useEffect(() => {
+    if (!canEditBedTariff || !customInventoryWards.length) return;
+    const key = customInventoryWards.join('|');
+    if (syncedInventoryKeyRef.current === key) return;
+
+    const existing = new Set(
+      wardRates.map((row) => String(row.ward_name || '').trim().toLowerCase()).filter(Boolean),
+    );
+    const missing = customInventoryWards.filter(
+      (name) => !existing.has(name.toLowerCase()),
+    );
+    syncedInventoryKeyRef.current = key;
+    if (!missing.length) return;
+
+    const defaultCharge = Number(bedTariff.general_ward_charge);
+    const fallback = Number.isFinite(defaultCharge) ? defaultCharge : 500;
+    patch('pricing.bed_tariff.ward_rates', [
+      ...wardRates,
+      ...missing.map((ward_name) => ({
+        ward_name,
+        charge_per_day: fallback,
+      })),
+    ]);
+  }, [
+    canEditBedTariff,
+    customInventoryWards,
+    wardRates,
+    bedTariff.general_ward_charge,
+    patch,
+  ]);
+
+  const setInventoryWardCharge = (wardName, rawValue) => {
+    const value = rawValue === '' ? '' : Number(rawValue);
+    const field = builtinTariffField(wardName);
+    if (field) {
+      patch(`pricing.bed_tariff.${field}`, value);
+      return;
+    }
+    const key = String(wardName || '').trim().toLowerCase();
+    const next = [...wardRates];
+    const idx = next.findIndex(
+      (row) => String(row.ward_name || '').trim().toLowerCase() === key,
+    );
+    if (idx >= 0) {
+      next[idx] = { ...next[idx], ward_name: wardName, charge_per_day: value };
+    } else {
+      next.push({ ward_name: wardName, charge_per_day: value });
+    }
     patch('pricing.bed_tariff.ward_rates', next);
   };
-  const addWardRate = () => {
-    patch('pricing.bed_tariff.ward_rates', [...wardRates, { ward_name: '', charge_per_day: 0 }]);
-  };
-  const removeWardRate = (index) => {
-    patch('pricing.bed_tariff.ward_rates', wardRates.filter((_, i) => i !== index));
+
+  const getSpecialBedCharge = (bed) => {
+    const bedNo = String(bed?.bed_number || '').trim();
+    const bedKey = bedNo.toLowerCase();
+    const saved = specialBedRates.find(
+      (row) => String(row.bed_number || '').trim().toLowerCase() === bedKey,
+    );
+    if (saved && saved.charge_per_day !== '' && saved.charge_per_day != null) {
+      const n = Number(saved.charge_per_day);
+      if (Number.isFinite(n)) return n;
+    }
+    return getInventoryWardCharge(bedTariff, bed?.ward_name || specialWardFilter);
   };
 
-  const updateSpecialBedRate = (index, key, value) => {
-    const next = specialBedRates.map((row, i) => (i === index ? { ...row, [key]: value } : row));
+  const setSpecialBedCharge = (bed, rawValue) => {
+    const bedNo = String(bed?.bed_number || '').trim();
+    if (!bedNo) return;
+    const wardName = String(bed?.ward_name || specialWardFilter || '').trim();
+    const value = rawValue === '' ? '' : Number(rawValue);
+    const bedKey = bedNo.toLowerCase();
+    const next = [...specialBedRates];
+    const idx = next.findIndex(
+      (row) => String(row.bed_number || '').trim().toLowerCase() === bedKey,
+    );
+    if (idx >= 0) {
+      next[idx] = {
+        ...next[idx],
+        bed_number: bedNo,
+        ward_name: wardName,
+        charge_per_day: value,
+      };
+    } else {
+      next.push({
+        bed_number: bedNo,
+        ward_name: wardName,
+        charge_per_day: value,
+      });
+    }
     patch('pricing.bed_tariff.special_bed_rates', next);
   };
-  const addSpecialBedRate = () => {
-    patch('pricing.bed_tariff.special_bed_rates', [
-      ...specialBedRates,
-      { bed_number: '', ward_name: '', charge_per_day: 0 },
-    ]);
-  };
-  const removeSpecialBedRate = (index) => {
+
+  const clearSpecialBedCharge = (bed) => {
+    const bedKey = String(bed?.bed_number || '').trim().toLowerCase();
+    if (!bedKey) return;
     patch(
       'pricing.bed_tariff.special_bed_rates',
-      specialBedRates.filter((_, i) => i !== index),
+      specialBedRates.filter(
+        (row) => String(row.bed_number || '').trim().toLowerCase() !== bedKey,
+      ),
     );
   };
+
   const handleSaveBedTariff = () => persist('bed-tariff', form);
 
   return (
@@ -447,174 +593,151 @@ export default function AdminOpdPricingSection({
           ) : null
         }
       >
-        <p className="aos-card__note">Set default ward charges and optional custom per-bed rates.</p>
-
-        <div className="aos-grid aos-grid--3">
-          <Field id="bed_tariff_general" label="General ward (₹ / day)">
-            <Input
-              id="bed_tariff_general"
-              type="number"
-              min={0}
-              step={1}
-              value={bedTariff.general_ward_charge ?? 0}
-              onChange={setNumber('pricing.bed_tariff.general_ward_charge')}
-            />
-          </Field>
-          <Field id="bed_tariff_private" label="Private ward (₹ / day)">
-            <Input
-              id="bed_tariff_private"
-              type="number"
-              min={0}
-              step={1}
-              value={bedTariff.private_ward_charge ?? 0}
-              onChange={setNumber('pricing.bed_tariff.private_ward_charge')}
-            />
-          </Field>
-          <Field id="bed_tariff_icu" label="ICU (₹ / day)">
-            <Input
-              id="bed_tariff_icu"
-              type="number"
-              min={0}
-              step={1}
-              value={bedTariff.icu_charge ?? 0}
-              onChange={setNumber('pricing.bed_tariff.icu_charge')}
-            />
-          </Field>
-        </div>
-
-        <div className="aos-bed-grid">
-          <section className="aos-bed-box">
-            <div className="aos-bed-box__head">
-              <h4>Custom ward rates</h4>
-              <Button type="button" variant="outline" size="sm" onClick={addWardRate}>
-                <Plus size={14} /> Add ward
-              </Button>
+        <div className="aos-bed-tariff">
+          <section className="aos-bed-tariff__block">
+            <div className="aos-bed-tariff__label-row">
+              <h4 className="aos-bed-tariff__label">Ward rates</h4>
+              {inventoryWardNames.length > 0 ? (
+                <span className="aos-bed-tariff__hint">₹ / day</span>
+              ) : null}
             </div>
-            <div className="aos-table-wrap">
-              <table className="aos-table">
-                <thead>
-                  <tr>
-                    <th>Ward</th>
-                    <th>Charge / day (₹)</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {wardRates.length === 0 ? (
-                    <tr>
-                      <td colSpan={3} className="aos-table__empty">No custom ward rates</td>
-                    </tr>
-                  ) : (
-                    wardRates.map((row, index) => (
-                      <tr key={`ward-rate-${index}`}>
-                        <td>
-                          <Input
-                            value={row.ward_name ?? ''}
-                            placeholder="e.g. Semi-Private"
-                            onChange={(e) => updateWardRate(index, 'ward_name', e.target.value)}
-                          />
-                        </td>
-                        <td>
-                          <Input
-                            type="number"
-                            min={0}
-                            step={1}
-                            value={row.charge_per_day ?? 0}
-                            onChange={(e) =>
-                              updateWardRate(
-                                index,
-                                'charge_per_day',
-                                e.target.value === '' ? '' : Number(e.target.value),
-                              )
-                            }
-                          />
-                        </td>
-                        <td>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeWardRate(index)}
-                            aria-label="Remove ward rate"
-                          >
-                            <Trash2 size={14} />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+
+            {inventorySummaryQ.isLoading ? (
+              <p className="aos-bed-tariff__empty">Loading wards…</p>
+            ) : inventoryWardNames.length === 0 ? (
+              <p className="aos-bed-tariff__empty">
+                No wards yet. Add them under Beds &amp; wards.
+              </p>
+            ) : (
+              <div className="aos-ward-rate-strip" role="region" aria-label="Ward daily rates">
+                {inventoryWardNames.map((wardName) => {
+                  const fieldId = `bed_tariff_ward_${wardName.replace(/\s+/g, '_').toLowerCase()}`;
+                  return (
+                    <label key={wardName} className="aos-ward-chip" htmlFor={fieldId}>
+                      <span className="aos-ward-chip__name">{wardName}</span>
+                      <span className="aos-ward-chip__field">
+                        <span className="aos-ward-chip__rs" aria-hidden>
+                          ₹
+                        </span>
+                        <Input
+                          id={fieldId}
+                          type="number"
+                          min={0}
+                          step={1}
+                          className="aos-ward-chip__input"
+                          value={getInventoryWardCharge(bedTariff, wardName)}
+                          disabled={!canEditBedTariff}
+                          onChange={(e) => setInventoryWardCharge(wardName, e.target.value)}
+                          aria-label={`${wardName} charge per day`}
+                        />
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
           </section>
 
-          <section className="aos-bed-box">
-            <div className="aos-bed-box__head">
-              <h4>Special bed rates</h4>
-              <Button type="button" variant="outline" size="sm" onClick={addSpecialBedRate}>
-                <Plus size={14} /> Add bed
-              </Button>
+          <section className="aos-bed-tariff__block aos-bed-tariff__block--beds">
+            <div className="aos-bed-tariff__label-row">
+              <h4 className="aos-bed-tariff__label">Special bed rates</h4>
+              <select
+                id="special_bed_ward"
+                className="aos-select aos-select--chip"
+                value={specialWardFilter}
+                disabled={!canEditBedTariff || inventoryWardNames.length === 0}
+                onChange={(e) => setSpecialWardFilter(e.target.value)}
+                aria-label="Ward for special bed rates"
+              >
+                <option value="">Select ward…</option>
+                {inventoryWardNames.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
             </div>
-            <div className="aos-table-wrap">
-              <table className="aos-table">
+
+            <div className="aos-table-wrap aos-table-wrap--tariff">
+              <table className="aos-table aos-table--tariff">
                 <thead>
                   <tr>
-                    <th>Bed no.</th>
-                    <th>Ward</th>
-                    <th>Charge / day (₹)</th>
-                    <th />
+                    <th>Bed</th>
+                    <th>₹ / day</th>
+                    <th className="aos-bed-tariff__col-actions">Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {specialBedRates.length === 0 ? (
+                  {!specialWardFilter ? (
                     <tr>
-                      <td colSpan={4} className="aos-table__empty">No special bed rates</td>
+                      <td colSpan={3} className="aos-table__empty">
+                        Choose a ward to edit bed rates
+                      </td>
+                    </tr>
+                  ) : inventoryListQ.isLoading ? (
+                    <tr>
+                      <td colSpan={3} className="aos-table__empty">
+                        Loading beds…
+                      </td>
+                    </tr>
+                  ) : bedsInSpecialWard.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="aos-table__empty">
+                        No beds in {specialWardFilter}
+                      </td>
                     </tr>
                   ) : (
-                    specialBedRates.map((row, index) => (
-                      <tr key={`special-bed-rate-${index}`}>
-                        <td>
-                          <Input
-                            value={row.bed_number ?? ''}
-                            placeholder="e.g. ICU-2"
-                            onChange={(e) => updateSpecialBedRate(index, 'bed_number', e.target.value)}
-                          />
-                        </td>
-                        <td>
-                          <Input
-                            value={row.ward_name ?? ''}
-                            placeholder="Optional"
-                            onChange={(e) => updateSpecialBedRate(index, 'ward_name', e.target.value)}
-                          />
-                        </td>
-                        <td>
-                          <Input
-                            type="number"
-                            min={0}
-                            step={1}
-                            value={row.charge_per_day ?? 0}
-                            onChange={(e) =>
-                              updateSpecialBedRate(
-                                index,
-                                'charge_per_day',
-                                e.target.value === '' ? '' : Number(e.target.value),
-                              )
-                            }
-                          />
-                        </td>
-                        <td>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeSpecialBedRate(index)}
-                            aria-label="Remove special bed rate"
-                          >
-                            <Trash2 size={14} />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))
+                    bedsInSpecialWard.map((bed) => {
+                      const bedNo = bed.bed_number || bed.id;
+                      const hasOverride = specialBedRates.some(
+                        (row) =>
+                          String(row.bed_number || '').trim().toLowerCase() ===
+                          String(bed.bed_number || '').trim().toLowerCase(),
+                      );
+                      return (
+                        <tr
+                          key={bed.id ?? bedNo}
+                          className={hasOverride ? 'aos-table__row--override' : undefined}
+                        >
+                          <td>
+                            <span className="aos-bed-tariff__bed-id">{bedNo}</span>
+                            {hasOverride ? (
+                              <span className="aos-bed-tariff__override-tag">Custom</span>
+                            ) : null}
+                          </td>
+                          <td>
+                            <span className="aos-ward-chip__field aos-ward-chip__field--table">
+                              <span className="aos-ward-chip__rs" aria-hidden>
+                                ₹
+                              </span>
+                              <Input
+                                type="number"
+                                min={0}
+                                step={1}
+                                className="aos-ward-chip__input"
+                                value={getSpecialBedCharge(bed)}
+                                disabled={!canEditBedTariff}
+                                onChange={(e) => setSpecialBedCharge(bed, e.target.value)}
+                                aria-label={`${bedNo} charge per day`}
+                              />
+                            </span>
+                          </td>
+                          <td className="aos-bed-tariff__col-actions">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              disabled={!canEditBedTariff || !hasOverride}
+                              onClick={() => clearSpecialBedCharge(bed)}
+                              aria-label={`Reset ${bedNo} to ward rate`}
+                              title="Reset to ward rate"
+                            >
+                              <Trash2 size={14} />
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>

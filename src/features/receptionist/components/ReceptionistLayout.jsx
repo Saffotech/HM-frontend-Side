@@ -38,19 +38,9 @@ const NAV_LINKS = [
   },
 ];
 
-const PAGE_TITLES = [
-  { prefix: ROUTES.RECEPTIONIST_NOTIFICATIONS, title: 'Notifications' },
-  { prefix: ROUTES.RECEPTIONIST_PROFILE, title: 'My Profile' },
-  { prefix: ROUTES.RECEPTIONIST_QUEUE_HISTORY, title: 'Queue History' },
-  { prefix: ROUTES.RECEPTIONIST_DOCTOR_QUEUES, title: 'Doctor Queues' },
-  { prefix: ROUTES.RECEPTIONIST_TODAY_QUEUE, title: "Today's Queue" },
-  { prefix: ROUTES.RECEPTIONIST_DASHBOARD, title: 'Receptionist Dashboard' },
-];
-
-function resolveTitle(pathname, pageTitleOverride) {
-  if (pageTitleOverride) return pageTitleOverride;
-  const match = PAGE_TITLES.find((entry) => pathname.startsWith(entry.prefix));
-  return match?.title || 'Reception';
+/** Top shell title stays "Receptionist"; page names live in each screen. */
+function resolveTitle() {
+  return 'Receptionist';
 }
 
 export default function ReceptionistLayout({ children }) {
@@ -75,9 +65,7 @@ export default function ReceptionistLayout({ children }) {
       homeRoute={
         canViewQueues ? ROUTES.RECEPTIONIST_DASHBOARD : ROUTES.RECEPTIONIST_PROFILE
       }
-      roleLabel="Reception"
-      roleLabelClassName="receptionist-role-label"
-      defaultTitle="Receptionist Dashboard"
+      defaultTitle="Receptionist"
       showBell={canViewNotifications}
       profileHref={ROUTES.RECEPTIONIST_PROFILE}
       logoutMenuOnly={onProfilePage}

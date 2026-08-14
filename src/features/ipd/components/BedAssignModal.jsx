@@ -2,10 +2,10 @@
  * Assign bed modal — admits patient onto an available bed (POST /ipd/admissions).
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal, Button } from '@/shared/components/common';
-import { ROUTES, WARDS } from '@/shared/constants';
+import { ROUTES } from '@/shared/constants';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { usePatientsQuery } from '@/shared/hooks/queries/usePatientQuery';
 import { asPatientList } from '@/shared/hooks/queries/listDataUtils';
@@ -16,7 +16,9 @@ import {
   useIpdDepartmentsQuery,
   useIpdDoctorsByDepartmentQuery,
 } from '@/features/ipd/hooks/useIpdQuery';
-import { toIsoAdmissionDate } from '@/features/ipd/utils/ipdFormat';
+import { useIpdWardOptions } from '@/features/ipd/hooks/useIpdWardOptions';
+import { useIpdBedRateLookup } from '@/features/ipd/hooks/useIpdBedRateLookup';
+import { formatIpdMoney, toIsoAdmissionDate } from '@/features/ipd/utils/ipdFormat';
 
 const INITIAL = {
   patientSearch: '',
@@ -66,7 +68,8 @@ export default function BedAssignModal({
   const availableBeds = (bedsQuery.data?.beds ?? []).filter(
     (bed) => bed.status === 'available'
   );
-  const wardOptions = useMemo(() => WARDS ?? [], []);
+  const { wardOptions, isLoading: wardsLoading } = useIpdWardOptions();
+  const { getRate, ratesAvailable } = useIpdBedRateLookup();
   const departmentsQuery = useIpdDepartmentsQuery();
   const doctorsQuery = useIpdDoctorsByDepartmentQuery(values.departmentId || null);
 
@@ -188,13 +191,23 @@ export default function BedAssignModal({
             className="ipd-select"
             value={values.ward}
             onChange={(e) => set('ward', e.target.value)}
+            disabled={wardsLoading}
           >
-            <option value="">Select ward…</option>
-            {wardOptions.map((w) => (
-              <option key={w} value={w}>
-                {w}
-              </option>
-            ))}
+            <option value="">
+              {wardsLoading
+                ? 'Loading wards…'
+                : wardOptions.length === 0
+                  ? 'No wards in inventory'
+                  : 'Select ward…'}
+            </option>
+            {wardOptions.map((w) => {
+              const rate = ratesAvailable ? getRate(w) : null;
+              return (
+                <option key={w} value={w}>
+                  {rate != null ? `${w} · ${formatIpdMoney(rate)}/day` : w}
+                </option>
+              );
+            })}
           </select>
         </div>
         <div className="ipd-toolbar__field">
@@ -211,11 +224,16 @@ export default function BedAssignModal({
             <option value="">
               {!values.ward ? 'Select ward first…' : 'Select bed…'}
             </option>
-            {availableBeds.map((bed) => (
-              <option key={bed.id} value={bed.id}>
-                {bed.bed_number}
-              </option>
-            ))}
+            {availableBeds.map((bed) => {
+              const rate = ratesAvailable ? getRate(bed) : null;
+              return (
+                <option key={bed.id} value={bed.id}>
+                  {rate != null
+                    ? `${bed.bed_number} · ${formatIpdMoney(rate)}/day`
+                    : bed.bed_number}
+                </option>
+              );
+            })}
           </select>
         </div>
         <div className="ipd-toolbar__field">

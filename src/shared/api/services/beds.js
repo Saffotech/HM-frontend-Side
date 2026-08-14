@@ -45,3 +45,6 @@ export async function listBeds(token, params = {}) {
 export async function listBedsByWard(wardName, token) {
   return listBeds(token, { ward: wardName });
 }
+
+
+

@@ -64,8 +64,6 @@ export default function PharmacyLayout({ children, compact = false }) {
       homeRoute={
         canViewPrescriptions ? ROUTES.PHARMACY_PRESCRIPTIONS : ROUTES.PHARMACY_PROFILE
       }
-      roleLabel="Pharmacy"
-      roleLabelClassName="pharmacy-role-label"
       defaultTitle="Pharmacy"
       pageTitleOverride={undefined}
       compact={compact}

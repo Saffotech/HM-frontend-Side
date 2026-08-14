@@ -16,23 +16,25 @@ import { Button } from '@/shared/components/common';
 const ROLE_ICONS = {
   super_admin: Shield,
   admin: UserCog,
-  doctor: Stethoscope,
-  nurse: HeartPulse,
-  pharmacist: Pill,
-  opd_billing: Banknote,
-  lab_technician: FlaskConical,
   receptionist: ClipboardList,
+  opd_billing: Banknote,
+  doctor: Stethoscope,
+  ipd: Users,
+  nurse: HeartPulse,
+  lab_technician: FlaskConical,
+  pharmacist: Pill,
 };
 
 const ROLE_TONE_CLASS = {
   super_admin: 'sa-role-card--super',
   admin: 'sa-role-card--admin',
-  doctor: 'sa-role-card--doctor',
-  nurse: 'sa-role-card--nurse',
-  pharmacist: 'sa-role-card--pharmacist',
-  opd_billing: 'sa-role-card--billing',
-  lab_technician: 'sa-role-card--lab',
   receptionist: 'sa-role-card--receptionist',
+  opd_billing: 'sa-role-card--billing',
+  doctor: 'sa-role-card--doctor',
+  ipd: 'sa-role-card--ipd',
+  nurse: 'sa-role-card--nurse',
+  lab_technician: 'sa-role-card--lab',
+  pharmacist: 'sa-role-card--pharmacist',
 };
 
 export default function SuperAdminRoleCard({ role, staffCount = 0, onManage }) {

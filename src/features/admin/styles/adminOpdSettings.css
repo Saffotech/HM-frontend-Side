@@ -761,6 +761,242 @@
   background: #fff;
 }
 
+.aos-bed-box--full {
+  grid-column: 1 / -1;
+}
+
+.aos-bed-tariff {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.aos-bed-tariff__block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.aos-bed-tariff__block--beds {
+  padding: 0.65rem 0.7rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid #f0d9a8;
+  background: #fffdf8;
+}
+
+.aos-bed-tariff__label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.aos-bed-tariff__label {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #92400e;
+}
+
+.aos-bed-tariff__hint {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #b45309;
+}
+
+.aos-bed-tariff__empty {
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  border: 1px dashed #f0d9a8;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.aos-bed-tariff__bed-id {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #1c1917;
+}
+
+.aos-bed-tariff__override-tag {
+  display: inline-flex;
+  margin-left: 0.35rem;
+  padding: 0.08rem 0.35rem;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.aos-ward-rate-strip {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.45rem;
+  overflow-x: auto;
+  padding-bottom: 0.15rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.aos-ward-chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.15rem;
+  padding: 0.2rem 0.3rem 0.2rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid #ecd9b0;
+  background: linear-gradient(180deg, #fffefb, #fff7e8);
+  box-shadow: 0 1px 2px rgba(120, 53, 15, 0.06);
+  cursor: text;
+}
+
+.aos-ward-chip:focus-within {
+  border-color: #d97706;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.14);
+}
+
+.aos-ward-chip__name {
+  max-width: 6.5rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #44403c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aos-ward-chip__field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.12rem;
+  min-width: 4.4rem;
+  max-width: 5.6rem;
+  padding: 0.1rem 0.4rem 0.1rem 0.35rem;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid rgba(217, 119, 6, 0.2);
+}
+
+.aos-ward-chip__field--table {
+  max-width: 6rem;
+}
+
+.aos-ward-chip__rs {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #b45309;
+  line-height: 1;
+}
+
+.aos-ward-chip__input.field {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  gap: 0;
+}
+
+.aos-ward-chip__input .field__input {
+  width: 100%;
+  min-width: 0;
+  height: 1.55rem;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  font-size: 0.86rem !important;
+  font-weight: 800 !important;
+  color: #1c1917 !important;
+  line-height: 1.2;
+}
+
+.aos-select--chip {
+  width: auto;
+  min-width: 8.5rem;
+  max-width: 11rem;
+  height: 2rem;
+  padding: 0.2rem 0.55rem;
+  border-color: #f0d9a8;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.aos-table-wrap--tariff {
+  border: 1px solid #f0d9a8;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.aos-table--tariff {
+  margin: 0;
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.aos-table--tariff thead {
+  background: #fff7ed;
+}
+
+.aos-table--tariff thead th {
+  background: #fff7ed !important;
+  color: #9a3412;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #f0d9a8;
+  padding-top: 0.45rem;
+  padding-bottom: 0.45rem;
+}
+
+.aos-table--tariff tbody td {
+  vertical-align: middle;
+  border-bottom: 1px solid #f5efe4;
+  background: #fff;
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+}
+
+.aos-table--tariff tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.aos-table--tariff tbody tr.aos-table__row--override td {
+  background: #fffbeb;
+}
+
+.aos-table--tariff .aos-table__empty {
+  padding: 0.85rem 0.75rem;
+  color: #a16207;
+  font-weight: 600;
+  font-size: 0.82rem;
+  background: #fff !important;
+  text-align: left;
+}
+
+/* Keep as table-cell — do not use flex here (breaks header fill). */
+.aos-table--tariff .aos-bed-tariff__col-actions {
+  width: 4.25rem;
+  text-align: right;
+  display: table-cell !important;
+  white-space: nowrap;
+}
+
 .aos-bed-box__head {
   display: flex;
   align-items: center;

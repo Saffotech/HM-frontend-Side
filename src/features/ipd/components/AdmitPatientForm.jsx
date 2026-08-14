@@ -3,10 +3,10 @@
  * Registration creates UHID demographics via POST /ipd/patients/register — no OPD visit/bill.
  */
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, DateInput } from "@/shared/components/common";
-import { BLOOD_GROUPS, GENDERS, ROUTES, WARDS } from "@/shared/constants";
+import { BLOOD_GROUPS, GENDERS, ROUTES } from "@/shared/constants";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { usePatientsQuery } from "@/shared/hooks/queries/usePatientQuery";
 import { asPatientList } from "@/shared/hooks/queries/listDataUtils";
@@ -25,7 +25,9 @@ import {
   useIpdDoctorsByDepartmentQuery,
   useRegisterIpdPatientMutation,
 } from "@/features/ipd/hooks/useIpdQuery";
-import { toIsoAdmissionDate } from "@/features/ipd/utils/ipdFormat";
+import { useIpdWardOptions } from "@/features/ipd/hooks/useIpdWardOptions";
+import { useIpdBedRateLookup } from "@/features/ipd/hooks/useIpdBedRateLookup";
+import { formatIpdMoney, toIsoAdmissionDate } from "@/features/ipd/utils/ipdFormat";
 import { validateRegisterPatient } from "@/features/opd/utils/registerPatientUtils";
 
 const INITIAL = {
@@ -99,6 +101,8 @@ export default function AdmitPatientForm() {
   const availableBeds = (bedsQuery.data?.beds ?? []).filter(
     (bed) => bed.status === "available",
   );
+  const { wardOptions, isLoading: wardsLoading } = useIpdWardOptions();
+  const { getRate, ratesAvailable } = useIpdBedRateLookup();
 
   const departmentsQuery = useIpdDepartmentsQuery();
   const doctorsQuery = useIpdDoctorsByDepartmentQuery(
@@ -135,8 +139,6 @@ export default function AdmitPatientForm() {
     setSubmitError("");
     setRegisterError("");
   };
-
-  const wardOptions = useMemo(() => WARDS ?? [], []);
 
   const selectPatient = (patient) => {
     setValues((prev) => ({
@@ -595,13 +597,25 @@ export default function AdmitPatientForm() {
                 className="ipd-select"
                 value={values.ward}
                 onChange={(e) => set("ward", e.target.value)}
+                disabled={wardsLoading}
               >
-                <option value="">Select ward…</option>
-                {wardOptions.map((w) => (
-                  <option key={w} value={w}>
-                    {w}
-                  </option>
-                ))}
+                <option value="">
+                  {wardsLoading
+                    ? "Loading wards…"
+                    : wardOptions.length === 0
+                      ? "No wards in inventory"
+                      : "Select ward…"}
+                </option>
+                {wardOptions.map((w) => {
+                  const rate = ratesAvailable ? getRate(w) : null;
+                  return (
+                    <option key={w} value={w}>
+                      {rate != null
+                        ? `${w} · ${formatIpdMoney(rate)}/day`
+                        : w}
+                    </option>
+                  );
+                })}
               </select>
               {show("ward") ? (
                 <span className="ipd-field-error">{errors.ward}</span>
@@ -627,11 +641,16 @@ export default function AdmitPatientForm() {
                         ? "No available beds"
                         : "Select bed…"}
                 </option>
-                {availableBeds.map((bed) => (
-                  <option key={bed.id} value={bed.id}>
-                    {bed.bed_number}
-                  </option>
-                ))}
+                {availableBeds.map((bed) => {
+                  const rate = ratesAvailable ? getRate(bed) : null;
+                  return (
+                    <option key={bed.id} value={bed.id}>
+                      {rate != null
+                        ? `${bed.bed_number} · ${formatIpdMoney(rate)}/day`
+                        : bed.bed_number}
+                    </option>
+                  );
+                })}
               </select>
               {show("bed") ? (
                 <span className="ipd-field-error">{errors.bed}</span>

@@ -4,6 +4,7 @@ import { useAuthStore } from '@/shared/store/useAuthStore';
 import { getAppEntryForRole } from '@/shared/utils/authRedirect';
 import { useFormValidation } from '@/shared/hooks/useFormValidation';
 import { trimForm } from '@/shared/utils/trimForm';
+import { normalizeEmailInput } from '@/shared/utils/credentials';
 import Button from '@/shared/components/common/Button';
 import Input from '@/shared/components/common/Input';
 
@@ -27,7 +28,10 @@ export default function LoginForm() {
     const trimmed = trimForm(raw);
     setFormError('');
     try {
-      const me = await login({ email: trimmed.email, password: trimmed.password });
+      const me = await login({
+        email: normalizeEmailInput(trimmed.email),
+        password: trimmed.password,
+      });
       navigate(getAppEntryForRole(me.role));
     } catch {
       setFormError('Invalid email or password');
@@ -42,7 +46,7 @@ export default function LoginForm() {
         label="Email"
         type="email"
         value={values.email}
-        onChange={(e) => handleChange('email', e.target.value)}
+        onChange={(e) => handleChange('email', normalizeEmailInput(e.target.value))}
         error={errors.email}
       />
       <Input

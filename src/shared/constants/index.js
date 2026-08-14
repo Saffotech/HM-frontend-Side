@@ -74,6 +74,7 @@ export const REVISIT_DAYS = 30;
 
 export const PAYMENT_MODES = ['Cash', 'Card', 'UPI', 'Insurance'];
 
+/** @deprecated Prefer live IPD ward stats (`useIpdWardOptions`) — inventory is admin-driven. */
 export const WARDS = ['General', 'ICU', 'Private', 'Pediatric'];
 
 export const ROUTES = {

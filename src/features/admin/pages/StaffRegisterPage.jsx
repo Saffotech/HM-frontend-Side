@@ -13,6 +13,7 @@ import { Button, Input, Label, QueryFeedback, Select } from '@/shared/components
 import { ROUTES } from '@/shared/constants';
 import { filterHospitalAdminRegisterRoles } from '@/features/admin/utils/hospitalAdminRoles';
 import { toast } from '@/shared/utils/toast';
+import { normalizeEmailInput } from '@/shared/utils/credentials';
 import { ensureLabTechDepartmentId } from '@/features/admin/utils/ensureLabTechDepartment';
 import {
   isLabTechnicianRole,
@@ -79,7 +80,11 @@ export default function StaffRegisterPage() {
   );
 
   const handleChange = (field) => (e) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    const value = e.target.value;
+    setForm((prev) => ({
+      ...prev,
+      [field]: field === 'email' ? normalizeEmailInput(value) : value,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -121,7 +126,7 @@ export default function StaffRegisterPage() {
     const payload = {
       first_name: form.first_name.trim(),
       last_name: form.last_name.trim() || null,
-      email: form.email.trim(),
+      email: normalizeEmailInput(form.email.trim()),
       password: form.password,
       role_id: Number(form.role_id),
       department_id: departmentId,
@@ -207,13 +212,14 @@ export default function StaffRegisterPage() {
                     <Label htmlFor="password">Temporary password *</Label>
                     <Input
                       id="password"
-                      type="password"
+                      type="text"
+                      autoComplete="new-password"
                       value={form.password}
                       onChange={handleChange('password')}
                       minLength={8}
                       required
                     />
-                    <p className="admin-help-text">Minimum 8 characters.</p>
+                    <p className="admin-help-text">Minimum 8 characters. Shown clearly so you can share it.</p>
                   </div>
                 </div>
               </div>

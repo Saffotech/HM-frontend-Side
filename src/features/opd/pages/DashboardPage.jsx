@@ -4,10 +4,13 @@ import { useOpdDashboardQuery } from '@/shared/hooks/queries/useOpdDashboardQuer
 import { enrichAppointmentsWithApiPayment, prepareOpdDashboardAppointments } from '@/features/opd/utils/appointmentPaymentUtils';
 import { Avatar, StatusBadge, QueryFeedback } from '@/shared/components/common';
 import TodayOverviewCard from '@/features/opd/today-overview/components/TodayOverviewCard';
+import { useAuthStore } from '@/shared/store/useAuthStore';
+import { toTitleCase } from '@/shared/utils/roleUtils';
 import { ROUTES } from '@/shared/constants';
 import './DashboardPage.css';
 
 export default function DashboardPage() {
+  const user = useAuthStore((s) => s.user);
   const { data: dashboard, isLoading, isError, error } = useOpdDashboardQuery();
 
   const todaysAppts = prepareOpdDashboardAppointments(
@@ -17,6 +20,7 @@ export default function DashboardPage() {
   const unpaidCount = todaysAppts.length - paidCount;
   const recentPatients = dashboard?.recentPatients ?? [];
 
+  const employeeName = toTitleCase(user?.full_name) || user?.email || 'there';
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
   const today = new Date().toLocaleDateString('en-GB', {
@@ -44,7 +48,7 @@ export default function DashboardPage() {
     <div className="dashboard stagger-reveal">
         <section className="dashboard-banner">
           <div>
-            <h2 className="dashboard-banner__title">{greeting}, Billing Counter</h2>
+            <h2 className="dashboard-banner__title">{greeting}, {employeeName}</h2>
             <p className="dashboard-banner__date">{today}</p>
           </div>
           <div className="dashboard-banner__chips">

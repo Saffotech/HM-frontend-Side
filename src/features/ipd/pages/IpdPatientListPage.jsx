@@ -3,16 +3,17 @@
  * Stay filter: Admitted · Completed · All.
  */
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, DateInput, EmptyState, QueryFeedback } from '@/shared/components/common';
-import { ROUTES, WARDS } from '@/shared/constants';
+import { ROUTES } from '@/shared/constants';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import IpdPageHeader from '@/features/ipd/components/IpdPageHeader';
 import IpdStatusBadge from '@/features/ipd/components/IpdStatusBadge';
 import { useIpdPermissionSet } from '@/features/ipd/hooks/useIpdPermission';
 import IpdPermissionButton from '@/features/ipd/components/IpdPermissionButton';
 import { useIpdPatientsQuery } from '@/features/ipd/hooks/useIpdQuery';
+import { useIpdWardOptions } from '@/features/ipd/hooks/useIpdWardOptions';
 import { IPD_ADMISSION_STATUS } from '@/features/ipd/utils/constants';
 import { formatIpdDateTime } from '@/features/ipd/utils/ipdFormat';
 
@@ -91,7 +92,7 @@ export default function IpdPatientListPage() {
   const colSpan =
     6 + (showStatusColumn ? 1 : 0) + (showDischargeDate ? 1 : 0);
 
-  const wardOptions = useMemo(() => WARDS ?? [], []);
+  const { wardOptions } = useIpdWardOptions();
 
   const pathFor = (template, admissionId) =>
     template.replace(':admissionId', String(admissionId));

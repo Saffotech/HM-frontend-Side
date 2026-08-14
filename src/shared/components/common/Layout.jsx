@@ -28,23 +28,14 @@ const NAV_LINKS = [
   { href: ROUTES.PAYMENT_HISTORY, label: 'Payment History', icon: History, permission: ACTIONS.VIEW_PAYMENT_HISTORY },
 ];
 
-const PAGE_TITLES = [
-  { prefix: ROUTES.OPD_NOTIFICATIONS, title: 'Notifications' },
-  { prefix: ROUTES.OPD_PROFILE, title: 'My Profile' },
-  { prefix: ROUTES.BILLING_OPD_NEW, title: 'Generate Bill' },
-  { prefix: ROUTES.DASHBOARD, title: 'Dashboard' },
-  { prefix: ROUTES.PATIENTS, title: 'Patient Management' },
-  { prefix: ROUTES.APPOINTMENTS, title: 'Appointments' },
-  { prefix: ROUTES.BILLING, title: 'Billing & Payments' },
-  { prefix: ROUTES.PAYMENT_HISTORY, title: 'Payment History' },
-];
+/** Top shell title stays "OPD"; page names live in each screen header. */
+const HEADER_TITLE = 'OPD';
 
 export default function Layout({ children }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [title, setTitle] = useState('Dashboard');
   const onProfilePage = pathname === ROUTES.OPD_PROFILE;
 
   const navLinks = useMemo(
@@ -53,8 +44,6 @@ export default function Layout({ children }) {
   );
 
   useEffect(() => {
-    const match = PAGE_TITLES.find((p) => pathname.startsWith(p.prefix));
-    setTitle(match?.title || 'Dashboard');
     setSidebarOpen(false);
   }, [pathname]);
 
@@ -71,7 +60,7 @@ export default function Layout({ children }) {
           <BrandLogo size={28} />
           <BrandName className="layout-mobile-bar__brand-text" />
         </Link>
-        <h1 className="layout-mobile-bar__title">{title}</h1>
+        <h1 className="layout-mobile-bar__title">{HEADER_TITLE}</h1>
         <button
           type="button"
           className="layout-menu-btn"
@@ -137,7 +126,7 @@ export default function Layout({ children }) {
 
       <div className="layout-main">
         <header className="layout-header no-print">
-          <h1 className="layout-header__title">{title}</h1>
+          <h1 className="layout-header__title">{HEADER_TITLE}</h1>
           <div className="layout-header__actions">
             <span className="layout-header__date">{today}</span>
             <OpdNotificationsBell

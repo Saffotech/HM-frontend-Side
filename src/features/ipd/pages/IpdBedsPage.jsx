@@ -5,7 +5,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button, EmptyState, QueryFeedback } from "@/shared/components/common";
-import { ROUTES, WARDS } from "@/shared/constants";
+import { ROUTES } from "@/shared/constants";
 import { toast } from "@/shared/utils/toast";
 import IpdPageHeader from "@/features/ipd/components/IpdPageHeader";
 import IpdStatusBadge from "@/features/ipd/components/IpdStatusBadge";
@@ -18,6 +18,9 @@ import {
   useIpdPatientsQuery,
   useIpdWardStatsQuery,
 } from "@/features/ipd/hooks/useIpdQuery";
+import { useIpdWardOptions } from "@/features/ipd/hooks/useIpdWardOptions";
+import { useIpdBedRateLookup } from "@/features/ipd/hooks/useIpdBedRateLookup";
+import { formatIpdMoney } from "@/features/ipd/utils/ipdFormat";
 import { IPD_ADMISSION_STATUS } from "@/features/ipd/utils/constants";
 
 const PAGE_SIZE = 25;
@@ -55,14 +58,21 @@ export default function IpdBedsPage() {
     status: IPD_ADMISSION_STATUS.ADMITTED,
     limit: 100,
   });
+  const { wardOptions } = useIpdWardOptions();
+  const { getRate, ratesAvailable } = useIpdBedRateLookup();
 
   const loading = wardsQuery.isLoading || bedsQuery.isLoading;
-  const wards = (wardsQuery.data?.wards ?? []).map((ward) => ({
-    name: ward.ward,
-    occupied: ward.occupied ?? 0,
-    available: ward.available ?? 0,
-    total: (ward.occupied ?? 0) + (ward.available ?? 0),
-  }));
+  const wards = (wardsQuery.data?.wards ?? []).map((ward) => {
+    const name = ward.ward;
+    const rate = ratesAvailable ? getRate(name) : null;
+    return {
+      name,
+      occupied: ward.occupied ?? 0,
+      available: ward.available ?? 0,
+      total: (ward.occupied ?? 0) + (ward.available ?? 0),
+      rate,
+    };
+  });
 
   /** Resolve active admission id from bed occupancy fields. */
   const admissionLookup = useMemo(() => {
@@ -229,6 +239,11 @@ export default function IpdBedsPage() {
                   >
                     <div className="ipd-beds-summary__top">
                       <span className="ipd-beds-summary__name">{ward.name}</span>
+                      {ward.rate != null ? (
+                        <span className="ipd-beds-summary__rate">
+                          {formatIpdMoney(ward.rate)}/day
+                        </span>
+                      ) : null}
                     </div>
                     <div className="ipd-occ-bar" aria-hidden>
                       <div
@@ -334,7 +349,7 @@ export default function IpdBedsPage() {
                 onChange={(e) => setFilter("ward", e.target.value)}
               >
                 <option value="">All wards</option>
-                {(WARDS ?? []).map((w) => (
+                {wardOptions.map((w) => (
                   <option key={w} value={w}>
                     {w}
                   </option>
@@ -368,6 +383,7 @@ export default function IpdBedsPage() {
                     <tr>
                       <th>Ward</th>
                       <th>Bed</th>
+                      <th>Rate / day</th>
                       <th>Status</th>
                       <th>Patient</th>
                       <th>Actions</th>
@@ -376,6 +392,7 @@ export default function IpdBedsPage() {
                   <tbody>
                     {pageBeds.map((bed) => {
                       const occupied = bed.status === "occupied";
+                      const rate = ratesAvailable ? getRate(bed) : null;
                       return (
                         <tr
                           key={bed.id}
@@ -388,6 +405,9 @@ export default function IpdBedsPage() {
                           <td>{bed.ward_name || "—"}</td>
                           <td>
                             <strong>{bed.bed_number || bed.id}</strong>
+                          </td>
+                          <td>
+                            {rate != null ? formatIpdMoney(rate) : "—"}
                           </td>
                           <td>
                             <IpdStatusBadge status={bed.status} />

@@ -13,7 +13,7 @@ import { ROUTES } from '@/shared/constants';
 import { BrandLogo, BrandName } from '@/shared/components/common';
 import { useAuthStore } from '@/shared/store/useAuthStore';
 import { getAppEntryForRole, getAppEntryForUser } from '@/shared/utils/authRedirect';
-import { trimCredentials, hasCredentials } from '@/shared/utils/credentials';
+import { trimCredentials, hasCredentials, normalizeEmailInput } from '@/shared/utils/credentials';
 import { toast } from '@/shared/utils/toast';
 import { isStaffModuleLive } from '@/shared/constants/moduleAvailability';
 import './LoginPage.css';
@@ -237,10 +237,12 @@ export default function LoginPage() {
                     <input
                       id="staff-email"
                       type="email"
-                      placeholder="you@saffocare.local"
+                      placeholder="you@saffocare.com"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => setEmail(normalizeEmailInput(e.target.value))}
                       autoComplete="email"
+                      autoCapitalize="none"
+                      spellCheck={false}
                       required
                     />
                   </div>

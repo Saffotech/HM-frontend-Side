@@ -10,6 +10,7 @@ import {
 import { Button, Input, Label, QueryFeedback, Select } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
+import { normalizeEmailInput } from '@/shared/utils/credentials';
 import { ensureLabTechDepartmentId } from '@/features/admin/utils/ensureLabTechDepartment';
 import {
   isLabTechnicianRole,
@@ -82,7 +83,11 @@ export default function SuperAdminStaffRegisterPage() {
   );
 
   const handleChange = (field) => (e) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    const value = e.target.value;
+    setForm((prev) => ({
+      ...prev,
+      [field]: field === 'email' ? normalizeEmailInput(value) : value,
+    }));
   };
 
   const handleRoleChange = (value) => {
@@ -133,7 +138,7 @@ export default function SuperAdminStaffRegisterPage() {
     const payload = {
       first_name: form.first_name.trim(),
       last_name: form.last_name.trim() || null,
-      email: form.email.trim(),
+      email: normalizeEmailInput(form.email.trim()),
       password: form.password,
       role_id: Number(form.role_id),
       department_id: departmentId,
@@ -169,11 +174,13 @@ export default function SuperAdminStaffRegisterPage() {
             </Button>
             <div className="sa-register-shell__title-wrap">
               <span className="sa-register-shell__icon" aria-hidden>
-                <UserPlus size={18} strokeWidth={2} />
+                <UserPlus size={22} strokeWidth={2} />
               </span>
               <div>
                 <h1 className="sa-register-shell__title">New staff member</h1>
-                <p className="sa-register-shell__desc">Register any hospital role</p>
+                <p className="sa-register-shell__desc">
+                  Create login access for any hospital role
+                </p>
               </div>
             </div>
           </header>
@@ -185,89 +192,107 @@ export default function SuperAdminStaffRegisterPage() {
           ) : (
             <form onSubmit={handleSubmit} className="sa-register-form">
               <div className="sa-register-shell__body">
-                <div className="sa-register-grid">
-                  <RegisterField id="sa_first_name" label="First name" required>
-                    <Input
-                      id="sa_first_name"
-                      value={form.first_name}
-                      onChange={handleChange('first_name')}
-                      placeholder="Priya"
-                      required
-                    />
-                  </RegisterField>
-                  <RegisterField id="sa_last_name" label="Last name">
-                    <Input
-                      id="sa_last_name"
-                      value={form.last_name}
-                      onChange={handleChange('last_name')}
-                      placeholder="Sharma"
-                    />
-                  </RegisterField>
-                  <RegisterField id="sa_email" label="Email" required>
-                    <Input
-                      id="sa_email"
-                      type="email"
-                      value={form.email}
-                      onChange={handleChange('email')}
-                      placeholder="name@saffocare.local"
-                      required
-                    />
-                  </RegisterField>
-                  <RegisterField id="sa_password" label="Password" required>
-                    <Input
-                      id="sa_password"
-                      type="password"
-                      value={form.password}
-                      onChange={handleChange('password')}
-                      placeholder="Min. 8 characters"
-                      minLength={8}
-                      required
-                    />
-                  </RegisterField>
-                  <RegisterField id="sa_role" label="Role" required>
-                    <Select
-                      value={form.role_id}
-                      onChange={handleRoleChange}
-                      options={roleOptions}
-                      placeholder={rolesLoading ? 'Loading…' : 'Select role'}
-                      disabled={rolesLoading || rolesError}
-                    />
-                  </RegisterField>
-                  <RegisterField
-                    id="sa_department"
-                    label="Department"
-                    required={departmentEnabled}
-                  >
-                    {departmentsError ? (
-                      <p className="sa-register-field__error" role="alert">
-                        {departmentsQuery.error?.message || 'Could not load departments'}
-                      </p>
-                    ) : null}
-                    <Select
-                      value={staffDepartmentSelectValue(
-                        departments,
-                        selectedRole?.name,
-                        form.department_id,
-                      )}
-                      onChange={(value) =>
-                        setForm((prev) => ({ ...prev, department_id: value }))
-                      }
-                      options={departmentOptions}
-                      placeholder={
-                        !departmentEnabled
-                          ? 'Only for doctor / lab technician'
-                          : departmentsLoading
-                            ? 'Loading…'
-                            : isLabTech
-                              ? 'Laboratory or Radiology'
-                              : 'Select department'
-                      }
-                      disabled={
-                        !departmentEnabled || departmentsLoading || departmentsError
-                      }
-                    />
-                  </RegisterField>
-                </div>
+                <section className="sa-register-section">
+                  <h2 className="sa-register-section__title">Personal details</h2>
+                  <div className="sa-register-grid">
+                    <RegisterField id="sa_first_name" label="First name" required>
+                      <Input
+                        id="sa_first_name"
+                        value={form.first_name}
+                        onChange={handleChange('first_name')}
+                        placeholder="Priya"
+                        required
+                      />
+                    </RegisterField>
+                    <RegisterField id="sa_last_name" label="Last name">
+                      <Input
+                        id="sa_last_name"
+                        value={form.last_name}
+                        onChange={handleChange('last_name')}
+                        placeholder="Sharma"
+                      />
+                    </RegisterField>
+                  </div>
+                </section>
+
+                <section className="sa-register-section">
+                  <h2 className="sa-register-section__title">Account credentials</h2>
+                  <div className="sa-register-grid">
+                    <RegisterField id="sa_email" label="Email" required>
+                      <Input
+                        id="sa_email"
+                        type="email"
+                        value={form.email}
+                        onChange={handleChange('email')}
+                        placeholder="name@saffocare.com"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        required
+                      />
+                    </RegisterField>
+                    <RegisterField id="sa_password" label="Password" required>
+                      <Input
+                        id="sa_password"
+                        type="text"
+                        autoComplete="new-password"
+                        value={form.password}
+                        onChange={handleChange('password')}
+                        placeholder="Min. 8 characters"
+                        minLength={8}
+                        required
+                      />
+                    </RegisterField>
+                  </div>
+                </section>
+
+                <section className="sa-register-section">
+                  <h2 className="sa-register-section__title">Role assignment</h2>
+                  <div className="sa-register-grid">
+                    <RegisterField id="sa_role" label="Role" required>
+                      <Select
+                        value={form.role_id}
+                        onChange={handleRoleChange}
+                        options={roleOptions}
+                        placeholder={rolesLoading ? 'Loading…' : 'Select role'}
+                        disabled={rolesLoading || rolesError}
+                      />
+                    </RegisterField>
+                    <RegisterField
+                      id="sa_department"
+                      label="Department"
+                      required={departmentEnabled}
+                    >
+                      {departmentsError ? (
+                        <p className="sa-register-field__error" role="alert">
+                          {departmentsQuery.error?.message || 'Could not load departments'}
+                        </p>
+                      ) : null}
+                      <Select
+                        value={staffDepartmentSelectValue(
+                          departments,
+                          selectedRole?.name,
+                          form.department_id,
+                        )}
+                        onChange={(value) =>
+                          setForm((prev) => ({ ...prev, department_id: value }))
+                        }
+                        options={departmentOptions}
+                        placeholder={
+                          !departmentEnabled
+                            ? 'Only for doctor / lab technician'
+                            : departmentsLoading
+                              ? 'Loading…'
+                              : isLabTech
+                                ? 'Laboratory or Radiology'
+                                : 'Select department'
+                        }
+                        disabled={
+                          !departmentEnabled || departmentsLoading || departmentsError
+                        }
+                      />
+                    </RegisterField>
+                  </div>
+                </section>
               </div>
 
               <div className="sa-register-actions">
@@ -287,7 +312,7 @@ export default function SuperAdminStaffRegisterPage() {
                     !roleOptions.length
                   }
                 >
-                  <UserPlus size={16} aria-hidden />
+                  <UserPlus size={17} aria-hidden />
                   {registerMutation.isPending ? 'Registering…' : 'Register staff'}
                 </Button>
               </div>

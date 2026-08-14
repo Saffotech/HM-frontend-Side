@@ -5,7 +5,7 @@ import { ROUTES, ROLES } from '@/shared/constants';
 import { BrandLogo, BrandName } from '@/shared/components/common';
 import { useAuthStore } from '@/shared/store/useAuthStore';
 import { isStaffModuleLive } from '@/shared/constants/moduleAvailability';
-import { trimCredentials, hasCredentials } from '@/shared/utils/credentials';
+import { trimCredentials, hasCredentials, normalizeEmailInput } from '@/shared/utils/credentials';
 import { toast } from '@/shared/utils/toast';
 import '@/features/admin/styles/admin-login.css';
 
@@ -129,8 +129,10 @@ export default function AdminLoginPage() {
                     type="email"
                     autoComplete="username"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => setEmail(normalizeEmailInput(e.target.value))}
                     placeholder="admin@hospital.com"
+                    autoCapitalize="none"
+                    spellCheck={false}
                   />
                 </div>
               </div>
