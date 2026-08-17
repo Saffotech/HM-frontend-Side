@@ -454,9 +454,13 @@
   gap: 0.75rem 1rem;
 }
 
-/* Contact: 4 fields / row, then full-width address */
+/* Contact: 3 fields / row; last row is State + Address */
 .doc-profile-grid--contact {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.doc-profile-grid--contact .doc-profile-field--span {
+  grid-column: span 2;
 }
 
 .doc-profile-field {
@@ -527,6 +531,70 @@
   box-shadow: 0 0 0 3px rgba(26, 92, 52, 0.12);
 }
 
+.doc-profile-phone {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  border: 1px solid #d2dde4;
+  border-radius: 0.4rem;
+  background: #fff;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.doc-profile-phone:hover {
+  border-color: #b7c9d4;
+}
+
+.doc-profile-phone:focus-within {
+  border-color: var(--dp-green);
+  box-shadow: 0 0 0 3px rgba(26, 92, 52, 0.12);
+}
+
+.doc-profile-page .doc-profile-phone .doc-input {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  min-height: 2.2rem;
+}
+
+.doc-profile-page .doc-profile-phone .doc-input:hover,
+.doc-profile-page .doc-profile-phone .doc-input:focus {
+  border: 0;
+  box-shadow: none;
+}
+
+.doc-profile-phone__code {
+  flex: 0 0 7.25rem;
+  max-width: 7.25rem;
+  padding-right: 0.35rem;
+  border-right: 1px solid #e2e8f0 !important;
+  background: #f8fafc;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.doc-profile-phone--custom .doc-profile-phone__code {
+  flex-basis: 6.1rem;
+  max-width: 6.1rem;
+}
+
+.doc-profile-phone__custom {
+  flex: 0 0 4.4rem;
+  max-width: 4.4rem;
+  padding-left: 0.45rem;
+  padding-right: 0.35rem;
+  border-right: 1px solid #e2e8f0 !important;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.doc-profile-phone__number {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 /* =============================================================================
  * Language chips
  * ============================================================================= */
@@ -575,6 +643,10 @@
 
   .doc-profile-grid--contact {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .doc-profile-grid--contact .doc-profile-field--span {
+    grid-column: span 1;
   }
 }
 
@@ -626,7 +698,9 @@
   .doc-profile-grid--contact {
     grid-template-columns: 1fr;
   }
-    gap: 0.65rem;
+
+  .doc-profile-grid--contact .doc-profile-field--span {
+    grid-column: 1 / -1;
   }
 
   .doc-profile-avatar-img,

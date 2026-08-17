@@ -16,6 +16,8 @@ const MAP = {
   Processing: 'doc-pill--progress',
   Reviewed: 'doc-pill--reviewed',
   Cancelled: 'doc-pill--muted',
+  Admit: 'doc-pill--progress',
+  Discharge: 'doc-pill--done',
   cancelled: 'doc-pill--muted',
   dispensed: 'doc-pill--done',
   partially_dispensed: 'doc-pill--progress',

@@ -10,8 +10,10 @@ import {
 import DoctorShell from '@/features/doctor/components/DoctorShell';
 import PageSpinner from '@/shared/components/PageSpinner';
 import { PATIENT_CATEGORY_FILTER } from '@/features/doctor/utils/patientListFilters';
+import { DOCTOR_ENCOUNTER_MODE } from '@/features/doctor/utils/encounterType';
 import {
   prefetchDoctorDashboard,
+  prefetchDoctorSection,
   preloadDashboardSectionChunk,
 } from '@/features/doctor/utils/doctorDashboardCache';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
@@ -31,9 +33,12 @@ export default function DoctorDashboardPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [active, setActive] = useState('dashboard');
+  const [encounterMode, setEncounterMode] = useState(DOCTOR_ENCOUNTER_MODE.OPD);
   const [patientsCategoryFilter, setPatientsCategoryFilter] = useState(
     PATIENT_CATEGORY_FILTER.COMPLETED
   );
+
+  const showEncounterToggle = ['dashboard', 'patients', 'labs', 'schedule'].includes(active);
 
   useEffect(() => {
     void preloadDashboardSectionChunk();
@@ -41,6 +46,11 @@ export default function DoctorDashboardPage() {
       void prefetchDoctorDashboard(queryClient, token);
     }
   }, [queryClient, token]);
+
+  useEffect(() => {
+    if (!token) return;
+    void prefetchDoctorSection(queryClient, token, { section: active, encounterMode });
+  }, [queryClient, token, active, encounterMode]);
 
   useEffect(() => {
     const section = location.state?.doctorSection;
@@ -99,19 +109,30 @@ export default function DoctorDashboardPage() {
   };
 
   return (
-    <DoctorShell title="Doctor" nav={nav} active={active} onSelect={setActive}>
+    <DoctorShell
+      title="Doctor"
+      nav={nav}
+      active={active}
+      onSelect={setActive}
+      encounterMode={showEncounterToggle ? encounterMode : undefined}
+      onEncounterModeChange={showEncounterToggle ? setEncounterMode : undefined}
+    >
       <Suspense fallback={<PageSpinner />}>
         {active === 'dashboard' && (
-          <DashboardSection onViewAllPatients={openPatientsWithFilter} />
+          <DashboardSection
+            encounterMode={encounterMode}
+            onViewAllPatients={openPatientsWithFilter}
+          />
         )}
         {active === 'patients' && (
           <PatientsEMRSection
-            key={patientsCategoryFilter}
+            key={`${patientsCategoryFilter}-${encounterMode}`}
             initialCategoryFilter={patientsCategoryFilter}
+            encounterMode={encounterMode}
           />
         )}
-        {active === 'labs' && <LabsSection />}
-        {active === 'schedule' && <ScheduleSection />}
+        {active === 'labs' && <LabsSection encounterMode={encounterMode} />}
+        {active === 'schedule' && <ScheduleSection encounterMode={encounterMode} />}
         {active === 'notifications' && (
           <NotificationsSection onDeepLink={handleNotificationDeepLink} />
         )}

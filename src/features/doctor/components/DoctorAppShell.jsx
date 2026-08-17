@@ -1,6 +1,12 @@
 import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/shared/hooks/useAuth';
+import { invalidateDoctorIpdAdmissions } from '@/features/doctor/utils/doctorDashboardCache';
+import {
+  DOCTOR_IPD_BUMP_EVENT,
+  DOCTOR_IPD_BUMP_KEY,
+} from '@/shared/utils/doctorIpdSync';
 
 export const DOCTOR_PERMISSIONS_BUMP_KEY = 'hms:doctor-permissions-bump';
 
@@ -43,10 +49,40 @@ function DoctorPermissionSync({ children }) {
   return children;
 }
 
+/** Refresh doctor IPD lists when admissions are created/updated elsewhere in the app. */
+function DoctorIpdDataSync({ children }) {
+  const queryClient = useQueryClient();
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!isAuthenticated) return undefined;
+
+    const sync = () => {
+      invalidateDoctorIpdAdmissions(queryClient);
+    };
+
+    const onStorage = (event) => {
+      if (event.key === DOCTOR_IPD_BUMP_KEY) sync();
+    };
+
+    window.addEventListener(DOCTOR_IPD_BUMP_EVENT, sync);
+    window.addEventListener('storage', onStorage);
+
+    return () => {
+      window.removeEventListener(DOCTOR_IPD_BUMP_EVENT, sync);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, [isAuthenticated, queryClient]);
+
+  return children;
+}
+
 export default function DoctorAppShell() {
   return (
     <DoctorPermissionSync>
-      <Outlet />
+      <DoctorIpdDataSync>
+        <Outlet />
+      </DoctorIpdDataSync>
     </DoctorPermissionSync>
   );
 }

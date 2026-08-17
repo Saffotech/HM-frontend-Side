@@ -203,6 +203,7 @@ export function apiToUiLabTest(api) {
       || null,
     priority: api.priority ?? 'Normal',
     clinicalNotes: api.clinical_notes ?? api.clinicalNotes ?? '',
+    registrationSource: api.registration_source ?? api.registrationSource ?? null,
     status,
     apiStatus,
     result: api.result,

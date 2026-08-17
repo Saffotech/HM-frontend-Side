@@ -196,10 +196,14 @@ export const queryKeys = {
 
       visits: ['doctor', 'patients', 'visits'],
 
-      history: (uhid) => ['doctor', 'patients', 'history', uhid],
+      history: (uhid, params) => ['doctor', 'patients', 'history', uhid, params],
 
       prescriptions: (patientId) => ['doctor', 'patients', 'prescriptions', patientId],
 
+    },
+
+    ipd: {
+      admissions: (filters) => ['doctor', 'ipd', 'admissions', filters],
     },
 
   },

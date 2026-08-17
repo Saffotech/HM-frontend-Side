@@ -6,8 +6,9 @@ import { Users, Filter, ChevronRight, ChevronDown, CalendarDays, RotateCcw, Chec
 import { useDoctorPatientVisitsQuery } from '@/features/doctor/hooks/useDoctorPatientQuery';
 
 import { useDoctorTodayAppointmentsQuery } from '@/features/doctor/hooks/useDoctorAppointmentQuery';
+import { useDoctorIpdAdmissionsQuery } from '@/features/doctor/hooks/useDoctorIpdQuery';
 
-import { visitRowToPatientSummary } from '@/shared/api/mappers/doctorPatientMapper';
+import { visitRowToPatientSummary, appointmentToVisitRow } from '@/shared/api/mappers/doctorPatientMapper';
 
 import { Input, EmptyState } from '@/shared/components/common';
 
@@ -42,6 +43,7 @@ import {
   matchesPatientDateFilters,
 
 } from '@/features/doctor/utils/patientDateFilters';
+import { DOCTOR_ENCOUNTER_MODE, matchesDoctorEncounterMode } from '@/features/doctor/utils/encounterType';
 
 import {
 
@@ -49,9 +51,21 @@ import {
 
   PATIENT_CATEGORY_OPTIONS,
 
+  IPD_PATIENT_CATEGORY_FILTER,
+
+  IPD_PATIENT_CATEGORY_OPTIONS,
+
+  IPD_PATIENT_CATEGORY_VALUES,
+
+  OPD_PATIENT_CATEGORY_VALUES,
+
   buildPatientListByCategory,
 
   categoryEmptyMessage,
+
+  ipdCategoryEmptyMessage,
+
+  ipdStatusQueryParam,
 
   TODAY_APPOINTMENT_CATEGORIES,
 
@@ -61,7 +75,7 @@ import {
 
 import '../styles/doctor-ui.css';
 
-const CATEGORY_HINTS = {
+const OPD_CATEGORY_HINTS = {
   [PATIENT_CATEGORY_FILTER.COMPLETED]: 'Open visit history',
   [PATIENT_CATEGORY_FILTER.QUEUE]: 'Patients waiting now',
   [PATIENT_CATEGORY_FILTER.IN_PROGRESS]: 'Scheduled today',
@@ -69,11 +83,29 @@ const CATEGORY_HINTS = {
   [PATIENT_CATEGORY_FILTER.ALL]: 'All records combined',
 };
 
-function PatientCategorySelect({ value, onChange }) {
+const IPD_CATEGORY_HINTS = {
+  [IPD_PATIENT_CATEGORY_FILTER.ADMITTED]: 'Currently admitted under you',
+  [IPD_PATIENT_CATEGORY_FILTER.DISCHARGED]: 'Discharged IPD admissions',
+  [IPD_PATIENT_CATEGORY_FILTER.ALL]: 'All IPD admissions combined',
+};
+
+const IPD_PATIENTS_PAGE_SIZE = 100;
+
+function resolveInitialCategoryFilter(initial, encounterMode) {
+  if (encounterMode === DOCTOR_ENCOUNTER_MODE.IPD) {
+    return IPD_PATIENT_CATEGORY_VALUES.has(initial)
+      ? initial
+      : IPD_PATIENT_CATEGORY_FILTER.ADMITTED;
+  }
+  return OPD_PATIENT_CATEGORY_VALUES.has(initial)
+    ? initial
+    : PATIENT_CATEGORY_FILTER.COMPLETED;
+}
+
+function PatientCategorySelect({ value, onChange, options, hints }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
-  const active =
-    PATIENT_CATEGORY_OPTIONS.find((o) => o.value === value) ?? PATIENT_CATEGORY_OPTIONS[0];
+  const active = options.find((o) => o.value === value) ?? options[0];
 
   useEffect(() => {
     if (!open) return;
@@ -112,7 +144,7 @@ function PatientCategorySelect({ value, onChange }) {
       </button>
       {open ? (
         <ul className="doc-patient-category__menu" role="listbox" aria-label="Patient list category">
-          {PATIENT_CATEGORY_OPTIONS.map((option) => {
+          {options.map((option) => {
             const selected = option.value === value;
             return (
               <li key={option.value} role="presentation">
@@ -129,7 +161,7 @@ function PatientCategorySelect({ value, onChange }) {
                   <span className="doc-patient-category__option-text">
                     <span className="doc-patient-category__option-label">{option.label}</span>
                     <span className="doc-patient-category__option-hint">
-                      {CATEGORY_HINTS[option.value]}
+                      {hints[option.value]}
                     </span>
                   </span>
                   {selected ? <Check size={14} aria-hidden className="doc-patient-category__check" /> : null}
@@ -155,7 +187,8 @@ function formatAgeGender(row) {
 
 
 
-function formatVisitDateCompact(scheduledAt) {
+function formatVisitDateCompact(row) {
+  const scheduledAt = row?.admittedAt ?? row?.scheduledAt ?? row?.visitAt;
 
   if (!scheduledAt) return '—';
 
@@ -276,49 +309,74 @@ function PatientDateFilters({ filters, onChange, onReset, disabled }) {
 export default function PatientsEMRSection({
 
   initialCategoryFilter = PATIENT_CATEGORY_FILTER.COMPLETED,
+  encounterMode = DOCTOR_ENCOUNTER_MODE.OPD,
 
 }) {
 
   const queryClient = useQueryClient();
   const token = useQueryToken();
+  const isIpdMode = encounterMode === DOCTOR_ENCOUNTER_MODE.IPD;
 
   const [q, setQ] = useState('');
 
   const [dateFilters, setDateFilters] = useState(DEFAULT_DATE_FILTERS);
 
-  const [categoryFilter, setCategoryFilter] = useState(initialCategoryFilter);
+  const [categoryFilter, setCategoryFilter] = useState(() =>
+    resolveInitialCategoryFilter(initialCategoryFilter, encounterMode),
+  );
 
   const [view, setView] = useState(null);
 
-
+  const categoryOptions = isIpdMode ? IPD_PATIENT_CATEGORY_OPTIONS : PATIENT_CATEGORY_OPTIONS;
+  const categoryHints = isIpdMode ? IPD_CATEGORY_HINTS : OPD_CATEGORY_HINTS;
 
   useEffect(() => {
+    setCategoryFilter(resolveInitialCategoryFilter(initialCategoryFilter, encounterMode));
+  }, [initialCategoryFilter, encounterMode]);
 
-    setCategoryFilter(initialCategoryFilter);
-
-  }, [initialCategoryFilter]);
-
-
+  useEffect(() => {
+    setCategoryFilter((current) => {
+      if (isIpdMode) {
+        return IPD_PATIENT_CATEGORY_VALUES.has(current)
+          ? current
+          : IPD_PATIENT_CATEGORY_FILTER.ADMITTED;
+      }
+      return OPD_PATIENT_CATEGORY_VALUES.has(current)
+        ? current
+        : PATIENT_CATEGORY_FILTER.COMPLETED;
+    });
+  }, [isIpdMode]);
 
   const needsCompletedApi =
+    !isIpdMode &&
+    (categoryFilter === PATIENT_CATEGORY_FILTER.COMPLETED ||
+      categoryFilter === PATIENT_CATEGORY_FILTER.ALL);
 
-    categoryFilter === PATIENT_CATEGORY_FILTER.COMPLETED ||
-
-    categoryFilter === PATIENT_CATEGORY_FILTER.ALL;
-
-  const needsTodayApi = TODAY_APPOINTMENT_CATEGORIES.has(categoryFilter);
+  const needsTodayApi = !isIpdMode && TODAY_APPOINTMENT_CATEGORIES.has(categoryFilter);
 
 
 
   const apiParams = useMemo(
 
-    () => buildDoctorPatientsQueryParams({ search: q, dateFilters }),
+    () => buildDoctorPatientsQueryParams({
+      search: q,
+      dateFilters,
+      encounter_type: encounterMode,
+    }),
 
-    [q, dateFilters]
+    [q, dateFilters, encounterMode]
 
   );
 
-
+  const ipdQueryParams = useMemo(
+    () => ({
+      status: ipdStatusQueryParam(categoryFilter),
+      search: q.trim() || undefined,
+      page: 1,
+      page_size: IPD_PATIENTS_PAGE_SIZE,
+    }),
+    [categoryFilter, q],
+  );
 
   const { data: visitsData, isLoading: visitsLoading } = useDoctorPatientVisitsQuery(
 
@@ -332,6 +390,11 @@ export default function PatientsEMRSection({
 
     useDoctorTodayAppointmentsQuery();
 
+  const { data: ipdData, isPending: ipdLoading } = useDoctorIpdAdmissionsQuery(
+    ipdQueryParams,
+    { enabled: isIpdMode },
+  );
+
 
 
   const completedVisits = useMemo(() => {
@@ -342,9 +405,23 @@ export default function PatientsEMRSection({
 
   }, [visitsData?.visits, dateFilters]);
 
-  const dateFiltersDisabled = DATE_FILTER_DISABLED_CATEGORIES.has(categoryFilter);
+  const dateFiltersDisabled = !isIpdMode && DATE_FILTER_DISABLED_CATEGORIES.has(categoryFilter);
 
   const list = useMemo(() => {
+    if (isIpdMode) {
+      const rows = (ipdData?.items ?? [])
+        .map((appt) => {
+          const row = appointmentToVisitRow(appt);
+          if (!row) return null;
+          return {
+            ...row,
+            id: appt.admissionId != null ? `ipd-${appt.admissionId}` : row.id,
+          };
+        })
+        .filter(Boolean);
+
+      return rows.filter((row) => matchesPatientDateFilters(row, dateFilters));
+    }
 
     const rows = buildPatientListByCategory({
 
@@ -365,9 +442,12 @@ export default function PatientsEMRSection({
 
     const term = q.trim().toLowerCase();
 
-    if (!term) return dateFiltered;
+    if (!term) {
+      return dateFiltered.filter((row) => matchesDoctorEncounterMode(row, encounterMode));
+    }
 
     return dateFiltered.filter((row) => {
+      if (!matchesDoctorEncounterMode(row, encounterMode)) return false;
 
       const name = (row.name ?? '').toLowerCase();
 
@@ -378,6 +458,8 @@ export default function PatientsEMRSection({
     });
 
   }, [
+    isIpdMode,
+    ipdData?.items,
     categoryFilter,
     completedVisits,
     todayAppointments,
@@ -385,6 +467,7 @@ export default function PatientsEMRSection({
     q,
     dateFilters,
     dateFiltersDisabled,
+    encounterMode,
   ]);
 
   // Doctor list APIs only send whole-year age; fetch DOB for infants so Age/Gender can show m/d.
@@ -431,19 +514,22 @@ export default function PatientsEMRSection({
     [list, dobByPatientId],
   );
 
-  const isLoading =
-
-    (needsCompletedApi && visitsLoading) || (needsTodayApi && todayLoading);
+  const isLoading = isIpdMode
+    ? ipdLoading
+    : (needsCompletedApi && visitsLoading) || (needsTodayApi && todayLoading);
 
 
 
   const activeCategoryLabel =
 
-    PATIENT_CATEGORY_OPTIONS.find((o) => o.value === categoryFilter)?.label ?? 'Patients';
+    categoryOptions.find((o) => o.value === categoryFilter)?.label ?? 'Patients';
 
 
 
-  const showPatientActions = categoryFilter === PATIENT_CATEGORY_FILTER.COMPLETED;
+  const showPatientActions = isIpdMode || categoryFilter === PATIENT_CATEGORY_FILTER.COMPLETED;
+  const emptyDescription = isIpdMode
+    ? ipdCategoryEmptyMessage(categoryFilter)
+    : categoryEmptyMessage(categoryFilter);
   const tableColumnCount = showPatientActions ? 6 : 5;
 
   const profilePlaceholderVisits = useMemo(
@@ -498,19 +584,24 @@ export default function PatientsEMRSection({
 
             <p className="doc-patients-page__subtitle">
 
-              {displayList.length} record{displayList.length === 1 ? '' : 's'} · {activeCategoryLabel}
+              {displayList.length} record{displayList.length === 1 ? '' : 's'} · {encounterMode.toUpperCase()} · {activeCategoryLabel}
 
             </p>
 
           </div>
 
-          <PatientCategorySelect value={categoryFilter} onChange={setCategoryFilter} />
+          <PatientCategorySelect
+            value={categoryFilter}
+            onChange={setCategoryFilter}
+            options={categoryOptions}
+            hints={categoryHints}
+          />
 
         </div>
 
 
 
-        <div className="doc-patients-page__toolbar">
+          <div className="doc-patients-page__toolbar">
           <div className="doc-patient-search doc-patient-search--inline">
             <Input
               className="doc-patient-search__field"
@@ -580,7 +671,7 @@ export default function PatientsEMRSection({
                     <EmptyState
                       icon={Users}
                       title="No patients found"
-                      description={categoryEmptyMessage(categoryFilter)}
+                      description={emptyDescription}
                     />
                   </td>
                 </tr>
@@ -606,7 +697,7 @@ export default function PatientsEMRSection({
                     </td>
                     <td className="doc-patient-table__meta">{formatAgeGender(row)}</td>
                     <td className="doc-patient-table__date">
-                      {formatVisitDateCompact(row.scheduledAt)}
+                      {formatVisitDateCompact(row)}
                     </td>
                     <td className="doc-patient-table__status">
                       <StatusPill status={row.status} />

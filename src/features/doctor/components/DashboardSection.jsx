@@ -1,4 +1,4 @@
-import { useMemo, useState, memo, useCallback } from 'react';
+import { useMemo, useState, memo, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
@@ -6,6 +6,9 @@ import {
   Clock,
   Search,
   XCircle,
+  BedDouble,
+  LogOut,
+  X,
 } from 'lucide-react';
 
 import {
@@ -15,6 +18,8 @@ import {
 } from '@/features/doctor/hooks/useDoctorAppointmentQuery';
 
 import { useDoctorDashboardTodayQueueQuery } from '@/features/doctor/hooks/useDoctorQueueQuery';
+import { useDoctorIpdAdmissionsQuery } from '@/features/doctor/hooks/useDoctorIpdQuery';
+import { isIpdEncounter, DOCTOR_ENCOUNTER_MODE } from '@/features/doctor/utils/encounterType';
 
 import {
 
@@ -46,6 +51,7 @@ import { toast } from '@/shared/utils/toast';
 import DashboardFilterBar from './DashboardFilterBar';
 
 import DashboardAppointmentsTable from './DashboardAppointmentsTable';
+import DoctorIpdPatientsTable from './DoctorIpdPatientsTable';
 
 import DashboardModals from './DashboardModals';
 
@@ -73,6 +79,13 @@ const DASHBOARD_FILTER = {
   CANCELLED: 'cancelled',
 };
 
+const IPD_STATUS_FILTER = {
+  ADMITTED: 'admitted',
+  DISCHARGED: 'discharged',
+};
+
+const IPD_PAGE_SIZE = 20;
+
 function comparePatientQueueDashboard(a, b, queueMetaByAppointmentId) {
   const aMeta = queueMetaByAppointmentId.get(a.dbId);
   const bMeta = queueMetaByAppointmentId.get(b.dbId);
@@ -87,7 +100,7 @@ function comparePatientQueueDashboard(a, b, queueMetaByAppointmentId) {
   return compareAppointmentsByDateTime(a, b);
 }
 
-function DashboardSection({ onViewAllPatients }) {
+function DashboardSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD, onViewAllPatients }) {
 
   const token = useQueryToken();
   const queryClient = useQueryClient();
@@ -117,12 +130,61 @@ function DashboardSection({ onViewAllPatients }) {
   const cancelAppointment = useCancelAppointmentMutation();
 
   const [activeFilter, setActiveFilter] = useState(DASHBOARD_FILTER.SCHEDULED);
+  const [ipdStatusFilter, setIpdStatusFilter] = useState(IPD_STATUS_FILTER.ADMITTED);
+  const [ipdSearch, setIpdSearch] = useState('');
+  const [ipdFromDate, setIpdFromDate] = useState('');
+  const [ipdToDate, setIpdToDate] = useState('');
+  const [ipdPage, setIpdPage] = useState(1);
   const [patientIdSearch, setPatientIdSearch] = useState('');
   const patientIdQuery = patientIdSearch.trim().toLowerCase();
 
+  const ipdQueryParams = useMemo(
+    () => ({
+      status: ipdStatusFilter,
+      search: ipdSearch.trim() || undefined,
+      from_date: ipdFromDate || undefined,
+      to_date: ipdToDate || undefined,
+      page: ipdPage,
+      page_size: IPD_PAGE_SIZE,
+    }),
+    [ipdStatusFilter, ipdSearch, ipdFromDate, ipdToDate, ipdPage],
+  );
 
+  const ipdSecondaryStatus =
+    ipdStatusFilter === IPD_STATUS_FILTER.ADMITTED
+      ? IPD_STATUS_FILTER.DISCHARGED
+      : IPD_STATUS_FILTER.ADMITTED;
 
-  const todaysAll = todayAppointments;
+  const ipdCountQueryParams = useMemo(
+    () => ({
+      status: ipdSecondaryStatus,
+      search: ipdSearch.trim() || undefined,
+      from_date: ipdFromDate || undefined,
+      to_date: ipdToDate || undefined,
+      page: 1,
+      page_size: 1,
+    }),
+    [ipdSecondaryStatus, ipdSearch, ipdFromDate, ipdToDate],
+  );
+
+  const isIpdMode = encounterMode === DOCTOR_ENCOUNTER_MODE.IPD;
+
+  const { data: ipdData, isPending: isIpdPending } = useDoctorIpdAdmissionsQuery(
+    ipdQueryParams,
+    { enabled: isIpdMode },
+  );
+
+  const { data: ipdSecondaryData, isPending: isIpdSecondaryPending } =
+    useDoctorIpdAdmissionsQuery(ipdCountQueryParams, { enabled: isIpdMode });
+
+  useEffect(() => {
+    setIpdPage(1);
+  }, [ipdStatusFilter, ipdSearch, ipdFromDate, ipdToDate]);
+
+  const todaysAll = useMemo(
+    () => todayAppointments.filter((a) => !isIpdEncounter(a)),
+    [todayAppointments],
+  );
 
   const todaysActive = useMemo(
 
@@ -295,7 +357,40 @@ function DashboardSection({ onViewAllPatients }) {
     [recentPatients]
   );
 
+  const beginIpdConsultation = useCallback(async (row) => {
+    const admissionId = row.admissionId ?? row.admission_id;
+    if (admissionId == null) {
+      toast.error('Admission id missing — cannot open consultation');
+      return;
+    }
+
+    setStartingConsult(true);
+    try {
+      const patientUid = row.patientUid ?? row.patientId;
+      const patientDbId = row.patientDbId ?? row.patientId;
+
+      await prefetchPatientProfileData(queryClient, token, {
+        patientUid,
+        patientId: patientDbId,
+      });
+
+      setConsultFor({
+        ...row,
+        encounterType: 'IPD',
+        admissionId,
+      });
+    } catch (err) {
+      toast.error(err?.message ?? 'Could not open consultation');
+    } finally {
+      setStartingConsult(false);
+    }
+  }, [queryClient, token]);
+
   const beginConsultation = useCallback(async (appt) => {
+    if (isIpdEncounter(appt)) {
+      await beginIpdConsultation(appt);
+      return;
+    }
     if (appt.dbId == null) {
       toast.error('Appointment id missing — cannot open consultation');
       return;
@@ -334,10 +429,14 @@ function DashboardSection({ onViewAllPatients }) {
     } finally {
       setStartingConsult(false);
     }
-  }, [todayQueue, queryClient, token]);
+  }, [beginIpdConsultation, todayQueue, queryClient, token]);
 
   const handleCancelAppointment = useCallback(
     (appt) => {
+      if (isIpdEncounter(appt)) {
+        toast.error('Cancel is not available for IPD admissions');
+        return;
+      }
       const appointmentId = appt.dbId ?? appt.id;
       if (appointmentId == null) {
         toast.error('Appointment id missing — cannot cancel');
@@ -419,6 +518,91 @@ function DashboardSection({ onViewAllPatients }) {
 
 
 
+  const ipdSummary = useMemo(() => {
+    const admittedTotal =
+      ipdStatusFilter === IPD_STATUS_FILTER.ADMITTED
+        ? (ipdData?.total ?? 0)
+        : (ipdSecondaryData?.total ?? 0);
+    const dischargedTotal =
+      ipdStatusFilter === IPD_STATUS_FILTER.DISCHARGED
+        ? (ipdData?.total ?? 0)
+        : (ipdSecondaryData?.total ?? 0);
+
+    return [
+      {
+        filter: IPD_STATUS_FILTER.ADMITTED,
+        label: 'Admit',
+        value: admittedTotal,
+        icon: BedDouble,
+        tint: 'doc-stat-icon--amber',
+      },
+      {
+        filter: IPD_STATUS_FILTER.DISCHARGED,
+        label: 'Discharge',
+        value: dischargedTotal,
+        icon: LogOut,
+        tint: 'doc-stat-icon--green',
+      },
+    ];
+  }, [ipdStatusFilter, ipdData?.total, ipdSecondaryData?.total]);
+
+  const isIpdSummaryPending = isIpdPending || isIpdSecondaryPending;
+
+  const ipdSearchField = (
+    <label className="doc-queue-card__patient-search">
+      <Search size={14} className="doc-queue-card__patient-search-icon" aria-hidden />
+      <input
+        type="search"
+        className="doc-queue-card__patient-search-input"
+        value={ipdSearch}
+        onChange={(e) => setIpdSearch(e.target.value)}
+        placeholder="Search name, UHID, phone, admission no…"
+        aria-label="Search IPD patients"
+      />
+    </label>
+  );
+
+  const hasIpdDateFilter = Boolean(ipdFromDate || ipdToDate);
+
+  const clearIpdDateFilters = useCallback(() => {
+    setIpdFromDate('');
+    setIpdToDate('');
+  }, []);
+
+  const ipdDateFilters = (
+    <div className="doc-dashboard-ipd-dates">
+      <label className="doc-dashboard-ipd-dates__field">
+        <span>From</span>
+        <input
+          type="date"
+          value={ipdFromDate}
+          onChange={(e) => setIpdFromDate(e.target.value)}
+          aria-label="Admit date from"
+        />
+      </label>
+      <label className="doc-dashboard-ipd-dates__field">
+        <span>To</span>
+        <input
+          type="date"
+          value={ipdToDate}
+          onChange={(e) => setIpdToDate(e.target.value)}
+          aria-label="Admit date to"
+        />
+      </label>
+      {hasIpdDateFilter ? (
+        <button
+          type="button"
+          className="doc-dashboard-ipd-dates__clear"
+          onClick={clearIpdDateFilters}
+          aria-label="Clear date filters"
+        >
+          <X size={14} aria-hidden />
+          Clear
+        </button>
+      ) : null}
+    </div>
+  );
+
   if (profilePatient) {
     return (
       <PatientHistoryProfile
@@ -435,6 +619,8 @@ function DashboardSection({ onViewAllPatients }) {
 
     <div className="doc-page doc-dashboard">
 
+      {encounterMode === DOCTOR_ENCOUNTER_MODE.OPD ? (
+        <>
       <DashboardFilterBar
 
         summary={summary}
@@ -567,6 +753,40 @@ function DashboardSection({ onViewAllPatients }) {
         </div>
 
       </div>
+        </>
+      ) : (
+        <>
+          <DashboardFilterBar
+            summary={ipdSummary}
+            activeFilter={ipdStatusFilter}
+            onFilterChange={setIpdStatusFilter}
+            isLoading={isIpdSummaryPending}
+          />
+          <DoctorIpdPatientsTable
+            title={ipdStatusFilter === IPD_STATUS_FILTER.DISCHARGED ? 'Discharged IPD' : 'Admitted IPD'}
+            emptyMessage={
+              ipdSearch.trim()
+                ? 'No IPD patients match your search.'
+                : ipdStatusFilter === IPD_STATUS_FILTER.DISCHARGED
+                  ? 'No discharged IPD patients for these filters.'
+                  : 'No admitted IPD patients under you.'
+            }
+            titleExtra={ipdSearchField}
+            headerEnd={ipdDateFilters}
+            rows={ipdData?.items ?? []}
+            isLoading={isIpdPending}
+            page={ipdData?.page ?? ipdPage}
+            pageSize={ipdData?.page_size ?? IPD_PAGE_SIZE}
+            total={ipdData?.total ?? 0}
+            onPageChange={setIpdPage}
+            onOpenPatient={handleOpenPatient}
+            showWardBedColumn
+            showActions
+            onConsult={beginIpdConsultation}
+            startingConsult={startingConsult}
+          />
+        </>
+      )}
 
 
 

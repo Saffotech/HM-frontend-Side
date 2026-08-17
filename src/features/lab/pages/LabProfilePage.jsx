@@ -29,7 +29,7 @@ import {
 } from '@/features/lab/hooks/useLabTechnicianProfileQuery';
 import { useLabPermissionSet } from '@/features/lab/hooks/useLabPermission';
 import { ROUTES } from '@/shared/constants';
-import { Button, ConfirmDialog, EmptyState, ProfilePhotoCropDialog } from '@/shared/components/common';
+import { Button, ConfirmDialog, EmptyState, ProfilePhoneField, ProfilePhotoCropDialog } from '@/shared/components/common';
 import PageSpinner from '@/shared/components/PageSpinner';
 import { toast } from '@/shared/utils/toast';
 import {
@@ -37,6 +37,12 @@ import {
   LAB_DEPT_UNASSIGNED_MESSAGE,
 } from '@/shared/utils/labDepartments';
 import { formatPhoneInput } from '@/shared/utils/validators';
+import {
+  PHONE_CODE_PATTERN,
+  formatPhoneCodeInput,
+  formatPhoneDisplay,
+  normalizePhoneCode,
+} from '@/shared/utils/phoneCountryCode';
 import {
   capitalizeFirst,
   displayProfileText,
@@ -117,12 +123,10 @@ function buildEditableForm(profile) {
       ? profile.languages.map((l) => capitalizeFirst(l)).join(', ')
       : '',
     phone: formatPhoneInput(profile?.phone ?? ''),
-    phone_code: profile?.phone_code ?? '+91',
+    phone_code: normalizePhoneCode(profile?.phone_code),
     address_line: capitalizeFirst(profile?.address?.line ?? ''),
     city: capitalizeFirst(profile?.address?.city ?? ''),
     state: capitalizeFirst(profile?.address?.state ?? ''),
-    country: capitalizeFirst(profile?.address?.country ?? ''),
-    postal_code: capitalizeFirst(profile?.address?.postal_code ?? ''),
     date_of_birth: profile?.date_of_birth ?? '',
     gender: profile?.gender ?? '',
     emergency_contact_name: capitalizeFirst(profile?.emergency_contact?.name ?? ''),
@@ -172,20 +176,18 @@ function buildDirtyPayload(form, baseline) {
     }
   });
 
+  const prevAddress = baseline.address || {};
   const nextAddress = {
     line: form.address_line === '' ? null : capitalizeFirst(form.address_line),
     city: form.city === '' ? null : capitalizeFirst(form.city),
     state: form.state === '' ? null : capitalizeFirst(form.state),
-    country: form.country === '' ? null : capitalizeFirst(form.country),
-    postal_code: form.postal_code === '' ? null : capitalizeFirst(form.postal_code),
+    country: prevAddress.country ?? null,
+    postal_code: prevAddress.postal_code ?? null,
   };
-  const prevAddress = baseline.address || {};
   const addressChanged =
     (nextAddress.line ?? null) !== (prevAddress.line ?? null) ||
     (nextAddress.city ?? null) !== (prevAddress.city ?? null) ||
-    (nextAddress.state ?? null) !== (prevAddress.state ?? null) ||
-    (nextAddress.country ?? null) !== (prevAddress.country ?? null) ||
-    (nextAddress.postal_code ?? null) !== (prevAddress.postal_code ?? null);
+    (nextAddress.state ?? null) !== (prevAddress.state ?? null);
   if (addressChanged) payload.address = nextAddress;
 
   const nextEmergency = {
@@ -329,6 +331,12 @@ export default function LabProfilePage() {
     // Phone is optional; if entered it must be exactly 10 digits.
     const phone = formatPhoneInput(form?.phone);
     const emergencyPhone = formatPhoneInput(form?.emergency_contact_phone);
+    const phoneCode = formatPhoneCodeInput(form?.phone_code);
+    if (!PHONE_CODE_PATTERN.test(phoneCode)) {
+      toast.error('Enter a valid phone code (e.g. +91)');
+      setActiveTab('contact');
+      return;
+    }
     if (phone && !isStrictTenDigitPhone(phone)) {
       toast.error('Phone must be a 10-digit number');
       setActiveTab('contact');
@@ -348,6 +356,7 @@ export default function LabProfilePage() {
     const formForSave = {
       ...form,
       phone,
+      phone_code: phoneCode,
       emergency_contact_phone: emergencyPhone,
       gender: form.gender === '' || form.gender == null ? '' : Number(form.gender),
     };
@@ -894,25 +903,13 @@ export default function LabProfilePage() {
                   {editing && form ? (
                     <>
                       <label className="lab-profile-field">
-                        <span className="lab-profile-field__label">Phone code</span>
-                        <input
-                          className="lab-profile-input"
-                          maxLength={8}
-                          value={form.phone_code}
-                          onChange={(e) => setField('phone_code', e.target.value)}
-                        />
-                      </label>
-                      <label className="lab-profile-field">
                         <span className="lab-profile-field__label">Phone</span>
-                        <input
-                          className="lab-profile-input"
-                          type="tel"
-                          inputMode="numeric"
-                          autoComplete="tel"
-                          maxLength={10}
-                          placeholder="10-digit number"
-                          value={form.phone}
-                          onChange={(e) => setField('phone', formatPhoneInput(e.target.value))}
+                        <ProfilePhoneField
+                          inputClassName="lab-profile-input"
+                          phoneCode={form.phone_code}
+                          phone={form.phone}
+                          onPhoneCodeChange={(value) => setField('phone_code', value)}
+                          onPhoneChange={(value) => setField('phone', value)}
                         />
                       </label>
                       <label className="lab-profile-field">
@@ -986,24 +983,6 @@ export default function LabProfilePage() {
                         />
                       </label>
                       <label className="lab-profile-field">
-                        <span className="lab-profile-field__label">Country</span>
-                        <input
-                          className="lab-profile-input"
-                          maxLength={100}
-                          value={form.country}
-                          onChange={(e) => setTextField('country', e.target.value)}
-                        />
-                      </label>
-                      <label className="lab-profile-field">
-                        <span className="lab-profile-field__label">Postal code</span>
-                        <input
-                          className="lab-profile-input"
-                          maxLength={20}
-                          value={form.postal_code}
-                          onChange={(e) => setTextField('postal_code', e.target.value)}
-                        />
-                      </label>
-                      <label className="lab-profile-field">
                         <span className="lab-profile-field__label">State</span>
                         <input
                           className="lab-profile-input"
@@ -1024,8 +1003,10 @@ export default function LabProfilePage() {
                     </>
                   ) : (
                     <>
-                      <ReadField label="Phone code" value={profile.phone_code} />
-                      <ReadField label="Phone" value={profile.phone} />
+                      <ReadField
+                        label="Phone"
+                        value={formatPhoneDisplay(profile.phone_code, profile.phone)}
+                      />
                       <ReadField
                         label="Emergency contact name"
                         value={profile.emergency_contact?.name}
@@ -1038,8 +1019,6 @@ export default function LabProfilePage() {
                       <ReadField label="Date of birth" value={profile.date_of_birth} />
                       <ReadField label="City" value={profile.address?.city} />
                       <ReadField label="State" value={profile.address?.state} />
-                      <ReadField label="Country" value={profile.address?.country} />
-                      <ReadField label="Postal code" value={profile.address?.postal_code} />
                       <ReadField label="Address line" value={profile.address?.line} />
                     </>
                   )}

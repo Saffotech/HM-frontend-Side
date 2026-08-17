@@ -12,12 +12,14 @@ import {
   uiStatusToApiStatus,
 } from '@/shared/api/mappers/appointmentMapper';
 import { enrichDoctorAppointmentsWithOpdPayment } from '@/features/doctor/utils/doctorAppointmentPayment';
+import { isIpdEncounter } from '@/features/doctor/utils/encounterType';
 import { getTodayRangeIso } from '@/shared/utils/opdDates';
 
 function mapAppointmentsList(raw) {
   return unwrapDoctorResponse(raw, 'appointments')
     .map(apiToUiAppointment)
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((a) => !isIpdEncounter(a));
 }
 
 async function loadOpdAppointmentsForDate(token, uiDate) {

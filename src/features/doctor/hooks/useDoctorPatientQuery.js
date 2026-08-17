@@ -15,6 +15,7 @@ import {
   resolvePatientHistoryPlaceholder,
 
 } from '@/features/doctor/utils/doctorPatientProfileCache';
+import { DOCTOR_DASHBOARD_QUERY_OPTIONS } from '@/features/doctor/utils/doctorDashboardCache';
 
 
 
@@ -32,11 +33,9 @@ export function useDoctorPatientVisitsQuery(params = {}, options = {}) {
 
     queryFn: () => doctorPatientsApi.listPatientVisits(token, queryParams),
 
-    enabled,
+    enabled: Boolean(token) && enabled,
 
-    staleTime: 1000 * 60 * 2,
-
-    refetchOnWindowFocus: false,
+    ...DOCTOR_DASHBOARD_QUERY_OPTIONS,
 
   });
 
@@ -58,9 +57,9 @@ export function useDoctorPatientHistoryQuery(patientUhid, options = {}) {
 
   return useQuery({
 
-    queryKey: queryKeys.doctor.patients.history(uid),
+    queryKey: queryKeys.doctor.patients.history(uid, { encounter_type: 'all' }),
 
-    queryFn: () => doctorPatientsApi.fetchPatientHistory(uid, token),
+    queryFn: () => doctorPatientsApi.fetchPatientHistory(uid, token, { encounter_type: 'all' }),
 
     enabled: Boolean(uid) && enabled,
 

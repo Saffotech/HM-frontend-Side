@@ -6,6 +6,7 @@ import { mutationOnError } from '@/shared/utils/mutationErrors';
 import { finalizeConsultationOnSave } from '@/features/doctor/utils/consultationSaveWorkflow';
 import {
   DOCTOR_DASHBOARD_QUERY_OPTIONS,
+  DOCTOR_LIVE_QUERY_OPTIONS,
   invalidateDoctorDashboardAfterComplete,
 } from '@/features/doctor/utils/doctorDashboardCache';
 import { selectDashboardQueue } from '@/features/doctor/utils/doctorDashboardSelectors';
@@ -17,7 +18,8 @@ export function useDoctorDashboardTodayQueueQuery() {
     queryKey: queryKeys.doctor.queue.today,
     queryFn: () => doctorQueueApi.fetchTodayQueue(token),
     select: selectDashboardQueue,
-    ...DOCTOR_DASHBOARD_QUERY_OPTIONS,
+    enabled: Boolean(token),
+    ...DOCTOR_LIVE_QUERY_OPTIONS,
   });
 }
 

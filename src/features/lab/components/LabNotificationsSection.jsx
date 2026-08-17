@@ -8,6 +8,7 @@ import { Bell, Search, X } from 'lucide-react';
 import {
   isLabTechnicianNotificationRead,
   isLabTechnicianNotificationUnread,
+  sortLabNotificationsNewestFirst,
   useLabTechnicianNotificationsListQuery,
   useMarkAllLabTechnicianNotificationsReadMutation,
   useMarkLabTechnicianNotificationReadMutation,
@@ -99,7 +100,7 @@ export default function LabNotificationsSection({ onDeepLink }) {
         (n) => String(n.priority || '').toUpperCase() === notificationType
       );
     }
-    return list;
+    return sortLabNotificationsNewestFirst(list);
   }, [data?.items, readFilter, notificationType]);
 
   const total = data?.total ?? items.length;

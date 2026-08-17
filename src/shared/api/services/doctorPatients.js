@@ -18,8 +18,12 @@ export async function listPatientVisits(token, params = {}) {
   };
 }
 
-export async function fetchPatientHistory(patientUhid, token) {
-  const history = await getPatientHistory(patientUhid, token);
+export async function fetchPatientHistory(patientUhid, token, params = {}) {
+  const history = await getPatientHistory(patientUhid, token, {
+    encounter_type: 'all',
+    page_size: 100,
+    ...params,
+  });
   const visitRows = mapPatientVisitList(history);
   return {
     patientUid: patientUhid,

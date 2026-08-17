@@ -6,6 +6,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import {
+  sortLabNotificationsNewestFirst,
   useLabTechnicianNotificationsListQuery,
   useLabTechnicianNotificationsUnreadCountQuery,
 } from '@/features/lab/hooks/useLabTechnicianNotificationsQuery';
@@ -28,7 +29,7 @@ export default function LabNotificationsBell({ onViewAll }) {
     },
     { enabled: canViewNotifications && open },
   );
-  const notifications = preview?.items ?? [];
+  const notifications = sortLabNotificationsNewestFirst(preview?.items ?? []);
   const showBadge = unread > 0;
 
   useEffect(() => {

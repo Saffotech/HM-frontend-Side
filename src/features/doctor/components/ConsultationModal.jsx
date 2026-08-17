@@ -1,17 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCreatePrescriptionMutation } from '@/features/doctor/hooks/useDoctorPrescriptionQuery';
 import { useCreateLabTestMutation } from '@/features/doctor/hooks/useDoctorLabQuery';
 import { useSaveConsultationWorkflowMutation, useConsultationContextQuery } from '@/features/doctor/hooks/useDoctorQueueQuery';
+import {
+  recordIpdDoctorVisit,
+  patchIpdAdmissionClinical,
+} from '@/features/doctor/api/ipd';
 import {
   DEFAULT_MEDICINE,
   LAB_DEPARTMENTS,
   LAB_PRIORITIES,
   inferLabCategory,
-  testsForLabDepartment,
 } from '@/features/doctor/constants';
 import { DOCTOR_PATIENT_HISTORY_QUERY_OPTIONS } from '@/features/doctor/utils/doctorPatientProfileCache';
 import { getDoctorDisplayStatus } from '@/features/doctor/utils/appointmentWorkflow';
+import { isIpdEncounter } from '@/features/doctor/utils/encounterType';
 import {
   clearConsultationDraft,
   loadConsultationDraft,
@@ -27,7 +31,7 @@ import { useAuthStore } from '@/shared/store/useAuthStore';
 import { toast } from '@/shared/utils/toast';
 import { useLabRoutingDepartmentsQuery } from '@/shared/hooks/queries/useOpdReferenceQuery';
 import { resolveLabDepartmentId } from '@/shared/utils/labDepartments';
-import '../styles/doctor-ui.css';
+import LabTestNameField from './LabTestNameField';
 
 function emptyMedicineRow() {
   return { ...DEFAULT_MEDICINE, durationValue: '', durationUnit: 'Days' };
@@ -37,6 +41,7 @@ function emptyLabOrderRow() {
   return {
     deptCode: '',
     testName: '',
+    otherTest: false,
     priority: 'Normal',
     clinicalNotes: '',
   };
@@ -47,6 +52,7 @@ function labOrdersFromDraft(draft) {
     return draft.labOrders.map((row) => ({
       deptCode: row.deptCode ?? '',
       testName: row.testName ?? '',
+      otherTest: Boolean(row.otherTest),
       priority: row.priority ?? 'Normal',
       clinicalNotes: row.clinicalNotes ?? '',
     }));
@@ -56,6 +62,7 @@ function labOrdersFromDraft(draft) {
       {
         deptCode: draft.labDeptCode ?? '',
         testName: draft.labTest ?? '',
+        otherTest: false,
         priority: draft.labPriority ?? 'Normal',
         clinicalNotes: draft.labClinicalNotes ?? '',
       },
@@ -98,6 +105,39 @@ function symptomsPrefillFromAppointment(detail) {
   return text;
 }
 
+function buildIpdConsultVisitNotes({ symptoms, diagnosis, notes, followUp, meds, labOrders }) {
+  const parts = [];
+  if (symptoms.trim()) parts.push(`Symptoms: ${symptoms.trim()}`);
+  if (diagnosis.trim()) parts.push(`Diagnosis: ${diagnosis.trim()}`);
+  if (notes.trim()) parts.push(`Notes: ${notes.trim()}`);
+  if (followUp) parts.push(`Follow-up: ${followUp}`);
+
+  const validMeds = meds.filter((m) => m.name.trim());
+  if (validMeds.length) {
+    parts.push(
+      `Prescription:\n${validMeds
+        .map((m) => {
+          const duration = [m.durationValue, m.durationUnit].filter(Boolean).join(' ');
+          return `- ${m.name}${m.dosage ? ` · ${m.dosage}` : ''}${m.frequency ? ` · ${m.frequency}` : ''}${duration ? ` · ${duration}` : ''}${m.instructions ? ` · ${m.instructions}` : ''}`;
+        })
+        .join('\n')}`,
+    );
+  }
+
+  const filledLabOrders = labOrders.filter(
+    (row) => String(row.testName ?? '').trim() && row.deptCode,
+  );
+  if (filledLabOrders.length) {
+    parts.push(
+      `Lab orders:\n${filledLabOrders
+        .map((row) => `- ${row.deptCode}: ${row.testName}${row.priority ? ` (${row.priority})` : ''}`)
+        .join('\n')}`,
+    );
+  }
+
+  return parts.join('\n\n');
+}
+
 export default function ConsultationModal({
   appointment,
   open,
@@ -105,6 +145,7 @@ export default function ConsultationModal({
   onDone,
 }) {
   const token = useQueryToken();
+  const queryClient = useQueryClient();
   const doctorId = useAuthStore((state) => state.user?.id);
   const saveConsultation = useSaveConsultationWorkflowMutation();
   const createPrescription = useCreatePrescriptionMutation();
@@ -118,33 +159,44 @@ export default function ConsultationModal({
   const [labOrders, setLabOrders] = useState([emptyLabOrderRow()]);
   const [fieldErrors, setFieldErrors] = useState({});
   const [hydratedFromDraft, setHydratedFromDraft] = useState(false);
+  const [ipdSaving, setIpdSaving] = useState(false);
   const skipDraftPersistRef = useRef(false);
 
-  const appointmentDbId = appointment?.dbId;
+  const isIpdConsult = isIpdEncounter(appointment);
+  const admissionId = appointment?.admissionId ?? appointment?.admission_id ?? null;
+  const appointmentDbId = isIpdConsult ? null : appointment?.dbId;
+  const consultDraftKey = isIpdConsult
+    ? (admissionId != null ? `ipd-${admissionId}` : null)
+    : appointmentDbId;
   const patientUid = appointment?.patientUid ?? appointment?.patientId;
 
   const labRoutingQuery = useLabRoutingDepartmentsQuery({ enabled: open });
   const labRoutingDepts = labRoutingQuery.data ?? [];
 
   const consultationContextQuery = useConsultationContextQuery(appointmentDbId, {
-    enabled: open && appointmentDbId != null,
+    enabled: open && !isIpdConsult && appointmentDbId != null,
   });
 
   const patientHistoryQuery = useQuery({
-    queryKey: queryKeys.doctor.patients.history(patientUid),
-    queryFn: () => doctorPatientsApi.fetchPatientHistory(patientUid, token),
+    queryKey: queryKeys.doctor.patients.history(patientUid, {
+      encounter_type: isIpdConsult ? 'ipd' : 'all',
+    }),
+    queryFn: () =>
+      doctorPatientsApi.fetchPatientHistory(patientUid, token, {
+        encounter_type: isIpdConsult ? 'ipd' : 'all',
+      }),
     enabled: open && Boolean(patientUid) && Boolean(token),
     ...DOCTOR_PATIENT_HISTORY_QUERY_OPTIONS,
   });
 
   useEffect(() => {
-    if (!open || appointmentDbId == null) {
+    if (!open || consultDraftKey == null) {
       setHydratedFromDraft(false);
       return;
     }
 
     skipDraftPersistRef.current = true;
-    const draft = loadConsultationDraft(appointmentDbId, doctorId);
+    const draft = loadConsultationDraft(consultDraftKey, doctorId);
     const next = draft ? applyDraftToForm(draft) : resetConsultationFormState();
 
     setTab(next.tab);
@@ -162,10 +214,25 @@ export default function ConsultationModal({
     }, 0);
 
     return () => window.clearTimeout(timer);
-  }, [open, appointmentDbId, doctorId]);
+  }, [open, consultDraftKey, doctorId]);
 
   useEffect(() => {
-    if (!open || hydratedFromDraft) return;
+    if (!open || hydratedFromDraft || !isIpdConsult) return;
+
+    if (!symptoms) {
+      setSymptoms(symptomsPrefillFromAppointment(appointment) || '');
+    }
+    if (!diagnosis && appointment?.diagnosis) setDiagnosis(appointment.diagnosis);
+    if (!notes && appointment?.notes) {
+      setNotes(stripInternalAppointmentMarkers(appointment.notes));
+    }
+    if (!followUp && appointment?.followUpDate) {
+      setFollowUp(String(appointment.followUpDate).slice(0, 10));
+    }
+  }, [open, hydratedFromDraft, isIpdConsult, appointment, symptoms, diagnosis, notes, followUp]);
+
+  useEffect(() => {
+    if (!open || hydratedFromDraft || isIpdConsult) return;
     const detail = consultationContextQuery.data?.appointment;
     if (!detail) return;
 
@@ -190,12 +257,21 @@ export default function ConsultationModal({
         detail.followUpDate ?? detail.followUp ?? parsedNotes.followUp ?? '';
       if (nextFollowUp) setFollowUp(String(nextFollowUp).slice(0, 10));
     }
-  }, [open, hydratedFromDraft, consultationContextQuery.data, symptoms, diagnosis, notes, followUp]);
+  }, [
+    open,
+    hydratedFromDraft,
+    isIpdConsult,
+    consultationContextQuery.data,
+    symptoms,
+    diagnosis,
+    notes,
+    followUp,
+  ]);
 
   useEffect(() => {
-    if (!open || appointmentDbId == null || skipDraftPersistRef.current) return;
+    if (!open || consultDraftKey == null || skipDraftPersistRef.current) return;
 
-    saveConsultationDraft(appointmentDbId, doctorId, {
+    saveConsultationDraft(consultDraftKey, doctorId, {
       tab,
       symptoms,
       diagnosis,
@@ -206,7 +282,7 @@ export default function ConsultationModal({
     });
   }, [
     open,
-    appointmentDbId,
+    consultDraftKey,
     doctorId,
     tab,
     symptoms,
@@ -220,6 +296,7 @@ export default function ConsultationModal({
   if (!appointment) return null;
 
   const saving =
+    ipdSaving ||
     saveConsultation.isPending ||
     createPrescription.isPending ||
     createLabTest.isPending;
@@ -236,6 +313,9 @@ export default function ConsultationModal({
       if (row.testName && !row.deptCode) {
         errs[`labDept_${i}`] = 'Select Laboratory or Radiology';
       }
+      if (row.otherTest && !String(row.testName ?? '').trim()) {
+        errs[`labTest_${i}`] = 'Enter a test name';
+      }
     });
     meds.forEach((m, i) => {
       if (m.name.trim()) {
@@ -247,6 +327,64 @@ export default function ConsultationModal({
     });
     setFieldErrors(errs);
     if (Object.keys(errs).length) return;
+
+    if (isIpdConsult) {
+      if (admissionId == null) {
+        toast.error('Admission id missing — cannot save consultation');
+        return;
+      }
+      if (doctorId == null) {
+        toast.error('Doctor session missing — cannot save consultation');
+        return;
+      }
+
+      setIpdSaving(true);
+      try {
+        const visitNotes = buildIpdConsultVisitNotes({
+          symptoms,
+          diagnosis,
+          notes,
+          followUp,
+          meds,
+          labOrders,
+        });
+
+        await patchIpdAdmissionClinical(
+          admissionId,
+          {
+            diagnosis: diagnosis.trim(),
+            notes: notes.trim() || undefined,
+          },
+          token,
+        );
+
+        await recordIpdDoctorVisit(
+          admissionId,
+          {
+            doctor_id: Number(doctorId),
+            charge: 0,
+            notes: visitNotes || undefined,
+          },
+          token,
+        );
+
+        queryClient.invalidateQueries({ queryKey: ['doctor', 'ipd'] });
+        if (patientUid) {
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.doctor.patients.history(patientUid),
+          });
+        }
+
+        toast.success('IPD consultation saved');
+        clearConsultationDraft(consultDraftKey, doctorId);
+        onDone();
+      } catch (err) {
+        toast.error(err?.message ?? 'Could not save IPD consultation');
+      } finally {
+        setIpdSaving(false);
+      }
+      return;
+    }
 
     if (appointmentDbId == null) {
       toast.error('Appointment id missing — cannot save consultation');
@@ -288,7 +426,9 @@ export default function ConsultationModal({
         }
       }
 
-      const filledLabOrders = labOrders.filter((row) => row.testName && row.deptCode);
+      const filledLabOrders = labOrders.filter(
+        (row) => String(row.testName ?? '').trim() && row.deptCode,
+      );
       for (const row of filledLabOrders) {
         const departmentId = resolveLabDepartmentId(labRoutingDepts, row.deptCode);
         try {
@@ -296,7 +436,7 @@ export default function ConsultationModal({
             appointmentDbId,
             patientUid,
             patientName: appointment.patientName,
-            testName: row.testName,
+            testName: String(row.testName).trim(),
             category: inferLabCategory(row.testName, row.deptCode),
             departmentId: departmentId ?? undefined,
             priority: row.priority || 'Normal',
@@ -311,7 +451,7 @@ export default function ConsultationModal({
       }
 
       toast.success('Consultation saved');
-      clearConsultationDraft(appointmentDbId, doctorId);
+      clearConsultationDraft(consultDraftKey, doctorId);
       onDone();
     } catch {
       // mutation hooks toast via mutationOnError
@@ -322,7 +462,7 @@ export default function ConsultationModal({
     <Modal
       isOpen={open}
       onClose={onClose}
-      title={`Consultation · ${appointment.patientName}`}
+      title={`Consultation · ${appointment.patientName}${isIpdConsult ? ' · IPD' : ''}`}
       size="lg"
       panelClassName="doc-consult-modal"
       footer={
@@ -337,35 +477,65 @@ export default function ConsultationModal({
       <p className="text-muted" style={{ margin: '0 0 1rem', fontSize: '0.875rem' }}>
         {patientUid ?? '—'}
         <span style={{ marginLeft: '0.75rem' }}>Status: {displayStatus}</span>
-        {appointment.time ? (
+        {isIpdConsult && (appointment.wardName || appointment.bedNumber) ? (
+          <span style={{ marginLeft: '0.75rem' }}>
+            {[appointment.wardName, appointment.bedNumber ? `Bed ${appointment.bedNumber}` : null]
+              .filter(Boolean)
+              .join(' · ')}
+          </span>
+        ) : null}
+        {!isIpdConsult && appointment.time ? (
           <span style={{ marginLeft: '0.75rem' }}>Visit: {appointment.time}</span>
         ) : null}
       </p>
 
-      <QueryFeedback
-        isError={consultationContextQuery.isError}
-        error={consultationContextQuery.error}
-        onRetry={() => consultationContextQuery.refetch()}
-      >
-        {patientHistoryQuery.isError && (
-          <p className="text-muted" style={{ fontSize: '0.8125rem', margin: '0 0 1rem' }}>
-            Recent visit history could not be loaded.
-          </p>
-        )}
-        {recentVisits.length > 0 && (
-          <div className="doc-consult-history" style={{ marginBottom: '1rem' }}>
-            <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.875rem' }}>Recent visits</h4>
-            <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.8125rem' }}>
-              {recentVisits.map((visit) => (
-                <li key={visit.id ?? visit.appointmentDbId}>
-                  {visit.dateTime ?? '—'}
-                  {visit.diagnosis && visit.diagnosis !== '—' ? ` — ${visit.diagnosis}` : ''}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </QueryFeedback>
+      {isIpdConsult ? (
+        <>
+          {patientHistoryQuery.isError && (
+            <p className="text-muted" style={{ fontSize: '0.8125rem', margin: '0 0 1rem' }}>
+              Recent visit history could not be loaded.
+            </p>
+          )}
+          {recentVisits.length > 0 && (
+            <div className="doc-consult-history" style={{ marginBottom: '1rem' }}>
+              <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.875rem' }}>Recent IPD visits</h4>
+              <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.8125rem' }}>
+                {recentVisits.map((visit) => (
+                  <li key={visit.id ?? visit.appointmentDbId}>
+                    {visit.dateTime ?? '—'}
+                    {visit.diagnosis && visit.diagnosis !== '—' ? ` — ${visit.diagnosis}` : ''}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
+      ) : (
+        <QueryFeedback
+          isError={consultationContextQuery.isError}
+          error={consultationContextQuery.error}
+          onRetry={() => consultationContextQuery.refetch()}
+        >
+          {patientHistoryQuery.isError && (
+            <p className="text-muted" style={{ fontSize: '0.8125rem', margin: '0 0 1rem' }}>
+              Recent visit history could not be loaded.
+            </p>
+          )}
+          {recentVisits.length > 0 && (
+            <div className="doc-consult-history" style={{ marginBottom: '1rem' }}>
+              <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.875rem' }}>Recent visits</h4>
+              <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.8125rem' }}>
+                {recentVisits.map((visit) => (
+                  <li key={visit.id ?? visit.appointmentDbId}>
+                    {visit.dateTime ?? '—'}
+                    {visit.diagnosis && visit.diagnosis !== '—' ? ` — ${visit.diagnosis}` : ''}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </QueryFeedback>
+      )}
 
       <div className="doc-modal-tabs">
         {['clinical', 'rx', 'lab'].map((t) => (
@@ -474,7 +644,6 @@ export default function ConsultationModal({
             Choose Laboratory or Radiology first. Tests listed match that department. Orders are saved when you click Save Consultation.
           </p>
           {labOrders.map((row, i) => {
-            const testOptions = testsForLabDepartment(row.deptCode);
             return (
               <div key={i} className="doc-lab-order">
                 <div className="doc-lab-order__head">
@@ -501,7 +670,7 @@ export default function ConsultationModal({
                       setLabOrders((rows) =>
                         rows.map((item, j) =>
                           j === i
-                            ? { ...item, deptCode: code, testName: '' }
+                            ? { ...item, deptCode: code, testName: '', otherTest: false }
                             : item,
                         ),
                       );
@@ -520,19 +689,19 @@ export default function ConsultationModal({
                       label: d.label,
                     }))}
                   />
-                  <Select
+                  <LabTestNameField
                     label="Test *"
-                    value={row.testName}
-                    onChange={(testName) =>
+                    deptCode={row.deptCode}
+                    testName={row.testName}
+                    otherTest={row.otherTest}
+                    error={fieldErrors[`labTest_${i}`]}
+                    onChange={({ testName, otherTest }) =>
                       setLabOrders((rows) =>
                         rows.map((item, j) =>
-                          j === i ? { ...item, testName } : item,
+                          j === i ? { ...item, testName, otherTest } : item,
                         ),
                       )
                     }
-                    placeholder={row.deptCode ? 'Select test' : 'Select department first'}
-                    disabled={!row.deptCode}
-                    options={testOptions.map((t) => ({ value: t, label: t }))}
                   />
                   <Select
                     label="Priority"
@@ -547,7 +716,7 @@ export default function ConsultationModal({
                     options={LAB_PRIORITIES.map((p) => ({ value: p, label: p }))}
                   />
                 </div>
-                {row.testName ? (
+                {row.testName || row.otherTest ? (
                   <Textarea
                     label="Clinical notes"
                     rows={2}

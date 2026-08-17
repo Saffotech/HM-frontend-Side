@@ -3,6 +3,7 @@ import { doctorLabsApi } from '@/shared/api/services';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { mutationOnError } from '@/shared/utils/mutationErrors';
+import { DOCTOR_DASHBOARD_QUERY_OPTIONS } from '@/features/doctor/utils/doctorDashboardCache';
 
 export function useDoctorLabTestsQuery(params = {}, options = {}) {
   const { enabled = true } = options;
@@ -11,9 +12,8 @@ export function useDoctorLabTestsQuery(params = {}, options = {}) {
   return useQuery({
     queryKey: [...queryKeys.doctor.labs, apiParams],
     queryFn: () => doctorLabsApi.fetchLabTests(token, apiParams),
-    enabled,
-    staleTime: 1000 * 60 * 2,
-    refetchOnWindowFocus: false,
+    enabled: Boolean(token) && enabled,
+    ...DOCTOR_DASHBOARD_QUERY_OPTIONS,
   });
 }
 

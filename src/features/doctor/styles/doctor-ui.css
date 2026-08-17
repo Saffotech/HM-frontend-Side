@@ -478,6 +478,13 @@
   grid-template-columns: 1fr;
 }
 
+.doc-lab-test-name{
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
 @media (min-width: 560px){
   .doc-lab-order__grid{
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(8rem, 0.7fr);
@@ -1176,19 +1183,98 @@
 }
 
 .doc-patient-col--meta{
-  width: 15%;
+  width: 13%;
+}
+
+.doc-patient-col--type{
+  width: 10%;
 }
 
 .doc-patient-col--date{
-  width: 20%;
-}
-
-.doc-patient-col--status{
   width: 18%;
 }
 
+.doc-patient-col--status{
+  width: 16%;
+}
+
 .doc-patient-col--action{
-  width: 15%;
+  width: 14%;
+}
+
+.doc-patients-page__encounter-filter{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.doc-patients-page__encounter-filter select{
+  min-height: 2.15rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: 0.8125rem;
+  background: #fff;
+}
+
+.doc-encounter-mode{
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0.35rem;
+  padding: 0.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  flex-shrink: 0;
+}
+
+.doc-encounter-mode__btn{
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  padding: 0.45rem 1.1rem;
+  border-radius: calc(var(--radius-md) - 2px);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.doc-encounter-mode__btn.is-active{
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(29, 111, 164, 0.25);
+}
+
+.doc-encounter-mode__btn:focus-visible{
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.doc-encounter-badge{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.4rem;
+  padding: 0.18rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.doc-encounter-badge--opd{
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.doc-encounter-badge--ipd{
+  background: #ede9fe;
+  color: #5b21b6;
 }
 
 .doc-patient-table--no-action .doc-patient-col--uid{

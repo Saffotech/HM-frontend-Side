@@ -5,6 +5,10 @@
 import { apiStatusToUiStatus } from '@/shared/api/mappers/appointmentMapper';
 import { formatVisitDateTime } from '@/features/doctor/utils/patientHistory';
 import { parseEmbeddedClinicalNotes } from '@/features/doctor/utils/clinicalNotesParse';
+import {
+  isIpdEncounter,
+  resolveNumericAppointmentDbId,
+} from '@/features/doctor/utils/encounterType';
 
 const GENDER_LABELS = {
   1: 'Male',
@@ -45,17 +49,34 @@ function resolveVisitSymptoms(api) {
   return null;
 }
 
+function resolveVisitAppointmentDbId(api) {
+  const enc = String(api?.encounter_type ?? api?.encounterType ?? 'OPD').toUpperCase();
+  if (enc === 'IPD') return null;
+  return resolveNumericAppointmentDbId(api?.id ?? api?.appointment_id ?? api?.appointmentId);
+}
+
+function resolveVisitScheduledAt(api) {
+  return (
+    api.scheduled_at
+    ?? api.scheduledAt
+    ?? api.admitted_at
+    ?? api.admittedAt
+    ?? null
+  );
+}
+
 /** Completed-visit row from GET /patients or patient_history item */
 export function apiToUiPatientVisitRow(api) {
   if (!api) return null;
-  const scheduledAt = api.scheduled_at ?? api.scheduledAt ?? null;
+  const scheduledAt = resolveVisitScheduledAt(api);
   const patientUid =
     api.patient_uid ?? api.patient_uhid ?? api.patientUhid ?? api.patientUid ?? null;
   const patientId = api.patient_id ?? api.patientId ?? null;
+  const encounterType = api.encounter_type ?? api.encounterType ?? 'OPD';
 
   return {
     id: visitRowKey(api),
-    appointmentDbId: api.id ?? api.appointment_id ?? api.appointmentId ?? null,
+    appointmentDbId: resolveVisitAppointmentDbId(api),
     patientUid,
     patientId: patientId != null ? Number(patientId) : null,
     name: api.patient_name ?? api.patientName ?? '',
@@ -71,6 +92,13 @@ export function apiToUiPatientVisitRow(api) {
     scheduledAt,
     visitAt: scheduledAt,
     status: apiStatusToUiStatus(api.status) ?? api.status,
+    encounterType,
+    registrationSource: api.registration_source ?? api.registrationSource ?? null,
+    admissionId: api.admission_id ?? api.admissionId ?? null,
+    bedNumber: api.bed_number ?? api.bedNumber ?? null,
+    wardName: api.ward_name ?? api.wardName ?? null,
+    admittedAt: api.admitted_at ?? api.admittedAt ?? null,
+    dischargedAt: api.discharged_at ?? api.dischargedAt ?? null,
     symptoms: resolveVisitSymptoms(api),
     diagnosis: api.diagnosis ?? null,
     notes: api.notes ?? null,
@@ -82,10 +110,10 @@ export function apiToUiPatientVisitRow(api) {
 export function appointmentToVisitRow(appt) {
   if (!appt) return null;
   const patientUid = appt.patientUid ?? appt.patientId ?? null;
-  const scheduledAt = appt.scheduledAt ?? null;
+  const scheduledAt = appt.scheduledAt ?? appt.admittedAt ?? null;
   return {
     id: appt.dbId != null ? `appt-${appt.dbId}` : `${patientUid}-${appt.time ?? ''}`,
-    appointmentDbId: appt.dbId ?? null,
+    appointmentDbId: isIpdEncounter(appt) ? null : (appt.dbId ?? null),
     patientUid,
     patientId: appt.patientDbId ?? null,
     name: appt.patientName ?? '',
@@ -96,6 +124,13 @@ export function appointmentToVisitRow(appt) {
     scheduledAt,
     visitAt: scheduledAt,
     status: appt.status ?? null,
+    encounterType: appt.encounterType ?? 'OPD',
+    registrationSource: appt.registrationSource ?? null,
+    admissionId: appt.admissionId ?? null,
+    bedNumber: appt.bedNumber ?? null,
+    wardName: appt.wardName ?? null,
+    admittedAt: appt.admittedAt ?? null,
+    dischargedAt: appt.dischargedAt ?? null,
     symptoms: appt.reason ?? null,
     diagnosis: null,
     notes: appt.notes ?? null,
@@ -165,9 +200,14 @@ export function apiToUiVisitHistoryItem(api) {
   return {
     id: row.id,
     appointmentDbId: row.appointmentDbId,
+    encounterType: row.encounterType ?? 'OPD',
     scheduledAt: row.scheduledAt,
-    dateTime: formatVisitDateTime(null, row.scheduledAt),
-    sortTime: row.scheduledAt ? new Date(row.scheduledAt).getTime() : 0,
+    admittedAt: row.admittedAt ?? null,
+    dischargedAt: row.dischargedAt ?? null,
+    dateTime: formatVisitDateTime(null, row.admittedAt ?? row.scheduledAt),
+    sortTime: (row.admittedAt ?? row.scheduledAt)
+      ? new Date(row.admittedAt ?? row.scheduledAt).getTime()
+      : 0,
     symptoms,
     diagnosis: row.diagnosis || '—',
     notes,

@@ -30,6 +30,22 @@ export function isLabTechnicianNotificationUnread(n) {
   return !isLabTechnicianNotificationRead(n);
 }
 
+function notificationTimeMs(n) {
+  const raw = n?.created_at ?? n?.at ?? n?.createdAt ?? null;
+  if (!raw) return 0;
+  const t = new Date(raw).getTime();
+  return Number.isNaN(t) ? 0 : t;
+}
+
+/** Newest notifications first (frontend sort). */
+export function sortLabNotificationsNewestFirst(items = []) {
+  return [...items].sort((a, b) => {
+    const diff = notificationTimeMs(b) - notificationTimeMs(a);
+    if (diff !== 0) return diff;
+    return Number(b?.id ?? 0) - Number(a?.id ?? 0);
+  });
+}
+
 function patchListCachesAsRead(queryClient, notificationId) {
   const id = Number(notificationId);
   const now = new Date().toISOString();

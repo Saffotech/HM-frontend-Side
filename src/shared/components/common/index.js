@@ -25,6 +25,7 @@ export { default as MoneyAmount } from './MoneyAmount';
 export { default as ConfirmDialog } from '../ConfirmDialog';
 export { default as EmptyState } from '../EmptyState';
 export { default as ProfilePhotoCropDialog } from '../ProfilePhotoCropDialog';
+export { default as ProfilePhoneField } from './ProfilePhoneField';
 
 /* Design system — also available from '@/components/ui' */
 export { default as PageHeader } from '@/components/ui/PageHeader';

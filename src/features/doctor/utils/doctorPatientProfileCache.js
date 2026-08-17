@@ -80,8 +80,9 @@ export async function prefetchPatientProfileData(queryClient, token, { patientUi
   if (patientUid) {
     tasks.push(
       queryClient.prefetchQuery({
-        queryKey: queryKeys.doctor.patients.history(patientUid),
-        queryFn: () => doctorPatientsApi.fetchPatientHistory(patientUid, token),
+        queryKey: queryKeys.doctor.patients.history(patientUid, { encounter_type: 'all' }),
+        queryFn: () =>
+          doctorPatientsApi.fetchPatientHistory(patientUid, token, { encounter_type: 'all' }),
         ...DOCTOR_PATIENT_HISTORY_QUERY_OPTIONS,
       }),
     );

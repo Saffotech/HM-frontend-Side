@@ -4,14 +4,24 @@ import { Menu, X } from 'lucide-react';
 import { ROUTES } from '@/shared/constants';
 import { BrandLogo, BrandName, UserProfileMenu } from '@/shared/components/common';
 import DoctorNotificationsBell from './DoctorNotificationsBell';
+import DoctorEncounterModeToggle from './DoctorEncounterModeToggle';
 import './DoctorShell.css';
 
 const DOCTOR_HEADER_TITLE = 'Doctor';
 
-export default function DoctorShell({ title = DOCTOR_HEADER_TITLE, nav, active, onSelect, children }) {
+export default function DoctorShell({
+  title = DOCTOR_HEADER_TITLE,
+  nav,
+  active,
+  onSelect,
+  encounterMode,
+  onEncounterModeChange,
+  children,
+}) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const onProfilePage = location.pathname === ROUTES.DOCTOR_PROFILE;
+  const showEncounterToggle = typeof onEncounterModeChange === 'function';
 
   return (
     <div className="doctor-shell">
@@ -22,6 +32,13 @@ export default function DoctorShell({ title = DOCTOR_HEADER_TITLE, nav, active, 
         </Link>
         <p className="doctor-shell__mobile-title">{DOCTOR_HEADER_TITLE}</p>
         <div className="doctor-shell__mobile-actions">
+          {showEncounterToggle ? (
+            <DoctorEncounterModeToggle
+              className="doc-encounter-mode--compact"
+              value={encounterMode}
+              onChange={onEncounterModeChange}
+            />
+          ) : null}
           <DoctorNotificationsBell onViewAll={() => onSelect('notifications')} />
           <button type="button" className="doctor-shell__menu-btn" onClick={() => setMobileOpen(true)} aria-label="Open menu">
             <Menu size={22} />
@@ -71,8 +88,14 @@ export default function DoctorShell({ title = DOCTOR_HEADER_TITLE, nav, active, 
 
       <div className="doctor-shell__main">
         <header className="doctor-shell__header no-print">
-          <div>
+          <div className="doctor-shell__header-start">
             <h1 className="doctor-shell__header-title">{DOCTOR_HEADER_TITLE}</h1>
+            {showEncounterToggle ? (
+              <DoctorEncounterModeToggle
+                value={encounterMode}
+                onChange={onEncounterModeChange}
+              />
+            ) : null}
           </div>
           <div className="doctor-shell__header-actions">
             <DoctorNotificationsBell onViewAll={() => onSelect('notifications')} />
