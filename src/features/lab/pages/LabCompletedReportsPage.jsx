@@ -8,6 +8,8 @@ import { printLabReport } from '@/features/lab/utils/labReportUtils';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { EmptyState, QueryFeedback } from '@/shared/components/common';
 import { DateInput } from '@/shared/components/common';
+import LabEncounterBadge from '@/features/lab/components/LabEncounterBadge';
+import { visitLocationLabel, normalizeEncounterType, reportMatchesArchiveSearch } from '@/features/lab/utils/visitLocation';
 import '../styles/lab.css';
 
 export default function LabCompletedReportsPage() {
@@ -20,7 +22,6 @@ export default function LabCompletedReportsPage() {
 
   const reportsQuery = useLabReportsQuery(
     {
-      search: debouncedSearch,
       date: filterDate || undefined,
       pageSize: 100,
     },
@@ -36,17 +37,25 @@ export default function LabCompletedReportsPage() {
   );
 
   const [filterDoctor, setFilterDoctor] = useState('all');
+  const [filterSource, setFilterSource] = useState('all');
 
   const filtered = useMemo(() => {
-    if (filterDoctor === 'all') return reports;
-    return reports.filter((r) => r.doctorName === filterDoctor);
-  }, [reports, filterDoctor]);
+    return reports.filter((r) => {
+      if (!reportMatchesArchiveSearch(r, debouncedSearch)) return false;
+      if (filterDoctor !== 'all' && r.doctorName !== filterDoctor) return false;
+      if (filterSource !== 'all' && normalizeEncounterType(r.encounterType) !== filterSource) {
+        return false;
+      }
+      return true;
+    });
+  }, [reports, debouncedSearch, filterDoctor, filterSource]);
 
-  const hasFilters = search || filterDate || filterDoctor !== 'all';
+  const hasFilters = search || filterDate || filterDoctor !== 'all' || filterSource !== 'all';
   const resetFilters = () => {
     setSearch('');
     setFilterDate('');
     setFilterDoctor('all');
+    setFilterSource('all');
   };
 
   if (!canViewLab) {
@@ -72,10 +81,22 @@ export default function LabCompletedReportsPage() {
             <input
               id="reports-search"
               type="search"
-              placeholder="Patient name, Report ID, or Test..."
+              placeholder="Patient, report ID, test, ward, bed, source..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+          </div>
+          <div className="lab-filter-group">
+            <label htmlFor="reports-source">Source</label>
+            <select
+              id="reports-source"
+              value={filterSource}
+              onChange={(e) => setFilterSource(e.target.value)}
+            >
+              <option value="all">All</option>
+              <option value="OPD">OPD</option>
+              <option value="IPD">IPD</option>
+            </select>
           </div>
           <div className="lab-filter-group">
             <label htmlFor="reports-doctor">Ordering doctor</label>
@@ -128,33 +149,51 @@ export default function LabCompletedReportsPage() {
               <table className="lab-table lab-table--archive">
                 <thead>
                   <tr>
-                    <th>Report ID</th>
-                    <th>Patient Name</th>
-                    <th>Patient ID</th>
-                    <th>Test Name</th>
-                    <th>Doctor</th>
-                    <th>Lab Technician</th>
-                    <th>Uploaded Date</th>
-                    <th>Status</th>
-                    <th className="lab-archive-actions-head">Actions</th>
+                    <th className="lab-archive-col lab-archive-col--report">Report ID</th>
+                    <th className="lab-archive-col lab-archive-col--patient">Patient Name</th>
+                    <th className="lab-archive-col lab-archive-col--source">Source</th>
+                    <th className="lab-archive-col lab-archive-col--location">Ward / Bed</th>
+                    <th className="lab-archive-col lab-archive-col--test">Test Name</th>
+                    <th className="lab-archive-col lab-archive-col--doctor">Doctor</th>
+                    <th className="lab-archive-col lab-archive-col--tech">Lab Technician</th>
+                    <th className="lab-archive-col lab-archive-col--date">Uploaded Date</th>
+                    <th className="lab-archive-col lab-archive-col--status">Status</th>
+                    <th className="lab-archive-col lab-archive-col--actions lab-archive-actions-head">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((report) => (
+                  {filtered.map((report) => {
+                    const location = visitLocationLabel(report);
+                    return (
                     <tr key={report.reportDbId ?? report.reportId}>
-                      <td>
+                      <td className="lab-archive-col lab-archive-col--report">
                         <strong>{report.reportId}</strong>
                       </td>
-                      <td>{report.patientName}</td>
-                      <td className="lab-archive-meta">{report.patientId}</td>
-                      <td>{report.testName}</td>
-                      <td>{report.doctorName}</td>
-                      <td>{report.uploadedByName}</td>
-                      <td className="lab-archive-meta lab-archive-meta--nowrap">{report.uploadedDate}</td>
-                      <td>
+                      <td className="lab-archive-col lab-archive-col--patient lab-archive-patient">
+                        <span className="lab-archive-patient__name">{report.patientName}</span>
+                        <span className="lab-archive-meta lab-archive-patient__id">{report.patientId}</span>
+                      </td>
+                      <td className="lab-archive-col lab-archive-col--source">
+                        <LabEncounterBadge encounterType={report.encounterType} />
+                      </td>
+                      <td className="lab-archive-col lab-archive-col--location lab-archive-location">
+                        {location.visit === 'IPD' ? (
+                          <>
+                            <span className="lab-archive-location__ward">{location.ward}</span>
+                            <span className="lab-archive-meta lab-archive-location__bed">{location.bed}</span>
+                          </>
+                        ) : (
+                          <span className="lab-archive-location__empty">-</span>
+                        )}
+                      </td>
+                      <td className="lab-archive-col lab-archive-col--test">{report.testName}</td>
+                      <td className="lab-archive-col lab-archive-col--doctor">{report.doctorName}</td>
+                      <td className="lab-archive-col lab-archive-col--tech">{report.uploadedByName}</td>
+                      <td className="lab-archive-col lab-archive-col--date">{report.uploadedDate}</td>
+                      <td className="lab-archive-col lab-archive-col--status">
                         <span className="lab-badge completed">Completed</span>
                       </td>
-                      <td className="lab-archive-actions-cell">
+                      <td className="lab-archive-col lab-archive-col--actions lab-archive-actions-cell">
                         <div className="lab-archive-actions">
                           <button
                             type="button"
@@ -173,7 +212,8 @@ export default function LabCompletedReportsPage() {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

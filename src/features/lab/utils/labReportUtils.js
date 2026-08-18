@@ -1,7 +1,9 @@
 import { APP_NAME } from '@/shared/constants';
 import { fetchLabReportById } from '@/shared/api/services/lab';
+import { fetchLabReportFileBlob } from '@/features/lab/api/lab';
 import { useAuthStore } from '@/shared/store/useAuthStore';
 import { toast } from '@/shared/utils/toast';
+import { visitLocationLabel } from '@/features/lab/utils/visitLocation';
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -53,6 +55,111 @@ function buildParametersRows(parameters = []) {
     .join('');
 }
 
+function resolvePreviewKind(fileType, fileName) {
+  const mime = String(fileType ?? '').toLowerCase();
+  const name = String(fileName ?? '').toLowerCase();
+
+  if (mime.startsWith('image/')) return 'image';
+  if (mime === 'application/pdf') return 'pdf';
+  if (/\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(name)) return 'image';
+  if (name.endsWith('.pdf')) return 'pdf';
+  return 'other';
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error ?? new Error('Could not read uploaded file'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function renderPdfPagesToDataUrls(blob) {
+  const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist');
+  const pdfjsWorker = (await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default;
+  GlobalWorkerOptions.workerSrc = pdfjsWorker;
+
+  const arrayBuffer = await blob.arrayBuffer();
+  const pdf = await getDocument({ data: arrayBuffer }).promise;
+  const pageImages = [];
+
+  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
+    const page = await pdf.getPage(pageNum);
+    const viewport = page.getViewport({ scale: 2 });
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    await page.render({ canvasContext: context, viewport }).promise;
+    pageImages.push(canvas.toDataURL('image/jpeg', 0.92));
+  }
+
+  return pageImages;
+}
+
+function buildUploadedFileSection(report) {
+  const previewKind = resolvePreviewKind(report.fileType, report.fileName);
+  const fileName = escapeHtml(displayValue(report.fileName, 'Uploaded report file'));
+
+  if (previewKind === 'other') return '';
+
+  if (previewKind === 'image' && report.fileDataUrl) {
+    return `
+      <section class="uploaded-file-page uploaded-file-page--break">
+        <div class="uploaded-file-header">
+          <div class="uploaded-file-kicker">Uploaded Report File</div>
+          <h2>${fileName}</h2>
+        </div>
+        <div class="uploaded-file-frame">
+          <img src="${report.fileDataUrl}" alt="${fileName}" class="uploaded-image" />
+        </div>
+      </section>
+    `;
+  }
+
+  if (previewKind === 'pdf' && report.pdfPageImages?.length) {
+    const totalPages = report.pdfPageImages.length;
+    return report.pdfPageImages
+      .map((pageDataUrl, index) => {
+        const pageLabel = totalPages > 1 ? ` · Page ${index + 1} of ${totalPages}` : '';
+        return `
+          <section class="uploaded-file-page uploaded-pdf-page">
+            <div class="uploaded-file-header">
+              <div class="uploaded-file-kicker">Uploaded Report File${pageLabel}</div>
+              <h2>${fileName}</h2>
+            </div>
+            <div class="uploaded-file-frame uploaded-pdf-page-frame">
+              <img
+                src="${pageDataUrl}"
+                alt="${fileName} page ${index + 1}"
+                class="uploaded-image uploaded-pdf-page-image"
+              />
+            </div>
+          </section>
+        `;
+      })
+      .join('');
+  }
+
+  if (previewKind === 'pdf' && report.fileDataUrl) {
+    return `
+      <section class="uploaded-file-page uploaded-file-page--break">
+        <div class="uploaded-file-header">
+          <div class="uploaded-file-kicker">Uploaded Report File</div>
+          <h2>${fileName}</h2>
+        </div>
+        <div class="uploaded-file-frame">
+          <iframe src="${report.fileDataUrl}" title="${fileName}" class="uploaded-pdf"></iframe>
+        </div>
+      </section>
+    `;
+  }
+
+  return '';
+}
+
 function buildPrintHtml(report, hospitalName) {
   const labTitle = `${hospitalName} Laboratory`;
   const reportId = escapeHtml(displayValue(report.reportId));
@@ -67,6 +174,10 @@ function buildPrintHtml(report, hospitalName) {
   const performedAt = escapeHtml(displayValue(report.testPerformedAt));
   const uploadedBy = escapeHtml(displayValue(report.uploadedByName));
   const remarks = escapeHtml(displayValue(report.remarks, ''));
+  const location = visitLocationLabel(report);
+  const encounterType = escapeHtml(location.visit);
+  const wardName = escapeHtml(location.ward);
+  const bedNumber = escapeHtml(location.bed);
   const printedAt = new Date().toLocaleString('en-GB', {
     day: '2-digit',
     month: 'short',
@@ -228,8 +339,77 @@ function buildPrintHtml(report, hospitalName) {
             justify-content: space-between;
             gap: 12px;
           }
+          .uploaded-file-page {
+            max-width: 800px;
+            margin: 0 auto;
+          }
+          .uploaded-file-page--break,
+          .uploaded-pdf-page {
+            page-break-before: always;
+            break-before: page;
+          }
+          .uploaded-file-header {
+            margin-bottom: 16px;
+            border-bottom: 2px solid #1a5c34;
+            padding-bottom: 10px;
+          }
+          .uploaded-file-kicker {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #1a5c34;
+            margin-bottom: 6px;
+          }
+          .uploaded-file-header h2 {
+            margin: 0;
+            font-size: 18px;
+            color: #0f2744;
+            word-break: break-word;
+          }
+          .uploaded-file-frame {
+            border: 1px solid #d5dee8;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fff;
+          }
+          .uploaded-image {
+            display: block;
+            width: 100%;
+            height: auto;
+          }
+          .uploaded-pdf {
+            display: block;
+            width: 100%;
+            min-height: 980px;
+            border: 0;
+            background: #fff;
+          }
+          .uploaded-pdf-page-frame {
+            min-height: auto;
+          }
+          .uploaded-pdf-page-image {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-height: 220mm;
+            object-fit: contain;
+          }
           @media print {
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .uploaded-file-page--break,
+            .uploaded-pdf-page {
+              page-break-before: always;
+              break-before: page;
+            }
+            .uploaded-file-header {
+              margin-bottom: 8px;
+              padding-bottom: 6px;
+            }
+            .uploaded-pdf-page-image,
+            .uploaded-image {
+              max-height: 220mm;
+            }
           }
         </style>
       </head>
@@ -257,6 +437,18 @@ function buildPrintHtml(report, hospitalName) {
             <div class="info-item">
               <div class="label">Patient ID</div>
               <div class="value">${patientId}</div>
+            </div>
+            <div class="info-item">
+              <div class="label">Source</div>
+              <div class="value">${encounterType}</div>
+            </div>
+            <div class="info-item">
+              <div class="label">Ward</div>
+              <div class="value">${wardName}</div>
+            </div>
+            <div class="info-item">
+              <div class="label">Bed</div>
+              <div class="value">${bedNumber}</div>
             </div>
             <div class="info-item">
               <div class="label">Test Name</div>
@@ -316,6 +508,7 @@ function buildPrintHtml(report, hospitalName) {
             <span>Confidential medical document</span>
           </footer>
         </div>
+        ${buildUploadedFileSection(report)}
       </body>
     </html>
   `;
@@ -326,20 +519,26 @@ async function resolveReportForPrint(report) {
 
   const hasParameters = Array.isArray(report.parameters);
   const reportDbId = report.reportDbId ?? report.id;
-  if (hasParameters || reportDbId == null) {
+  const shouldFetchFile = Boolean(report?.fileName || report?.hasFile);
+
+  if (reportDbId == null) {
     return report;
   }
 
   const token = useAuthStore.getState()?.token;
   if (!token) return report;
 
+  if (hasParameters && !shouldFetchFile) {
+    return report;
+  }
+
   try {
-    const detail = await fetchLabReportById(reportDbId, token);
+    const detail = hasParameters ? report : await fetchLabReportById(reportDbId, token);
     const pick = (next, prev) => {
       if (next == null || String(next).trim() === '' || next === '—') return prev;
       return next;
     };
-    return {
+    const nextReport = {
       ...report,
       ...detail,
       reportId: detail.reportId ?? report.reportId,
@@ -351,6 +550,29 @@ async function resolveReportForPrint(report) {
       uploadedByName: pick(detail.uploadedByName, report.uploadedByName),
       parameters: detail.parameters ?? report.parameters ?? [],
     };
+
+    if (detail?.fileName || report?.fileName || report?.hasFile) {
+      try {
+        const { blob, fileName, contentType } = await fetchLabReportFileBlob(reportDbId, token);
+        nextReport.fileName = fileName ?? detail?.fileName ?? report?.fileName ?? null;
+        nextReport.fileType = contentType ?? blob.type ?? detail?.fileType ?? report?.fileType ?? '';
+        const previewKind = resolvePreviewKind(nextReport.fileType, nextReport.fileName);
+
+        if (previewKind === 'pdf') {
+          try {
+            nextReport.pdfPageImages = await renderPdfPagesToDataUrls(blob);
+          } catch {
+            nextReport.fileDataUrl = await blobToDataUrl(blob);
+          }
+        } else {
+          nextReport.fileDataUrl = await blobToDataUrl(blob);
+        }
+      } catch {
+        // File preview in print is best-effort; keep report printable even if file fetch fails.
+      }
+    }
+
+    return nextReport;
   } catch {
     return report;
   }
@@ -380,16 +602,22 @@ export async function printLabReport(report) {
 export function printReportsSummary(reports, title = 'Lab Reports Summary') {
   const rows = reports
     .map(
-      (r) => `
+      (r) => {
+        const location = visitLocationLabel(r);
+        return `
       <tr>
         <td>${escapeHtml(r.reportId)}</td>
         <td>${escapeHtml(r.patientName)}</td>
         <td>${escapeHtml(r.patientId)}</td>
+        <td>${escapeHtml(location.visit)}</td>
+        <td>${escapeHtml(location.ward)}</td>
+        <td>${escapeHtml(location.bed)}</td>
         <td>${escapeHtml(r.testName)}</td>
         <td>${escapeHtml(r.doctorName)}</td>
         <td>${escapeHtml(r.uploadedByName)}</td>
         <td>${escapeHtml(r.uploadedDate)}</td>
-      </tr>`
+      </tr>`;
+      },
     )
     .join('');
 
@@ -412,6 +640,9 @@ export function printReportsSummary(reports, title = 'Lab Reports Summary') {
               <th>Report ID</th>
               <th>Patient</th>
               <th>Patient ID</th>
+              <th>Source</th>
+              <th>Ward</th>
+              <th>Bed</th>
               <th>Test</th>
               <th>Doctor</th>
               <th>Lab Technician</th>
@@ -432,6 +663,9 @@ export function downloadReportsCsv(reports) {
     'Report ID',
     'Patient Name',
     'Patient ID',
+    'Source',
+    'Ward',
+    'Bed',
     'Test',
     'Doctor',
     'Lab Technician',
@@ -439,19 +673,23 @@ export function downloadReportsCsv(reports) {
   ];
   const lines = [
     header.join(','),
-    ...reports.map((r) =>
-      [
+    ...reports.map((r) => {
+      const location = visitLocationLabel(r);
+      return [
         r.reportId,
         r.patientName,
         r.patientId,
+        location.visit,
+        location.ward,
+        location.bed,
         r.testName,
         r.doctorName,
         r.uploadedByName,
         r.uploadedDate,
       ]
         .map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`)
-        .join(',')
-    ),
+        .join(',');
+    }),
   ];
   const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);

@@ -3,6 +3,7 @@
  */
 
 import { labDepartmentLabel } from '@/shared/utils/labDepartments';
+import { mapApiVisitLocationFields } from '@/features/lab/utils/visitLocation';
 
 const IST_OFFSET = '+05:30';
 
@@ -69,6 +70,7 @@ export function apiToUiLabOrder(row) {
     createdAt: row.created_at ?? row.createdAt,
     reportUploaded: row.report_uploaded ?? row.reportUploaded ?? false,
     report: row.report ?? null,
+    ...mapApiVisitLocationFields(row),
   };
 }
 
@@ -125,6 +127,7 @@ export function apiToUiLabReport(row) {
     status: row.status ?? 'completed',
     source: row.source ?? null,
     hasFile: Boolean(row.report_file ?? row.file_name),
+    ...mapApiVisitLocationFields(row),
   };
 }
 
@@ -156,6 +159,7 @@ export function apiToUiLabReportDetail(row) {
       normal_range: p.normal_range,
       flag: p.flag,
     })),
+    ...mapApiVisitLocationFields(order),
   };
 }
 
