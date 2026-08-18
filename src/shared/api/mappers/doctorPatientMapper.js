@@ -200,6 +200,7 @@ export function apiToUiVisitHistoryItem(api) {
   return {
     id: row.id,
     appointmentDbId: row.appointmentDbId,
+    admissionId: row.admissionId ?? null,
     encounterType: row.encounterType ?? 'OPD',
     scheduledAt: row.scheduledAt,
     admittedAt: row.admittedAt ?? null,

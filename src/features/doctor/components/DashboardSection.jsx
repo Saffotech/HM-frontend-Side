@@ -781,7 +781,7 @@ function DashboardSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD, onViewAll
             onPageChange={setIpdPage}
             onOpenPatient={handleOpenPatient}
             showWardBedColumn
-            showActions
+            showActions={ipdStatusFilter === IPD_STATUS_FILTER.ADMITTED}
             onConsult={beginIpdConsultation}
             startingConsult={startingConsult}
           />

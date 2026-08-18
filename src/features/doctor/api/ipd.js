@@ -14,17 +14,10 @@ export async function getDoctorIpdAdmissions(token, params = {}) {
   return apiClient(q ? `/doctor/ipd-admissions?${q}` : '/doctor/ipd-admissions', { token });
 }
 
-export async function recordIpdDoctorVisit(admissionId, body, token) {
-  return apiClient(`/ipd/admissions/${admissionId}/visits`, {
+/** POST /doctor/ipd-admissions/{id}/consultations — doctor consult save (appointments:update). */
+export async function saveDoctorIpdConsultation(admissionId, body, token) {
+  return apiClient(`/doctor/ipd-admissions/${admissionId}/consultations`, {
     method: 'POST',
-    body: JSON.stringify(body),
-    token,
-  });
-}
-
-export async function patchIpdAdmissionClinical(admissionId, body, token) {
-  return apiClient(`/ipd/admissions/${admissionId}`, {
-    method: 'PUT',
     body: JSON.stringify(body),
     token,
   });

@@ -33,9 +33,15 @@ export function matchesDoctorEncounterMode(row, mode) {
   return true;
 }
 
-/** Lab orders: prefer registration_source, then encounter heuristics. */
+/** Lab orders: prefer admission_id / appointment_id, then registration_source. */
 export function labOrderMatchesEncounterMode(test, mode, patientSourceByDbId = null) {
   if (!test) return false;
+  if (test.admissionId != null || test.admission_id != null) {
+    return mode === DOCTOR_ENCOUNTER_MODE.IPD;
+  }
+  if (test.appointmentId != null || test.appointment_id != null) {
+    return mode === DOCTOR_ENCOUNTER_MODE.OPD;
+  }
   const source =
     test.registrationSource
     ?? (test.patientDbId != null ? patientSourceByDbId?.get(Number(test.patientDbId)) : null);

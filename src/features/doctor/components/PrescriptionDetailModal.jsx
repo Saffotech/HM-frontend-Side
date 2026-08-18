@@ -44,12 +44,61 @@ function pickClinicalText(value) {
   return text && text !== '—' ? text : null;
 }
 
+const RX_VISIT_MATCH_WINDOW_MS = 5 * 60 * 1000;
+
+function visitSortMs(visit) {
+  if (visit?.sortTime != null) return Number(visit.sortTime);
+  if (visit?.scheduledAt) {
+    const t = new Date(visit.scheduledAt).getTime();
+    return Number.isNaN(t) ? 0 : t;
+  }
+  return 0;
+}
+
+/** IPD Rx: match visit from same consult window — not latest admission visit. */
+function findIpdVisitClinicalForPrescription(visits, admissionId, rxDate) {
+  if (admissionId == null || !rxDate) return null;
+  const rxMs = new Date(rxDate).getTime();
+  if (Number.isNaN(rxMs)) return null;
+
+  const pool = (visits ?? []).filter(
+    (v) => v.admissionId != null && Number(v.admissionId) === Number(admissionId),
+  );
+  if (!pool.length) return null;
+
+  const atOrBeforeRx = pool.filter((v) => visitSortMs(v) <= rxMs + RX_VISIT_MATCH_WINDOW_MS);
+  if (atOrBeforeRx.length) {
+    const best = atOrBeforeRx.reduce((a, b) => (visitSortMs(a) >= visitSortMs(b) ? a : b));
+    return {
+      symptoms: best.symptoms,
+      followUp: best.followUp,
+    };
+  }
+
+  const rxDay = new Date(rxDate).toDateString();
+  const sameDay = pool.filter((v) => {
+    const t = visitSortMs(v);
+    return t > 0 && new Date(t).toDateString() === rxDay;
+  });
+  if (sameDay.length) {
+    const best = sameDay.reduce((a, b) =>
+      Math.abs(visitSortMs(a) - rxMs) <= Math.abs(visitSortMs(b) - rxMs) ? a : b,
+    );
+    return {
+      symptoms: best.symptoms,
+      followUp: best.followUp,
+    };
+  }
+
+  return null;
+}
+
 /**
  * Clinical fields for prescription View.
- * Prefer appointment symptoms / follow-up (where consultation saves them);
- * fall back to legacy "Symptoms: … Follow-up: …" blobs in notes.
+ * OPD: prefer appointment / visit clinical. IPD: Rx notes from prescription record;
+ * symptoms/follow-up from the visit matched to Rx date (not latest admission visit).
  */
-function clinicalFieldsFromDetail(detail, appointmentClinical = null) {
+function clinicalFieldsFromDetail(detail, appointmentClinical = null, { ipdPrescription = false } = {}) {
   const parsed = parseEmbeddedClinicalNotes(detail?.notes);
   const rawNotes = detail?.notes;
   const isEmbeddedBlob = rawNotes && /^\s*symptoms\s*:/i.test(String(rawNotes));
@@ -63,11 +112,22 @@ function clinicalFieldsFromDetail(detail, appointmentClinical = null) {
         pickClinicalText(appointmentClinical?.followUpDate) ||
         pickClinicalText(parsed.followUp),
     ) || '—';
+  const notesFromRx =
+    parsed.notes ||
+    (isEmbeddedBlob ? null : pickClinicalText(rawNotes));
+  const notes = ipdPrescription
+    ? notesFromRx || '—'
+    : pickClinicalText(appointmentClinical?.notes)?.replace(
+        /(?:^|\n+)Lab orders:\s*(?:\n- .+)*/gi,
+        '',
+      ).trim() ||
+      notesFromRx ||
+      '—';
   return {
     diagnosis: detail?.diagnosis || '—',
     symptoms,
     followUp,
-    notes: parsed.notes || (isEmbeddedBlob ? '—' : rawNotes) || '—',
+    notes,
   };
 }
 
@@ -108,8 +168,8 @@ function medicinesFromDetail(detail) {
   });
 }
 
-function PrescriptionDetailView({ detail, appointmentClinical }) {
-  const clinical = clinicalFieldsFromDetail(detail, appointmentClinical);
+function PrescriptionDetailView({ detail, appointmentClinical, ipdPrescription = false }) {
+  const clinical = clinicalFieldsFromDetail(detail, appointmentClinical, { ipdPrescription });
 
   return (
     <div className="doc-rx-detail doc-rx-detail--modal">
@@ -304,6 +364,12 @@ export default function PrescriptionDetailModal({
   doctorName: doctorNameProp,
   /** Optional visit-history clinical keyed by appointment id (instant while appointment loads). */
   clinicalByAppointmentId,
+  /** Optional visit-history clinical keyed by IPD admission id (OPD fallback only). */
+  clinicalByAdmissionId,
+  /** Visit timeline for IPD Rx date-matching (patient profile). */
+  visitTimeline = [],
+  fallbackAdmissionId = null,
+  readOnly = false,
 }) {
   const { user } = useAuth();
   const canEdit = canAccessAction(user, ACTIONS.UPDATE_PRESCRIPTION);
@@ -323,24 +389,55 @@ export default function PrescriptionDetailModal({
   });
 
   const appointmentId = detail?.appointmentId ?? null;
+  const admissionId = detail?.admissionId ?? fallbackAdmissionId ?? null;
   const { data: appointment } = useDoctorAppointmentDetailQuery(appointmentId, {
     enabled: open && appointmentId != null,
   });
 
   const replacePrescription = useReplacePrescriptionMutation();
 
+  const isIpdPrescription = admissionId != null && appointmentId == null;
+
+  const ipdClinicalForRx = useMemo(() => {
+    if (!isIpdPrescription || !detail?.date) return null;
+    return findIpdVisitClinicalForPrescription(visitTimeline, admissionId, detail.date);
+  }, [isIpdPrescription, visitTimeline, admissionId, detail?.date]);
+
   const appointmentClinical = useMemo(() => {
-    const fromVisits =
+    if (isIpdPrescription) {
+      return {
+        symptoms: ipdClinicalForRx?.symptoms ?? null,
+        followUp: ipdClinicalForRx?.followUp ?? null,
+        followUpDate: ipdClinicalForRx?.followUp ?? null,
+        notes: null,
+      };
+    }
+    const fromAppointmentVisit =
       appointmentId != null && clinicalByAppointmentId
         ? clinicalByAppointmentId.get(Number(appointmentId)) ??
           clinicalByAppointmentId.get(String(appointmentId))
         : null;
+    const fromAdmissionVisit =
+      admissionId != null && clinicalByAdmissionId
+        ? clinicalByAdmissionId.get(Number(admissionId)) ??
+          clinicalByAdmissionId.get(String(admissionId))
+        : null;
+    const fromVisits = fromAppointmentVisit ?? fromAdmissionVisit;
     return {
       symptoms: appointment?.symptoms ?? fromVisits?.symptoms ?? null,
       followUp: appointment?.followUpDate ?? fromVisits?.followUp ?? null,
       followUpDate: appointment?.followUpDate ?? fromVisits?.followUp ?? null,
+      notes: fromVisits?.notes ?? null,
     };
-  }, [appointment, appointmentId, clinicalByAppointmentId]);
+  }, [
+    isIpdPrescription,
+    ipdClinicalForRx,
+    appointment,
+    appointmentId,
+    admissionId,
+    clinicalByAppointmentId,
+    clinicalByAdmissionId,
+  ]);
 
   const displayDetail = useMemo(() => {
     if (!detail) return null;
@@ -361,13 +458,15 @@ export default function PrescriptionDetailModal({
 
   useEffect(() => {
     if (!editing || !detail) return;
-    const clinical = clinicalFieldsFromDetail(detail, appointmentClinical);
+    const clinical = clinicalFieldsFromDetail(detail, appointmentClinical, {
+      ipdPrescription: isIpdPrescription,
+    });
     setDiagnosis(detail.diagnosis ?? '');
     // Edit form keeps real notes only — not the legacy Symptoms/Follow-up blob
     setNotes(clinical.notes === '—' ? '' : clinical.notes);
     setMeds(medicinesFromDetail(detail));
     setFieldErrors({});
-  }, [editing, detail, appointmentClinical]);
+  }, [editing, detail, appointmentClinical, isIpdPrescription]);
 
   const handleClose = () => {
     setEditing(false);
@@ -430,7 +529,7 @@ export default function PrescriptionDetailModal({
           <Button variant="outline" onClick={handleClose}>
             Close
           </Button>
-          {!editing && canEdit && detail && !isLoading && !isError && (
+          {!editing && canEdit && !readOnly && detail && !isLoading && !isError && (
             <Button onClick={() => setEditing(true)}>Edit</Button>
           )}
           {editing && (
@@ -461,6 +560,7 @@ export default function PrescriptionDetailModal({
         <PrescriptionDetailView
           detail={displayDetail}
           appointmentClinical={appointmentClinical}
+          ipdPrescription={isIpdPrescription}
         />
       )}
       {!isLoading && !isError && detail && editing && (

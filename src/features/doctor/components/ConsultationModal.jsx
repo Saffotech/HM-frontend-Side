@@ -1,12 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useCreatePrescriptionMutation } from '@/features/doctor/hooks/useDoctorPrescriptionQuery';
 import { useCreateLabTestMutation } from '@/features/doctor/hooks/useDoctorLabQuery';
 import { useSaveConsultationWorkflowMutation, useConsultationContextQuery } from '@/features/doctor/hooks/useDoctorQueueQuery';
-import {
-  recordIpdDoctorVisit,
-  patchIpdAdmissionClinical,
-} from '@/features/doctor/api/ipd';
+import { useSaveIpdConsultationMutation } from '@/features/doctor/hooks/useSaveIpdConsultationMutation';
 import {
   DEFAULT_MEDICINE,
   LAB_DEPARTMENTS,
@@ -22,6 +19,7 @@ import {
   saveConsultationDraft,
 } from '@/features/doctor/utils/consultationDraftStorage';
 import { parseEmbeddedClinicalNotes } from '@/features/doctor/utils/clinicalNotesParse';
+import { ipdStaticLabRoutingDepartments } from '@/features/doctor/utils/ipdLabRouting';
 import { stripInternalAppointmentMarkers } from '@/features/opd/utils/appointmentPaymentUtils';
 import { Modal, Button, Input, Label, Textarea, Select, QueryFeedback } from '@/shared/components/common';
 import { doctorPatientsApi } from '@/shared/api/services';
@@ -105,39 +103,6 @@ function symptomsPrefillFromAppointment(detail) {
   return text;
 }
 
-function buildIpdConsultVisitNotes({ symptoms, diagnosis, notes, followUp, meds, labOrders }) {
-  const parts = [];
-  if (symptoms.trim()) parts.push(`Symptoms: ${symptoms.trim()}`);
-  if (diagnosis.trim()) parts.push(`Diagnosis: ${diagnosis.trim()}`);
-  if (notes.trim()) parts.push(`Notes: ${notes.trim()}`);
-  if (followUp) parts.push(`Follow-up: ${followUp}`);
-
-  const validMeds = meds.filter((m) => m.name.trim());
-  if (validMeds.length) {
-    parts.push(
-      `Prescription:\n${validMeds
-        .map((m) => {
-          const duration = [m.durationValue, m.durationUnit].filter(Boolean).join(' ');
-          return `- ${m.name}${m.dosage ? ` · ${m.dosage}` : ''}${m.frequency ? ` · ${m.frequency}` : ''}${duration ? ` · ${duration}` : ''}${m.instructions ? ` · ${m.instructions}` : ''}`;
-        })
-        .join('\n')}`,
-    );
-  }
-
-  const filledLabOrders = labOrders.filter(
-    (row) => String(row.testName ?? '').trim() && row.deptCode,
-  );
-  if (filledLabOrders.length) {
-    parts.push(
-      `Lab orders:\n${filledLabOrders
-        .map((row) => `- ${row.deptCode}: ${row.testName}${row.priority ? ` (${row.priority})` : ''}`)
-        .join('\n')}`,
-    );
-  }
-
-  return parts.join('\n\n');
-}
-
 export default function ConsultationModal({
   appointment,
   open,
@@ -145,9 +110,9 @@ export default function ConsultationModal({
   onDone,
 }) {
   const token = useQueryToken();
-  const queryClient = useQueryClient();
   const doctorId = useAuthStore((state) => state.user?.id);
   const saveConsultation = useSaveConsultationWorkflowMutation();
+  const saveIpdConsultation = useSaveIpdConsultationMutation();
   const createPrescription = useCreatePrescriptionMutation();
   const createLabTest = useCreateLabTestMutation();
   const [tab, setTab] = useState('clinical');
@@ -159,7 +124,6 @@ export default function ConsultationModal({
   const [labOrders, setLabOrders] = useState([emptyLabOrderRow()]);
   const [fieldErrors, setFieldErrors] = useState({});
   const [hydratedFromDraft, setHydratedFromDraft] = useState(false);
-  const [ipdSaving, setIpdSaving] = useState(false);
   const skipDraftPersistRef = useRef(false);
 
   const isIpdConsult = isIpdEncounter(appointment);
@@ -170,8 +134,10 @@ export default function ConsultationModal({
     : appointmentDbId;
   const patientUid = appointment?.patientUid ?? appointment?.patientId;
 
-  const labRoutingQuery = useLabRoutingDepartmentsQuery({ enabled: open });
-  const labRoutingDepts = labRoutingQuery.data ?? [];
+  const labRoutingQuery = useLabRoutingDepartmentsQuery({ enabled: open && !isIpdConsult });
+  const labRoutingDepts = isIpdConsult
+    ? ipdStaticLabRoutingDepartments()
+    : (labRoutingQuery.data ?? []);
 
   const consultationContextQuery = useConsultationContextQuery(appointmentDbId, {
     enabled: open && !isIpdConsult && appointmentDbId != null,
@@ -215,21 +181,6 @@ export default function ConsultationModal({
 
     return () => window.clearTimeout(timer);
   }, [open, consultDraftKey, doctorId]);
-
-  useEffect(() => {
-    if (!open || hydratedFromDraft || !isIpdConsult) return;
-
-    if (!symptoms) {
-      setSymptoms(symptomsPrefillFromAppointment(appointment) || '');
-    }
-    if (!diagnosis && appointment?.diagnosis) setDiagnosis(appointment.diagnosis);
-    if (!notes && appointment?.notes) {
-      setNotes(stripInternalAppointmentMarkers(appointment.notes));
-    }
-    if (!followUp && appointment?.followUpDate) {
-      setFollowUp(String(appointment.followUpDate).slice(0, 10));
-    }
-  }, [open, hydratedFromDraft, isIpdConsult, appointment, symptoms, diagnosis, notes, followUp]);
 
   useEffect(() => {
     if (!open || hydratedFromDraft || isIpdConsult) return;
@@ -296,7 +247,7 @@ export default function ConsultationModal({
   if (!appointment) return null;
 
   const saving =
-    ipdSaving ||
+    saveIpdConsultation.isPending ||
     saveConsultation.isPending ||
     createPrescription.isPending ||
     createLabTest.isPending;
@@ -333,55 +284,69 @@ export default function ConsultationModal({
         toast.error('Admission id missing — cannot save consultation');
         return;
       }
-      if (doctorId == null) {
-        toast.error('Doctor session missing — cannot save consultation');
-        return;
-      }
-
-      setIpdSaving(true);
       try {
-        const visitNotes = buildIpdConsultVisitNotes({
-          symptoms,
-          diagnosis,
-          notes,
-          followUp,
-          meds,
-          labOrders,
+        const patientDbId = appointment.patientDbId ?? null;
+
+        await saveIpdConsultation.mutateAsync({
+          admissionId,
+          patientUid,
+          clinical: {
+            symptoms,
+            diagnosis,
+            notes,
+            followUp,
+            meds,
+            labOrders,
+          },
         });
 
-        await patchIpdAdmissionClinical(
-          admissionId,
-          {
-            diagnosis: diagnosis.trim(),
+        const validMeds = meds.filter((m) => m.name.trim());
+        try {
+          await createPrescription.mutateAsync({
+            admissionId,
+            patientId: patientDbId,
+            patientUid,
+            patientName: appointment.patientName,
+            diagnosis,
             notes: notes.trim() || undefined,
-          },
-          token,
-        );
-
-        await recordIpdDoctorVisit(
-          admissionId,
-          {
-            doctor_id: Number(doctorId),
-            charge: 0,
-            notes: visitNotes || undefined,
-          },
-          token,
-        );
-
-        queryClient.invalidateQueries({ queryKey: ['doctor', 'ipd'] });
-        if (patientUid) {
-          queryClient.invalidateQueries({
-            queryKey: queryKeys.doctor.patients.history(patientUid),
+            medicines: validMeds,
           });
+        } catch (rxErr) {
+          const msg = String(rxErr?.message ?? '');
+          if (!/already exists/i.test(msg)) {
+            throw rxErr;
+          }
+        }
+
+        const filledLabOrders = labOrders.filter(
+          (row) => String(row.testName ?? '').trim() && row.deptCode,
+        );
+        for (const row of filledLabOrders) {
+          const departmentId = resolveLabDepartmentId(labRoutingDepts, row.deptCode);
+          try {
+            await createLabTest.mutateAsync({
+              admissionId,
+              patientUid,
+              patientName: appointment.patientName,
+              testName: String(row.testName).trim(),
+              category: inferLabCategory(row.testName, row.deptCode),
+              departmentId: departmentId ?? undefined,
+              priority: row.priority || 'Normal',
+              clinicalNotes: row.clinicalNotes,
+            });
+          } catch (labErr) {
+            const msg = String(labErr?.message ?? '');
+            if (!/already been ordered/i.test(msg)) {
+              throw labErr;
+            }
+          }
         }
 
         toast.success('IPD consultation saved');
         clearConsultationDraft(consultDraftKey, doctorId);
         onDone();
-      } catch (err) {
-        toast.error(err?.message ?? 'Could not save IPD consultation');
-      } finally {
-        setIpdSaving(false);
+      } catch {
+        // mutation hooks toast via mutationOnError
       }
       return;
     }

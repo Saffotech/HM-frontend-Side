@@ -95,7 +95,7 @@ function resolveInitialCategoryFilter(initial, encounterMode) {
   if (encounterMode === DOCTOR_ENCOUNTER_MODE.IPD) {
     return IPD_PATIENT_CATEGORY_VALUES.has(initial)
       ? initial
-      : IPD_PATIENT_CATEGORY_FILTER.ADMITTED;
+      : IPD_PATIENT_CATEGORY_FILTER.DISCHARGED;
   }
   return OPD_PATIENT_CATEGORY_VALUES.has(initial)
     ? initial
@@ -339,7 +339,7 @@ export default function PatientsEMRSection({
       if (isIpdMode) {
         return IPD_PATIENT_CATEGORY_VALUES.has(current)
           ? current
-          : IPD_PATIENT_CATEGORY_FILTER.ADMITTED;
+          : IPD_PATIENT_CATEGORY_FILTER.DISCHARGED;
       }
       return OPD_PATIENT_CATEGORY_VALUES.has(current)
         ? current

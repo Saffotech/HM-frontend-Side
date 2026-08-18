@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
@@ -21,6 +21,8 @@ import { useDoctorLabTestsQuery } from '@/features/doctor/hooks/useDoctorLabQuer
 import { matchesLabTestPatient } from '@/features/doctor/utils/labPatientMatch';
 import DoctorLabReportModal from './DoctorLabReportModal';
 import { mergeVisitTimelineWithPrescriptions } from '@/features/doctor/utils/patientHistory';
+import { mergeIpdIntoVisitHistory } from '@/features/doctor/utils/ipdVisitHistory';
+import { useDoctorIpdPatientAdmissionsQuery } from '@/features/doctor/hooks/useDoctorIpdPatientAdmissionsQuery';
 import { formatPatientAge } from '@/features/doctor/utils/formatPatientAge';
 import { patientsApi } from '@/shared/api/services';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
@@ -57,6 +59,20 @@ export default function PatientHistoryProfile({
     isPending: historyPending,
     isFetching: historyFetching,
   } = useDoctorPatientHistoryQuery(patientUid, { placeholderVisits });
+
+  const {
+    data: ipdAdmissions = [],
+    isPending: ipdAdmissionsPending,
+    isFetching: ipdAdmissionsFetching,
+  } = useDoctorIpdPatientAdmissionsQuery(patientUid);
+
+  const [consultCacheTick, setConsultCacheTick] = useState(0);
+
+  useEffect(() => {
+    const onUpdate = () => setConsultCacheTick((tick) => tick + 1);
+    window.addEventListener('hms:ipd-consult-cache-updated', onUpdate);
+    return () => window.removeEventListener('hms:ipd-consult-cache-updated', onUpdate);
+  }, []);
 
   const patientId = resolvedPatientId ?? historyData?.patientId ?? null;
 
@@ -102,8 +118,9 @@ export default function PatientHistoryProfile({
 
   const visits = useMemo(() => {
     const fromApi = historyData?.visits ?? [];
-    return mergeVisitTimelineWithPrescriptions(fromApi, prescriptions);
-  }, [historyData?.visits, prescriptions]);
+    const withIpd = mergeIpdIntoVisitHistory(fromApi, ipdAdmissions, patientUid);
+    return mergeVisitTimelineWithPrescriptions(withIpd, prescriptions);
+  }, [historyData?.visits, prescriptions, ipdAdmissions, patientUid, consultCacheTick]);
 
   const clinicalByAppointmentId = useMemo(() => {
     const map = new Map();
@@ -112,12 +129,33 @@ export default function PatientHistoryProfile({
       map.set(Number(visit.appointmentDbId), {
         symptoms: visit.symptoms,
         followUp: visit.followUp,
+        notes: visit.notes,
       });
     }
     return map;
   }, [visits]);
 
-  const showVisitSkeleton = historyPending && visits.length === 0;
+  const clinicalByAdmissionId = useMemo(() => {
+    const map = new Map();
+    for (const visit of visits) {
+      if (visit.admissionId == null) continue;
+      const current = {
+        symptoms: visit.symptoms,
+        followUp: visit.followUp,
+        notes: visit.notes,
+      };
+      const existing = map.get(Number(visit.admissionId));
+      if (!existing || (visit.sortTime ?? 0) >= (existing.sortTime ?? 0)) {
+        map.set(Number(visit.admissionId), { ...current, sortTime: visit.sortTime });
+        map.set(String(visit.admissionId), { ...current, sortTime: visit.sortTime });
+      }
+    }
+    return map;
+  }, [visits]);
+
+  const showVisitSkeleton =
+    (historyPending || ipdAdmissionsPending) && visits.length === 0;
+  const historyRefreshing = historyFetching || ipdAdmissionsFetching;
 
   const patientLabs = useMemo(
     () =>
@@ -130,6 +168,8 @@ export default function PatientHistoryProfile({
       ),
     [allLabTests, patientUid, patientId, profile.name, patient?.name]
   );
+
+  const viewingPrescription = prescriptions.find((rx) => rx.id === viewPrescriptionId);
 
   if (!patient) return null;
 
@@ -240,7 +280,7 @@ export default function PatientHistoryProfile({
             </h3>
             {visits.length > 0 ? (
               <span className="doc-profile-panel__hint">
-                Newest first{historyFetching ? ' · updating…' : ''}
+                Newest first{historyRefreshing ? ' · updating…' : ''}
               </span>
             ) : null}
           </div>
@@ -299,6 +339,10 @@ export default function PatientHistoryProfile({
         patientUid={patientUid}
         patientName={profile.name !== '—' ? profile.name : undefined}
         clinicalByAppointmentId={clinicalByAppointmentId}
+        clinicalByAdmissionId={clinicalByAdmissionId}
+        visitTimeline={visits}
+        fallbackAdmissionId={viewingPrescription?.admissionId ?? null}
+        readOnly
       />
 
       <DoctorLabReportModal
