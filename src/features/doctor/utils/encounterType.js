@@ -5,6 +5,14 @@ export const DOCTOR_ENCOUNTER_MODE = {
   IPD: 'ipd',
 };
 
+/** Normalize URL / UI values to `opd` | `ipd`. */
+export function parseDoctorEncounterMode(raw) {
+  const value = String(raw ?? '').trim().toLowerCase();
+  return value === DOCTOR_ENCOUNTER_MODE.IPD
+    ? DOCTOR_ENCOUNTER_MODE.IPD
+    : DOCTOR_ENCOUNTER_MODE.OPD;
+}
+
 export function isIpdEncounter(row) {
   if (!row) return false;
   const enc = String(row.encounterType ?? row.encounter_type ?? '').toUpperCase();

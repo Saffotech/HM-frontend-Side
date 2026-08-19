@@ -104,6 +104,7 @@ export default function LabUploadReportPage() {
         }
       }
       if (next.parametersGeneral) delete next.parametersGeneral;
+      if (next.reportOrParameters) delete next.reportOrParameters;
       return next;
     });
   };
@@ -127,7 +128,6 @@ export default function LabUploadReportPage() {
     const errs = {};
     if (!sampleCollectedAt) errs.sampleCollectedAt = 'Required';
     if (!testPerformedAt) errs.testPerformedAt = 'Required';
-    if (!reportFile) errs.reportFile = 'Report file is required';
 
     const paramErrors = {};
     parameters.forEach((param) => {
@@ -157,10 +157,22 @@ export default function LabUploadReportPage() {
         'When a parameter name is entered, value, unit, normal range, and flag are required';
     }
 
+    const hasNamedParameters = parameters.some(isNamedParameter);
+    const hasCompleteParameters = hasNamedParameters && Object.keys(paramErrors).length === 0;
+    if (!reportFile && !hasCompleteParameters) {
+      const message = 'Upload a report file or enter at least one test parameter';
+      errs.reportOrParameters = message;
+      errs.reportFile = message;
+      errs.parametersGeneral = message;
+    }
+
     setErrors(errs);
     if (Object.keys(errs).length) {
       toast.error(
-        errs.reportFile || errs.parametersGeneral || 'Please fix the highlighted fields',
+        errs.reportOrParameters
+        || errs.reportFile
+        || errs.parametersGeneral
+        || 'Please fix the highlighted fields',
       );
       return;
     }
@@ -423,21 +435,25 @@ export default function LabUploadReportPage() {
               <div className="lab-field">
                 <label htmlFor="report-file">
                   Report File
-                  <span className="required"> *</span>
-                  <small style={{ fontWeight: 400, color: '#8a9ab5', marginLeft: 6 }}>(PDF, PNG, JPG — required)</small>
+                  <small style={{ fontWeight: 400, color: '#8a9ab5', marginLeft: 6 }}>
+                    (PDF, PNG, JPG — required if no test parameters)
+                  </small>
                 </label>
                 <input
                   id="report-file"
                   type="file"
                   accept=".pdf,image/*"
-                  required
-                  aria-required="true"
+                  aria-required={Boolean(errors.reportFile)}
                   onChange={(e) => {
                     setReportFile(e.target.files?.[0] ?? null);
                     setErrors((prev) => {
-                      if (!prev.reportFile) return prev;
+                      if (!prev.reportFile && !prev.reportOrParameters) return prev;
                       const next = { ...prev };
                       delete next.reportFile;
+                      delete next.reportOrParameters;
+                      if (next.parametersGeneral === 'Upload a report file or enter at least one test parameter') {
+                        delete next.parametersGeneral;
+                      }
                       return next;
                     });
                   }}
@@ -478,7 +494,9 @@ export default function LabUploadReportPage() {
               <div className="lab-params-header">
                 <h3>
                   Test Parameters
-                  <small style={{ fontWeight: 400, color: '#8a9ab5', marginLeft: 8 }}>(optional)</small>
+                  <small style={{ fontWeight: 400, color: '#8a9ab5', marginLeft: 8 }}>
+                    (required if no report file)
+                  </small>
                 </h3>
                 <button type="button" className="lab-btn lab-btn-secondary lab-btn-sm" onClick={addRow}>
                   + Add Parameter

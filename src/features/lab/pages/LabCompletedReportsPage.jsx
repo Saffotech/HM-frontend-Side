@@ -2,9 +2,9 @@ import { useState, useMemo } from 'react';
 import { FileCheck } from 'lucide-react';
 import LabLayout from '@/features/lab/components/LabLayout';
 import LabReportDetailModal from '@/features/lab/components/LabReportDetailModal';
+import LabReportEditModal from '@/features/lab/components/LabReportEditModal';
 import { useLabPermissionSet } from '@/features/lab/hooks/useLabPermission';
 import { useLabReportsQuery } from '@/shared/hooks/queries/useLabQuery';
-import { printLabReport } from '@/features/lab/utils/labReportUtils';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { EmptyState, QueryFeedback } from '@/shared/components/common';
 import { DateInput } from '@/shared/components/common';
@@ -17,6 +17,7 @@ export default function LabCompletedReportsPage() {
   const [search, setSearch] = useState('');
   const [filterDate, setFilterDate] = useState('');
   const [selectedReport, setSelectedReport] = useState(null);
+  const [editingReport, setEditingReport] = useState(null);
 
   const debouncedSearch = useDebouncedValue(search, 300);
 
@@ -73,6 +74,7 @@ export default function LabCompletedReportsPage() {
   return (
     <LabLayout pageTitle="Completed Reports">
       <LabReportDetailModal report={selectedReport} onClose={() => setSelectedReport(null)} />
+      <LabReportEditModal report={editingReport} onClose={() => setEditingReport(null)} />
 
       <div className="lab-card lab-card--archive">
         <div className="lab-filters">
@@ -204,10 +206,10 @@ export default function LabCompletedReportsPage() {
                           </button>
                           <button
                             type="button"
-                            className="lab-btn lab-btn-sm lab-archive-btn lab-archive-btn--print"
-                            onClick={() => printLabReport(report)}
+                            className="lab-btn lab-btn-sm lab-archive-btn lab-archive-btn--edit"
+                            onClick={() => setEditingReport(report)}
                           >
-                            Print
+                            Edit
                           </button>
                         </div>
                       </td>

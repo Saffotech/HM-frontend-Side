@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   LayoutDashboard,
@@ -10,7 +10,7 @@ import {
 import DoctorShell from '@/features/doctor/components/DoctorShell';
 import PageSpinner from '@/shared/components/PageSpinner';
 import { PATIENT_CATEGORY_FILTER } from '@/features/doctor/utils/patientListFilters';
-import { DOCTOR_ENCOUNTER_MODE } from '@/features/doctor/utils/encounterType';
+import { parseDoctorEncounterMode } from '@/features/doctor/utils/encounterType';
 import {
   prefetchDoctorDashboard,
   prefetchDoctorSection,
@@ -32,13 +32,28 @@ export default function DoctorDashboardPage() {
   const token = useQueryToken();
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [active, setActive] = useState('dashboard');
-  const [encounterMode, setEncounterMode] = useState(DOCTOR_ENCOUNTER_MODE.OPD);
+  const encounterMode = parseDoctorEncounterMode(searchParams.get('mode'));
   const [patientsCategoryFilter, setPatientsCategoryFilter] = useState(
     PATIENT_CATEGORY_FILTER.COMPLETED
   );
 
   const showEncounterToggle = ['dashboard', 'patients', 'labs', 'schedule'].includes(active);
+
+  const handleEncounterModeChange = useCallback(
+    (mode) => {
+      const nextMode = parseDoctorEncounterMode(mode);
+      setActive('dashboard');
+      const next = new URLSearchParams(searchParams);
+      next.set('mode', nextMode);
+      navigate(
+        { pathname: ROUTES.DOCTOR_DASHBOARD, search: `?${next.toString()}` },
+        { replace: false, state: { ...(location.state ?? {}), doctorSection: undefined } },
+      );
+    },
+    [navigate, searchParams, location.state],
+  );
 
   useEffect(() => {
     void preloadDashboardSectionChunk();
@@ -81,24 +96,33 @@ export default function DoctorDashboardPage() {
     switch (n?.reference_type) {
       case 'LAB_ORDER':
         setActive('labs');
-        navigate(ROUTES.DOCTOR_DASHBOARD, {
-          state: { doctorSection: 'labs', labOrderId: refId },
-          replace: true,
-        });
+        navigate(
+          { pathname: ROUTES.DOCTOR_DASHBOARD, search: location.search },
+          {
+            state: { doctorSection: 'labs', labOrderId: refId },
+            replace: true,
+          },
+        );
         break;
       case 'PATIENT':
         setActive('patients');
-        navigate(ROUTES.DOCTOR_DASHBOARD, {
-          state: { doctorSection: 'patients', patientId: refId },
-          replace: true,
-        });
+        navigate(
+          { pathname: ROUTES.DOCTOR_DASHBOARD, search: location.search },
+          {
+            state: { doctorSection: 'patients', patientId: refId },
+            replace: true,
+          },
+        );
         break;
       case 'APPOINTMENT':
         setActive('dashboard');
-        navigate(ROUTES.DOCTOR_DASHBOARD, {
-          state: { doctorSection: 'dashboard', appointmentId: refId },
-          replace: true,
-        });
+        navigate(
+          { pathname: ROUTES.DOCTOR_DASHBOARD, search: location.search },
+          {
+            state: { doctorSection: 'dashboard', appointmentId: refId },
+            replace: true,
+          },
+        );
         break;
       case 'USER':
         navigate(ROUTES.DOCTOR_PROFILE);
@@ -115,11 +139,12 @@ export default function DoctorDashboardPage() {
       active={active}
       onSelect={setActive}
       encounterMode={showEncounterToggle ? encounterMode : undefined}
-      onEncounterModeChange={showEncounterToggle ? setEncounterMode : undefined}
+      onEncounterModeChange={showEncounterToggle ? handleEncounterModeChange : undefined}
     >
       <Suspense fallback={<PageSpinner />}>
         {active === 'dashboard' && (
           <DashboardSection
+            key={`dashboard-${encounterMode}`}
             encounterMode={encounterMode}
             onViewAllPatients={openPatientsWithFilter}
           />
@@ -131,8 +156,12 @@ export default function DoctorDashboardPage() {
             encounterMode={encounterMode}
           />
         )}
-        {active === 'labs' && <LabsSection encounterMode={encounterMode} />}
-        {active === 'schedule' && <ScheduleSection encounterMode={encounterMode} />}
+        {active === 'labs' && (
+          <LabsSection key={`labs-${encounterMode}`} encounterMode={encounterMode} />
+        )}
+        {active === 'schedule' && (
+          <ScheduleSection key={`schedule-${encounterMode}`} encounterMode={encounterMode} />
+        )}
         {active === 'notifications' && (
           <NotificationsSection onDeepLink={handleNotificationDeepLink} />
         )}

@@ -22,11 +22,14 @@ export default function DoctorShell({
   const location = useLocation();
   const onProfilePage = location.pathname === ROUTES.DOCTOR_PROFILE;
   const showEncounterToggle = typeof onEncounterModeChange === 'function';
+  const dashboardHref = encounterMode
+    ? `${ROUTES.DOCTOR_DASHBOARD}?mode=${encounterMode}`
+    : ROUTES.DOCTOR_DASHBOARD;
 
   return (
     <div className="doctor-shell">
       <div className="doctor-shell__mobile-bar no-print">
-        <Link to={ROUTES.DOCTOR_DASHBOARD} className="doctor-shell__brand doctor-shell__mobile-brand">
+        <Link to={dashboardHref} className="doctor-shell__brand doctor-shell__mobile-brand">
           <BrandLogo size={28} />
           <BrandName className="doctor-shell__mobile-brand-text" />
         </Link>
@@ -52,7 +55,7 @@ export default function DoctorShell({
 
       <aside className={`doctor-shell__sidebar no-print ${mobileOpen ? 'doctor-shell__sidebar--open' : ''}`}>
         <div className="doctor-shell__sidebar-head">
-          <Link to={ROUTES.DOCTOR_DASHBOARD} className="doctor-shell__brand">
+          <Link to={dashboardHref} className="doctor-shell__brand">
             <BrandLogo size={32} />
             <BrandName className="brand-name--on-dark" />
           </Link>

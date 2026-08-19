@@ -774,13 +774,13 @@
   box-shadow: 0 4px 12px rgba(26, 159, 212, 0.28);
 }
 
-.lab-archive-btn--print {
+.lab-archive-btn--edit {
   background: #fff;
   border: 1.5px solid #c5d4e8;
   color: #3b5378;
 }
 
-.lab-archive-btn--print:hover:not(:disabled) {
+.lab-archive-btn--edit:hover:not(:disabled) {
   background: #eef5ff;
   border-color: var(--color-primary);
   color: var(--color-primary);
@@ -2005,6 +2005,16 @@
   margin-top: 1.1rem;
   padding-top: 1rem;
   border-top: 1px solid #dce8f5;
+}
+
+.lab-report-edit__file {
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dce8f5;
+}
+
+.lab-report-edit__current {
+  margin: 0 0 8px;
 }
 
 .lab-report-view__file-wrap {
