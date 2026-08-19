@@ -353,6 +353,7 @@ export default function LabsSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD 
         patient={profilePatient}
         onBack={() => setProfilePatient(null)}
         backLabel="Back to Lab Tests"
+        encounterMode={encounterMode}
       />
     );
   }

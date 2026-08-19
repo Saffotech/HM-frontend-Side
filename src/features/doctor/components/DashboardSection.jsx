@@ -609,6 +609,7 @@ function DashboardSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD, onViewAll
         patient={profilePatient}
         onBack={() => setProfilePatient(null)}
         backLabel="Back to Dashboard"
+        encounterMode={encounterMode}
       />
     );
   }

@@ -5,11 +5,13 @@ import {
   Beaker,
   ChevronDown,
   Droplet,
+  Edit3,
+  Eye,
   FileText,
   Link2,
   Phone,
   Pill,
-  Eye,
+  Plus,
   User,
 } from 'lucide-react';
 import {
@@ -17,6 +19,7 @@ import {
   useDoctorPatientPrescriptionsQuery,
 } from '@/features/doctor/hooks/useDoctorPatientQuery';
 import PrescriptionDetailModal from './PrescriptionDetailModal';
+import AddLabTestModal from './AddLabTestModal';
 import { useDoctorLabTestsQuery } from '@/features/doctor/hooks/useDoctorLabQuery';
 import { matchesLabTestPatient } from '@/features/doctor/utils/labPatientMatch';
 import DoctorLabReportModal from './DoctorLabReportModal';
@@ -29,6 +32,11 @@ import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { Button, Skeleton } from '@/shared/components/common';
 import StatusPill from './StatusPill';
+import { useAuth } from '@/shared/hooks/useAuth';
+import { ACTIONS, canAccessAction } from '@/hooks/permissions';
+import { useDoctorPermission, DOCTOR_PERMISSIONS } from '@/features/doctor/hooks/useDoctorPermission';
+import { buildPatientLabOrderLinks } from '@/features/doctor/utils/patientLabOrderLinks';
+import { DOCTOR_ENCOUNTER_MODE } from '@/features/doctor/utils/encounterType';
 import '../styles/doctor-ui.css';
 
 function formatPrescriptionDate(dateStr) {
@@ -49,8 +57,15 @@ export default function PatientHistoryProfile({
   onBack,
   backLabel = 'Back to Patients',
   placeholderVisits,
+  encounterMode = DOCTOR_ENCOUNTER_MODE.OPD,
 }) {
   const token = useQueryToken();
+  const { user } = useAuth();
+  const canEditPrescription = canAccessAction(user, ACTIONS.UPDATE_PRESCRIPTION);
+  const canCreateLabTest = useDoctorPermission(DOCTOR_PERMISSIONS.labCreate);
+  const isOpdMode = encounterMode === DOCTOR_ENCOUNTER_MODE.OPD;
+  const showAddLabTest = canCreateLabTest && isOpdMode;
+  const showEditPrescription = canEditPrescription && isOpdMode;
   const patientUid = patient?.patientUid ?? patient?.id;
   const resolvedPatientId = patient?.patientId ?? null;
 
@@ -78,8 +93,9 @@ export default function PatientHistoryProfile({
 
   const { data: prescriptions = [] } = useDoctorPatientPrescriptionsQuery(patientId);
 
-  const [viewPrescriptionId, setViewPrescriptionId] = useState(null);
+  const [prescriptionModal, setPrescriptionModal] = useState({ id: null, editing: false });
   const [viewLabTest, setViewLabTest] = useState(null);
+  const [addLabOpen, setAddLabOpen] = useState(false);
 
   const canLoadLabs = Boolean(patientUid || resolvedPatientId);
 
@@ -169,7 +185,22 @@ export default function PatientHistoryProfile({
     [allLabTests, patientUid, patientId, profile.name, patient?.name]
   );
 
-  const viewingPrescription = prescriptions.find((rx) => rx.id === viewPrescriptionId);
+  const labOrderLinks = useMemo(() => {
+    if (!isOpdMode) return [];
+    return buildPatientLabOrderLinks(visits, ipdAdmissions).filter(
+      (link) => link.appointmentDbId != null,
+    );
+  }, [visits, ipdAdmissions, isOpdMode]);
+
+  const viewingPrescription = prescriptions.find((rx) => rx.id === prescriptionModal.id);
+
+  const openPrescriptionModal = (id, editing = false) => {
+    setPrescriptionModal({ id, editing: editing && showEditPrescription });
+  };
+
+  const closePrescriptionModal = () => {
+    setPrescriptionModal({ id: null, editing: false });
+  };
 
   if (!patient) return null;
 
@@ -253,15 +284,28 @@ export default function PatientHistoryProfile({
                       )}
                     </td>
                     <td className="doc-profile-rx-table__actions">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setViewPrescriptionId(rx.id)}
-                      >
-                        <Eye size={14} aria-hidden />
-                        View
-                      </Button>
+                      <div className="doc-profile-rx-table__action-group">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openPrescriptionModal(rx.id, false)}
+                        >
+                          <Eye size={14} aria-hidden />
+                          View
+                        </Button>
+                        {showEditPrescription ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openPrescriptionModal(rx.id, true)}
+                          >
+                            <Edit3 size={14} aria-hidden />
+                            Add medicine
+                          </Button>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -297,15 +341,28 @@ export default function PatientHistoryProfile({
           )}
         </section>
 
-        <aside className="doc-card doc-profile-panel doc-profile-panel--side">
+        <section className="doc-card doc-profile-panel doc-profile-panel--labs">
           <div className="doc-profile-panel__head">
             <h3 className="doc-profile-panel__title">
               <Beaker size={16} aria-hidden />
               Lab Reports
             </h3>
-            {patientLabs.length > 0 ? (
-              <span className="doc-profile-panel__count">{patientLabs.length}</span>
-            ) : null}
+            <div className="doc-profile-panel__head-end">
+              {patientLabs.length > 0 ? (
+                <span className="doc-profile-panel__count">{patientLabs.length}</span>
+              ) : null}
+              {showAddLabTest ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setAddLabOpen(true)}
+                >
+                  <Plus size={14} aria-hidden />
+                  Add lab test
+                </Button>
+              ) : null}
+            </div>
           </div>
           {patientLabs.length === 0 ? (
             <p className="text-muted doc-profile-empty">No lab tests</p>
@@ -328,13 +385,14 @@ export default function PatientHistoryProfile({
               ))}
             </ul>
           )}
-        </aside>
+        </section>
       </div>
 
       <PrescriptionDetailModal
-        prescriptionId={viewPrescriptionId}
-        open={viewPrescriptionId != null}
-        onClose={() => setViewPrescriptionId(null)}
+        prescriptionId={prescriptionModal.id}
+        open={prescriptionModal.id != null}
+        initialEditing={prescriptionModal.editing}
+        onClose={closePrescriptionModal}
         patientId={patientId}
         patientUid={patientUid}
         patientName={profile.name !== '—' ? profile.name : undefined}
@@ -342,7 +400,16 @@ export default function PatientHistoryProfile({
         clinicalByAdmissionId={clinicalByAdmissionId}
         visitTimeline={visits}
         fallbackAdmissionId={viewingPrescription?.admissionId ?? null}
-        readOnly
+        readOnly={!isOpdMode}
+        addMedicineOnly={isOpdMode}
+      />
+
+      <AddLabTestModal
+        open={addLabOpen}
+        onClose={() => setAddLabOpen(false)}
+        patientUid={patientUid}
+        patientName={profile.name !== '—' ? profile.name : undefined}
+        linkOptions={labOrderLinks}
       />
 
       <DoctorLabReportModal

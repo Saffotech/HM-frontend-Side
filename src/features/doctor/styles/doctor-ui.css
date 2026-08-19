@@ -398,9 +398,15 @@
 
 .doc-med-row--consult .doc-med-row__pair{
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.5rem;
   min-width: 0;
+}
+
+@media (min-width: 520px){
+  .doc-med-row--consult .doc-med-row__pair{
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
 }
 
 .doc-med-row--consult .doc-med-row__duration-unit{
@@ -435,7 +441,9 @@
 .doc-rx-detail-modal .modal__body{
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .doc-consult-modal .modal__footer,
@@ -1535,10 +1543,19 @@
 .doc-patient-profile{
   gap: 0.65rem;
   max-width: 72rem;
+  width: 100%;
+  min-width: 0;
+  overflow-x: clip;
 }
 
-.doc-patient-profile .doc-labs-back{
-  margin-bottom: 0.15rem;
+.doc-patient-profile .table-wrap{
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+.doc-profile-panel--rx{
+  min-width: 0;
+  max-width: 100%;
 }
 
 .doc-profile-hero{
@@ -1606,22 +1623,65 @@
 .doc-profile-grid{
   display: grid;
   gap: 0.65rem;
-  align-items: start;
+  align-items: stretch;
+  min-width: 0;
+  max-width: 100%;
 }
 
-@media (min-width: 1024px){
+@media (min-width: 768px){
   .doc-profile-grid {
-    grid-template-columns: minmax(0, 1fr) 17.5rem;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }
 
 .doc-profile-panel{
   padding: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  max-width: 100%;
 }
 
-.doc-profile-panel--side{
+.doc-profile-grid > .doc-profile-panel{
+  min-height: 22rem;
+}
+
+@media (min-width: 768px){
+  .doc-profile-grid > .doc-profile-panel {
+    min-height: 26rem;
+  }
+}
+
+.doc-profile-panel--side,
+.doc-profile-panel--labs{
   min-height: 0;
+}
+
+.doc-profile-panel__body{
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.doc-profile-panel__head-end{
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.doc-profile-add-lab-empty,
+.doc-profile-add-lab-link{
+  font-size: 0.8125rem;
+  margin: 0 0 0.75rem;
+}
+
+.doc-profile-add-lab-link strong{
+  color: #0f172a;
+  font-weight: 600;
 }
 
 .doc-profile-panel__head{
@@ -1632,6 +1692,8 @@
   padding: 0.6rem 0.85rem;
   border-bottom: 1px solid var(--color-border-light);
   background: #fafbfc;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .doc-profile-panel__title{
@@ -1658,14 +1720,18 @@
   font-size: 0.8125rem;
   margin: 0;
   padding: 0.85rem 1rem;
+  flex: 1;
 }
 
 .doc-profile-rx-table-wrap{
   border-radius: 0;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 .doc-profile-rx-table{
   width: 100%;
+  max-width: 100%;
   table-layout: fixed;
 }
 
@@ -1695,19 +1761,26 @@
   background: #fafbfc;
 }
 
+.doc-profile-rx-table thead th,
+.doc-profile-rx-table tbody td{
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .doc-profile-rx-table__date{
-  width: 6.5rem;
-  white-space: nowrap;
+  width: 15%;
   font-weight: 600;
   color: #475569;
 }
 
 .doc-profile-rx-table__diagnosis{
+  width: 22%;
   font-weight: 600;
   color: #0f172a;
 }
 
 .doc-profile-rx-table__meds{
+  width: 28%;
   color: #64748b;
 }
 
@@ -1727,27 +1800,41 @@
   font-size: 0.6875rem;
   font-weight: 600;
   color: #475569;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
-.doc-profile-rx-table__th-actions,
-.doc-profile-rx-table__actions{
-  width: 6.5rem;
+.doc-profile-rx-table thead th.doc-profile-rx-table__th-actions,
+.doc-profile-rx-table tbody td.doc-profile-rx-table__actions{
+  width: 35%;
+  min-width: 0;
   text-align: center;
-  white-space: nowrap;
+  vertical-align: middle;
 }
 
-.doc-profile-rx-table__actions{
+.doc-profile-rx-table__action-group{
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
   gap: 0.35rem;
+  max-width: 100%;
+}
+
+.doc-profile-rx-table tbody td.doc-profile-rx-table__actions{
+  display: table-cell;
+}
+
+.doc-profile-rx-table__actions .doc-profile-rx-table__action-group{
+  padding: 0.15rem 0;
 }
 
 .doc-profile-rx-table__actions .btn{
-  padding-left: 0.55rem;
-  padding-right: 0.55rem;
+  flex-shrink: 1;
+  min-width: 0;
+  padding-left: 0.45rem;
+  padding-right: 0.45rem;
+  font-size: 0.75rem;
 }
 
 .doc-visit-list{
@@ -1755,6 +1842,9 @@
   flex-direction: column;
   gap: 0.35rem;
   padding: 0.55rem 0.65rem 0.65rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .doc-visit-card--skeleton{
@@ -1992,6 +2082,9 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .doc-profile-lab-item{
@@ -2097,6 +2190,18 @@
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.doc-rx-detail-modal .doc-rx-detail__summary{
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 720px){
+  .doc-rx-detail-modal .doc-rx-detail__summary {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
 }
 
 .doc-rx-detail__summary{
@@ -2213,13 +2318,22 @@
 
 .doc-rx-detail__table-wrap{
   border-radius: 0;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 .doc-rx-detail__table{
   width: 100%;
+  max-width: 100%;
   table-layout: fixed;
   margin: 0;
   font-size: 0.8125rem;
+}
+
+.doc-rx-detail__table thead th,
+.doc-rx-detail__table tbody td{
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .doc-rx-detail__table thead th{
@@ -2275,10 +2389,27 @@
   font-size: 0.8125rem;
 }
 
+.doc-rx-detail__clinical--readonly{
+  margin-bottom: 0.75rem;
+  min-width: 0;
+}
+
+.doc-rx-detail__clinical--readonly p{
+  margin: 0;
+}
+
+.doc-rx-detail__meds-panel--locked{
+  margin-bottom: 0.75rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .doc-rx-detail__form{
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .doc-appt-detail{
@@ -2291,13 +2422,47 @@
     margin-left: 0;
   }
 
-  .doc-profile-rx-table__th-actions,
-  .doc-profile-rx-table__actions {
-    width: auto;
+  .doc-profile-rx-table__date{
+    width: 18%;
   }
 
-  .doc-profile-rx-table {
-    table-layout: auto;
+  .doc-profile-rx-table__diagnosis{
+    width: 20%;
+  }
+
+  .doc-profile-rx-table__meds{
+    width: 22%;
+  }
+
+  .doc-profile-rx-table thead th.doc-profile-rx-table__th-actions,
+  .doc-profile-rx-table tbody td.doc-profile-rx-table__actions {
+    width: 40%;
+  }
+}
+
+@media (max-width: 480px){
+  .doc-profile-rx-table thead th,
+  .doc-profile-rx-table tbody td{
+    padding-left: 0.45rem;
+    padding-right: 0.45rem;
+    font-size: 0.75rem;
+  }
+
+  .doc-profile-rx-table__action-group{
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .doc-profile-rx-table__actions .btn{
+    width: 100%;
+    justify-content: center;
+  }
+
+  .doc-rx-detail__table thead th:nth-child(4),
+  .doc-rx-detail__table tbody td:nth-child(4),
+  .doc-rx-detail__table thead th:nth-child(5),
+  .doc-rx-detail__table tbody td:nth-child(5){
+    display: none;
   }
 }
 

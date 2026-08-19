@@ -561,6 +561,7 @@ export default function PatientsEMRSection({
         onBack={() => setView(null)}
 
         backLabel="Back to Patients"
+        encounterMode={encounterMode}
 
       />
 

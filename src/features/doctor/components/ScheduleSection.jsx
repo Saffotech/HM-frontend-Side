@@ -122,6 +122,7 @@ export default function ScheduleSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.
         patient={profilePatient}
         onBack={() => setProfilePatient(null)}
         backLabel="Back to Calendar"
+        encounterMode={encounterMode}
       />
     );
   }
