@@ -27,6 +27,9 @@ export function buildIpdProvisionalInvoice(preview, admissionDetail) {
     bill_number: 'Provisional',
     admission_no: preview.admission_no,
     bill_date: formatBillDate(),
+    payment_type: 'self',
+    payment_type_label: 'Self',
+    insurance: null,
     patient: {
       name: preview.patient_name || admission.patient_name || '—',
       patient_uid: admission.patient_uid || '—',

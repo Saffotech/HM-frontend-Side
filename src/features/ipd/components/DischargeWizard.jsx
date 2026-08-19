@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, EmptyState, QueryFeedback } from '@/shared/components/common';
-import { PAYMENT_MODES, ROUTES } from '@/shared/constants';
+import { IPD_COLLECT_PAYMENT_MODES, ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 import { IPD_DISCHARGE_STEPS } from '@/features/ipd/utils/constants';
 import { cn } from '@/features/ipd/utils/cn';
@@ -296,7 +296,7 @@ export default function DischargeWizard({ admissionId }) {
                       setPaymentReady(false);
                     }}
                   >
-                    {PAYMENT_MODES.map((mode) => (
+                    {IPD_COLLECT_PAYMENT_MODES.map((mode) => (
                       <option key={mode} value={mode}>
                         {mode}
                       </option>

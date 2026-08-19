@@ -28,6 +28,13 @@ import {
 import { useIpdWardOptions } from "@/features/ipd/hooks/useIpdWardOptions";
 import { useIpdBedRateLookup } from "@/features/ipd/hooks/useIpdBedRateLookup";
 import { formatIpdMoney, toIsoAdmissionDate } from "@/features/ipd/utils/ipdFormat";
+import {
+  buildInsuranceAdmitContext,
+  buildPayAndClaimInsuranceProfile,
+  insuranceAdmitRouteId,
+  persistInsuranceAdmitContext,
+  persistPayAndClaimInsuranceContext,
+} from "@/features/ipd/utils/dummyInsuranceClaim";
 import { validateRegisterPatient } from "@/features/opd/utils/registerPatientUtils";
 
 const INITIAL = {
@@ -50,6 +57,17 @@ const INITIAL = {
   admissionDate: new Date().toISOString().slice(0, 10),
   departmentId: "",
   doctorId: "",
+  // payment (UI only — not sent to admission API)
+  paymentMode: "", // self | insurance
+  selfPayMethod: "", // cash | card | upi
+  insuranceClaimType: "", // cashless | pay_and_claim
+  insuranceCompany: "",
+  memberId: "",
+  policyNumber: "",
+  policyHolderName: "",
+  relationship: "",
+  claimedAmount: "",
+  estimateAmount: "",
 };
 
 function toIsoDateParam(value) {
@@ -69,6 +87,38 @@ function validateAdmission(values) {
   if (!values.bedId) errors.bed = "Bed is required";
   if (!toIsoDateParam(values.admissionDate))
     errors.admissionDate = "Admission date is required";
+  if (!values.paymentMode) errors.paymentMode = "Payment mode is required";
+  if (values.paymentMode === "self" && !values.selfPayMethod) {
+    errors.selfPayMethod = "Select Cash, Card, or UPI";
+  }
+  if (values.paymentMode === "insurance") {
+    if (!values.insuranceClaimType) {
+      errors.insuranceClaimType = "Select Cashless or Pay and claim";
+    } else {
+      if (!String(values.insuranceCompany || "").trim()) {
+        errors.insuranceCompany = "Insurance company is required";
+      }
+      if (!String(values.policyNumber || "").trim()) {
+        errors.policyNumber = "Policy number is required";
+      }
+      if (!String(values.policyHolderName || "").trim()) {
+        errors.policyHolderName = "Policy holder name is required";
+      }
+      if (!String(values.relationship || "").trim()) {
+        errors.relationship = "Relationship is required";
+      }
+      const claimed = Number(values.claimedAmount);
+      if (Number.isNaN(claimed) || claimed <= 0) {
+        errors.claimedAmount = "Enter a valid claimed amount";
+      }
+      if (String(values.estimateAmount || "").trim()) {
+        const estimate = Number(values.estimateAmount);
+        if (Number.isNaN(estimate) || estimate < 0) {
+          errors.estimateAmount = "Enter a valid estimate amount";
+        }
+      }
+    }
+  }
   return errors;
 }
 
@@ -133,6 +183,17 @@ export default function AdmitPatientForm() {
         next.address = "";
         next.state = "";
         next.aadhaar = "";
+      }
+      if (key === "paymentMode") {
+        next.selfPayMethod = "";
+        next.insuranceClaimType = "";
+        next.insuranceCompany = "";
+        next.memberId = "";
+        next.policyNumber = "";
+        next.policyHolderName = "";
+        next.relationship = "";
+        next.claimedAmount = "";
+        next.estimateAmount = "";
       }
       return next;
     });
@@ -220,6 +281,30 @@ export default function AdmitPatientForm() {
       toast.success(
         `Admitted ${created?.patient_name || "patient"} successfully`,
       );
+
+      if (values.paymentMode === "insurance") {
+        if (values.insuranceClaimType === "pay_and_claim") {
+          const profile = buildPayAndClaimInsuranceProfile(created, values);
+          persistPayAndClaimInsuranceContext(created.id, profile);
+          navigate(
+            ROUTES.IPD_PATIENT_DETAIL.replace(
+              ":admissionId",
+              String(created.id),
+            ),
+          );
+          return;
+        }
+
+        const insuranceAdmit = buildInsuranceAdmitContext(created, values);
+        const routePatientId = insuranceAdmitRouteId(created);
+        persistInsuranceAdmitContext(routePatientId, insuranceAdmit);
+        navigate(
+          ROUTES.IPD_INSURANCE_PATIENT.replace(":patientId", routePatientId),
+          { state: { insuranceAdmit } },
+        );
+        return;
+      }
+
       navigate(
         ROUTES.IPD_PATIENT_DETAIL.replace(":admissionId", String(created.id)),
       );
@@ -247,9 +332,41 @@ export default function AdmitPatientForm() {
     { label: "Admission date", value: values.admissionDate },
     { label: "Department", value: selectedDepartment?.name },
     { label: "Doctor", value: selectedDoctor?.name },
+    {
+      label: "Payment",
+      value:
+        values.paymentMode === "self" && values.selfPayMethod
+          ? `Self · ${
+              { cash: "Cash", card: "Card", upi: "UPI" }[values.selfPayMethod]
+            }`
+          : values.paymentMode === "insurance" && values.insuranceClaimType
+            ? `Insurance · ${
+                values.insuranceClaimType === "cashless"
+                  ? "Cashless"
+                  : "Pay and claim"
+              }`
+            : values.paymentMode === "self"
+              ? "Self"
+              : values.paymentMode === "insurance"
+                ? "Insurance"
+                : "",
+    },
   ];
+  const paymentReady =
+    values.paymentMode === "self"
+      ? Boolean(values.selfPayMethod)
+      : values.paymentMode === "insurance"
+        ? Boolean(
+            values.insuranceClaimType &&
+              String(values.insuranceCompany || "").trim() &&
+              String(values.policyNumber || "").trim() &&
+              String(values.policyHolderName || "").trim() &&
+              String(values.relationship || "").trim() &&
+              Number(values.claimedAmount) > 0,
+          )
+        : false;
   const readyToAdmit = Boolean(
-    values.patientDbId && values.ward && values.bedId,
+    values.patientDbId && values.ward && values.bedId && paymentReady,
   );
 
   return (
@@ -726,6 +843,226 @@ export default function AdmitPatientForm() {
                 ))}
               </select>
             </div>
+          </div>
+        </div>
+
+        <div className="ipd-card">
+          <div className="ipd-card__head">
+            <h2 className="ipd-card__title">
+              <span className="ipd-step-badge">3</span>
+              Payment
+            </h2>
+          </div>
+          <div className="ipd-card__body ipd-form-grid">
+            <div className="ipd-toolbar__field">
+              <label
+                className="ipd-toolbar__label"
+                htmlFor="ipd-admit-pay-mode"
+              >
+                Payment mode
+              </label>
+              <select
+                id="ipd-admit-pay-mode"
+                className="ipd-select"
+                value={values.paymentMode}
+                onChange={(e) => set("paymentMode", e.target.value)}
+              >
+                <option value="">Select…</option>
+                <option value="self">Self</option>
+                <option value="insurance">Insurance</option>
+              </select>
+              {show("paymentMode") ? (
+                <span className="ipd-field-error">{errors.paymentMode}</span>
+              ) : null}
+            </div>
+
+            {values.paymentMode === "self" ? (
+              <div className="ipd-toolbar__field">
+                <label
+                  className="ipd-toolbar__label"
+                  htmlFor="ipd-admit-self-method"
+                >
+                  Method
+                </label>
+                <select
+                  id="ipd-admit-self-method"
+                  className="ipd-select"
+                  value={values.selfPayMethod}
+                  onChange={(e) => set("selfPayMethod", e.target.value)}
+                >
+                  <option value="">Select…</option>
+                  <option value="cash">Cash</option>
+                  <option value="card">Card</option>
+                  <option value="upi">UPI</option>
+                </select>
+                {show("selfPayMethod") ? (
+                  <span className="ipd-field-error">
+                    {errors.selfPayMethod}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+
+            {values.paymentMode === "insurance" ? (
+              <div className="ipd-toolbar__field">
+                <label
+                  className="ipd-toolbar__label"
+                  htmlFor="ipd-admit-claim-type"
+                >
+                  Claim type
+                </label>
+                <select
+                  id="ipd-admit-claim-type"
+                  className="ipd-select"
+                  value={values.insuranceClaimType}
+                  onChange={(e) => set("insuranceClaimType", e.target.value)}
+                >
+                  <option value="">Select…</option>
+                  <option value="cashless">Cashless</option>
+                  <option value="pay_and_claim">Pay and claim</option>
+                </select>
+                {show("insuranceClaimType") ? (
+                  <span className="ipd-field-error">
+                    {errors.insuranceClaimType}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+
+            {values.paymentMode === "insurance" &&
+            values.insuranceClaimType ? (
+              <>
+                <div className="ipd-toolbar__field">
+                  <label
+                    className="ipd-toolbar__label"
+                    htmlFor="ipd-admit-ins-company"
+                  >
+                    Insurance company
+                  </label>
+                  <input
+                    id="ipd-admit-ins-company"
+                    className="ipd-input"
+                    value={values.insuranceCompany}
+                    onChange={(e) => set("insuranceCompany", e.target.value)}
+                    placeholder="Company name"
+                  />
+                  {show("insuranceCompany") ? (
+                    <span className="ipd-field-error">
+                      {errors.insuranceCompany}
+                    </span>
+                  ) : null}
+                </div>
+                <div className="ipd-toolbar__field">
+                  <label
+                    className="ipd-toolbar__label"
+                    htmlFor="ipd-admit-policy-no"
+                  >
+                    Policy number
+                  </label>
+                  <input
+                    id="ipd-admit-policy-no"
+                    className="ipd-input"
+                    value={values.policyNumber}
+                    onChange={(e) => set("policyNumber", e.target.value)}
+                    placeholder="Policy number"
+                  />
+                  {show("policyNumber") ? (
+                    <span className="ipd-field-error">
+                      {errors.policyNumber}
+                    </span>
+                  ) : null}
+                </div>
+                <div className="ipd-toolbar__field">
+                  <label
+                    className="ipd-toolbar__label"
+                    htmlFor="ipd-admit-holder"
+                  >
+                    Policy holder name
+                  </label>
+                  <input
+                    id="ipd-admit-holder"
+                    className="ipd-input"
+                    value={values.policyHolderName}
+                    onChange={(e) => set("policyHolderName", e.target.value)}
+                    placeholder="Full name"
+                  />
+                  {show("policyHolderName") ? (
+                    <span className="ipd-field-error">
+                      {errors.policyHolderName}
+                    </span>
+                  ) : null}
+                </div>
+                <div className="ipd-toolbar__field">
+                  <label
+                    className="ipd-toolbar__label"
+                    htmlFor="ipd-admit-relation"
+                  >
+                    Relationship
+                  </label>
+                  <input
+                    id="ipd-admit-relation"
+                    className="ipd-input"
+                    value={values.relationship}
+                    onChange={(e) => set("relationship", e.target.value)}
+                    placeholder="e.g. Self, Spouse"
+                  />
+                  {show("relationship") ? (
+                    <span className="ipd-field-error">
+                      {errors.relationship}
+                    </span>
+                  ) : null}
+                </div>
+                <div className="ipd-toolbar__field">
+                  <label
+                    className="ipd-toolbar__label"
+                    htmlFor="ipd-admit-claimed-amount"
+                  >
+                    Claimed amount
+                  </label>
+                  <input
+                    id="ipd-admit-claimed-amount"
+                    className="ipd-input"
+                    value={values.claimedAmount}
+                    onChange={(e) =>
+                      set("claimedAmount", e.target.value.replace(/[^\d.]/g, ""))
+                    }
+                    placeholder="0"
+                    inputMode="decimal"
+                  />
+                  {show("claimedAmount") ? (
+                    <span className="ipd-field-error">
+                      {errors.claimedAmount}
+                    </span>
+                  ) : null}
+                </div>
+                <div className="ipd-toolbar__field">
+                  <label
+                    className="ipd-toolbar__label"
+                    htmlFor="ipd-admit-estimate-amount"
+                  >
+                    Estimate amount (optional)
+                  </label>
+                  <input
+                    id="ipd-admit-estimate-amount"
+                    className="ipd-input"
+                    value={values.estimateAmount}
+                    onChange={(e) =>
+                      set(
+                        "estimateAmount",
+                        e.target.value.replace(/[^\d.]/g, ""),
+                      )
+                    }
+                    placeholder="Optional"
+                    inputMode="decimal"
+                  />
+                  {show("estimateAmount") ? (
+                    <span className="ipd-field-error">
+                      {errors.estimateAmount}
+                    </span>
+                  ) : null}
+                </div>
+              </>
+            ) : null}
           </div>
         </div>
       </div>

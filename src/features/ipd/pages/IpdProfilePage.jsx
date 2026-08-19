@@ -16,6 +16,7 @@ import {
   User,
   X,
 } from 'lucide-react';
+import useIpdBackNavigation from '@/features/ipd/hooks/useIpdBackNavigation';
 import {
   IPD_PROFILE_EDITABLE_TOP_KEYS,
   resolveIpdProfileImageUrl,
@@ -207,6 +208,7 @@ function ReadField({ label, value }) {
 export default function IpdProfilePage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const goBack = useIpdBackNavigation(ROUTES.IPD_DASHBOARD);
   const {
     canViewProfile,
     canUpdateProfile,
@@ -487,7 +489,7 @@ export default function IpdProfilePage() {
           <Button variant="primary" onClick={() => refetch()}>
             Try again
           </Button>
-          <Button variant="outline" onClick={() => navigate(ROUTES.IPD_DASHBOARD)}>
+          <Button variant="outline" onClick={goBack}>
             <ArrowLeft size={16} /> Back to dashboard
           </Button>
         </div>
@@ -504,7 +506,7 @@ export default function IpdProfilePage() {
           description="Contact admin to create your IPD profile."
         />
         <div style={{ marginTop: '1rem' }}>
-          <Button variant="outline" onClick={() => navigate(ROUTES.IPD_DASHBOARD)}>
+          <Button variant="outline" onClick={goBack}>
             <ArrowLeft size={16} /> Back to dashboard
           </Button>
         </div>

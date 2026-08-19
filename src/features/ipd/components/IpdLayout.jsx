@@ -12,6 +12,7 @@ import {
   Receipt,
   History,
   LogOut,
+  Tags,
   UserCircle,
 } from 'lucide-react';
 import { ROUTES } from '@/shared/constants';
@@ -63,6 +64,12 @@ const NAV_LINKS = [
     requires: 'discharge',
   },
   {
+    href: ROUTES.IPD_PRICING,
+    label: 'Pricing',
+    icon: Tags,
+    requires: 'pricing',
+  },
+  {
     href: ROUTES.IPD_PROFILE,
     label: 'Profile',
     icon: UserCircle,
@@ -98,6 +105,8 @@ export default function IpdLayout({ children }) {
             return perms.canViewPaymentHistory;
           case 'discharge':
             return perms.canDischarge;
+          case 'pricing':
+            return true;
           case 'profile':
             return perms.canViewProfile;
           default:

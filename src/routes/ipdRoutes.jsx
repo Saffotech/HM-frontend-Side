@@ -15,6 +15,10 @@ const IpdBillPreviewPage = lazy(() => import('@/features/ipd/pages/IpdBillPrevie
 const IpdViewBillPage = lazy(() => import('@/features/ipd/pages/IpdViewBillPage'));
 const IpdPaymentHistoryPage = lazy(() => import('@/features/ipd/pages/IpdPaymentHistoryPage'));
 const IpdDischargePage = lazy(() => import('@/features/ipd/pages/IpdDischargePage'));
+const IpdInsuranceClaimDetailPage = lazy(() => import('@/features/ipd/pages/IpdInsuranceClaimDetailPage'));
+const IpdInsurancePatientPage = lazy(() => import('@/features/ipd/pages/IpdInsurancePatientPage'));
+const IpdInsuranceBillingPage = lazy(() => import('@/features/ipd/pages/IpdInsuranceBillingPage'));
+const IpdPricingPage = lazy(() => import('@/features/ipd/pages/IpdPricingPage'));
 const IpdProfilePage = lazy(() => import('@/features/ipd/pages/IpdProfilePage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
@@ -47,6 +51,14 @@ export const ipdRoutes = [
             ),
           },
           {
+            path: ROUTES.IPD_INSURANCE_PATIENT,
+            element: (
+              <LazyRoute>
+                <IpdInsurancePatientPage />
+              </LazyRoute>
+            ),
+          },
+          {
             path: ROUTES.IPD_PATIENT_DETAIL,
             element: (
               <LazyRoute>
@@ -75,6 +87,14 @@ export const ipdRoutes = [
             element: (
               <LazyRoute>
                 <IpdBedsPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.IPD_INSURANCE_BILLING,
+            element: (
+              <LazyRoute>
+                <IpdInsuranceBillingPage />
               </LazyRoute>
             ),
           },
@@ -123,6 +143,22 @@ export const ipdRoutes = [
             element: (
               <LazyRoute>
                 <IpdDischargePage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.IPD_INSURANCE_CLAIM_DETAIL,
+            element: (
+              <LazyRoute>
+                <IpdInsuranceClaimDetailPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.IPD_PRICING,
+            element: (
+              <LazyRoute>
+                <IpdPricingPage />
               </LazyRoute>
             ),
           },

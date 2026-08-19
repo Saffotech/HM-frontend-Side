@@ -3,16 +3,18 @@
  */
 
 import { useEffect } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Printer } from 'lucide-react';
 import { Button, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import IpdBillPrintSheet from '@/features/ipd/components/IpdBillPrintSheet';
+import useIpdBackNavigation from '@/features/ipd/hooks/useIpdBackNavigation';
 import { useIpdBillInvoiceQuery } from '@/features/ipd/hooks/useIpdQuery';
 import '@/features/opd/billing/pages/ViewBillPage.css';
 
 export default function IpdViewBillPage() {
   const { billId } = useParams();
+  const goBack = useIpdBackNavigation(ROUTES.IPD_PAYMENT_HISTORY);
   const [searchParams] = useSearchParams();
   const autoPrint = searchParams.get('print') === '1';
   const invoiceQuery = useIpdBillInvoiceQuery(billId);
@@ -45,11 +47,9 @@ export default function IpdViewBillPage() {
     <div className="view-bill page-container">
       <div className="view-bill__actions no-print">
         <div className="view-bill__actions-left">
-          <Link to={ROUTES.IPD_PAYMENT_HISTORY}>
-            <Button variant="outline" size="sm">
-              <ArrowLeft size={16} /> Back
-            </Button>
-          </Link>
+          <Button variant="outline" size="sm" onClick={goBack}>
+            <ArrowLeft size={16} /> Back
+          </Button>
           <h2>Bill Details — {raw.bill_number}</h2>
         </div>
         <div className="view-bill__actions-right">

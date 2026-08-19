@@ -7,7 +7,7 @@ import AdmitPatientForm from '@/features/ipd/components/AdmitPatientForm';
 
 export default function IpdAdmitPatientPage() {
   return (
-    <div className="ipd-page">
+    <div className="ipd-page ipd-page--admit">
       <IpdPageHeader title="Admit Patient" />
       <AdmitPatientForm />
     </div>

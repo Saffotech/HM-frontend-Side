@@ -33,6 +33,11 @@ function resolveStamp(summary = {}) {
   return { stampClass, stampLabel };
 }
 
+function textOrDash(value) {
+  const raw = value == null ? '' : String(value).trim();
+  return raw || '—';
+}
+
 export default function IpdBillPrintSheet({ invoice, className = '' }) {
   if (!invoice) return null;
 
@@ -49,6 +54,8 @@ export default function IpdBillPrintSheet({ invoice, className = '' }) {
   const amountPaid = Number(summary.amount_paid ?? 0);
   const balanceDue = Number(summary.balance_due ?? 0);
   const taxLabel = summary.gst_label || 'Tax (GST)';
+  const isPayAndClaim = invoice.payment_type === 'insurance_pay_and_claim';
+  const insurance = invoice.insurance ?? {};
 
   return (
     <div className={`bill-print-zone${className ? ` ${className}` : ''}`}>
@@ -89,6 +96,22 @@ export default function IpdBillPrintSheet({ invoice, className = '' }) {
           <span>{stampLabel}</span>
         </div>
       </div>
+
+      {isPayAndClaim ? (
+        <div className="bill-meta-row" style={{ marginTop: '0.75rem', alignItems: 'flex-start' }}>
+          <div className="bill-meta-col">
+            <h4>Payment Type</h4>
+            <p className="bill-meta-name">{textOrDash(invoice.payment_type_label)}</p>
+          </div>
+          <div className="bill-meta-col">
+            <h4>Insurance</h4>
+            <p>Company: {textOrDash(insurance.company)}</p>
+            <p>Policy No.: {textOrDash(insurance.policy_no)}</p>
+            <p>Member ID: {textOrDash(insurance.member_id)}</p>
+          </div>
+          <div />
+        </div>
+      ) : null}
 
       <div className="bill-items-section">
         <h4>Bill Items</h4>

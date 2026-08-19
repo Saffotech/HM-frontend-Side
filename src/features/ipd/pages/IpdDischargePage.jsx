@@ -10,6 +10,7 @@ import { ROUTES } from '@/shared/constants';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import DischargeWizard from '@/features/ipd/components/DischargeWizard';
 import IpdPageHeader from '@/features/ipd/components/IpdPageHeader';
+import useIpdBackNavigation from '@/features/ipd/hooks/useIpdBackNavigation';
 import IpdPermissionButton from '@/features/ipd/components/IpdPermissionButton';
 import IpdStatusBadge from '@/features/ipd/components/IpdStatusBadge';
 import { useIpdPermissionSet } from '@/features/ipd/hooks/useIpdPermission';
@@ -19,6 +20,7 @@ import { formatIpdDateTime } from '@/features/ipd/utils/ipdFormat';
 
 export default function IpdDischargePage() {
   const { admissionId } = useParams();
+  const goBack = useIpdBackNavigation(ROUTES.IPD_DISCHARGE);
   const navigate = useNavigate();
   const { canDischarge, canViewPatient } = useIpdPermissionSet();
   const [search, setSearch] = useState('');
@@ -41,9 +43,13 @@ export default function IpdDischargePage() {
         <IpdPageHeader
           title="Discharge"
           actions={
-            <Link to={ROUTES.IPD_DISCHARGE} className="btn btn--secondary btn--sm">
+            <button
+              type="button"
+              onClick={goBack}
+              className="btn btn--secondary btn--sm"
+            >
               Back to list
-            </Link>
+            </button>
           }
         />
         <DischargeWizard admissionId={admissionId} />

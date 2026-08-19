@@ -2,7 +2,7 @@
  * IPD Patient Detail — admission overview (`/ipd/admissions/{id}`).
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button, EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
@@ -11,6 +11,8 @@ import IpdStatusBadge from '@/features/ipd/components/IpdStatusBadge';
 import ChargeTable from '@/features/ipd/components/ChargeTable';
 import BillSummary from '@/features/ipd/components/BillSummary';
 import AdmissionCareTeamEditor from '@/features/ipd/components/AdmissionCareTeamEditor';
+import EditInsuranceModal from '@/features/ipd/components/EditInsuranceModal';
+import useIpdBackNavigation from '@/features/ipd/hooks/useIpdBackNavigation';
 import { useIpdAdmissionDetailQuery } from '@/features/ipd/hooks/useIpdQuery';
 import { useIpdPermissionSet } from '@/features/ipd/hooks/useIpdPermission';
 import {
@@ -18,6 +20,10 @@ import {
   formatIpdMoney,
 } from '@/features/ipd/utils/ipdFormat';
 import { resolveIpdBillPreviewPayment } from '@/features/ipd/utils/resolveIpdBillPreviewPayment';
+import {
+  loadPayAndClaimInsuranceContext,
+  updatePayAndClaimInsuranceContext,
+} from '@/features/ipd/utils/dummyInsuranceClaim';
 
 function Field({ label, children, wide = false }) {
   return (
@@ -31,9 +37,17 @@ function Field({ label, children, wide = false }) {
 export default function IpdPatientDetailPage() {
   const { admissionId } = useParams();
   const navigate = useNavigate();
+  const goBack = useIpdBackNavigation(ROUTES.IPD_PATIENTS);
   const { canAdmit } = useIpdPermissionSet();
   const { data, isLoading, isError, error, refetch } =
     useIpdAdmissionDetailQuery(admissionId);
+
+  const [payClaimInsurance, setPayClaimInsurance] = useState(null);
+  const [editInsuranceOpen, setEditInsuranceOpen] = useState(false);
+
+  useEffect(() => {
+    setPayClaimInsurance(loadPayAndClaimInsuranceContext(admissionId));
+  }, [admissionId]);
 
   const admission = data?.admission;
   const visits = data?.doctor_visits ?? [];
@@ -115,7 +129,7 @@ export default function IpdPatientDetailPage() {
               type="button"
               variant="secondary"
               size="sm"
-              onClick={() => navigate(ROUTES.IPD_PATIENTS)}
+              onClick={goBack}
             >
               Back
             </Button>
@@ -186,6 +200,45 @@ export default function IpdPatientDetailPage() {
             </div>
           </div>
 
+          {payClaimInsurance ? (
+            <div className="ipd-card">
+              <div className="ipd-card__head">
+                <h2 className="ipd-card__title">Insurance (Pay and Claim)</h2>
+                <div className="ipd-form-actions">
+                  <span className="ipd-ins-chip ipd-ins-chip--coverage">
+                    {payClaimInsurance.coverage}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setEditInsuranceOpen(true)}
+                  >
+                    Edit Insurance
+                  </Button>
+                </div>
+              </div>
+              <div className="ipd-card__body">
+                <dl className="ipd-claim-ins-grid">
+                  <Field label="Insurance Company">{payClaimInsurance.insurer}</Field>
+                  <Field label="Policy Number">{payClaimInsurance.policyNo}</Field>
+                  <Field label="Policy Holder">{payClaimInsurance.policyHolder}</Field>
+                  <Field label="Relationship">{payClaimInsurance.relationship}</Field>
+                  <Field label="Claimed Amount">
+                    {formatIpdMoney(payClaimInsurance.claimedAmount)}
+                  </Field>
+                  <Field label="Estimate Amount">
+                    {formatIpdMoney(payClaimInsurance.estimateAmount)}
+                  </Field>
+                </dl>
+                <p className="ipd-page__subtitle" style={{ marginTop: '0.75rem' }}>
+                  Billing and payments use the standard self-pay flow. Insurance
+                  details are stored on this profile for reimbursement reference.
+                </p>
+              </div>
+            </div>
+          ) : null}
+
           <div className="ipd-pd-split">
             <div className="ipd-card">
               <div className="ipd-card__head">
@@ -255,6 +308,10 @@ export default function IpdPatientDetailPage() {
                 ) : (
                   <ChargeTable rows={running.items} compact />
                 )}
+                <p className="ipd-pd-muted" style={{ marginTop: '0.75rem' }}>
+                  Daily charges and full hospital breakdown are on the billing page
+                  — use <strong>{billActionLabel}</strong> above.
+                </p>
                 <BillSummary
                   subtotal={formatIpdMoney(running?.subtotal)}
                   tax={formatIpdMoney(running?.gst_amount)}
@@ -301,6 +358,18 @@ export default function IpdPatientDetailPage() {
           </div>
         </div>
       )}
+
+      {payClaimInsurance ? (
+        <EditInsuranceModal
+          open={editInsuranceOpen}
+          onClose={() => setEditInsuranceOpen(false)}
+          initial={payClaimInsurance}
+          onSave={(next) => {
+            const updated = updatePayAndClaimInsuranceContext(admissionId, next);
+            if (updated) setPayClaimInsurance(updated);
+          }}
+        />
+      ) : null}
     </div>
   );
 }

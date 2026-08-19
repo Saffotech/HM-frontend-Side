@@ -74,6 +74,9 @@ export const REVISIT_DAYS = 30;
 
 export const PAYMENT_MODES = ['Cash', 'Card', 'UPI', 'Insurance'];
 
+/** IPD bill collect / discharge — insurance is handled via the claim module. */
+export const IPD_COLLECT_PAYMENT_MODES = ['Cash', 'Card', 'UPI'];
+
 /** @deprecated Prefer live IPD ward stats (`useIpdWardOptions`) — inventory is admin-driven. */
 export const WARDS = ['General', 'ICU', 'Private', 'Pediatric'];
 
@@ -140,15 +143,19 @@ export const ROUTES = {
   IPD_DASHBOARD: '/ipd/dashboard',
   IPD_PATIENTS: '/ipd/patients',
   IPD_PATIENT_DETAIL: '/ipd/patients/:admissionId',
+  IPD_INSURANCE_PATIENT: '/ipd/patients/insurance/:patientId',
   IPD_ADMIT: '/ipd/admit',
   IPD_BEDS: '/ipd/beds',
   IPD_BED_TRANSFER: '/ipd/beds/transfer',
   IPD_BILLING: '/ipd/billing',
+  IPD_INSURANCE_BILLING: '/ipd/billing/insurance/:patientId',
   IPD_BILL_PREVIEW: '/ipd/billing/preview/:admissionId',
   IPD_BILL_VIEW: '/ipd/billing/bills/:billId',
   IPD_PAYMENT_HISTORY: '/ipd/payment-history',
   IPD_DISCHARGE: '/ipd/discharge',
   IPD_DISCHARGE_ADMISSION: '/ipd/discharge/:admissionId',
+  IPD_INSURANCE_CLAIM_DETAIL: '/ipd/insurance-claim/view/:claimId',
+  IPD_PRICING: '/ipd/pricing',
   IPD_PROFILE: '/ipd/profile',
   ADMIN_LOGIN: '/admin/login',
   ADMIN_DASHBOARD: '/admin/dashboard',
