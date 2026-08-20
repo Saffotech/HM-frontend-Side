@@ -8,6 +8,7 @@ export const ACTIONS = {
   VIEW_BILLING: 'view_billing',
   CREATE_BILL: 'create_bill',
   VIEW_PAYMENT_HISTORY: 'view_payment_history',
+  VIEW_PRICING: 'view_pricing',
   MANAGE_PATIENTS: 'manage_patients',
   MANAGE_APPOINTMENTS: 'manage_appointments',
   MANAGE_BEDS: 'manage_beds',
@@ -27,6 +28,7 @@ export const ACTION_BACKEND_PERMISSIONS = {
   [ACTIONS.VIEW_BILLING]: ['billing:view'],
   [ACTIONS.CREATE_BILL]: ['billing:create'],
   [ACTIONS.VIEW_PAYMENT_HISTORY]: ['billing:view'],
+  [ACTIONS.VIEW_PRICING]: ['opd:view'],
   [ACTIONS.MANAGE_PATIENTS]: ['patients:view'],
   [ACTIONS.MANAGE_APPOINTMENTS]: ['appointments:view'],
   [ACTIONS.MANAGE_BEDS]: ['opd:view', 'opd:create'],
@@ -50,6 +52,7 @@ const OPD_STAFF_PERMISSIONS = [
   ACTIONS.VIEW_BILLING,
   ACTIONS.CREATE_BILL,
   ACTIONS.VIEW_PAYMENT_HISTORY,
+  ACTIONS.VIEW_PRICING,
 ];
 
 /** Fallback when JWT permissions are missing (e.g. legacy sessions). */
@@ -77,6 +80,7 @@ const ROLE_PERMISSIONS = {
     ACTIONS.VIEW_BILLING,
     ACTIONS.CREATE_BILL,
     ACTIONS.VIEW_PAYMENT_HISTORY,
+    ACTIONS.VIEW_PRICING,
     ACTIONS.MANAGE_PATIENTS,
   ],
   lab_technician: [ACTIONS.VIEW_LAB],

@@ -18,7 +18,9 @@ import {
   normalizeDailyCharges,
   resolveCategoryFromHead,
   sortDailyCharges,
+  rollupDailyChargesToChargeHeads,
 } from '@/features/ipd/utils/insuranceDailyCharges';
+import { mergePharmacyDispenseIntoDailyCharges } from '@/features/pharmacy/utils/dispensePricing';
 
 /** Live self-pay preview item_type → billing source (existing backend contract). */
 const PREVIEW_ITEM_TYPE_TO_SOURCE = {
@@ -162,8 +164,23 @@ export function buildInsuranceBillingBundle({
   });
   const patientId = patient?.id ?? null;
   const claimId = claim?.id ?? null;
-  const dailyCharges = initDailyCharges(claim);
-  const chargeHeads = initChargeHeadsFromClaim(claim);
+  const dailyCharges = mergePharmacyDispenseIntoDailyCharges(initDailyCharges(claim), {
+    admissionId,
+    patientId,
+    patientUid: patient?.uhid ?? patient?.patient_uid ?? null,
+  });
+  const baseChargeHeads = initChargeHeadsFromClaim(claim);
+  const rolledChargeHeads = rollupDailyChargesToChargeHeads(dailyCharges, baseChargeHeads);
+  const chargeHeads = rolledChargeHeads.map((head) => {
+    if (isDiscountCharge(head)) return head;
+    const baseHead = baseChargeHeads.find((row) => row.id === head.id);
+    const rolledAmount = Number(head.amount) || 0;
+    const baseAmount = Number(baseHead?.amount) || 0;
+    return {
+      ...head,
+      amount: rolledAmount > 0 ? rolledAmount : baseAmount,
+    };
+  });
   const txContext = { admissionId, patientId };
   const transactions = dailyCharges.map((row) =>
     mapDailyChargeRowToTransaction(row, txContext),
@@ -438,7 +455,12 @@ export function buildSelfPayBillingBundle(preview, context = {}, storedState = n
   const admissionId = String(
     context.admissionId ?? preview?.admission_id ?? '',
   );
-  const dailyCharges = mergeSelfPayDailyCharges(preview, storedState, context);
+  const mergedDaily = mergeSelfPayDailyCharges(preview, storedState, context);
+  const dailyCharges = mergePharmacyDispenseIntoDailyCharges(mergedDaily, {
+    admissionId,
+    patientId: context.patientId ?? null,
+    patientUid: context.patientUid ?? preview?.patient_uid ?? null,
+  });
   const chargeHeads = initSelfPayChargeHeads(
     preview,
     storedState,

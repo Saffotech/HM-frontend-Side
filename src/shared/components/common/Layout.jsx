@@ -9,6 +9,7 @@ import {
   Menu,
   X,
   History,
+  Tag,
 } from 'lucide-react';
 import { ROUTES } from '@/shared/constants';
 import { ACTIONS, canAccessAction } from '@/hooks/permissions';
@@ -25,6 +26,7 @@ const NAV_LINKS = [
   { href: ROUTES.APPOINTMENTS, label: 'Appointments', icon: Calendar, permission: ACTIONS.MANAGE_APPOINTMENTS },
   { href: ROUTES.PATIENTS, label: 'Patient Management', icon: Users, permission: ACTIONS.MANAGE_PATIENTS },
   { href: ROUTES.BILLING_OPD_NEW, label: 'Generate Bill', icon: Receipt, permission: ACTIONS.CREATE_BILL },
+  { href: ROUTES.PRICING, label: 'Pricing', icon: Tag, permission: ACTIONS.VIEW_PRICING },
   { href: ROUTES.PAYMENT_HISTORY, label: 'Payment History', icon: History, permission: ACTIONS.VIEW_PAYMENT_HISTORY },
 ];
 

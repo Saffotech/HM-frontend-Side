@@ -218,6 +218,7 @@ export const ROUTES = {
   PATIENTS_REGISTER: '/patients/register',
   PATIENT_PROFILE: '/patients/:id/profile',
   PATIENT_UPDATE: '/patients/:id/update',
+  PRICING: '/pricing',
   PAYMENT_HISTORY: '/payment-history',
   UNAUTHORIZED: '/unauthorized',
 };

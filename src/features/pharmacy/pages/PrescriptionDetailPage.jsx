@@ -16,6 +16,12 @@ import {
   getPrescriptionDiagnoses,
 } from '@/features/pharmacy/utils/prescriptionMeta';
 import { formatHumanInstructions, formatQuantityLabel } from '@/features/pharmacy/utils/prescriptionQuantity';
+import {
+  formatPharmacyMoney,
+  getPrescriptionItemPricingSummary,
+  loadPrescriptionDispensePricing,
+  matchDispenseHistoryPricing,
+} from '@/features/pharmacy/utils/dispensePricing';
 import { ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 import './PrescriptionDetailPage.css';
@@ -79,6 +85,11 @@ export default function PrescriptionDetailPage() {
 
   const doctors = rx ? getPrescriptionDoctors(rx) : [];
   const diagnoses = rx ? getPrescriptionDiagnoses(rx) : [];
+  const dispensePricing = loadPrescriptionDispensePricing(id);
+  const totalDispensedAmount = dispensePricing.reduce(
+    (sum, row) => sum + (Number(row.amount) || 0),
+    0,
+  );
 
   if (!canViewPrescriptions) {
     return (
@@ -187,20 +198,36 @@ export default function PrescriptionDetailPage() {
             </div>
 
             <div className="card card--flat">
-              <div className="card__header">
+              <div className="card__header pharmacy-detail-table-header">
                 <h3>Prescribed medicines</h3>
+                {totalDispensedAmount > 0 && (
+                  <span className="pharmacy-detail-total-amount">
+                    Total dispensed: {formatPharmacyMoney(totalDispensedAmount)}
+                  </span>
+                )}
               </div>
               <DataTableShell>
-                <table className="data-table">
+                <table className="data-table pharmacy-detail-table">
+                  <colgroup>
+                    <col className="pharmacy-detail-col pharmacy-detail-col--med" />
+                    <col className="pharmacy-detail-col pharmacy-detail-col--instr" />
+                    <col className="pharmacy-detail-col pharmacy-detail-col--qty" />
+                    <col className="pharmacy-detail-col pharmacy-detail-col--money" />
+                    <col className="pharmacy-detail-col pharmacy-detail-col--money" />
+                  </colgroup>
                   <thead>
                     <tr>
                       <th>Medicine</th>
                       <th>Instructions</th>
-                      <th>Total quantity</th>
+                      <th className="pharmacy-detail-qty-head">Total quantity</th>
+                      <th className="pharmacy-detail-money">Price</th>
+                      <th className="pharmacy-detail-money">Amount</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {(rx.prescription_items ?? []).map((item) => (
+                    {(rx.prescription_items ?? []).map((item) => {
+                      const pricing = getPrescriptionItemPricingSummary(id, item.id);
+                      return (
                       <tr key={item.id}>
                         <td>{item.medicine_name}</td>
                         <td className="pharmacy-detail-instructions">
@@ -209,8 +236,15 @@ export default function PrescriptionDetailPage() {
                         <td className="pharmacy-detail-qty">
                           {formatQuantityLabel(item.quantity_prescribed, item.medicine_name)}
                         </td>
+                        <td className="pharmacy-detail-money">
+                          {pricing ? formatPharmacyMoney(pricing.unitPrice) : '—'}
+                        </td>
+                        <td className="pharmacy-detail-money">
+                          {pricing ? formatPharmacyMoney(pricing.totalAmount) : '—'}
+                        </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </DataTableShell>
@@ -222,22 +256,40 @@ export default function PrescriptionDetailPage() {
                   <h3>Previous dispensings</h3>
                 </div>
                 <DataTableShell>
-                  <table className="data-table">
+                  <table className="data-table pharmacy-detail-table">
+                    <colgroup>
+                      <col className="pharmacy-detail-col pharmacy-detail-col--date" />
+                      <col className="pharmacy-detail-col pharmacy-detail-col--med" />
+                      <col className="pharmacy-detail-col pharmacy-detail-col--qty" />
+                      <col className="pharmacy-detail-col pharmacy-detail-col--money" />
+                      <col className="pharmacy-detail-col pharmacy-detail-col--money" />
+                    </colgroup>
                     <thead>
                       <tr>
                         <th>Date</th>
                         <th>Medicine</th>
-                        <th>Quantity dispensed</th>
+                        <th className="pharmacy-detail-qty-head">Quantity dispensed</th>
+                        <th className="pharmacy-detail-money">Price</th>
+                        <th className="pharmacy-detail-money">Amount</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {previousDispensing.map((row) => (
+                      {previousDispensing.map((row) => {
+                        const pricing = matchDispenseHistoryPricing(id, row);
+                        return (
                         <tr key={row.id}>
                           <td>{fmtDt(row.dispensed_at)}</td>
                           <td>{row.medicine_name || '—'}</td>
                           <td>{row.quantity_dispensed ?? '—'}</td>
+                          <td className="pharmacy-detail-money">
+                            {pricing ? formatPharmacyMoney(pricing.unitPrice) : '—'}
+                          </td>
+                          <td className="pharmacy-detail-money">
+                            {pricing ? formatPharmacyMoney(pricing.amount) : '—'}
+                          </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </DataTableShell>

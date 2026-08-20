@@ -26,6 +26,13 @@ import {
   getPrescriptionItemDbId,
 } from '@/features/pharmacy/utils/dispenseWorkflow';
 import {
+  calculateUnitPriceFromLineAmount,
+  formatPharmacyMoney,
+  parseDispenseAmountInput,
+  recordPharmacyDispenseWithPricing,
+  resolveAdmissionIdForPharmacyPatient,
+} from '@/features/pharmacy/utils/dispensePricing';
+import {
   formatHumanInstructions,
   formatQuantityLabel,
   formatSummaryQuantity,
@@ -61,14 +68,26 @@ export default function DispensePage() {
   );
 
   const [quantities, setQuantities] = useState({});
+  const [amounts, setAmounts] = useState({});
   const [remarks, setRemarks] = useState('');
   const [formError, setFormError] = useState('');
   const [rowErrors, setRowErrors] = useState({});
 
   const summary = useMemo(
-    () => buildDispenseSummary(enrichedItems, quantities),
-    [enrichedItems, quantities]
+    () => buildDispenseSummary(enrichedItems, quantities, amounts),
+    [enrichedItems, quantities, amounts]
   );
+
+  const handleAmountChange = (itemId, value) => {
+    setAmounts((prev) => ({ ...prev, [itemId]: value }));
+    setRowErrors((prev) => {
+      if (!prev[itemId]) return prev;
+      const next = { ...prev };
+      delete next[itemId];
+      return next;
+    });
+    setFormError('');
+  };
 
   const activeMedicineNames = useMemo(
     () =>
@@ -98,7 +117,7 @@ export default function DispensePage() {
       toast.error('You do not have permission to dispense medicines');
       return;
     }
-    const validation = validateItemDispenseInputs(enrichedItems, quantities);
+    const validation = validateItemDispenseInputs(enrichedItems, quantities, amounts);
     setRowErrors(validation.rowErrors);
     setFormError(validation.formError);
     if (!validation.valid) return;
@@ -115,8 +134,36 @@ export default function DispensePage() {
       return;
     }
 
+    const dispensedAt = new Date().toISOString();
+    const pricingItems = enrichedItems
+      .map((item) => {
+        const qty = parseDispenseQuantityInput(quantities[item.id]) ?? 0;
+        const lineAmount = parseDispenseAmountInput(amounts[item.id]) ?? 0;
+        if (qty <= 0) return null;
+        return {
+          prescriptionItemId: getPrescriptionItemDbId(item),
+          medicineName: item.medicine_name,
+          quantity: qty,
+          unitPrice: calculateUnitPriceFromLineAmount(lineAmount, qty),
+          amount: lineAmount,
+        };
+      })
+      .filter(Boolean);
+
+    const persistDispensePricing = () => {
+      recordPharmacyDispenseWithPricing({
+        prescriptionId: id,
+        patientId: rx.patient_id,
+        patientUid: rx.patient_uid,
+        admissionId: resolveAdmissionIdForPharmacyPatient(rx.patient_id, rx.patient_uid),
+        dispensedAt,
+        items: pricingItems,
+      });
+    };
+
     try {
       await dispenseMutation.mutateAsync({ prescriptionId: id, body });
+      persistDispensePricing();
       toast.success('Dispensed successfully');
       navigate(`/pharmacy/prescriptions/${id}`);
     } catch (err) {
@@ -128,6 +175,7 @@ export default function DispensePage() {
             refreshed?.status !== rx?.status
             || dispenseWasApplied(enrichedItems, afterItems, quantities)
           ) {
+            persistDispensePricing();
             queryClient.invalidateQueries({ queryKey: queryKeys.pharmacy.all });
             toast.success('Dispense completed');
             navigate(`/pharmacy/prescriptions/${id}`);
@@ -212,6 +260,8 @@ export default function DispensePage() {
                           <th className="pharmacy-dispense-table__qty">Already Dispensed</th>
                           <th className="pharmacy-dispense-table__qty">Remaining</th>
                           <th className="pharmacy-dispense-table__input-col">Give Now</th>
+                          <th className="pharmacy-dispense-table__input-col">Amount (₹)</th>
+                          <th className="pharmacy-dispense-table__amount-col">Price</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -219,6 +269,9 @@ export default function DispensePage() {
                           const disabled = item.quantity_remaining <= 0;
                           const instructions =
                             item.instructions_label || formatHumanInstructions(item);
+                          const giveNowQty = parseDispenseQuantityInput(quantities[item.id]) ?? 0;
+                          const lineAmount = parseDispenseAmountInput(amounts[item.id]) ?? 0;
+                          const unitPrice = calculateUnitPriceFromLineAmount(lineAmount, giveNowQty);
 
                           return (
                             <tr key={item.id} className={disabled ? 'is-complete' : undefined}>
@@ -276,6 +329,34 @@ export default function DispensePage() {
                                   </p>
                                 )}
                               </td>
+                              <td className="pharmacy-dispense-table__input-col">
+                                <div className="pharmacy-dispense-give-now">
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    step={0.01}
+                                    inputMode="decimal"
+                                    className={`pharmacy-dispense-qty-input pharmacy-dispense-price-input${
+                                      rowErrors[item.id] ? ' pharmacy-dispense-qty-input--error' : ''
+                                    }`}
+                                    aria-label={`Amount for ${item.medicine_name}`}
+                                    placeholder="0"
+                                    disabled={disabled}
+                                    value={amounts[item.id] ?? ''}
+                                    onChange={(e) => handleAmountChange(item.id, e.target.value)}
+                                  />
+                                  {!disabled && (
+                                    <span className="pharmacy-dispense-give-now__unit">total</span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="pharmacy-dispense-table__amount-col">
+                                <span className="pharmacy-dispense-line-amount">
+                                  {giveNowQty > 0 && String(amounts[item.id] ?? '').trim()
+                                    ? `${formatPharmacyMoney(unitPrice)} / unit`
+                                    : '—'}
+                                </span>
+                              </td>
                             </tr>
                           );
                         })}
@@ -302,6 +383,12 @@ export default function DispensePage() {
                             summary.totalRemainingAfter,
                             enrichedItems.map((item) => item.medicine_name)
                           )}
+                        </span>
+                      </div>
+                      <div className="pharmacy-dispense-stat">
+                        <span className="pharmacy-dispense-stat__label">Total Amount</span>
+                        <span className="pharmacy-dispense-stat__value pharmacy-dispense-stat__value--amount">
+                          {formatPharmacyMoney(summary.totalAmount)}
                         </span>
                       </div>
                     </div>

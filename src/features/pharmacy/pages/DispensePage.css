@@ -172,6 +172,24 @@
   text-align: center;
 }
 
+.pharmacy-dispense-table__amount-col {
+  min-width: 5.5rem;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.pharmacy-dispense-line-amount {
+  display: inline-block;
+  padding-top: 0.375rem;
+}
+
+.pharmacy-dispense-price-input {
+  width: 4.5rem;
+}
+
 .pharmacy-dispense-give-now {
   display: flex;
   flex-direction: column;
@@ -194,6 +212,14 @@
   font-size: 0.8125rem;
   text-align: center;
   font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.pharmacy-dispense-qty-input::-webkit-outer-spin-button,
+.pharmacy-dispense-qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .pharmacy-dispense-qty-input:focus {
@@ -254,6 +280,10 @@
   border-radius: var(--radius-md, 8px);
   background: var(--color-surface-muted, #f1f5f9);
   border: 1px solid var(--color-border, #e2e8f0);
+}
+
+.pharmacy-dispense-stat__value--amount {
+  color: var(--color-primary, var(--color-primary));
 }
 
 .pharmacy-dispense-stat__value {

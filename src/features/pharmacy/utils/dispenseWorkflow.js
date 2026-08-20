@@ -34,9 +34,15 @@ export function enrichPrescriptionItems(rx) {
   });
 }
 
-export function validateItemDispenseInputs(enrichedItems, quantitiesByItemId) {
+export function validateItemDispenseInputs(
+  enrichedItems,
+  quantitiesByItemId,
+  amountsByItemId = {},
+) {
   const rowErrors = {};
+  const amountErrors = {};
   let totalNow = 0;
+  let totalAmount = 0;
 
   for (const item of enrichedItems) {
     const raw = quantitiesByItemId[item.id];
@@ -50,27 +56,64 @@ export function validateItemDispenseInputs(enrichedItems, quantitiesByItemId) {
       continue;
     }
     totalNow += qty;
+
+    if (qty > 0) {
+      const amountRaw = amountsByItemId[item.id];
+      const trimmed = String(amountRaw ?? '').trim();
+      if (!trimmed) {
+        amountErrors[item.id] = 'Enter amount.';
+        continue;
+      }
+      const lineAmount = Number.parseFloat(trimmed);
+      if (!Number.isFinite(lineAmount) || lineAmount < 0) {
+        amountErrors[item.id] = 'Enter a valid amount ≥ 0.';
+        continue;
+      }
+      totalAmount += Math.round(lineAmount * 100) / 100;
+    }
   }
 
   const formError =
     totalNow === 0 ? 'Enter a dispense quantity for at least one medicine.' : '';
 
-  return { rowErrors, formError, totalNow, valid: !formError && !Object.keys(rowErrors).length };
+  const mergedRowErrors = { ...rowErrors, ...amountErrors };
+
+  return {
+    rowErrors: mergedRowErrors,
+    formError,
+    totalNow,
+    totalAmount: Math.round(totalAmount * 100) / 100,
+    valid: !formError && !Object.keys(mergedRowErrors).length,
+  };
 }
 
-export function buildDispenseSummary(enrichedItems, quantitiesByItemId) {
+export function buildDispenseSummary(enrichedItems, quantitiesByItemId, amountsByItemId = {}) {
   let medicinesCount = 0;
   let totalNow = 0;
   let totalRemainingAfter = 0;
+  let totalAmount = 0;
 
   for (const item of enrichedItems) {
     const qty = parseDispenseQuantityInput(quantitiesByItemId[item.id]) ?? 0;
     if (qty > 0) medicinesCount += 1;
     totalNow += qty;
     totalRemainingAfter += Math.max(0, item.quantity_remaining - qty);
+
+    if (qty > 0) {
+      const amountRaw = amountsByItemId[item.id];
+      const lineAmount = Number.parseFloat(String(amountRaw ?? '').trim());
+      if (Number.isFinite(lineAmount) && lineAmount >= 0) {
+        totalAmount += Math.round(lineAmount * 100) / 100;
+      }
+    }
   }
 
-  return { medicinesCount, totalNow, totalRemainingAfter };
+  return {
+    medicinesCount,
+    totalNow,
+    totalRemainingAfter,
+    totalAmount: Math.round(totalAmount * 100) / 100,
+  };
 }
 
 export function buildDispensePayload(enrichedItems, quantitiesByItemId, remarks) {
