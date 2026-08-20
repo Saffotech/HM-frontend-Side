@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { useCreatePrescriptionMutation } from '@/features/doctor/hooks/useDoctorPrescriptionQuery';
 import { useCreateLabTestMutation } from '@/features/doctor/hooks/useDoctorLabQuery';
 import { useSaveConsultationWorkflowMutation, useConsultationContextQuery } from '@/features/doctor/hooks/useDoctorQueueQuery';
@@ -10,8 +9,6 @@ import {
   LAB_PRIORITIES,
   inferLabCategory,
 } from '@/features/doctor/constants';
-import { DOCTOR_PATIENT_HISTORY_QUERY_OPTIONS } from '@/features/doctor/utils/doctorPatientProfileCache';
-import { getDoctorDisplayStatus } from '@/features/doctor/utils/appointmentWorkflow';
 import { isIpdEncounter } from '@/features/doctor/utils/encounterType';
 import {
   clearConsultationDraft,
@@ -21,9 +18,7 @@ import {
 import { parseEmbeddedClinicalNotes } from '@/features/doctor/utils/clinicalNotesParse';
 import { ipdStaticLabRoutingDepartments } from '@/features/doctor/utils/ipdLabRouting';
 import { stripInternalAppointmentMarkers } from '@/features/opd/utils/appointmentPaymentUtils';
-import { Modal, Button, Input, Label, Textarea, Select, QueryFeedback } from '@/shared/components/common';
-import { doctorPatientsApi } from '@/shared/api/services';
-import { queryKeys } from '@/shared/api/queryKeys';
+import { Modal, Button, Input, Label, Textarea, Select } from '@/shared/components/common';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { useAuthStore } from '@/shared/store/useAuthStore';
 import { toast } from '@/shared/utils/toast';
@@ -143,18 +138,6 @@ export default function ConsultationModal({
     enabled: open && !isIpdConsult && appointmentDbId != null,
   });
 
-  const patientHistoryQuery = useQuery({
-    queryKey: queryKeys.doctor.patients.history(patientUid, {
-      encounter_type: isIpdConsult ? 'ipd' : 'all',
-    }),
-    queryFn: () =>
-      doctorPatientsApi.fetchPatientHistory(patientUid, token, {
-        encounter_type: isIpdConsult ? 'ipd' : 'all',
-      }),
-    enabled: open && Boolean(patientUid) && Boolean(token),
-    ...DOCTOR_PATIENT_HISTORY_QUERY_OPTIONS,
-  });
-
   useEffect(() => {
     if (!open || consultDraftKey == null) {
       setHydratedFromDraft(false);
@@ -251,11 +234,6 @@ export default function ConsultationModal({
     saveConsultation.isPending ||
     createPrescription.isPending ||
     createLabTest.isPending;
-
-  const displayStatus = getDoctorDisplayStatus(
-    consultationContextQuery.data?.appointment ?? appointment
-  );
-  const recentVisits = (patientHistoryQuery.data?.visits ?? []).slice(0, 3);
 
   const save = async () => {
     const errs = {};
@@ -439,70 +417,7 @@ export default function ConsultationModal({
         </>
       }
     >
-      <p className="text-muted" style={{ margin: '0 0 1rem', fontSize: '0.875rem' }}>
-        {patientUid ?? '—'}
-        <span style={{ marginLeft: '0.75rem' }}>Status: {displayStatus}</span>
-        {isIpdConsult && (appointment.wardName || appointment.bedNumber) ? (
-          <span style={{ marginLeft: '0.75rem' }}>
-            {[appointment.wardName, appointment.bedNumber ? `Bed ${appointment.bedNumber}` : null]
-              .filter(Boolean)
-              .join(' · ')}
-          </span>
-        ) : null}
-        {!isIpdConsult && appointment.time ? (
-          <span style={{ marginLeft: '0.75rem' }}>Visit: {appointment.time}</span>
-        ) : null}
-      </p>
-
-      {isIpdConsult ? (
-        <>
-          {patientHistoryQuery.isError && (
-            <p className="text-muted" style={{ fontSize: '0.8125rem', margin: '0 0 1rem' }}>
-              Recent visit history could not be loaded.
-            </p>
-          )}
-          {recentVisits.length > 0 && (
-            <div className="doc-consult-history" style={{ marginBottom: '1rem' }}>
-              <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.875rem' }}>Recent IPD visits</h4>
-              <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.8125rem' }}>
-                {recentVisits.map((visit) => (
-                  <li key={visit.id ?? visit.appointmentDbId}>
-                    {visit.dateTime ?? '—'}
-                    {visit.diagnosis && visit.diagnosis !== '—' ? ` — ${visit.diagnosis}` : ''}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </>
-      ) : (
-        <QueryFeedback
-          isError={consultationContextQuery.isError}
-          error={consultationContextQuery.error}
-          onRetry={() => consultationContextQuery.refetch()}
-        >
-          {patientHistoryQuery.isError && (
-            <p className="text-muted" style={{ fontSize: '0.8125rem', margin: '0 0 1rem' }}>
-              Recent visit history could not be loaded.
-            </p>
-          )}
-          {recentVisits.length > 0 && (
-            <div className="doc-consult-history" style={{ marginBottom: '1rem' }}>
-              <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.875rem' }}>Recent visits</h4>
-              <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.8125rem' }}>
-                {recentVisits.map((visit) => (
-                  <li key={visit.id ?? visit.appointmentDbId}>
-                    {visit.dateTime ?? '—'}
-                    {visit.diagnosis && visit.diagnosis !== '—' ? ` — ${visit.diagnosis}` : ''}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </QueryFeedback>
-      )}
-
-      <div className="doc-modal-tabs">
+      <div className="doc-modal-tabs doc-consult-tabs">
         {['clinical', 'rx', 'lab'].map((t) => (
           <button
             key={t}
@@ -515,8 +430,7 @@ export default function ConsultationModal({
         ))}
       </div>
       {tab === 'clinical' && (
-        <div className="doc-page">
-          <Textarea label="Symptoms" rows={2} value={symptoms} onChange={(e) => setSymptoms(e.target.value)} />
+        <div className="doc-consult-panel doc-consult-panel--clinical">
           <Input
             label="Diagnosis *"
             value={diagnosis}
@@ -526,15 +440,13 @@ export default function ConsultationModal({
             }}
             error={fieldErrors.diagnosis}
           />
-          <Textarea label="Clinical notes / Treatment plan" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <Textarea label="Symptoms" rows={2} value={symptoms} onChange={(e) => setSymptoms(e.target.value)} />
+          <Textarea label="Treatment plan" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
       )}
       {tab === 'rx' && (
-        <div>
-          <p className="text-muted" style={{ fontSize: '0.8125rem', margin: '0 0 0.75rem' }}>
-            Prescription is saved when you click Save Consultation.
-          </p>
-          <Label>Medicines</Label>
+        <div className="doc-consult-panel doc-consult-panel--rx">
+          <Label className="doc-consult-rx__label">Medicines</Label>
           {meds.map((m, i) => (
             <div key={i} className="doc-med-row doc-med-row--consult">
               <div className="doc-med-row__pair">
@@ -600,14 +512,18 @@ export default function ConsultationModal({
               </div>
             </div>
           ))}
-          <Button size="sm" variant="outline" onClick={() => setMeds([...meds, emptyMedicineRow()])}>+ Add medicine</Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="doc-consult-rx__add"
+            onClick={() => setMeds([...meds, emptyMedicineRow()])}
+          >
+            + Add medicine
+          </Button>
         </div>
       )}
       {tab === 'lab' && (
-        <div className="doc-page">
-          <p className="text-muted" style={{ fontSize: '0.8125rem', margin: '0 0 0.75rem' }}>
-            Choose Laboratory or Radiology first. Tests listed match that department. Orders are saved when you click Save Consultation.
-          </p>
+        <div className="doc-consult-panel doc-consult-panel--lab">
           {labOrders.map((row, i) => {
             return (
               <div key={i} className="doc-lab-order">
@@ -701,11 +617,14 @@ export default function ConsultationModal({
           <Button
             size="sm"
             variant="outline"
+            className="doc-consult-lab__add"
             onClick={() => setLabOrders((rows) => [...rows, emptyLabOrderRow()])}
           >
             + Add test
           </Button>
-          <Input label="Follow-up date" type="date" value={followUp} onChange={(e) => setFollowUp(e.target.value)} />
+          <div className="doc-consult-lab__followup">
+            <Input label="Follow-up date" type="date" value={followUp} onChange={(e) => setFollowUp(e.target.value)} />
+          </div>
         </div>
       )}
     </Modal>

@@ -26,7 +26,7 @@ import DoctorLabReportModal from './DoctorLabReportModal';
 import { mergeVisitTimelineWithPrescriptions } from '@/features/doctor/utils/patientHistory';
 import { mergeIpdIntoVisitHistory } from '@/features/doctor/utils/ipdVisitHistory';
 import { useDoctorIpdPatientAdmissionsQuery } from '@/features/doctor/hooks/useDoctorIpdPatientAdmissionsQuery';
-import { formatPatientAge } from '@/features/doctor/utils/formatPatientAge';
+import { formatPatientAgeGender } from '@/features/doctor/utils/formatPatientAge';
 import { patientsApi } from '@/shared/api/services';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { queryKeys } from '@/shared/api/queryKeys';
@@ -219,8 +219,8 @@ export default function PatientHistoryProfile({
           <div className="doc-profile-hero__identity">
             <h2 className="doc-profile-name">{profile.name}</h2>
             <p className="doc-profile-meta">
-              {patientUid} · {formatPatientAge({ age: profile.age, dob: profile.dob }) ?? '—'} ·{' '}
-              {profile.gender || '—'}
+              {patientUid} ·{' '}
+              {formatPatientAgeGender({ age: profile.age, dob: profile.dob, gender: profile.gender })}
             </p>
           </div>
           <div className="doc-profile-hero__tags">

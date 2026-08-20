@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
-    "@vitejs/plugin-react": "^4.3.3",
+    "@vitejs/plugin-react": "^6.0.5",
     "eslint": "^8.57.1",
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-import": "^2.32.0",
