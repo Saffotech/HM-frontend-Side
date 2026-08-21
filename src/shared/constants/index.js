@@ -137,6 +137,7 @@ export const ROUTES = {
   RECEPTIONIST_DASHBOARD: '/receptionist/dashboard',
   RECEPTIONIST_TODAY_QUEUE: '/receptionist/today-queue',
   RECEPTIONIST_DOCTOR_QUEUES: '/receptionist/doctor-queues',
+  RECEPTIONIST_PRICING: '/receptionist/pricing',
   RECEPTIONIST_QUEUE_HISTORY: '/receptionist/queue-history',
   RECEPTIONIST_PROFILE: '/receptionist/profile',
   RECEPTIONIST_NOTIFICATIONS: '/receptionist/notifications',

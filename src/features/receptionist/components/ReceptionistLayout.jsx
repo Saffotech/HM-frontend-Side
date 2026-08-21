@@ -4,7 +4,7 @@
 
 import { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Stethoscope, History, ListOrdered } from 'lucide-react';
+import { LayoutDashboard, Stethoscope, History, ListOrdered, CircleDollarSign } from 'lucide-react';
 import { ROUTES } from '@/shared/constants';
 import RoleLayout from '@/shared/components/layout/RoleLayout';
 import ReceptionistNotificationsBell from '@/features/receptionist/components/ReceptionistNotificationsBell';
@@ -28,6 +28,12 @@ const NAV_LINKS = [
     href: ROUTES.RECEPTIONIST_DOCTOR_QUEUES,
     label: 'Doctor Queues',
     icon: Stethoscope,
+    requires: 'queues',
+  },
+  {
+    href: ROUTES.RECEPTIONIST_PRICING,
+    label: 'Pricing',
+    icon: CircleDollarSign,
     requires: 'queues',
   },
   {

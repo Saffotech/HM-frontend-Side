@@ -15,7 +15,10 @@ import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
 import { getDummyInsuranceBills } from '@/features/ipd/utils/dummyInsuranceClaim';
 import {
   IPD_PAYMENT_TYPE,
-  IPD_PAYMENT_TYPE_OPTIONS,
+  IPD_PAYMENT_TYPE_GROUP,
+  IPD_PAYMENT_TYPE_GROUP_OPTIONS,
+  IPD_PAYMENT_TYPE_SUB_OPTIONS,
+  getPaymentTypeGroup,
   isInsuranceCashlessPaymentType,
   matchesPaymentType,
   parseIpdPaymentType,
@@ -43,9 +46,31 @@ export default function IpdBillingPage() {
   );
   const debouncedSearch = useDebouncedValue(search, 300);
   const { data, isLoading, isError, error, refetch } = useIpdRunningBillsQuery();
+  const paymentTypeGroup = getPaymentTypeGroup(paymentType);
   const showInsuranceCashless = isInsuranceCashlessPaymentType(paymentType);
-  // Self AND pay-and-claim both use the same live self-pay billing table.
+  // Self AND copay both use the same live self-pay billing table.
   const showSelfBilling = !showInsuranceCashless;
+
+  const updatePaymentType = (nextType) => {
+    setPaymentType(nextType);
+    const next = new URLSearchParams(searchParams);
+    const queryValue = paymentTypeQueryValue(nextType);
+    if (queryValue) next.set('paymentType', queryValue);
+    else next.delete('paymentType');
+    setSearchParams(next, { replace: true });
+  };
+
+  const handlePaymentGroupChange = (group) => {
+    const nextType =
+      group === IPD_PAYMENT_TYPE_GROUP.INSURANCE
+        ? IPD_PAYMENT_TYPE.INSURANCE_CASHLESS
+        : IPD_PAYMENT_TYPE.SELF;
+    updatePaymentType(nextType);
+  };
+
+  const handlePaymentSubTypeChange = (raw) => {
+    updatePaymentType(parseIpdPaymentType(raw));
+  };
 
   const insuranceRows = useMemo(() => {
     const mapped = getDummyInsuranceBills({ cashlessOnly: true });
@@ -147,24 +172,31 @@ export default function IpdBillingPage() {
               <select
                 id="ipd-billing-pay-type"
                 className="ipd-select"
-                value={paymentType}
-                onChange={(e) => {
-                  const value = parseIpdPaymentType(e.target.value);
-                  setPaymentType(value);
-                  const next = new URLSearchParams(searchParams);
-                  const queryValue = paymentTypeQueryValue(value);
-                  if (queryValue) next.set('paymentType', queryValue);
-                  else next.delete('paymentType');
-                  setSearchParams(next, { replace: true });
-                }}
+                value={paymentTypeGroup}
+                onChange={(e) => handlePaymentGroupChange(e.target.value)}
                 aria-label="Payment type"
               >
-                {IPD_PAYMENT_TYPE_OPTIONS.map((opt) => (
+                {IPD_PAYMENT_TYPE_GROUP_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
                 ))}
               </select>
+              {paymentTypeGroup === IPD_PAYMENT_TYPE_GROUP.INSURANCE && (
+                <select
+                  id="ipd-billing-insurance-sub-type"
+                  className="ipd-select"
+                  value={paymentType}
+                  onChange={(e) => handlePaymentSubTypeChange(e.target.value)}
+                  aria-label="Insurance type"
+                >
+                  {IPD_PAYMENT_TYPE_SUB_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
         </div>
@@ -293,8 +325,8 @@ export default function IpdBillingPage() {
                         description={
                           debouncedSearch.trim()
                             ? 'Try a different patient, admission, or ward.'
-                            : paymentType === IPD_PAYMENT_TYPE.INSURANCE_PAY_AND_CLAIM
-                              ? 'Admit a patient with Insurance · Pay and claim to see bills here.'
+                            : paymentType === IPD_PAYMENT_TYPE.INSURANCE_COPAY
+                              ? 'Admit a patient with Insurance · Copay to see bills here.'
                               : 'Admitted patients with open charges will appear here.'
                         }
                       />

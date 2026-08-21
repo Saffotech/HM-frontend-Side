@@ -41,6 +41,7 @@ export default function IpdBedsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const statusFilter = searchParams.get("status") ?? "";
   const wardFilter = searchParams.get("ward") ?? "";
+  const bedTypeFilter = searchParams.get("bed_type") ?? "";
 
   const setFilter = (key, value) => {
     const next = new URLSearchParams(searchParams);
@@ -53,6 +54,7 @@ export default function IpdBedsPage() {
   const wardsQuery = useIpdWardStatsQuery();
   const bedsQuery = useIpdBedsQuery({
     ward: wardFilter || undefined,
+    bed_type: bedTypeFilter || undefined,
   });
   const admissionsQuery = useIpdPatientsQuery({
     status: IPD_ADMISSION_STATUS.ADMITTED,
@@ -115,6 +117,9 @@ export default function IpdBedsPage() {
     if (statusFilter) {
       list = list.filter((b) => b.status === statusFilter);
     }
+    if (bedTypeFilter) {
+      list = list.filter((b) => b.bed_type === bedTypeFilter);
+    }
     const q = search.trim().toLowerCase();
     if (q) {
       list = list.filter((b) => {
@@ -126,14 +131,14 @@ export default function IpdBedsPage() {
       });
     }
     return list;
-  }, [bedsQuery.data, statusFilter, search]);
+  }, [bedsQuery.data, statusFilter, bedTypeFilter, search]);
 
   const totalFiltered = filteredBeds.length;
   const totalPages = Math.max(1, Math.ceil(totalFiltered / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const pageStart = (safePage - 1) * PAGE_SIZE;
   const pageBeds = filteredBeds.slice(pageStart, pageStart + PAGE_SIZE);
-  const hasFilter = Boolean(statusFilter || wardFilter || search.trim());
+  const hasFilter = Boolean(statusFilter || wardFilter || bedTypeFilter || search.trim());
 
   const openAssign = (bed = null) => {
     setAssignSeed({
@@ -356,6 +361,21 @@ export default function IpdBedsPage() {
                 ))}
               </select>
             </div>
+            <div className="ipd-toolbar__field ipd-toolbar__field--sm">
+              <label className="ipd-toolbar__label" htmlFor="ipd-beds-type">
+                Bed Type
+              </label>
+              <select
+                id="ipd-beds-type"
+                className="ipd-select"
+                value={bedTypeFilter}
+                onChange={(e) => setFilter("bed_type", e.target.value)}
+              >
+                <option value="">All types</option>
+                <option value="single">Single</option>
+                <option value="double">Double</option>
+              </select>
+            </div>
           </div>
 
           {loading ? (
@@ -371,7 +391,7 @@ export default function IpdBedsPage() {
               }
               description={
                 hasFilter
-                  ? "Clear search or change ward / status."
+                  ? "Clear search or change ward / status / bed type."
                   : "Add beds from hospital bed inventory to see them here."
               }
             />
@@ -383,6 +403,7 @@ export default function IpdBedsPage() {
                     <tr>
                       <th>Ward</th>
                       <th>Bed</th>
+                      <th>Type</th>
                       <th>Rate / day</th>
                       <th>Status</th>
                       <th>Patient</th>
@@ -405,6 +426,12 @@ export default function IpdBedsPage() {
                           <td>{bed.ward_name || "—"}</td>
                           <td>
                             <strong>{bed.bed_number || bed.id}</strong>
+                          </td>
+                          <td>
+                            {bed.bed_type
+                              ? bed.bed_type.charAt(0).toUpperCase() +
+                                bed.bed_type.slice(1)
+                              : "—"}
                           </td>
                           <td>
                             {rate != null ? formatIpdMoney(rate) : "—"}

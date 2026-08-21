@@ -7,12 +7,29 @@ const TABS = [
   { id: 'items', label: 'Additional OPD Charges', icon: Package },
 ];
 
-export default function PricingPage() {
+const STATIC_DATA = {
+  settings: {
+    pricing: {
+      registration_fee: 0,
+      consultation_fee: 0,
+      gst_percent: 0,
+      allow_manual_price_entry: true,
+      department_consultation_fees: [],
+      doctor_consultation_fees: [],
+      bill_items: [],
+    },
+  },
+  departments: [],
+  doctors: [],
+};
+
+export default function ReceptionistPricingPage() {
   return (
     <PricingView
       title="Pricing"
       subtitle="Hospital OPD charges — current configured pricing"
       tabs={TABS}
+      data={STATIC_DATA}
     />
   );
 }

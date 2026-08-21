@@ -20,7 +20,10 @@ import { formatIpdDateTime, formatIpdMoney } from '@/features/ipd/utils/ipdForma
 import { buildCashlessPatientRows } from '@/features/ipd/utils/dummyInsuranceClaim';
 import {
   IPD_PAYMENT_TYPE,
-  IPD_PAYMENT_TYPE_OPTIONS,
+  IPD_PAYMENT_TYPE_GROUP,
+  IPD_PAYMENT_TYPE_GROUP_OPTIONS,
+  IPD_PAYMENT_TYPE_SUB_OPTIONS,
+  getPaymentTypeGroup,
   isInsuranceCashlessPaymentType,
   matchesPaymentType,
   parseIpdPaymentType,
@@ -112,6 +115,7 @@ export default function IpdPatientListPage() {
   });
 
   const showInsuranceCashless = isInsuranceCashlessPaymentType(paymentType);
+  const paymentTypeGroup = getPaymentTypeGroup(paymentType);
   const cashlessPatients = useMemo(
     () => buildCashlessPatientRows(data?.items ?? []),
     [data?.items],
@@ -132,18 +136,18 @@ export default function IpdPatientListPage() {
     const selfCount = items.filter((row) =>
       matchesPaymentType(row.id, row.patient_uid, IPD_PAYMENT_TYPE.SELF),
     ).length;
-    const payAndClaimCount = items.filter((row) =>
+    const copayCount = items.filter((row) =>
       matchesPaymentType(
         row.id,
         row.patient_uid,
-        IPD_PAYMENT_TYPE.INSURANCE_PAY_AND_CLAIM,
+        IPD_PAYMENT_TYPE.INSURANCE_COPAY,
       ),
     ).length;
 
     return {
       self: selfCount,
       cashless: cashlessPatients.length,
-      payAndClaim: payAndClaimCount,
+      copay: copayCount,
     };
   }, [data?.items, cashlessPatients]);
   const limit = data?.limit ?? 20;
@@ -189,15 +193,27 @@ export default function IpdPatientListPage() {
     setSearchParams(next, { replace: true });
   };
 
-  const onPaymentTypeChange = (e) => {
-    const value = parseIpdPaymentType(e.target.value);
-    setPaymentType(value);
+  const updatePaymentType = (nextType) => {
+    setPaymentType(nextType);
     setPage(1);
     const next = new URLSearchParams(searchParams);
-    const queryValue = paymentTypeQueryValue(value);
+    const queryValue = paymentTypeQueryValue(nextType);
     if (queryValue) next.set('paymentType', queryValue);
     else next.delete('paymentType');
     setSearchParams(next, { replace: true });
+  };
+
+  const onPaymentGroupChange = (e) => {
+    const group = e.target.value;
+    const nextType =
+      group === IPD_PAYMENT_TYPE_GROUP.INSURANCE
+        ? IPD_PAYMENT_TYPE.INSURANCE_CASHLESS
+        : IPD_PAYMENT_TYPE.SELF;
+    updatePaymentType(nextType);
+  };
+
+  const onPaymentSubTypeChange = (e) => {
+    updatePaymentType(parseIpdPaymentType(e.target.value));
   };
 
   const emptyTitle =
@@ -232,7 +248,7 @@ export default function IpdPatientListPage() {
                 Cashless: {paymentTypeSummary.cashless}
               </span>
               <span className="ipd-pl-chip ipd-pl-chip--violet">
-                Pay and Claim: {paymentTypeSummary.payAndClaim}
+                Copay: {paymentTypeSummary.copay}
               </span>
             </div>
           ) : null}
@@ -298,22 +314,45 @@ export default function IpdPatientListPage() {
                 aria-label="Admission date"
               />
             </div>
-            <div className="ipd-toolbar__field ipd-pay-type-field">
+            <div
+              className={`ipd-toolbar__field ipd-pay-type-field ${
+                paymentTypeGroup === IPD_PAYMENT_TYPE_GROUP.INSURANCE
+                  ? 'ipd-pay-type-field--insurance'
+                  : ''
+              }`}
+            >
               <label className="ipd-toolbar__label" htmlFor="ipd-pl-pay-type">
                 Payment type
               </label>
-              <select
-                id="ipd-pl-pay-type"
-                className="ipd-select"
-                value={paymentType}
-                onChange={onPaymentTypeChange}
-              >
-                {IPD_PAYMENT_TYPE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+              <div className="ipd-pay-type-selects">
+                <select
+                  id="ipd-pl-pay-type"
+                  className="ipd-select"
+                  value={paymentTypeGroup}
+                  onChange={onPaymentGroupChange}
+                >
+                  {IPD_PAYMENT_TYPE_GROUP_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                {paymentTypeGroup === IPD_PAYMENT_TYPE_GROUP.INSURANCE && (
+                  <select
+                    id="ipd-pl-insurance-sub-type"
+                    className="ipd-select"
+                    value={paymentType}
+                    onChange={onPaymentSubTypeChange}
+                    aria-label="Insurance type"
+                  >
+                    {IPD_PAYMENT_TYPE_SUB_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
             </div>
           </div>
 

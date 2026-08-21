@@ -15,6 +15,7 @@ import {
   sortDailyCharges,
 } from '@/features/ipd/utils/insuranceDailyCharges';
 import { toast } from '@/shared/utils/toast';
+import IpdDailyChargesGroupItems from '@/features/ipd/components/IpdDailyChargesGroupItems';
 
 function formatChargeDate(iso) {
   if (!iso) return '—';
@@ -163,70 +164,17 @@ export default function IpdDailyChargesCard({
                       }`}
                     />
                   </button>
-                  {isOpen ? (
-                    <div className="ipd-ins-daily-group__panel">
-                      <div className="ipd-ins-daily-detail-head">
-                        <span>Head</span>
-                        <span>Item / medicine / treatment</span>
-                        <span>Qty</span>
-                        <span>Amount (₹)</span>
-                        <span aria-hidden />
+                    {isOpen ? (
+                      <div className="ipd-ins-daily-group__panel">
+                        <IpdDailyChargesGroupItems
+                          items={group.items}
+                          chargeDate={group.charge_date}
+                          updateDailyCharge={updateDailyCharge}
+                          removeDailyCharge={removeDailyCharge}
+                        />
                       </div>
-                      {group.items.map((row) => (
-                        <div key={row.id} className="ipd-ins-daily-detail-row">
-                          <input
-                            className="ipd-input"
-                            value={row.head}
-                            onChange={(e) =>
-                              updateDailyCharge(row.id, { head: e.target.value })
-                            }
-                            placeholder="e.g. Pharmacy"
-                            aria-label={`Charge head for ${row.item_name}`}
-                          />
-                          <input
-                            className="ipd-input"
-                            value={row.item_name}
-                            onChange={(e) =>
-                              updateDailyCharge(row.id, {
-                                item_name: e.target.value,
-                              })
-                            }
-                            placeholder={getDailyChargeItemPlaceholder(row.head)}
-                            aria-label={`Item for ${formatChargeDate(row.charge_date)}`}
-                          />
-                          <input
-                            className="ipd-input ipd-ins-daily-qty-input"
-                            value={row.quantity}
-                            onChange={(e) =>
-                              updateDailyCharge(row.id, {
-                                quantity: e.target.value.replace(/[^\d.]/g, ''),
-                              })
-                            }
-                            inputMode="decimal"
-                            aria-label={`Quantity for ${row.item_name}`}
-                          />
-                          <input
-                            className="ipd-input ipd-ins-charge-input"
-                            value={row.amount}
-                            onChange={(e) =>
-                              updateDailyCharge(row.id, {
-                                amount: e.target.value.replace(/[^\d.]/g, ''),
-                              })
-                            }
-                            inputMode="decimal"
-                            aria-label={`Amount for ${row.item_name}`}
-                          />
-                          <button
-                            type="button"
-                            className="ipd-text-link ipd-ins-charge-remove"
-                            onClick={() => removeDailyCharge(row.id)}
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
+                    ) : null}
+
                 </div>
               );
             })}

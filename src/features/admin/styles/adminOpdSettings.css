@@ -1504,6 +1504,16 @@
   min-width: 5rem;
 }
 
+.aos-beds__compact-field--type {
+  width: 6rem;
+  min-width: 5.5rem;
+}
+
+.aos-beds__compact-field--type .aos-select--sm {
+  width: 100%;
+  min-width: 0;
+}
+
 .aos-beds__compact-field--xs {
   width: 4.75rem;
   min-width: 4.25rem;

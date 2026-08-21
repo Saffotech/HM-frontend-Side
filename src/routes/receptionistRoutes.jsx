@@ -16,6 +16,9 @@ const DoctorQueuesPage = lazy(
 const QueueHistoryPage = lazy(
   () => import('@/features/receptionist/pages/QueueHistoryPage'),
 );
+const ReceptionistPricingPage = lazy(
+  () => import('@/features/receptionist/pages/ReceptionistPricingPage'),
+);
 const ReceptionistProfilePage = lazy(
   () => import('@/features/receptionist/pages/ReceptionistProfilePage'),
 );
@@ -65,6 +68,14 @@ export const receptionistRoutes = [
             element: (
               <LazyRoute>
                 <QueueHistoryPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.RECEPTIONIST_PRICING,
+            element: (
+              <LazyRoute>
+                <ReceptionistPricingPage />
               </LazyRoute>
             ),
           },

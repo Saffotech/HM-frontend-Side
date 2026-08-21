@@ -11,8 +11,8 @@ import {
   BedDouble,
   Receipt,
   History,
+  CircleDollarSign,
   LogOut,
-  Tags,
   UserCircle,
 } from 'lucide-react';
 import { ROUTES } from '@/shared/constants';
@@ -58,16 +58,16 @@ const NAV_LINKS = [
     requires: 'payments',
   },
   {
+    href: ROUTES.IPD_PRICING,
+    label: 'Pricing',
+    icon: CircleDollarSign,
+    requires: 'pricing',
+  },
+  {
     href: ROUTES.IPD_DISCHARGE,
     label: 'Discharge',
     icon: LogOut,
     requires: 'discharge',
-  },
-  {
-    href: ROUTES.IPD_PRICING,
-    label: 'Pricing',
-    icon: Tags,
-    requires: 'pricing',
   },
   {
     href: ROUTES.IPD_PROFILE,
@@ -103,10 +103,10 @@ export default function IpdLayout({ children }) {
             return perms.canViewBilling;
           case 'payments':
             return perms.canViewPaymentHistory;
+          case 'pricing':
+            return perms.canViewPricing;
           case 'discharge':
             return perms.canDischarge;
-          case 'pricing':
-            return true;
           case 'profile':
             return perms.canViewProfile;
           default:

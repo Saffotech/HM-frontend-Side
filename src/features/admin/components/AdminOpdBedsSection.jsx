@@ -172,6 +172,7 @@ export default function AdminOpdBedsSection({
   const [editForm, setEditForm] = useState({ bed_number: '', ward_name: '' });
   const [startTouched, setStartTouched] = useState(false);
   const [singleTouched, setSingleTouched] = useState(false);
+  const [bedType, setBedType] = useState('single');
 
   const summaryQ = useBedInventorySummaryQuery();
   // Always load full inventory so duplicate checks & next-number work with ward filter on.
@@ -374,6 +375,7 @@ export default function AdminOpdBedsSection({
         await createMut.mutateAsync({
           ward_name: wardName.trim(),
           bed_number: bedNumber,
+          bed_type: bedType,
         });
         toast.success(`Bed ${bedNumber} added`);
         setSingleTouched(false);
@@ -406,6 +408,7 @@ export default function AdminOpdBedsSection({
         start_number: Number(bulkForm.start_number) || 1,
         count,
         pad_width: Number(bulkForm.pad_width) || 0,
+        bed_type: bedType,
       });
       toast.success(`${result?.created_count ?? count} bed(s) added to ${wardName}`);
       setStartTouched(false);
@@ -614,6 +617,19 @@ export default function AdminOpdBedsSection({
                     {w}
                   </option>
                 ))}
+              </select>
+            </label>
+
+            <label className="aos-beds__compact-field aos-beds__compact-field--type">
+              <span>Type</span>
+              <select
+                className="aos-select aos-select--sm"
+                value={bedType}
+                onChange={(e) => setBedType(e.target.value)}
+                aria-label="Bed type"
+              >
+                <option value="single">Single</option>
+                <option value="double">Double</option>
               </select>
             </label>
 

@@ -93,7 +93,7 @@ function validateAdmission(values) {
   }
   if (values.paymentMode === "insurance") {
     if (!values.insuranceClaimType) {
-      errors.insuranceClaimType = "Select Cashless or Pay and claim";
+      errors.insuranceClaimType = "Select Cashless or Copay";
     } else {
       if (!String(values.insuranceCompany || "").trim()) {
         errors.insuranceCompany = "Insurance company is required";
@@ -343,7 +343,7 @@ export default function AdmitPatientForm() {
             ? `Insurance · ${
                 values.insuranceClaimType === "cashless"
                   ? "Cashless"
-                  : "Pay and claim"
+                  : "Copay"
               }`
             : values.paymentMode === "self"
               ? "Self"
@@ -919,7 +919,7 @@ export default function AdmitPatientForm() {
                 >
                   <option value="">Select…</option>
                   <option value="cashless">Cashless</option>
-                  <option value="pay_and_claim">Pay and claim</option>
+                  <option value="pay_and_claim">Copay</option>
                 </select>
                 {show("insuranceClaimType") ? (
                   <span className="ipd-field-error">

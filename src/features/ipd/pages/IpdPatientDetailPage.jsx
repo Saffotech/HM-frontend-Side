@@ -203,7 +203,7 @@ export default function IpdPatientDetailPage() {
           {payClaimInsurance ? (
             <div className="ipd-card">
               <div className="ipd-card__head">
-                <h2 className="ipd-card__title">Insurance (Pay and Claim)</h2>
+                <h2 className="ipd-card__title">Insurance (Copay)</h2>
                 <div className="ipd-form-actions">
                   <span className="ipd-ins-chip ipd-ins-chip--coverage">
                     {payClaimInsurance.coverage}

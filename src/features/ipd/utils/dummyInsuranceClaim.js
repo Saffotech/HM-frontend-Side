@@ -513,7 +513,7 @@ export function buildInsuranceAdmitContext(admission, formValues) {
   const coverage =
     formValues.insuranceClaimType === 'cashless'
       ? 'Cashless Insurance'
-      : 'Pay and Claim';
+      : 'Copay';
   const createdLabel = formatInsuranceDateLabel(new Date().toISOString());
   const admissionDate = formatInsuranceDateLabel(
     admission.admitted_at || formValues.admissionDate,
@@ -739,7 +739,7 @@ export function buildPayAndClaimInsuranceProfile(admission, formValues) {
   return {
     admissionId: admission?.id,
     claimType: 'pay_and_claim',
-    coverage: 'Pay and Claim',
+    coverage: 'Copay',
     insurer: formValues.insuranceCompany,
     policyNo: formValues.policyNumber,
     memberId: formValues.memberId,

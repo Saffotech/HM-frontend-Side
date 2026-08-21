@@ -2005,17 +2005,64 @@
   margin-left: 0;
 }
 
-.ipd-billing-pay-type,
+.ipd-billing-pay-type {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: none;
+}
+
 .ipd-pay-type-field {
-  flex: 0 0 15rem;
-  min-width: 15rem;
-  max-width: 20rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: none;
+}
+
+.ipd-pay-type-field--insurance {
+  max-width: none;
+}
+
+.ipd-pay-type-field .ipd-pay-type-selects {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
 }
 
 .ipd-billing-search .ipd-input,
 .ipd-billing-pay-type .ipd-select,
 .ipd-pay-type-field .ipd-select {
   width: 100%;
+  min-width: 7.5rem;
+}
+
+.ipd-pay-type-field .ipd-pay-type-selects .ipd-select:only-of-type {
+  flex: 1 1 0;
+}
+
+.ipd-pay-type-field .ipd-pay-type-selects .ipd-select:first-child:not(:only-of-type) {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 5rem;
+}
+
+.ipd-pay-type-field .ipd-pay-type-selects .ipd-select + .ipd-select {
+  flex: 1 1 0;
+}
+
+.ipd-pl-filters .ipd-toolbar__field:first-child {
+  flex: 1 1 10rem;
+  min-width: 10rem;
+  max-width: 16rem;
 }
 
 .ipd-table--insurance-bills {
@@ -3187,6 +3234,82 @@
   color: #64748b;
 }
 
+.ipd-ins-daily-detail-row--pharmacy-summary .ipd-input[readOnly] {
+  background: #f8fafc;
+  color: #334155;
+  border-color: var(--color-border, #d1d5db);
+  cursor: default;
+}
+
+.ipd-ins-daily-pharmacy-trigger {
+  position: relative;
+  width: 100%;
+}
+
+.ipd-ins-daily-pharmacy-trigger .ipd-input {
+  padding-right: 2rem;
+  cursor: pointer;
+}
+
+.ipd-ins-daily-pharmacy-trigger .ipd-input[readOnly] {
+  cursor: pointer;
+}
+
+.ipd-ins-daily-pharmacy-chev-btn {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  color: #64748b;
+}
+
+.ipd-ins-daily-pharmacy-chev-btn:hover {
+  color: #334155;
+}
+
+.ipd-ins-daily-pharmacy-chev {
+  transition: transform 0.2s ease;
+}
+
+.ipd-ins-daily-pharmacy-chev--open {
+  transform: rotate(180deg);
+}
+
+.ipd-ins-daily-pharmacy-card {
+  background: #f8fafc;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.65rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.1rem;
+}
+
+.ipd-ins-daily-pharmacy-card__head,
+.ipd-ins-daily-pharmacy-card__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 4.25rem 8rem 4.5rem;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.ipd-ins-daily-pharmacy-card__head {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+  padding-bottom: 0.15rem;
+}
+
 @media (max-width: 900px) {
   .ipd-ins-daily-group__trigger {
     grid-template-columns: 1fr auto;
@@ -3224,6 +3347,28 @@
 
   .ipd-ins-daily-detail-row .ipd-ins-charge-remove,
   .ipd-ins-daily-add .btn {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .ipd-ins-daily-detail-row--pharmacy-summary .ipd-input:first-of-type {
+    display: none;
+  }
+
+  .ipd-ins-daily-detail-row--pharmacy-summary .ipd-ins-daily-pharmacy-trigger {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+  }
+
+  .ipd-ins-daily-pharmacy-card__head {
+    display: none;
+  }
+
+  .ipd-ins-daily-pharmacy-card__row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ipd-ins-daily-pharmacy-card__row .ipd-ins-charge-remove {
     grid-column: 1 / -1;
     justify-self: start;
   }

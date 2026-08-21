@@ -90,6 +90,7 @@ export function useIpdBedsQuery(filters = {}) {
   const params = {
     ward: filters.ward || undefined,
     status: filters.status || undefined,
+    bed_type: filters.bed_type || undefined,
     search: filters.search?.trim() || undefined,
   };
   return useQuery({
