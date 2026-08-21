@@ -235,3 +235,39 @@ export function dedupePatientSummariesFromVisits(visits) {
   }
   return [...map.values()];
 }
+
+/** Map a single doctor patient visit row (NurseDoctorVisitResponse shape). */
+export function mapDoctorPatientVisitItem(row) {
+  if (!row) return null;
+  return {
+    id: row.id ?? row.visit_id,
+    patient_id: row.patient_id,
+    patient_uid: row.patient_uid ?? null,
+    patient_name: row.patient_name ?? '',
+    doctor_id: row.doctor_id,
+    doctor_name: row.doctor_name ?? '',
+    visited_at: row.visited_at ?? null,
+    notes: row.notes ?? null,
+    visit_number: row.visit_number ?? null,
+    recorded_by: row.recorded_by,
+    recorded_by_name: row.recorded_by_name ?? '',
+    created_at: row.created_at ?? null,
+    updated_by: row.updated_by ?? null,
+    updated_by_name: row.updated_by_name ?? null,
+    updated_at: row.updated_at ?? null,
+    is_voided: Boolean(row.is_voided),
+  };
+}
+
+/** Map GET /doctor/patient-visits response. */
+export function mapDoctorPatientVisitsResponse(raw) {
+  if (!raw) return { patient_id: null, patient_uid: null, patient_name: '', visit_date: null, visit_count: 0, visits: [] };
+  return {
+    patient_id: raw.patient_id ?? null,
+    patient_uid: raw.patient_uid ?? null,
+    patient_name: raw.patient_name ?? '',
+    visit_date: raw.visit_date ?? null,
+    visit_count: raw.visit_count ?? 0,
+    visits: (raw.visits ?? []).map(mapDoctorPatientVisitItem).filter(Boolean),
+  };
+}

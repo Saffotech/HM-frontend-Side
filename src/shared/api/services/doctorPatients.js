@@ -1,8 +1,10 @@
 import { getPatients } from '@/features/doctor/api/patients';
 import { getPatientHistoryPage } from '@/features/doctor/api/patientHistoryPage';
+import { getDoctorPatientVisits } from '@/features/doctor/api/patientVisits';
 import {
   mapPatientVisitList,
   mapVisitHistoryList,
+  mapDoctorPatientVisitsResponse,
 } from '@/shared/api/mappers/doctorPatientMapper';
 import { fetchPrescriptionsByPatient } from '@/shared/api/services/doctorPrescriptions';
 
@@ -60,4 +62,9 @@ export async function fetchPatientHistory(patientUhid, token, params = {}) {
 
 export async function fetchPatientPrescriptions(patientId, token) {
   return fetchPrescriptionsByPatient(patientId, token);
+}
+
+export async function fetchDoctorPatientVisits(token, params = {}) {
+  const raw = await getDoctorPatientVisits(params, token);
+  return mapDoctorPatientVisitsResponse(raw);
 }

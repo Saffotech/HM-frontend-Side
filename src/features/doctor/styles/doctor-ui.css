@@ -2666,3 +2666,24 @@
     font-size: 0.75rem;
   }
 }
+
+/* Doctor patient visits panel (read-only) */
+.doc-profile-panel--visits{
+  margin-top: 1rem;
+}
+
+.doc-profile-visits-table-wrap{
+  overflow-x: auto;
+}
+
+.doc-profile-visits-table th,
+.doc-profile-visits-table td{
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  vertical-align: top;
+}
+
+.doc-profile-visits-table__notes{
+  max-width: 18rem;
+  white-space: normal;
+}

@@ -734,3 +734,90 @@ export function toApiMedicationAdminUpdateBody(body = {}) {
   }
   return payload;
 }
+
+/** Map a single nurse-logged doctor visit row to the UI shape. */
+export function mapDoctorVisitItem(row) {
+  if (!row) return null;
+  return attachPatientUid({
+    ...row,
+    id: row.id ?? row.visit_id,
+    patient_name: row.patient_name ?? '',
+    doctor_name: row.doctor_name ?? '',
+    recorded_by_name: row.recorded_by_name ?? '',
+    updated_by_name: row.updated_by_name ?? '',
+    notes: row.notes ?? null,
+    is_voided: Boolean(row.is_voided),
+  });
+}
+
+/** Map GET /nurse/doctor-visits list response. */
+export function mapDoctorVisitListResponse(raw) {
+  if (!raw) return { items: [], total: 0, page: 1, page_size: 20 };
+  const items = (raw.items ?? []).map(mapDoctorVisitItem).filter(Boolean);
+  return {
+    items,
+    total: raw.total ?? items.length,
+    page: raw.page ?? 1,
+    page_size: raw.page_size ?? 20,
+  };
+}
+
+/** Map a single active-doctor option row. */
+export function mapDoctorOption(row) {
+  if (!row) return null;
+  return {
+    id: Number(row.id),
+    name: row.name ?? '',
+    specialization: row.specialization ?? null,
+  };
+}
+
+/** Map GET /nurse/doctor-visits/doctors list response. */
+export function mapDoctorListResponse(raw) {
+  if (!raw) return { doctors: [], total: 0, page: 1, page_size: 50 };
+  const doctors = (raw.doctors ?? []).map(mapDoctorOption).filter(Boolean);
+  return {
+    doctors,
+    total: raw.total ?? doctors.length,
+    page: raw.page ?? 1,
+    page_size: raw.page_size ?? 50,
+  };
+}
+
+/** Map GET /nurse/other-visits/departments list response. */
+export function mapDepartmentListResponse(raw) {
+  if (!raw) return { departments: [], total: 0, page: 1, page_size: 50 };
+  const departments = (raw.departments ?? []).map((row) => ({
+    id: Number(row.id),
+    name: row.name ?? '',
+    code: row.code ?? null,
+  })).filter((d) => d.name);
+  return {
+    departments,
+    total: raw.total ?? departments.length,
+    page: raw.page ?? 1,
+    page_size: raw.page_size ?? 50,
+  };
+}
+
+/** Strip UI-only fields before doctor-visit POST. */
+/** Strip UI-only fields before doctor-visit POST. */
+export function toApiDoctorVisitCreateBody(body = {}) {
+  const payload = {};
+  if (body.patient_id != null) payload.patient_id = Number(body.patient_id);
+  if (body.appointment_id != null) payload.appointment_id = Number(body.appointment_id);
+  if (body.doctor_id != null) payload.doctor_id = Number(body.doctor_id);
+  if (body.visited_at != null) payload.visited_at = body.visited_at;
+  if (body.notes != null) payload.notes = body.notes;
+  return payload;
+}
+
+/** Strip UI-only fields before doctor-visit PUT. */
+/** Strip UI-only fields before doctor-visit PUT. */
+export function toApiDoctorVisitUpdateBody(body = {}) {
+  const payload = {};
+  if (body.doctor_id != null) payload.doctor_id = Number(body.doctor_id);
+  if (body.visited_at != null) payload.visited_at = body.visited_at;
+  if (body.notes != null) payload.notes = body.notes;
+  return payload;
+}

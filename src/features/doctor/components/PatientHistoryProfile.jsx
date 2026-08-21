@@ -23,6 +23,7 @@ import AddLabTestModal from './AddLabTestModal';
 import { useDoctorLabTestsQuery } from '@/features/doctor/hooks/useDoctorLabQuery';
 import { matchesLabTestPatient } from '@/features/doctor/utils/labPatientMatch';
 import DoctorLabReportModal from './DoctorLabReportModal';
+import DoctorPatientVisitsPanel from './DoctorPatientVisitsPanel';
 import { mergeVisitTimelineWithPrescriptions } from '@/features/doctor/utils/patientHistory';
 import { mergeIpdIntoVisitHistory } from '@/features/doctor/utils/ipdVisitHistory';
 import { useDoctorIpdPatientAdmissionsQuery } from '@/features/doctor/hooks/useDoctorIpdPatientAdmissionsQuery';
@@ -387,6 +388,8 @@ export default function PatientHistoryProfile({
           )}
         </section>
       </div>
+
+      <DoctorPatientVisitsPanel patientId={patientId} patientUid={patientUid} />
 
       <PrescriptionDetailModal
         prescriptionId={prescriptionModal.id}

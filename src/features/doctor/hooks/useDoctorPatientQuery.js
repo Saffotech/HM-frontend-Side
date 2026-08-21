@@ -108,3 +108,17 @@ export function useDoctorPatientPrescriptionsQuery(patientId, options = {}) {
 }
 
 
+
+export function useDoctorPatientVisitsForPatientQuery(patientId, patientUid, options = {}) {
+  const { enabled = true } = options;
+  const token = useQueryToken();
+  const params = {};
+  if (patientId != null && !Number.isNaN(Number(patientId))) params.patient_id = Number(patientId);
+  if (patientUid) params.patient_uid = patientUid;
+  return useQuery({
+    queryKey: queryKeys.doctor.patients.patientVisits(params),
+    queryFn: () => doctorPatientsApi.fetchDoctorPatientVisits(token, params),
+    enabled: enabled && Boolean(token) && (params.patient_id != null || Boolean(params.patient_uid)),
+    staleTime: 30 * 1000,
+  });
+}

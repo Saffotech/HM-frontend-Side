@@ -62,8 +62,9 @@ export function useIpdDashboardQuery() {
   });
 }
 
-export function useIpdPatientsQuery(filters = {}) {
+export function useIpdPatientsQuery(filters = {}, options = {}) {
   const token = useQueryToken();
+  const { enabled = true } = options;
   const params = {
     search: filters.search?.trim() || undefined,
     status: filters.status || undefined,
@@ -77,6 +78,7 @@ export function useIpdPatientsQuery(filters = {}) {
   return useQuery({
     queryKey: queryKeys.ipd.patients(params),
     queryFn: () => getIpdPatients(params, token),
+    enabled: enabled && Boolean(token),
     placeholderData: keepPreviousData,
     staleTime: 20_000,
   });

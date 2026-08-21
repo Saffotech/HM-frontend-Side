@@ -32,6 +32,12 @@ import {
   getAlert,
   createAlert,
   resolveAlert,
+  listDoctorVisits,
+  listActiveDoctors,
+  listDepartments,
+  createDoctorVisit,
+  updateDoctorVisit,
+  voidDoctorVisit,
 } from '@/shared/api/services/nurse';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
@@ -507,6 +513,74 @@ export function useResolveAlertMutation(alertId) {
       queryClient.invalidateQueries({ queryKey: ['nurse', 'alerts'] });
       queryClient.invalidateQueries({ queryKey: ['nurse', 'alert-summary'] });
       if (alertId) queryClient.invalidateQueries({ queryKey: queryKeys.nurse.alert(alertId) });
+    },
+  });
+}
+
+export function useNurseDoctorVisitsQuery(filters = {}, options = {}) {
+  const { enabled = true, ...queryOptions } = options;
+  const token = useQueryToken();
+  return useQuery({
+    queryKey: queryKeys.nurse.doctorVisits(filters),
+    enabled: enabled && Boolean(token),
+    queryFn: () => listDoctorVisits(filters, token),
+    staleTime: 15 * 1000,
+    placeholderData: keepPreviousData,
+    ...queryOptions,
+  });
+}
+
+export function useNurseActiveDoctorsQuery(filters = {}, options = {}) {
+  const { enabled = true } = options;
+  const token = useQueryToken();
+  return useQuery({
+    queryKey: queryKeys.nurse.doctorVisitsDoctors(filters),
+    enabled: enabled && Boolean(token),
+    queryFn: () => listActiveDoctors(filters, token),
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useNurseDepartmentsQuery(filters = {}, options = {}) {
+  const { enabled = true } = options;
+  const token = useQueryToken();
+  return useQuery({
+    queryKey: queryKeys.nurse.doctorVisitsDepartments(filters),
+    enabled: enabled && Boolean(token),
+    queryFn: () => listDepartments(filters, token),
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useCreateDoctorVisitMutation() {
+  const token = useQueryToken();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data) => createDoctorVisit(data, token),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nurse', 'doctor-visits'] });
+    },
+  });
+}
+
+export function useUpdateDoctorVisitMutation(visitId) {
+  const token = useQueryToken();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data) => updateDoctorVisit(visitId, data, token),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nurse', 'doctor-visits'] });
+    },
+  });
+}
+
+export function useVoidDoctorVisitMutation(visitId) {
+  const token = useQueryToken();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data) => voidDoctorVisit(visitId, data, token),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nurse', 'doctor-visits'] });
     },
   });
 }

@@ -18,7 +18,10 @@ import {
 } from '@/features/doctor/hooks/useDoctorAppointmentQuery';
 
 import { useDoctorDashboardTodayQueueQuery } from '@/features/doctor/hooks/useDoctorQueueQuery';
-import { useDoctorIpdAdmissionsQuery } from '@/features/doctor/hooks/useDoctorIpdQuery';
+import {
+  useDoctorIpdAdmissionsQuery,
+  useIpdPatientVisitCounts,
+} from '@/features/doctor/hooks/useDoctorIpdQuery';
 import { isIpdEncounter, DOCTOR_ENCOUNTER_MODE } from '@/features/doctor/utils/encounterType';
 
 import {
@@ -176,6 +179,10 @@ function DashboardSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD, onViewAll
 
   const { data: ipdSecondaryData, isPending: isIpdSecondaryPending } =
     useDoctorIpdAdmissionsQuery(ipdCountQueryParams, { enabled: isIpdMode });
+
+  const ipdVisitCounts = useIpdPatientVisitCounts(
+    isIpdMode ? (ipdData?.items ?? []) : [],
+  );
 
   useEffect(() => {
     setIpdPage(1);
@@ -785,6 +792,7 @@ function DashboardSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD, onViewAll
             showActions={ipdStatusFilter === IPD_STATUS_FILTER.ADMITTED}
             onConsult={beginIpdConsultation}
             startingConsult={startingConsult}
+            visitCounts={ipdVisitCounts}
           />
         </>
       )}

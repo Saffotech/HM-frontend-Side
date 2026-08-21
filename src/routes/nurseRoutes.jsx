@@ -55,6 +55,8 @@ const NurseHandoverDetailPage = lazy(() => import('@/features/nurse/pages/NurseH
 const NurseProfilePage = lazy(() => import('@/features/nurse/pages/NurseProfilePage'));
 
 const NurseNotificationsPage = lazy(() => import('@/features/nurse/pages/NurseNotificationsPage'));
+const NurseDoctorVisitsPage = lazy(() => import('@/features/nurse/pages/NurseDoctorVisitsPage'));
+const NursePatientVisitHistoryPage = lazy(() => import('@/features/nurse/pages/NursePatientVisitHistoryPage'));
 
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
@@ -119,6 +121,8 @@ export const nurseRoutes = [
           { path: ROUTES.NURSE_PROFILE, element: <LazyRoute><NurseProfilePage /></LazyRoute> },
 
           { path: ROUTES.NURSE_NOTIFICATIONS, element: <LazyRoute><NurseNotificationsPage /></LazyRoute> },
+          { path: ROUTES.NURSE_DOCTOR_VISITS, element: <LazyRoute><NurseDoctorVisitsPage /></LazyRoute> },
+          { path: ROUTES.NURSE_DOCTOR_VISITS_PATIENT, element: <LazyRoute><NursePatientVisitHistoryPage /></LazyRoute> },
 
           { path: '*', element: <LazyRoute><NotFoundPage /></LazyRoute> },
 

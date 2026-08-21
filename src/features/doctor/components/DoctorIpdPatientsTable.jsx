@@ -40,6 +40,7 @@ function IpdTableSkeleton({ showActions, showWardBedColumn }) {
             {showWardBedColumn ? <th scope="col">Ward / Bed No</th> : null}
             <th scope="col">Date</th>
             <th scope="col">Status</th>
+            <th scope="col">No of visits</th>
             {showActions ? (
               <th scope="col" className="doc-dashboard-table__th-actions">
                 Actions
@@ -55,6 +56,7 @@ function IpdTableSkeleton({ showActions, showWardBedColumn }) {
               {showWardBedColumn ? <td><Skeleton height={14} width={88} /></td> : null}
               <td><Skeleton height={14} width={72} /></td>
               <td><Skeleton height={22} width={72} /></td>
+              <td><Skeleton height={14} width={40} /></td>
               {showActions ? (
                 <td><Skeleton height={30} width={72} /></td>
               ) : null}
@@ -83,9 +85,10 @@ function DoctorIpdPatientsTable({
   showWardBedColumn = false,
   onConsult,
   startingConsult = false,
+  visitCounts = new Map(),
 }) {
   const showEmpty = !isLoading && rows.length === 0;
-  const columnCount = 4 + (showWardBedColumn ? 1 : 0) + (showActions ? 1 : 0);
+  const columnCount = 5 + (showWardBedColumn ? 1 : 0) + (showActions ? 1 : 0);
 
   return (
     <div className="doc-card doc-card__body--flush">
@@ -119,6 +122,7 @@ function DoctorIpdPatientsTable({
                   {showWardBedColumn ? <th scope="col">Ward / Bed No</th> : null}
                   <th scope="col">Date</th>
                   <th scope="col">Status</th>
+                  <th scope="col">No of visits</th>
                   {showActions ? (
                     <th scope="col" className="doc-dashboard-table__th-actions">
                       Actions
@@ -181,6 +185,11 @@ function DoctorIpdPatientsTable({
                         </td>
                         <td className="doc-dashboard-table__appt-status">
                           <StatusPill status={row.status} />
+                        </td>
+                        <td className="doc-dashboard-table__visit-count">
+                          {visitCounts.get(row.patientDbId) ??
+                            visitCounts.get(row.patientUid) ??
+                            '—'}
                         </td>
                         {showActions ? (
                           <td

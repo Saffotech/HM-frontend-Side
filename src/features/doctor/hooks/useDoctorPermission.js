@@ -16,6 +16,7 @@ export const DOCTOR_PERMISSIONS = {
   profileDeleteImage: 'doctor_profile:delete_image',
   notificationsView: 'notifications:view',
   notificationsUpdate: 'notifications:update',
+  patientVisitsView: 'doctor_patient_visits:view',
 };
 
 export function useDoctorPermission(permission) {
@@ -40,5 +41,6 @@ export function useDoctorPermissionSet() {
     canDeleteProfileImage: hasBackendPermission(user, DOCTOR_PERMISSIONS.profileDeleteImage),
     canViewNotifications: hasBackendPermission(user, DOCTOR_PERMISSIONS.notificationsView),
     canUpdateNotifications: hasBackendPermission(user, DOCTOR_PERMISSIONS.notificationsUpdate),
+    canViewPatientVisits: hasBackendPermission(user, DOCTOR_PERMISSIONS.patientVisitsView),
   };
 }
