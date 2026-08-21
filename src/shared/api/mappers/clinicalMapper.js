@@ -29,14 +29,25 @@ export function uiMedicinesToApiItems(medicines = []) {
     .filter((item) => item.duration > 0);
 }
 
-/** POST /prescriptions and PUT /prescriptions/{id} body */
-export function uiToApiPrescriptionBody({ appointmentDbId, diagnosis, notes, medicines }) {
-  return {
-    appointment_id: appointmentDbId,
+/** POST /prescriptions and PUT /prescriptions/{id} body — OPD uses appointment_id, IPD uses admission_id. */
+export function uiToApiPrescriptionBody({
+  appointmentDbId,
+  admissionId,
+  diagnosis,
+  notes,
+  medicines,
+}) {
+  const body = {
     diagnosis: diagnosis || '',
     notes: notes || '',
     items: uiMedicinesToApiItems(medicines),
   };
+  if (admissionId != null && admissionId !== '') {
+    body.admission_id = Number(admissionId);
+  } else if (appointmentDbId != null && appointmentDbId !== '') {
+    body.appointment_id = Number(appointmentDbId);
+  }
+  return body;
 }
 
 /** Raw PrescriptionResponse → UI */
@@ -67,7 +78,8 @@ export function apiToUiPrescription(api) {
 
   return {
     id: api.id,
-    appointmentId: api.appointment_id ?? api.appointmentId,
+    appointmentId: api.appointment_id ?? api.appointmentId ?? null,
+    admissionId: api.admission_id ?? api.admissionId ?? null,
     patientId: api.patient_id ?? api.patientId,
     patientUid: api.patient_uhid ?? api.patientUid,
     patientName: api.patient_name ?? api.patientName,
@@ -114,17 +126,26 @@ export function apiToUiRecord(api) {
   };
 }
 
-/** POST /lab-tests body */
+/** POST /lab-tests body — OPD uses appointment_id, IPD uses admission_id. */
 export function uiToApiLabTestCreate(ui) {
   const departmentId = ui.departmentId ?? ui.department_id;
-  return {
-    appointment_id: ui.appointmentDbId,
+  const admissionId = ui.admissionId ?? ui.admission_id;
+  const body = {
     test_name: ui.testName ?? ui.test,
     category: ui.category,
-    department_id: departmentId != null && departmentId !== '' ? Number(departmentId) : undefined,
     priority: ui.priority || 'Normal',
     clinical_notes: ui.clinicalNotes ?? ui.clinical_notes ?? '',
   };
+  if (admissionId != null && admissionId !== '') {
+    body.admission_id = Number(admissionId);
+  } else if (ui.appointmentDbId != null && ui.appointmentDbId !== '') {
+    body.appointment_id = Number(ui.appointmentDbId);
+  }
+  const deptNum = Number(departmentId);
+  if (departmentId != null && departmentId !== '' && Number.isFinite(deptNum)) {
+    body.department_id = deptNum;
+  }
+  return body;
 }
 
 /** PUT /lab-tests/{id} — doctor may only change these fields */
@@ -188,7 +209,9 @@ export function apiToUiLabTest(api) {
 
   return {
     id: api.id,
-    appointmentId: api.appointment_id ?? api.appointmentId,
+    appointmentId: api.appointment_id ?? api.appointmentId ?? null,
+    admissionId: api.admission_id ?? api.admissionId ?? null,
+    encounterType: (api.admission_id ?? api.admissionId) != null ? 'IPD' : 'OPD',
     patientId: displayPatientId,
     patientUid,
     patientDbId: patientDbId != null ? Number(patientDbId) : null,
@@ -203,6 +226,7 @@ export function apiToUiLabTest(api) {
       || null,
     priority: api.priority ?? 'Normal',
     clinicalNotes: api.clinical_notes ?? api.clinicalNotes ?? '',
+    registrationSource: api.registration_source ?? api.registrationSource ?? null,
     status,
     apiStatus,
     result: api.result,

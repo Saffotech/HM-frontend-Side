@@ -33,9 +33,16 @@ import {
   deleteIpdProfileImage,
 } from '@/features/ipd/api';
 import { IPD_PAGE_SIZE } from '@/features/ipd/utils/constants';
+import { invalidateDoctorIpdAdmissions } from '@/features/doctor/utils/doctorDashboardCache';
+import { bumpDoctorIpdCache } from '@/shared/utils/doctorIpdSync';
 
 function invalidateIpdDomain(queryClient) {
   queryClient.invalidateQueries({ queryKey: queryKeys.ipd.all });
+}
+
+function notifyDoctorIpdChange(queryClient) {
+  invalidateDoctorIpdAdmissions(queryClient);
+  bumpDoctorIpdCache();
 }
 
 async function fetchIpdProfile(token) {
@@ -55,8 +62,9 @@ export function useIpdDashboardQuery() {
   });
 }
 
-export function useIpdPatientsQuery(filters = {}) {
+export function useIpdPatientsQuery(filters = {}, options = {}) {
   const token = useQueryToken();
+  const { enabled = true } = options;
   const params = {
     search: filters.search?.trim() || undefined,
     status: filters.status || undefined,
@@ -70,6 +78,7 @@ export function useIpdPatientsQuery(filters = {}) {
   return useQuery({
     queryKey: queryKeys.ipd.patients(params),
     queryFn: () => getIpdPatients(params, token),
+    enabled: enabled && Boolean(token),
     placeholderData: keepPreviousData,
     staleTime: 20_000,
   });
@@ -205,7 +214,10 @@ export function useCreateIpdAdmissionMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload) => createIpdAdmission(payload, token),
-    onSuccess: () => invalidateIpdDomain(queryClient),
+    onSuccess: () => {
+      invalidateIpdDomain(queryClient);
+      notifyDoctorIpdChange(queryClient);
+    },
     onError: mutationOnError,
   });
 }
@@ -218,6 +230,7 @@ export function useUpdateIpdAdmissionMutation() {
       updateIpdAdmission(admissionId, payload, token),
     onSuccess: (_data, variables) => {
       invalidateIpdDomain(queryClient);
+      notifyDoctorIpdChange(queryClient);
       if (variables?.admissionId) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.ipd.admission(variables.admissionId),
@@ -233,7 +246,10 @@ export function useTransferIpdBedMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload) => transferIpdBed(payload, token),
-    onSuccess: () => invalidateIpdDomain(queryClient),
+    onSuccess: () => {
+      invalidateIpdDomain(queryClient);
+      notifyDoctorIpdChange(queryClient);
+    },
     onError: mutationOnError,
   });
 }
@@ -263,7 +279,10 @@ export function usePayIpdBillMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ billId, payload }) => payIpdBill(billId, payload, token),
-    onSuccess: () => invalidateIpdDomain(queryClient),
+    onSuccess: () => {
+      invalidateIpdDomain(queryClient);
+      notifyDoctorIpdChange(queryClient);
+    },
     onError: mutationOnError,
   });
 }
@@ -274,7 +293,10 @@ export function useCompleteIpdDischargeMutation() {
   return useMutation({
     mutationFn: ({ admissionId, payload }) =>
       completeIpdDischarge(admissionId, payload ?? {}, token),
-    onSuccess: () => invalidateIpdDomain(queryClient),
+    onSuccess: () => {
+      invalidateIpdDomain(queryClient);
+      notifyDoctorIpdChange(queryClient);
+    },
     onError: mutationOnError,
   });
 }

@@ -16,6 +16,7 @@
     "@tanstack/react-query-devtools": "^5.100.11",
     "framer-motion": "^12.40.0",
     "lucide-react": "^0.460.0",
+    "pdfjs-dist": "^4.10.38",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0",
@@ -23,7 +24,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
-    "@vitejs/plugin-react": "^4.3.3",
+    "@vitejs/plugin-react": "^6.0.5",
     "eslint": "^8.57.1",
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-import": "^2.32.0",

@@ -9,13 +9,13 @@ import {
   DOCTOR_LAB_FILTERS,
   countDoctorLabFilters,
   filterDoctorLabTests,
+  inferTestCategory,
 } from '@/shared/utils/doctorLabView';
 import { useDoctorPatientVisitsQuery } from '@/features/doctor/hooks/useDoctorPatientQuery';
 import {
   LAB_DEPARTMENTS,
   LAB_PRIORITIES,
   inferLabCategory,
-  testsForLabDepartment,
 } from '@/features/doctor/constants';
 import { useLabRoutingDepartmentsQuery } from '@/shared/hooks/queries/useOpdReferenceQuery';
 import {
@@ -25,26 +25,26 @@ import {
   resolveLabDepartmentId,
 } from '@/shared/utils/labDepartments';
 import PatientHistoryProfile from './PatientHistoryProfile';
+import LabTestNameField from './LabTestNameField';
 import { resolveDoctorPatient } from '@/features/doctor/utils/patientHistory';
+import {
+  DOCTOR_ENCOUNTER_MODE,
+  labOrderMatchesEncounterMode,
+} from '@/features/doctor/utils/encounterType';
 import { Button, Input, Label, Select, Modal } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
 import StatusPill from './StatusPill';
 import DoctorLabReportModal from './DoctorLabReportModal';
 import '../styles/doctor-ui.css';
 
-function CategoryCell({ category, departmentName }) {
-  const dept = departmentName || (category === 'Radiology' ? 'Radiology' : 'Laboratory');
-  const isRad = /radio/i.test(dept) || category === 'Radiology';
+function CategoryCell({ category, testName, departmentName }) {
+  const label = inferTestCategory(testName, category, departmentName);
+  const isRad = label === 'Radiology';
   const Icon = isRad ? Scan : Beaker;
   return (
     <span className="doc-labs-category">
       <Icon size={14} aria-hidden />
-      {category}
-      {dept ? (
-        <span className={`doc-labs-dept-badge${isRad ? ' doc-labs-dept-badge--rad' : ''}`}>
-          {dept}
-        </span>
-      ) : null}
+      {label}
     </span>
   );
 }
@@ -54,6 +54,7 @@ function LabEditModal({ test, open, onClose, onSave, saving }) {
   const labRoutingDepts = labRoutingQuery.data ?? [];
   const [deptCode, setDeptCode] = useState('');
   const [testName, setTestName] = useState(test?.testName ?? '');
+  const [otherTest, setOtherTest] = useState(false);
   const [priority, setPriority] = useState(test?.priority ?? 'Normal');
   const [clinicalNotes, setClinicalNotes] = useState(test?.clinicalNotes ?? '');
 
@@ -61,26 +62,25 @@ function LabEditModal({ test, open, onClose, onSave, saving }) {
     if (!open || !test) return;
     setDeptCode(inferLabDeptCodeFromOrder(test, labRoutingQuery.data ?? []));
     setTestName(test.testName);
+    setOtherTest(false);
     setPriority(test.priority);
     setClinicalNotes(test.clinicalNotes);
   }, [open, test, labRoutingQuery.data]);
 
   if (!test) return null;
 
-  const testOptions = testsForLabDepartment(deptCode);
-
   const handleSave = () => {
     if (!deptCode) {
       toast.error('Please select Laboratory or Radiology');
       return;
     }
-    if (!testName) {
-      toast.error('Please select a test');
+    if (!String(testName ?? '').trim()) {
+      toast.error('Please select or enter a test');
       return;
     }
     const departmentId = resolveLabDepartmentId(labRoutingDepts, deptCode);
     onSave({
-      testName,
+      testName: String(testName).trim(),
       category: inferLabCategory(testName, deptCode),
       departmentId: departmentId ?? undefined,
       priority,
@@ -108,6 +108,7 @@ function LabEditModal({ test, open, onClose, onSave, saving }) {
         onChange={(code) => {
           setDeptCode(code);
           setTestName('');
+          setOtherTest(false);
         }}
         placeholder={labRoutingQuery.isLoading ? 'Loading…' : 'Laboratory or Radiology'}
         options={
@@ -119,18 +120,15 @@ function LabEditModal({ test, open, onClose, onSave, saving }) {
             : LAB_DEPARTMENTS.map((d) => ({ value: d.code, label: d.label }))
         }
       />
-      <Select
+      <LabTestNameField
         label="Test name"
-        value={testName}
-        onChange={setTestName}
-        placeholder={deptCode ? 'Select test' : 'Select department first'}
-        disabled={!deptCode}
-        options={[
-          ...(testName && !testOptions.includes(testName)
-            ? [{ value: testName, label: testName }]
-            : []),
-          ...testOptions.map((t) => ({ value: t, label: t })),
-        ]}
+        deptCode={deptCode}
+        testName={testName}
+        otherTest={otherTest}
+        onChange={({ testName: nextName, otherTest: nextOther }) => {
+          setTestName(nextName);
+          setOtherTest(nextOther);
+        }}
       />
       <Select
         label="Priority"
@@ -243,7 +241,11 @@ function LabTestsList({
                   </td>
                   <td>{t.testName}</td>
                   <td>
-                    <CategoryCell category={t.category} departmentName={t.departmentName} />
+                    <CategoryCell
+                      category={t.category}
+                      testName={t.testName}
+                      departmentName={t.departmentName}
+                    />
                   </td>
                   <td>{t.orderedDisplay}</td>
                   <td>
@@ -294,12 +296,30 @@ function LabTestsList({
   );
 }
 
-export default function LabsSection() {
+export default function LabsSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD }) {
   const { data: tests = [], isLoading } = useDoctorLabTestsQuery();
   const updateLab = useUpdateLabTestMutation();
   const cancelLab = useCancelLabTestMutation();
-  const { data: patientVisitsData } = useDoctorPatientVisitsQuery();
+  const { data: patientVisitsData } = useDoctorPatientVisitsQuery({ limit: 500 });
   const patientVisits = patientVisitsData?.visits ?? [];
+  const patientSourceByDbId = useMemo(() => {
+    const map = new Map();
+    for (const row of patientVisits) {
+      if (row.patientId == null) continue;
+      map.set(
+        Number(row.patientId),
+        row.registrationSource ?? row.encounterType ?? 'OPD',
+      );
+    }
+    return map;
+  }, [patientVisits]);
+  const modeFilteredTests = useMemo(
+    () =>
+      tests.filter((test) =>
+        labOrderMatchesEncounterMode(test, encounterMode, patientSourceByDbId),
+      ),
+    [tests, encounterMode, patientSourceByDbId],
+  );
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [profilePatient, setProfilePatient] = useState(null);
@@ -333,6 +353,7 @@ export default function LabsSection() {
         patient={profilePatient}
         onBack={() => setProfilePatient(null)}
         backLabel="Back to Lab Tests"
+        encounterMode={encounterMode}
       />
     );
   }
@@ -341,7 +362,7 @@ export default function LabsSection() {
     <div className="doc-page">
       {isLoading && <p className="text-muted">Loading lab tests…</p>}
       <LabTestsList
-        tests={tests}
+        tests={modeFilteredTests}
         filter={filter}
         onFilterChange={setFilter}
         search={search}

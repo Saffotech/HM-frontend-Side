@@ -85,8 +85,9 @@ export function buildDoctorPatientsQueryParams({
   dateFilters = DEFAULT_DATE_FILTERS,
   page = 1,
   limit = 100,
+  encounter_type = 'all',
 } = {}) {
-  const params = { page, limit, page_size: limit };
+  const params = { page, limit, page_size: limit, encounter_type };
   const q = search.trim();
   if (q) params.search = q;
 
@@ -123,7 +124,10 @@ function parseVisitDate(dateStr) {
 
 export function matchesPatientDateFilters(patient, filters) {
   const d = parseVisitDate(
-    patient.scheduledAt ?? patient.visitAt ?? patient.registeredDate
+    patient.admittedAt
+      ?? patient.scheduledAt
+      ?? patient.visitAt
+      ?? patient.registeredDate
   );
   const hasActiveFilter =
     (filters.day && filters.day !== 'all')

@@ -30,10 +30,16 @@ import {
 } from '@/features/nurse/hooks/useNurseProfileQuery';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
 import { ROUTES } from '@/shared/constants';
-import { Button, ConfirmDialog, EmptyState, ProfilePhotoCropDialog } from '@/shared/components/common';
+import { Button, ConfirmDialog, EmptyState, ProfilePhoneField, ProfilePhotoCropDialog } from '@/shared/components/common';
 import PageSpinner from '@/shared/components/PageSpinner';
 import { toast } from '@/shared/utils/toast';
 import { formatPhoneInput } from '@/shared/utils/validators';
+import {
+  PHONE_CODE_PATTERN,
+  formatPhoneCodeInput,
+  formatPhoneDisplay,
+  normalizePhoneCode,
+} from '@/shared/utils/phoneCountryCode';
 import {
   capitalizeFirst,
   displayProfileText,
@@ -108,7 +114,7 @@ function buildEditableForm(profile) {
       ? profile.languages.map((l) => capitalizeFirst(l)).join(', ')
       : '',
     phone: formatPhoneInput(profile?.phone ?? ''),
-    phone_code: profile?.phone_code ?? '+91',
+    phone_code: normalizePhoneCode(profile?.phone_code),
     address_line: capitalizeFirst(profile?.address?.line ?? ''),
     city: capitalizeFirst(profile?.address?.city ?? ''),
     state: capitalizeFirst(profile?.address?.state ?? ''),
@@ -320,6 +326,12 @@ export default function NurseProfilePage() {
 
     const phone = formatPhoneInput(form?.phone);
     const emergencyPhone = formatPhoneInput(form?.emergency_contact_phone);
+    const phoneCode = formatPhoneCodeInput(form?.phone_code);
+    if (!PHONE_CODE_PATTERN.test(phoneCode)) {
+      toast.error('Enter a valid phone code (e.g. +91)');
+      setActiveTab('contact');
+      return;
+    }
     if (phone && !isStrictTenDigitPhone(phone)) {
       toast.error('Phone must be a 10-digit number');
       setActiveTab('contact');
@@ -340,6 +352,7 @@ export default function NurseProfilePage() {
     const formForSave = {
       ...form,
       phone,
+      phone_code: phoneCode,
       emergency_contact_phone: emergencyPhone,
       gender: Number(form.gender),
     };
@@ -859,25 +872,13 @@ export default function NurseProfilePage() {
                   {editing && form ? (
                     <>
                       <label className="nurse-profile-field">
-                        <span className="nurse-profile-field__label">Phone code</span>
-                        <input
-                          className="nurse-profile-input"
-                          maxLength={8}
-                          value={form.phone_code}
-                          onChange={(e) => setField('phone_code', e.target.value)}
-                        />
-                      </label>
-                      <label className="nurse-profile-field">
                         <span className="nurse-profile-field__label">Phone</span>
-                        <input
-                          className="nurse-profile-input"
-                          type="tel"
-                          inputMode="numeric"
-                          autoComplete="tel"
-                          maxLength={10}
-                          placeholder="10-digit number"
-                          value={form.phone}
-                          onChange={(e) => setField('phone', formatPhoneInput(e.target.value))}
+                        <ProfilePhoneField
+                          inputClassName="nurse-profile-input"
+                          phoneCode={form.phone_code}
+                          phone={form.phone}
+                          onPhoneCodeChange={(value) => setField('phone_code', value)}
+                          onPhoneChange={(value) => setField('phone', value)}
                         />
                       </label>
                       <label className="nurse-profile-field">
@@ -969,8 +970,10 @@ export default function NurseProfilePage() {
                     </>
                   ) : (
                     <>
-                      <ReadField label="Phone code" value={profile.phone_code} />
-                      <ReadField label="Phone" value={profile.phone} />
+                      <ReadField
+                        label="Phone"
+                        value={formatPhoneDisplay(profile.phone_code, profile.phone)}
+                      />
                       <ReadField
                         label="Emergency contact name"
                         value={profile.emergency_contact?.name}

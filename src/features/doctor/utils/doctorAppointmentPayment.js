@@ -3,10 +3,12 @@ import {
   getAppointmentDisplayStatus,
   buildPaymentFromApiFields,
 } from '@/features/opd/utils/appointmentPaymentUtils';
+import { isIpdEncounter } from '@/features/doctor/utils/encounterType';
 
 /**
  * Merge OPD payment fields onto doctor appointment rows, then drop unpaid
  * pending visits — doctors only see paid scheduled patients.
+ * IPD rows pass through unchanged (never marked Pending).
  */
 export function enrichDoctorAppointmentsWithOpdPayment(doctorAppts, opdAppts) {
   const opdEnriched = enrichAppointmentsWithApiPayment(opdAppts ?? []);
@@ -16,6 +18,10 @@ export function enrichDoctorAppointmentsWithOpdPayment(doctorAppts, opdAppts) {
 
   return (doctorAppts ?? [])
     .map((appt) => {
+      if (isIpdEncounter(appt)) {
+        return { ...appt, displayStatus: appt.status ?? 'Admit' };
+      }
+
       const opdMatch = appt.dbId != null ? opdByDbId.get(appt.dbId) : null;
       const merged = opdMatch
         ? {

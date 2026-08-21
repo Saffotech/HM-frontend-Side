@@ -32,6 +32,29 @@ export function isDoctorNotificationUnread(n) {
   return !isDoctorNotificationRead(n);
 }
 
+function notificationSortTime(n) {
+  const raw = n?.created_at ?? n?.at ?? n?.createdAt;
+  const t = raw ? new Date(raw).getTime() : 0;
+  return Number.isNaN(t) ? 0 : t;
+}
+
+/** Newest notifications first (API may sort by priority before date). */
+export function sortDoctorNotificationsNewestFirst(list = []) {
+  return [...list].sort((a, b) => {
+    const byTime = notificationSortTime(b) - notificationSortTime(a);
+    if (byTime !== 0) return byTime;
+    return (Number(b.id) || 0) - (Number(a.id) || 0);
+  });
+}
+
+function withSortedNotificationItems(data) {
+  if (!data) return data;
+  return {
+    ...data,
+    items: sortDoctorNotificationsNewestFirst(data.items ?? []),
+  };
+}
+
 function patchListCachesAsRead(queryClient, notificationId) {
   const id = Number(notificationId);
   const now = new Date().toISOString();
@@ -71,6 +94,7 @@ export function useDoctorNotificationsListQuery(filters = {}) {
   return useQuery({
     queryKey: queryKeys.doctor.notificationsList(filters),
     queryFn: () => getDoctorNotifications(filters, token),
+    select: withSortedNotificationItems,
     enabled: Boolean(token),
     retry: false,
   });

@@ -1,15 +1,17 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
   Beaker,
   ChevronDown,
   Droplet,
+  Edit3,
+  Eye,
   FileText,
   Link2,
   Phone,
   Pill,
-  Eye,
+  Plus,
   User,
 } from 'lucide-react';
 import {
@@ -17,16 +19,25 @@ import {
   useDoctorPatientPrescriptionsQuery,
 } from '@/features/doctor/hooks/useDoctorPatientQuery';
 import PrescriptionDetailModal from './PrescriptionDetailModal';
+import AddLabTestModal from './AddLabTestModal';
 import { useDoctorLabTestsQuery } from '@/features/doctor/hooks/useDoctorLabQuery';
 import { matchesLabTestPatient } from '@/features/doctor/utils/labPatientMatch';
 import DoctorLabReportModal from './DoctorLabReportModal';
+import DoctorPatientVisitsPanel from './DoctorPatientVisitsPanel';
 import { mergeVisitTimelineWithPrescriptions } from '@/features/doctor/utils/patientHistory';
-import { formatPatientAge } from '@/features/doctor/utils/formatPatientAge';
+import { mergeIpdIntoVisitHistory } from '@/features/doctor/utils/ipdVisitHistory';
+import { useDoctorIpdPatientAdmissionsQuery } from '@/features/doctor/hooks/useDoctorIpdPatientAdmissionsQuery';
+import { formatPatientAgeGender } from '@/features/doctor/utils/formatPatientAge';
 import { patientsApi } from '@/shared/api/services';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { Button, Skeleton } from '@/shared/components/common';
 import StatusPill from './StatusPill';
+import { useAuth } from '@/shared/hooks/useAuth';
+import { ACTIONS, canAccessAction } from '@/hooks/permissions';
+import { useDoctorPermission, DOCTOR_PERMISSIONS } from '@/features/doctor/hooks/useDoctorPermission';
+import { buildPatientLabOrderLinks } from '@/features/doctor/utils/patientLabOrderLinks';
+import { DOCTOR_ENCOUNTER_MODE } from '@/features/doctor/utils/encounterType';
 import '../styles/doctor-ui.css';
 
 function formatPrescriptionDate(dateStr) {
@@ -47,8 +58,15 @@ export default function PatientHistoryProfile({
   onBack,
   backLabel = 'Back to Patients',
   placeholderVisits,
+  encounterMode = DOCTOR_ENCOUNTER_MODE.OPD,
 }) {
   const token = useQueryToken();
+  const { user } = useAuth();
+  const canEditPrescription = canAccessAction(user, ACTIONS.UPDATE_PRESCRIPTION);
+  const canCreateLabTest = useDoctorPermission(DOCTOR_PERMISSIONS.labCreate);
+  const isOpdMode = encounterMode === DOCTOR_ENCOUNTER_MODE.OPD;
+  const showAddLabTest = canCreateLabTest && isOpdMode;
+  const showEditPrescription = canEditPrescription && isOpdMode;
   const patientUid = patient?.patientUid ?? patient?.id;
   const resolvedPatientId = patient?.patientId ?? null;
 
@@ -58,12 +76,27 @@ export default function PatientHistoryProfile({
     isFetching: historyFetching,
   } = useDoctorPatientHistoryQuery(patientUid, { placeholderVisits });
 
+  const {
+    data: ipdAdmissions = [],
+    isPending: ipdAdmissionsPending,
+    isFetching: ipdAdmissionsFetching,
+  } = useDoctorIpdPatientAdmissionsQuery(patientUid);
+
+  const [consultCacheTick, setConsultCacheTick] = useState(0);
+
+  useEffect(() => {
+    const onUpdate = () => setConsultCacheTick((tick) => tick + 1);
+    window.addEventListener('hms:ipd-consult-cache-updated', onUpdate);
+    return () => window.removeEventListener('hms:ipd-consult-cache-updated', onUpdate);
+  }, []);
+
   const patientId = resolvedPatientId ?? historyData?.patientId ?? null;
 
   const { data: prescriptions = [] } = useDoctorPatientPrescriptionsQuery(patientId);
 
-  const [viewPrescriptionId, setViewPrescriptionId] = useState(null);
+  const [prescriptionModal, setPrescriptionModal] = useState({ id: null, editing: false });
   const [viewLabTest, setViewLabTest] = useState(null);
+  const [addLabOpen, setAddLabOpen] = useState(false);
 
   const canLoadLabs = Boolean(patientUid || resolvedPatientId);
 
@@ -102,8 +135,9 @@ export default function PatientHistoryProfile({
 
   const visits = useMemo(() => {
     const fromApi = historyData?.visits ?? [];
-    return mergeVisitTimelineWithPrescriptions(fromApi, prescriptions);
-  }, [historyData?.visits, prescriptions]);
+    const withIpd = mergeIpdIntoVisitHistory(fromApi, ipdAdmissions, patientUid);
+    return mergeVisitTimelineWithPrescriptions(withIpd, prescriptions);
+  }, [historyData?.visits, prescriptions, ipdAdmissions, patientUid, consultCacheTick]);
 
   const clinicalByAppointmentId = useMemo(() => {
     const map = new Map();
@@ -112,12 +146,33 @@ export default function PatientHistoryProfile({
       map.set(Number(visit.appointmentDbId), {
         symptoms: visit.symptoms,
         followUp: visit.followUp,
+        notes: visit.notes,
       });
     }
     return map;
   }, [visits]);
 
-  const showVisitSkeleton = historyPending && visits.length === 0;
+  const clinicalByAdmissionId = useMemo(() => {
+    const map = new Map();
+    for (const visit of visits) {
+      if (visit.admissionId == null) continue;
+      const current = {
+        symptoms: visit.symptoms,
+        followUp: visit.followUp,
+        notes: visit.notes,
+      };
+      const existing = map.get(Number(visit.admissionId));
+      if (!existing || (visit.sortTime ?? 0) >= (existing.sortTime ?? 0)) {
+        map.set(Number(visit.admissionId), { ...current, sortTime: visit.sortTime });
+        map.set(String(visit.admissionId), { ...current, sortTime: visit.sortTime });
+      }
+    }
+    return map;
+  }, [visits]);
+
+  const showVisitSkeleton =
+    (historyPending || ipdAdmissionsPending) && visits.length === 0;
+  const historyRefreshing = historyFetching || ipdAdmissionsFetching;
 
   const patientLabs = useMemo(
     () =>
@@ -130,6 +185,23 @@ export default function PatientHistoryProfile({
       ),
     [allLabTests, patientUid, patientId, profile.name, patient?.name]
   );
+
+  const labOrderLinks = useMemo(() => {
+    if (!isOpdMode) return [];
+    return buildPatientLabOrderLinks(visits, ipdAdmissions).filter(
+      (link) => link.appointmentDbId != null,
+    );
+  }, [visits, ipdAdmissions, isOpdMode]);
+
+  const viewingPrescription = prescriptions.find((rx) => rx.id === prescriptionModal.id);
+
+  const openPrescriptionModal = (id, editing = false) => {
+    setPrescriptionModal({ id, editing: editing && showEditPrescription });
+  };
+
+  const closePrescriptionModal = () => {
+    setPrescriptionModal({ id: null, editing: false });
+  };
 
   if (!patient) return null;
 
@@ -148,8 +220,8 @@ export default function PatientHistoryProfile({
           <div className="doc-profile-hero__identity">
             <h2 className="doc-profile-name">{profile.name}</h2>
             <p className="doc-profile-meta">
-              {patientUid} · {formatPatientAge({ age: profile.age, dob: profile.dob }) ?? '—'} ·{' '}
-              {profile.gender || '—'}
+              {patientUid} ·{' '}
+              {formatPatientAgeGender({ age: profile.age, dob: profile.dob, gender: profile.gender })}
             </p>
           </div>
           <div className="doc-profile-hero__tags">
@@ -213,15 +285,28 @@ export default function PatientHistoryProfile({
                       )}
                     </td>
                     <td className="doc-profile-rx-table__actions">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setViewPrescriptionId(rx.id)}
-                      >
-                        <Eye size={14} aria-hidden />
-                        View
-                      </Button>
+                      <div className="doc-profile-rx-table__action-group">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openPrescriptionModal(rx.id, false)}
+                        >
+                          <Eye size={14} aria-hidden />
+                          View
+                        </Button>
+                        {showEditPrescription ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openPrescriptionModal(rx.id, true)}
+                          >
+                            <Edit3 size={14} aria-hidden />
+                            Add medicine
+                          </Button>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -240,7 +325,7 @@ export default function PatientHistoryProfile({
             </h3>
             {visits.length > 0 ? (
               <span className="doc-profile-panel__hint">
-                Newest first{historyFetching ? ' · updating…' : ''}
+                Newest first{historyRefreshing ? ' · updating…' : ''}
               </span>
             ) : null}
           </div>
@@ -257,15 +342,28 @@ export default function PatientHistoryProfile({
           )}
         </section>
 
-        <aside className="doc-card doc-profile-panel doc-profile-panel--side">
+        <section className="doc-card doc-profile-panel doc-profile-panel--labs">
           <div className="doc-profile-panel__head">
             <h3 className="doc-profile-panel__title">
               <Beaker size={16} aria-hidden />
               Lab Reports
             </h3>
-            {patientLabs.length > 0 ? (
-              <span className="doc-profile-panel__count">{patientLabs.length}</span>
-            ) : null}
+            <div className="doc-profile-panel__head-end">
+              {patientLabs.length > 0 ? (
+                <span className="doc-profile-panel__count">{patientLabs.length}</span>
+              ) : null}
+              {showAddLabTest ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setAddLabOpen(true)}
+                >
+                  <Plus size={14} aria-hidden />
+                  Add lab test
+                </Button>
+              ) : null}
+            </div>
           </div>
           {patientLabs.length === 0 ? (
             <p className="text-muted doc-profile-empty">No lab tests</p>
@@ -288,17 +386,33 @@ export default function PatientHistoryProfile({
               ))}
             </ul>
           )}
-        </aside>
+        </section>
       </div>
 
+      <DoctorPatientVisitsPanel patientId={patientId} patientUid={patientUid} />
+
       <PrescriptionDetailModal
-        prescriptionId={viewPrescriptionId}
-        open={viewPrescriptionId != null}
-        onClose={() => setViewPrescriptionId(null)}
+        prescriptionId={prescriptionModal.id}
+        open={prescriptionModal.id != null}
+        initialEditing={prescriptionModal.editing}
+        onClose={closePrescriptionModal}
         patientId={patientId}
         patientUid={patientUid}
         patientName={profile.name !== '—' ? profile.name : undefined}
         clinicalByAppointmentId={clinicalByAppointmentId}
+        clinicalByAdmissionId={clinicalByAdmissionId}
+        visitTimeline={visits}
+        fallbackAdmissionId={viewingPrescription?.admissionId ?? null}
+        readOnly={!isOpdMode}
+        addMedicineOnly={isOpdMode}
+      />
+
+      <AddLabTestModal
+        open={addLabOpen}
+        onClose={() => setAddLabOpen(false)}
+        patientUid={patientUid}
+        patientName={profile.name !== '—' ? profile.name : undefined}
+        linkOptions={labOrderLinks}
       />
 
       <DoctorLabReportModal

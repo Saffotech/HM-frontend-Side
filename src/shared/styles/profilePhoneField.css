@@ -1,0 +1,59 @@
+.profile-phone {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  border: 1px solid #d2dde4;
+  border-radius: 0.4rem;
+  background: #fff;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.profile-phone:hover {
+  border-color: #b7c9d4;
+}
+
+.profile-phone:focus-within {
+  border-color: #1a5c34;
+  box-shadow: 0 0 0 3px rgba(26, 92, 52, 0.12);
+}
+
+.profile-phone .profile-phone__code,
+.profile-phone .profile-phone__custom,
+.profile-phone .profile-phone__number {
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  min-height: 2.2rem;
+}
+
+.profile-phone__code {
+  flex: 0 0 7.25rem;
+  max-width: 7.25rem;
+  padding-right: 0.35rem;
+  border-right: 1px solid #e2e8f0 !important;
+  background: #f8fafc;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.profile-phone--custom .profile-phone__code {
+  flex-basis: 6.1rem;
+  max-width: 6.1rem;
+}
+
+.profile-phone__custom {
+  flex: 0 0 4.4rem;
+  max-width: 4.4rem;
+  padding-left: 0.45rem;
+  padding-right: 0.35rem;
+  border-right: 1px solid #e2e8f0 !important;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.profile-phone__number {
+  flex: 1 1 auto;
+  min-width: 0;
+}

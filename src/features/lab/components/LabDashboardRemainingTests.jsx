@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { useMemo, useState } from 'react';
 import { ArrowRight, Clock3, FlaskConical } from 'lucide-react';
 import {
   isOpenStatus,
@@ -7,6 +8,8 @@ import {
   uploadActionLabel,
 } from '@/features/lab/utils/labOrderStatus';
 import { ROUTES } from '@/shared/constants';
+import LabEncounterBadge from '@/features/lab/components/LabEncounterBadge';
+import { visitLocationSummary, normalizeEncounterType } from '@/features/lab/utils/visitLocation';
 
 const PREVIEW_COUNT = 8;
 
@@ -46,7 +49,20 @@ function orderTimeMs(order) {
  */
 export default function LabDashboardRemainingTests({ orders = [] }) {
   const navigate = useNavigate();
-  const openOrders = [...orders]
+  const [filterSource, setFilterSource] = useState('all');
+
+  const worklistHref = useMemo(() => {
+    const params = new URLSearchParams({ view: 'ordered' });
+    if (filterSource !== 'all') params.set('source', filterSource);
+    return `${ROUTES.LAB_ORDERS}?${params.toString()}`;
+  }, [filterSource]);
+
+  const sourceFilteredOrders = useMemo(() => {
+    if (filterSource === 'all') return orders;
+    return orders.filter((o) => normalizeEncounterType(o.encounterType) === filterSource);
+  }, [orders, filterSource]);
+
+  const openOrders = [...sourceFilteredOrders]
     .filter((o) => isOpenStatus(o.status))
     .sort((a, b) => orderTimeMs(b) - orderTimeMs(a)); // newest first
   const remaining = openOrders.slice(0, PREVIEW_COUNT);
@@ -69,10 +85,25 @@ export default function LabDashboardRemainingTests({ orders = [] }) {
             <p>Newest requests first · open work still waiting</p>
           </div>
         </div>
-        <Link to={`${ROUTES.LAB_ORDERS}?view=ordered`} className="lab-dash-ghost-btn">
-          View worklist
-          <ArrowRight size={14} aria-hidden />
-        </Link>
+        <div className="lab-dash-remaining-panel__actions">
+          <label className="lab-dash-source-filter" htmlFor="lab-dash-source">
+            <span className="lab-dash-source-filter__label">Source</span>
+            <select
+              id="lab-dash-source"
+              className="lab-dash-source-filter__select"
+              value={filterSource}
+              onChange={(e) => setFilterSource(e.target.value)}
+            >
+              <option value="all">All</option>
+              <option value="OPD">OPD</option>
+              <option value="IPD">IPD</option>
+            </select>
+          </label>
+          <Link to={worklistHref} className="lab-dash-ghost-btn">
+            View worklist
+            <ArrowRight size={14} aria-hidden />
+          </Link>
+        </div>
       </div>
 
       {remaining.length === 0 ? (
@@ -82,7 +113,9 @@ export default function LabDashboardRemainingTests({ orders = [] }) {
           </div>
           <p className="lab-dash-remaining-empty__title">No remaining tests</p>
           <p className="lab-dash-remaining-empty__text">
-            All open orders are clear. New requests will show up here.
+            {filterSource === 'all'
+              ? 'All open orders are clear. New requests will show up here.'
+              : `No open ${filterSource} tests right now.`}
           </p>
         </div>
       ) : (
@@ -104,6 +137,12 @@ export default function LabDashboardRemainingTests({ orders = [] }) {
                   <div className="lab-dash-remaining__main">
                     <span className="lab-dash-remaining__patient">{order.patientName}</span>
                     <span className="lab-dash-remaining__test">{order.testName}</span>
+                    <span className="lab-dash-remaining__visit">
+                      <LabEncounterBadge encounterType={order.encounterType} />
+                      {visitLocationSummary(order) ? (
+                        <span className="lab-dash-remaining__visit-meta">{visitLocationSummary(order)}</span>
+                      ) : null}
+                    </span>
                     <span className="lab-dash-remaining__meta">
                       <Clock3 size={12} aria-hidden />
                       <span>

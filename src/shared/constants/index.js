@@ -127,6 +127,8 @@ export const ROUTES = {
   NURSE_HANDOVER_NEW: '/nurse/handover/new',
   NURSE_HANDOVER_DETAIL: '/nurse/handover/:id',
   NURSE_ALERTS: '/nurse/alerts',
+  NURSE_DOCTOR_VISITS: '/nurse/doctor-visits',
+  NURSE_DOCTOR_VISITS_PATIENT: '/nurse/doctor-visits/patient/:patientId',
   NURSE_ALERTS_NEW: '/nurse/alerts/new',
   NURSE_ALERT_DETAIL: '/nurse/alerts/:alertId',
   NURSE_PROFILE: '/nurse/profile',

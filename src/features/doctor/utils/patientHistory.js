@@ -51,6 +51,11 @@ function coalesceVisitField(primary, secondary) {
 function findPrescriptionForVisit(visit, prescriptions, usedRx) {
   return prescriptions.find((rx) => {
     if (usedRx.has(rx.id)) return false;
+
+    if (rx.admissionId != null) {
+      return visit.admissionId != null && Number(rx.admissionId) === Number(visit.admissionId);
+    }
+
     if (
       visit.appointmentDbId != null &&
       rx.appointmentId != null &&
@@ -58,6 +63,9 @@ function findPrescriptionForVisit(visit, prescriptions, usedRx) {
     ) {
       return true;
     }
+
+    if (visit.admissionId != null) return false;
+
     const rxDay = new Date(rx.date).toDateString();
     const visitDay = visit.scheduledAt
       ? new Date(visit.scheduledAt).toDateString()
@@ -132,12 +140,23 @@ export function mergeVisitTimelineWithPrescriptions(visits, prescriptions) {
   });
 
   const extraRx = prescriptions
-    .filter((rx) => !usedRx.has(rx.id))
+    .filter((rx) => {
+      if (usedRx.has(rx.id)) return false;
+      if (rx.admissionId != null) {
+        return !visits.some(
+          (visit) =>
+            visit.admissionId != null && Number(visit.admissionId) === Number(rx.admissionId),
+        );
+      }
+      return true;
+    })
     .map((rx) => {
       const parsed = parseEmbeddedClinicalNotes(rx.notes);
       return {
         id: `rx-${rx.id}`,
         appointmentDbId: rx.appointmentId ?? null,
+        admissionId: rx.admissionId ?? null,
+        encounterType: rx.admissionId != null ? 'IPD' : 'OPD',
         dateTime: formatVisitDateTime(rx.date),
         sortTime: rxSortTime(rx),
         symptoms: parsed.symptoms || '—',

@@ -8,6 +8,7 @@ import { Bell, Search, X } from 'lucide-react';
 import {
   isDoctorNotificationRead,
   isDoctorNotificationUnread,
+  sortDoctorNotificationsNewestFirst,
   useDoctorNotificationsListQuery,
   useMarkAllDoctorNotificationsReadMutation,
   useMarkDoctorNotificationReadMutation,
@@ -96,7 +97,7 @@ export default function NotificationsSection({ onDeepLink }) {
         (n) => String(n.priority || '').toUpperCase() === notificationType
       );
     }
-    return list;
+    return sortDoctorNotificationsNewestFirst(list);
   }, [data?.items, readFilter, notificationType]);
 
   const total = data?.total ?? items.length;

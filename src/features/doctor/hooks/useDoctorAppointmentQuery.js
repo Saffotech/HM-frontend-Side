@@ -12,6 +12,7 @@ import { formatOpdDate } from '@/features/doctor/utils/doctorDates';
 
 import {
   DOCTOR_DASHBOARD_QUERY_OPTIONS,
+  DOCTOR_LIVE_QUERY_OPTIONS,
   invalidateDoctorAppointmentStatusChange,
 } from '@/features/doctor/utils/doctorDashboardCache';
 import { selectDashboardAppointments } from '@/features/doctor/utils/doctorDashboardSelectors';
@@ -28,7 +29,9 @@ export function useDoctorTodayAppointmentsQuery() {
 
     queryFn: () => doctorAppointmentsApi.fetchTodayAppointments(token),
 
-    ...DOCTOR_DASHBOARD_QUERY_OPTIONS,
+    enabled: Boolean(token),
+
+    ...DOCTOR_LIVE_QUERY_OPTIONS,
 
   });
 
@@ -49,7 +52,9 @@ export function useDoctorDashboardTodayAppointmentsQuery() {
 
     select: selectDashboardAppointments,
 
-    ...DOCTOR_DASHBOARD_QUERY_OPTIONS,
+    enabled: Boolean(token),
+
+    ...DOCTOR_LIVE_QUERY_OPTIONS,
 
   });
 
@@ -67,7 +72,9 @@ export function useDoctorAppointmentsByDateQuery(uiDate) {
 
     queryFn: () => doctorAppointmentsApi.fetchAppointmentsByDate(uiDate, token),
 
-    enabled: Boolean(uiDate),
+    enabled: Boolean(token) && Boolean(uiDate),
+
+    ...DOCTOR_DASHBOARD_QUERY_OPTIONS,
 
   });
 
@@ -101,7 +108,9 @@ export function useDoctorWeekAppointmentsQueries(dayCount = 14) {
 
       queryFn: () => doctorAppointmentsApi.fetchAppointmentsByDate(uiDate, token),
 
-      staleTime: 30_000,
+      enabled: Boolean(token),
+
+      ...DOCTOR_DASHBOARD_QUERY_OPTIONS,
 
     })),
 
@@ -137,7 +146,9 @@ export function useDoctorAppointmentDetailQuery(appointmentDbId, options = {}) {
 
     queryFn: () => doctorAppointmentsApi.fetchAppointmentById(appointmentDbId, token),
 
-    enabled: enabled && appointmentDbId != null,
+    enabled: Boolean(token) && enabled && appointmentDbId != null,
+
+    ...DOCTOR_DASHBOARD_QUERY_OPTIONS,
 
   });
 

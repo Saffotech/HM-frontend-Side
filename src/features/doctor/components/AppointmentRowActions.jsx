@@ -3,6 +3,7 @@ import { MoreHorizontal, FileText, Pill, StickyNote, Stethoscope, XCircle } from
 import { Button } from '@/shared/components/common';
 import { usePermission } from '@/hooks/usePermission';
 import { ACTIONS } from '@/hooks/permissions';
+import { isIpdEncounter } from '@/features/doctor/utils/encounterType';
 import './AppointmentRowActions.css';
 
 function getRowBounds(rootEl) {
@@ -20,6 +21,7 @@ export default function AppointmentRowActions({
   onNotes,
   disabled = false,
   cancelDisabled = false,
+  allowIpdConsult = false,
   mode = 'full',
 }) {
   const [open, setOpen] = useState(false);
@@ -30,8 +32,14 @@ export default function AppointmentRowActions({
   const anchorRef = useRef(null);
   const menuRef = useRef(null);
   const canWritePrescription = appointment?.status === 'Completed';
+  const isIpd = isIpdEncounter(appointment);
+  const isDischargedIpd =
+    appointment?.status === 'Discharge' || appointment?.status === 'discharged';
   const canStartConsult =
-    appointment?.status !== 'Completed' && appointment?.status !== 'Cancelled';
+    (allowIpdConsult || !isIpd)
+    && appointment?.status !== 'Completed'
+    && appointment?.status !== 'Cancelled'
+    && !isDischargedIpd;
   const canConsult = usePermission(ACTIONS.CONSULT);
   const canEmr = usePermission(ACTIONS.VIEW_EMR);
   const canPrescribe = usePermission(ACTIONS.PRESCRIBE);

@@ -15,6 +15,9 @@ import {
   isLabDepartmentUnassignedError,
   LAB_DEPT_UNASSIGNED_MESSAGE,
 } from '@/shared/utils/labDepartments';
+import LabLocalFilePreviewModal from '@/features/lab/components/LabLocalFilePreviewModal';
+import LabEncounterBadge from '@/features/lab/components/LabEncounterBadge';
+import { visitLocationLabel } from '@/features/lab/utils/visitLocation';
 import '../styles/lab.css';
 
 function makeId() {
@@ -62,6 +65,7 @@ export default function LabUploadReportPage() {
   const [parameters, setParameters] = useState([emptyParameterRow()]);
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
+  const [showFilePreview, setShowFilePreview] = useState(false);
 
   useEffect(() => {
     if (!order) return;
@@ -100,6 +104,7 @@ export default function LabUploadReportPage() {
         }
       }
       if (next.parametersGeneral) delete next.parametersGeneral;
+      if (next.reportOrParameters) delete next.reportOrParameters;
       return next;
     });
   };
@@ -123,7 +128,6 @@ export default function LabUploadReportPage() {
     const errs = {};
     if (!sampleCollectedAt) errs.sampleCollectedAt = 'Required';
     if (!testPerformedAt) errs.testPerformedAt = 'Required';
-    if (!reportFile) errs.reportFile = 'Report file is required';
 
     const paramErrors = {};
     parameters.forEach((param) => {
@@ -153,10 +157,22 @@ export default function LabUploadReportPage() {
         'When a parameter name is entered, value, unit, normal range, and flag are required';
     }
 
+    const hasNamedParameters = parameters.some(isNamedParameter);
+    const hasCompleteParameters = hasNamedParameters && Object.keys(paramErrors).length === 0;
+    if (!reportFile && !hasCompleteParameters) {
+      const message = 'Upload a report file or enter at least one test parameter';
+      errs.reportOrParameters = message;
+      errs.reportFile = message;
+      errs.parametersGeneral = message;
+    }
+
     setErrors(errs);
     if (Object.keys(errs).length) {
       toast.error(
-        errs.reportFile || errs.parametersGeneral || 'Please fix the highlighted fields',
+        errs.reportOrParameters
+        || errs.reportFile
+        || errs.parametersGeneral
+        || 'Please fix the highlighted fields',
       );
       return;
     }
@@ -268,6 +284,7 @@ export default function LabUploadReportPage() {
   }
 
   const submitting = submitWorkflow.isPending;
+  const orderLocation = order ? visitLocationLabel(order) : null;
 
   return (
     <LabLayout pageTitle="Upload Report" compact>
@@ -315,6 +332,20 @@ export default function LabUploadReportPage() {
           <div className="lab-info-item">
             <label>Patient ID</label>
             <span>{order.patientId}</span>
+          </div>
+          <div className="lab-info-item">
+            <label>Source</label>
+            <span>
+              <LabEncounterBadge encounterType={order.encounterType} />
+            </span>
+          </div>
+          <div className="lab-info-item">
+            <label>Ward</label>
+            <span>{orderLocation?.ward ?? '-'}</span>
+          </div>
+          <div className="lab-info-item">
+            <label>Bed</label>
+            <span>{orderLocation?.bed ?? '-'}</span>
           </div>
           <div className="lab-info-item">
             <label>Test Name</label>
@@ -404,21 +435,25 @@ export default function LabUploadReportPage() {
               <div className="lab-field">
                 <label htmlFor="report-file">
                   Report File
-                  <span className="required"> *</span>
-                  <small style={{ fontWeight: 400, color: '#8a9ab5', marginLeft: 6 }}>(PDF, PNG, JPG — required)</small>
+                  <small style={{ fontWeight: 400, color: '#8a9ab5', marginLeft: 6 }}>
+                    (PDF, PNG, JPG — required if no test parameters)
+                  </small>
                 </label>
                 <input
                   id="report-file"
                   type="file"
                   accept=".pdf,image/*"
-                  required
-                  aria-required="true"
+                  aria-required={Boolean(errors.reportFile)}
                   onChange={(e) => {
                     setReportFile(e.target.files?.[0] ?? null);
                     setErrors((prev) => {
-                      if (!prev.reportFile) return prev;
+                      if (!prev.reportFile && !prev.reportOrParameters) return prev;
                       const next = { ...prev };
                       delete next.reportFile;
+                      delete next.reportOrParameters;
+                      if (next.parametersGeneral === 'Upload a report file or enter at least one test parameter') {
+                        delete next.parametersGeneral;
+                      }
                       return next;
                     });
                   }}
@@ -430,9 +465,13 @@ export default function LabUploadReportPage() {
                   <small className="lab-param-field-error">{errors.reportFile}</small>
                 ) : null}
                 {reportFile ? (
-                  <small style={{ color: '#059669', fontSize: '12px' }}>
+                  <button
+                    type="button"
+                    className="lab-upload-file-link"
+                    onClick={() => setShowFilePreview(true)}
+                  >
                     ✓ {reportFile.name}
-                  </small>
+                  </button>
                 ) : null}
               </div>
             </div>
@@ -455,7 +494,9 @@ export default function LabUploadReportPage() {
               <div className="lab-params-header">
                 <h3>
                   Test Parameters
-                  <small style={{ fontWeight: 400, color: '#8a9ab5', marginLeft: 8 }}>(optional)</small>
+                  <small style={{ fontWeight: 400, color: '#8a9ab5', marginLeft: 8 }}>
+                    (required if no report file)
+                  </small>
                 </h3>
                 <button type="button" className="lab-btn lab-btn-secondary lab-btn-sm" onClick={addRow}>
                   + Add Parameter
@@ -582,6 +623,10 @@ export default function LabUploadReportPage() {
       </div>
       )}
       </QueryFeedback>
+
+      {showFilePreview && reportFile ? (
+        <LabLocalFilePreviewModal file={reportFile} onClose={() => setShowFilePreview(false)} />
+      ) : null}
     </LabLayout>
   );
 }

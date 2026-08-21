@@ -27,6 +27,8 @@ import { EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import { DateInput } from '@/shared/components/common';
 import { ClipboardList } from 'lucide-react';
+import LabEncounterBadge from '@/features/lab/components/LabEncounterBadge';
+import { visitLocationLabel, normalizeEncounterType } from '@/features/lab/utils/visitLocation';
 import '../styles/lab.css';
 
 const labUploadPath = (id) => `/lab/orders/${id}/upload`;
@@ -85,6 +87,10 @@ export default function LabOrderListPage() {
   });
   const [category, setCategory] = useState(searchParams.get('category') || 'all');
   const [date, setDate] = useState(searchParams.get('date') || '');
+  const [filterSource, setFilterSource] = useState(() => {
+    const raw = searchParams.get('source') || 'all';
+    return raw === 'OPD' || raw === 'IPD' ? raw : 'all';
+  });
 
   const debouncedSearch = useDebouncedValue(search, 300);
 
@@ -103,8 +109,9 @@ export default function LabOrderListPage() {
     if (priority !== 'all') params.set('priority', priority);
     if (category !== 'all') params.set('category', category);
     if (date) params.set('date', date);
+    if (filterSource !== 'all') params.set('source', filterSource);
     setSearchParams(params, { replace: true });
-  }, [search, view, priority, category, date, setSearchParams]);
+  }, [search, view, priority, category, date, filterSource, setSearchParams]);
 
   const ordersQuery = useLabOrdersQuery(
     {
@@ -126,18 +133,23 @@ export default function LabOrderListPage() {
         return false;
       }
       return orderMatchesCategoryFilter(order, category);
+    })
+    .filter((order) => {
+      if (filterSource === 'all') return true;
+      return normalizeEncounterType(order.encounterType) === filterSource;
     });
-  }, [ordersQuery.data?.data, techDeptCode, category]);
+  }, [ordersQuery.data?.data, techDeptCode, category, filterSource]);
 
   const total = orders.length;
 
-  const hasExtraFilters = search || priority !== 'all' || category !== 'all' || date;
+  const hasExtraFilters = search || priority !== 'all' || category !== 'all' || date || filterSource !== 'all';
 
   const resetExtraFilters = () => {
     setSearch('');
     setPriority('all');
     setCategory('all');
     setDate('');
+    setFilterSource('all');
   };
 
   const handleRowAction = (order) => {
@@ -192,6 +204,18 @@ export default function LabOrderListPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+          </div>
+          <div className="lab-filter-group">
+            <label htmlFor="lab-orders-source">Source</label>
+            <select
+              id="lab-orders-source"
+              value={filterSource}
+              onChange={(e) => setFilterSource(e.target.value)}
+            >
+              <option value="all">All</option>
+              <option value="OPD">OPD</option>
+              <option value="IPD">IPD</option>
+            </select>
           </div>
           <div className="lab-filter-group">
             <label htmlFor="lab-orders-priority">Priority</label>
@@ -250,7 +274,9 @@ export default function LabOrderListPage() {
                   <tr>
                     <th>Request ID</th>
                     <th>Patient Name</th>
-                    <th>Patient ID</th>
+                    <th>Source</th>
+                    <th>Ward</th>
+                    <th>Bed</th>
                     <th>Doctor</th>
                     <th>Test</th>
                     <th>Priority</th>
@@ -260,13 +286,22 @@ export default function LabOrderListPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map((o) => (
+                  {orders.map((o) => {
+                    const location = visitLocationLabel(o);
+                    return (
                     <tr key={o.id}>
                       <td>
                         <strong>{o.id}</strong>
                       </td>
-                      <td>{o.patientName}</td>
-                      <td style={{ fontFamily: 'monospace', fontSize: '12.5px', color: '#6b7f99' }}>{o.patientId}</td>
+                      <td className="lab-archive-patient">
+                        <span className="lab-archive-patient__name">{o.patientName}</span>
+                        <span className="lab-archive-meta lab-archive-patient__id">{o.patientId}</span>
+                      </td>
+                      <td>
+                        <LabEncounterBadge encounterType={o.encounterType} />
+                      </td>
+                      <td className="lab-location-cell">{location.ward}</td>
+                      <td className="lab-location-cell">{location.bed}</td>
                       <td>{o.doctorName}</td>
                       <td>{o.testName}</td>
                       <td>
@@ -304,7 +339,8 @@ export default function LabOrderListPage() {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

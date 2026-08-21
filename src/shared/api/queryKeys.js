@@ -111,6 +111,9 @@ export const queryKeys = {
     alerts: (filters) => ['nurse', 'alerts', filters],
     alertSummary: (filters = {}) => ['nurse', 'alert-summary', filters],
     alert: (id) => ['nurse', 'alert', id],
+    doctorVisits: (filters) => ['nurse', 'doctor-visits', filters],
+    doctorVisitsDoctors: (filters = {}) => ['nurse', 'doctor-visits', 'doctors', filters],
+    doctorVisitsDepartments: (filters = {}) => ['nurse', 'doctor-visits', 'departments', filters],
     // Nurse Phase 2 by Atharva — profile + notifications cache keys
     profile: ['nurse', 'profile'],
     notifications: ['nurse', 'notifications'],
@@ -195,11 +198,16 @@ export const queryKeys = {
     patients: {
 
       visits: ['doctor', 'patients', 'visits'],
+      patientVisits: (params) => ['doctor', 'patients', 'patient-visits', params],
 
-      history: (uhid) => ['doctor', 'patients', 'history', uhid],
+      history: (uhid, params) => ['doctor', 'patients', 'history', uhid, params],
 
       prescriptions: (patientId) => ['doctor', 'patients', 'prescriptions', patientId],
 
+    },
+
+    ipd: {
+      admissions: (filters) => ['doctor', 'ipd', 'admissions', filters],
     },
 
   },

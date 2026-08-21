@@ -4,6 +4,7 @@ import {
   getAppointmentStatus,
   isDoctorSchedulableAppointment,
 } from '@/features/doctor/utils/appointmentWorkflow';
+import { isIpdEncounter } from '@/features/doctor/utils/encounterType';
 import { appointmentToVisitRow } from '@/shared/api/mappers/doctorPatientMapper';
 
 export const DASHBOARD_PREVIEW_LIMIT = 10;
@@ -23,6 +24,24 @@ export const PATIENT_CATEGORY_OPTIONS = [
   { value: PATIENT_CATEGORY_FILTER.CANCELLED, label: 'Cancelled' },
   { value: PATIENT_CATEGORY_FILTER.ALL, label: 'All' },
 ];
+
+export const IPD_PATIENT_CATEGORY_FILTER = {
+  ADMITTED: 'admitted',
+  DISCHARGED: 'discharged',
+  ALL: 'all',
+};
+
+export const IPD_PATIENT_CATEGORY_OPTIONS = [
+  { value: IPD_PATIENT_CATEGORY_FILTER.ADMITTED, label: 'Admitted' },
+  { value: IPD_PATIENT_CATEGORY_FILTER.DISCHARGED, label: 'Discharged' },
+  { value: IPD_PATIENT_CATEGORY_FILTER.ALL, label: 'All' },
+];
+
+export const IPD_PATIENT_CATEGORY_VALUES = new Set(
+  Object.values(IPD_PATIENT_CATEGORY_FILTER),
+);
+
+export const OPD_PATIENT_CATEGORY_VALUES = new Set(Object.values(PATIENT_CATEGORY_FILTER));
 
 export const TODAY_APPOINTMENT_CATEGORIES = new Set([
   PATIENT_CATEGORY_FILTER.QUEUE,
@@ -122,6 +141,7 @@ export function buildPatientListByCategory({
   todayAppointments = [],
 }) {
   const todayRows = todayAppointments
+    .filter((a) => !isIpdEncounter(a))
     .filter(isDoctorSchedulableAppointment)
     .map(appointmentToVisitRow)
     .filter(Boolean);
@@ -164,5 +184,30 @@ export function categoryEmptyMessage(category) {
       return 'No patient records found.';
     default:
       return 'No completed visits found. Try adjusting search or date filters.';
+  }
+}
+
+export function ipdCategoryEmptyMessage(category) {
+  switch (category) {
+    case IPD_PATIENT_CATEGORY_FILTER.ADMITTED:
+      return 'No admitted IPD patients found. Try adjusting search or date filters.';
+    case IPD_PATIENT_CATEGORY_FILTER.DISCHARGED:
+      return 'No discharged IPD patients found. Try adjusting search or date filters.';
+    case IPD_PATIENT_CATEGORY_FILTER.ALL:
+      return 'No IPD patients found. Try adjusting search or date filters.';
+    default:
+      return 'No IPD patients found.';
+  }
+}
+
+export function ipdStatusQueryParam(category) {
+  switch (category) {
+    case IPD_PATIENT_CATEGORY_FILTER.DISCHARGED:
+      return 'discharged';
+    case IPD_PATIENT_CATEGORY_FILTER.ALL:
+      return 'all';
+    case IPD_PATIENT_CATEGORY_FILTER.ADMITTED:
+    default:
+      return 'admitted';
   }
 }

@@ -54,12 +54,18 @@ export async function downloadLabReportFile(reportId, token) {
   return fetchLabReportFileBlob(reportId, token);
 }
 
+export async function uploadLabReportFile(orderId, file, token) {
+  return postLabReportFile(orderId, file, token);
+}
+
 /**
- * Full backend workflow: sample → processing → report → complete → required file.
+ * Full backend workflow: sample → processing → report → complete.
+ * Either a report file or at least one test parameter is required.
  */
 export async function submitLabOrderWorkflow(orderId, { currentStatus, form, file }, token) {
-  if (!file) {
-    const err = new Error('Report file is required');
+  const hasParameters = (form?.parameters ?? []).some((p) => String(p?.parameter_name ?? '').trim());
+  if (!file && !hasParameters) {
+    const err = new Error('Upload a report file or enter at least one test parameter');
     err.status = 400;
     throw err;
   }

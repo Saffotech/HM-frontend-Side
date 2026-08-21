@@ -237,6 +237,18 @@
   color: var(--color-text);
 }
 
+.doctor-shell__header-start{
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.doc-encounter-mode--compact .doc-encounter-mode__btn{
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+}
+
 .doctor-shell__header-actions{
   display: flex;
   align-items: center;

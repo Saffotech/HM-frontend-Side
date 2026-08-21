@@ -12,6 +12,8 @@ const API_STATUS_TO_UI = {
   in_progress: 'In Progress',
   completed: 'Completed',
   cancelled: 'Cancelled',
+  admitted: 'Admit',
+  discharged: 'Discharge',
   // Legacy system status — treat as Cancelled in OPD UI.
   no_show: 'Cancelled',
 };
@@ -61,6 +63,18 @@ function formatAppointmentDate(raw) {
 function resolveAppointmentIds(apiAppt) {
   const rawId = apiAppt.id;
   const uid = apiAppt.appointment_uid ?? null;
+  const encounterType = String(apiAppt.encounter_type ?? apiAppt.encounterType ?? '').toUpperCase();
+  const isIpd =
+    encounterType === 'IPD'
+    || String(apiAppt.appointment_type ?? apiAppt.type ?? '').toLowerCase() === 'ipd';
+
+  if (isIpd || (typeof rawId === 'string' && !/^\d+$/.test(String(rawId)))) {
+    return {
+      id: uid ?? String(rawId ?? ''),
+      dbId: null,
+    };
+  }
+
   const numericId =
     typeof rawId === 'number'
       ? rawId
@@ -186,6 +200,13 @@ export function apiToUiAppointment(apiAppt) {
     totalAmount: apiAppt.total_amount ?? apiAppt.totalAmount ?? 0,
     paidAmount: apiAppt.paid_amount ?? apiAppt.paidAmount ?? 0,
     balanceAmount: apiAppt.balance_amount ?? apiAppt.balanceAmount ?? 0,
+    encounterType: apiAppt.encounter_type ?? apiAppt.encounterType ?? 'OPD',
+    registrationSource: apiAppt.registration_source ?? apiAppt.registrationSource ?? null,
+    admissionId: apiAppt.admission_id ?? apiAppt.admissionId ?? null,
+    bedNumber: apiAppt.bed_number ?? apiAppt.bedNumber ?? null,
+    wardName: apiAppt.ward_name ?? apiAppt.wardName ?? null,
+    admittedAt: apiAppt.admitted_at ?? apiAppt.admittedAt ?? null,
+    dischargedAt: apiAppt.discharged_at ?? apiAppt.dischargedAt ?? null,
   };
 }
 

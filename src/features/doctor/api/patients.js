@@ -13,6 +13,7 @@ export async function getPatients(token, params = {}) {
   if (params.year != null) qs.set('year', String(params.year));
   if (params.page_size != null) qs.set('page_size', String(params.page_size));
   else if (params.limit != null) qs.set('page_size', String(params.limit));
+  if (params.encounter_type) qs.set('encounter_type', params.encounter_type);
   const query = qs.toString();
   const path = query ? `/patients?${query}` : '/patients';
   const response = await apiClient(path, { token });
@@ -29,10 +30,16 @@ export async function getPatients(token, params = {}) {
   };
 }
 
-export async function getPatientHistory(patientUhid, token) {
-  const response = await apiClient(
-    `/patients/${encodeURIComponent(patientUhid)}`,
-    { token },
-  );
+export async function getPatientHistory(patientUhid, token, params = {}) {
+  const qs = new URLSearchParams();
+  if (params.page != null) qs.set('page', String(params.page));
+  if (params.page_size != null) qs.set('page_size', String(params.page_size));
+  else if (params.limit != null) qs.set('page_size', String(params.limit));
+  if (params.encounter_type) qs.set('encounter_type', params.encounter_type);
+  const query = qs.toString();
+  const path = query
+    ? `/patients/${encodeURIComponent(patientUhid)}?${query}`
+    : `/patients/${encodeURIComponent(patientUhid)}`;
+  const response = await apiClient(path, { token });
   return unwrapDoctorResponse(response, "patient_history");
 }

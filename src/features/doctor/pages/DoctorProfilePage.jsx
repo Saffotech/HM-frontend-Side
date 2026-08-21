@@ -53,6 +53,42 @@ const GENDER_OPTIONS = [
   { value: 4, label: 'Prefer not to say' },
 ];
 
+const PHONE_COUNTRY_CODES = [
+  { value: '+91', label: '+91 (IN)' },
+  { value: '+92', label: '+92 (PK)' },
+  { value: '+880', label: '+880 (BD)' },
+  { value: '+977', label: '+977 (NP)' },
+  { value: '+94', label: '+94 (LK)' },
+  { value: '+971', label: '+971 (AE)' },
+  { value: '+65', label: '+65 (SG)' },
+  { value: '+44', label: '+44 (UK)' },
+  { value: '+1', label: '+1 (US/CA)' },
+  { value: '+61', label: '+61 (AU)' },
+];
+const CUSTOM_PHONE_CODE = '__other__';
+const PHONE_CODE_PATTERN = /^\+\d{1,4}$/;
+
+function isPresetPhoneCode(code) {
+  return PHONE_COUNTRY_CODES.some((o) => o.value === code);
+}
+
+function formatPhoneCodeInput(value) {
+  const digits = String(value ?? '').replace(/[^\d]/g, '').slice(0, 4);
+  return digits ? `+${digits}` : '+';
+}
+
+function normalizePhoneCode(code) {
+  const formatted = formatPhoneCodeInput(code);
+  return PHONE_CODE_PATTERN.test(formatted) ? formatted : '+91';
+}
+
+function formatPhoneDisplay(code, phone) {
+  const digits = String(phone ?? '').trim();
+  const dial = normalizePhoneCode(code);
+  if (!digits) return null;
+  return `${dial} ${digits}`;
+}
+
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const TEN_DIGIT_PHONE = /^\d{10}$/;
@@ -111,7 +147,7 @@ function buildEditableForm(profile) {
       ? profile.languages.map((l) => capitalizeFirst(l)).join(', ')
       : '',
     phone: formatPhoneInput(profile?.phone ?? ''),
-    phone_code: profile?.phone_code ?? '+91',
+    phone_code: normalizePhoneCode(profile?.phone_code),
     address_line: capitalizeFirst(profile?.address?.line ?? ''),
     city: capitalizeFirst(profile?.address?.city ?? ''),
     state: capitalizeFirst(profile?.address?.state ?? ''),
@@ -317,6 +353,12 @@ export default function DoctorProfilePage() {
     // Doctor Phase 2 by Atharva — phone & emergency_contact_phone must be exactly 10 digits
     const phone = formatPhoneInput(form?.phone);
     const emergencyPhone = formatPhoneInput(form?.emergency_contact_phone);
+    const phoneCode = formatPhoneCodeInput(form?.phone_code);
+    if (!PHONE_CODE_PATTERN.test(phoneCode)) {
+      toast.error('Enter a valid phone code (e.g. +91)');
+      setActiveTab('contact');
+      return;
+    }
     if (!isStrictTenDigitPhone(phone)) {
       toast.error('Phone must be a 10-digit number');
       setActiveTab('contact');
@@ -337,6 +379,7 @@ export default function DoctorProfilePage() {
     const formForSave = {
       ...form,
       phone,
+      phone_code: phoneCode,
       emergency_contact_phone: emergencyPhone,
       gender: Number(form.gender),
     };
@@ -880,26 +923,65 @@ export default function DoctorProfilePage() {
                 {editing && form ? (
                   <>
                     <label className="doc-profile-field">
-                      <span className="doc-profile-field__label">Phone code</span>
-                      <input
-                        className="doc-input"
-                        maxLength={10}
-                        value={form.phone_code}
-                        onChange={(e) => setField('phone_code', e.target.value)}
-                      />
-                    </label>
-                    <label className="doc-profile-field">
                       <span className="doc-profile-field__label">Phone</span>
-                      <input
-                        className="doc-input"
-                        type="tel"
-                        inputMode="numeric"
-                        autoComplete="tel"
-                        maxLength={10}
-                        placeholder="10-digit number"
-                        value={form.phone}
-                        onChange={(e) => setField('phone', formatPhoneInput(e.target.value))}
-                      />
+                      <div
+                        className={`doc-profile-phone${
+                          !isPresetPhoneCode(form.phone_code) ? ' doc-profile-phone--custom' : ''
+                        }`}
+                      >
+                        <select
+                          className="doc-input doc-profile-phone__code"
+                          value={
+                            isPresetPhoneCode(form.phone_code)
+                              ? form.phone_code
+                              : CUSTOM_PHONE_CODE
+                          }
+                          onChange={(e) => {
+                            const next = e.target.value;
+                            if (next === CUSTOM_PHONE_CODE) {
+                              setField(
+                                'phone_code',
+                                isPresetPhoneCode(form.phone_code) ? '+' : form.phone_code || '+'
+                              );
+                              return;
+                            }
+                            setField('phone_code', next);
+                          }}
+                          aria-label="Phone country code"
+                        >
+                          {PHONE_COUNTRY_CODES.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                          <option value={CUSTOM_PHONE_CODE}>Other</option>
+                        </select>
+                        {!isPresetPhoneCode(form.phone_code) ? (
+                          <input
+                            className="doc-input doc-profile-phone__custom"
+                            type="tel"
+                            inputMode="tel"
+                            autoComplete="tel-country-code"
+                            maxLength={5}
+                            placeholder="+___"
+                            value={form.phone_code || '+'}
+                            onChange={(e) =>
+                              setField('phone_code', formatPhoneCodeInput(e.target.value))
+                            }
+                            aria-label="Custom phone code"
+                          />
+                        ) : null}
+                        <input
+                          className="doc-input doc-profile-phone__number"
+                          type="tel"
+                          inputMode="numeric"
+                          autoComplete="tel-national"
+                          maxLength={10}
+                          placeholder="10-digit number"
+                          value={form.phone}
+                          onChange={(e) => setField('phone', formatPhoneInput(e.target.value))}
+                        />
+                      </div>
                     </label>
                     <label className="doc-profile-field">
                       <span className="doc-profile-field__label">Emergency contact name</span>
@@ -986,8 +1068,10 @@ export default function DoctorProfilePage() {
                   </>
                 ) : (
                   <>
-                    <ReadField label="Phone code" value={profile.phone_code} />
-                    <ReadField label="Phone" value={profile.phone} />
+                    <ReadField
+                      label="Phone"
+                      value={formatPhoneDisplay(profile.phone_code, profile.phone)}
+                    />
                     <ReadField
                       label="Emergency contact name"
                       value={profile.emergency_contact?.name}

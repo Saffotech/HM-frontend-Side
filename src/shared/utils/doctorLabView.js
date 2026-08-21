@@ -13,12 +13,15 @@ export const DOCTOR_LAB_FILTERS = [
   { id: 'cancelled', label: 'Cancelled' },
 ];
 
-const RADIOLOGY_TESTS = /x-ray|mri|ct|ecg|scan|radiology|ultrasound/i;
+const RADIOLOGY_TESTS = /x-ray|mri|ct|ecg|scan|radiology|ultrasound|usg|mammography/i;
 
-export function inferTestCategory(testName = '', category = '') {
-  if (category === 'Radiology' || category === 'Lab') return category;
+export function inferTestCategory(testName = '', category = '', departmentName = '') {
+  const cat = String(category ?? '').trim().toLowerCase();
+  const dept = String(departmentName ?? '').trim().toLowerCase();
+  if (cat === 'radiology' || dept.includes('radio')) return 'Radiology';
+  if (cat === 'laboratory' || cat === 'lab' || dept.includes('laborator')) return 'Laboratory';
   if (RADIOLOGY_TESTS.test(testName)) return 'Radiology';
-  return 'Lab';
+  return 'Laboratory';
 }
 
 export function formatLabDateTime(isoOrDate) {
@@ -111,7 +114,7 @@ export function formatNormalRange(parameters = [], fallback = '') {
 }
 
 export function buildDoctorLabTest(order, report, doctorMeta = {}) {
-  const category = inferTestCategory(order.testName, order.category);
+  const category = inferTestCategory(order.testName, order.category, order.departmentName);
   const doctorStatus = getDoctorDisplayStatus(order, doctorMeta);
   const orderedAt = order.orderedAt || order.requestedDate;
   const reportAvailable = isReportAvailable(order, report);

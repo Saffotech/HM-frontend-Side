@@ -3,6 +3,7 @@
  */
 
 import * as nurseApi from '@/features/nurse/api/nurse';
+import * as doctorVisitsApi from '@/features/nurse/api/doctorVisits';
 import {
   mapQueueResponse,
   mapBedPatientsResponse,
@@ -34,6 +35,12 @@ import {
   attachPatientUid,
   resolvePatientUid,
   mapMedicationPatientRow,
+  mapDoctorVisitItem,
+  mapDoctorVisitListResponse,
+  mapDoctorListResponse,
+  mapDepartmentListResponse,
+  toApiDoctorVisitCreateBody,
+  toApiDoctorVisitUpdateBody,
 } from '@/shared/api/mappers/nurseMapper';
 
 /** Backend GET /nurse/queue/today enforces page_size <= 100. */
@@ -486,4 +493,46 @@ export async function getAlert(id, token) {
 
 export async function resolveAlert(alertId, data, token) {
   return nurseApi.resolveAlert(alertId, data, token);
+}
+
+// —— Nurse Doctor Visits ——
+
+/** Backend GET /nurse/doctor-visits (allocated_only drives both API param + cache key). */
+export async function listDoctorVisits(params = {}, token) {
+  const { _scopeMode, allocated_only: allocatedOnlyFlag, ...rest } = params;
+  const allocatedOnly = allocatedOnlyFlag === true || _scopeMode === 'allocated';
+  const apiParams = { ...rest };
+  if (allocatedOnly) apiParams.allocated_only = true;
+  const raw = await doctorVisitsApi.listDoctorVisits(apiParams, token);
+  return mapDoctorVisitListResponse(raw);
+}
+
+/** Backend GET /nurse/doctor-visits/doctors — active doctors for the picker. */
+export async function listActiveDoctors(params = {}, token) {
+  const raw = await doctorVisitsApi.listActiveDoctors(params, token);
+  return mapDoctorListResponse(raw);
+}
+
+/** Backend GET /nurse/other-visits/departments — active departments for the picker. */
+export async function listDepartments(params = {}, token) {
+  const raw = await doctorVisitsApi.listDepartments(params, token);
+  return mapDepartmentListResponse(raw);
+}
+
+/** Backend POST /nurse/doctor-visits. */
+export async function createDoctorVisit(data, token) {
+  const raw = await doctorVisitsApi.createDoctorVisit(toApiDoctorVisitCreateBody(data), token);
+  return mapDoctorVisitItem(raw);
+}
+
+/** Backend PUT /nurse/doctor-visits/{id}. */
+export async function updateDoctorVisit(visitId, data, token) {
+  const raw = await doctorVisitsApi.updateDoctorVisit(visitId, toApiDoctorVisitUpdateBody(data), token);
+  return mapDoctorVisitItem(raw);
+}
+
+/** Backend PUT /nurse/doctor-visits/{id}/void. */
+export async function voidDoctorVisit(visitId, data, token) {
+  const raw = await doctorVisitsApi.voidDoctorVisit(visitId, data, token);
+  return mapDoctorVisitItem(raw);
 }

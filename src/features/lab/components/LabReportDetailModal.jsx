@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { printLabReport } from '@/features/lab/utils/labReportUtils';
 import {
   useLabReportQuery,
@@ -5,17 +6,78 @@ import {
 } from '@/shared/hooks/queries/useLabQuery';
 import { QueryFeedback } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
+import LabEncounterBadge from '@/features/lab/components/LabEncounterBadge';
+import { visitLocationLabel } from '@/features/lab/utils/visitLocation';
+
+function resolvePreviewKind(fileType, fileName) {
+  const mime = String(fileType ?? '').toLowerCase();
+  const name = String(fileName ?? '').toLowerCase();
+
+  if (mime.startsWith('image/')) return 'image';
+  if (mime === 'application/pdf') return 'pdf';
+  if (/\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(name)) return 'image';
+  if (name.endsWith('.pdf')) return 'pdf';
+  return 'other';
+}
 
 /** Full-screen detail — used only on Completed Reports archive page */
 export default function LabReportDetailModal({ report, onClose }) {
   const reportDbId = report?.reportDbId;
   const detailQuery = useLabReportQuery(reportDbId, { enabled: reportDbId != null });
   const downloadFile = useDownloadLabReportFileMutation();
-
-  if (!report) return null;
+  const [preview, setPreview] = useState({
+    url: null,
+    fileName: null,
+    fileType: null,
+    error: null,
+    loading: false,
+  });
 
   const detail = detailQuery.data;
   const display = detail ?? report;
+
+  useEffect(() => {
+    let active = true;
+    let objectUrl = null;
+
+    if (reportDbId == null || !(detail?.fileName || report.hasFile)) {
+      setPreview({ url: null, fileName: null, fileType: null, error: null, loading: false });
+      return () => {};
+    }
+
+    setPreview((prev) => ({ ...prev, loading: true, error: null }));
+
+    downloadFile
+      .mutateAsync(reportDbId)
+      .then(({ blob, fileName, contentType }) => {
+        if (!active) return;
+        objectUrl = URL.createObjectURL(blob);
+        setPreview({
+          url: objectUrl,
+          fileName,
+          fileType: contentType ?? blob.type ?? '',
+          error: null,
+          loading: false,
+        });
+      })
+      .catch(() => {
+        if (!active) return;
+        setPreview({
+          url: null,
+          fileName: detail?.fileName ?? null,
+          fileType: detail?.fileType ?? null,
+          error: 'Could not load the uploaded file preview.',
+          loading: false,
+        });
+      });
+
+    return () => {
+      active = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [reportDbId, detail?.fileName, detail?.fileType, report?.hasFile]);
+
+  if (!report) return null;
 
   const handleDownload = async () => {
     if (!reportDbId) return;
@@ -31,6 +93,9 @@ export default function LabReportDetailModal({ report, onClose }) {
       toast.error('No file available for this report');
     }
   };
+
+  const previewKind = resolvePreviewKind(preview.fileType, preview.fileName);
+  const location = visitLocationLabel(display);
 
   return (
     <div className="lab-modal-overlay lab-report-view-overlay" onClick={onClose} role="presentation">
@@ -66,6 +131,20 @@ export default function LabReportDetailModal({ report, onClose }) {
                 <div className="lab-info-item">
                   <label>Patient ID</label>
                   <span className="lab-report-view__mono">{display.patientId}</span>
+                </div>
+                <div className="lab-info-item">
+                  <label>Source</label>
+                  <span>
+                    <LabEncounterBadge encounterType={display.encounterType} />
+                  </span>
+                </div>
+                <div className="lab-info-item">
+                  <label>Ward</label>
+                  <span>{location.ward}</span>
+                </div>
+                <div className="lab-info-item">
+                  <label>Bed</label>
+                  <span>{location.bed}</span>
                 </div>
                 <div className="lab-info-item">
                   <label>Test Name</label>
@@ -124,6 +203,35 @@ export default function LabReportDetailModal({ report, onClose }) {
                   </div>
                 </div>
               ) : null}
+
+              {(detail?.fileName || report.hasFile) && (
+                <div className="lab-report-view__file">
+                  <h3 className="lab-report-view__params-title">Uploaded Report File</h3>
+                  <div className="lab-report-view__file-wrap">
+                    {preview.loading ? (
+                      <p className="text-muted">Loading uploaded file…</p>
+                    ) : preview.error ? (
+                      <p className="field__error">{preview.error}</p>
+                    ) : preview.url && previewKind === 'image' ? (
+                      <img
+                        src={preview.url}
+                        alt={preview.fileName ?? 'Uploaded report file'}
+                        className="lab-report-view__file-image"
+                      />
+                    ) : preview.url && previewKind === 'pdf' ? (
+                      <iframe
+                        src={preview.url}
+                        title={preview.fileName ?? 'Uploaded report PDF'}
+                        className="lab-report-view__file-frame"
+                      />
+                    ) : (
+                      <p className="text-muted">
+                        Preview is not available for this file type. Use Download File.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </QueryFeedback>
         </div>

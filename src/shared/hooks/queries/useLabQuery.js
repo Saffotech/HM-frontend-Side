@@ -7,6 +7,7 @@ import {
   fetchLabReportById,
   submitLabOrderWorkflow,
   downloadLabReportFile,
+  uploadLabReportFile,
 } from '@/shared/api/services/lab';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
@@ -82,6 +83,21 @@ export function useDownloadLabReportFileMutation() {
   const token = useQueryToken();
   return useMutation({
     mutationFn: (reportId) => downloadLabReportFile(reportId, token),
+    onError: mutationOnError,
+  });
+}
+
+export function useUploadLabReportFileMutation() {
+  const token = useQueryToken();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ orderId, file }) => uploadLabReportFile(orderId, file, token),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.lab.all });
+      if (variables?.orderId != null) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.lab.order(variables.orderId) });
+      }
+    },
     onError: mutationOnError,
   });
 }
