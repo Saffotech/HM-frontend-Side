@@ -180,9 +180,15 @@
   flex: 0 1 15.5rem;
 }
 
+.doc-labs-search__wrap{
+  position: relative;
+  width: 100%;
+}
+
 .doc-labs-search .field,
 .doc-labs-search__field{
   margin: 0;
+  width: 100%;
 }
 
 .doc-labs-search .field__input{
@@ -192,6 +198,39 @@
   min-height: 2.1rem;
   padding-top: 0.35rem;
   padding-bottom: 0.35rem;
+}
+
+.doc-labs-search__wrap--has-clear .field__input{
+  padding-right: 2.1rem;
+}
+
+.doc-labs-search__clear{
+  position: absolute;
+  top: 50%;
+  right: 0.35rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.doc-labs-search__clear:hover{
+  color: #0f172a;
+  background: #f1f5f9;
+}
+
+.doc-labs-search__clear:focus-visible{
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
 }
 
 .doc-labs-filters{
@@ -1588,6 +1627,11 @@
   position: relative;
 }
 
+.doc-patient-search__wrap{
+  position: relative;
+  width: 100%;
+}
+
 .doc-patient-search--inline .field__input{
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
@@ -1597,6 +1641,39 @@
   background: #fff;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.doc-patient-search__wrap--has-clear .field__input{
+  padding-right: 2.25rem;
+}
+
+.doc-patient-search__clear{
+  position: absolute;
+  top: 50%;
+  right: 0.4rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.doc-patient-search__clear:hover{
+  color: #0f172a;
+  background: #f1f5f9;
+}
+
+.doc-patient-search__clear:focus-visible{
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
 }
 
 .doc-patient-search--inline .field__input:focus{
@@ -1814,7 +1891,7 @@
 .doc-profile-grid{
   display: grid;
   gap: 0.65rem;
-  align-items: stretch;
+  align-items: start;
   min-width: 0;
   max-width: 100%;
 }
@@ -1833,16 +1910,7 @@
   min-height: 0;
   min-width: 0;
   max-width: 100%;
-}
-
-.doc-profile-grid > .doc-profile-panel{
-  min-height: 22rem;
-}
-
-@media (min-width: 768px){
-  .doc-profile-grid > .doc-profile-panel {
-    min-height: 26rem;
-  }
+  height: fit-content;
 }
 
 .doc-profile-panel--side,
@@ -1911,7 +1979,6 @@
   font-size: 0.8125rem;
   margin: 0;
   padding: 0.85rem 1rem;
-  flex: 1;
 }
 
 .doc-profile-rx-table-wrap{
@@ -2033,9 +2100,6 @@
   flex-direction: column;
   gap: 0.35rem;
   padding: 0.55rem 0.65rem 0.65rem;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
 }
 
 .doc-visit-card--skeleton{
@@ -2273,9 +2337,6 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
 }
 
 .doc-profile-lab-item{

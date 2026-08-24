@@ -27,7 +27,12 @@ import { resolveLabDepartmentId } from '@/shared/utils/labDepartments';
 import LabTestNameField from './LabTestNameField';
 
 function emptyMedicineRow() {
-  return { ...DEFAULT_MEDICINE, durationValue: '', durationUnit: 'Days' };
+  return {
+    ...DEFAULT_MEDICINE,
+    instructions: '',
+    durationValue: '',
+    durationUnit: 'Days',
+  };
 }
 
 function emptyLabOrderRow() {
@@ -452,13 +457,13 @@ export default function ConsultationModal({
               <div className="doc-med-row__pair">
                 <Input
                   className="doc-med-row__cell"
-                  placeholder="Name"
+                  placeholder="Medicine name"
                   value={m.name}
                   onChange={(e) => setMeds(meds.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))}
                 />
                 <Input
                   className="doc-med-row__cell"
-                  placeholder="Dosage"
+                  placeholder="Dosage - example 200mg"
                   value={m.dosage}
                   onChange={(e) => setMeds(meds.map((x, j) => (j === i ? { ...x, dosage: e.target.value } : x)))}
                 />
@@ -472,7 +477,7 @@ export default function ConsultationModal({
                 />
                 <Input
                   className="doc-med-row__cell"
-                  placeholder="Instructions"
+                  placeholder="Instruction - example after food"
                   value={m.instructions}
                   onChange={(e) => setMeds(meds.map((x, j) => (j === i ? { ...x, instructions: e.target.value } : x)))}
                 />
@@ -483,7 +488,7 @@ export default function ConsultationModal({
                   type="number"
                   min={1}
                   max={365}
-                  placeholder="e.g. 5"
+                  placeholder="No. of days / weeks / months"
                   value={m.durationValue ?? ''}
                   onChange={(e) => {
                     setMeds(meds.map((x, j) => (j === i ? { ...x, durationValue: e.target.value } : x)));

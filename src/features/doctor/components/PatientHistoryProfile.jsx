@@ -8,7 +8,6 @@ import {
   Edit3,
   Eye,
   FileText,
-  Link2,
   Phone,
   Pill,
   Plus,
@@ -73,13 +72,11 @@ export default function PatientHistoryProfile({
   const {
     data: historyData,
     isPending: historyPending,
-    isFetching: historyFetching,
   } = useDoctorPatientHistoryQuery(patientUid, { placeholderVisits });
 
   const {
     data: ipdAdmissions = [],
     isPending: ipdAdmissionsPending,
-    isFetching: ipdAdmissionsFetching,
   } = useDoctorIpdPatientAdmissionsQuery(patientUid);
 
   const [consultCacheTick, setConsultCacheTick] = useState(0);
@@ -172,7 +169,6 @@ export default function PatientHistoryProfile({
 
   const showVisitSkeleton =
     (historyPending || ipdAdmissionsPending) && visits.length === 0;
-  const historyRefreshing = historyFetching || ipdAdmissionsFetching;
 
   const patientLabs = useMemo(
     () =>
@@ -323,11 +319,6 @@ export default function PatientHistoryProfile({
               <FileText size={16} aria-hidden />
               Visit History
             </h3>
-            {visits.length > 0 ? (
-              <span className="doc-profile-panel__hint">
-                Newest first{historyRefreshing ? ' · updating…' : ''}
-              </span>
-            ) : null}
           </div>
           {showVisitSkeleton ? (
             <VisitHistorySkeleton />
@@ -389,11 +380,13 @@ export default function PatientHistoryProfile({
         </section>
       </div>
 
-      <DoctorPatientVisitsPanel
-        patientId={patientId}
-        patientUid={patientUid}
-        admissions={ipdAdmissions}
-      />
+      {!isOpdMode ? (
+        <DoctorPatientVisitsPanel
+          patientId={patientId}
+          patientUid={patientUid}
+          admissions={ipdAdmissions}
+        />
+      ) : null}
 
       <PrescriptionDetailModal
         prescriptionId={prescriptionModal.id}
@@ -488,23 +481,6 @@ function VisitHistoryItem({ visit, isLatest }) {
               <p className="doc-visit-detail-tile__value">{visit.followUp || '—'}</p>
             </div>
           </div>
-
-          {visit.medicines.length > 0 && (
-            <div className="doc-visit-rx-block">
-              <div className="doc-visit-rx-block__head">
-                <Link2 size={14} aria-hidden />
-                <span>Prescription</span>
-              </div>
-              <ul className="doc-visit-rx-list">
-                {visit.medicines.map((m, i) => (
-                  <li key={i} className="doc-visit-rx-item">
-                    <span className="doc-visit-rx-item__name">{m.name}</span>
-                    {m.dosage && <span className="doc-visit-rx-item__dose">{m.dosage}</span>}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
       )}
     </article>

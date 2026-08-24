@@ -40,7 +40,7 @@ function IpdTableSkeleton({ showActions, showWardBedColumn }) {
             {showWardBedColumn ? <th scope="col">Ward / Bed No</th> : null}
             <th scope="col">Date</th>
             <th scope="col">Status</th>
-            <th scope="col">No of visits</th>
+            <th scope="col" className="doc-dashboard-table__visit-count">No of visits</th>
             {showActions ? (
               <th scope="col" className="doc-dashboard-table__th-actions">
                 Actions
@@ -56,7 +56,7 @@ function IpdTableSkeleton({ showActions, showWardBedColumn }) {
               {showWardBedColumn ? <td><Skeleton height={14} width={88} /></td> : null}
               <td><Skeleton height={14} width={72} /></td>
               <td><Skeleton height={22} width={72} /></td>
-              <td><Skeleton height={14} width={40} /></td>
+              <td className="doc-dashboard-table__visit-count"><Skeleton height={14} width={40} /></td>
               {showActions ? (
                 <td><Skeleton height={30} width={72} /></td>
               ) : null}
@@ -122,7 +122,7 @@ function DoctorIpdPatientsTable({
                   {showWardBedColumn ? <th scope="col">Ward / Bed No</th> : null}
                   <th scope="col">Date</th>
                   <th scope="col">Status</th>
-                  <th scope="col">No of visits</th>
+                  <th scope="col" className="doc-dashboard-table__visit-count">No of visits</th>
                   {showActions ? (
                     <th scope="col" className="doc-dashboard-table__th-actions">
                       Actions

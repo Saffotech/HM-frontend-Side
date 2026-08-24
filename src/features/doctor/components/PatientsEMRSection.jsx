@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient, useQueries } from '@tanstack/react-query';
 
-import { Users, Filter, ChevronRight, ChevronDown, CalendarDays, RotateCcw, Check } from 'lucide-react';
+import { Users, Filter, ChevronRight, ChevronDown, CalendarDays, RotateCcw, Check, X } from 'lucide-react';
 
 import { useDoctorPatientVisitsQuery } from '@/features/doctor/hooks/useDoctorPatientQuery';
 
@@ -604,12 +604,27 @@ export default function PatientsEMRSection({
 
           <div className="doc-patients-page__toolbar">
           <div className="doc-patient-search doc-patient-search--inline">
-            <Input
-              className="doc-patient-search__field"
-              placeholder="Search by name or patient ID…"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
+            <div
+              className={`doc-patient-search__wrap${q.trim() ? ' doc-patient-search__wrap--has-clear' : ''}`}
+            >
+              <Input
+                className="doc-patient-search__field"
+                placeholder="Search by name or patient ID…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                aria-label="Search patients"
+              />
+              {q.trim() ? (
+                <button
+                  type="button"
+                  className="doc-patient-search__clear"
+                  onClick={() => setQ('')}
+                  aria-label="Clear search"
+                >
+                  <X size={14} aria-hidden />
+                </button>
+              ) : null}
+            </div>
           </div>
 
           <div

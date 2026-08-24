@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { Beaker, Eye, Scan } from 'lucide-react';
+import { Beaker, Eye, Scan, X } from 'lucide-react';
 import {
   useDoctorLabTestsQuery,
   useUpdateLabTestMutation,
@@ -169,18 +169,34 @@ function LabTestsList({
     [searched, filter]
   );
 
+  const hasSearch = Boolean(String(search ?? '').trim());
+
   return (
     <>
       <header className="doc-labs-toolbar">
         <h2>Lab Tests</h2>
         <div className="doc-labs-search">
-          <Input
-            className="doc-labs-search__field"
-            placeholder="Search patient by name or ID…"
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            aria-label="Search patient"
-          />
+          <div
+            className={`doc-labs-search__wrap${hasSearch ? ' doc-labs-search__wrap--has-clear' : ''}`}
+          >
+            <Input
+              className="doc-labs-search__field"
+              placeholder="Search patient by name or ID…"
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+              aria-label="Search patient"
+            />
+            {hasSearch ? (
+              <button
+                type="button"
+                className="doc-labs-search__clear"
+                onClick={() => onSearchChange('')}
+                aria-label="Clear search"
+              >
+                <X size={14} aria-hidden />
+              </button>
+            ) : null}
+          </div>
         </div>
         <div className="doc-labs-filters" role="tablist" aria-label="Filter lab tests">
           {DOCTOR_LAB_FILTERS.map((f) => (

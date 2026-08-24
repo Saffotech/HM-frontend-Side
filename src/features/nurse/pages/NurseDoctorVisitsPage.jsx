@@ -12,10 +12,11 @@ import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
 import { ROUTES } from '@/shared/constants';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
-import { useIpdPatientsQuery } from '@/features/ipd/hooks/useIpdQuery';
-import { IPD_ADMISSION_STATUS } from '@/features/ipd/utils/constants';
 import { formatIpdDateTime } from '@/features/ipd/utils/ipdFormat';
-import { useNurseDoctorVisitsQuery } from '@/shared/hooks/queries/useNurseQuery';
+import {
+  useNurseBedPatientsQuery,
+  useNurseDoctorVisitsQuery,
+} from '@/shared/hooks/queries/useNurseQuery';
 
 const PAGE_SIZE = 20;
 const FETCH_PAGE_SIZE = 100;
@@ -24,8 +25,14 @@ const WARD_OPTIONS = ['ICU', 'Private', 'General'];
 export default function NurseDoctorVisitsPage() {
   const navigate = useNavigate();
   const { canViewDoctorVisits, canCreateDoctorVisits } = useNursePermissionSet();
-  const { scopeReady, allocatedOnly, listMode, allocationSummary, isPatientInScope } =
-    useNursePatientScope();
+  const {
+    scopeReady,
+    allocatedOnly,
+    listMode,
+    allocationSummary,
+    scopeFilters,
+    isPatientInScope,
+  } = useNursePatientScope();
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -41,16 +48,15 @@ export default function NurseDoctorVisitsPage() {
   const filters = useMemo(
     () => ({
       search: debouncedSearch || undefined,
-      status: IPD_ADMISSION_STATUS.ADMITTED,
-      ward: ward || undefined,
-      admissionDate: admissionDate || undefined,
+      ward_name: ward || undefined,
       page: 1,
-      limit: FETCH_PAGE_SIZE,
+      page_size: FETCH_PAGE_SIZE,
+      ...scopeFilters,
     }),
-    [debouncedSearch, ward, admissionDate],
+    [debouncedSearch, ward, scopeFilters],
   );
 
-  const { data, isLoading, isFetching, isError, error, refetch } = useIpdPatientsQuery(
+  const { data, isLoading, isFetching, isError, error, refetch } = useNurseBedPatientsQuery(
     filters,
     { enabled: scopeReady && canViewDoctorVisits },
   );
@@ -81,10 +87,18 @@ export default function NurseDoctorVisitsPage() {
   }, [visitsData?.items]);
 
   const allRows = useMemo(() => {
-    const items = data?.items ?? [];
+    let items = data?.items ?? [];
+    // Admission-date filter stays client-side (nurse beds API has no admission_date param).
+    if (admissionDate) {
+      items = items.filter((row) => {
+        const raw = row.admitted_at;
+        if (!raw) return false;
+        return String(raw).slice(0, 10) === admissionDate;
+      });
+    }
     if (!allocatedOnly) return items;
     return items.filter((row) => isPatientInScope(row.patient_id));
-  }, [data?.items, allocatedOnly, isPatientInScope]);
+  }, [data?.items, admissionDate, allocatedOnly, isPatientInScope]);
 
   const total = allRows.length;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
