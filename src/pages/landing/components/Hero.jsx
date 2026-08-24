@@ -12,8 +12,8 @@ import heroDashboard from '@/assets/hero-dashboard.png';
 import './Hero.css';
 
 const TRUST_ITEMS = [
-  { icon: Users, label: '8 Staff Roles' },
-  { icon: ClipboardList, label: 'OPD to Pharmacy' },
+  { icon: Users, label: '9 Staff Roles' },
+  { icon: ClipboardList, label: 'OPD & IPD to Pharmacy' },
   { icon: ShieldCheck, label: 'Role-Based Access' },
 ];
 
