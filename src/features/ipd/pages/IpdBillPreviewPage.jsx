@@ -36,14 +36,13 @@ import {
   useIpdSelfPayBillingBundleQuery,
   useSaveIpdSelfPayDailyBillingMutation,
   useSaveIpdSelfPayFinalBillingMutation,
+  useIpdAdmissionInsuranceQuery,
 } from '@/features/ipd/hooks/useIpdBillingQuery';
 import { initChargeHeadsFromClaim, buildSelfPayBillingBundle } from '@/features/ipd/billing/ipdBillingMapper';
-import { loadSelfPayBillingState } from '@/features/ipd/billing/ipdSelfPayBillingStorage';
 import { initDailyCharges } from '@/features/ipd/utils/insuranceDailyCharges';
 import { buildIpdProvisionalInvoice } from '@/features/ipd/utils/ipdBillPrintModel';
 import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
 import { resolveIpdBillPreviewPayment } from '@/features/ipd/utils/resolveIpdBillPreviewPayment';
-import { loadPayAndClaimInsuranceContext } from '@/features/ipd/utils/dummyInsuranceClaim';
 import '@/features/opd/billing/pages/ViewBillPage.css';
 
 export default function IpdBillPreviewPage() {
@@ -73,6 +72,7 @@ export default function IpdBillPreviewPage() {
     doctorVisits,
     enabled: Boolean(admissionId),
   });
+  const admissionInsuranceQuery = useIpdAdmissionInsuranceQuery(admissionId);
   const saveFinalBillingMutation = useSaveIpdSelfPayFinalBillingMutation();
   const saveDailyBillingMutation = useSaveIpdSelfPayDailyBillingMutation();
 
@@ -81,7 +81,7 @@ export default function IpdBillPreviewPage() {
   const [charges, setCharges] = useState(() => initChargeHeadsFromClaim(null));
   const [dailyCharges, setDailyCharges] = useState([]);
 
-  // Sync from billing bundle or preview + sessionStorage (do not wipe while user edits).
+  // Sync from billing bundle or live preview (do not wipe while user edits).
   useEffect(() => {
     if (!admissionId) return;
 
@@ -96,7 +96,7 @@ export default function IpdBillPreviewPage() {
               admittedAt,
               doctorVisits,
             },
-            loadSelfPayBillingState(admissionId),
+            null,
           )
         : null);
 
@@ -155,10 +155,7 @@ export default function IpdBillPreviewPage() {
     [preview, detailQuery.data],
   );
 
-  const payClaimInsurance = useMemo(
-    () => loadPayAndClaimInsuranceContext(admissionId),
-    [admissionId],
-  );
+  const payClaimInsurance = admissionInsuranceQuery.data ?? null;
 
   const basePrintInvoice = printableBill?.id ? invoiceQuery.data : provisionalInvoice;
   const printInvoice = useMemo(() => {
@@ -425,7 +422,7 @@ export default function IpdBillPreviewPage() {
       {billingQuery.isLoading && !preview ? (
         <div className="ipd-card">
           <div className="ipd-card__body">
-            <QueryFeedback loading />
+            <QueryFeedback isLoading />
           </div>
         </div>
       ) : null}

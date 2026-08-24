@@ -11,8 +11,9 @@ import IpdPageHeader from '@/features/ipd/components/IpdPageHeader';
 import { useIpdPermissionSet } from '@/features/ipd/hooks/useIpdPermission';
 import IpdPermissionButton from '@/features/ipd/components/IpdPermissionButton';
 import { useIpdRunningBillsQuery } from '@/features/ipd/hooks/useIpdQuery';
+import { useIpdInsuranceBillsQuery } from '@/features/ipd/hooks/useIpdBillingQuery';
 import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
-import { getDummyInsuranceBills } from '@/features/ipd/utils/dummyInsuranceClaim';
+import { mapInsuranceBillRow } from '@/features/ipd/utils/mapInsuranceApi';
 import {
   IPD_PAYMENT_TYPE,
   IPD_PAYMENT_TYPE_GROUP,
@@ -46,6 +47,10 @@ export default function IpdBillingPage() {
   );
   const debouncedSearch = useDebouncedValue(search, 300);
   const { data, isLoading, isError, error, refetch } = useIpdRunningBillsQuery();
+  const insuranceBillsQuery = useIpdInsuranceBillsQuery(
+    {},
+    { enabled: isInsuranceCashlessPaymentType(paymentType) },
+  );
   const paymentTypeGroup = getPaymentTypeGroup(paymentType);
   const showInsuranceCashless = isInsuranceCashlessPaymentType(paymentType);
   // Self AND copay both use the same live self-pay billing table.
@@ -73,7 +78,7 @@ export default function IpdBillingPage() {
   };
 
   const insuranceRows = useMemo(() => {
-    const mapped = getDummyInsuranceBills({ cashlessOnly: true });
+    const mapped = (insuranceBillsQuery.data?.items ?? []).map(mapInsuranceBillRow);
     const q = debouncedSearch.trim().toLowerCase();
     if (!q) return mapped;
 
@@ -93,7 +98,7 @@ export default function IpdBillingPage() {
         .toLowerCase();
       return hay.includes(q);
     });
-  }, [debouncedSearch]);
+  }, [debouncedSearch, insuranceBillsQuery.data?.items]);
 
   const rows = useMemo(() => {
     const mapped = (data?.items ?? []).map((item) => {
@@ -122,7 +127,7 @@ export default function IpdBillingPage() {
     });
 
     const byPaymentType = mapped.filter((row) =>
-      matchesPaymentType(row.id, row.patient_uid, paymentType),
+      matchesPaymentType(row, paymentType),
     );
 
     const q = debouncedSearch.trim().toLowerCase();

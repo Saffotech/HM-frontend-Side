@@ -1,5 +1,5 @@
 /**
- * Maps backend / dummy / live-preview billing payloads to the canonical frontend model
+ * Maps backend / live-preview billing payloads to the canonical frontend model
  * and to existing insurance UI shapes (daily rows, charge heads).
  */
 
@@ -20,7 +20,6 @@ import {
   sortDailyCharges,
   rollupDailyChargesToChargeHeads,
 } from '@/features/ipd/utils/insuranceDailyCharges';
-import { mergePharmacyDispenseIntoDailyCharges } from '@/features/pharmacy/utils/dispensePricing';
 
 /** Live self-pay preview item_type → billing source (existing backend contract). */
 const PREVIEW_ITEM_TYPE_TO_SOURCE = {
@@ -155,7 +154,7 @@ export function buildInsuranceBillingBundle({
   patient,
   claim,
   insuranceAdmit,
-  dataSource = 'dummy',
+  dataSource = 'api',
 }) {
   const admissionId = resolveAdmissionIdFromBillingContext({
     patient,
@@ -164,11 +163,7 @@ export function buildInsuranceBillingBundle({
   });
   const patientId = patient?.id ?? null;
   const claimId = claim?.id ?? null;
-  const dailyCharges = mergePharmacyDispenseIntoDailyCharges(initDailyCharges(claim), {
-    admissionId,
-    patientId,
-    patientUid: patient?.uhid ?? patient?.patient_uid ?? null,
-  });
+  const dailyCharges = initDailyCharges(claim);
   const baseChargeHeads = initChargeHeadsFromClaim(claim);
   const rolledChargeHeads = rollupDailyChargesToChargeHeads(dailyCharges, baseChargeHeads);
   const chargeHeads = rolledChargeHeads.map((head) => {
@@ -455,12 +450,7 @@ export function buildSelfPayBillingBundle(preview, context = {}, storedState = n
   const admissionId = String(
     context.admissionId ?? preview?.admission_id ?? '',
   );
-  const mergedDaily = mergeSelfPayDailyCharges(preview, storedState, context);
-  const dailyCharges = mergePharmacyDispenseIntoDailyCharges(mergedDaily, {
-    admissionId,
-    patientId: context.patientId ?? null,
-    patientUid: context.patientUid ?? preview?.patient_uid ?? null,
-  });
+  const dailyCharges = mergeSelfPayDailyCharges(preview, storedState, context);
   const chargeHeads = initSelfPayChargeHeads(
     preview,
     storedState,
@@ -486,7 +476,7 @@ export function buildSelfPayBillingBundle(preview, context = {}, storedState = n
     transactions: [...autoTransactions, ...manualTransactions],
     dailyCharges,
     finalBilling: buildFinalBillingSummary(chargeHeads),
-    dataSource: storedState ? 'local' : 'api',
+    dataSource: 'api',
   };
 }
 

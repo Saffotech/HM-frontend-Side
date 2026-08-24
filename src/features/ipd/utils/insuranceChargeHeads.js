@@ -96,7 +96,7 @@ export function canRemoveChargeHead(row) {
   return Boolean(row?.id);
 }
 
-/** Normalize legacy/dummy rows into a consistent API-ready shape. */
+/** Normalize charge-head rows into a consistent API-ready shape. */
 export function normalizeInsuranceChargeHeads(charges) {
   if (!Array.isArray(charges)) {
     return cloneDefaultChargeHeads();

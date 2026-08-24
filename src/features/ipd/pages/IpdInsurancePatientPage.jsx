@@ -1,20 +1,18 @@
 /**
- * Insurance patient profile — UI preview when Open is clicked
- * from Patients list (Payment type = Insurance).
+ * Insurance patient profile — shown when Open is clicked from Patients
+ * (Payment type = Insurance).
  */
 
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Button, EmptyState } from '@/shared/components/common';
+import { Button, EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import EditInsuranceModal from '@/features/ipd/components/EditInsuranceModal';
 import useIpdBackNavigation from '@/features/ipd/hooks/useIpdBackNavigation';
 import {
-  loadInsuranceAdmitContext,
-  persistInsuranceAdmitContext,
-  resolveInsurancePatientContext,
-  updateInsuranceClaim,
-} from '@/features/ipd/utils/dummyInsuranceClaim';
+  useIpdInsurancePatientQuery,
+  useUpdateIpdInsurancePatientMutation,
+} from '@/features/ipd/hooks/useIpdBillingQuery';
 import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
 
 function Fact({ label, value }) {
@@ -34,14 +32,22 @@ export default function IpdInsurancePatientPage() {
     `${ROUTES.IPD_PATIENTS}?paymentType=insurance_cashless`,
   );
 
-  const { patient, claim: seedClaim } = useMemo(
-    () =>
-      resolveInsurancePatientContext(
-        patientId,
-        location.state?.insuranceAdmit,
-      ),
-    [patientId, location.state],
-  );
+  const patientQuery = useIpdInsurancePatientQuery(patientId);
+  const updatePatientMutation = useUpdateIpdInsurancePatientMutation();
+  const navAdmit = location.state?.insuranceAdmit;
+
+  const { patient, claim: seedClaim } = useMemo(() => {
+    if (patientQuery.data?.patient && patientQuery.data?.claim) {
+      return {
+        patient: patientQuery.data.patient,
+        claim: patientQuery.data.claim,
+      };
+    }
+    if (navAdmit?.patient && navAdmit?.claim) {
+      return { patient: navAdmit.patient, claim: navAdmit.claim };
+    }
+    return { patient: null, claim: null };
+  }, [patientQuery.data, navAdmit]);
 
   const [editOpen, setEditOpen] = useState(false);
   const [insurance, setInsurance] = useState(null);
@@ -50,6 +56,26 @@ export default function IpdInsurancePatientPage() {
     if (!seedClaim) return null;
     return { ...seedClaim, ...(insurance ?? {}) };
   }, [seedClaim, insurance]);
+
+  if (patientQuery.isLoading) {
+    return (
+      <div className="ipd-page">
+        <QueryFeedback isLoading />
+      </div>
+    );
+  }
+
+  if (patientQuery.isError) {
+    return (
+      <div className="ipd-page">
+        <QueryFeedback
+          isError
+          error={patientQuery.error}
+          onRetry={patientQuery.refetch}
+        />
+      </div>
+    );
+  }
 
   if (!patient || !claim) {
     return (
@@ -202,24 +228,10 @@ export default function IpdInsurancePatientPage() {
         onClose={() => setEditOpen(false)}
         initial={claim}
         onSave={(next) => {
-          setInsurance((prev) => {
-            const merged = { ...(prev ?? {}), ...next };
-            const ctx = loadInsuranceAdmitContext(patientId);
-            if (ctx?.claim) {
-              persistInsuranceAdmitContext(patientId, {
-                ...ctx,
-                claim: { ...ctx.claim, ...merged },
-                patient: {
-                  ...ctx.patient,
-                  insurer: merged.insurer ?? ctx.patient.insurer,
-                  policyNo: merged.policyNo ?? ctx.patient.policyNo,
-                },
-              });
-            }
-            if (seedClaim?.id) {
-              updateInsuranceClaim(seedClaim.id, merged);
-            }
-            return merged;
+          setInsurance((prev) => ({ ...(prev ?? {}), ...next }));
+          updatePatientMutation.mutate({
+            patientId,
+            payload: next,
           });
         }}
       />

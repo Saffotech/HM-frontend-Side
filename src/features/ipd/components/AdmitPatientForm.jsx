@@ -32,9 +32,7 @@ import {
   buildInsuranceAdmitContext,
   buildPayAndClaimInsuranceProfile,
   insuranceAdmitRouteId,
-  persistInsuranceAdmitContext,
-  persistPayAndClaimInsuranceContext,
-} from "@/features/ipd/utils/dummyInsuranceClaim";
+} from "@/features/ipd/utils/insuranceAdmitPayload";
 import { validateRegisterPatient } from "@/features/opd/utils/registerPatientUtils";
 
 const INITIAL = {
@@ -285,19 +283,18 @@ export default function AdmitPatientForm() {
       if (values.paymentMode === "insurance") {
         if (values.insuranceClaimType === "pay_and_claim") {
           const profile = buildPayAndClaimInsuranceProfile(created, values);
-          persistPayAndClaimInsuranceContext(created.id, profile);
           navigate(
             ROUTES.IPD_PATIENT_DETAIL.replace(
               ":admissionId",
               String(created.id),
             ),
+            { state: { payAndClaimInsurance: profile } },
           );
           return;
         }
 
         const insuranceAdmit = buildInsuranceAdmitContext(created, values);
         const routePatientId = insuranceAdmitRouteId(created);
-        persistInsuranceAdmitContext(routePatientId, insuranceAdmit);
         navigate(
           ROUTES.IPD_INSURANCE_PATIENT.replace(":patientId", routePatientId),
           { state: { insuranceAdmit } },

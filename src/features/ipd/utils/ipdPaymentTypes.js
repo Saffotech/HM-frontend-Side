@@ -1,9 +1,6 @@
 /** IPD list filters — self vs insurance cashless vs insurance copay. */
 
-import {
-  isCashlessAdmission,
-  isPayAndClaimAdmission,
-} from '@/features/ipd/utils/dummyInsuranceClaim';
+import { paymentTypeFromRecord } from '@/features/ipd/utils/mapInsuranceApi';
 
 export const IPD_PAYMENT_TYPE = {
   SELF: 'self',
@@ -78,26 +75,15 @@ export function paymentTypeQueryValue(type) {
 }
 
 /**
- * Filter patients / bills by payment type.
- * - Self            → not cashless, not copay/pay-and-claim
- * - Insurance/Cashless    → isCashlessAdmission (patient_uid key)
- * - Insurance/Copay → isPayAndClaimAdmission (admission ID key)
+ * Filter a live admission / bill row by payment type.
+ * Uses API fields when present; otherwise treats the row as self-pay.
  */
-export function matchesPaymentType(admissionId, patientUid, paymentType) {
-  const copay = isPayAndClaimAdmission(admissionId);
-  const cashless = isCashlessAdmission(patientUid);
-
-  if (paymentType === IPD_PAYMENT_TYPE.INSURANCE_COPAY) {
-    return copay;
-  }
-  if (paymentType === IPD_PAYMENT_TYPE.INSURANCE_CASHLESS) {
-    return cashless;
-  }
-  // Self — exclude cashless and copay admissions
-  return !copay && !cashless;
+export function matchesPaymentType(record, paymentType) {
+  const resolved = paymentTypeFromRecord(record) ?? IPD_PAYMENT_TYPE.SELF;
+  return resolved === paymentType;
 }
 
-/** @deprecated use matchesPaymentType */
-export function matchesSelfBillingPaymentType(admissionId, paymentType) {
-  return matchesPaymentType(admissionId, null, paymentType);
+/** @deprecated use matchesPaymentType(record, paymentType) */
+export function matchesSelfBillingPaymentType(record, paymentType) {
+  return matchesPaymentType(record, paymentType);
 }

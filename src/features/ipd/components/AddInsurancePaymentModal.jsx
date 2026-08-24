@@ -1,5 +1,5 @@
 /**
- * Add Insurance Payment modal — UI only (dummy claim flow).
+ * Add Insurance Payment modal — collects payment details for the claim API.
  */
 
 import { useEffect, useState } from 'react';

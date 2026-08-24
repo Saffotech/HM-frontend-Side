@@ -1,6 +1,6 @@
 /**
  * IPD billing React Query hooks — insurance + self-pay data layer.
- * UI components should consume these instead of dummy/sessionStorage directly.
+ * UI components should consume these instead of reading billing data from the page.
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -17,6 +17,18 @@ import {
   saveIpdSelfPayDailyCharges,
   saveIpdSelfPayFinalCharges,
 } from '@/features/ipd/billing/ipdBillingRepository';
+import {
+  addIpdInsurancePatientPayment,
+  addIpdInsurancePayment,
+  getIpdAdmissionInsurance,
+  getIpdInsuranceBills,
+  getIpdInsuranceClaim,
+  getIpdInsurancePatient,
+  getIpdInsurancePatients,
+  updateIpdAdmissionInsurance,
+  updateIpdInsuranceClaim,
+  updateIpdInsurancePatient,
+} from '@/features/ipd/api/insurance';
 import {
   selectDailyBillingFromBundle,
   selectFinalBillingFromBundle,
@@ -64,7 +76,7 @@ export function useIpdInsuranceBillingBundleQuery({
   });
 }
 
-/** Combined billing bundle — insurance (dummy/API) or self-pay by admission. */
+/** Combined billing bundle — insurance or self-pay by admission. */
 export function useIpdBillingQuery({
   patientId,
   insuranceAdmit,
@@ -288,4 +300,138 @@ export function useIpdPatientBillingContext(admissionId) {
       billingQuery.refetch();
     },
   };
+}
+
+const insuranceQueryKeys = {
+  patients: (filters) => ['ipd', 'insurance', 'patients', filters],
+  patient: (patientId) => ['ipd', 'insurance', 'patient', patientId],
+  claim: (claimId) => ['ipd', 'insurance', 'claim', claimId],
+  bills: (filters) => ['ipd', 'insurance', 'bills', filters],
+  admission: (admissionId) => ['ipd', 'insurance', 'admission', admissionId],
+};
+
+export function useIpdInsurancePatientsQuery(filters = {}, options = {}) {
+  const token = useQueryToken();
+  return useQuery({
+    queryKey: insuranceQueryKeys.patients(filters),
+    queryFn: () => getIpdInsurancePatients(filters, token),
+    enabled: options.enabled !== false && Boolean(token),
+    staleTime: 10_000,
+  });
+}
+
+export function useIpdInsurancePatientQuery(patientId, options = {}) {
+  const token = useQueryToken();
+  return useQuery({
+    queryKey: insuranceQueryKeys.patient(patientId),
+    queryFn: () => getIpdInsurancePatient(patientId, token),
+    enabled: options.enabled !== false && Boolean(patientId) && Boolean(token),
+    staleTime: 10_000,
+  });
+}
+
+export function useIpdInsuranceBillsQuery(filters = {}, options = {}) {
+  const token = useQueryToken();
+  return useQuery({
+    queryKey: insuranceQueryKeys.bills(filters),
+    queryFn: () => getIpdInsuranceBills(filters, token),
+    enabled: options.enabled !== false && Boolean(token),
+    staleTime: 10_000,
+  });
+}
+
+export function useIpdInsuranceClaimQuery(claimId, options = {}) {
+  const token = useQueryToken();
+  return useQuery({
+    queryKey: insuranceQueryKeys.claim(claimId),
+    queryFn: () => getIpdInsuranceClaim(claimId, token),
+    enabled: options.enabled !== false && Boolean(claimId) && Boolean(token),
+    staleTime: 10_000,
+  });
+}
+
+export function useIpdAdmissionInsuranceQuery(admissionId, options = {}) {
+  const token = useQueryToken();
+  return useQuery({
+    queryKey: insuranceQueryKeys.admission(admissionId),
+    queryFn: () => getIpdAdmissionInsurance(admissionId, token),
+    enabled: options.enabled !== false && Boolean(admissionId) && Boolean(token),
+    staleTime: 10_000,
+  });
+}
+
+export function useUpdateIpdInsuranceClaimMutation() {
+  const token = useQueryToken();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ claimId, payload }) =>
+      updateIpdInsuranceClaim(claimId, payload, token),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['ipd', 'insurance'] });
+      if (variables.claimId) {
+        queryClient.invalidateQueries({
+          queryKey: insuranceQueryKeys.claim(variables.claimId),
+        });
+      }
+    },
+    onError: mutationOnError,
+  });
+}
+
+export function useUpdateIpdInsurancePatientMutation() {
+  const token = useQueryToken();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ patientId, payload }) =>
+      updateIpdInsurancePatient(patientId, payload, token),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ipd', 'insurance'] });
+    },
+    onError: mutationOnError,
+  });
+}
+
+export function useUpdateIpdAdmissionInsuranceMutation() {
+  const token = useQueryToken();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ admissionId, payload }) =>
+      updateIpdAdmissionInsurance(admissionId, payload, token),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: insuranceQueryKeys.admission(variables.admissionId),
+      });
+    },
+    onError: mutationOnError,
+  });
+}
+
+export function useAddIpdInsurancePaymentMutation() {
+  const token = useQueryToken();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ claimId, payload }) =>
+      addIpdInsurancePayment(claimId, payload, token),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: insuranceQueryKeys.claim(variables.claimId),
+      });
+    },
+    onError: mutationOnError,
+  });
+}
+
+export function useAddIpdInsurancePatientPaymentMutation() {
+  const token = useQueryToken();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ claimId, payload }) =>
+      addIpdInsurancePatientPayment(claimId, payload, token),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: insuranceQueryKeys.claim(variables.claimId),
+      });
+    },
+    onError: mutationOnError,
+  });
 }

@@ -14,10 +14,11 @@ import BedTransferModal from '@/features/ipd/components/BedTransferModal';
 import { useIpdPermissionSet } from '@/features/ipd/hooks/useIpdPermission';
 import IpdPermissionButton from '@/features/ipd/components/IpdPermissionButton';
 import { useIpdPatientsQuery } from '@/features/ipd/hooks/useIpdQuery';
+import { useIpdInsurancePatientsQuery } from '@/features/ipd/hooks/useIpdBillingQuery';
 import { useIpdWardOptions } from '@/features/ipd/hooks/useIpdWardOptions';
 import { IPD_ADMISSION_STATUS } from '@/features/ipd/utils/constants';
 import { formatIpdDateTime, formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
-import { buildCashlessPatientRows } from '@/features/ipd/utils/dummyInsuranceClaim';
+import { mapInsurancePatientRow } from '@/features/ipd/utils/mapInsuranceApi';
 import {
   IPD_PAYMENT_TYPE,
   IPD_PAYMENT_TYPE_GROUP,
@@ -113,19 +114,38 @@ export default function IpdPatientListPage() {
     admissionDate: admissionDateParam,
     page,
   });
+  const insurancePatientsQuery = useIpdInsurancePatientsQuery(
+    {
+      search: debouncedSearch,
+      status: statusParam,
+      ward,
+      admissionDate: admissionDateParam,
+      page,
+    },
+    { enabled: isInsuranceCashlessPaymentType(paymentType) },
+  );
 
   const showInsuranceCashless = isInsuranceCashlessPaymentType(paymentType);
   const paymentTypeGroup = getPaymentTypeGroup(paymentType);
-  const cashlessPatients = useMemo(
-    () => buildCashlessPatientRows(data?.items ?? []),
-    [data?.items],
-  );
+  const cashlessPatients = useMemo(() => {
+    const fromApi = (insurancePatientsQuery.data?.items ?? []).map(
+      mapInsurancePatientRow,
+    );
+    const fromAdmissions = (data?.items ?? [])
+      .filter((row) => matchesPaymentType(row, IPD_PAYMENT_TYPE.INSURANCE_CASHLESS))
+      .map(mapInsurancePatientRow);
+    const seen = new Set();
+    return [...fromApi, ...fromAdmissions].filter((row) => {
+      const key = String(row.id ?? row.uhid ?? '');
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [insurancePatientsQuery.data?.items, data?.items]);
 
   const rows = useMemo(() => {
     const items = data?.items ?? [];
-    return items.filter((row) =>
-      matchesPaymentType(row.id, row.patient_uid, paymentType),
-    );
+    return items.filter((row) => matchesPaymentType(row, paymentType));
   }, [data?.items, paymentType]);
 
   const total = showInsuranceCashless
@@ -134,14 +154,10 @@ export default function IpdPatientListPage() {
   const paymentTypeSummary = useMemo(() => {
     const items = data?.items ?? [];
     const selfCount = items.filter((row) =>
-      matchesPaymentType(row.id, row.patient_uid, IPD_PAYMENT_TYPE.SELF),
+      matchesPaymentType(row, IPD_PAYMENT_TYPE.SELF),
     ).length;
     const copayCount = items.filter((row) =>
-      matchesPaymentType(
-        row.id,
-        row.patient_uid,
-        IPD_PAYMENT_TYPE.INSURANCE_COPAY,
-      ),
+      matchesPaymentType(row, IPD_PAYMENT_TYPE.INSURANCE_COPAY),
     ).length;
 
     return {

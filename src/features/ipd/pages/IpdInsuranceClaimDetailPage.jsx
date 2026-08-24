@@ -1,10 +1,10 @@
 /**
- * Insurance claim detail — contextual status actions (dummy until API exists).
+ * Insurance claim detail — status actions and payments.
  */
 
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Button, EmptyState } from '@/shared/components/common';
+import { Button, EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import IpdPageHeader from '@/features/ipd/components/IpdPageHeader';
 import useIpdBackNavigation from '@/features/ipd/hooks/useIpdBackNavigation';
@@ -19,12 +19,14 @@ import {
   claimStatusChipClass,
   resolveStatusFromApprovedAmount,
 } from '@/features/ipd/utils/claimStatusConstants';
+import { recalculateClaimFinancials } from '@/features/ipd/utils/insuranceClaimFinancials';
+import { mapInsuranceClaim } from '@/features/ipd/utils/mapInsuranceApi';
 import {
-  getDummyInsurancePatientByClaimId,
-  getInsuranceClaim,
-  recalculateClaimFinancials,
-  updateInsuranceClaim,
-} from '@/features/ipd/utils/dummyInsuranceClaim';
+  useAddIpdInsurancePatientPaymentMutation,
+  useAddIpdInsurancePaymentMutation,
+  useIpdInsuranceClaimQuery,
+  useUpdateIpdInsuranceClaimMutation,
+} from '@/features/ipd/hooks/useIpdBillingQuery';
 import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
 import { toast } from '@/shared/utils/toast';
 
@@ -59,16 +61,23 @@ function Field({ label, value, tone, fullRow = false }) {
 export default function IpdInsuranceClaimDetailPage() {
   const { claimId } = useParams();
   const navigate = useNavigate();
-  const patientForBack = getDummyInsurancePatientByClaimId(claimId);
+  const claimQuery = useIpdInsuranceClaimQuery(claimId);
+  const updateClaimMutation = useUpdateIpdInsuranceClaimMutation();
+  const addInsurancePaymentMutation = useAddIpdInsurancePaymentMutation();
+  const addPatientPaymentMutation = useAddIpdInsurancePatientPaymentMutation();
+  const loadedClaim = useMemo(
+    () => (claimQuery.data ? mapInsuranceClaim(claimQuery.data) : null),
+    [claimQuery.data],
+  );
   const goBack = useIpdBackNavigation(
-    patientForBack?.id
+    loadedClaim?.patientId
       ? ROUTES.IPD_INSURANCE_PATIENT.replace(
           ':patientId',
-          String(patientForBack.id),
+          String(loadedClaim.patientId),
         )
       : ROUTES.IPD_PATIENTS,
   );
-  const initialClaim = getInsuranceClaim(claimId);
+  const initialClaim = loadedClaim;
 
   const [claim, setClaim] = useState(initialClaim);
   const [claimedAmount, setClaimedAmount] = useState(
@@ -91,16 +100,16 @@ export default function IpdInsuranceClaimDetailPage() {
   );
 
   useEffect(() => {
-    const next = getInsuranceClaim(claimId);
+    const next = loadedClaim;
     setClaim(next);
     setClaimedAmount(String(next?.claimed ?? ''));
     setLines(next?.responsibilityLines ?? []);
     setInsurancePayments(next?.insurancePayments ?? []);
     setPatientPayments(next?.patientPayments ?? []);
-  }, [claimId]);
+  }, [claimId, loadedClaim]);
 
   const insurancePatient = useMemo(
-    () => (claim ? getDummyInsurancePatientByClaimId(claim.id) : null),
+    () => (claim?.patientId ? { id: claim.patientId } : null),
     [claim],
   );
 
@@ -119,16 +128,20 @@ export default function IpdInsuranceClaimDetailPage() {
     claim?.status === CLAIM_STATUS.PARTIALLY_APPROVED;
 
   const applyClaimUpdate = (patch) => {
-    const updated = updateInsuranceClaim(claimId, {
+    if (!claim) return null;
+    const financials = recalculateClaimFinancials(claim, {
       ...patch,
       responsibilityLines: lines,
     });
-    if (!updated) {
-      toast.error('Unable to update claim');
-      return null;
-    }
+    const updated = {
+      ...claim,
+      ...patch,
+      ...financials,
+      responsibilityLines: lines,
+    };
     setClaim(updated);
     setClaimedAmount(String(updated.claimed ?? ''));
+    updateClaimMutation.mutate({ claimId, payload: updated });
     return updated;
   };
 
@@ -183,6 +196,34 @@ export default function IpdInsuranceClaimDetailPage() {
     if (updated) toast.success('Claimed amount saved');
   };
 
+  if (claimQuery.isLoading) {
+    return (
+      <div className="ipd-page">
+        <QueryFeedback isLoading />
+      </div>
+    );
+  }
+
+  if (claimQuery.isError) {
+    return (
+      <div className="ipd-page">
+        <IpdPageHeader
+          title="Insurance Claim"
+          actions={
+            <button type="button" onClick={goBack} className="btn btn--secondary">
+              Back
+            </button>
+          }
+        />
+        <QueryFeedback
+          isError
+          error={claimQuery.error}
+          onRetry={claimQuery.refetch}
+        />
+      </div>
+    );
+  }
+
   if (!claim) {
     return (
       <div className="ipd-page">
@@ -210,11 +251,13 @@ export default function IpdInsuranceClaimDetailPage() {
     const financials = recalculateClaimFinancials(claim, {
       responsibilityLines: nextLines,
     });
-    const updated = updateInsuranceClaim(claimId, {
+    const updated = {
+      ...claim,
       responsibilityLines: nextLines,
       ...financials,
-    });
-    if (updated) setClaim(updated);
+    };
+    setClaim(updated);
+    updateClaimMutation.mutate({ claimId, payload: updated });
     setNewAmount('');
   };
 
@@ -578,11 +621,13 @@ export default function IpdInsuranceClaimDetailPage() {
                               const financials = recalculateClaimFinancials(claim, {
                                 responsibilityLines: nextLines,
                               });
-                              const updated = updateInsuranceClaim(claimId, {
+                              const updated = {
+                                ...claim,
                                 responsibilityLines: nextLines,
                                 ...financials,
-                              });
-                              if (updated) setClaim(updated);
+                              };
+                              setClaim(updated);
+                              updateClaimMutation.mutate({ claimId, payload: updated });
                             }}
                           >
                             Remove
@@ -769,27 +814,10 @@ export default function IpdInsuranceClaimDetailPage() {
         onClose={() => setInsPayOpen(false)}
         outstanding={claim.insOutstanding}
         onSave={(payment) => {
-          const dateLabel = (() => {
-            const d = new Date(`${payment.paymentDate}T12:00:00`);
-            if (Number.isNaN(d.getTime())) return payment.paymentDate;
-            return d.toLocaleString('en-IN', {
-              day: '2-digit',
-              month: 'short',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            });
-          })();
-          setInsurancePayments((prev) => [
-            ...prev,
-            {
-              id: `${claim.id}-IP${prev.length}`,
-              date: dateLabel,
-              mode: payment.paymentMode,
-              reference: payment.reference || '—',
-              amount: payment.amount,
-            },
-          ]);
+          addInsurancePaymentMutation.mutate({
+            claimId,
+            payload: payment,
+          });
           setTab('insPayments');
         }}
       />
@@ -799,27 +827,10 @@ export default function IpdInsuranceClaimDetailPage() {
         onClose={() => setPatPayOpen(false)}
         outstanding={claim.patientOutstanding}
         onSave={(payment) => {
-          const dateLabel = (() => {
-            const d = new Date(`${payment.paymentDate}T12:00:00`);
-            if (Number.isNaN(d.getTime())) return payment.paymentDate;
-            return d.toLocaleString('en-IN', {
-              day: '2-digit',
-              month: 'short',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            });
-          })();
-          setPatientPayments((prev) => [
-            ...prev,
-            {
-              id: `${claim.id}-PP${prev.length}`,
-              date: dateLabel,
-              mode: payment.paymentMode,
-              reference: payment.reference || '—',
-              amount: payment.amount,
-            },
-          ]);
+          addPatientPaymentMutation.mutate({
+            claimId,
+            payload: payment,
+          });
           setTab('patientPayments');
         }}
       />

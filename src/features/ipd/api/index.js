@@ -10,5 +10,6 @@ export * from './admissions';
 export * from './beds';
 export * from './billing';
 export * from './ipdBilling';
+export * from './insurance';
 export * from './discharge';
 export * from './profile';

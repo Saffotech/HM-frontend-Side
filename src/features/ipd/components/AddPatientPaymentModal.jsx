@@ -1,5 +1,5 @@
 /**
- * Add Patient Payment modal — UI only (dummy claim flow).
+ * Add Patient Payment modal — collects patient payment details for the claim API.
  */
 
 import { useEffect, useState } from 'react';

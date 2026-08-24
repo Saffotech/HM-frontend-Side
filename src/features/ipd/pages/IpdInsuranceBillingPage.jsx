@@ -1,5 +1,5 @@
 /**
- * Insurance IPD billing — charge breakdown with add/remove (dummy until API).
+ * Insurance IPD billing — charge breakdown with add/remove.
  */
 
 import { Fragment, useEffect, useMemo, useState } from 'react';
@@ -192,7 +192,19 @@ export default function IpdInsuranceBillingPage() {
   if (bundleQuery.isLoading) {
     return (
       <div className="ipd-page">
-        <QueryFeedback loading />
+        <QueryFeedback isLoading />
+      </div>
+    );
+  }
+
+  if (bundleQuery.isError) {
+    return (
+      <div className="ipd-page">
+        <QueryFeedback
+          isError
+          error={bundleQuery.error}
+          onRetry={bundleQuery.refetch}
+        />
       </div>
     );
   }

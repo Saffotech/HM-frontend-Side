@@ -1,7 +1,7 @@
 /**
  * Canonical IPD billing transaction model (frontend consumption shape).
  *
- * Backend contract TBD — mappers adapt API/dummy data into this structure.
+ * Backend contract TBD — mappers adapt API payloads into this structure.
  */
 
 import {
@@ -46,7 +46,7 @@ import {
  * @property {IpdBillingTransaction[]} transactions
  * @property {import('@/features/ipd/utils/insuranceDailyCharges').DailyChargeRow[]} dailyCharges UI daily rows
  * @property {IpdFinalBillingSummary} finalBilling
- * @property {'dummy'|'api'} dataSource
+ * @property {'api'} dataSource
  */
 
 export function normalizeBillingTransaction(row, context = {}) {

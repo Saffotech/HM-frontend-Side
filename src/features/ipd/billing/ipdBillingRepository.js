@@ -1,48 +1,45 @@
 /**
- * IPD billing repository — single data access point for billing UI.
- * Tries live API when enabled; falls back to isolated dummy adapter for insurance.
+ * IPD billing repository — API-only data access for billing UI.
+ * No dummy adapter and no sessionStorage fallback.
  */
 
 import {
   IPD_BILLING_USE_LIVE_API,
   getIpdBillingBundle,
+  updateIpdDailyBilling,
+  updateIpdFinalBilling,
 } from '@/features/ipd/api/ipdBilling';
-import * as dummyAdapter from '@/features/ipd/billing/ipdBillingDummyAdapter';
 import * as selfPayAdapter from '@/features/ipd/billing/ipdSelfPayBillingAdapter';
 import { mapBackendBillingBundleResponse } from '@/features/ipd/billing/ipdBillingMapper';
+
+function pendingBillingSave(feature) {
+  const error = new Error(
+    `${feature} is waiting for the unified IPD billing API.`,
+  );
+  error.code = 'IPD_BILLING_API_NOT_ENABLED';
+  return error;
+}
 
 export async function fetchIpdInsuranceBillingBundle(
   { patientId, insuranceAdmit },
   token,
 ) {
-  if (IPD_BILLING_USE_LIVE_API) {
-    const admissionId =
-      insuranceAdmit?.admission?.id ??
-      dummyAdapter.fetchInsuranceBillingBundle({ patientId, insuranceAdmit })
-        ?.admissionId;
-
-    if (admissionId) {
-      try {
-        const raw = await getIpdBillingBundle(admissionId, token);
-        const fallback = dummyAdapter.fetchInsuranceBillingBundle({
-          patientId,
-          insuranceAdmit,
-        });
-        return mapBackendBillingBundleResponse(raw, {
-          patientId,
-          admissionId: String(admissionId),
-          patient: fallback?.patient,
-          claim: fallback?.claim,
-          insuranceAdmit,
-          claimId: fallback?.claimId,
-        });
-      } catch {
-        // Fall through to dummy adapter while backend is unavailable.
-      }
-    }
+  if (!IPD_BILLING_USE_LIVE_API) {
+    return null;
   }
 
-  return dummyAdapter.fetchInsuranceBillingBundle({ patientId, insuranceAdmit });
+  const admissionId = insuranceAdmit?.admission?.id ?? insuranceAdmit?.claim?.admissionId;
+  if (!admissionId) return null;
+
+  const raw = await getIpdBillingBundle(admissionId, token);
+  return mapBackendBillingBundleResponse(raw, {
+    patientId,
+    admissionId: String(admissionId),
+    patient: insuranceAdmit?.patient ?? null,
+    claim: insuranceAdmit?.claim ?? null,
+    insuranceAdmit,
+    claimId: insuranceAdmit?.claim?.id ?? null,
+  });
 }
 
 export async function fetchIpdSelfPayBillingBundle(
@@ -52,15 +49,11 @@ export async function fetchIpdSelfPayBillingBundle(
   if (!admissionId) return null;
 
   if (IPD_BILLING_USE_LIVE_API) {
-    try {
-      const raw = await getIpdBillingBundle(admissionId, token);
-      return mapBackendBillingBundleResponse(raw, {
-        admissionId: String(admissionId),
-        patientId,
-      });
-    } catch {
-      // Fall through to preview + local storage.
-    }
+    const raw = await getIpdBillingBundle(admissionId, token);
+    return mapBackendBillingBundleResponse(raw, {
+      admissionId: String(admissionId),
+      patientId,
+    });
   }
 
   return selfPayAdapter.fetchSelfPayBillingBundle(
@@ -73,44 +66,27 @@ export async function saveIpdSelfPayFinalCharges(
   { admissionId, charges, previewItems, admittedAt, doctorVisits },
   token,
 ) {
-  if (IPD_BILLING_USE_LIVE_API) {
-    void token;
+  if (!IPD_BILLING_USE_LIVE_API) {
+    throw pendingBillingSave('Saving self-pay hospital charges');
   }
-
-  const updated = selfPayAdapter.saveSelfPayFinalCharges(
-    admissionId,
-    charges,
-    previewItems,
-    { admittedAt, doctorVisits },
+  await updateIpdFinalBilling(admissionId, { charges, previewItems }, token);
+  return fetchIpdSelfPayBillingBundle(
+    { admissionId, preview: { items: previewItems }, admittedAt, doctorVisits },
+    token,
   );
-  return updated;
 }
 
 export async function saveIpdSelfPayDailyCharges(
   { admissionId, dailyCharges, previewItems, admittedAt, doctorVisits },
   token,
 ) {
-  if (IPD_BILLING_USE_LIVE_API) {
-    void token;
+  if (!IPD_BILLING_USE_LIVE_API) {
+    throw pendingBillingSave('Saving self-pay daily charges');
   }
-
-  return selfPayAdapter.saveSelfPayDailyCharges(
-    admissionId,
-    dailyCharges,
-    previewItems,
-    { admittedAt, doctorVisits },
-  );
-}
-
-export async function rebuildIpdSelfPayBillingFromPreview(
-  { admissionId, patientId, preview },
-  token,
-) {
-  void token;
-  return selfPayAdapter.rebuildSelfPayBillingBundle(
-    admissionId,
-    preview,
-    patientId,
+  await updateIpdDailyBilling(admissionId, { dailyCharges, previewItems }, token);
+  return fetchIpdSelfPayBillingBundle(
+    { admissionId, preview: { items: previewItems }, admittedAt, doctorVisits },
+    token,
   );
 }
 
@@ -118,53 +94,43 @@ export async function saveIpdInsuranceFinalCharges(
   { claimId, charges, patientId, insuranceAdmit },
   token,
 ) {
-  if (IPD_BILLING_USE_LIVE_API) {
-    // Future: PUT unified billing endpoint
-    void token;
+  if (!IPD_BILLING_USE_LIVE_API) {
+    throw pendingBillingSave('Saving insurance hospital charges');
   }
-
-  const updated = dummyAdapter.saveInsuranceFinalCharges(claimId, charges);
-  if (!updated) return null;
-
-  return dummyAdapter.rebuildInsuranceBillingBundle({
-    patientId,
-    insuranceAdmit,
-    claim: updated,
-  });
+  const admissionId = insuranceAdmit?.admission?.id;
+  if (!admissionId) {
+    throw pendingBillingSave('Saving insurance hospital charges');
+  }
+  void claimId;
+  await updateIpdFinalBilling(admissionId, { charges }, token);
+  return fetchIpdInsuranceBillingBundle({ patientId, insuranceAdmit }, token);
 }
 
 export async function saveIpdInsuranceDailyCharges(
   { claimId, dailyCharges, patientId, insuranceAdmit },
   token,
 ) {
-  if (IPD_BILLING_USE_LIVE_API) {
-    void token;
+  if (!IPD_BILLING_USE_LIVE_API) {
+    throw pendingBillingSave('Saving insurance daily charges');
   }
-
-  const updated = dummyAdapter.saveInsuranceDailyCharges(claimId, dailyCharges);
-  if (!updated) return null;
-
-  return dummyAdapter.rebuildInsuranceBillingBundle({
-    patientId,
-    insuranceAdmit,
-    claim: updated,
-  });
+  const admissionId = insuranceAdmit?.admission?.id;
+  if (!admissionId) {
+    throw pendingBillingSave('Saving insurance daily charges');
+  }
+  void claimId;
+  await updateIpdDailyBilling(admissionId, { dailyCharges }, token);
+  return fetchIpdInsuranceBillingBundle({ patientId, insuranceAdmit }, token);
 }
 
 export async function saveIpdInsuranceClaimAmounts(
   { claimId, patch, patientId, insuranceAdmit },
   token,
 ) {
-  if (IPD_BILLING_USE_LIVE_API) {
-    void token;
+  if (!IPD_BILLING_USE_LIVE_API) {
+    throw pendingBillingSave('Saving insurance claim amounts');
   }
-
-  const updated = dummyAdapter.saveInsuranceClaimAmounts(claimId, patch);
-  if (!updated) return null;
-
-  return dummyAdapter.rebuildInsuranceBillingBundle({
-    patientId,
-    insuranceAdmit,
-    claim: updated,
-  });
+  void claimId;
+  void patch;
+  void token;
+  return fetchIpdInsuranceBillingBundle({ patientId, insuranceAdmit }, token);
 }

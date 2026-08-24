@@ -2,8 +2,8 @@
  * IPD Patient Detail — admission overview (`/ipd/admissions/{id}`).
  */
 
-import { useMemo, useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button, EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import IpdPageHeader from '@/features/ipd/components/IpdPageHeader';
@@ -14,16 +14,16 @@ import AdmissionCareTeamEditor from '@/features/ipd/components/AdmissionCareTeam
 import EditInsuranceModal from '@/features/ipd/components/EditInsuranceModal';
 import useIpdBackNavigation from '@/features/ipd/hooks/useIpdBackNavigation';
 import { useIpdAdmissionDetailQuery } from '@/features/ipd/hooks/useIpdQuery';
+import {
+  useIpdAdmissionInsuranceQuery,
+  useUpdateIpdAdmissionInsuranceMutation,
+} from '@/features/ipd/hooks/useIpdBillingQuery';
 import { useIpdPermissionSet } from '@/features/ipd/hooks/useIpdPermission';
 import {
   formatIpdDateTime,
   formatIpdMoney,
 } from '@/features/ipd/utils/ipdFormat';
 import { resolveIpdBillPreviewPayment } from '@/features/ipd/utils/resolveIpdBillPreviewPayment';
-import {
-  loadPayAndClaimInsuranceContext,
-  updatePayAndClaimInsuranceContext,
-} from '@/features/ipd/utils/dummyInsuranceClaim';
 
 function Field({ label, children, wide = false }) {
   return (
@@ -37,17 +37,22 @@ function Field({ label, children, wide = false }) {
 export default function IpdPatientDetailPage() {
   const { admissionId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const goBack = useIpdBackNavigation(ROUTES.IPD_PATIENTS);
   const { canAdmit } = useIpdPermissionSet();
   const { data, isLoading, isError, error, refetch } =
     useIpdAdmissionDetailQuery(admissionId);
+  const admissionInsuranceQuery = useIpdAdmissionInsuranceQuery(admissionId);
+  const updateAdmissionInsuranceMutation = useUpdateIpdAdmissionInsuranceMutation();
 
-  const [payClaimInsurance, setPayClaimInsurance] = useState(null);
   const [editInsuranceOpen, setEditInsuranceOpen] = useState(false);
+  const [insuranceDraft, setInsuranceDraft] = useState(null);
 
-  useEffect(() => {
-    setPayClaimInsurance(loadPayAndClaimInsuranceContext(admissionId));
-  }, [admissionId]);
+  const payClaimInsurance =
+    insuranceDraft ??
+    admissionInsuranceQuery.data ??
+    location.state?.payAndClaimInsurance ??
+    null;
 
   const admission = data?.admission;
   const visits = data?.doctor_visits ?? [];
@@ -365,8 +370,14 @@ export default function IpdPatientDetailPage() {
           onClose={() => setEditInsuranceOpen(false)}
           initial={payClaimInsurance}
           onSave={(next) => {
-            const updated = updatePayAndClaimInsuranceContext(admissionId, next);
-            if (updated) setPayClaimInsurance(updated);
+            setInsuranceDraft((prev) => ({
+              ...(prev ?? payClaimInsurance),
+              ...next,
+            }));
+            updateAdmissionInsuranceMutation.mutate({
+              admissionId,
+              payload: next,
+            });
           }}
         />
       ) : null}

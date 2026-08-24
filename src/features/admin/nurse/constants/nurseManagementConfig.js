@@ -44,6 +44,26 @@ export const PERMISSION_GROUPS = [
     ],
   },
   {
+    module: 'Doctor Visits',
+    permissions: [
+      {
+        key: 'nurse_doctor_visits:view',
+        name: 'View Doctor Visits',
+        description: 'Show Doctor Visits in the nurse sidebar and open the visit registry.',
+      },
+      {
+        key: 'nurse_doctor_visits:create',
+        name: 'Log Doctor Visits',
+        description: 'Record a doctor visit for an IPD patient.',
+      },
+      {
+        key: 'nurse_doctor_visits:update',
+        name: 'Update Doctor Visits',
+        description: 'Edit or void nurse-logged doctor visits.',
+      },
+    ],
+  },
+  {
     module: 'Emergency Alerts',
     permissions: [
       {
