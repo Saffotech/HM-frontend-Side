@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   ClipboardList,
   FileText,
+  FlaskConical,
   History,
   Pencil,
   Pill,
@@ -16,6 +17,7 @@ import NurseNotesSnapshotView from '@/features/nurse/components/NurseNotesSnapsh
 import NurseVitalsSnapshotView from '@/features/nurse/components/NurseVitalsSnapshotView';
 import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
+import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
 import { QueryFeedback } from '@/shared/components/common';
 import {
   formatPatientIdDisplay,
@@ -27,7 +29,9 @@ import {
   useNursePatientMedicationsQuery,
   useNursePatientMedHistoryQuery,
   useNurseBedPatientsQuery,
+  useNurseLabReportsQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
+import { ROUTES } from '@/shared/constants';
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -51,9 +55,11 @@ export default function NursePatientOverviewPage() {
     canViewNotes,
     canCreateNotes,
     canUpdateNotes,
+    canViewLabReports,
     canViewMedication,
     canCreateMedication,
   } = useNursePermissionSet();
+  const { scopeFilters, scopeReady } = useNursePatientScope();
   const [activeTab, setActiveTab] = useState('vitals');
 
   const {
@@ -75,6 +81,16 @@ export default function NursePatientOverviewPage() {
   } = useNurseNotesSearchQuery(
     { patient_id: patientId },
     { enabled: canViewNotes && activeTab === 'notes' }
+  );
+  const {
+    data: labReports,
+    isLoading: isLabReportsLoading,
+    isError: isLabReportsError,
+    error: labReportsError,
+    refetch: refetchLabReports,
+  } = useNurseLabReportsQuery(
+    { patient_id: patientId, page: 1, page_size: 20, ...scopeFilters },
+    { enabled: scopeReady && canViewLabReports && activeTab === 'labs' },
   );
   const {
     data: meds,
@@ -120,9 +136,12 @@ export default function NursePatientOverviewPage() {
     };
   }, [patientId, meds, vitals, notes, bedData?.items]);
 
+  const labReportItems = labReports?.items ?? [];
+
   const tabs = [
     canViewVitals ? { id: 'vitals', label: 'Vitals', icon: Activity, count: 0 } : null,
     canViewNotes ? { id: 'notes', label: 'Nursing Notes', icon: FileText, count: 0 } : null,
+    canViewLabReports ? { id: 'labs', label: 'Lab Reports', icon: FlaskConical, count: labReportItems.length } : null,
     canViewMedication ? { id: 'meds', label: 'Medications', icon: Pill, count: meds?.prescriptions?.length || 0 } : null,
     canViewMedication ? { id: 'history', label: 'Med History', icon: History, count: medHistory?.items?.length || 0 } : null,
   ].filter(Boolean);
@@ -292,6 +311,55 @@ export default function NursePatientOverviewPage() {
                   <div className="nurse-patient-overview__empty">No nursing notes for this patient.</div>
                 ) : (
                   <NurseNotesSnapshotView note={latestNote} />
+                )}
+              </QueryFeedback>
+            )}
+
+            {activeTab === 'labs' && (
+              <QueryFeedback
+                isLoading={isLabReportsLoading}
+                isError={isLabReportsError}
+                error={labReportsError}
+                onRetry={refetchLabReports}
+              >
+                {labReportItems.length === 0 ? (
+                  <div className="nurse-patient-overview__empty">
+                    No lab reports for this patient on an occupied bed.
+                  </div>
+                ) : (
+                  <div className="nurse-patient-overview__table-wrap">
+                    <table className="nurse-patient-overview__table">
+                      <thead>
+                        <tr>
+                          <th>Test</th>
+                          <th>Reported at</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {labReportItems.map((row) => (
+                          <tr
+                            key={row.report_id ?? row.id}
+                            className="nurse-row--clickable"
+                            onClick={() => navigate(
+                              ROUTES.NURSE_LAB_REPORT_DETAIL.replace(
+                                ':reportId',
+                                String(row.report_id ?? row.id),
+                              ),
+                            )}
+                          >
+                            <td>{row.test_name || '—'}</td>
+                            <td>
+                              {row.uploaded_at
+                                ? new Date(row.uploaded_at).toLocaleString()
+                                : '—'}
+                            </td>
+                            <td>{row.status || '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </QueryFeedback>
             )}

@@ -80,7 +80,7 @@ function LastAdministrationCell({ prescription }) {
     <div className="nurse-patient-meds__last-admin" ref={rootRef}>
       <button
         type="button"
-        className={`nurse-btn nurse-btn--sm nurse-patient-meds__view-btn${
+        className={`nurse-btn nurse-btn--sm nurse-btn--secondary nurse-patient-meds__view-btn${
           open ? ' nurse-patient-meds__view-btn--open' : ''
         }`}
         onClick={() => setOpen((value) => !value)}
@@ -290,105 +290,98 @@ export default function NursePatientMedicationsPage() {
   return (
     <NurseLayout>
       <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
-        <div className="nurse-patient-meds-page">
-          <div className="nurse-patient-meds-page__toolbar">
-            <button
-              type="button"
-              className="nurse-patient-meds-page__back"
-              onClick={() => navigate(ROUTES.NURSE_MEDICATIONS)}
-            >
-              <ArrowLeft size={16} aria-hidden />
-              Back to patients
-            </button>
-            {patientData && (
-              <div className="nurse-patient-meds-page__summary" aria-label="Medication summary">
-                <div className="nurse-patient-meds-page__stat nurse-patient-meds-page__stat--total">
-                  <span className="nurse-patient-meds-page__stat-icon" aria-hidden>
-                    <ClipboardList size={15} />
-                  </span>
-                  <span className="nurse-patient-meds-page__stat-text">
-                    <span className="nurse-patient-meds-page__stat-value">
-                      {prescriptions.length}
-                    </span>
-                    <span className="nurse-patient-meds-page__stat-label">
-                      {prescriptions.length === 1 ? 'Medicine' : 'Medicines'}
-                    </span>
-                  </span>
-                </div>
-                {unrecordedCount > 0 && (
-                  <div className="nurse-patient-meds-page__stat nurse-patient-meds-page__stat--pending">
-                    <span className="nurse-patient-meds-page__stat-icon" aria-hidden>
-                      <AlertCircle size={15} />
-                    </span>
-                    <span className="nurse-patient-meds-page__stat-text">
-                      <span className="nurse-patient-meds-page__stat-value">
-                        {unrecordedCount}
-                      </span>
-                      <span className="nurse-patient-meds-page__stat-label">Not recorded</span>
-                    </span>
-                  </div>
-                )}
-                {actionableCount > unrecordedCount && (
-                  <div className="nurse-patient-meds-page__stat nurse-patient-meds-page__stat--followup">
-                    <span className="nurse-patient-meds-page__stat-icon" aria-hidden>
-                      <AlertCircle size={15} />
-                    </span>
-                    <span className="nurse-patient-meds-page__stat-text">
-                      <span className="nurse-patient-meds-page__stat-value">
-                        {actionableCount - unrecordedCount}
-                      </span>
-                      <span className="nurse-patient-meds-page__stat-label">Need follow-up</span>
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {patientData && (
+        <div className="nurse-page nurse-patient-meds-page">
+          {patientData ? (
             <>
-              <div className="nurse-card nurse-patient-meds-page__patient">
-                <div className="nurse-patient-meds-page__patient-icon" aria-hidden>
-                  <Pill size={18} />
+              <div className="nurse-vital-detail__top">
+                <div className="nurse-vital-detail__identity">
+                  <div className="nurse-vital-detail__avatar" aria-hidden>
+                    <Pill size={22} />
+                  </div>
+                  <div>
+                    <h1 className="nurse-vital-detail__name">{patientData.patient_name || '—'}</h1>
+                    <p className="nurse-vital-detail__meta-line">
+                      <span>
+                        ID: <strong>{formatPatientIdDisplay(patientData)}</strong>
+                      </span>
+                      <span className="nurse-vital-detail__dot" aria-hidden>·</span>
+                      <span>
+                        Ward: <strong>{patientData.ward_name || '—'}</strong>
+                      </span>
+                      <span className="nurse-vital-detail__dot" aria-hidden>·</span>
+                      <span>
+                        Bed: <strong>{patientData.bed_number || '—'}</strong>
+                      </span>
+                    </p>
+                  </div>
                 </div>
-                <div className="nurse-patient-meds-page__patient-grid">
-                  <div>
-                    <span className="nurse-patient-meds-page__label">Name</span>
-                    <span className="nurse-patient-meds-page__value nurse-patient-meds-page__value--name">
-                      {patientData.patient_name}
-                    </span>
+                <div className="nurse-vital-detail__actions nurse-patient-meds-page__actions">
+                  <div className="nurse-patient-meds-page__summary" aria-label="Medication summary">
+                    <div className="nurse-patient-meds-page__stat nurse-patient-meds-page__stat--total">
+                      <span className="nurse-patient-meds-page__stat-icon" aria-hidden>
+                        <ClipboardList size={15} />
+                      </span>
+                      <span className="nurse-patient-meds-page__stat-text">
+                        <span className="nurse-patient-meds-page__stat-value">
+                          {prescriptions.length}
+                        </span>
+                        <span className="nurse-patient-meds-page__stat-label">
+                          {prescriptions.length === 1 ? 'Medicine' : 'Medicines'}
+                        </span>
+                      </span>
+                    </div>
+                    {unrecordedCount > 0 ? (
+                      <div className="nurse-patient-meds-page__stat nurse-patient-meds-page__stat--pending">
+                        <span className="nurse-patient-meds-page__stat-icon" aria-hidden>
+                          <AlertCircle size={15} />
+                        </span>
+                        <span className="nurse-patient-meds-page__stat-text">
+                          <span className="nurse-patient-meds-page__stat-value">
+                            {unrecordedCount}
+                          </span>
+                          <span className="nurse-patient-meds-page__stat-label">Not recorded</span>
+                        </span>
+                      </div>
+                    ) : null}
+                    {actionableCount > unrecordedCount ? (
+                      <div className="nurse-patient-meds-page__stat nurse-patient-meds-page__stat--followup">
+                        <span className="nurse-patient-meds-page__stat-icon" aria-hidden>
+                          <AlertCircle size={15} />
+                        </span>
+                        <span className="nurse-patient-meds-page__stat-text">
+                          <span className="nurse-patient-meds-page__stat-value">
+                            {actionableCount - unrecordedCount}
+                          </span>
+                          <span className="nurse-patient-meds-page__stat-label">Need follow-up</span>
+                        </span>
+                      </div>
+                    ) : null}
                   </div>
-                  <div>
-                    <span className="nurse-patient-meds-page__label">Patient ID</span>
-                    <span className="nurse-patient-meds-page__value">
-                      {formatPatientIdDisplay(patientData)}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="nurse-patient-meds-page__label">Bed</span>
-                    <span className="nurse-patient-meds-page__bed">
-                      {patientData.bed_number || '—'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="nurse-patient-meds-page__label">Ward</span>
-                    <span className="nurse-patient-meds-page__value">
-                      {patientData.ward_name || '—'}
-                    </span>
-                  </div>
+                  <button
+                    type="button"
+                    className="nurse-btn nurse-btn--secondary"
+                    onClick={() => navigate(ROUTES.NURSE_MEDICATIONS)}
+                  >
+                    <ArrowLeft size={16} aria-hidden />
+                    Back
+                  </button>
                 </div>
               </div>
 
-              <div className="nurse-patient-meds-page__table">
+              <div
+                className={`nurse-notes-registry__table nurse-patient-meds-page__table${
+                  isLoading ? ' nurse-notes-registry__table--fetching' : ''
+                }`}
+              >
                 <NurseDataTable
                   columns={columns}
                   data={prescriptions}
-                  isLoading={isLoading}
+                  isLoading={false}
                   emptyMessage="No active prescriptions."
                 />
               </div>
             </>
-          )}
+          ) : null}
 
           <NurseConfirmDialog
             open={!!selected}

@@ -114,6 +114,8 @@ export const queryKeys = {
     doctorVisits: (filters) => ['nurse', 'doctor-visits', filters],
     doctorVisitsDoctors: (filters = {}) => ['nurse', 'doctor-visits', 'doctors', filters],
     doctorVisitsDepartments: (filters = {}) => ['nurse', 'doctor-visits', 'departments', filters],
+    labReports: (filters) => ['nurse', 'lab-reports', filters],
+    labReport: (id, filters = {}) => ['nurse', 'lab-reports', 'detail', id, filters],
     // Nurse Phase 2 by Atharva — profile + notifications cache keys
     profile: ['nurse', 'profile'],
     notifications: ['nurse', 'notifications'],

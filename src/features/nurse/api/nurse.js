@@ -1,6 +1,7 @@
 /** Nurse API — mirrors HM-Backend /nurse/* routes. */
 
 import { apiClient } from '@/shared/api/client';
+import { API_BASE_URL, API_PREFIX } from '@/shared/constants';
 
 function appendQuery(path, params = {}) {
   const search = new URLSearchParams();
@@ -209,4 +210,40 @@ export function resolveAlert(alertId, body, token) {
     body: JSON.stringify(body),
     token,
   });
+}
+
+// —— Lab Reports (read-only nurse scope — NOT /lab/reports) ——
+
+export function getNurseLabReports(params, token) {
+  return apiClient(appendQuery('/nurse/lab-reports', params), { token });
+}
+
+export function getNurseLabReportById(reportId, params, token) {
+  return apiClient(appendQuery(`/nurse/lab-reports/${reportId}`, params), { token });
+}
+
+/** Raw file download — do not use apiClient JSON helper. */
+export async function fetchNurseLabReportFileBlob(reportId, params = {}, token) {
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const path = appendQuery(`/nurse/lab-reports/${reportId}/file`, params);
+  const response = await fetch(`${API_BASE_URL}${API_PREFIX}${path}`, { headers });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    const detail = typeof body.detail === 'string' ? body.detail : 'Could not download file';
+    const err = new Error(detail);
+    err.status = response.status;
+    throw err;
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get('content-disposition') ?? '';
+  const match = disposition.match(/filename="?([^"]+)"?/i);
+  const fileName = match?.[1] ?? `lab-report-${reportId}`;
+
+  return { blob, fileName, contentType: response.headers.get('content-type') };
 }

@@ -116,6 +116,8 @@ export const ROUTES = {
   NURSE_NOTES_NEW: '/nurse/notes/new',
   NURSE_NOTE_DETAIL: '/nurse/notes/:noteId',
   NURSE_NOTE_EDIT: '/nurse/notes/:noteId/edit',
+  NURSE_LAB_REPORTS: '/nurse/lab-reports',
+  NURSE_LAB_REPORT_DETAIL: '/nurse/lab-reports/:reportId',
   NURSE_MEDICATIONS: '/nurse/medications',
   NURSE_MEDICATIONS_PATIENT: '/nurse/medications/patient/:patientId',
   NURSE_MEDICATIONS_HISTORY: '/nurse/medications/history',

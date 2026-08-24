@@ -22,6 +22,7 @@ const NURSE_PERMISSIONS = {
   doctorVisitsView: 'nurse_doctor_visits:view',
   doctorVisitsCreate: 'nurse_doctor_visits:create',
   doctorVisitsUpdate: 'nurse_doctor_visits:update',
+  labReportsView: 'nurse_lab_reports:view',
   profileView: 'nurse_profile:view',
   profileUpdate: 'nurse_profile:update',
   profileUploadImage: 'nurse_profile:upload_image',
@@ -60,6 +61,7 @@ export function useNursePermissionSet() {
     canViewDoctorVisits: hasBackendPermission(user, NURSE_PERMISSIONS.doctorVisitsView),
     canCreateDoctorVisits: hasBackendPermission(user, NURSE_PERMISSIONS.doctorVisitsCreate),
     canUpdateDoctorVisits: hasBackendPermission(user, NURSE_PERMISSIONS.doctorVisitsUpdate),
+    canViewLabReports: hasBackendPermission(user, NURSE_PERMISSIONS.labReportsView),
   };
 }
 

@@ -13,6 +13,7 @@ import {
   Pill,
   CalendarClock,
   Stethoscope,
+  FlaskConical,
 } from 'lucide-react';
 import { ROUTES } from '@/shared/constants';
 import RoleLayout from '@/shared/components/layout/RoleLayout';
@@ -31,6 +32,7 @@ export default function NurseLayout({ children }) {
     canViewPatients,
     canViewVitals,
     canViewNotes,
+    canViewLabReports,
     canViewMedication,
     canViewDoctorVisits,
   } = useNursePermissionSet();
@@ -51,6 +53,9 @@ export default function NurseLayout({ children }) {
     if (canViewNotes) {
       links.push({ href: ROUTES.NURSE_NOTES, label: 'Nursing Notes', icon: FileText });
     }
+    if (canViewLabReports) {
+      links.push({ href: ROUTES.NURSE_LAB_REPORTS, label: 'Lab Reports', icon: FlaskConical });
+    }
     if (canViewMedication) {
       links.push({ href: ROUTES.NURSE_MEDICATIONS, label: 'Medications', icon: Pill });
     }
@@ -58,7 +63,7 @@ export default function NurseLayout({ children }) {
       links.push({ href: ROUTES.NURSE_DOCTOR_VISITS, label: 'Doctor Visits', icon: Stethoscope });
     }
     return links;
-  }, [canViewPatients, canViewVitals, canViewNotes, canViewMedication, canViewDoctorVisits]);
+  }, [canViewPatients, canViewVitals, canViewNotes, canViewLabReports, canViewMedication, canViewDoctorVisits]);
 
   return (
     <RoleLayout

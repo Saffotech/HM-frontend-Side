@@ -1,664 +1,140 @@
-.nurse-med-patients-page {
-  gap: 0.75rem;
-}
+/* Medication patients list — shares notes-registry layout; only ward/search extras here. */
 
-/* —— Page hero —— */
-.nurse-med-patients-page__hero {
+.nurse-med-patients__toolbar-filters {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.875rem;
-  padding: 0.25rem 0.125rem 0.5rem;
-}
-
-.nurse-med-patients-page__hero-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: var(--radius-lg);
-  background: var(--color-primary);
-  color: #fff;
-  box-shadow: var(--shadow-sm);
-  flex-shrink: 0;
-}
-
-.nurse-med-patients-page__title {
-  margin: 0;
-  font-size: var(--text-section-title);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text);
-  letter-spacing: normal;
-}
-
-.nurse-med-patients-page__subtitle {
-  margin: 0.15rem 0 0;
-  font-size: var(--text-body);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-muted);
-}
-
-/* —— Panel —— */
-.nurse-med-patients-page__panel {
-  overflow: visible;
-  padding: 0;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  box-shadow:
-    0 1px 3px rgba(15, 23, 42, 0.06),
-    0 8px 24px rgba(99, 102, 241, 0.06);
-}
-
-.nurse-med-patients-page__toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.875rem 1rem;
-  border-bottom: 1px solid #e2e8f0;
-  background:
-    var(--color-surface);
-}
-
-.nurse-med-patients-page__filters {
+  gap: 0.5rem;
   flex: 1;
-  min-width: 0;
+  min-width: min(100%, 18rem);
+  justify-content: flex-end;
 }
 
-.nurse-med-patients-page__filter-row {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  flex-wrap: nowrap;
-  min-width: 0;
-}
-
-.nurse-med-patients-page__search-field {
-  margin: 0;
+.nurse-med-patients__search-wrap {
+  position: relative;
   flex: 1;
-  min-width: 10rem;
+  min-width: min(100%, 14rem);
   max-width: 22rem;
 }
 
-.nurse-med-patients-page__ward-field {
-  margin: 0;
-  flex-shrink: 0;
-  width: 12rem;
+.nurse-med-patients__search-wrap--has-clear .nurse-notes-registry__search {
+  padding-right: 2.25rem;
 }
 
-.nurse-med-patients-page__search-field label {
+.nurse-med-patients__search-clear {
   position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  border: 0;
-}
-
-.nurse-med-patients-page__search-wrap {
-  position: relative;
-  display: flex;
+  top: 50%;
+  right: 0.4rem;
+  transform: translateY(-50%);
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  z-index: 1;
 }
 
-.nurse-med-patients-page__search-icon {
-  position: absolute;
-  left: 0.75rem;
-  color: var(--color-primary);
-  pointer-events: none;
+.nurse-med-patients__search-clear:hover {
+  color: #0f172a;
+  background: #f1f5f9;
 }
 
-.nurse-med-patients-page__search-input {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #c7d2fe;
-  border-radius: 10px;
-  background: #fff;
-  font-weight: 500;
-  box-shadow: 0 1px 3px rgba(99, 102, 241, 0.08);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+.nurse-med-patients__search-clear:focus-visible {
+  outline: 2px solid var(--color-primary, #2563eb);
+  outline-offset: 1px;
 }
 
-.nurse-med-patients-page__search-input:focus {
-  border-color: var(--color-primary-border);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
-}
-
-.nurse-med-patients-page__search-input::placeholder {
-  color: #94a3b8;
-}
-
-/* —— Custom ward dropdown —— */
-.nurse-med-patients-page__ward-dropdown {
+.nurse-med-patients__ward-dropdown {
   position: relative;
-  width: 100%;
+  flex-shrink: 0;
+  min-width: 9.5rem;
 }
 
-.nurse-med-patients-page__ward-trigger {
+.nurse-med-patients__ward-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.45rem 0.7rem;
+  cursor: pointer;
+}
+
+.nurse-med-patients__ward-trigger span {
+  flex: 1;
+  text-align: left;
+}
+
+.nurse-med-patients__ward-trigger svg:last-child {
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.nurse-med-patients__ward-trigger svg:last-child.is-open,
+.nurse-med-patients__ward-trigger.is-open svg:last-child {
+  transform: rotate(180deg);
+}
+
+.nurse-med-patients__ward-menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 20;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  min-width: 100%;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+}
+
+.nurse-med-patients__ward-option {
   display: flex;
   align-items: center;
   gap: 0.45rem;
   width: 100%;
   margin: 0;
-  padding: 0.5rem 0.65rem;
-  border-radius: 10px;
-  font-family: inherit;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
-}
-
-.nurse-med-patients-page__ward-trigger:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.1);
-}
-
-.nurse-med-patients-page__ward-trigger--open {
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
-}
-
-.nurse-med-patients-page__ward-trigger-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 6px;
-  flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.85);
-}
-
-.nurse-med-patients-page__ward-trigger-label {
-  flex: 1;
-  text-align: left;
-  min-width: 0;
-}
-
-.nurse-med-patients-page__ward-trigger-chevron {
-  flex-shrink: 0;
-  color: inherit;
-  opacity: 0.75;
-  transition: transform 0.15s ease;
-}
-
-.nurse-med-patients-page__ward-trigger-chevron.is-open {
-  transform: rotate(180deg);
-}
-
-.nurse-med-patients-page__ward-trigger--all {
-  color: #475569;
-  background: var(--color-surface);
-  border: 1px solid #cbd5e1;
-}
-.nurse-med-patients-page__ward-trigger--all .nurse-med-patients-page__ward-trigger-icon {
-  color: #64748b;
-}
-
-.nurse-med-patients-page__ward-trigger--general {
-  color: #047857;
-  background: var(--color-surface);
-  border: 1px solid #6ee7b7;
-}
-.nurse-med-patients-page__ward-trigger--general .nurse-med-patients-page__ward-trigger-icon {
-  color: #059669;
-}
-
-.nurse-med-patients-page__ward-trigger--icu {
-  color: #b91c1c;
-  background: var(--color-surface);
-  border: 1px solid #fca5a5;
-}
-.nurse-med-patients-page__ward-trigger--icu .nurse-med-patients-page__ward-trigger-icon {
-  color: #dc2626;
-}
-
-.nurse-med-patients-page__ward-trigger--private {
-  color: #6d28d9;
-  background: var(--color-surface);
-  border: 1px solid #c4b5fd;
-}
-.nurse-med-patients-page__ward-trigger--private .nurse-med-patients-page__ward-trigger-icon {
-  color: var(--color-primary);
-}
-
-.nurse-med-patients-page__ward-menu {
-  position: absolute;
-  top: calc(100% + 0.35rem);
-  left: 0;
-  right: 0;
-  z-index: 40;
-  margin: 0;
-  padding: 0.35rem;
-  list-style: none;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  box-shadow:
-    0 4px 6px rgba(15, 23, 42, 0.05),
-    0 12px 28px rgba(99, 102, 241, 0.14);
-  animation: nurse-med-patients-ward-menu-in 0.16s ease-out;
-}
-
-@keyframes nurse-med-patients-ward-menu-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.nurse-med-patients-page__ward-option {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  margin: 0;
-  padding: 0.5rem 0.55rem;
-  border: 1px solid transparent;
+  padding: 0.45rem 0.55rem;
+  border: none;
   border-radius: 8px;
   background: transparent;
-  font-family: inherit;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease;
-}
-
-.nurse-med-patients-page__ward-option:hover {
-  background: #f8fafc;
-}
-
-.nurse-med-patients-page__ward-option-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.625rem;
-  height: 1.625rem;
-  border-radius: 7px;
-  flex-shrink: 0;
-}
-
-.nurse-med-patients-page__ward-option-label {
-  flex: 1;
-  min-width: 0;
-}
-
-.nurse-med-patients-page__ward-option-check {
-  flex-shrink: 0;
-  opacity: 0.9;
-}
-
-.nurse-med-patients-page__ward-option--all .nurse-med-patients-page__ward-option-icon {
-  color: #64748b;
-  background: #f1f5f9;
-}
-.nurse-med-patients-page__ward-option--all.nurse-med-patients-page__ward-option--active {
   color: #334155;
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-}
-
-.nurse-med-patients-page__ward-option--general .nurse-med-patients-page__ward-option-icon {
-  color: #059669;
-  background: #d1fae5;
-}
-.nurse-med-patients-page__ward-option--general.nurse-med-patients-page__ward-option--active {
-  color: #047857;
-  background: var(--color-surface);
-  border-color: #6ee7b7;
-}
-
-.nurse-med-patients-page__ward-option--icu .nurse-med-patients-page__ward-option-icon {
-  color: #dc2626;
-  background: #fee2e2;
-}
-.nurse-med-patients-page__ward-option--icu.nurse-med-patients-page__ward-option--active {
-  color: #b91c1c;
-  background: var(--color-surface);
-  border-color: #fca5a5;
-}
-
-.nurse-med-patients-page__ward-option--private .nurse-med-patients-page__ward-option-icon {
-  color: var(--color-primary);
-  background: var(--color-primary-light);
-}
-.nurse-med-patients-page__ward-option--private.nurse-med-patients-page__ward-option--active {
-  color: #6d28d9;
-  background: var(--color-surface);
-  border-color: #c4b5fd;
-}
-
-.nurse-med-patients-page__clear {
-  flex-shrink: 0;
-  align-self: center;
-  margin: 0;
-  padding: 0.5rem 0.75rem;
-  border: 1px dashed #cbd5e1;
-  border-radius: 10px;
-  background: #fff;
-  font-family: inherit;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #64748b;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
-}
-
-.nurse-med-patients-page__clear:hover {
-  color: var(--color-primary);
-  border-color: #a5b4fc;
-  background: var(--color-primary-light);
-}
-
-/* —— Summary pills —— */
-.nurse-med-patients-page__summary {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  flex-shrink: 0;
-  padding-top: 0.125rem;
-}
-
-.nurse-med-patients-page__summary-loading {
+  font: inherit;
   font-size: 0.8125rem;
-  font-weight: 500;
-  color: #64748b;
-  white-space: nowrap;
-}
-
-.nurse-med-patients-page__stat {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.65rem;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  flex-shrink: 0;
-  white-space: nowrap;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
-}
-
-.nurse-med-patients-page__stat-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 6px;
-}
-
-.nurse-med-patients-page__stat-text {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.25rem;
-  line-height: 1.2;
-}
-
-.nurse-med-patients-page__stat-value {
-  font-size: 0.875rem;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.nurse-med-patients-page__stat-label {
-  font-size: 0.6875rem;
-  font-weight: 600;
-}
-
-.nurse-med-patients-page__stat--patients {
-  background: var(--color-surface);
-  border-color: #86efac;
-}
-
-.nurse-med-patients-page__stat--patients .nurse-med-patients-page__stat-icon {
-  color: #16a34a;
-  background: #fff;
-}
-
-.nurse-med-patients-page__stat--patients .nurse-med-patients-page__stat-label {
-  color: #15803d;
-}
-
-.nurse-med-patients-page__stat--meds {
-  background: var(--color-surface);
-  border-color: #93c5fd;
-}
-
-.nurse-med-patients-page__stat--meds .nurse-med-patients-page__stat-icon {
-  color: var(--color-info);
-  background: #fff;
-}
-
-.nurse-med-patients-page__stat--meds .nurse-med-patients-page__stat-label {
-  color: var(--color-info);
-}
-
-/* —— Table —— */
-.nurse-med-patients-page__table .nurse-card {
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.nurse-med-patients-page__table--fetching {
-  opacity: 0.72;
-  transition: opacity 0.15s ease;
-}
-
-.nurse-med-patients-page__table > .nurse-card:not(.nurse-table-wrap) {
-  padding: 1.5rem 1rem 2rem;
-}
-
-.nurse-med-patients-page__table .nurse-table th {
-  padding: 0.625rem 0.875rem;
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  background: var(--color-surface);
-  border-bottom: 2px solid #c7d2fe;
-  color: #475569;
-}
-
-.nurse-med-patients-page__table .nurse-table td {
-  padding: 0.65rem 0.875rem;
-  font-size: 0.8125rem;
-  border-bottom: 1px solid #f1f5f9;
-  vertical-align: middle;
-}
-
-.nurse-med-patients-page__table .nurse-table tbody tr:nth-child(even) td {
-  background: #fafbff;
-}
-
-.nurse-med-patients-page__table .nurse-row--clickable {
   cursor: pointer;
-  transition: background 0.15s ease, box-shadow 0.15s ease;
+  text-align: left;
 }
 
-.nurse-med-patients-page__table .nurse-row--clickable:hover td {
-  background: var(--color-surface) !important;
-}
-
-.nurse-med-patients-page__table .nurse-row--clickable:hover .nurse-med-patients__row-chevron {
-  opacity: 1;
-  transform: translateX(2px);
-}
-
-.nurse-med-patients-page__table .nurse-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-/* —— Row cells —— */
-.nurse-med-patients__name-cell {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-}
-
-.nurse-med-patients__avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 8px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #fff;
-  background: var(--color-primary);
-  box-shadow: var(--shadow-sm);
-}
-
-.nurse-med-patients__name {
-  font-weight: 600;
-  color: #0f172a;
+.nurse-med-patients__ward-option span {
   flex: 1;
-  min-width: 0;
 }
 
-.nurse-med-patients__row-chevron {
-  flex-shrink: 0;
-  color: #94a3b8;
-  opacity: 0;
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.nurse-med-patients__uhid {
-  display: inline-flex;
-  padding: 0.15rem 0.45rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--color-primary-hover);
-  background: var(--color-primary-light);
-  border: 1px solid #c7d2fe;
-  font-variant-numeric: tabular-nums;
-}
-
-.nurse-med-patients__bed {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.2rem 0.55rem;
-  border-radius: 8px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--color-primary-hover);
-  background: var(--color-surface);
-  border: 1px solid #5eead4;
-}
-
-.nurse-med-patients__ward {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.2rem 0.55rem;
-  border-radius: 8px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  border: 1px solid transparent;
-}
-
-.nurse-med-patients__ward--general {
-  color: #047857;
-  background: #ecfdf5;
-  border-color: #a7f3d0;
-}
-
-.nurse-med-patients__ward--icu {
-  color: #b91c1c;
-  background: #fef2f2;
-  border-color: #fecaca;
-}
-
-.nurse-med-patients__ward--private {
-  color: #6d28d9;
-  background: var(--color-primary-light);
-  border-color: #ddd6fe;
-}
-
-.nurse-med-patients__ward--ward {
-  color: #0369a1;
-  background: var(--color-info-bg);
-  border-color: #bae6fd;
-}
-
-.nurse-med-patients__ward--default {
-  color: #475569;
+.nurse-med-patients__ward-option:hover {
   background: #f1f5f9;
-  border-color: #e2e8f0;
 }
 
-.nurse-med-patients__count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.75rem;
-  padding: 0.2rem 0.55rem;
-  border-radius: 999px;
-  font-size: 0.8125rem;
-  font-weight: 800;
-  color: #fff;
-  background: var(--color-primary);
-  border: 1px solid var(--color-primary);
-  box-shadow: var(--shadow-sm);
+.nurse-med-patients__ward-option.is-active {
+  background: var(--color-primary-light, #eff6ff);
+  color: var(--color-primary, #2563eb);
+  font-weight: 600;
 }
 
-@media (max-width: 900px) {
-  .nurse-med-patients-page__toolbar {
-    flex-direction: column;
-    align-items: stretch;
+@media (max-width: 720px) {
+  .nurse-med-patients__toolbar-filters {
+    justify-content: stretch;
   }
 
-  .nurse-med-patients-page__filter-row {
-    flex-wrap: wrap;
-  }
-
-  .nurse-med-patients-page__search-field {
-    flex: 1 1 12rem;
+  .nurse-med-patients__search-wrap,
+  .nurse-med-patients__ward-dropdown {
     max-width: none;
-  }
-
-  .nurse-med-patients-page__summary {
-    justify-content: flex-start;
-    padding-top: 0;
-  }
-}
-
-@media (max-width: 480px) {
-  .nurse-med-patients-page__filter-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .nurse-med-patients-page__ward-field {
     width: 100%;
-  }
-
-  .nurse-med-patients-page__clear {
-    align-self: stretch;
-    text-align: center;
-  }
-
-  .nurse-med-patients-page__hero {
-    align-items: flex-start;
-  }
-
-  .nurse-med-patients-page__title {
-    font-size: 1.1rem;
   }
 }

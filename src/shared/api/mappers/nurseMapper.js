@@ -823,3 +823,78 @@ export function toApiDoctorVisitUpdateBody(body = {}) {
   if (body.notes != null) payload.notes = body.notes;
   return payload;
 }
+
+/** Map GET /nurse/lab-reports list item (report_id from list; id on detail). */
+export function mapLabReportItem(row) {
+  if (!row) return null;
+  const reportId = row.report_id ?? row.id;
+  return attachPatientUid({
+    ...row,
+    id: reportId,
+    report_id: reportId,
+    patient_name: row.patient_name ?? '',
+    ward_name: row.ward_name ?? null,
+    bed_number: row.bed_number ?? null,
+    doctor_name: row.doctor_name ?? null,
+    test_name: row.test_name ?? '',
+    source: row.source ?? 'NONE',
+    report_file: row.report_file ?? null,
+    has_file: Boolean(row.report_file),
+    uploaded_at: row.uploaded_at ?? row.created_at ?? null,
+    status: row.status ?? 'completed',
+  });
+}
+
+/** Map GET /nurse/lab-reports/{id} detail (id + nested order + parameters). */
+export function mapLabReportDetail(row) {
+  if (!row) return null;
+  const order = row.order ?? {};
+  const reportId = row.report_id ?? row.id;
+  const parameters = Array.isArray(row.parameters) ? row.parameters : [];
+  return attachPatientUid({
+    ...row,
+    id: reportId,
+    report_id: reportId,
+    patient_id: order.patient_id ?? row.patient_id,
+    patient_name: order.patient_name ?? row.patient_name ?? '',
+    patient_uid: order.patient_uid ?? row.patient_uid,
+    ward_name: order.ward_name ?? row.ward_name ?? null,
+    bed_number: order.bed_number ?? row.bed_number ?? null,
+    doctor_name: order.doctor_name ?? row.doctor_name ?? null,
+    doctor_id: order.doctor_id ?? row.doctor_id ?? null,
+    test_name: order.test_name ?? row.test_name ?? '',
+    category: order.category ?? null,
+    priority: order.priority ?? null,
+    order_status: order.status ?? null,
+    parameters,
+    report_file: row.report_file ?? null,
+    has_file: Boolean(row.report_file),
+    uploaded_at: row.created_at ?? row.uploaded_at ?? null,
+    uploaded_by_name: row.uploaded_by_name ?? null,
+    sample_collected_at: row.sample_collected_at ?? null,
+    test_performed_at: row.test_performed_at ?? null,
+    remarks: row.remarks ?? null,
+    file_name: row.file_name ?? null,
+    file_type: row.file_type ?? null,
+    file_size: row.file_size ?? null,
+    file_size_display: row.file_size_display ?? null,
+    source: row.source ?? 'NONE',
+    status: order.status ?? row.status ?? 'completed',
+  });
+}
+
+/** Map GET /nurse/lab-reports paginated list response. */
+export function mapLabReportListResponse(raw) {
+  if (!raw) return { items: [], total: 0, page: 1, page_size: 20, hasNextPage: false };
+  const items = (raw.items ?? []).map(mapLabReportItem).filter(Boolean);
+  const page = raw.page ?? 1;
+  const pageSize = raw.page_size ?? 20;
+  const total = raw.total ?? items.length;
+  return {
+    items,
+    total,
+    page,
+    page_size: pageSize,
+    hasNextPage: page * pageSize < total,
+  };
+}

@@ -41,6 +41,8 @@ import {
   mapDepartmentListResponse,
   toApiDoctorVisitCreateBody,
   toApiDoctorVisitUpdateBody,
+  mapLabReportDetail,
+  mapLabReportListResponse,
 } from '@/shared/api/mappers/nurseMapper';
 
 /** Backend GET /nurse/queue/today enforces page_size <= 100. */
@@ -535,4 +537,38 @@ export async function updateDoctorVisit(visitId, data, token) {
 export async function voidDoctorVisit(visitId, data, token) {
   const raw = await doctorVisitsApi.voidDoctorVisit(visitId, data, token);
   return mapDoctorVisitItem(raw);
+}
+
+/** Backend GET /nurse/lab-reports — occupied-bed scoped, read-only. */
+export async function listLabReports(params = {}, token) {
+  const { page = 1, page_size = 20, _scopeMode, ...rest } = params;
+  const scopeParams = withAllocatedOnly(params);
+  const raw = await nurseApi.getNurseLabReports(
+    { page, page_size, ...rest, ...scopeParams },
+    token,
+  );
+  return mapLabReportListResponse(raw);
+}
+
+/** Backend GET /nurse/lab-reports/{report_id} — pass same scopeFilters as list. */
+export async function getLabReport(reportId, params = {}, token) {
+  const { _scopeMode, ...rest } = params;
+  const scopeParams = withAllocatedOnly(params);
+  const raw = await nurseApi.getNurseLabReportById(
+    reportId,
+    { ...rest, ...scopeParams },
+    token,
+  );
+  return mapLabReportDetail(raw);
+}
+
+/** Backend GET /nurse/lab-reports/{report_id}/file — blob download with scope. */
+export async function fetchLabReportFileBlob(reportId, params = {}, token) {
+  const { _scopeMode, ...rest } = params;
+  const scopeParams = withAllocatedOnly(params);
+  return nurseApi.fetchNurseLabReportFileBlob(
+    reportId,
+    { ...rest, ...scopeParams },
+    token,
+  );
 }

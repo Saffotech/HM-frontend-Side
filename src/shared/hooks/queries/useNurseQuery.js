@@ -38,6 +38,9 @@ import {
   createDoctorVisit,
   updateDoctorVisit,
   voidDoctorVisit,
+  listLabReports,
+  getLabReport,
+  fetchLabReportFileBlob,
 } from '@/shared/api/services/nurse';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
@@ -582,5 +585,35 @@ export function useVoidDoctorVisitMutation(visitId) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nurse', 'doctor-visits'] });
     },
+  });
+}
+
+export function useNurseLabReportsQuery(filters = {}, options = {}) {
+  const { enabled = true, ...queryOptions } = options;
+  const token = useQueryToken();
+  return useQuery({
+    queryKey: queryKeys.nurse.labReports(filters),
+    enabled,
+    queryFn: () => listLabReports(filters, token),
+    placeholderData: keepPreviousData,
+    ...queryOptions,
+  });
+}
+
+export function useNurseLabReportQuery(reportId, filters = {}, options = {}) {
+  const { enabled = true, ...queryOptions } = options;
+  const token = useQueryToken();
+  return useQuery({
+    queryKey: queryKeys.nurse.labReport(reportId, filters),
+    enabled: enabled && Boolean(reportId),
+    queryFn: () => getLabReport(reportId, filters, token),
+    ...queryOptions,
+  });
+}
+
+export function useDownloadNurseLabReportFileMutation() {
+  const token = useQueryToken();
+  return useMutation({
+    mutationFn: ({ reportId, ...params }) => fetchLabReportFileBlob(reportId, params, token),
   });
 }

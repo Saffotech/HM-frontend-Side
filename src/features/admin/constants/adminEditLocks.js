@@ -113,6 +113,7 @@ export const MODULE_CARD_PERMISSION_KEYS = Object.freeze({
     'nurse_notes:view',
     'nurse_notes:create',
     'nurse_notes:update',
+    'nurse_lab_reports:view',
     'nurse_medication:view',
     'nurse_medication:create',
     'nurse_medication:update',
