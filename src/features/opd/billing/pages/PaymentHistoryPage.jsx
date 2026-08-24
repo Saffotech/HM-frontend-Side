@@ -46,6 +46,10 @@ export default function PaymentHistoryPage() {
     setPage(1);
   }, [debouncedSearch, activeFilter]);
 
+  useEffect(() => {
+    if (activeFilter === 'Insurance') setActiveFilter('all');
+  }, [activeFilter]);
+
   const totalPages = pagination?.totalPages ?? 1;
   const totalItems = pagination?.totalItems ?? sorted.length;
   const pageSize = PAYMENT_HISTORY_PAGE_SIZE;
@@ -79,14 +83,6 @@ export default function PaymentHistoryPage() {
       value: <MoneyAmount amount={summary?.card ?? 0} exact />,
       icon: CreditCard,
       color: 'blue',
-    },
-    {
-      key: 'Insurance',
-      label: 'Insurance',
-      value: <MoneyAmount amount={summary?.insurance ?? 0} exact />,
-      icon: IndianRupee,
-      color: 'blue',
-      sub: 'Included in total',
     },
   ];
 

@@ -22,7 +22,7 @@ import {
 } from '@/shared/components/common';
 import './CollectPaymentModal.css';
 
-const DEFAULT_COLLECT_PAYMENT_MODES = ['Cash', 'Card', 'UPI', 'Insurance'];
+const DEFAULT_COLLECT_PAYMENT_MODES = ['Cash', 'Card', 'UPI'];
 
 function normalizePaymentMode(mode) {
   if (String(mode).toLowerCase() === 'online') return 'Insurance';

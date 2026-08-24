@@ -72,7 +72,8 @@ export const REGISTRATION_FEE = 200;
 export const TAX_RATE = 0.05;
 export const REVISIT_DAYS = 30;
 
-export const PAYMENT_MODES = ['Cash', 'Card', 'UPI', 'Insurance'];
+/** OPD payment buttons — Insurance is IPD-only (claim module). */
+export const PAYMENT_MODES = ['Cash', 'Card', 'UPI'];
 
 /** IPD bill collect / discharge — insurance is handled via the claim module. */
 export const IPD_COLLECT_PAYMENT_MODES = ['Cash', 'Card', 'UPI'];

@@ -19,7 +19,8 @@ export const DEFAULT_PAYMENT_MODES = [
   { code: 'cash', label: 'Cash', enabled: true },
   { code: 'card', label: 'Card', enabled: true },
   { code: 'upi', label: 'UPI', enabled: true },
-  { code: 'insurance', label: 'Insurance', enabled: true },
+  // Kept for settings/history shape; OPD UI does not offer Insurance as a payment option.
+  { code: 'insurance', label: 'Insurance', enabled: false },
 ];
 
 function nextItemId(prefix = 'item') {

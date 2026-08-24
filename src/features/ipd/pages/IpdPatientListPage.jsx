@@ -173,7 +173,7 @@ export default function IpdPatientListPage() {
     stay === STAY_FILTER.COMPLETED || stay === STAY_FILTER.ALL;
   const showStatusColumn = stay !== STAY_FILTER.COMPLETED;
   const colSpan =
-    6 + (showStatusColumn ? 1 : 0) + (showDischargeDate ? 1 : 0);
+    7 + (showStatusColumn ? 1 : 0) + (showDischargeDate ? 1 : 0);
 
   const { wardOptions } = useIpdWardOptions();
 
@@ -282,7 +282,7 @@ export default function IpdPatientListPage() {
                 className="ipd-input"
                 value={search}
                 onChange={onFilterChange(setSearch, 'search')}
-                placeholder="Search patient"
+                placeholder="Search patient by ID"
               />
             </div>
             <div className="ipd-toolbar__field ipd-toolbar__field--sm">
@@ -522,6 +522,7 @@ export default function IpdPatientListPage() {
                   <thead>
                     <tr>
                       <th>Patient</th>
+                      <th>Admission NO</th>
                       {showStatusColumn ? <th>Status</th> : null}
                       <th>Ward</th>
                       <th>Bed</th>
@@ -554,9 +555,10 @@ export default function IpdPatientListPage() {
                             <td>
                               <strong>{row.patient_name || '—'}</strong>
                               <div className="ipd-pl-patient__id">
-                                {row.admission_no || row.patient_uid || '—'}
+                                {row.patient_uid || '—'}
                               </div>
                             </td>
+                            <td>{row.admission_no || '—'}</td>
                             {showStatusColumn ? (
                               <td>
                                 <IpdStatusBadge status={row.status} />

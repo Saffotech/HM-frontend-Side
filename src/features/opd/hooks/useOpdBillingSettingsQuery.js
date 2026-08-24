@@ -71,6 +71,7 @@ export function useOpdPaymentControls() {
 
   const enabledModes = modes
     .filter((m) => m.enabled !== false)
+    .filter((m) => (m.code || '').toLowerCase() !== 'insurance')
     .map((m) => {
       const code = (m.code || '').toLowerCase();
       if (code === 'upi') return 'UPI';
@@ -79,7 +80,7 @@ export function useOpdPaymentControls() {
 
   return {
     ...query,
-    enabledPaymentModes: enabledModes.length ? enabledModes : ['Cash', 'Card', 'UPI', 'Insurance'],
+    enabledPaymentModes: enabledModes.length ? enabledModes : ['Cash', 'Card', 'UPI'],
     bankDetails: pm?.bank_details ?? {},
     insuranceProviders: (pm?.insurance_providers ?? []).filter((p) => p.is_active),
   };

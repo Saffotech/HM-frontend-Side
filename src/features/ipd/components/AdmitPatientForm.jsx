@@ -462,7 +462,7 @@ export default function AdmitPatientForm() {
                       className="ipd-input"
                       value={values.patientSearch}
                       onChange={(e) => set("patientSearch", e.target.value)}
-                      placeholder="Search patient"
+                      placeholder="Search patient by ID"
                     />
                     {show("patient") ? (
                       <span className="ipd-field-error">{errors.patient}</span>
