@@ -27,7 +27,7 @@ import {
   useIpdInsuranceClaimQuery,
   useUpdateIpdInsuranceClaimMutation,
 } from '@/features/ipd/hooks/useIpdBillingQuery';
-import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 import { toast } from '@/shared/utils/toast';
 
 const TABS = [
@@ -44,7 +44,7 @@ const REASON_OPTIONS = [
 ];
 
 function money(n) {
-  return formatIpdMoney(n);
+  return formatCurrency(n, { empty: '—' });
 }
 
 function Field({ label, value, tone, fullRow = false }) {

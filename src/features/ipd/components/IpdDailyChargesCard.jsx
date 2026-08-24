@@ -5,7 +5,6 @@
 import { useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Button, DateInput } from '@/shared/components/common';
-import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
 import {
   calculateDailyChargesTotal,
   createDailyCharge,
@@ -16,6 +15,7 @@ import {
 } from '@/features/ipd/utils/insuranceDailyCharges';
 import { toast } from '@/shared/utils/toast';
 import IpdDailyChargesGroupItems from '@/features/ipd/components/IpdDailyChargesGroupItems';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 function formatChargeDate(iso) {
   if (!iso) return '—';
@@ -154,7 +154,7 @@ export default function IpdDailyChargesCard({
                       {group.categories.join(' · ')}
                     </span>
                     <strong className="ipd-ins-daily-group__total">
-                      {formatIpdMoney(group.total)}
+                      {formatCurrency(group.total, { empty: '—' })}
                     </strong>
                     <ChevronDown
                       size={18}
@@ -233,7 +233,7 @@ export default function IpdDailyChargesCard({
             {dailyChargeGroups.length === 1 ? '' : 's'} · {dailyCharges.length}{' '}
             item{dailyCharges.length === 1 ? '' : 's'}
           </span>
-          <strong>{formatIpdMoney(dailyChargesTotal)}</strong>
+          <strong>{formatCurrency(dailyChargesTotal, { empty: '—' })}</strong>
           <span className="ipd-ins-daily-total__note">
             Saves roll up into hospital charge heads
           </span>

@@ -37,6 +37,7 @@ import { ROUTES } from '@/shared/constants';
 import { Button, ConfirmDialog, EmptyState, ProfilePhotoCropDialog } from '@/shared/components/common';
 import PageSpinner from '@/shared/components/PageSpinner';
 import { toast } from '@/shared/utils/toast';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 import { formatPhoneInput } from '@/shared/utils/validators';
 import {
   capitalizeFirst,
@@ -667,7 +668,7 @@ export default function DoctorProfilePage() {
                   <span className="doc-profile-tag">{profile.specialization}</span>
                 ) : null}
                 {profile.consultation_fee != null ? (
-                  <span className="doc-profile-tag">₹{profile.consultation_fee}</span>
+                  <span className="doc-profile-tag">{formatCurrency(profile.consultation_fee)}</span>
                 ) : null}
                 {fmtShift(profile.shift) ? (
                   <span className="doc-profile-tag">{fmtShift(profile.shift)}</span>
@@ -801,7 +802,9 @@ export default function DoctorProfilePage() {
                 <ReadField
                   label="Consultation fee"
                   value={
-                    profile.consultation_fee != null ? `₹${profile.consultation_fee}` : null
+                    profile.consultation_fee != null
+                      ? formatCurrency(profile.consultation_fee)
+                      : null
                   }
                 />
                 <ReadField label="Shift" value={fmtShift(profile.shift)} />

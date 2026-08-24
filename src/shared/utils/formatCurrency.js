@@ -1,130 +1,43 @@
+/**
+ * Single source of truth for monetary display across the frontend.
+ *
+ * Change currency / locale / compact rules here only.
+ */
 
-// const CURRENCY = 'USD';
-// const LOCALE = 'en-US';
+// const LOCALE = 'en-IN';
+// const CURRENCY_SYMBOL = '₹';
 
-// /**
-//  * Format a normal currency amount.
-//  *
-//  * Example:
-//  * 1500    -> $1,500
-//  * 1500.50 -> $1,500.50
-//  */
-// export function formatCurrency(amount) {
-//   const value = Number(amount || 0);
+const LOCALE = 'en-US';
+const CURRENCY_SYMBOL = '$';
+/**
+ * Format a monetary amount for display.
+ *
+ * @param {unknown} amount
+ * @param {{ empty?: string }} [options]
+ *   When `empty` is set, null / undefined / '' / non-finite values return that
+ *   string (e.g. '—' or 'N/A') instead of formatting as zero.
+ *
+ * Examples (INR):
+ *   1500     -> ₹1,500
+ *   1500.5   -> ₹1,500.5
+ *   null     -> ₹0          (default)
+ *   null, { empty: '—' } -> —
+ */
+export function formatCurrency(amount, options = {}) {
+  const { empty } = options;
+  const isBlank = amount == null || amount === '';
 
-//   return new Intl.NumberFormat(LOCALE, {
-//     style: 'currency',
-//     currency: CURRENCY,
-//     minimumFractionDigits: 0,
-//     maximumFractionDigits: 2,
-//   }).format(value);
-// }
+  if (isBlank) {
+    if (empty !== undefined) return empty;
+  }
 
-// function trimTrailingZeros(numStr) {
-//   if (!numStr.includes('.')) return numStr;
+  const value = Number(isBlank ? 0 : amount);
+  if (!Number.isFinite(value)) {
+    if (empty !== undefined) return empty;
+    return `${CURRENCY_SYMBOL}0`;
+  }
 
-//   return numStr
-//     .replace(/(\.\d*?)0+$/, '$1')
-//     .replace(/\.$/, '');
-// }
-
-// function formatPower10(x) {
-//   const n = Number(x);
-
-//   if (!Number.isFinite(n) || n === 0) return '0';
-
-//   const abs = Math.abs(n);
-//   const exp = Math.floor(Math.log10(abs));
-//   const mantissa = abs / 10 ** exp;
-
-//   const m = trimTrailingZeros(
-//     mantissa.toFixed(mantissa >= 10 ? 1 : 2)
-//   );
-
-//   return `${m}×10^${exp}`;
-// }
-
-// function formatScaledNumber(n) {
-//   const x = Number(n);
-
-//   if (!Number.isFinite(x)) return '0';
-
-//   // Avoid printing thousands of digits for extremely large values.
-//   if (Math.abs(x) >= 1e9) {
-//     return formatPower10(x);
-//   }
-
-//   const maximumFractionDigits =
-//     x >= 100 ? 0 :
-//     x >= 10 ? 1 :
-//     2;
-
-//   const formatted = new Intl.NumberFormat(LOCALE, {
-//     minimumFractionDigits: 0,
-//     maximumFractionDigits,
-//     useGrouping: true,
-//   }).format(x);
-
-//   return trimTrailingZeros(formatted);
-// }
-
-// /**
-//  * Amounts below this use full digits.
-//  *
-//  * Example:
-//  * $9,999
-//  *
-//  * From $10,000 use compact K / M / B.
-//  */
-// export const COMPACT_CURRENCY_FROM = 10000;
-
-// /**
-//  * USD short form:
-//  *
-//  * Thousand -> K
-//  * Million  -> M
-//  * Billion  -> B
-//  *
-//  * Examples:
-//  * $10 K
-//  * $100 K
-//  * $1 M
-//  * $10 M
-//  * $1 B
-//  */
-// export function formatCurrencyCompact(amount) {
-//   const raw = Number(amount || 0);
-//   const n = Math.abs(raw);
-//   const prefix = raw < 0 ? '-' : '';
-
-//   if (n >= 1e9) {
-//     const billion = n / 1e9;
-
-//     return `${prefix}$${formatScaledNumber(billion)} B`;
-//   }
-
-//   if (n >= 1e6) {
-//     const million = n / 1e6;
-
-//     return `${prefix}$${formatScaledNumber(million)} M`;
-//   }
-
-//   if (n >= COMPACT_CURRENCY_FROM) {
-//     const thousand = n / 1e3;
-
-//     return `${prefix}$${formatScaledNumber(thousand)} K`;
-//   }
-
-//   return formatCurrency(amount);
-// }
-
-// export function shouldUseCompactCurrency(amount) {
-//   return formatCurrencyCompact(amount) !== formatCurrency(amount);
-// }
-
-
-export function formatCurrency(amount) {
-  return `₹${Number(amount || 0).toLocaleString('en-IN', {
+  return `${CURRENCY_SYMBOL}${value.toLocaleString(LOCALE, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   })}`;
@@ -151,7 +64,7 @@ function formatScaledNumber(n) {
   // Avoid printing thousands of digits for absurdly large values.
   if (Math.abs(x) >= 1e6) return formatPower10(x);
   const maximumFractionDigits = x >= 100 ? 0 : x >= 10 ? 1 : 2;
-  const formatted = new Intl.NumberFormat('en-IN', {
+  const formatted = new Intl.NumberFormat(LOCALE, {
     minimumFractionDigits: 0,
     maximumFractionDigits,
     useGrouping: true,
@@ -172,15 +85,15 @@ export function formatCurrencyCompact(amount) {
 
   if (n >= 1e7) {
     const cr = n / 1e7;
-    return `${prefix}₹${formatScaledNumber(cr)} Cr`;
+    return `${prefix}${CURRENCY_SYMBOL}${formatScaledNumber(cr)} Cr`;
   }
   if (n >= 1e5) {
     const lakh = n / 1e5;
-    return `${prefix}₹${formatScaledNumber(lakh)} L`;
+    return `${prefix}${CURRENCY_SYMBOL}${formatScaledNumber(lakh)} L`;
   }
   if (n >= COMPACT_CURRENCY_FROM) {
     const k = n / 1e3;
-    return `${prefix}₹${formatScaledNumber(k)} K`;
+    return `${prefix}${CURRENCY_SYMBOL}${formatScaledNumber(k)} K`;
   }
   return formatCurrency(amount);
 }
@@ -188,4 +101,3 @@ export function formatCurrencyCompact(amount) {
 export function shouldUseCompactCurrency(amount) {
   return formatCurrencyCompact(amount) !== formatCurrency(amount);
 }
-

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { getDailyChargeItemPlaceholder } from '@/features/ipd/utils/insuranceDailyCharges';
-import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 function formatChargeDate(iso) {
   if (!iso) return '—';
@@ -176,7 +176,7 @@ export default function IpdDailyChargesGroupItems({
             />
             <input
               className="ipd-input ipd-ins-charge-input"
-              value={formatIpdMoney(pharmacyTotalAmount)}
+              value={formatCurrency(pharmacyTotalAmount, { empty: '—' })}
               readOnly
               tabIndex={-1}
               aria-label="Total pharmacy amount"

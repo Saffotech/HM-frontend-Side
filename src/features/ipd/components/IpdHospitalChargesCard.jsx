@@ -4,39 +4,17 @@
 
 import { Fragment, useState } from 'react';
 import { Button } from '@/shared/components/common';
-import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
 import {
   calculateInsuranceChargeTotals,
   createCustomChargeHead,
+  groupHospitalChargeBuckets,
   isDefaultChargeHead,
   isDiscountCharge,
   normalizeInsuranceChargeHeads,
   sortInsuranceChargeHeads,
 } from '@/features/ipd/utils/insuranceChargeHeads';
 import { toast } from '@/shared/utils/toast';
-
-function groupHospitalChargeBuckets(chargeRows) {
-  const buckets = [
-    { id: 'clinical', label: 'Stay & clinical', rows: [] },
-    { id: 'diagnostics', label: 'Lab & pharmacy', rows: [] },
-    { id: 'adjustments', label: 'Misc & discount', rows: [] },
-    { id: 'custom', label: 'Additional heads', rows: [] },
-  ];
-
-  chargeRows.forEach((row) => {
-    if (!isDefaultChargeHead(row)) {
-      buckets[3].rows.push(row);
-    } else if (isDiscountCharge(row) || row.id === 'misc') {
-      buckets[2].rows.push(row);
-    } else if (row.id === 'lab' || row.id === 'pharmacy') {
-      buckets[1].rows.push(row);
-    } else {
-      buckets[0].rows.push(row);
-    }
-  });
-
-  return buckets.filter((bucket) => bucket.rows.length > 0);
-}
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 export default function IpdHospitalChargesCard({
   charges,
@@ -197,7 +175,7 @@ export default function IpdHospitalChargesCard({
               <tr className="ipd-ins-charge-table__total-row">
                 <th scope="row">Gross bill</th>
                 <td className="ipd-num">
-                  <strong>{formatIpdMoney(totals.displayGross)}</strong>
+                  <strong>{formatCurrency(totals.displayGross, { empty: '—' })}</strong>
                 </td>
                 <td />
               </tr>

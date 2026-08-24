@@ -4,13 +4,13 @@
 
 import { useEffect, useState } from 'react';
 import { Modal, Button } from '@/shared/components/common';
-import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
 import {
   CLAIM_STATUS,
   validateApproveTransition,
   validatePartiallyApprovedTransition,
   validateRejectTransition,
 } from '@/features/ipd/utils/claimStatusConstants';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 const ACTION_META = {
   approve: {
@@ -110,7 +110,7 @@ export default function ClaimStatusActionModal({
     >
       <form id="ipd-claim-status-action-form" onSubmit={handleSubmit}>
         <p className="ipd-page__subtitle">
-          Claimed amount: {formatIpdMoney(claimedAmount)}
+          Claimed amount: {formatCurrency(claimedAmount, { empty: '—' })}
         </p>
 
         {meta.requireApproved ? (

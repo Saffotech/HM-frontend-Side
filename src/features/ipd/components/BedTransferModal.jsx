@@ -13,8 +13,8 @@ import {
 } from '@/features/ipd/hooks/useIpdQuery';
 import { useIpdWardOptions } from '@/features/ipd/hooks/useIpdWardOptions';
 import { useIpdBedRateLookup } from '@/features/ipd/hooks/useIpdBedRateLookup';
-import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
 import { IPD_ADMISSION_STATUS } from '@/features/ipd/utils/constants';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 function patientLabel(row) {
   const name = row.patient_name || 'Patient';
@@ -315,7 +315,7 @@ export default function BedTransferModal({
               const rate = ratesAvailable ? getRate(w) : null;
               return (
                 <option key={w} value={w}>
-                  {rate != null ? `${w} · ${formatIpdMoney(rate)}/day` : w}
+                  {rate != null ? `${w} · ${formatCurrency(rate, { empty: '—' })}/day` : w}
                 </option>
               );
             })}
@@ -338,7 +338,7 @@ export default function BedTransferModal({
               return (
                 <option key={bed.id} value={bed.id}>
                   {rate != null
-                    ? `${bed.bed_number} · ${formatIpdMoney(rate)}/day`
+                    ? `${bed.bed_number} · ${formatCurrency(rate, { empty: '—' })}/day`
                     : bed.bed_number}
                 </option>
               );

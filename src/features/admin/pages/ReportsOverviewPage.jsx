@@ -15,9 +15,9 @@ import AdminReportFilters from '@/features/admin/components/AdminReportFilters';
 import AdminStatCard from '@/features/admin/components/AdminStatCard';
 import {
   defaultReportDateRange,
-  formatCurrency,
   normalizeReportsOverviewPayments,
 } from '@/features/admin/utils/reportUtils';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 import { useAdminReportsOverviewQuery } from '@/shared/hooks/queries/useAdminQuery';
 import { QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';

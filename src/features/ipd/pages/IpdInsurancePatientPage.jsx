@@ -13,7 +13,7 @@ import {
   useIpdInsurancePatientQuery,
   useUpdateIpdInsurancePatientMutation,
 } from '@/features/ipd/hooks/useIpdBillingQuery';
-import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 function Fact({ label, value }) {
   return (
@@ -151,11 +151,11 @@ export default function IpdInsurancePatientPage() {
             <Fact label="Relationship" value={claim.relationship} />
             <Fact
               label="Claimed Amount"
-              value={formatIpdMoney(claim.claimed)}
+              value={formatCurrency(claim.claimed, { empty: '—' })}
             />
             <Fact
               label="Estimate Amount"
-              value={formatIpdMoney(claim.estimateAmount)}
+              value={formatCurrency(claim.estimateAmount, { empty: '—' })}
             />
           </dl>
         </div>
@@ -205,11 +205,11 @@ export default function IpdInsurancePatientPage() {
               </p>
             </div>
             <div className="ipd-ins-history-row__money">
-              <span>Bill {formatIpdMoney(claim.netBill)}</span>
+              <span>Bill {formatCurrency(claim.netBill, { empty: '—' })}</span>
               <span className="ipd-claim-amt--ok">
-                Approved {formatIpdMoney(claim.approved)}
+                Approved {formatCurrency(claim.approved, { empty: '—' })}
               </span>
-              <span>Patient {formatIpdMoney(claim.patientResponsibility)}</span>
+              <span>Patient {formatCurrency(claim.patientResponsibility, { empty: '—' })}</span>
             </div>
             <span className="ipd-ins-chip ipd-ins-chip--warn">
               {claim.statusLabel}

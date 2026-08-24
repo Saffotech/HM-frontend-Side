@@ -23,7 +23,9 @@ import { ROUTES } from '@/shared/constants';
 import IpdPageHeader from '@/features/ipd/components/IpdPageHeader';
 import { useIpdPaymentHistoryQuery } from '@/features/ipd/hooks/useIpdQuery';
 import { IPD_PAGE_SIZE } from '@/features/ipd/utils/constants';
-import { formatIpdDateTime, formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
+import { formatIpdDateTime } from '@/features/ipd/utils/ipdFormat';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
+
 import '@/features/opd/billing/pages/PaymentHistoryPage.css';
 
 const MODE_CLASS = {
@@ -214,10 +216,10 @@ export default function IpdPaymentHistoryPage() {
                             </span>
                           </td>
                           <td className="text-green">
-                            {formatIpdMoney(row.amount)}
+                            {formatCurrency(row.amount, { empty: '—' })}
                             {Number(row.bill_balance) > 0 ? (
                               <div className="ipd-page__subtitle">
-                                Bill due: {formatIpdMoney(row.bill_balance)}
+                                Bill due: {formatCurrency(row.bill_balance, { empty: '—' })}
                               </div>
                             ) : null}
                           </td>

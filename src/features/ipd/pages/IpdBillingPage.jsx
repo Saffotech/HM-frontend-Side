@@ -12,7 +12,6 @@ import { useIpdPermissionSet } from '@/features/ipd/hooks/useIpdPermission';
 import IpdPermissionButton from '@/features/ipd/components/IpdPermissionButton';
 import { useIpdRunningBillsQuery } from '@/features/ipd/hooks/useIpdQuery';
 import { useIpdInsuranceBillsQuery } from '@/features/ipd/hooks/useIpdBillingQuery';
-import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
 import { mapInsuranceBillRow } from '@/features/ipd/utils/mapInsuranceApi';
 import {
   IPD_PAYMENT_TYPE,
@@ -25,6 +24,7 @@ import {
   parseIpdPaymentType,
   paymentTypeQueryValue,
 } from '@/features/ipd/utils/ipdPaymentTypes';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 const INSURANCE_BILL_COLUMNS = [
   'IPD ID',
@@ -255,10 +255,10 @@ export default function IpdBillingPage() {
                         {row.doctor}
                         <div className="ipd-ins-meta">{row.wardRoom}</div>
                       </td>
-                      <td>{formatIpdMoney(row.netBill)}</td>
+                      <td>{formatCurrency(row.netBill, { empty: '—' })}</td>
                       <td>
                         <span className="ipd-claim-amt--ok">
-                          {formatIpdMoney(row.approved)}
+                          {formatCurrency(row.approved, { empty: '—' })}
                         </span>
                       </td>
                       <td>
@@ -346,9 +346,9 @@ export default function IpdBillingPage() {
                         {row.ward || '—'} / {row.bed || '—'}
                       </td>
                       <td>{row.days ?? '—'}</td>
-                      <td>{formatIpdMoney(row.total)}</td>
-                      <td>{formatIpdMoney(row.paid_balance)}</td>
-                      <td>{formatIpdMoney(row.due_balance)}</td>
+                      <td>{formatCurrency(row.total, { empty: '—' })}</td>
+                      <td>{formatCurrency(row.paid_balance, { empty: '—' })}</td>
+                      <td>{formatCurrency(row.due_balance, { empty: '—' })}</td>
                       <td>
                         <IpdPermissionButton
                           allowed={canViewBilling}

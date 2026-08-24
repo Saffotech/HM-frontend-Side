@@ -15,9 +15,9 @@ import {
 import SuperAdminLayout from '@/features/super-admin/components/SuperAdminLayout';
 import {
   defaultReportDateRange,
-  formatCurrency,
   formatReportDate,
 } from '@/features/admin/utils/reportUtils';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 import {
   useAdminDashboardQuery,
   useAdminDepartmentsQuery,

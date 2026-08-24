@@ -298,7 +298,7 @@ export default function AdminNurseManagementPanel({ manageAdminEditLocks = false
             locked={!canEdit('nurse_clinical')}
           >
             <PermissionToggles
-              modules={['Vitals', 'Nursing Notes', 'Medication']}
+              modules={['Vitals', 'Nursing Notes', 'Medication', 'Doctor Visits']}
               targetRoleKey={targetRoleKey}
               selectedByRole={selectedByRole}
               togglePermission={togglePermission}

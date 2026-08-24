@@ -27,11 +27,11 @@ import {
 } from '@/features/pharmacy/utils/dispenseWorkflow';
 import {
   calculateUnitPriceFromLineAmount,
-  formatPharmacyMoney,
   parseDispenseAmountInput,
   recordPharmacyDispenseWithPricing,
   resolveAdmissionIdForPharmacyPatient,
 } from '@/features/pharmacy/utils/dispensePricing';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 import {
   formatHumanInstructions,
   formatQuantityLabel,
@@ -353,7 +353,7 @@ export default function DispensePage() {
                               <td className="pharmacy-dispense-table__amount-col">
                                 <span className="pharmacy-dispense-line-amount">
                                   {giveNowQty > 0 && String(amounts[item.id] ?? '').trim()
-                                    ? `${formatPharmacyMoney(unitPrice)} / unit`
+                                    ? `${formatCurrency(unitPrice, { empty: '—' })} / unit`
                                     : '—'}
                                 </span>
                               </td>
@@ -388,7 +388,7 @@ export default function DispensePage() {
                       <div className="pharmacy-dispense-stat">
                         <span className="pharmacy-dispense-stat__label">Total Amount</span>
                         <span className="pharmacy-dispense-stat__value pharmacy-dispense-stat__value--amount">
-                          {formatPharmacyMoney(summary.totalAmount)}
+                          {formatCurrency(summary.totalAmount, { empty: '—' })}
                         </span>
                       </div>
                     </div>

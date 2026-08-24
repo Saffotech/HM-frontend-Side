@@ -13,17 +13,6 @@ export function formatIpdDateTime(raw) {
   });
 }
 
-export function formatIpdMoney(amount) {
-  if (amount == null || amount === '') return '—';
-  const n = Number(amount);
-  if (Number.isNaN(n)) return String(amount);
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 2,
-  }).format(n);
-}
-
 export function toIsoAdmissionDate(dateOnly) {
   if (!dateOnly) return undefined;
   // Backend accepts ISO datetime; noon avoids TZ day-shift for date-only inputs.

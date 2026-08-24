@@ -7,34 +7,9 @@
 
 
 import { BrandLogo, BrandName } from '@/shared/components/common';
-
 import { APP_NAME } from '@/shared/constants';
-
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 import './IpdInsuranceBillPrint.css';
-
-
-
-function formatInr(value) {
-
-  if (value == null || value === '') return 'N/A';
-
-  const n = Number(value);
-
-  if (Number.isNaN(n)) return 'N/A';
-
-  return new Intl.NumberFormat('en-IN', {
-
-    style: 'currency',
-
-    currency: 'INR',
-
-    maximumFractionDigits: 0,
-
-  }).format(n);
-
-}
-
-
 
 function textOrNa(value) {
 
@@ -86,7 +61,7 @@ function SettlementRow({ label, value, muted }) {
 
       <td>{label}</td>
 
-      <td className="ipd-ins-print-money">{formatInr(value)}</td>
+      <td className="ipd-ins-print-money">{formatCurrency(value, { empty: 'N/A' })}</td>
 
     </tr>
 
@@ -158,8 +133,8 @@ export default function IpdInsuranceBillPrintSheet({ model, className = '' }) {
         { label: 'Policy No.', value: textOrNa(insurance.policy_no) },
         { label: 'Policy Holder', value: textOrNa(insurance.policy_holder) },
         { label: 'Relationship', value: textOrNa(insurance.relationship) },
-        { label: 'Claimed Amount', value: formatInr(insurance.claimed) },
-        { label: 'Estimate Amount', value: formatInr(insurance.estimate_amount) },
+        { label: 'Claimed Amount', value: formatCurrency(insurance.claimed, { empty: 'N/A' }) },
+        { label: 'Estimate Amount', value: formatCurrency(insurance.estimate_amount, { empty: 'N/A' }) },
       ]
     : [];
 
@@ -327,9 +302,9 @@ export default function IpdInsuranceBillPrintSheet({ model, className = '' }) {
 
                   <td className="col-qty">{item.qty}</td>
 
-                  <td className="col-money">{formatInr(item.rate)}</td>
+                  <td className="col-money">{formatCurrency(item.rate, { empty: 'N/A' })}</td>
 
-                  <td className="col-money">{formatInr(item.amount)}</td>
+                  <td className="col-money">{formatCurrency(item.amount, { empty: 'N/A' })}</td>
 
                 </tr>
 
@@ -351,7 +326,7 @@ export default function IpdInsuranceBillPrintSheet({ model, className = '' }) {
 
                 </td>
 
-                <td className="col-money">({formatInr(model.discount)})</td>
+                <td className="col-money">({formatCurrency(model.discount, { empty: 'N/A' })})</td>
 
               </tr>
 
@@ -365,7 +340,7 @@ export default function IpdInsuranceBillPrintSheet({ model, className = '' }) {
 
               </td>
 
-              <td className="col-money">{formatInr(model.net_hospital_bill)}</td>
+              <td className="col-money">{formatCurrency(model.net_hospital_bill, { empty: 'N/A' })}</td>
 
             </tr>
 
@@ -471,7 +446,7 @@ export default function IpdInsuranceBillPrintSheet({ model, className = '' }) {
 
             <strong className="ipd-ins-print-final__value ipd-ins-print-final__value--paid">
 
-              Paid {formatInr(summary.patient_paid)}
+              Paid {formatCurrency(summary.patient_paid, { empty: 'N/A' })}
 
             </strong>
 
@@ -479,7 +454,7 @@ export default function IpdInsuranceBillPrintSheet({ model, className = '' }) {
 
               <strong className="ipd-ins-print-final__value ipd-ins-print-final__value--nil">
 
-                Unpaid ₹0
+                Unpaid {formatCurrency(0)}
 
               </strong>
 
@@ -487,7 +462,7 @@ export default function IpdInsuranceBillPrintSheet({ model, className = '' }) {
 
               <strong className="ipd-ins-print-final__value">
 
-                Unpaid {formatInr(patientDue)}
+                Unpaid {formatCurrency(patientDue, { empty: 'N/A' })}
 
               </strong>
 
@@ -515,7 +490,7 @@ export default function IpdInsuranceBillPrintSheet({ model, className = '' }) {
 
               <strong className="ipd-ins-print-final__value ipd-ins-print-final__value--paid">
 
-                Paid {formatInr(summary.ins_received)}
+                Paid {formatCurrency(summary.ins_received, { empty: 'N/A' })}
 
               </strong>
 
@@ -523,7 +498,7 @@ export default function IpdInsuranceBillPrintSheet({ model, className = '' }) {
 
                 <strong className="ipd-ins-print-final__value ipd-ins-print-final__value--nil">
 
-                  Unpaid ₹0
+                  Unpaid {formatCurrency(0)}
 
                 </strong>
 
@@ -531,7 +506,7 @@ export default function IpdInsuranceBillPrintSheet({ model, className = '' }) {
 
                 <strong className="ipd-ins-print-final__value">
 
-                  Unpaid {formatInr(insurancePending)}
+                  Unpaid {formatCurrency(insurancePending, { empty: 'N/A' })}
 
                 </strong>
 

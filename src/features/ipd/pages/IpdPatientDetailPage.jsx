@@ -19,11 +19,9 @@ import {
   useUpdateIpdAdmissionInsuranceMutation,
 } from '@/features/ipd/hooks/useIpdBillingQuery';
 import { useIpdPermissionSet } from '@/features/ipd/hooks/useIpdPermission';
-import {
-  formatIpdDateTime,
-  formatIpdMoney,
-} from '@/features/ipd/utils/ipdFormat';
+import { formatIpdDateTime } from '@/features/ipd/utils/ipdFormat';
 import { resolveIpdBillPreviewPayment } from '@/features/ipd/utils/resolveIpdBillPreviewPayment';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 function Field({ label, children, wide = false }) {
   return (
@@ -230,10 +228,10 @@ export default function IpdPatientDetailPage() {
                   <Field label="Policy Holder">{payClaimInsurance.policyHolder}</Field>
                   <Field label="Relationship">{payClaimInsurance.relationship}</Field>
                   <Field label="Claimed Amount">
-                    {formatIpdMoney(payClaimInsurance.claimedAmount)}
+                    {formatCurrency(payClaimInsurance.claimedAmount, { empty: '—' })}
                   </Field>
                   <Field label="Estimate Amount">
-                    {formatIpdMoney(payClaimInsurance.estimateAmount)}
+                    {formatCurrency(payClaimInsurance.estimateAmount, { empty: '—' })}
                   </Field>
                 </dl>
                 <p className="ipd-page__subtitle" style={{ marginTop: '0.75rem' }}>
@@ -272,7 +270,7 @@ export default function IpdPatientDetailPage() {
                         <tr key={visit.id}>
                           <td>{visit.doctor_name || '—'}</td>
                           <td>{formatIpdDateTime(visit.visited_at)}</td>
-                          <td>{formatIpdMoney(visit.charge)}</td>
+                          <td>{formatCurrency(visit.charge, { empty: '—' })}</td>
                           <td>{visit.notes || '—'}</td>
                         </tr>
                       ))}
@@ -318,12 +316,12 @@ export default function IpdPatientDetailPage() {
                   — use <strong>{billActionLabel}</strong> above.
                 </p>
                 <BillSummary
-                  subtotal={formatIpdMoney(running?.subtotal)}
-                  tax={formatIpdMoney(running?.gst_amount)}
+                  subtotal={formatCurrency(running?.subtotal, { empty: '—' })}
+                  tax={formatCurrency(running?.gst_amount, { empty: '—' })}
                   taxPercent={running?.gst_percent}
-                  total={formatIpdMoney(running?.grand_total)}
-                  paid={formatIpdMoney(paymentView.paid)}
-                  balance={formatIpdMoney(paymentView.balance)}
+                  total={formatCurrency(running?.grand_total, { empty: '—' })}
+                  paid={formatCurrency(paymentView.paid, { empty: '—' })}
+                  balance={formatCurrency(paymentView.balance, { empty: '—' })}
                 />
                 {bills.length > 0 ? (
                   <div className="ipd-pd-bill-list">
@@ -345,13 +343,13 @@ export default function IpdPatientDetailPage() {
                         </div>
                         <div className="ipd-pd-bill-row__amounts">
                           <span>
-                            <em>Total</em> {formatIpdMoney(bill.grand_total)}
+                            <em>Total</em> {formatCurrency(bill.grand_total, { empty: '—' })}
                           </span>
                           <span>
-                            <em>Paid</em> {formatIpdMoney(bill.paid_amount)}
+                            <em>Paid</em> {formatCurrency(bill.paid_amount, { empty: '—' })}
                           </span>
                           <span>
-                            <em>Due</em> {formatIpdMoney(bill.balance_due)}
+                            <em>Due</em> {formatCurrency(bill.balance_due, { empty: '—' })}
                           </span>
                         </div>
                       </Link>

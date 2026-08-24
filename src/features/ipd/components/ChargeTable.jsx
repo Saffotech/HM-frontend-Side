@@ -3,7 +3,7 @@
  */
 
 import { EmptyState } from '@/shared/components/common';
-import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 export default function ChargeTable({
   rows = [],
@@ -45,10 +45,10 @@ export default function ChargeTable({
               <td>{row.description || '—'}</td>
               <td className="ipd-num">{row.qty ?? '—'}</td>
               <td className="ipd-num">
-                {row.unit_price != null ? formatIpdMoney(row.unit_price) : '—'}
+                {formatCurrency(row.unit_price, { empty: '—' })}
               </td>
               <td className="ipd-num ipd-num--strong">
-                {row.amount != null ? formatIpdMoney(row.amount) : '—'}
+                {formatCurrency(row.amount, { empty: '—' })}
               </td>
             </tr>
           ))}

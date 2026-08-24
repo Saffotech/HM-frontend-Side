@@ -14,16 +14,6 @@ export function defaultReportDateRange() {
   };
 }
 
-export function formatCurrency(amount) {
-  const value = Number(amount);
-  if (!Number.isFinite(value)) return '—';
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
 export function formatReportDate(value) {
   if (!value) return '—';
   return new Date(value).toLocaleDateString('en-GB', {

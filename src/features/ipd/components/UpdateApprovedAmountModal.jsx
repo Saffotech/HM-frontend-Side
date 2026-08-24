@@ -4,8 +4,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Modal, Button } from '@/shared/components/common';
-import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
 import { validateAddApprovedAmount } from '@/features/ipd/utils/claimStatusConstants';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 export default function UpdateApprovedAmountModal({
   open,
@@ -82,10 +82,10 @@ export default function UpdateApprovedAmountModal({
     >
       <form id="ipd-update-approved-form" onSubmit={handleSubmit}>
         <p className="ipd-page__subtitle">
-          Claimed amount: {formatIpdMoney(claimedAmount)}
+          Claimed amount: {formatCurrency(claimedAmount, { empty: '—' })}
         </p>
         <p className="ipd-page__subtitle" style={{ marginTop: '0.35rem' }}>
-          Current approved amount: {formatIpdMoney(currentApproved)}
+          Current approved amount: {formatCurrency(currentApproved, { empty: '—' })}
         </p>
 
         <div className="ipd-toolbar__field" style={{ marginTop: '1rem' }}>
@@ -109,11 +109,11 @@ export default function UpdateApprovedAmountModal({
         {!Number.isNaN(additionalNum) && additionalNum > 0 ? (
           <p className="ipd-page__subtitle" style={{ marginTop: '0.75rem' }}>
             New approved amount:{' '}
-            <strong>{formatIpdMoney(nextApproved)}</strong>
+            <strong>{formatCurrency(nextApproved, { empty: '—' })}</strong>
             {currentApproved > 0 ? (
               <>
                 {' '}
-                ({formatIpdMoney(currentApproved)} + {formatIpdMoney(additionalNum)})
+                ({formatCurrency(currentApproved, { empty: '—' })} + {formatCurrency(additionalNum, { empty: '—' })})
               </>
             ) : null}
           </p>

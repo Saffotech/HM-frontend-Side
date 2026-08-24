@@ -17,11 +17,11 @@ import {
 } from '@/features/pharmacy/utils/prescriptionMeta';
 import { formatHumanInstructions, formatQuantityLabel } from '@/features/pharmacy/utils/prescriptionQuantity';
 import {
-  formatPharmacyMoney,
   getPrescriptionItemPricingSummary,
   loadPrescriptionDispensePricing,
   matchDispenseHistoryPricing,
 } from '@/features/pharmacy/utils/dispensePricing';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 import { ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 import './PrescriptionDetailPage.css';
@@ -202,7 +202,7 @@ export default function PrescriptionDetailPage() {
                 <h3>Prescribed medicines</h3>
                 {totalDispensedAmount > 0 && (
                   <span className="pharmacy-detail-total-amount">
-                    Total dispensed: {formatPharmacyMoney(totalDispensedAmount)}
+                    Total dispensed: {formatCurrency(totalDispensedAmount, { empty: '—' })}
                   </span>
                 )}
               </div>
@@ -237,10 +237,10 @@ export default function PrescriptionDetailPage() {
                           {formatQuantityLabel(item.quantity_prescribed, item.medicine_name)}
                         </td>
                         <td className="pharmacy-detail-money">
-                          {pricing ? formatPharmacyMoney(pricing.unitPrice) : '—'}
+                          {formatCurrency(pricing?.unitPrice, { empty: '—' })}
                         </td>
                         <td className="pharmacy-detail-money">
-                          {pricing ? formatPharmacyMoney(pricing.totalAmount) : '—'}
+                          {formatCurrency(pricing?.totalAmount, { empty: '—' })}
                         </td>
                       </tr>
                       );
@@ -282,10 +282,10 @@ export default function PrescriptionDetailPage() {
                           <td>{row.medicine_name || '—'}</td>
                           <td>{row.quantity_dispensed ?? '—'}</td>
                           <td className="pharmacy-detail-money">
-                            {pricing ? formatPharmacyMoney(pricing.unitPrice) : '—'}
+                            {formatCurrency(pricing?.unitPrice, { empty: '—' })}
                           </td>
                           <td className="pharmacy-detail-money">
-                            {pricing ? formatPharmacyMoney(pricing.amount) : '—'}
+                            {formatCurrency(pricing?.amount, { empty: '—' })}
                           </td>
                         </tr>
                         );

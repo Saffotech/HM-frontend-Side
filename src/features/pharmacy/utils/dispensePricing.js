@@ -24,15 +24,6 @@ function writeJson(key, value) {
   sessionStorage.setItem(key, JSON.stringify(value));
 }
 
-export function formatPharmacyMoney(amount) {
-  const value = Number(amount);
-  if (!Number.isFinite(value)) return '—';
-  return `₹${value.toLocaleString('en-IN', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
 export function parseDispenseAmountInput(raw) {
   const trimmed = String(raw ?? '').trim();
   if (!trimmed) return null;

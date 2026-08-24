@@ -18,7 +18,8 @@ import {
 } from '@/features/ipd/hooks/useIpdQuery';
 import { useIpdWardOptions } from '@/features/ipd/hooks/useIpdWardOptions';
 import { useIpdBedRateLookup } from '@/features/ipd/hooks/useIpdBedRateLookup';
-import { formatIpdMoney, toIsoAdmissionDate } from '@/features/ipd/utils/ipdFormat';
+import { toIsoAdmissionDate } from '@/features/ipd/utils/ipdFormat';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 const INITIAL = {
   patientSearch: '',
@@ -204,7 +205,7 @@ export default function BedAssignModal({
               const rate = ratesAvailable ? getRate(w) : null;
               return (
                 <option key={w} value={w}>
-                  {rate != null ? `${w} · ${formatIpdMoney(rate)}/day` : w}
+                  {rate != null ? `${w} · ${formatCurrency(rate, { empty: '—' })}/day` : w}
                 </option>
               );
             })}
@@ -229,7 +230,7 @@ export default function BedAssignModal({
               return (
                 <option key={bed.id} value={bed.id}>
                   {rate != null
-                    ? `${bed.bed_number} · ${formatIpdMoney(rate)}/day`
+                    ? `${bed.bed_number} · ${formatCurrency(rate, { empty: '—' })}/day`
                     : bed.bed_number}
                 </option>
               );

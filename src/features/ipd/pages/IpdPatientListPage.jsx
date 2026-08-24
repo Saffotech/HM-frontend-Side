@@ -17,7 +17,7 @@ import { useIpdPatientsQuery } from '@/features/ipd/hooks/useIpdQuery';
 import { useIpdInsurancePatientsQuery } from '@/features/ipd/hooks/useIpdBillingQuery';
 import { useIpdWardOptions } from '@/features/ipd/hooks/useIpdWardOptions';
 import { IPD_ADMISSION_STATUS } from '@/features/ipd/utils/constants';
-import { formatIpdDateTime, formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
+import { formatIpdDateTime } from '@/features/ipd/utils/ipdFormat';
 import { mapInsurancePatientRow } from '@/features/ipd/utils/mapInsuranceApi';
 import {
   IPD_PAYMENT_TYPE,
@@ -30,6 +30,7 @@ import {
   parseIpdPaymentType,
   paymentTypeQueryValue,
 } from '@/features/ipd/utils/ipdPaymentTypes';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 const WARD_CHIP = {
   General: 'ipd-pl-chip--green',
@@ -418,7 +419,7 @@ export default function IpdPatientListPage() {
                           </td>
                           <td>{row.insurer}</td>
                           <td>{row.policyNo}</td>
-                          <td>{formatIpdMoney(row.availableSi)}</td>
+                          <td>{formatCurrency(row.availableSi, { empty: '—' })}</td>
                           <td>
                             <span className="ipd-ins-chip ipd-ins-chip--active">
                               {row.policyStatus}

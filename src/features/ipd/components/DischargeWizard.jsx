@@ -20,11 +20,9 @@ import {
   useIpdBillPreviewQuery,
   usePayIpdBillMutation,
 } from '@/features/ipd/hooks/useIpdQuery';
-import {
-  formatIpdDateTime,
-  formatIpdMoney,
-} from '@/features/ipd/utils/ipdFormat';
+import { formatIpdDateTime } from '@/features/ipd/utils/ipdFormat';
 import { resolveIpdBillPreviewPayment } from '@/features/ipd/utils/resolveIpdBillPreviewPayment';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 export default function DischargeWizard({ admissionId }) {
   const navigate = useNavigate();
@@ -260,12 +258,12 @@ export default function DischargeWizard({ admissionId }) {
                 emptyDescription="Bed and visit charges will appear here."
               />
               <BillSummary
-                subtotal={formatIpdMoney(preview?.subtotal)}
-                tax={formatIpdMoney(preview?.gst_amount)}
+                subtotal={formatCurrency(preview?.subtotal, { empty: '—' })}
+                tax={formatCurrency(preview?.gst_amount, { empty: '—' })}
                 taxPercent={preview?.gst_percent}
-                total={formatIpdMoney(preview?.grand_total)}
-                paid={formatIpdMoney(paymentView.paid)}
-                balance={formatIpdMoney(paymentView.balance)}
+                total={formatCurrency(preview?.grand_total, { empty: '—' })}
+                paid={formatCurrency(paymentView.paid, { empty: '—' })}
+                balance={formatCurrency(paymentView.balance, { empty: '—' })}
               />
             </div>
           ) : null}
@@ -275,7 +273,7 @@ export default function DischargeWizard({ admissionId }) {
               <div className="ipd-dw-pay__summary">
                 <span className="ipd-dw-pay__summary-label">Outstanding balance</span>
                 <strong className="ipd-dw-pay__summary-value">
-                  {formatIpdMoney(exactAmount)}
+                  {formatCurrency(exactAmount, { empty: '—' })}
                 </strong>
                 <p className="ipd-dw-pay__hint">
                   Review the exact amount and payment mode. Money is saved only when you
@@ -345,7 +343,7 @@ export default function DischargeWizard({ admissionId }) {
                   {Number(exactAmount) > 0.01 ? (
                     <>
                       {' '}
-                      of <strong>{formatIpdMoney(exactAmount)}</strong> via{' '}
+                      of <strong>{formatCurrency(exactAmount, { empty: '—' })}</strong> via{' '}
                       <strong>{payMode}</strong>,{' '}
                     </>
                   ) : (

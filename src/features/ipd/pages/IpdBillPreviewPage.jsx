@@ -41,8 +41,9 @@ import {
 import { initChargeHeadsFromClaim, buildSelfPayBillingBundle } from '@/features/ipd/billing/ipdBillingMapper';
 import { initDailyCharges } from '@/features/ipd/utils/insuranceDailyCharges';
 import { buildIpdProvisionalInvoice } from '@/features/ipd/utils/ipdBillPrintModel';
-import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
 import { resolveIpdBillPreviewPayment } from '@/features/ipd/utils/resolveIpdBillPreviewPayment';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
+
 import '@/features/opd/billing/pages/ViewBillPage.css';
 
 export default function IpdBillPreviewPage() {
@@ -193,8 +194,8 @@ export default function IpdBillPreviewPage() {
       : paymentStatusKey === 'partial'
         ? 'Partial'
         : 'Unpaid';
-  const summaryPaid = formatIpdMoney(paidAmount);
-  const summaryBalance = formatIpdMoney(balanceDue);
+  const summaryPaid = formatCurrency(paidAmount, { empty: '—' });
+  const summaryBalance = formatCurrency(balanceDue, { empty: '—' });
   const collectAmountCap = Number(openBill?.balance_due ?? balanceDue ?? billingGrandTotal);
 
   const parsedPayAmount = Number(payAmount);
@@ -446,10 +447,10 @@ export default function IpdBillPreviewPage() {
             </div>
             <div className="ipd-card__body">
               <BillSummary
-                subtotal={formatIpdMoney(billingSubtotal)}
-                tax={formatIpdMoney(billingGst)}
+                subtotal={formatCurrency(billingSubtotal, { empty: '—' })}
+                tax={formatCurrency(billingGst, { empty: '—' })}
                 taxPercent={gstPercent || preview?.gst_percent}
-                total={formatIpdMoney(billingGrandTotal)}
+                total={formatCurrency(billingGrandTotal, { empty: '—' })}
                 paid={summaryPaid}
                 balance={summaryBalance}
               />

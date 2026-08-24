@@ -8,9 +8,9 @@ import AdminReportFilters from '@/features/admin/components/AdminReportFilters';
 import AdminStatusPill from '@/features/admin/components/AdminStatusPill';
 import {
   defaultReportDateRange,
-  formatCurrency,
   formatReportDate,
 } from '@/features/admin/utils/reportUtils';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 import {
   useAdminDepartmentsQuery,
   useAdminReportsVisitsQuery,

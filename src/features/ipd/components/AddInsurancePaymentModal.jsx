@@ -4,8 +4,8 @@
 
 import { useEffect, useState } from 'react';
 import { Modal, Button, DateInput } from '@/shared/components/common';
-import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
 import { toast } from '@/shared/utils/toast';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 const PAYMENT_MODES = [
   'Bank Transfer',
@@ -104,7 +104,7 @@ export default function AddInsurancePaymentModal({
         onSubmit={onSubmit}
       >
         <p className="ipd-page__subtitle" style={{ margin: '0 0 0.85rem' }}>
-          Insurance outstanding for this claim: {formatIpdMoney(outstanding)}
+          Insurance outstanding for this claim: {formatCurrency(outstanding, { empty: '—' })}
         </p>
 
         <div className="ipd-form-grid ipd-ins-pay-modal__grid">

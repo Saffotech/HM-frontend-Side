@@ -20,8 +20,8 @@ import {
 } from "@/features/ipd/hooks/useIpdQuery";
 import { useIpdWardOptions } from "@/features/ipd/hooks/useIpdWardOptions";
 import { useIpdBedRateLookup } from "@/features/ipd/hooks/useIpdBedRateLookup";
-import { formatIpdMoney } from "@/features/ipd/utils/ipdFormat";
 import { IPD_ADMISSION_STATUS } from "@/features/ipd/utils/constants";
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 const PAGE_SIZE = 25;
 
@@ -246,7 +246,7 @@ export default function IpdBedsPage() {
                       <span className="ipd-beds-summary__name">{ward.name}</span>
                       {ward.rate != null ? (
                         <span className="ipd-beds-summary__rate">
-                          {formatIpdMoney(ward.rate)}/day
+                          {formatCurrency(ward.rate, { empty: '—' })}/day
                         </span>
                       ) : null}
                     </div>
@@ -434,7 +434,7 @@ export default function IpdBedsPage() {
                               : "—"}
                           </td>
                           <td>
-                            {rate != null ? formatIpdMoney(rate) : "—"}
+                            {formatCurrency(rate, { empty: '—' })}
                           </td>
                           <td>
                             <IpdStatusBadge status={bed.status} />

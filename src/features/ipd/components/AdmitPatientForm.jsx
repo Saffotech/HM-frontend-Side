@@ -27,13 +27,14 @@ import {
 } from "@/features/ipd/hooks/useIpdQuery";
 import { useIpdWardOptions } from "@/features/ipd/hooks/useIpdWardOptions";
 import { useIpdBedRateLookup } from "@/features/ipd/hooks/useIpdBedRateLookup";
-import { formatIpdMoney, toIsoAdmissionDate } from "@/features/ipd/utils/ipdFormat";
+import { toIsoAdmissionDate } from '@/features/ipd/utils/ipdFormat';
 import {
   buildInsuranceAdmitContext,
   buildPayAndClaimInsuranceProfile,
   insuranceAdmitRouteId,
 } from "@/features/ipd/utils/insuranceAdmitPayload";
 import { validateRegisterPatient } from "@/features/opd/utils/registerPatientUtils";
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 const INITIAL = {
   patientMode: "existing", // existing | register
@@ -725,7 +726,7 @@ export default function AdmitPatientForm() {
                   return (
                     <option key={w} value={w}>
                       {rate != null
-                        ? `${w} · ${formatIpdMoney(rate)}/day`
+                        ? `${w} · ${formatCurrency(rate, { empty: '—' })}/day`
                         : w}
                     </option>
                   );
@@ -760,7 +761,7 @@ export default function AdmitPatientForm() {
                   return (
                     <option key={bed.id} value={bed.id}>
                       {rate != null
-                        ? `${bed.bed_number} · ${formatIpdMoney(rate)}/day`
+                        ? `${bed.bed_number} · ${formatCurrency(rate, { empty: '—' })}/day`
                         : bed.bed_number}
                     </option>
                   );

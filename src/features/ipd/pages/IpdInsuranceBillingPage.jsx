@@ -17,11 +17,12 @@ import {
 } from '@/features/ipd/hooks/useIpdBillingQuery';
 import { initChargeHeadsFromClaim } from '@/features/ipd/billing/ipdBillingMapper';
 import { buildInsuranceIpdBillPrintModel } from '@/features/ipd/utils/buildInsuranceIpdBillPrintModel';
-import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 import {
   calculateInsuranceChargeTotals,
   cloneDefaultChargeHeads,
   createCustomChargeHead,
+  groupHospitalChargeBuckets,
   isDefaultChargeHead,
   isDiscountCharge,
   normalizeInsuranceChargeHeads,
@@ -49,7 +50,7 @@ function Fact({ label, value }) {
 }
 
 function money(n) {
-  return formatIpdMoney(n);
+  return formatCurrency(n, { empty: '—' });
 }
 
 function formatChargeDate(iso) {
@@ -65,29 +66,6 @@ function formatChargeDate(iso) {
 
 function todayIsoDate() {
   return new Date().toISOString().slice(0, 10);
-}
-
-function groupHospitalChargeBuckets(chargeRows) {
-  const buckets = [
-    { id: 'clinical', label: 'Stay & clinical', rows: [] },
-    { id: 'diagnostics', label: 'Lab & pharmacy', rows: [] },
-    { id: 'adjustments', label: 'Misc & discount', rows: [] },
-    { id: 'custom', label: 'Additional heads', rows: [] },
-  ];
-
-  chargeRows.forEach((row) => {
-    if (!isDefaultChargeHead(row)) {
-      buckets[3].rows.push(row);
-    } else if (isDiscountCharge(row) || row.id === 'misc') {
-      buckets[2].rows.push(row);
-    } else if (row.id === 'lab' || row.id === 'pharmacy') {
-      buckets[1].rows.push(row);
-    } else {
-      buckets[0].rows.push(row);
-    }
-  });
-
-  return buckets.filter((bucket) => bucket.rows.length > 0);
 }
 
 function initCharges(claim) {

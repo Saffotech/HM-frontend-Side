@@ -96,6 +96,44 @@ export function canRemoveChargeHead(row) {
   return Boolean(row?.id);
 }
 
+/** True when a charge head should appear in the Hospital Charges table. */
+export function shouldDisplayChargeHead(row) {
+  if (!row) return false;
+  // Custom heads stay visible so newly added rows can be edited even at 0.
+  if (!isDefaultChargeHead(row)) return true;
+  return Number(row.amount) > 0;
+}
+
+/**
+ * Group charge heads for the Hospital Charges UI.
+ * Hides default heads with no amount; empty section labels are omitted.
+ * Does not mutate the underlying charges array used for save/totals.
+ */
+export function groupHospitalChargeBuckets(chargeRows) {
+  const buckets = [
+    { id: 'clinical', label: 'Stay & clinical', rows: [] },
+    { id: 'diagnostics', label: 'Lab & pharmacy', rows: [] },
+    { id: 'adjustments', label: 'Misc & discount', rows: [] },
+    { id: 'custom', label: 'Additional heads', rows: [] },
+  ];
+
+  (Array.isArray(chargeRows) ? chargeRows : []).forEach((row) => {
+    if (!shouldDisplayChargeHead(row)) return;
+
+    if (!isDefaultChargeHead(row)) {
+      buckets[3].rows.push(row);
+    } else if (isDiscountCharge(row) || row.id === 'misc') {
+      buckets[2].rows.push(row);
+    } else if (row.id === 'lab' || row.id === 'pharmacy') {
+      buckets[1].rows.push(row);
+    } else {
+      buckets[0].rows.push(row);
+    }
+  });
+
+  return buckets.filter((bucket) => bucket.rows.length > 0);
+}
+
 /** Normalize charge-head rows into a consistent API-ready shape. */
 export function normalizeInsuranceChargeHeads(charges) {
   if (!Array.isArray(charges)) {
