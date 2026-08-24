@@ -389,7 +389,11 @@ export default function PatientHistoryProfile({
         </section>
       </div>
 
-      <DoctorPatientVisitsPanel patientId={patientId} patientUid={patientUid} />
+      <DoctorPatientVisitsPanel
+        patientId={patientId}
+        patientUid={patientUid}
+        admissions={ipdAdmissions}
+      />
 
       <PrescriptionDetailModal
         prescriptionId={prescriptionModal.id}

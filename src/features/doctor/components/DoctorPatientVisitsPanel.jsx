@@ -10,20 +10,32 @@ function formatVisitTime(iso) {
   return d.toLocaleString();
 }
 
-export default function DoctorPatientVisitsPanel({ patientId, patientUid }) {
+/**
+ * Nurse-recorded doctor visits on the patient history profile.
+ * Pass IPD `admissions` so visits across the stay are loaded (API is day-scoped).
+ */
+export default function DoctorPatientVisitsPanel({
+  patientId,
+  patientUid,
+  admissions = null,
+  className = '',
+}) {
   const canView = useDoctorPermission(DOCTOR_PERMISSIONS.patientVisitsView);
   const { data, isPending, isError } = useDoctorPatientVisitsForPatientQuery(
     patientId,
     patientUid,
-    { enabled: canView },
+    { enabled: canView, admissions },
   );
 
   if (!canView) return null;
 
   const visits = data?.visits ?? [];
+  const panelClass = ['doc-card', 'doc-profile-panel', 'doc-profile-panel--visits', className]
+    .filter(Boolean)
+    .join(' ');
 
   return (
-    <section className="doc-card doc-profile-panel doc-profile-panel--visits">
+    <section className={panelClass}>
       <div className="doc-profile-panel__head">
         <h3 className="doc-profile-panel__title">
           <Stethoscope size={16} aria-hidden />
