@@ -15,6 +15,7 @@ export function useSaveIpdConsultationMutation() {
     onSuccess: (_data, variables) => {
       invalidateDoctorIpdAdmissions(queryClient);
       bumpDoctorIpdCache();
+      queryClient.invalidateQueries({ queryKey: ['doctor', 'ipd', 'nurse-visit-count'] });
       if (variables?.patientUid) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.doctor.patients.history(variables.patientUid),

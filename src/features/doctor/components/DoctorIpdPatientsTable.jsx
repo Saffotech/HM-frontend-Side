@@ -187,7 +187,8 @@ function DoctorIpdPatientsTable({
                           <StatusPill status={row.status} />
                         </td>
                         <td className="doc-dashboard-table__visit-count">
-                          {visitCounts.get(row.patientDbId) ??
+                          {visitCounts.get(row.admissionId) ??
+                            visitCounts.get(row.patientDbId) ??
                             visitCounts.get(row.patientUid) ??
                             '—'}
                         </td>

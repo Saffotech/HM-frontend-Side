@@ -2669,11 +2669,16 @@
 
 /* Doctor patient visits panel (read-only) */
 .doc-profile-panel--visits{
-  margin-top: 1rem;
+  margin-top: 0.65rem;
 }
 
 .doc-profile-visits-table-wrap{
   overflow-x: auto;
+  max-width: 100%;
+}
+
+.doc-profile-visits-table{
+  width: 100%;
 }
 
 .doc-profile-visits-table th,
@@ -2686,4 +2691,5 @@
 .doc-profile-visits-table__notes{
   max-width: 18rem;
   white-space: normal;
+  overflow-wrap: anywhere;
 }
