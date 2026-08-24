@@ -10,6 +10,7 @@ import { useNurseDocumentedPatients } from '@/features/nurse/hooks/useNurseDocum
 import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
 import { QueryFeedback } from '@/shared/components/common';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
+import NursePatientAllocationTags from '@/features/nurse/components/NursePatientAllocationTags';
 
 export default function NurseQueuePage() {
   const navigate = useNavigate();
@@ -47,7 +48,12 @@ export default function NurseQueuePage() {
     },
     {
       header: 'Patient Name',
-      render: (row) => <span className="nurse-queue__name">{row.patient_name}</span>,
+      render: (row) => (
+        <span className="nurse-patient-name-with-tags">
+          <span className="nurse-queue__name">{row.patient_name}</span>
+          <NursePatientAllocationTags patientId={row.patient_id} />
+        </span>
+      ),
     },
     {
       header: 'Bed Number',

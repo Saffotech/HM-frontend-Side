@@ -114,9 +114,6 @@ export default function NurseDashboardPage() {
       render: (row) => (
         <span className="nurse-dashboard-page__patient-cell">
           <span>{row.patient_name}</span>
-          {listMode === 'allocated' && (
-            <span className="nurse-badge nurse-badge--allocated">Allocated</span>
-          )}
           {listMode === 'all' && row.is_allocated && (
             <span className="nurse-badge nurse-badge--allocated">Allocated</span>
           )}
@@ -128,6 +125,7 @@ export default function NurseDashboardPage() {
     },
     { header: 'Bed', accessor: 'bed_number' },
     { header: 'Ward', accessor: 'ward_name' },
+    { header: 'Doctor', render: (row) => row.doctor_name?.trim() || '—' },
     { header: 'Department', render: (row) => row.department || '—' },
     {
       header: 'Pending Meds',

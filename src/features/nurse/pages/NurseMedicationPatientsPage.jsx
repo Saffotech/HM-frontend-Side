@@ -21,6 +21,7 @@ import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
 import { useNurseMedicationPatientsQuery } from '@/shared/hooks/queries/useNurseQuery';
 import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
+import NursePatientAllocationTags from '@/features/nurse/components/NursePatientAllocationTags';
 import './NurseMedicationPatientsPage.css';
 
 const WARD_OPTIONS = [
@@ -178,7 +179,10 @@ export default function NurseMedicationPatientsPage() {
           <span className="nurse-med-patients__avatar" aria-hidden>
             {patientInitial(row.patient_name)}
           </span>
-          <span className="nurse-med-patients__name">{row.patient_name}</span>
+          <span className="nurse-patient-name-with-tags">
+            <span className="nurse-med-patients__name">{row.patient_name}</span>
+            <NursePatientAllocationTags patientId={row.patient_id} />
+          </span>
           <ChevronRight size={14} className="nurse-med-patients__row-chevron" aria-hidden />
         </div>
       ),

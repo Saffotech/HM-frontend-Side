@@ -84,7 +84,10 @@ export function NursePatientScopeProvider({ children }) {
     isLoading: allocatedPatientsLoading,
   } = useNurseBedPatientsQuery(
     { allocated_only: true, page: 1, page_size: 100 },
-    { enabled: allocatedOnly },
+    {
+      // Keep loaded in All mode too so list pages can show Allocated / Outside Allocation tags.
+      enabled: Boolean(allocationSummary?.has_allocations),
+    },
   );
 
   const allocatedBedIdSet = useMemo(
@@ -93,14 +96,13 @@ export function NursePatientScopeProvider({ children }) {
   );
 
   const allocatedPatientIdSet = useMemo(() => {
-    if (!allocatedOnly) return new Set();
     const ids = new Set();
     for (const row of allocatedBedPatients?.items ?? []) {
       const id = Number(row?.patient_id);
       if (Number.isSafeInteger(id) && id >= 1) ids.add(id);
     }
     return ids;
-  }, [allocatedOnly, allocatedBedPatients?.items]);
+  }, [allocatedBedPatients?.items]);
 
   const scopeFilters = useMemo(
     () => (allocatedOnly ? { allocated_only: true } : {}),

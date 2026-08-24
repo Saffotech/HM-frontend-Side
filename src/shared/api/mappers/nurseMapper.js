@@ -249,6 +249,8 @@ export function mapBedPatientItem(row) {
     phone: row.patient_phone ?? row.phone ?? '',
     bed_number: row.bed_number ?? '',
     ward_name: row.ward_name ?? '',
+    doctor_id: row.doctor_id ?? null,
+    doctor_name: row.doctor_name ?? '',
     department: row.department_name ?? row.department ?? '',
     pending_medications: row.pending_medication_count ?? 0,
     has_vitals: Boolean(row.last_vitals),

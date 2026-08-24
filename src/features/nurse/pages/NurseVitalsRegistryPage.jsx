@@ -12,6 +12,7 @@ import { QueryFeedback } from '@/shared/components/common';
 import { useNurseVitalsListQuery } from '@/shared/hooks/queries/useNurseQuery';
 import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
 import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
+import NursePatientAllocationTags from '@/features/nurse/components/NursePatientAllocationTags';
 import { useAuth } from '@/shared/hooks/useAuth';
 
 function formatSince(iso) {
@@ -93,7 +94,10 @@ export default function NurseVitalsRegistryPage() {
     {
       header: 'Patient Name',
       render: (row) => (
-        <span className="nurse-vitals-registry__name">{row.patient_name || '—'}</span>
+        <span className="nurse-patient-name-with-tags">
+          <span className="nurse-vitals-registry__name">{row.patient_name || '—'}</span>
+          <NursePatientAllocationTags patientId={row.patient_id} />
+        </span>
       ),
     },
     {

@@ -95,10 +95,25 @@ export function mergeNurseDoctorVisits(dayResponses = []) {
     }
   }
 
-  const visits = [...byId.values()].sort((a, b) => {
+  // API visit_number is day-scoped; renumber across the full stay (oldest = 1).
+  const chronological = [...byId.values()].sort((a, b) => {
     const ta = a.visited_at ? new Date(a.visited_at).getTime() : 0;
     const tb = b.visited_at ? new Date(b.visited_at).getTime() : 0;
-    return tb - ta;
+    if (ta !== tb) return ta - tb;
+    return Number(a.id) - Number(b.id);
+  });
+
+  const numbered = chronological.map((visit, index) => ({
+    ...visit,
+    visit_number: index + 1,
+  }));
+
+  // Newest first for the profile table.
+  const visits = [...numbered].sort((a, b) => {
+    const ta = a.visited_at ? new Date(a.visited_at).getTime() : 0;
+    const tb = b.visited_at ? new Date(b.visited_at).getTime() : 0;
+    if (ta !== tb) return tb - ta;
+    return Number(b.id) - Number(a.id);
   });
 
   return {

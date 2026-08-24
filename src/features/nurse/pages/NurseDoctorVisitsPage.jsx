@@ -17,6 +17,7 @@ import {
   useNurseBedPatientsQuery,
   useNurseDoctorVisitsQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
+import NursePatientAllocationTags from '@/features/nurse/components/NursePatientAllocationTags';
 
 const PAGE_SIZE = 20;
 const FETCH_PAGE_SIZE = 100;
@@ -28,7 +29,6 @@ export default function NurseDoctorVisitsPage() {
   const {
     scopeReady,
     allocatedOnly,
-    listMode,
     allocationSummary,
     scopeFilters,
     isPatientInScope,
@@ -111,7 +111,15 @@ export default function NurseDoctorVisitsPage() {
   const columns = useMemo(
     () => [
       { header: 'Patient ID', render: (row) => formatPatientIdDisplay(row) },
-      { header: 'Patient name', render: (row) => row.patient_name?.trim() || '—' },
+      {
+        header: 'Patient name',
+        render: (row) => (
+          <span className="nurse-patient-name-with-tags">
+            <span>{row.patient_name?.trim() || '—'}</span>
+            <NursePatientAllocationTags patientId={row.patient_id} />
+          </span>
+        ),
+      },
       { header: 'Ward', render: (row) => row.ward_name || '—' },
       { header: 'Bed', render: (row) => row.bed_number || '—' },
       {
@@ -271,12 +279,6 @@ export default function NurseDoctorVisitsPage() {
                 }`}
               >
                 <div className="nurse-doctor-visits-table__head">
-                  <h2 className="nurse-section-title">
-                    IPD patients
-                    <span className={`nurse-alerts-scope-pill nurse-alerts-scope-pill--${listMode}`}>
-                      {allocatedOnly ? 'Allocated' : 'All'}
-                    </span>
-                  </h2>
                   <p className="nurse-doctor-visits-table__count">
                     {isLoading && !data ? (
                       'Loading...'

@@ -13,6 +13,7 @@ import { QueryFeedback } from '@/shared/components/common';
 import { useNurseNotesListQuery } from '@/shared/hooks/queries/useNurseQuery';
 import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
 import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
+import NursePatientAllocationTags from '@/features/nurse/components/NursePatientAllocationTags';
 import { useAuth } from '@/shared/hooks/useAuth';
 
 export default function NurseNotesRegistryPage() {
@@ -66,7 +67,10 @@ export default function NurseNotesRegistryPage() {
     {
       header: 'Patient Name',
       render: (row) => (
-        <span className="nurse-notes-registry__name">{row.patient_name || '—'}</span>
+        <span className="nurse-patient-name-with-tags">
+          <span className="nurse-notes-registry__name">{row.patient_name || '—'}</span>
+          <NursePatientAllocationTags patientId={row.patient_id} />
+        </span>
       ),
     },
     {
