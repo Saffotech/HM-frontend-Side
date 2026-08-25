@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Activity, Calendar, Stethoscope, User } from 'lucide-react';
+import { Activity, Calendar, Pencil, Stethoscope, User } from 'lucide-react';
 import NurseHistoryFilter from '@/features/nurse/components/NurseHistoryFilter';
+import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
 import {
   NurseClinicalFieldShell,
   NurseClinicalReadonlyValue,
@@ -10,6 +11,7 @@ import {
   decodeCustomVitals,
   formatVitalDisplay,
 } from '@/features/nurse/components/NurseVitalsFormFields';
+
 function formatRecordedAt(iso) {
   if (!iso) return '—';
   return new Date(iso).toLocaleString();
@@ -37,7 +39,7 @@ function normalizeHistory(vital) {
   }];
 }
 
-export default function NurseVitalsSnapshotView({ vital }) {
+export default function NurseVitalsSnapshotView({ vital, action = null }) {
   const historyItems = useMemo(() => normalizeHistory(vital), [vital]);
   const latestHistoryId = historyItems[0]?.history_id ?? '';
   const [selectedHistoryId, setSelectedHistoryId] = useState(latestHistoryId);
@@ -88,13 +90,29 @@ export default function NurseVitalsSnapshotView({ vital }) {
             <span className="nurse-vital-detail__info-value">{snapshot.recorded_by || '—'}</span>
           </div>
         </div>
-        <div className="nurse-vital-detail__info-item">
-          <Stethoscope size={18} aria-hidden />
-          <div>
-            <span className="nurse-vital-detail__info-label">Status</span>
-            <span className="nurse-vital-detail__status">{snapshot.status || 'recorded'}</span>
+        {action ? (
+          <div className="nurse-vital-detail__info-item">
+            <Pencil size={18} aria-hidden />
+            <div>
+              <span className="nurse-vital-detail__info-label">Action</span>
+              <NursePermissionButton
+                allowed={!action.disabled}
+                className="nurse-btn nurse-btn--secondary nurse-vital-detail__action-btn"
+                onClick={action.onClick}
+              >
+                {action.label || 'Update'}
+              </NursePermissionButton>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="nurse-vital-detail__info-item">
+            <Stethoscope size={18} aria-hidden />
+            <div>
+              <span className="nurse-vital-detail__info-label">Status</span>
+              <span className="nurse-vital-detail__status">{snapshot.status || 'recorded'}</span>
+            </div>
+          </div>
+        )}
       </div>
 
       <section className="nurse-vital-detail__section">

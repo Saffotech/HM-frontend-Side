@@ -12,6 +12,21 @@ import { QueryFeedback } from '@/shared/components/common';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
 import NursePatientAllocationTags from '@/features/nurse/components/NursePatientAllocationTags';
 
+function CareStatusBadge({ done, doneLabel = 'Done', pendingLabel = 'Not done', tone }) {
+  if (done) {
+    return (
+      <span className={`nurse-badge nurse-badge--${tone}`}>
+        {doneLabel}
+      </span>
+    );
+  }
+  return (
+    <span className="nurse-badge nurse-badge--not-done">
+      {pendingLabel}
+    </span>
+  );
+}
+
 export default function NurseQueuePage() {
   const navigate = useNavigate();
   const { canViewPatients } = useNursePermissionSet();
@@ -31,6 +46,7 @@ export default function NurseQueuePage() {
   });
 
   const total = data?.total || 0;
+  const pendingCareCount = data?.pending_care_count || 0;
 
   const handleRowClick = useCallback(
     (row) => {
@@ -61,19 +77,15 @@ export default function NurseQueuePage() {
     },
     {
       header: 'Ward',
-      render: (row) => <span className="nurse-queue__phone">{row.ward_name || '—'}</span>,
-    },
-    {
-      header: 'Phone',
-      render: (row) => <span className="nurse-queue__phone">{row.phone || '—'}</span>,
+      render: (row) => <span className="nurse-queue__ward">{row.ward_name || '—'}</span>,
     },
     {
       header: 'Vitals',
-      render: () => <span className="nurse-badge nurse-badge--vitals">Done</span>,
+      render: (row) => <CareStatusBadge done={Boolean(row.has_vitals)} tone="vitals" />,
     },
     {
       header: 'Notes',
-      render: () => <span className="nurse-badge nurse-badge--notes">Done</span>,
+      render: (row) => <CareStatusBadge done={Boolean(row.has_notes)} tone="notes" />,
     },
   ], []);
 
@@ -100,8 +112,14 @@ export default function NurseQueuePage() {
                     <strong>{total}</strong>
                     {' '}
                     {total === 1 ? 'patient' : 'patients'}
-                    {' '}
-                    with vitals and notes completed
+                    {pendingCareCount > 0 ? (
+                      <>
+                        {' · '}
+                        <strong>{pendingCareCount}</strong>
+                        {' '}
+                        need vitals or notes
+                      </>
+                    ) : null}
                     {allocatedOnly && allocationSummary?.has_allocations === false
                       ? ' (no beds assigned this shift)'
                       : ''}
@@ -134,7 +152,7 @@ export default function NurseQueuePage() {
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 placeholder="Name, UHID, bed, or ward…"
-                aria-label="Search documented patients"
+                aria-label="Search patients"
               />
             </div>
             {hasActiveFilters && (
@@ -156,7 +174,7 @@ export default function NurseQueuePage() {
               columns={columns}
               data={data?.items || []}
               isLoading={false}
-              emptyMessage="No patients with both vitals and nursing notes recorded yet. Complete care on the dashboard first."
+              emptyMessage="No patients found."
               onRowClick={canViewPatients ? handleRowClick : undefined}
             />
           </div>

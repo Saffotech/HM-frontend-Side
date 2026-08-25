@@ -1,9 +1,8 @@
 import { useMemo, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Pill, Eye, Clock, UserRound, ClipboardList, AlertCircle } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseDataTable from '@/features/nurse/components/NurseDataTable';
-import NurseQueueStatusBadge from '@/features/nurse/components/NurseQueueStatusBadge';
 import NurseConfirmDialog from '@/features/nurse/components/NurseConfirmDialog';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
 import { QueryFeedback, Modal, Button } from '@/shared/components/common';
@@ -11,6 +10,7 @@ import {
   useNursePatientMedicationsQuery,
   useAdministerMedicationMutation,
   useUpdateAdministrationMutation,
+  useNurseActiveDoctorsQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
 import { ROUTES } from '@/shared/constants';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
@@ -20,11 +20,12 @@ import './NursePatientMedicationsPage.css';
 
 const ACTIONABLE_STATUSES = new Set(['missed', 'delayed']);
 
-function MedicationStatusCell({ prescription }) {
-  if (prescription.statusKnown && prescription.status) {
-    return <NurseQueueStatusBadge status={prescription.status} />;
-  }
-  return <span className="nurse-patient-meds__status-unknown">Not recorded</span>;
+/** Local datetime string for `<input type="datetime-local" />` (YYYY-MM-DDTHH:mm). */
+function toDateTimeLocalValue(date = new Date()) {
+  const d = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(d.getTime())) return toDateTimeLocalValue(new Date());
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function formatLastGiven(prescription) {
@@ -89,9 +90,71 @@ function LastAdministrationDetails({ prescription }) {
 export default function NursePatientMedicationsPage() {
   const { patientId } = useParams();
   const navigate = useNavigate();
-  const { canCreateMedication, canUpdateMedication } = useNursePermissionSet();
+  const location = useLocation();
+  const { canCreateMedication, canUpdateMedication, canViewMedication } = useNursePermissionSet();
+
+  const handleBack = useCallback(() => {
+    const backTo = location.state?.backTo;
+    const overviewTab = location.state?.overviewTab;
+    const patientOverviewPath = patientId
+      ? ROUTES.NURSE_PATIENT.replace(':patientId', String(patientId))
+      : null;
+
+    // Prefer explicit return target (patient history / list / etc.)
+    if (backTo) {
+      navigate(backTo, {
+        state: overviewTab ? { overviewTab } : undefined,
+      });
+      return;
+    }
+
+    // Opened from patient history medications — always return to that patient page
+    if (patientOverviewPath && overviewTab) {
+      navigate(patientOverviewPath, { state: { overviewTab } });
+      return;
+    }
+
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate(ROUTES.NURSE_MEDICATIONS);
+  }, [location.state, navigate, patientId]);
+
+  const openHistory = useCallback(() => {
+    if (!patientId) return;
+    const administerPath = ROUTES.NURSE_MEDICATIONS_PATIENT.replace(
+      ':patientId',
+      String(patientId),
+    );
+    const patientOverviewPath = ROUTES.NURSE_PATIENT.replace(
+      ':patientId',
+      String(patientId),
+    );
+    const returnToPatient =
+      location.state?.backTo?.includes('/nurse/patients/')
+        ? location.state.backTo
+        : location.state?.overviewTab
+          ? patientOverviewPath
+          : location.state?.backTo;
+
+    navigate(
+      ROUTES.NURSE_MEDICATIONS_PATIENT_HISTORY.replace(':patientId', String(patientId)),
+      {
+        state: {
+          backTo: administerPath,
+          overviewTab: location.state?.overviewTab,
+          backToAdministerFrom: returnToPatient || location.state?.backTo,
+        },
+      },
+    );
+  }, [navigate, patientId, location.state]);
   const { data: patientData, isLoading, isError, error, refetch } =
     useNursePatientMedicationsQuery(patientId);
+  const { data: doctorsData } = useNurseActiveDoctorsQuery(
+    { page: 1, page_size: 100 },
+    { enabled: Boolean(patientId) },
+  );
   const adminMut = useAdministerMedicationMutation(patientId);
   const updateAdminMut = useUpdateAdministrationMutation(patientId);
   const [selected, setSelected] = useState(null);
@@ -100,10 +163,18 @@ export default function NursePatientMedicationsPage() {
   const [adminData, setAdminData] = useState({
     status: 'given',
     remarks: '',
-    scheduled_time: '',
+    scheduled_time: toDateTimeLocalValue(),
   });
 
   const prescriptions = patientData?.prescriptions ?? [];
+
+  const doctorDepartmentMap = useMemo(() => {
+    const map = new Map();
+    for (const doc of doctorsData?.doctors ?? []) {
+      map.set(Number(doc.id), String(doc.specialization || doc.department_name || '').trim());
+    }
+    return map;
+  }, [doctorsData?.doctors]);
 
   const unrecordedCount = useMemo(
     () => prescriptions.filter((p) => !p.administration?.id).length,
@@ -123,10 +194,15 @@ export default function NursePatientMedicationsPage() {
   const openAdmin = useCallback((rx, mode) => {
     setSelected(rx);
     setAdminMode(mode);
+    const existingScheduled = rx?.administration?.scheduled_time;
+    const scheduledFromRecord =
+      mode === 'update' && existingScheduled
+        ? toDateTimeLocalValue(existingScheduled)
+        : toDateTimeLocalValue();
     setAdminData({
       status: mode === 'update' ? (rx.status || 'given') : 'given',
       remarks: mode === 'update' ? (rx.administration?.remarks || '') : '',
-      scheduled_time: '',
+      scheduled_time: scheduledFromRecord,
     });
   }, []);
 
@@ -195,13 +271,28 @@ export default function NursePatientMedicationsPage() {
     {
       header: 'Medicine',
       render: (p) => (
-        <div className="nurse-patient-meds__medicine">
-          <span className="nurse-patient-meds__medicine-name">{p.medicine_name}</span>
-          <MedicationStatusCell prescription={p} />
-        </div>
+        <span className="nurse-patient-meds__medicine-name">{p.medicine_name}</span>
       ),
     },
-    { header: 'Dose', render: (p) => p.dose || '—' },
+    {
+      header: 'Doctor',
+      render: (p) => (
+        <span className="nurse-patient-meds__doctor">{p.doctor_name || '—'}</span>
+      ),
+    },
+    {
+      header: 'Department',
+      render: (p) => (
+        <span className="nurse-patient-meds__department">
+          {p.department_name
+            || doctorDepartmentMap.get(Number(p.doctor_id))
+            || doctorDepartmentMap.get(Number(patientData?.doctor_id))
+            || '—'}
+        </span>
+      ),
+    },
+    { header: 'Dosage', render: (p) => p.dose || '—' },
+    { header: 'Duration', render: (p) => p.duration || '—' },
     { header: 'Frequency', render: (p) => p.frequency || '—' },
     { header: 'Route', render: (p) => p.route || '—' },
     {
@@ -230,29 +321,27 @@ export default function NursePatientMedicationsPage() {
       header: 'Action',
       render: (p) => {
         const hasRecord = Boolean(p.administration?.id);
-        if (!hasRecord) {
-          return (
+        return (
+          <div className="nurse-patient-meds__action-cell">
             <NursePermissionButton
               allowed={canCreateMedication}
               className="nurse-btn nurse-btn--sm nurse-btn--primary nurse-patient-meds__action-btn"
               onClick={() => openAdmin(p, 'create')}
             >
-              Administer
+              {hasRecord ? 'Record dose' : 'Administer'}
             </NursePermissionButton>
-          );
-        }
-        return (
-          <NursePermissionButton
-            allowed={canCreateMedication}
-            className="nurse-btn nurse-btn--sm nurse-btn--primary nurse-patient-meds__action-btn"
-            onClick={() => openAdmin(p, 'create')}
-          >
-            Record dose
-          </NursePermissionButton>
+            <NursePermissionButton
+              allowed={canViewMedication}
+              className="nurse-btn nurse-btn--sm nurse-btn--secondary nurse-patient-meds__action-btn"
+              onClick={openHistory}
+            >
+              History
+            </NursePermissionButton>
+          </div>
         );
       },
     },
-  ], [openAdmin, openLastAdmin, canCreateMedication]);
+  ], [openAdmin, openLastAdmin, openHistory, canCreateMedication, canViewMedication, doctorDepartmentMap, patientData?.doctor_id]);
 
   return (
     <NurseLayout>
@@ -260,23 +349,21 @@ export default function NursePatientMedicationsPage() {
         <div className="nurse-page nurse-patient-meds-page">
           {patientData ? (
             <>
-              <div className="nurse-vital-detail__top">
+              <div className="nurse-vital-detail__top nurse-patient-meds-page__header">
                 <div className="nurse-vital-detail__identity">
-                  <div className="nurse-vital-detail__avatar" aria-hidden>
+                  <div className="nurse-vital-detail__avatar nurse-patient-meds-page__avatar" aria-hidden>
                     <Pill size={22} />
                   </div>
                   <div>
                     <h1 className="nurse-vital-detail__name">{patientData.patient_name || '—'}</h1>
-                    <p className="nurse-vital-detail__meta-line">
-                      <span>
+                    <p className="nurse-vital-detail__meta-line nurse-patient-meds-page__meta">
+                      <span className="nurse-patient-meds-page__meta-chip">
                         ID: <strong>{formatPatientIdDisplay(patientData)}</strong>
                       </span>
-                      <span className="nurse-vital-detail__dot" aria-hidden>·</span>
-                      <span>
+                      <span className="nurse-patient-meds-page__meta-chip">
                         Ward: <strong>{patientData.ward_name || '—'}</strong>
                       </span>
-                      <span className="nurse-vital-detail__dot" aria-hidden>·</span>
-                      <span>
+                      <span className="nurse-patient-meds-page__meta-chip">
                         Bed: <strong>{patientData.bed_number || '—'}</strong>
                       </span>
                     </p>
@@ -326,8 +413,8 @@ export default function NursePatientMedicationsPage() {
                   </div>
                   <button
                     type="button"
-                    className="nurse-btn nurse-btn--secondary"
-                    onClick={() => navigate(ROUTES.NURSE_MEDICATIONS)}
+                    className="nurse-btn nurse-btn--secondary nurse-patient-meds-page__back"
+                    onClick={handleBack}
                   >
                     <ArrowLeft size={16} aria-hidden />
                     Back

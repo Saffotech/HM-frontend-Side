@@ -1,32 +1,56 @@
 import { useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NursePageHeader from '@/features/nurse/components/NursePageHeader';
 import NurseDataTable from '@/features/nurse/components/NurseDataTable';
 import NurseQueueStatusBadge from '@/features/nurse/components/NurseQueueStatusBadge';
 import { QueryFeedback } from '@/shared/components/common';
-import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
-import { useNursePatientMedHistoryQuery, useNurseQueueQuery } from '@/shared/hooks/queries/useNurseQuery';
+import { useNursePatientMedHistoryQuery } from '@/shared/hooks/queries/useNurseQuery';
+import { ROUTES } from '@/shared/constants';
 
 export default function NursePatientMedHistoryPage() {
   const { patientId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { data, isLoading, isError, error, refetch } = useNursePatientMedHistoryQuery(patientId);
-  const { data: queueData } = useNurseQueueQuery({ page: 1, page_size: 100 });
 
-  const patientDisplayId = useMemo(() => {
-    const fromHistory = formatPatientIdDisplay(data?.items?.[0]);
-    if (fromHistory !== '—') return fromHistory;
-    const queuePatient = queueData?.items?.find((q) => String(q.patient_id) === String(patientId));
-    const fromQueue = formatPatientIdDisplay(queuePatient);
-    return fromQueue !== '—' ? fromQueue : 'Patient';
-  }, [data?.items, queueData?.items, patientId]);
+  const goBack = () => {
+    const backTo = location.state?.backTo;
+    const administerBackTo = location.state?.backToAdministerFrom;
+    const overviewTab = location.state?.overviewTab;
+
+    if (backTo) {
+      navigate(backTo, {
+        state: {
+          ...(administerBackTo ? { backTo: administerBackTo } : {}),
+          ...(overviewTab ? { overviewTab } : {}),
+        },
+      });
+      return;
+    }
+
+    if (patientId && overviewTab) {
+      navigate(ROUTES.NURSE_PATIENT.replace(':patientId', String(patientId)), {
+        state: { overviewTab },
+      });
+      return;
+    }
+
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate(ROUTES.NURSE_MEDICATIONS);
+  };
 
   const columns = useMemo(() => [
     { header: 'Medicine', accessor: 'medicine_name' },
     { header: 'Dose', accessor: 'dose' },
     { header: 'Status', render: (row) => <NurseQueueStatusBadge status={row.status} /> },
-    { header: 'Administered At', render: (row) => (row.administered_at ? new Date(row.administered_at).toLocaleString() : '-') },
+    {
+      header: 'Administered At',
+      render: (row) => (row.administered_at ? new Date(row.administered_at).toLocaleString() : '-'),
+    },
     { header: 'By', accessor: 'administered_by_name' },
     { header: 'Remarks', accessor: 'remarks' },
   ], []);
@@ -35,8 +59,12 @@ export default function NursePatientMedHistoryPage() {
     <NurseLayout>
       <div className="nurse-page">
         <NursePageHeader
-          title={`Medication History — ${patientDisplayId}`}
-          actions={<button type="button" className="nurse-btn nurse-btn--secondary" onClick={() => navigate(-1)}>Back</button>}
+          title="Medication History"
+          actions={(
+            <button type="button" className="nurse-btn nurse-btn--secondary" onClick={goBack}>
+              Back
+            </button>
+          )}
         />
         <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
           <NurseDataTable

@@ -822,6 +822,10 @@
 }.nurse-badge--waiting{ background: var(--badge-pending-bg); color: var(--badge-pending-fg); }
 .nurse-badge--vitals{ background: var(--badge-scheduled-bg); color: var(--badge-scheduled-fg); }
 .nurse-badge--notes{ background: var(--badge-scheduled-bg); color: var(--badge-scheduled-fg); }
+.nurse-badge--not-done{
+  background: var(--badge-pending-bg, #fef3c7);
+  color: var(--badge-pending-fg, #92400e);
+}
 .nurse-badge--consult{ background: var(--badge-scheduled-bg); color: var(--badge-scheduled-fg); }
 .nurse-badge--completed{ background: var(--badge-completed-bg); color: var(--badge-completed-fg); }
 .nurse-badge--draft{ background: var(--badge-inactive-bg); color: var(--badge-inactive-fg); }

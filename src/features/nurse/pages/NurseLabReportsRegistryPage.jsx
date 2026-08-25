@@ -24,11 +24,14 @@ const PAGE_SIZE = 20;
 const FETCH_PAGE_SIZE = 100;
 const WARD_OPTIONS = ['ICU', 'Private', 'General'];
 
-function formatReportedAt(iso) {
-  if (!iso) return '—';
+function formatReportedAtParts(iso) {
+  if (!iso) return null;
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleString();
+  if (Number.isNaN(d.getTime())) return null;
+  return {
+    date: d.toLocaleDateString(),
+    time: d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+  };
 }
 
 async function triggerBlobDownload({ blob, fileName }) {
@@ -118,7 +121,9 @@ export default function NurseLabReportsRegistryPage() {
   const viewReport = useCallback((row) => {
     const id = row.report_id ?? row.id;
     if (id == null) return;
-    navigate(ROUTES.NURSE_LAB_REPORT_DETAIL.replace(':reportId', String(id)));
+    navigate(ROUTES.NURSE_LAB_REPORT_DETAIL.replace(':reportId', String(id)), {
+      state: { backTo: ROUTES.NURSE_LAB_REPORTS },
+    });
   }, [navigate]);
 
   const downloadReport = useCallback(async (row, event) => {
@@ -153,13 +158,12 @@ export default function NurseLabReportsRegistryPage() {
       ),
     },
     {
-      header: 'Ward',
-      render: (row) => <span>{row.ward_name || '—'}</span>,
-    },
-    {
-      header: 'Bed',
+      header: 'Ward/Bed',
       render: (row) => (
-        <span className="nurse-notes-registry__bed">{row.bed_number || '—'}</span>
+        <span className="nurse-notes-registry__ward-bed">
+          <span className="nurse-notes-registry__ward">{row.ward_name || '—'}</span>
+          <span className="nurse-notes-registry__bed">{row.bed_number || '—'}</span>
+        </span>
       ),
     },
     {
@@ -183,9 +187,18 @@ export default function NurseLabReportsRegistryPage() {
     },
     {
       header: 'Reported at',
-      render: (row) => (
-        <span className="nurse-notes-registry__time">{formatReportedAt(row.uploaded_at)}</span>
-      ),
+      render: (row) => {
+        const parts = formatReportedAtParts(row.uploaded_at);
+        if (!parts) {
+          return <span className="nurse-notes-registry__time">—</span>;
+        }
+        return (
+          <span className="nurse-notes-registry__reported-at">
+            <span className="nurse-notes-registry__reported-date">{parts.date}</span>
+            <span className="nurse-notes-registry__reported-time">{parts.time}</span>
+          </span>
+        );
+      },
     },
     {
       header: 'Actions',

@@ -453,12 +453,45 @@ export function mapMedicationPatientRow(row) {
   return attachPatientUid({
     ...row,
     ward_name: row.ward_name ?? row.ward ?? '',
+    medicine_count: Number(row.medicine_count) || 0,
   });
+}
+
+/**
+ * API returns one row per prescription (any doctor); collapse to one row per patient.
+ * medicine_count is the total prescribed items across all of that patient's prescriptions.
+ */
+export function dedupeMedicationPatientsByPatientId(rows = []) {
+  const byPatient = new Map();
+  for (const row of rows) {
+    if (!row) continue;
+    const key = String(row.patient_id ?? '').trim();
+    if (!key || key === 'undefined' || key === 'null') continue;
+    const count = Number(row.medicine_count) || 0;
+    const existing = byPatient.get(key);
+    if (!existing) {
+      byPatient.set(key, { ...row, medicine_count: count });
+      continue;
+    }
+    byPatient.set(key, {
+      ...existing,
+      medicine_count: (Number(existing.medicine_count) || 0) + count,
+      bed_number: existing.bed_number || row.bed_number,
+      ward_name: existing.ward_name || row.ward_name,
+      doctor_name: existing.doctor_name || row.doctor_name,
+      patient_name: existing.patient_name || row.patient_name,
+      patient_uid: existing.patient_uid || row.patient_uid,
+      patientUid: existing.patientUid || row.patientUid,
+    });
+  }
+  return [...byPatient.values()];
 }
 
 export function mapMedicationPatientsResponse(raw, { page = 1, page_size = 20 } = {}) {
   const rows = Array.isArray(raw) ? raw : raw?.data ?? raw?.items ?? [];
-  return wrapPagedArray(rows, { page, page_size }, mapMedicationPatientRow);
+  const mapped = rows.map(mapMedicationPatientRow).filter(Boolean);
+  const deduped = dedupeMedicationPatientsByPatientId(mapped);
+  return paginateClientItems(deduped, { page, page_size });
 }
 
 function parseAdministeredAtMs(value) {
@@ -510,7 +543,7 @@ export function buildLatestAdministrationByPrescriptionItemId(historyRows = []) 
   return byItem;
 }
 
-export function mapMedicationToPrescription(item, latestHistoryRow = null) {
+export function mapMedicationToPrescription(item, latestHistoryRow = null, patientMeta = {}) {
   if (!item) return null;
   const itemId = item.prescription_item_id ?? item.id;
   const administration = latestHistoryRow ? mapAdministrationFromHistory(latestHistoryRow) : null;
@@ -519,6 +552,19 @@ export function mapMedicationToPrescription(item, latestHistoryRow = null) {
       ? String(item.status).toLowerCase()
       : null;
   const status = administration?.status ?? statusFromItem ?? null;
+  const doctorName =
+    item.doctor_name
+    || item.prescribed_by_name
+    || item.prescribed_by
+    || patientMeta.doctor_name
+    || '';
+  const doctorId = item.doctor_id ?? patientMeta.doctor_id ?? null;
+  const departmentName =
+    item.department_name
+    || item.department
+    || patientMeta.department_name
+    || patientMeta.department
+    || '';
 
   return {
     id: itemId,
@@ -529,6 +575,9 @@ export function mapMedicationToPrescription(item, latestHistoryRow = null) {
     route: item.route ?? item.instructions ?? '',
     duration: item.duration,
     instructions: item.instructions ?? null,
+    doctor_id: doctorId,
+    doctor_name: doctorName,
+    department_name: departmentName,
     status,
     statusKnown: status != null,
     administration,
@@ -541,11 +590,22 @@ export function mapPatientMedicationsResponse(raw, historyRows = []) {
   if (!raw) return { prescriptions: [], medications: [] };
   const meds = raw.medications ?? raw.prescriptions ?? [];
   const latestByItem = buildLatestAdministrationByPrescriptionItemId(historyRows);
+  const patientMeta = {
+    doctor_id: raw.doctor_id ?? null,
+    doctor_name: raw.doctor_name || raw.attending_doctor_name || '',
+    department_name: raw.department_name || raw.department || '',
+  };
+  const seen = new Set();
   const prescriptions = meds
     .map((m) => {
       const itemKey = m?.prescription_item_id ?? m?.id;
-      const latest = itemKey != null ? latestByItem.get(String(itemKey)) : null;
-      return mapMedicationToPrescription(m, latest);
+      const key = itemKey != null ? String(itemKey) : '';
+      if (key) {
+        if (seen.has(key)) return null;
+        seen.add(key);
+      }
+      const latest = key ? latestByItem.get(key) : null;
+      return mapMedicationToPrescription(m, latest, patientMeta);
     })
     .filter(Boolean);
   const uidFromHistory = historyRows
@@ -554,6 +614,8 @@ export function mapPatientMedicationsResponse(raw, historyRows = []) {
   return attachPatientUid({
     ...raw,
     ward_name: raw.ward_name ?? raw.ward ?? '',
+    doctor_name: patientMeta.doctor_name,
+    department_name: patientMeta.department_name,
     patient_uid: raw.patient_uid ?? raw.patient_uhid ?? uidFromHistory ?? '',
     prescriptions,
     medications: meds,
@@ -568,6 +630,7 @@ export function mapMedicationHistoryRow(row) {
     prescription_item_id: row.prescription_item_id,
     medicine_name: row.medicine_name ?? row.medicine ?? '',
     dose: row.dosage ?? row.dose ?? '',
+    duration: row.duration ?? null,
     patient_name: row.patient_name ?? '',
     administered_by_name:
       row.administered_by_name ??

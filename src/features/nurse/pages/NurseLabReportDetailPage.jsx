@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Download, FlaskConical, User } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
@@ -51,6 +51,7 @@ async function triggerBlobDownload({ blob, fileName }) {
 export default function NurseLabReportDetailPage() {
   const { reportId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { canViewLabReports } = useNursePermissionSet();
   const { scopeFilters, scopeReady } = useNursePatientScope();
   const downloadMutation = useDownloadNurseLabReportFileMutation();
@@ -61,6 +62,19 @@ export default function NurseLabReportDetailPage() {
     error: null,
     loading: false,
   });
+
+  const handleBack = useCallback(() => {
+    const backTo = location.state?.backTo;
+    if (backTo) {
+      navigate(backTo, {
+        state: location.state?.overviewTab
+          ? { overviewTab: location.state.overviewTab }
+          : undefined,
+      });
+      return;
+    }
+    navigate(ROUTES.NURSE_LAB_REPORTS);
+  }, [location.state, navigate]);
 
   const detailFilters = useMemo(() => ({ ...scopeFilters }), [scopeFilters]);
 
@@ -226,7 +240,7 @@ export default function NurseLabReportDetailPage() {
                   <button
                     type="button"
                     className="nurse-btn nurse-btn--secondary"
-                    onClick={() => navigate(ROUTES.NURSE_LAB_REPORTS)}
+                    onClick={handleBack}
                   >
                     <ArrowLeft size={16} />
                     Back

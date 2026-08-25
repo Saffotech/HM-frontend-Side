@@ -5,7 +5,6 @@ import { FileText, X } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseDataTable from '@/features/nurse/components/NurseDataTable';
 import NursePagination from '@/features/nurse/components/NursePagination';
-import NurseQueueStatusBadge from '@/features/nurse/components/NurseQueueStatusBadge';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
 import { useNursePagedListGuard } from '@/features/nurse/hooks/useNursePagedListGuard';
 import { getPagedListCount, formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
@@ -117,10 +116,6 @@ export default function NurseNotesRegistryPage() {
     {
       header: 'Bed Number',
       render: (row) => <span className="nurse-notes-registry__bed">{row.bed_number || '—'}</span>,
-    },
-    {
-      header: 'Status',
-      render: (row) => <NurseQueueStatusBadge status={row.status} />,
     },
     {
       header: 'Created At',

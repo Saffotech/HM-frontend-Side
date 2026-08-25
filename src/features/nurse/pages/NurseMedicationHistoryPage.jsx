@@ -45,6 +45,7 @@ export default function NurseMedicationHistoryPage() {
     { header: 'Patient ID', render: (row) => formatPatientIdDisplay(row) },
     { header: 'Medicine', accessor: 'medicine_name' },
     { header: 'Dose', accessor: 'dose' },
+    { header: 'Duration', render: (row) => row.duration || '—' },
     { header: 'Status', render: (row) => <NurseQueueStatusBadge status={row.status} /> },
     { header: 'Administered At', render: (row) => (row.administered_at ? new Date(row.administered_at).toLocaleString() : '-') },
     { header: 'By', accessor: 'administered_by_name' },

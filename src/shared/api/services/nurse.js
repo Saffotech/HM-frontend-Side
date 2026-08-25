@@ -18,9 +18,10 @@ import {
   assembleVitalHistoryFromItems,
   withAssembledVitalHistory,
   wrapPagedArray,
-  mapMedicationPatientsResponse,
   mapPatientMedicationsResponse,
   mapMedicationHistoryRow,
+  mapMedicationPatientRow,
+  dedupeMedicationPatientsByPatientId,
   mapHandoverListResponse,
   mapHandoverDetail,
   mapHandoverListItem,
@@ -34,7 +35,6 @@ import {
   applyQueuePatientUidLookup,
   attachPatientUid,
   resolvePatientUid,
-  mapMedicationPatientRow,
   mapDoctorVisitItem,
   mapDoctorVisitListResponse,
   mapDoctorListResponse,
@@ -281,9 +281,18 @@ function listMedicationPatientsWithClientSearch(params, token) {
   const { search, page = 1, page_size = 20 } = params;
   const term = String(search ?? '').trim();
   return fetchAllMedicationPatientsRegistryItems(params, token).then((enriched) => {
-    const filtered = filterNursePatientRegistryItems(enriched, term);
+    const deduped = dedupeMedicationPatientsByPatientId(enriched);
+    const filtered = term
+      ? filterNursePatientRegistryItems(deduped, term)
+      : deduped;
     return paginateClientItems(filtered, { page, page_size });
   });
+}
+
+export async function getMedicationPatients(params = {}, token) {
+  // Always load + dedupe client-side so the registry is one row per patient
+  // (backend returns one row per prescription).
+  return listMedicationPatientsWithClientSearch(params, token);
 }
 
 export async function listVitals(params = {}, token) {
@@ -363,24 +372,6 @@ export async function searchNotes(params = {}, token) {
   };
 }
 
-export async function getMedicationPatients(params = {}, token) {
-  const { page = 1, page_size = 100, search, ...rest } = params;
-  const scopeParams = withAllocatedOnly(params);
-  const term = String(search ?? '').trim();
-
-  if (term) {
-    return listMedicationPatientsWithClientSearch(params, token);
-  }
-
-  const raw = await nurseApi.getMedicationPatients({
-    page,
-    page_size,
-    ...rest,
-    ...scopeParams,
-  }, token);
-  return mapMedicationPatientsResponse(raw, { page, page_size });
-}
-
 export async function getMedicationHistory(params = {}, token) {
   const { page = 1, page_size = 20, ...rest } = params;
   const apiParams = mapMedicationHistoryFiltersToApi(rest);
@@ -390,22 +381,33 @@ export async function getMedicationHistory(params = {}, token) {
 
 export async function getPatientMedications(patientId, token) {
   const id = Number(patientId);
-  const [rawMeds, historyPaged] = await Promise.all([
-    nurseApi.getPatientMedications(patientId, token),
-    getMedicationHistory(
+  // Prescribed meds first — history enrichment must not wipe the list on failure.
+  const rawMeds = await nurseApi.getPatientMedications(patientId, token);
+
+  let historyRows = [];
+  try {
+    const historyPaged = await getMedicationHistory(
       { patient_id: Number.isFinite(id) && id >= 1 ? id : patientId, page: 1, page_size: 100 },
       token,
-    ),
-  ]);
-  const historyRows = historyPaged?.items ?? [];
-  let mapped = mapPatientMedicationsResponse(rawMeds, historyRows);
-  if (!resolvePatientUid(mapped) && Number.isFinite(id) && id >= 1) {
-    const medList = await getMedicationPatients({ patient_id: id, page: 1, page_size: 1 }, token);
-    const uid = medList?.items?.[0]?.patientUid;
-    if (uid) mapped = attachPatientUid({ ...mapped, patient_uid: uid });
+    );
+    historyRows = historyPaged?.items ?? [];
+  } catch {
+    historyRows = [];
   }
-  const [enriched] = await enrichRowsWithQueueUid([mapped], token);
-  return enriched ?? mapped;
+
+  let mapped = mapPatientMedicationsResponse(rawMeds, historyRows);
+
+  try {
+    if (!resolvePatientUid(mapped) && Number.isFinite(id) && id >= 1) {
+      const medList = await getMedicationPatients({ patient_id: id, page: 1, page_size: 1 }, token);
+      const uid = medList?.items?.[0]?.patientUid;
+      if (uid) mapped = attachPatientUid({ ...mapped, patient_uid: uid });
+    }
+    const [enriched] = await enrichRowsWithQueueUid([mapped], token);
+    return enriched ?? mapped;
+  } catch {
+    return mapped;
+  }
 }
 
 export async function administerMedication(data, token) {

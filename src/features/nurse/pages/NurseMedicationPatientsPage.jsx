@@ -21,6 +21,7 @@ import { useNursePatientScope } from '@/features/nurse/context/NursePatientScope
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
 import { useNursePagedListGuard } from '@/features/nurse/hooks/useNursePagedListGuard';
 import NursePatientAllocationTags from '@/features/nurse/components/NursePatientAllocationTags';
+import { ROUTES } from '@/shared/constants';
 import './NurseMedicationPatientsPage.css';
 
 const WARD_OPTIONS = [
@@ -152,7 +153,10 @@ export default function NurseMedicationPatientsPage() {
   }, [wardFilter, filteredPatients.length, page, data]);
 
   const openPatient = useCallback(
-    (row) => navigate(`/nurse/medications/patient/${row.patient_id}`),
+    (row) =>
+      navigate(`/nurse/medications/patient/${row.patient_id}`, {
+        state: { backTo: ROUTES.NURSE_MEDICATIONS },
+      }),
     [navigate],
   );
 
@@ -215,7 +219,7 @@ export default function NurseMedicationPatientsPage() {
                     {listCount.count === 1 && !listCount.approximate ? 'patient' : 'patients'}
                   </p>
                   <p className="nurse-notes-registry__hint">
-                    Patients with active prescriptions. Open a row to administer.
+                    One row per patient. Medicines count includes all prescriptions.
                   </p>
                 </div>
               </div>

@@ -93,7 +93,7 @@ export default function NurseDashboardPage() {
 
   const kpis = [
     { id: 'all', label: 'Admitted', value: bedPatients?.total ?? kpiCounts.all, border: '' },
-    { id: 'pending_meds', label: 'Pending Meds', value: kpiCounts.pending_meds, border: 'nurse-kpi--purple' },
+    { id: 'pending_meds', label: 'Pending Medicines', value: kpiCounts.pending_meds, border: 'nurse-kpi--purple' },
     { id: 'needs_vitals', label: 'Needs Vitals', value: kpiCounts.needs_vitals, border: 'nurse-kpi--yellow' },
     { id: 'has_vitals', label: 'Vitals Recorded', value: kpiCounts.has_vitals, border: 'nurse-kpi--green' },
   ];
@@ -128,7 +128,7 @@ export default function NurseDashboardPage() {
     { header: 'Doctor', render: (row) => row.doctor_name?.trim() || '—' },
     { header: 'Department', render: (row) => row.department || '—' },
     {
-      header: 'Pending Meds',
+      header: 'Pending Medicines',
       render: (row) => (row.pending_medications > 0 ? row.pending_medications : '—'),
     },
     {
