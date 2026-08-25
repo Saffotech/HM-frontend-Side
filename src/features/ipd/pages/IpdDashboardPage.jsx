@@ -2,7 +2,7 @@
  * IPD Dashboard — live `/ipd/dashboard`.
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   BedDouble,
@@ -12,7 +12,7 @@ import {
   Receipt,
   PlusCircle,
 } from "lucide-react";
-import { EmptyState, QueryFeedback } from "@/shared/components/common";
+import { Button, EmptyState, QueryFeedback } from "@/shared/components/common";
 import { ROUTES } from "@/shared/constants";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import IpdActionCard from "@/features/ipd/components/IpdActionCard";
@@ -22,6 +22,9 @@ import IpdStatusBadge from "@/features/ipd/components/IpdStatusBadge";
 import { useIpdDashboardQuery } from "@/features/ipd/hooks/useIpdQuery";
 import { useIpdPermissionSet } from "@/features/ipd/hooks/useIpdPermission";
 import { formatIpdDateTime } from "@/features/ipd/utils/ipdFormat";
+
+/** Matches backend `/ipd/dashboard` recent_admissions `.limit(8)`. */
+const RECENT_PAGE_SIZE = 8;
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
@@ -77,6 +80,7 @@ export default function IpdDashboardPage() {
   const permissions = useIpdPermissionSet();
   const { canAdmit } = permissions;
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const debouncedSearch = useDebouncedValue(search, 300);
   const stats = useMemo(() => buildStats(permissions), [permissions]);
   const recentAdmissions = useMemo(() => {
@@ -102,6 +106,16 @@ export default function IpdDashboardPage() {
       return hay.includes(q);
     });
   }, [data?.recent_admissions, debouncedSearch]);
+
+  const totalFiltered = recentAdmissions.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / RECENT_PAGE_SIZE) || 1);
+  const safePage = Math.min(page, totalPages);
+  const pageStart = (safePage - 1) * RECENT_PAGE_SIZE;
+  const pageRows = recentAdmissions.slice(pageStart, pageStart + RECENT_PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
 
   return (
     <div className="ipd-page">
@@ -157,7 +171,7 @@ export default function IpdDashboardPage() {
             View all
           </Link>
         </div>
-        <div className="ipd-card__body">
+        <div className="ipd-card__body ipd-dash-recent__body">
           {isLoading ? (
             <div style={{ display: "grid", gap: "0.5rem" }}>
               <div className="ipd-skeleton" />
@@ -165,85 +179,124 @@ export default function IpdDashboardPage() {
               <div className="ipd-skeleton" />
             </div>
           ) : (
-            <div className="ipd-table-wrap">
-              <table className="ipd-table">
-                <thead>
-                  <tr>
-                    <th>Admission</th>
-                    <th>Patient</th>
-                    <th>Ward / Bed</th>
-                    <th>Doctor</th>
-                    <th>Status</th>
-                    <th>Admitted</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentAdmissions.length === 0 ? (
+            <>
+              <div className="ipd-table-wrap">
+                <table className="ipd-table ipd-table--dense ipd-table--dash-recent">
+                  <thead>
                     <tr>
-                      <td colSpan={6}>
-                        <EmptyState
-                          title={
-                            debouncedSearch.trim()
-                              ? "No matching admissions"
-                              : "No recent admissions"
-                          }
-                          description={
-                            debouncedSearch.trim()
-                              ? "Try a different patient name, ID, or admission."
-                              : "New admissions will appear here as patients are admitted."
-                          }
-                        />
-                      </td>
+                      <th>Admission</th>
+                      <th>Patient</th>
+                      <th>Ward / Bed</th>
+                      <th>Doctor</th>
+                      <th>Status</th>
+                      <th>Admitted</th>
                     </tr>
-                  ) : (
-                    recentAdmissions.map((row) => (
-                      <tr key={row.id}>
-                        <td>
-                          <Link
-                            to={ROUTES.IPD_PATIENT_DETAIL.replace(
-                              ":admissionId",
-                              String(row.id),
-                            )}
-                          >
-                            {row.admission_no || `#${row.id}`}
-                          </Link>
+                  </thead>
+                  <tbody>
+                    {totalFiltered === 0 ? (
+                      <tr>
+                        <td colSpan={6}>
+                          <EmptyState
+                            title={
+                              debouncedSearch.trim()
+                                ? "No matching admissions"
+                                : "No recent admissions"
+                            }
+                            description={
+                              debouncedSearch.trim()
+                                ? "Try a different patient name, ID, or admission."
+                                : "New admissions will appear here as patients are admitted."
+                            }
+                          />
                         </td>
-                        <td>
-                          <strong>{row.patient_name || "—"}</strong>
-                          {row.patient_uid ? (
-                            <div className="ipd-page__subtitle">
-                              {row.patient_uid}
-                            </div>
-                          ) : null}
-                        </td>
-                        <td>
-                          {row.ward_name || "—"} / {row.bed_number || "—"}
-                        </td>
-                        <td>
-                          {row.doctor_name ||
-                            (row.status === "admitted" ? (
-                              <Link
-                                to={ROUTES.IPD_PATIENT_DETAIL.replace(
-                                  ":admissionId",
-                                  String(row.id),
-                                )}
-                              >
-                                Assign doctor
-                              </Link>
-                            ) : (
-                              "—"
-                            ))}
-                        </td>
-                        <td>
-                          <IpdStatusBadge status={row.status} />
-                        </td>
-                        <td>{formatIpdDateTime(row.admitted_at)}</td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    ) : (
+                      pageRows.map((row) => (
+                        <tr key={row.id}>
+                          <td>
+                            <Link
+                              to={ROUTES.IPD_PATIENT_DETAIL.replace(
+                                ":admissionId",
+                                String(row.id),
+                              )}
+                            >
+                              {row.admission_no || `#${row.id}`}
+                            </Link>
+                          </td>
+                          <td>
+                            <div className="ipd-dash-recent__patient">
+                              <strong>{row.patient_name || "—"}</strong>
+                              {row.patient_uid ? (
+                                <span className="ipd-page__subtitle">
+                                  {row.patient_uid}
+                                </span>
+                              ) : null}
+                            </div>
+                          </td>
+                          <td>
+                            {row.ward_name || "—"} / {row.bed_number || "—"}
+                          </td>
+                          <td>
+                            {row.doctor_name ||
+                              (row.status === "admitted" ? (
+                                <Link
+                                  to={ROUTES.IPD_PATIENT_DETAIL.replace(
+                                    ":admissionId",
+                                    String(row.id),
+                                  )}
+                                >
+                                  Assign doctor
+                                </Link>
+                              ) : (
+                                "—"
+                              ))}
+                          </td>
+                          <td>
+                            <IpdStatusBadge status={row.status} />
+                          </td>
+                          <td>{formatIpdDateTime(row.admitted_at)}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {totalFiltered > 0 ? (
+                <div className="ipd-beds-pager ipd-dash-recent__pager">
+                  <span className="ipd-page__subtitle">
+                    Showing {pageStart + 1}–
+                    {Math.min(pageStart + RECENT_PAGE_SIZE, totalFiltered)} of{" "}
+                    {totalFiltered}
+                  </span>
+                  <div className="ipd-beds-pager__controls">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled={safePage <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      Previous
+                    </Button>
+                    <span className="ipd-page__subtitle">
+                      Page {safePage} / {totalPages}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled={safePage >= totalPages}
+                      onClick={() =>
+                        setPage((p) => Math.min(totalPages, p + 1))
+                      }
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+            </>
           )}
         </div>
       </div>

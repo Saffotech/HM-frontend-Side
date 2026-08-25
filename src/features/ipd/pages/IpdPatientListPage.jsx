@@ -285,52 +285,6 @@ export default function IpdPatientListPage() {
                 placeholder="Search patient by ID"
               />
             </div>
-            <div className="ipd-toolbar__field ipd-toolbar__field--sm">
-              <label className="ipd-toolbar__label" htmlFor="ipd-pl-stay">
-                Stay
-              </label>
-              <select
-                id="ipd-pl-stay"
-                className="ipd-select"
-                value={stay}
-                onChange={onStayChange}
-              >
-                <option value={STAY_FILTER.ADMITTED}>Admitted</option>
-                <option value={STAY_FILTER.COMPLETED}>Completed</option>
-                <option value={STAY_FILTER.ALL}>All</option>
-              </select>
-            </div>
-            <div className="ipd-toolbar__field ipd-toolbar__field--sm">
-              <label className="ipd-toolbar__label" htmlFor="ipd-pl-ward">
-                Ward
-              </label>
-              <select
-                id="ipd-pl-ward"
-                className="ipd-select"
-                value={ward}
-                onChange={onFilterChange(setWard, 'ward')}
-              >
-                <option value="">All wards</option>
-                {wardOptions.map((w) => (
-                  <option key={w} value={w}>
-                    {w}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="ipd-toolbar__field ipd-toolbar__field--sm">
-              <label className="ipd-toolbar__label" htmlFor="ipd-pl-date">
-                Admission date
-              </label>
-              <DateInput
-                id="ipd-pl-date"
-                className="ipd-date-input"
-                value={admissionDate}
-                onChange={onAdmissionDateChange}
-                placeholder="DD/MM/YYYY"
-                aria-label="Admission date"
-              />
-            </div>
             <div
               className={`ipd-toolbar__field ipd-pay-type-field ${
                 paymentTypeGroup === IPD_PAYMENT_TYPE_GROUP.INSURANCE
@@ -370,6 +324,52 @@ export default function IpdPatientListPage() {
                   </select>
                 )}
               </div>
+            </div>
+            <div className="ipd-toolbar__field ipd-toolbar__field--sm">
+              <label className="ipd-toolbar__label" htmlFor="ipd-pl-ward">
+                Ward
+              </label>
+              <select
+                id="ipd-pl-ward"
+                className="ipd-select"
+                value={ward}
+                onChange={onFilterChange(setWard, 'ward')}
+              >
+                <option value="">All wards</option>
+                {wardOptions.map((w) => (
+                  <option key={w} value={w}>
+                    {w}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="ipd-toolbar__field ipd-toolbar__field--sm">
+              <label className="ipd-toolbar__label" htmlFor="ipd-pl-stay">
+                Stay
+              </label>
+              <select
+                id="ipd-pl-stay"
+                className="ipd-select"
+                value={stay}
+                onChange={onStayChange}
+              >
+                <option value={STAY_FILTER.ADMITTED}>Admitted</option>
+                <option value={STAY_FILTER.COMPLETED}>Completed</option>
+                <option value={STAY_FILTER.ALL}>All</option>
+              </select>
+            </div>
+            <div className="ipd-toolbar__field ipd-toolbar__field--sm">
+              <label className="ipd-toolbar__label" htmlFor="ipd-pl-date">
+                Admission date
+              </label>
+              <DateInput
+                id="ipd-pl-date"
+                className="ipd-date-input"
+                value={admissionDate}
+                onChange={onAdmissionDateChange}
+                placeholder="DD/MM/YYYY"
+                aria-label="Admission date"
+              />
             </div>
           </div>
 

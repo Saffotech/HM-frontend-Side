@@ -20,7 +20,6 @@ import IpdHospitalChargesCard, {
   normalizeInsuranceChargeHeads,
   sortInsuranceChargeHeads,
 } from '@/features/ipd/components/IpdHospitalChargesCard';
-import BillSummary from '@/features/ipd/components/BillSummary';
 import IpdStatusBadge from '@/features/ipd/components/IpdStatusBadge';
 import { useIpdPermissionSet } from '@/features/ipd/hooks/useIpdPermission';
 import IpdPermissionButton from '@/features/ipd/components/IpdPermissionButton';
@@ -194,11 +193,15 @@ export default function IpdBillPreviewPage() {
       : paymentStatusKey === 'partial'
         ? 'Partial'
         : 'Unpaid';
+  const paymentPanelTone =
+    paymentStatusKey === 'paid' || paymentStatusKey === 'partial'
+      ? paymentStatusKey
+      : 'unpaid';
   const summaryPaid = formatCurrency(paidAmount, { empty: '—' });
   const summaryBalance = formatCurrency(balanceDue, { empty: '—' });
   const collectAmountCap = Number(openBill?.balance_due ?? balanceDue ?? billingGrandTotal);
 
-  const parsedPayAmount = Number(payAmount);
+  const parsedPayAmount = Math.floor(Number(payAmount));
   const hasValidPayAmount =
     Number.isFinite(parsedPayAmount)
     && parsedPayAmount > 0
@@ -300,13 +303,13 @@ export default function IpdBillPreviewPage() {
       return;
     }
 
-    const amount = Number(payAmount);
-    if (!(amount > 0)) {
-      toast.error('Enter a valid payment amount');
+    const amount = Math.floor(Number(payAmount));
+    if (!(amount > 0) || !Number.isFinite(amount)) {
+      toast.error('Enter a valid whole-number payment amount');
       return;
     }
 
-    const capped = Math.min(amount, collectAmountCap);
+    const capped = Math.min(amount, Math.max(0, Math.floor(collectAmountCap)));
     if (!(capped > 0)) {
       toast.error('No due balance to collect');
       return;
@@ -434,102 +437,122 @@ export default function IpdBillPreviewPage() {
           onChargesChange={setCharges}
           onSave={handleSaveCharges}
           saving={saveFinalBillingMutation.isPending}
-          hint="Room & doctor auto-fill from stay — save daily charges to update other heads."
         />
 
         <div className="ipd-ins-billing__side">
-          <div className="ipd-card">
-            <div className="ipd-card__head">
-              <h2 className="ipd-card__title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                Payment
-                <IpdStatusBadge status={paymentStatusKey} label={paymentStatusLabel} />
-              </h2>
+          <div
+            className={`ipd-card ipd-pay-panel ipd-pay-panel--${paymentPanelTone}`}
+          >
+            <div className="ipd-card__head ipd-pay-panel__head">
+              <h2 className="ipd-card__title">Payment</h2>
+              <IpdStatusBadge status={paymentStatusKey} label={paymentStatusLabel} />
             </div>
-            <div className="ipd-card__body">
-              <BillSummary
-                subtotal={formatCurrency(billingSubtotal, { empty: '—' })}
-                tax={formatCurrency(billingGst, { empty: '—' })}
-                taxPercent={gstPercent || preview?.gst_percent}
-                total={formatCurrency(billingGrandTotal, { empty: '—' })}
-                paid={summaryPaid}
-                balance={summaryBalance}
-              />
+            <div className="ipd-card__body ipd-pay-panel__body">
+              <div className="ipd-pay-panel__due">
+                <span className="ipd-pay-panel__due-label">Amount due</span>
+                <strong className="ipd-pay-panel__due-value">
+                  {summaryBalance}
+                </strong>
+              </div>
+
+              <dl className="ipd-pay-panel__rows">
+                <div className="ipd-pay-panel__row">
+                  <dt>Subtotal</dt>
+                  <dd>{formatCurrency(billingSubtotal, { empty: '—' })}</dd>
+                </div>
+                <div className="ipd-pay-panel__row">
+                  <dt>
+                    {gstPercent > 0 ? `Tax (${gstPercent}%)` : 'Tax'}
+                  </dt>
+                  <dd>{formatCurrency(billingGst, { empty: '—' })}</dd>
+                </div>
+                <div className="ipd-pay-panel__row ipd-pay-panel__row--total">
+                  <dt>Total</dt>
+                  <dd>{formatCurrency(billingGrandTotal, { empty: '—' })}</dd>
+                </div>
+                <div className="ipd-pay-panel__row ipd-pay-panel__row--paid">
+                  <dt>Paid</dt>
+                  <dd>{summaryPaid}</dd>
+                </div>
+              </dl>
 
               <div className="no-print">
-              {canCollectPayment ? (
-                <>
-                  <div className="ipd-form-grid" style={{ marginTop: '1rem' }}>
-                    <div className="ipd-toolbar__field">
-                      <label className="ipd-toolbar__label" htmlFor="ipd-bill-mode">
-                        Payment mode
-                      </label>
-                      <select
-                        id="ipd-bill-mode"
-                        className="ipd-select"
-                        value={payMode}
-                        onChange={(e) => {
-                          setPayMode(e.target.value);
-                          if (!requiresTransactionReference(e.target.value)) {
-                            setPaymentRef('');
-                          }
-                        }}
-                        disabled={paymentBusy}
-                      >
-                        {IPD_COLLECT_PAYMENT_MODES.map((mode) => (
-                          <option key={mode} value={mode}>
-                            {mode}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="ipd-toolbar__field">
-                      <label className="ipd-toolbar__label" htmlFor="ipd-bill-amount">
-                        Amount
-                      </label>
-                      <input
-                        id="ipd-bill-amount"
-                        className="ipd-input"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        max={collectAmountCap || undefined}
-                        value={payAmount}
-                        onChange={(e) => setPayAmount(e.target.value)}
-                        disabled={paymentBusy}
-                        placeholder={String(collectAmountCap || '')}
-                      />
-                    </div>
-                    {requiresTransactionReference(payMode) ? (
+                {canCollectPayment ? (
+                  <div className="ipd-pay-panel__collect">
+                    <div className="ipd-pay-panel__fields">
                       <div className="ipd-toolbar__field">
-                        <label className="ipd-toolbar__label" htmlFor="ipd-bill-ref">
-                          Transaction / reference no.
+                        <label className="ipd-toolbar__label" htmlFor="ipd-bill-mode">
+                          Payment mode
+                        </label>
+                        <select
+                          id="ipd-bill-mode"
+                          className="ipd-select"
+                          value={payMode}
+                          onChange={(e) => {
+                            setPayMode(e.target.value);
+                            if (!requiresTransactionReference(e.target.value)) {
+                              setPaymentRef('');
+                            }
+                          }}
+                          disabled={paymentBusy}
+                        >
+                          {IPD_COLLECT_PAYMENT_MODES.map((mode) => (
+                            <option key={mode} value={mode}>
+                              {mode}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="ipd-toolbar__field">
+                        <label className="ipd-toolbar__label" htmlFor="ipd-bill-amount">
+                          Amount
                         </label>
                         <input
-                          id="ipd-bill-ref"
-                          className="ipd-input"
+                          id="ipd-bill-amount"
+                          className="ipd-input ipd-pay-panel__amount"
                           type="text"
-                          value={paymentRef}
-                          onChange={(e) => setPaymentRef(e.target.value)}
+                          inputMode="numeric"
+                          autoComplete="off"
+                          value={payAmount}
+                          onChange={(e) =>
+                            setPayAmount(e.target.value.replace(/\D/g, ''))
+                          }
                           disabled={paymentBusy}
-                          placeholder="e.g. UPI ref or card auth code"
+                          placeholder={String(
+                            Math.max(0, Math.round(collectAmountCap)) || '',
+                          )}
+                          aria-label="Payment amount"
                         />
                       </div>
-                    ) : null}
-                  </div>
+                      {requiresTransactionReference(payMode) ? (
+                        <div className="ipd-toolbar__field ipd-pay-panel__field--full">
+                          <label className="ipd-toolbar__label" htmlFor="ipd-bill-ref">
+                            Transaction / reference no.
+                          </label>
+                          <input
+                            id="ipd-bill-ref"
+                            className="ipd-input"
+                            type="text"
+                            value={paymentRef}
+                            onChange={(e) => setPaymentRef(e.target.value)}
+                            disabled={paymentBusy}
+                            placeholder="e.g. UPI ref or card auth code"
+                          />
+                        </div>
+                      ) : null}
+                    </div>
 
-                  <div className="ipd-form-actions">
                     <IpdPermissionButton
                       allowed={canCollect}
                       type="button"
-                      className="btn btn--primary"
+                      className="btn btn--primary ipd-pay-panel__cta"
                       disabled={collectDisabled}
                       onClick={onCollectPayment}
                     >
                       {paymentBusy ? 'Processing…' : 'Collect payment'}
                     </IpdPermissionButton>
                   </div>
-                </>
-              ) : null}
+                ) : null}
               </div>
             </div>
           </div>

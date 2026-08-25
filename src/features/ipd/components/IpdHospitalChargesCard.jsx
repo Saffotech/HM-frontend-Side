@@ -21,7 +21,7 @@ export default function IpdHospitalChargesCard({
   onChargesChange,
   onSave,
   saving = false,
-  hint = 'Totals by charge head — save daily charges to auto-update amounts.',
+  hint = '',
 }) {
   const [focusHead, setFocusHead] = useState('room');
   const [newHeadLabel, setNewHeadLabel] = useState('');
@@ -73,7 +73,7 @@ export default function IpdHospitalChargesCard({
         </Button>
       </div>
       <div className="ipd-card__body ipd-ins-charge-card">
-        <p className="ipd-ins-charge-card__hint">{hint}</p>
+        {hint ? <p className="ipd-ins-charge-card__hint">{hint}</p> : null}
 
         <div className="ipd-ins-charge-bucket">
           <table className="ipd-ins-charge-table">

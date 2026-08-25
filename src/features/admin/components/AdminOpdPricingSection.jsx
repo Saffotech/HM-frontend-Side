@@ -16,6 +16,12 @@ import { useBedInventoryListQuery, useBedInventorySummaryQuery } from '@/feature
 import AdminEditLockToggle from '@/features/admin/components/AdminEditLockToggle';
 import { Button, Input, Label } from '@/shared/components/common';
 
+import {
+  coerceBedType,
+  doubleWardStorageKey,
+  isDoubleWardStorageKey,
+} from '@/features/admin/utils/bedTariffRates';
+
 /** Backend still stores General/Private/ICU in fixed fields; other wards use ward_rates. */
 const BUILTIN_TARIFF_WARDS = new Set(['general', 'private', 'icu']);
 
@@ -31,7 +37,20 @@ function builtinTariffField(wardName) {
   return null;
 }
 
-function getInventoryWardCharge(bedTariff, wardName) {
+function getInventoryWardCharge(bedTariff, wardName, bedType = 'single') {
+  const type = coerceBedType(bedType);
+  if (type === 'double') {
+    const dblKey = doubleWardStorageKey(wardName).toLowerCase();
+    const match = (bedTariff?.ward_rates ?? []).find(
+      (row) => String(row.ward_name || '').trim().toLowerCase() === dblKey,
+    );
+    if (match && match.charge_per_day !== '' && match.charge_per_day != null) {
+      const n = Number(match.charge_per_day);
+      if (Number.isFinite(n)) return n;
+    }
+    return getInventoryWardCharge(bedTariff, wardName, 'single');
+  }
+
   const field = builtinTariffField(wardName);
   if (field) {
     const n = Number(bedTariff?.[field]);
@@ -39,8 +58,9 @@ function getInventoryWardCharge(bedTariff, wardName) {
   }
   const match = (bedTariff?.ward_rates ?? []).find(
     (row) =>
+      !isDoubleWardStorageKey(row.ward_name) &&
       String(row.ward_name || '').trim().toLowerCase() ===
-      String(wardName || '').trim().toLowerCase(),
+        String(wardName || '').trim().toLowerCase(),
   );
   if (match && match.charge_per_day !== '' && match.charge_per_day != null) {
     const n = Number(match.charge_per_day);
@@ -231,6 +251,8 @@ export default function AdminOpdPricingSection({
   const inventorySummaryQ = useBedInventorySummaryQuery();
   const inventoryListQ = useBedInventoryListQuery({});
   const [specialWardFilter, setSpecialWardFilter] = useState('');
+  const [specialTypeFilter, setSpecialTypeFilter] = useState('all');
+  const [wardRateTypeFilter, setWardRateTypeFilter] = useState('single');
 
   const inventoryWardNames = useMemo(() => {
     const rows = inventorySummaryQ.data?.wards ?? [];
@@ -251,13 +273,17 @@ export default function AdminOpdPricingSection({
     const key = specialWardFilter.toLowerCase();
     return inventoryBeds
       .filter((b) => String(b.ward_name || '').trim().toLowerCase() === key)
+      .filter((b) => {
+        if (specialTypeFilter === 'all') return true;
+        return coerceBedType(b.bed_type) === specialTypeFilter;
+      })
       .slice()
       .sort((a, b) =>
         String(a.bed_number || '').localeCompare(String(b.bed_number || ''), undefined, {
           numeric: true,
         }),
       );
-  }, [inventoryBeds, specialWardFilter]);
+  }, [inventoryBeds, specialWardFilter, specialTypeFilter]);
 
   const customInventoryWards = useMemo(
     () => inventoryWardNames.filter((name) => !isBuiltinTariffWard(name)),
@@ -398,7 +424,10 @@ export default function AdminOpdPricingSection({
     if (syncedInventoryKeyRef.current === key) return;
 
     const existing = new Set(
-      wardRates.map((row) => String(row.ward_name || '').trim().toLowerCase()).filter(Boolean),
+      wardRates
+        .filter((row) => !isDoubleWardStorageKey(row.ward_name))
+        .map((row) => String(row.ward_name || '').trim().toLowerCase())
+        .filter(Boolean),
     );
     const missing = customInventoryWards.filter(
       (name) => !existing.has(name.toLowerCase()),
@@ -423,8 +452,26 @@ export default function AdminOpdPricingSection({
     patch,
   ]);
 
-  const setInventoryWardCharge = (wardName, rawValue) => {
+  const setInventoryWardCharge = (wardName, rawValue, bedType = 'single') => {
     const value = rawValue === '' ? '' : Number(rawValue);
+    const type = coerceBedType(bedType);
+
+    if (type === 'double') {
+      const storageKey = doubleWardStorageKey(wardName);
+      const key = storageKey.toLowerCase();
+      const next = [...wardRates];
+      const idx = next.findIndex(
+        (row) => String(row.ward_name || '').trim().toLowerCase() === key,
+      );
+      if (idx >= 0) {
+        next[idx] = { ...next[idx], ward_name: storageKey, charge_per_day: value };
+      } else {
+        next.push({ ward_name: storageKey, charge_per_day: value });
+      }
+      patch('pricing.bed_tariff.ward_rates', next);
+      return;
+    }
+
     const field = builtinTariffField(wardName);
     if (field) {
       patch(`pricing.bed_tariff.${field}`, value);
@@ -433,7 +480,9 @@ export default function AdminOpdPricingSection({
     const key = String(wardName || '').trim().toLowerCase();
     const next = [...wardRates];
     const idx = next.findIndex(
-      (row) => String(row.ward_name || '').trim().toLowerCase() === key,
+      (row) =>
+        !isDoubleWardStorageKey(row.ward_name) &&
+        String(row.ward_name || '').trim().toLowerCase() === key,
     );
     if (idx >= 0) {
       next[idx] = { ...next[idx], ward_name: wardName, charge_per_day: value };
@@ -453,7 +502,11 @@ export default function AdminOpdPricingSection({
       const n = Number(saved.charge_per_day);
       if (Number.isFinite(n)) return n;
     }
-    return getInventoryWardCharge(bedTariff, bed?.ward_name || specialWardFilter);
+    return getInventoryWardCharge(
+      bedTariff,
+      bed?.ward_name || specialWardFilter,
+      bed?.bed_type,
+    );
   };
 
   const setSpecialBedCharge = (bed, rawValue) => {
@@ -598,7 +651,24 @@ export default function AdminOpdPricingSection({
             <div className="aos-bed-tariff__label-row">
               <h4 className="aos-bed-tariff__label">Ward rates</h4>
               {inventoryWardNames.length > 0 ? (
-                <span className="aos-bed-tariff__hint">₹ / day</span>
+                <div className="aos-bed-tariff__filters">
+                  <select
+                    id="ward_rate_type"
+                    className={`aos-select aos-select--sm aos-beds__filter ${
+                      wardRateTypeFilter === 'double'
+                        ? 'aos-beds__filter--type'
+                        : 'aos-beds__filter--ward'
+                    }`}
+                    value={wardRateTypeFilter}
+                    disabled={!canEditBedTariff}
+                    onChange={(e) => setWardRateTypeFilter(coerceBedType(e.target.value))}
+                    aria-label="Ward rate bed type"
+                  >
+                    <option value="single">Single</option>
+                    <option value="double">Double</option>
+                  </select>
+                  <span className="aos-bed-tariff__hint">₹ / day</span>
+                </div>
               ) : null}
             </div>
 
@@ -611,11 +681,17 @@ export default function AdminOpdPricingSection({
             ) : (
               <div className="aos-ward-rate-strip" role="region" aria-label="Ward daily rates">
                 {inventoryWardNames.map((wardName) => {
-                  const fieldId = `bed_tariff_ward_${wardName.replace(/\s+/g, '_').toLowerCase()}`;
+                  const fieldId = `bed_tariff_ward_${wardName
+                    .replace(/\s+/g, '_')
+                    .toLowerCase()}_${wardRateTypeFilter}`;
+                  const fieldTone =
+                    wardRateTypeFilter === 'double'
+                      ? 'aos-ward-chip__field--double'
+                      : 'aos-ward-chip__field--single';
                   return (
                     <label key={wardName} className="aos-ward-chip" htmlFor={fieldId}>
                       <span className="aos-ward-chip__name">{wardName}</span>
-                      <span className="aos-ward-chip__field">
+                      <span className={`aos-ward-chip__field ${fieldTone}`}>
                         <span className="aos-ward-chip__rs" aria-hidden>
                           ₹
                         </span>
@@ -625,10 +701,20 @@ export default function AdminOpdPricingSection({
                           min={0}
                           step={1}
                           className="aos-ward-chip__input"
-                          value={getInventoryWardCharge(bedTariff, wardName)}
+                          value={getInventoryWardCharge(
+                            bedTariff,
+                            wardName,
+                            wardRateTypeFilter,
+                          )}
                           disabled={!canEditBedTariff}
-                          onChange={(e) => setInventoryWardCharge(wardName, e.target.value)}
-                          aria-label={`${wardName} charge per day`}
+                          onChange={(e) =>
+                            setInventoryWardCharge(
+                              wardName,
+                              e.target.value,
+                              wardRateTypeFilter,
+                            )
+                          }
+                          aria-label={`${wardName} ${wardRateTypeFilter} bed charge per day`}
                         />
                       </span>
                     </label>
@@ -641,21 +727,35 @@ export default function AdminOpdPricingSection({
           <section className="aos-bed-tariff__block aos-bed-tariff__block--beds">
             <div className="aos-bed-tariff__label-row">
               <h4 className="aos-bed-tariff__label">Special bed rates</h4>
-              <select
-                id="special_bed_ward"
-                className="aos-select aos-select--chip"
-                value={specialWardFilter}
-                disabled={!canEditBedTariff || inventoryWardNames.length === 0}
-                onChange={(e) => setSpecialWardFilter(e.target.value)}
-                aria-label="Ward for special bed rates"
-              >
-                <option value="">Select ward…</option>
-                {inventoryWardNames.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </select>
+              <div className="aos-bed-tariff__filters">
+                <select
+                  id="special_bed_ward"
+                  className="aos-select aos-select--sm aos-beds__filter aos-beds__filter--ward"
+                  value={specialWardFilter}
+                  disabled={!canEditBedTariff || inventoryWardNames.length === 0}
+                  onChange={(e) => setSpecialWardFilter(e.target.value)}
+                  aria-label="Ward for special bed rates"
+                >
+                  <option value="">Select ward…</option>
+                  {inventoryWardNames.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  id="special_bed_type"
+                  className="aos-select aos-select--sm aos-beds__filter aos-beds__filter--type"
+                  value={specialTypeFilter}
+                  disabled={!canEditBedTariff || !specialWardFilter}
+                  onChange={(e) => setSpecialTypeFilter(e.target.value)}
+                  aria-label="Filter by bed type"
+                >
+                  <option value="all">All types</option>
+                  <option value="single">Single</option>
+                  <option value="double">Double</option>
+                </select>
+              </div>
             </div>
 
             <div className="aos-table-wrap aos-table-wrap--tariff">
@@ -663,6 +763,7 @@ export default function AdminOpdPricingSection({
                 <thead>
                   <tr>
                     <th>Bed</th>
+                    <th>Type</th>
                     <th>₹ / day</th>
                     <th className="aos-bed-tariff__col-actions">Action</th>
                   </tr>
@@ -670,25 +771,28 @@ export default function AdminOpdPricingSection({
                 <tbody>
                   {!specialWardFilter ? (
                     <tr>
-                      <td colSpan={3} className="aos-table__empty">
+                      <td colSpan={4} className="aos-table__empty">
                         Choose a ward to edit bed rates
                       </td>
                     </tr>
                   ) : inventoryListQ.isLoading ? (
                     <tr>
-                      <td colSpan={3} className="aos-table__empty">
+                      <td colSpan={4} className="aos-table__empty">
                         Loading beds…
                       </td>
                     </tr>
                   ) : bedsInSpecialWard.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="aos-table__empty">
-                        No beds in {specialWardFilter}
+                      <td colSpan={4} className="aos-table__empty">
+                        No{' '}
+                        {specialTypeFilter === 'all' ? '' : `${specialTypeFilter} `}
+                        beds in {specialWardFilter}
                       </td>
                     </tr>
                   ) : (
                     bedsInSpecialWard.map((bed) => {
                       const bedNo = bed.bed_number || bed.id;
+                      const bedType = coerceBedType(bed.bed_type);
                       const hasOverride = specialBedRates.some(
                         (row) =>
                           String(row.bed_number || '').trim().toLowerCase() ===
@@ -704,6 +808,13 @@ export default function AdminOpdPricingSection({
                             {hasOverride ? (
                               <span className="aos-bed-tariff__override-tag">Custom</span>
                             ) : null}
+                          </td>
+                          <td>
+                            <span
+                              className={`aos-beds__type aos-beds__type--${bedType}`}
+                            >
+                              {bedType === 'double' ? 'Double' : 'Single'}
+                            </span>
                           </td>
                           <td>
                             <span className="aos-ward-chip__field aos-ward-chip__field--table">

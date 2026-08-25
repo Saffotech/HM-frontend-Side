@@ -8,7 +8,6 @@ import { Button, EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import IpdPageHeader from '@/features/ipd/components/IpdPageHeader';
 import IpdStatusBadge from '@/features/ipd/components/IpdStatusBadge';
-import ChargeTable from '@/features/ipd/components/ChargeTable';
 import BillSummary from '@/features/ipd/components/BillSummary';
 import AdmissionCareTeamEditor from '@/features/ipd/components/AdmissionCareTeamEditor';
 import EditInsuranceModal from '@/features/ipd/components/EditInsuranceModal';
@@ -196,6 +195,7 @@ export default function IpdPatientDetailPage() {
                 <div className="ipd-pd-care__label">Care team</div>
                 <AdmissionCareTeamEditor
                   admission={admission}
+                  visits={visits}
                   canEdit={canAdmit}
                   compact
                 />
@@ -306,15 +306,6 @@ export default function IpdPatientDetailPage() {
                 </Button>
               </div>
               <div className="ipd-card__body ipd-pd-billing">
-                {(running?.items ?? []).length === 0 ? (
-                  <p className="ipd-pd-muted">No running charges yet.</p>
-                ) : (
-                  <ChargeTable rows={running.items} compact />
-                )}
-                <p className="ipd-pd-muted" style={{ marginTop: '0.75rem' }}>
-                  Daily charges and full hospital breakdown are on the billing page
-                  — use <strong>{billActionLabel}</strong> above.
-                </p>
                 <BillSummary
                   subtotal={formatCurrency(running?.subtotal, { empty: '—' })}
                   tax={formatCurrency(running?.gst_amount, { empty: '—' })}
@@ -326,7 +317,12 @@ export default function IpdPatientDetailPage() {
                 {bills.length > 0 ? (
                   <div className="ipd-pd-bill-list">
                     <div className="ipd-pd-bill-list__title">Generated bills</div>
-                    {bills.map((bill) => (
+                    {bills.map((bill) => {
+                      const methodRaw = String(bill.payment_mode || '').trim();
+                      const methodLabel = methodRaw
+                        ? methodRaw.charAt(0).toUpperCase() + methodRaw.slice(1).toLowerCase()
+                        : '—';
+                      return (
                       <Link
                         key={bill.id}
                         to={ROUTES.IPD_BILL_VIEW.replace(
@@ -351,9 +347,13 @@ export default function IpdPatientDetailPage() {
                           <span>
                             <em>Due</em> {formatCurrency(bill.balance_due, { empty: '—' })}
                           </span>
+                          <span>
+                            <em>Method</em> {methodLabel}
+                          </span>
                         </div>
                       </Link>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : null}
               </div>

@@ -7,6 +7,10 @@ import {
 } from 'lucide-react';
 import { getOpdBillingSettings } from '@/features/opd/api/opdSettings';
 import { getDepartments, getDoctorsByDepartment } from '@/features/opd/api/reference';
+import {
+  DOUBLE_WARD_PREFIX,
+  isDoubleWardStorageKey,
+} from '@/features/admin/utils/bedTariffRates';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
 import { QueryFeedback, Tabs } from '@/shared/components/common';
 import './PricingView.css';
@@ -209,7 +213,10 @@ export default function PricingView({ title, subtitle, tabs, data: externalData 
 
   const bedTariff = pricing?.bed_tariff;
   const wardRates = (bedTariff?.ward_rates ?? []).filter(
-    (row) => String(row?.ward_name || '').trim(),
+    (row) => String(row?.ward_name || '').trim() && !isDoubleWardStorageKey(row.ward_name),
+  );
+  const doubleWardRates = (bedTariff?.ward_rates ?? []).filter(
+    (row) => String(row?.ward_name || '').trim() && isDoubleWardStorageKey(row.ward_name),
   );
   const specialBedRates = (bedTariff?.special_bed_rates ?? []).filter(
     (row) => String(row?.bed_number || '').trim(),
@@ -220,6 +227,7 @@ export default function PricingView({ title, subtitle, tabs, data: externalData 
       Number(bedTariff.private_ward_charge) > 0 ||
       Number(bedTariff.icu_charge) > 0 ||
       wardRates.length > 0 ||
+      doubleWardRates.length > 0 ||
       specialBedRates.length > 0);
 
   const showBed = tabIds.includes('bed');
@@ -303,10 +311,25 @@ export default function PricingView({ title, subtitle, tabs, data: externalData 
                   )}
                   {wardRates.length > 0 && (
                     <div className="pricing-bed__sub">
-                      <h4 className="pricing-bed__sub-title">Ward Rates</h4>
+                      <h4 className="pricing-bed__sub-title">Ward Rates (Single)</h4>
                       {wardRates.map((row, idx) => (
                         <div className="pricing-bed__row" key={`ward-${idx}`}>
                           <span>{row.ward_name}</span>
+                          <span>{formatCurrency(row.charge_per_day)} / day</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {doubleWardRates.length > 0 && (
+                    <div className="pricing-bed__sub">
+                      <h4 className="pricing-bed__sub-title">Ward Rates (Double)</h4>
+                      {doubleWardRates.map((row, idx) => (
+                        <div className="pricing-bed__row" key={`ward-dbl-${idx}`}>
+                          <span>
+                            {String(row.ward_name || '')
+                              .replace(new RegExp(`^${DOUBLE_WARD_PREFIX}`, 'i'), '')
+                              .trim() || row.ward_name}
+                          </span>
                           <span>{formatCurrency(row.charge_per_day)} / day</span>
                         </div>
                       ))}

@@ -156,6 +156,7 @@ export default function AdminOpdBedsSection({
   adminEditSaving = false,
 }) {
   const [wardFilter, setWardFilter] = useState('all');
+  const [bedTypeFilter, setBedTypeFilter] = useState('all');
   const [addMode, setAddMode] = useState('single'); // single | bulk | ward
   const [wardName, setWardName] = useState('');
   const [customWards, setCustomWards] = useState([]);
@@ -169,7 +170,11 @@ export default function AdminOpdBedsSection({
     pad_width: 0,
   });
   const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({ bed_number: '', ward_name: '' });
+  const [editForm, setEditForm] = useState({
+    bed_number: '',
+    ward_name: '',
+    bed_type: 'single',
+  });
   const [startTouched, setStartTouched] = useState(false);
   const [singleTouched, setSingleTouched] = useState(false);
   const [bedType, setBedType] = useState('single');
@@ -184,10 +189,12 @@ export default function AdminOpdBedsSection({
   const deleteWardMut = useDeleteInventoryWardMutation();
 
   const allBeds = listQ.data?.beds ?? [];
-  const beds =
-    wardFilter === 'all'
-      ? allBeds
-      : allBeds.filter((b) => b.ward_name === wardFilter);
+  const beds = allBeds.filter((b) => {
+    if (wardFilter !== 'all' && b.ward_name !== wardFilter) return false;
+    const type = b.bed_type === 'double' ? 'double' : 'single';
+    if (bedTypeFilter !== 'all' && type !== bedTypeFilter) return false;
+    return true;
+  });
 
   const stats = listQ.data?.stats ?? summaryQ.data?.totals ?? {};
   const total = Number(stats.total ?? stats.beds ?? 0);
@@ -421,12 +428,16 @@ export default function AdminOpdBedsSection({
   const startEdit = (bed) => {
     if (!canEditAllBeds) return;
     setEditingId(bed.id);
-    setEditForm({ bed_number: bed.bed_number, ward_name: bed.ward_name });
+    setEditForm({
+      bed_number: bed.bed_number,
+      ward_name: bed.ward_name,
+      bed_type: bed.bed_type === 'double' ? 'double' : 'single',
+    });
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setEditForm({ bed_number: '', ward_name: '' });
+    setEditForm({ bed_number: '', ward_name: '', bed_type: 'single' });
   };
 
   const saveEdit = async (bedId) => {
@@ -450,6 +461,7 @@ export default function AdminOpdBedsSection({
         body: {
           bed_number: nextNum,
           ward_name: editForm.ward_name.trim(),
+          bed_type: editForm.bed_type === 'double' ? 'double' : 'single',
         },
       });
       toast.success('Bed updated');
@@ -843,7 +855,7 @@ export default function AdminOpdBedsSection({
               {beds.length} bed{beds.length === 1 ? '' : 's'}
             </span>
             <select
-              className="aos-select aos-select--sm"
+              className="aos-select aos-select--sm aos-beds__filter aos-beds__filter--ward"
               value={wardFilter}
               onChange={(e) => setWardFilter(e.target.value)}
               aria-label="Filter by ward"
@@ -855,6 +867,17 @@ export default function AdminOpdBedsSection({
                   {w}
                 </option>
               ))}
+            </select>
+            <select
+              className="aos-select aos-select--sm aos-beds__filter aos-beds__filter--type"
+              value={bedTypeFilter}
+              onChange={(e) => setBedTypeFilter(e.target.value)}
+              aria-label="Filter by bed type"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <option value="all">All types</option>
+              <option value="single">Single</option>
+              <option value="double">Double</option>
             </select>
           </div>
         }
@@ -879,6 +902,7 @@ export default function AdminOpdBedsSection({
                 <thead>
                   <tr>
                     <th>Bed</th>
+                    <th>Type</th>
                     <th>Ward</th>
                     <th>Status</th>
                     <th>Patient</th>
@@ -906,6 +930,29 @@ export default function AdminOpdBedsSection({
                             />
                           ) : (
                             <span className="aos-beds__bed-id">{bed.bed_number}</span>
+                          )}
+                        </td>
+                        <td>
+                          {isEditing ? (
+                            <select
+                              className="aos-select aos-select--sm"
+                              value={editForm.bed_type}
+                              onChange={(e) =>
+                                setEditForm((p) => ({ ...p, bed_type: e.target.value }))
+                              }
+                              aria-label="Bed type"
+                            >
+                              <option value="single">Single</option>
+                              <option value="double">Double</option>
+                            </select>
+                          ) : (
+                            <span
+                              className={`aos-beds__type aos-beds__type--${
+                                bed.bed_type === 'double' ? 'double' : 'single'
+                              }`}
+                            >
+                              {bed.bed_type === 'double' ? 'Double' : 'Single'}
+                            </span>
                           )}
                         </td>
                         <td>
@@ -945,11 +992,11 @@ export default function AdminOpdBedsSection({
                             <span className="aos-table__muted">—</span>
                           )}
                         </td>
-                        <td className="aos-table__actions">
+                        <td className="aos-beds__td-actions">
                           {!canEditAllBeds ? (
                             <span className="aos-table__muted">—</span>
                           ) : isEditing ? (
-                            <>
+                            <div className="aos-beds__actions">
                               <Button
                                 type="button"
                                 size="sm"
@@ -966,9 +1013,9 @@ export default function AdminOpdBedsSection({
                               >
                                 Cancel
                               </Button>
-                            </>
+                            </div>
                           ) : (
-                            <>
+                            <div className="aos-beds__actions">
                               <Button
                                 type="button"
                                 size="sm"
@@ -1001,7 +1048,7 @@ export default function AdminOpdBedsSection({
                                 <Trash2 size={14} />
                                 <span>Delete</span>
                               </Button>
-                            </>
+                            </div>
                           )}
                         </td>
                       </tr>

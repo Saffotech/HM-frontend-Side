@@ -2110,6 +2110,42 @@
   width: 100%;
 }
 
+.ipd-dash-recent__body {
+  padding: 0.35rem 0.65rem 0.5rem;
+}
+
+.ipd-table--dash-recent th,
+.ipd-table--dash-recent td {
+  padding: 0.32rem 0.55rem;
+  font-size: 0.8125rem;
+  line-height: 1.25;
+  vertical-align: middle;
+}
+
+.ipd-table--dash-recent th {
+  font-size: 0.68rem;
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
+}
+
+.ipd-dash-recent__patient {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  line-height: 1.2;
+}
+
+.ipd-dash-recent__patient .ipd-page__subtitle {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.15;
+}
+
+.ipd-dash-recent__pager {
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+}
+
 /* ── Transfer Bed modal (reference layout; scoped styles only) ─ */
 
 .modal.ipd-xfer-modal {
@@ -2407,6 +2443,77 @@
   color: var(--color-text-muted, #6b7280);
 }
 
+.ipd-care-team {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.ipd-care-team__table-wrap {
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #e5e7eb);
+  overflow: hidden;
+}
+
+.ipd-care-team__table {
+  margin: 0;
+}
+
+.ipd-care-team__role {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ipd-care-team__role--primary {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.ipd-care-team__role--associated {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+.ipd-care-team__role--visit {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.ipd-care-team__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.ipd-care-team__count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ipd-care-team__col-actions {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.ipd-care-team__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
 .ipd-pd-muted {
   margin: 0;
   font-size: 0.8125rem;
@@ -2467,6 +2574,9 @@
 
 .ipd-care-team-form__save {
   flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 /* ── IPD Payment History (OPD-parity table density) ──────── */
@@ -2888,6 +2998,179 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+/* IPD Billing — Payment panel */
+.ipd-pay-panel {
+  overflow: hidden;
+  border-color: #fecdd3;
+  background:
+    linear-gradient(165deg, #fff7f7 0%, #ffffff 42%, #f8fafc 100%);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.ipd-pay-panel .ipd-card__head {
+  padding: 0.55rem 0.75rem;
+  min-height: 0;
+}
+
+.ipd-pay-panel .ipd-card__body {
+  padding: 0.55rem 0.75rem 0.7rem;
+}
+
+.ipd-pay-panel--partial {
+  border-color: #fde68a;
+  background:
+    linear-gradient(165deg, #fffbeb 0%, #ffffff 42%, #f8fafc 100%);
+}
+
+.ipd-pay-panel--paid {
+  border-color: #a7f3d0;
+  background:
+    linear-gradient(165deg, #ecfdf5 0%, #ffffff 42%, #f8fafc 100%);
+}
+
+.ipd-pay-panel__head {
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.ipd-pay-panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.ipd-pay-panel__due {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: 0.55rem;
+  border: 1px solid #fecdd3;
+  background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+}
+
+.ipd-pay-panel--partial .ipd-pay-panel__due {
+  border-color: #fde68a;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+}
+
+.ipd-pay-panel--paid .ipd-pay-panel__due {
+  border-color: #a7f3d0;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+}
+
+.ipd-pay-panel__due-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #9f1239;
+}
+
+.ipd-pay-panel--partial .ipd-pay-panel__due-label {
+  color: #92400e;
+}
+
+.ipd-pay-panel--paid .ipd-pay-panel__due-label {
+  color: #065f46;
+}
+
+.ipd-pay-panel__due-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #9f1239;
+  font-variant-numeric: tabular-nums;
+}
+
+.ipd-pay-panel--partial .ipd-pay-panel__due-value {
+  color: #b45309;
+}
+
+.ipd-pay-panel--paid .ipd-pay-panel__due-value {
+  color: #047857;
+}
+
+.ipd-pay-panel__rows {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.ipd-pay-panel__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 0.35rem;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.ipd-pay-panel__row dt {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.ipd-pay-panel__row dd {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.ipd-pay-panel__row--total {
+  background: #e8f5ee;
+}
+
+.ipd-pay-panel__row--total dt,
+.ipd-pay-panel__row--total dd {
+  color: var(--color-primary, #1a5c34);
+}
+
+.ipd-pay-panel__row--paid dd {
+  color: #047857;
+}
+
+.ipd-pay-panel__collect {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding-top: 0.45rem;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.ipd-pay-panel__fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem 0.55rem;
+}
+
+.ipd-pay-panel__fields .ipd-toolbar__label {
+  margin-bottom: 0.2rem;
+}
+
+.ipd-pay-panel__field--full {
+  grid-column: 1 / -1;
+}
+
+.ipd-pay-panel__cta {
+  width: 100%;
+  justify-content: center;
+}
+
+@media (max-width: 420px) {
+  .ipd-pay-panel__fields {
+    grid-template-columns: 1fr;
+  }
 }
 
 .ipd-ins-charge-card__hint {

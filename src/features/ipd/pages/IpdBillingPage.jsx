@@ -150,10 +150,7 @@ export default function IpdBillingPage() {
 
   return (
     <div className="ipd-page">
-      <IpdPageHeader
-        title="Bills"
-        subtitle="Open IPD stays with outstanding charges"
-      />
+      <IpdPageHeader title="Bills" />
 
       <div className="ipd-card">
         <div className="ipd-card__head ipd-billing-card__head">
