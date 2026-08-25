@@ -1,7 +1,15 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { useNavigate } from 'react-router-dom';
-import { RefreshCw, Users } from 'lucide-react';
+import {
+  Users,
+  ChevronDown,
+  LayoutGrid,
+  Building2,
+  Activity,
+  Shield,
+  Check,
+} from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseDataTable from '@/features/nurse/components/NurseDataTable';
 import NursePagination from '@/features/nurse/components/NursePagination';
@@ -11,6 +19,88 @@ import { useNursePatientScope } from '@/features/nurse/context/NursePatientScope
 import { QueryFeedback } from '@/shared/components/common';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
 import NursePatientAllocationTags from '@/features/nurse/components/NursePatientAllocationTags';
+import '@/features/nurse/pages/NurseMedicationPatientsPage.css';
+
+const WARD_OPTIONS = [
+  { value: 'all', label: 'All wards', Icon: LayoutGrid },
+  { value: 'general', label: 'General', Icon: Building2 },
+  { value: 'icu', label: 'ICU', Icon: Activity },
+  { value: 'private', label: 'Private', Icon: Shield },
+];
+
+function matchesWard(wardName, wardFilter) {
+  if (!wardFilter || wardFilter === 'all') return true;
+  const normalized = String(wardName ?? '').trim().toLowerCase();
+  return normalized === wardFilter || normalized.includes(wardFilter);
+}
+
+function WardFilterDropdown({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+  const selected = WARD_OPTIONS.find((option) => option.value === value) ?? WARD_OPTIONS[0];
+  const SelectedIcon = selected.Icon;
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onDocClick = (event) => {
+      if (rootRef.current && !rootRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div className="nurse-med-patients__ward-dropdown" ref={rootRef}>
+      <button
+        type="button"
+        className={`nurse-input nurse-med-patients__ward-trigger${open ? ' is-open' : ''}`}
+        onClick={() => setOpen((isOpen) => !isOpen)}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-label={`Ward filter: ${selected.label}`}
+      >
+        <SelectedIcon size={15} aria-hidden />
+        <span>{selected.label}</span>
+        <ChevronDown size={15} className={open ? 'is-open' : undefined} aria-hidden />
+      </button>
+      {open ? (
+        <ul className="nurse-med-patients__ward-menu" role="listbox" aria-label="Select ward">
+          {WARD_OPTIONS.map((option) => {
+            const OptionIcon = option.Icon;
+            const isActive = value === option.value;
+            return (
+              <li key={option.value} role="presentation">
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={isActive}
+                  className={`nurse-med-patients__ward-option${isActive ? ' is-active' : ''}`}
+                  onClick={() => {
+                    onChange(option.value);
+                    setOpen(false);
+                  }}
+                >
+                  <OptionIcon size={15} aria-hidden />
+                  <span>{option.label}</span>
+                  {isActive ? <Check size={14} aria-hidden /> : null}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
 
 function CareStatusBadge({ done, doneLabel = 'Done', pendingLabel = 'Not done', tone }) {
   if (done) {
@@ -32,21 +122,31 @@ export default function NurseQueuePage() {
   const { canViewPatients } = useNursePermissionSet();
   const { scopeReady, allocatedOnly, allocationSummary } = useNursePatientScope();
   const [search, setSearch] = useState('');
+  const [wardFilter, setWardFilter] = useState('all');
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebouncedValue(search, 400);
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, allocatedOnly]);
+  }, [debouncedSearch, wardFilter, allocatedOnly]);
 
-  const { data, isLoading, isError, error, refetch, isFetching } = useNurseDocumentedPatients({
+  const { data, isLoading, isError, error, refetch } = useNurseDocumentedPatients({
     search: debouncedSearch,
     page,
     page_size: 20,
   });
 
-  const total = data?.total || 0;
-  const pendingCareCount = data?.pending_care_count || 0;
+  const patients = data?.items || [];
+  const filteredPatients = useMemo(
+    () => patients.filter((row) => matchesWard(row.ward_name, wardFilter)),
+    [patients, wardFilter],
+  );
+
+  const total = wardFilter === 'all' ? (data?.total || 0) : filteredPatients.length;
+  const pendingCareCount = useMemo(() => {
+    if (wardFilter === 'all') return data?.pending_care_count || 0;
+    return filteredPatients.filter((row) => !row.has_vitals || !row.has_notes).length;
+  }, [wardFilter, data?.pending_care_count, filteredPatients]);
 
   const handleRowClick = useCallback(
     (row) => {
@@ -89,10 +189,11 @@ export default function NurseQueuePage() {
     },
   ], []);
 
-  const hasActiveFilters = Boolean(search);
+  const hasActiveFilters = Boolean(search.trim() || wardFilter !== 'all');
 
   const clearFilters = () => {
     setSearch('');
+    setWardFilter('all');
     setPage(1);
   };
 
@@ -128,22 +229,11 @@ export default function NurseQueuePage() {
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            className="nurse-btn nurse-btn--secondary nurse-queue-page__refresh"
-            onClick={() => refetch()}
-            disabled={isFetching}
-          >
-            <RefreshCw size={15} className={isFetching ? 'nurse-queue-page__spin' : ''} />
-            Refresh
-          </button>
-        </div>
 
-        <div className="nurse-card nurse-queue-page__toolbar">
-          <label htmlFor="nurse-queue-search" className="nurse-queue-page__search-label">
-            Search patients
-          </label>
-          <div className="nurse-queue-page__toolbar-row">
+          <div className="nurse-queue-page__header-search">
+            <label htmlFor="nurse-queue-search" className="nurse-queue-page__search-label">
+              Search patients
+            </label>
             <div className="nurse-queue-page__search-wrap">
               <input
                 id="nurse-queue-search"
@@ -155,11 +245,18 @@ export default function NurseQueuePage() {
                 aria-label="Search patients"
               />
             </div>
-            {hasActiveFilters && (
+            <WardFilterDropdown
+              value={wardFilter}
+              onChange={(value) => {
+                setWardFilter(value);
+                setPage(1);
+              }}
+            />
+            {hasActiveFilters ? (
               <button type="button" className="nurse-queue-page__clear" onClick={clearFilters}>
                 Clear
               </button>
-            )}
+            ) : null}
           </div>
         </div>
 
@@ -172,9 +269,13 @@ export default function NurseQueuePage() {
           <div className="nurse-queue-page__table">
             <NurseDataTable
               columns={columns}
-              data={data?.items || []}
+              data={filteredPatients}
               isLoading={false}
-              emptyMessage="No patients found."
+              emptyMessage={
+                hasActiveFilters
+                  ? 'No patients match your filters.'
+                  : 'No patients found.'
+              }
               onRowClick={canViewPatients ? handleRowClick : undefined}
             />
           </div>
@@ -182,8 +283,8 @@ export default function NurseQueuePage() {
           <NursePagination
             page={page}
             pageSize={20}
-            total={data?.total}
-            itemCount={data?.items?.length ?? 0}
+            total={wardFilter === 'all' ? data?.total : filteredPatients.length}
+            itemCount={filteredPatients.length}
             onChange={setPage}
           />
         </QueryFeedback>

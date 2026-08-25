@@ -266,14 +266,6 @@ export default function NurseMyDutyPage() {
                           </span>
                         </div>
                       </div>
-
-                      <div className="nurse-my-duty__bed-shift">
-                        <Clock3 size={13} aria-hidden />
-                        {bed.shift_name || shiftName}
-                        {formatShiftTime(bed.shift_start, bed.shift_end) !== '—'
-                          ? ` · ${formatShiftTime(bed.shift_start, bed.shift_end)}`
-                          : ''}
-                      </div>
                     </article>
                   );
                 })}

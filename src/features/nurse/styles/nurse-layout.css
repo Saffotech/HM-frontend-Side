@@ -1221,6 +1221,28 @@
   display: flex;
   align-items: center;
   gap: 0.625rem;
+  min-width: 0;
+}
+
+.nurse-queue-page__header-search{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 18rem;
+  min-width: min(100%, 18rem);
+  max-width: 40rem;
+  margin-left: auto;
+  justify-content: flex-end;
+}
+
+.nurse-queue-page__header-search .nurse-queue-page__search-wrap{
+  flex: 1 1 12rem;
+  max-width: 18rem;
+}
+
+.nurse-queue-page__header-search .nurse-med-patients__ward-dropdown {
+  min-width: 9.5rem;
 }
 
 .nurse-queue-page__icon{

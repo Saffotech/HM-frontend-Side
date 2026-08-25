@@ -118,7 +118,7 @@ export default function NurseNotesRegistryPage() {
       render: (row) => <span className="nurse-notes-registry__bed">{row.bed_number || '—'}</span>,
     },
     {
-      header: 'Created At',
+      header: 'Recorded At',
       render: (row) => (
         <span className="nurse-notes-registry__time">
           {row.created_at ? new Date(row.created_at).toLocaleString() : '—'}
