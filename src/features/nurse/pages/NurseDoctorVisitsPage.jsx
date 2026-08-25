@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Stethoscope, X } from 'lucide-react';
+import { Plus, Stethoscope, X } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseDataTable from '@/features/nurse/components/NurseDataTable';
 import NursePagination from '@/features/nurse/components/NursePagination';
@@ -18,6 +18,7 @@ import {
   useNurseDoctorVisitsQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
 import NursePatientAllocationTags from '@/features/nurse/components/NursePatientAllocationTags';
+import './NurseMedicationPatientsPage.css';
 
 const PAGE_SIZE = 20;
 const FETCH_PAGE_SIZE = 100;
@@ -108,20 +109,32 @@ export default function NurseDoctorVisitsPage() {
     [allRows, safePage],
   );
 
+  const hasFilters = Boolean(search.trim() || ward || admissionDate);
+
   const columns = useMemo(
     () => [
-      { header: 'Patient ID', render: (row) => formatPatientIdDisplay(row) },
+      {
+        header: 'Patient ID',
+        render: (row) => (
+          <span className="nurse-notes-registry__id">{formatPatientIdDisplay(row)}</span>
+        ),
+      },
       {
         header: 'Patient name',
         render: (row) => (
           <span className="nurse-patient-name-with-tags">
-            <span>{row.patient_name?.trim() || '—'}</span>
+            <span className="nurse-notes-registry__name">{row.patient_name?.trim() || '—'}</span>
             <NursePatientAllocationTags patientId={row.patient_id} />
           </span>
         ),
       },
       { header: 'Ward', render: (row) => row.ward_name || '—' },
-      { header: 'Bed', render: (row) => row.bed_number || '—' },
+      {
+        header: 'Bed',
+        render: (row) => (
+          <span className="nurse-notes-registry__bed">{row.bed_number || '—'}</span>
+        ),
+      },
       {
         header: 'Admission date',
         render: (row) => formatIpdDateTime(row.admitted_at),
@@ -171,99 +184,92 @@ export default function NurseDoctorVisitsPage() {
 
   return (
     <NurseLayout>
-      <div className="nurse-page nurse-doctor-visits-page">
+      <div className="nurse-page nurse-notes-registry nurse-doctor-visits">
         {!canViewDoctorVisits ? (
           <div className="nurse-alert nurse-alert--error">
             You do not have permission to view doctor visits.
           </div>
         ) : (
           <>
-            <div className="nurse-doctor-visits-page__header nurse-card">
-              <div className="nurse-doctor-visits-page__header-left">
-                <div className="nurse-doctor-visits-page__icon" aria-hidden>
-                  <Stethoscope size={20} />
+            <div className="nurse-notes-registry__toolbar nurse-card">
+              <div className="nurse-notes-registry__toolbar-left">
+                <div className="nurse-notes-registry__icon" aria-hidden>
+                  <Stethoscope size={22} />
                 </div>
                 <div>
-                  <h1 className="nurse-doctor-visits-page__title">Doctor Visits</h1>
-                  <p className="nurse-doctor-visits-page__subtitle">
+                  <p className="nurse-notes-registry__count">
+                    {isLoading && !data ? '…' : total}
+                    {' '}
+                    {total === 1 ? 'patient' : 'patients'}
+                  </p>
+                  <p className="nurse-notes-registry__hint">
                     {allocatedOnly
-                      ? `Allocated filter · ${allocationSummary?.assigned_bed_count ?? 0} beds assigned`
-                      : 'All IPD patients · log a doctor visit for any admitted patient'}
+                      ? `Allocated filter · ${allocationSummary?.assigned_bed_count ?? 0} beds assigned. Open a row for visit history.`
+                      : 'All IPD patients · log a doctor visit or open a row for history.'}
                   </p>
                 </div>
               </div>
-            </div>
 
-            <div className="nurse-card nurse-doctor-visits-filters">
-              <div className="nurse-doctor-visits-filters__grid">
-                <div className="nurse-field nurse-doctor-visits-filters__search">
-                  <label htmlFor="nurse-doctor-visits-search">Search</label>
-                  <div className="nurse-doctor-visits-search-wrap">
-                    <Search size={16} className="nurse-doctor-visits-search-icon" aria-hidden />
-                    <input
-                      id="nurse-doctor-visits-search"
-                      type="search"
-                      className="nurse-input nurse-doctor-visits-search"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search IPD patient by ID or name..."
-                      aria-label="Search IPD patients"
-                      autoComplete="off"
-                    />
-                  </div>
-                </div>
-
-                <div className="nurse-field nurse-doctor-visits-filters__ward">
-                  <label htmlFor="nurse-doctor-visits-ward">Ward</label>
-                  <div className="nurse-doctor-visits-filter-control">
-                    <select
-                      id="nurse-doctor-visits-ward"
-                      className="nurse-select nurse-doctor-visits-filters__control"
-                      value={ward}
-                      onChange={(e) => setWard(e.target.value)}
-                      aria-label="Filter by ward"
+              <div className="nurse-med-patients__toolbar-filters nurse-doctor-visits__toolbar-filters">
+                <div
+                  className={`nurse-notes-registry__search-wrap nurse-med-patients__search-wrap${
+                    search ? ' nurse-med-patients__search-wrap--has-clear' : ''
+                  }`}
+                >
+                  <input
+                    type="text"
+                    className="nurse-input nurse-notes-registry__search"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by name or patient ID…"
+                    aria-label="Search IPD patients"
+                    autoComplete="off"
+                  />
+                  {search ? (
+                    <button
+                      type="button"
+                      className="nurse-med-patients__search-clear"
+                      onClick={() => setSearch('')}
+                      aria-label="Clear search"
                     >
-                      <option value="">All wards</option>
-                      {WARD_OPTIONS.map((w) => (
-                        <option key={w} value={w}>{w}</option>
-                      ))}
-                    </select>
-                    {ward && (
-                      <button
-                        type="button"
-                        className="nurse-doctor-visits-filter-clear"
-                        onClick={() => setWard('')}
-                        aria-label="Clear ward filter"
-                        title="Clear ward filter"
-                      >
-                        <X size={14} />
-                      </button>
-                    )}
-                  </div>
+                      <X size={14} aria-hidden />
+                    </button>
+                  ) : null}
                 </div>
 
-                <div className="nurse-field nurse-doctor-visits-filters__date">
-                  <label htmlFor="nurse-doctor-visits-admission-date">Admission date</label>
-                  <div className="nurse-doctor-visits-filter-control">
-                    <DateInput
-                      id="nurse-doctor-visits-admission-date"
-                      value={admissionDate}
-                      onChange={(e) => setAdmissionDate(e.target.value)}
-                      aria-label="Filter by admission date"
-                    />
-                    {admissionDate && (
-                      <button
-                        type="button"
-                        className="nurse-doctor-visits-filter-clear"
-                        onClick={() => setAdmissionDate('')}
-                        aria-label="Clear admission date filter"
-                        title="Clear admission date filter"
-                      >
-                        <X size={14} />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <select
+                  className="nurse-select nurse-doctor-visits__ward-select"
+                  value={ward}
+                  onChange={(e) => setWard(e.target.value)}
+                  aria-label="Filter by ward"
+                >
+                  <option value="">All wards</option>
+                  {WARD_OPTIONS.map((w) => (
+                    <option key={w} value={w}>{w}</option>
+                  ))}
+                </select>
+
+                <DateInput
+                  id="nurse-doctor-visits-admission-date"
+                  className="nurse-doctor-visits__date-input"
+                  value={admissionDate}
+                  onChange={(e) => setAdmissionDate(e.target.value)}
+                  aria-label="Filter by admission date"
+                />
+
+                {hasFilters ? (
+                  <button
+                    type="button"
+                    className="nurse-btn nurse-btn--secondary nurse-btn--sm"
+                    onClick={() => {
+                      setSearch('');
+                      setWard('');
+                      setAdmissionDate('');
+                    }}
+                  >
+                    Clear
+                  </button>
+                ) : null}
               </div>
             </div>
 
@@ -274,24 +280,10 @@ export default function NurseDoctorVisitsPage() {
               onRetry={refetch}
             >
               <div
-                className={`nurse-doctor-visits-table${
-                  isFetching ? ' nurse-doctor-visits-table--fetching' : ''
+                className={`nurse-notes-registry__table${
+                  isFetching ? ' nurse-notes-registry__table--fetching' : ''
                 }`}
               >
-                <div className="nurse-doctor-visits-table__head">
-                  <p className="nurse-doctor-visits-table__count">
-                    {isLoading && !data ? (
-                      'Loading...'
-                    ) : (
-                      <>
-                        <strong>{total}</strong>
-                        {' '}
-                        {total === 1 ? 'patient' : 'patients'}
-                      </>
-                    )}
-                  </p>
-                </div>
-
                 <NurseDataTable
                   columns={columns}
                   data={rows}
@@ -309,15 +301,15 @@ export default function NurseDoctorVisitsPage() {
                       : 'No admitted IPD patients match the current search.'
                   }
                 />
-
-                <NursePagination
-                  page={safePage}
-                  pageSize={PAGE_SIZE}
-                  total={total}
-                  itemCount={rows.length}
-                  onChange={setPage}
-                />
               </div>
+
+              <NursePagination
+                page={safePage}
+                pageSize={PAGE_SIZE}
+                total={total}
+                itemCount={rows.length}
+                onChange={setPage}
+              />
             </QueryFeedback>
           </>
         )}
@@ -328,7 +320,6 @@ export default function NurseDoctorVisitsPage() {
         initialPatient={logPatient}
         onClose={() => setLogPatient(null)}
       />
-
     </NurseLayout>
   );
 }

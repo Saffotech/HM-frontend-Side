@@ -108,3 +108,43 @@ export function useDoctorPatientVisitsForPatientQuery(patientId, patientUid, opt
     staleTime: 30 * 1000,
   });
 }
+
+export function useDoctorPatientVitalsQuery(patientId, filters = {}, options = {}) {
+  const { enabled = true } = options;
+  const token = useQueryToken();
+  const numericId = Number(patientId);
+  const hasPatientId = Number.isFinite(numericId) && numericId >= 1;
+  const queryFilters = {
+    page: filters.page ?? 1,
+    page_size: filters.page_size ?? 20,
+    ...(filters.from_date ? { from_date: filters.from_date } : {}),
+    ...(filters.to_date ? { to_date: filters.to_date } : {}),
+  };
+
+  return useQuery({
+    queryKey: queryKeys.doctor.patients.vitals(hasPatientId ? numericId : null, queryFilters),
+    queryFn: () => doctorPatientsApi.fetchDoctorPatientVitals(numericId, token, queryFilters),
+    enabled: Boolean(token) && enabled && hasPatientId,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useDoctorPatientNotesQuery(patientId, filters = {}, options = {}) {
+  const { enabled = true } = options;
+  const token = useQueryToken();
+  const numericId = Number(patientId);
+  const hasPatientId = Number.isFinite(numericId) && numericId >= 1;
+  const queryFilters = {
+    page: filters.page ?? 1,
+    page_size: filters.page_size ?? 20,
+    ...(filters.from_date ? { from_date: filters.from_date } : {}),
+    ...(filters.to_date ? { to_date: filters.to_date } : {}),
+  };
+
+  return useQuery({
+    queryKey: queryKeys.doctor.patients.notes(hasPatientId ? numericId : null, queryFilters),
+    queryFn: () => doctorPatientsApi.fetchDoctorPatientNotes(numericId, token, queryFilters),
+    enabled: Boolean(token) && enabled && hasPatientId,
+    staleTime: 30 * 1000,
+  });
+}

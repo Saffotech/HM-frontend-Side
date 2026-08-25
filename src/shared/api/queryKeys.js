@@ -206,6 +206,10 @@ export const queryKeys = {
 
       prescriptions: (patientId) => ['doctor', 'patients', 'prescriptions', patientId],
 
+      vitals: (patientId, filters) => ['doctor', 'patients', 'vitals', patientId, filters],
+
+      notes: (patientId, filters) => ['doctor', 'patients', 'notes', patientId, filters],
+
     },
 
     ipd: {

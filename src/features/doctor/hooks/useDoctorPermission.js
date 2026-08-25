@@ -17,6 +17,8 @@ export const DOCTOR_PERMISSIONS = {
   notificationsView: 'notifications:view',
   notificationsUpdate: 'notifications:update',
   patientVisitsView: 'doctor_patient_visits:view',
+  vitalsView: 'doctor_vitals:view',
+  notesView: 'doctor_notes:view',
 };
 
 export function useDoctorPermission(permission) {
@@ -42,5 +44,7 @@ export function useDoctorPermissionSet() {
     canViewNotifications: hasBackendPermission(user, DOCTOR_PERMISSIONS.notificationsView),
     canUpdateNotifications: hasBackendPermission(user, DOCTOR_PERMISSIONS.notificationsUpdate),
     canViewPatientVisits: hasBackendPermission(user, DOCTOR_PERMISSIONS.patientVisitsView),
+    canViewVitals: hasBackendPermission(user, DOCTOR_PERMISSIONS.vitalsView),
+    canViewNotes: hasBackendPermission(user, DOCTOR_PERMISSIONS.notesView),
   };
 }

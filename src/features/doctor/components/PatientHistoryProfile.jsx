@@ -23,6 +23,8 @@ import { useDoctorLabTestsQuery } from '@/features/doctor/hooks/useDoctorLabQuer
 import { matchesLabTestPatient } from '@/features/doctor/utils/labPatientMatch';
 import DoctorLabReportModal from './DoctorLabReportModal';
 import DoctorPatientVisitsPanel from './DoctorPatientVisitsPanel';
+import DoctorPatientVitalsPanel from './DoctorPatientVitalsPanel';
+import DoctorPatientNotesPanel from './DoctorPatientNotesPanel';
 import { mergeVisitTimelineWithPrescriptions } from '@/features/doctor/utils/patientHistory';
 import { mergeIpdIntoVisitHistory } from '@/features/doctor/utils/ipdVisitHistory';
 import { useDoctorIpdPatientAdmissionsQuery } from '@/features/doctor/hooks/useDoctorIpdPatientAdmissionsQuery';
@@ -238,10 +240,10 @@ export default function PatientHistoryProfile({
           <h3 className="doc-profile-panel__title">
             <Pill size={16} aria-hidden />
             Prescriptions
+            {prescriptions.length > 0 ? (
+              <span className="doc-profile-panel__count">{prescriptions.length}</span>
+            ) : null}
           </h3>
-          {prescriptions.length > 0 ? (
-            <span className="doc-profile-panel__count">{prescriptions.length}</span>
-          ) : null}
         </div>
         {prescriptions.length === 0 ? (
           <p className="text-muted doc-profile-empty">No prescriptions for this patient.</p>
@@ -317,7 +319,10 @@ export default function PatientHistoryProfile({
           <div className="doc-profile-panel__head">
             <h3 className="doc-profile-panel__title">
               <FileText size={16} aria-hidden />
-              Visit History
+              Consulting History
+              {visits.length > 0 ? (
+                <span className="doc-profile-panel__count">{visits.length}</span>
+              ) : null}
             </h3>
           </div>
           {showVisitSkeleton ? (
@@ -338,12 +343,12 @@ export default function PatientHistoryProfile({
             <h3 className="doc-profile-panel__title">
               <Beaker size={16} aria-hidden />
               Lab Reports
-            </h3>
-            <div className="doc-profile-panel__head-end">
               {patientLabs.length > 0 ? (
                 <span className="doc-profile-panel__count">{patientLabs.length}</span>
               ) : null}
-              {showAddLabTest ? (
+            </h3>
+            {showAddLabTest ? (
+              <div className="doc-profile-panel__head-end">
                 <Button
                   type="button"
                   size="sm"
@@ -353,8 +358,8 @@ export default function PatientHistoryProfile({
                   <Plus size={14} aria-hidden />
                   Add lab test
                 </Button>
-              ) : null}
-            </div>
+              </div>
+            ) : null}
           </div>
           {patientLabs.length === 0 ? (
             <p className="text-muted doc-profile-empty">No lab tests</p>
@@ -381,11 +386,15 @@ export default function PatientHistoryProfile({
       </div>
 
       {!isOpdMode ? (
-        <DoctorPatientVisitsPanel
-          patientId={patientId}
-          patientUid={patientUid}
-          admissions={ipdAdmissions}
-        />
+        <>
+          <DoctorPatientVitalsPanel patientId={patientId} />
+          <DoctorPatientNotesPanel patientId={patientId} />
+          <DoctorPatientVisitsPanel
+            patientId={patientId}
+            patientUid={patientUid}
+            admissions={ipdAdmissions}
+          />
+        </>
       ) : null}
 
       <PrescriptionDetailModal
@@ -423,7 +432,7 @@ export default function PatientHistoryProfile({
 
 function VisitHistorySkeleton({ count = 3 }) {
   return (
-    <div className="doc-visit-list" aria-busy="true" aria-label="Loading visit history">
+    <div className="doc-visit-list" aria-busy="true" aria-label="Loading consulting history">
       {Array.from({ length: count }).map((_, index) => (
         <div key={index} className="doc-visit-card doc-visit-card--skeleton">
           <Skeleton height={44} />

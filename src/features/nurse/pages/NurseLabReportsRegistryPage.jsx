@@ -6,18 +6,23 @@ import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseDataTable from '@/features/nurse/components/NurseDataTable';
 import NursePagination from '@/features/nurse/components/NursePagination';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
-import { useNursePagedListGuard } from '@/features/nurse/hooks/useNursePagedListGuard';
-import { getPagedListCount, formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
-import { QueryFeedback } from '@/shared/components/common';
+import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
+import { QueryFeedback, DateInput } from '@/shared/components/common';
 import {
   useNurseLabReportsQuery,
   useDownloadNurseLabReportFileMutation,
+  useNurseActiveDoctorsQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
 import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
 import NursePatientAllocationTags from '@/features/nurse/components/NursePatientAllocationTags';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { toast } from '@/shared/utils/toast';
 import { ROUTES } from '@/shared/constants';
+import './NurseMedicationPatientsPage.css';
+
+const PAGE_SIZE = 20;
+const FETCH_PAGE_SIZE = 100;
+const WARD_OPTIONS = ['ICU', 'Private', 'General'];
 
 function formatReportedAt(iso) {
   if (!iso) return '—';
@@ -41,6 +46,8 @@ export default function NurseLabReportsRegistryPage() {
   const { canViewLabReports } = useNursePermissionSet();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [ward, setWard] = useState('');
+  const [reportedDate, setReportedDate] = useState('');
   const debouncedSearch = useDebouncedValue(search, 400);
   const {
     scopeFilters,
@@ -50,36 +57,63 @@ export default function NurseLabReportsRegistryPage() {
   } = useNursePatientScope();
   const downloadMutation = useDownloadNurseLabReportFileMutation();
 
+  const { data: doctorsData } = useNurseActiveDoctorsQuery(
+    { page: 1, page_size: 100 },
+    { enabled: scopeReady && canViewLabReports },
+  );
+
+  const doctorDepartmentMap = useMemo(() => {
+    const map = new Map();
+    for (const doc of doctorsData?.doctors ?? []) {
+      map.set(Number(doc.id), String(doc.specialization || '').trim());
+    }
+    return map;
+  }, [doctorsData?.doctors]);
+
   useEffect(() => {
     refreshPermissions?.();
   }, [refreshPermissions]);
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, allocatedOnly]);
+  }, [debouncedSearch, ward, reportedDate, allocatedOnly]);
+
+  const filters = useMemo(
+    () => ({
+      search: debouncedSearch.trim() || undefined,
+      page: 1,
+      page_size: FETCH_PAGE_SIZE,
+      ...(reportedDate ? { from_date: reportedDate, to_date: reportedDate } : {}),
+      ...scopeFilters,
+    }),
+    [debouncedSearch, reportedDate, scopeFilters],
+  );
 
   const { data, isLoading, isFetching, isError, error, refetch } = useNurseLabReportsQuery(
-    { search: debouncedSearch, page, page_size: 20, ...scopeFilters },
+    filters,
     { enabled: scopeReady && canViewLabReports },
   );
 
-  useNursePagedListGuard({
-    isLoading,
-    page,
-    items: data?.items,
-    onPageChange: setPage,
-  });
+  const allRows = useMemo(() => {
+    let items = data?.items ?? [];
+    if (ward) {
+      const wardKey = ward.toLowerCase();
+      items = items.filter(
+        (row) => String(row.ward_name || '').trim().toLowerCase() === wardKey,
+      );
+    }
+    return items;
+  }, [data?.items, ward]);
 
-  const listCount = useMemo(
-    () => getPagedListCount({
-      page,
-      page_size: 20,
-      items: data?.items,
-      total: data?.total,
-      hasNextPage: data?.hasNextPage,
-    }),
-    [data, page],
+  const total = allRows.length;
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount);
+  const rows = useMemo(
+    () => allRows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [allRows, safePage],
   );
+
+  const hasFilters = Boolean(search.trim() || ward || reportedDate);
 
   const viewReport = useCallback((row) => {
     const id = row.report_id ?? row.id;
@@ -133,6 +167,17 @@ export default function NurseLabReportsRegistryPage() {
       render: (row) => <span>{row.doctor_name || '—'}</span>,
     },
     {
+      header: 'Department',
+      render: (row) => (
+        <span>
+          {row.department_name
+            || row.department
+            || doctorDepartmentMap.get(Number(row.doctor_id))
+            || '—'}
+        </span>
+      ),
+    },
+    {
       header: 'Test',
       render: (row) => <span>{row.test_name || '—'}</span>,
     },
@@ -166,10 +211,11 @@ export default function NurseLabReportsRegistryPage() {
         </div>
       ),
     },
-  ], [viewReport, downloadReport, downloadMutation.isPending]);
+  ], [viewReport, downloadReport, downloadMutation.isPending, doctorDepartmentMap]);
 
-  const emptyMessage =
-    allocatedOnly && !(allocationSummary?.has_allocations)
+  const emptyMessage = hasFilters
+    ? 'No lab reports match your filters.'
+    : allocatedOnly && !(allocationSummary?.has_allocations)
       ? 'No beds assigned for this shift.'
       : allocatedOnly
         ? 'No lab reports for allocated patients.'
@@ -177,7 +223,7 @@ export default function NurseLabReportsRegistryPage() {
 
   return (
     <NurseLayout>
-      <div className="nurse-page nurse-notes-registry">
+      <div className="nurse-page nurse-notes-registry nurse-lab-reports">
         {!canViewLabReports ? (
           <div className="nurse-alert nurse-alert--error">
             You do not have permission to view lab reports.
@@ -191,38 +237,73 @@ export default function NurseLabReportsRegistryPage() {
                 </div>
                 <div>
                   <p className="nurse-notes-registry__count">
-                    {isLoading && !data ? '…' : (
-                      <>
-                        {listCount.approximate ? `${listCount.count}+` : listCount.count}
-                      </>
-                    )}
+                    {isLoading && !data ? '…' : total}
                     {' '}
-                    {listCount.count === 1 && !listCount.approximate ? 'report' : 'reports'}
+                    {total === 1 ? 'report' : 'reports'}
                   </p>
                   <p className="nurse-notes-registry__hint">
-                    Completed lab reports for patients on occupied beds. View and download only.
+                    Click a row to view lab report
                   </p>
                 </div>
               </div>
-              <div
-                className={`nurse-notes-registry__search-wrap nurse-lab-reports__search-wrap${search ? ' nurse-lab-reports__search-wrap--has-clear' : ''}`}
-              >
-                <input
-                  type="text"
-                  className="nurse-input nurse-notes-registry__search"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search by name, patient ID, or test…"
-                  aria-label="Search lab reports"
+
+              <div className="nurse-med-patients__toolbar-filters nurse-lab-reports__toolbar-filters">
+                <div
+                  className={`nurse-notes-registry__search-wrap nurse-med-patients__search-wrap${
+                    search ? ' nurse-med-patients__search-wrap--has-clear' : ''
+                  }`}
+                >
+                  <input
+                    type="text"
+                    className="nurse-input nurse-notes-registry__search"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by name, patient ID, or test…"
+                    aria-label="Search lab reports"
+                  />
+                  {search ? (
+                    <button
+                      type="button"
+                      className="nurse-med-patients__search-clear"
+                      onClick={() => setSearch('')}
+                      aria-label="Clear search"
+                    >
+                      <X size={14} aria-hidden />
+                    </button>
+                  ) : null}
+                </div>
+
+                <select
+                  className="nurse-select nurse-lab-reports__ward-select"
+                  value={ward}
+                  onChange={(e) => setWard(e.target.value)}
+                  aria-label="Filter by ward"
+                >
+                  <option value="">All wards</option>
+                  {WARD_OPTIONS.map((w) => (
+                    <option key={w} value={w}>{w}</option>
+                  ))}
+                </select>
+
+                <DateInput
+                  id="nurse-lab-reports-reported-date"
+                  className="nurse-lab-reports__date-input"
+                  value={reportedDate}
+                  onChange={(e) => setReportedDate(e.target.value)}
+                  aria-label="Filter by reported date"
                 />
-                {search ? (
+
+                {hasFilters ? (
                   <button
                     type="button"
-                    className="nurse-lab-reports__search-clear"
-                    onClick={() => setSearch('')}
-                    aria-label="Clear search"
+                    className="nurse-btn nurse-btn--secondary nurse-btn--sm"
+                    onClick={() => {
+                      setSearch('');
+                      setWard('');
+                      setReportedDate('');
+                    }}
                   >
-                    <X size={14} aria-hidden />
+                    Clear
                   </button>
                 ) : null}
               </div>
@@ -234,10 +315,14 @@ export default function NurseLabReportsRegistryPage() {
               error={error}
               onRetry={refetch}
             >
-              <div className={`nurse-notes-registry__table${isFetching ? ' nurse-notes-registry__table--fetching' : ''}`}>
+              <div
+                className={`nurse-notes-registry__table${
+                  isFetching ? ' nurse-notes-registry__table--fetching' : ''
+                }`}
+              >
                 <NurseDataTable
                   columns={columns}
-                  data={data?.items || []}
+                  data={rows}
                   isLoading={false}
                   emptyMessage={emptyMessage}
                   onRowClick={viewReport}
@@ -245,11 +330,10 @@ export default function NurseLabReportsRegistryPage() {
               </div>
 
               <NursePagination
-                page={page}
-                pageSize={20}
-                total={data?.total}
-                hasNextPage={data?.hasNextPage}
-                itemCount={data?.items?.length ?? 0}
+                page={safePage}
+                pageSize={PAGE_SIZE}
+                total={total}
+                itemCount={rows.length}
                 onChange={setPage}
               />
             </QueryFeedback>

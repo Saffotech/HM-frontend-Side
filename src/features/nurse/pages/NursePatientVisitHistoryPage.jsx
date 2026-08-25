@@ -125,29 +125,39 @@ export default function NursePatientVisitHistoryPage() {
             <p className="nurse-visit-history__empty">Could not load visits.</p>
           ) : lastVisit ? (
             <div className="nurse-visit-history__last-grid">
-              <div>
-                <span className="nurse-visit-history__label">Doctor</span>
-                <span className="nurse-visit-history__value">
-                  {lastVisit.doctor_name || '—'}
-                </span>
+              <div className="nurse-visit-history__last-row">
+                <div>
+                  <span className="nurse-visit-history__label">Visited at</span>
+                  <span className="nurse-visit-history__value">
+                    {formatVisitTime(lastVisit.visited_at)}
+                  </span>
+                </div>
+                <div>
+                  <span className="nurse-visit-history__label">Doctor</span>
+                  <span className="nurse-visit-history__value">
+                    {lastVisit.doctor_name || '—'}
+                  </span>
+                </div>
+                <div>
+                  <span className="nurse-visit-history__label">Department</span>
+                  <span className="nurse-visit-history__value">
+                    {doctorDepartmentMap.get(Number(lastVisit.doctor_id)) || '—'}
+                  </span>
+                </div>
+                <div>
+                  <span className="nurse-visit-history__label">Logged by</span>
+                  <span className="nurse-visit-history__value">
+                    {lastVisit.recorded_by_name || '—'}
+                  </span>
+                </div>
               </div>
-              <div>
-                <span className="nurse-visit-history__label">Visited at</span>
-                <span className="nurse-visit-history__value">
-                  {formatVisitTime(lastVisit.visited_at)}
-                </span>
-              </div>
-              <div>
-                <span className="nurse-visit-history__label">Logged by</span>
-                <span className="nurse-visit-history__value">
-                  {lastVisit.recorded_by_name || '—'}
-                </span>
-              </div>
-              <div className="nurse-visit-history__notes-block">
-                <span className="nurse-visit-history__label">Notes</span>
-                <span className="nurse-visit-history__notes-text">
-                  {lastVisit.notes || '—'}
-                </span>
+              <div className="nurse-visit-history__last-row nurse-visit-history__last-row--secondary">
+                <div className="nurse-visit-history__notes-block">
+                  <span className="nurse-visit-history__label">Notes</span>
+                  <span className="nurse-visit-history__notes-text">
+                    {lastVisit.notes || '—'}
+                  </span>
+                </div>
               </div>
             </div>
           ) : (

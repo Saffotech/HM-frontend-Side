@@ -8,6 +8,7 @@ import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
 import {
   useNurseLabReportQuery,
   useDownloadNurseLabReportFileMutation,
+  useNurseActiveDoctorsQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
 import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
 import { toast } from '@/shared/utils/toast';
@@ -68,6 +69,25 @@ export default function NurseLabReportDetailPage() {
     detailFilters,
     { enabled: scopeReady && canViewLabReports && Boolean(reportId) },
   );
+
+  const { data: doctorsData } = useNurseActiveDoctorsQuery(
+    { page: 1, page_size: 100 },
+    { enabled: scopeReady && canViewLabReports },
+  );
+
+  const doctorDepartment = useMemo(() => {
+    if (report?.department_name || report?.department) {
+      return String(report.department_name || report.department).trim();
+    }
+    const doctorId = Number(report?.doctor_id);
+    if (!Number.isSafeInteger(doctorId) || doctorId < 1) return '';
+    for (const doc of doctorsData?.doctors ?? []) {
+      if (Number(doc.id) === doctorId) {
+        return String(doc.specialization || '').trim();
+      }
+    }
+    return '';
+  }, [report?.department_name, report?.department, report?.doctor_id, doctorsData?.doctors]);
 
   useEffect(() => {
     let active = true;
@@ -194,6 +214,10 @@ export default function NurseLabReportDetailPage() {
                       <span className="nurse-vital-detail__dot" aria-hidden>·</span>
                       <span>
                         Doctor: <strong>{report.doctor_name || '—'}</strong>
+                      </span>
+                      <span className="nurse-vital-detail__dot" aria-hidden>·</span>
+                      <span>
+                        Department: <strong>{doctorDepartment || '—'}</strong>
                       </span>
                     </p>
                   </div>

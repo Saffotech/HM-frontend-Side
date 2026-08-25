@@ -48,10 +48,10 @@ export default function DoctorPatientVisitsPanel({
         <h3 className="doc-profile-panel__title">
           <Stethoscope size={16} aria-hidden />
           Doctor Visits
+          {visits.length > 0 ? (
+            <span className="doc-profile-panel__count">{visits.length}</span>
+          ) : null}
         </h3>
-        {visits.length > 0 ? (
-          <span className="doc-profile-panel__count">{visits.length}</span>
-        ) : null}
       </div>
 
       {isPending ? (

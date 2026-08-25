@@ -15,34 +15,6 @@ import NursePermissionButton from '@/features/nurse/components/NursePermissionBu
 import NursePatientAllocationTags from '@/features/nurse/components/NursePatientAllocationTags';
 import { useAuth } from '@/shared/hooks/useAuth';
 
-function formatSince(iso) {
-  if (!iso) return '—';
-  const then = new Date(iso);
-  const now = new Date();
-  const diffMs = now - then;
-  if (diffMs < 0) return 'Just now';
-  const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return 'Just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  const weeks = Math.floor(days / 7);
-  if (weeks < 4) return `${weeks}w ago`;
-  return then.toLocaleDateString();
-}
-
-function sinceTone(iso) {
-  if (!iso) return 'muted';
-  const diffMs = Date.now() - new Date(iso);
-  if (diffMs < 0) return 'fresh';
-  const hours = diffMs / 3600000;
-  if (hours < 2) return 'fresh';
-  if (hours < 6) return 'warn';
-  return 'stale';
-}
-
 export default function NurseVitalsRegistryPage() {
   const navigate = useNavigate();
   const { refreshPermissions } = useAuth();
@@ -101,16 +73,12 @@ export default function NurseVitalsRegistryPage() {
       ),
     },
     {
-      header: 'Bed Number',
-      render: (row) => <span className="nurse-vitals-registry__bed">{row.bed_number || '—'}</span>,
+      header: 'Ward',
+      render: (row) => <span>{row.ward_name || '—'}</span>,
     },
     {
-      header: 'Since',
-      render: (row) => (
-        <span className={`nurse-since-badge nurse-since-badge--${sinceTone(row.recorded_at)}`}>
-          {formatSince(row.recorded_at)}
-        </span>
-      ),
+      header: 'Bed Number',
+      render: (row) => <span className="nurse-vitals-registry__bed">{row.bed_number || '—'}</span>,
     },
     {
       header: 'Recorded At',

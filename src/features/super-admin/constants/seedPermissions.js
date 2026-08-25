@@ -52,6 +52,9 @@ export const SEED_PERMISSION_NAMES = [
   'emergency_alerts:create',
   'emergency_alerts:update',
   'receptionist:view_doctor_schedule',
+  'doctor_patient_visits:view',
+  'doctor_vitals:view',
+  'doctor_notes:view',
 ];
 
 export function buildSeedPermissionCatalog() {

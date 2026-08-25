@@ -207,6 +207,8 @@ export function apiToUiAppointment(apiAppt) {
     wardName: apiAppt.ward_name ?? apiAppt.wardName ?? null,
     admittedAt: apiAppt.admitted_at ?? apiAppt.admittedAt ?? null,
     dischargedAt: apiAppt.discharged_at ?? apiAppt.dischargedAt ?? null,
+    nurseId: apiAppt.nurse_id ?? apiAppt.nurseId ?? null,
+    nurseName: apiAppt.nurse_name ?? apiAppt.nurseName ?? null,
   };
 }
 

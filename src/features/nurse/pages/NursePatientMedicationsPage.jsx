@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Pill, Eye, Clock, UserRound, ClipboardList, AlertCircle } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
@@ -6,7 +6,7 @@ import NurseDataTable from '@/features/nurse/components/NurseDataTable';
 import NurseQueueStatusBadge from '@/features/nurse/components/NurseQueueStatusBadge';
 import NurseConfirmDialog from '@/features/nurse/components/NurseConfirmDialog';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
-import { QueryFeedback } from '@/shared/components/common';
+import { QueryFeedback, Modal, Button } from '@/shared/components/common';
 import {
   useNursePatientMedicationsQuery,
   useAdministerMedicationMutation,
@@ -46,99 +46,42 @@ function hasAdministrationRecord(prescription) {
   );
 }
 
-function LastAdministrationCell({ prescription }) {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef(null);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    const onDocClick = (event) => {
-      if (rootRef.current && !rootRef.current.contains(event.target)) {
-        setOpen(false);
-      }
-    };
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', onDocClick);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', onDocClick);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [open]);
-
-  if (!hasAdministrationRecord(prescription)) {
-    return (
-      <span className="nurse-patient-meds__last-admin-empty">
-        Not yet
-      </span>
-    );
-  }
-
+function LastAdministrationDetails({ prescription }) {
   return (
-    <div className="nurse-patient-meds__last-admin" ref={rootRef}>
-      <button
-        type="button"
-        className={`nurse-btn nurse-btn--sm nurse-btn--secondary nurse-patient-meds__view-btn${
-          open ? ' nurse-patient-meds__view-btn--open' : ''
-        }`}
-        onClick={() => setOpen((value) => !value)}
-        aria-expanded={open}
-        aria-haspopup="dialog"
-      >
-        <Eye size={14} aria-hidden />
-        View
-      </button>
-      {open && (
-        <div
-          className="nurse-patient-meds__last-admin-card"
-          role="dialog"
-          aria-label="Last administration details"
-        >
-          <div className="nurse-patient-meds__last-admin-card-header">
-            <span className="nurse-patient-meds__last-admin-card-title">
-              Last Administration
-            </span>
-          </div>
-          <div className="nurse-patient-meds__last-admin-card-body">
-            <div className="nurse-patient-meds__last-admin-row nurse-patient-meds__last-admin-row--time">
-              <span className="nurse-patient-meds__last-admin-icon" aria-hidden>
-                <Clock size={14} />
-              </span>
-              <div className="nurse-patient-meds__last-admin-content">
-                <span className="nurse-patient-meds__last-admin-label">Last Given</span>
-                <span className="nurse-patient-meds__last-admin-value">
-                  {formatLastGiven(prescription)}
-                </span>
-              </div>
-            </div>
-            <div className="nurse-patient-meds__last-admin-row nurse-patient-meds__last-admin-row--by">
-              <span className="nurse-patient-meds__last-admin-icon" aria-hidden>
-                <UserRound size={14} />
-              </span>
-              <div className="nurse-patient-meds__last-admin-content">
-                <span className="nurse-patient-meds__last-admin-label">By</span>
-                <span className="nurse-patient-meds__last-admin-value">
-                  {formatLastGivenBy(prescription)}
-                </span>
-              </div>
-            </div>
-            <div className="nurse-patient-meds__last-admin-row nurse-patient-meds__last-admin-row--notes">
-              <span className="nurse-patient-meds__last-admin-icon" aria-hidden>
-                <ClipboardList size={14} />
-              </span>
-              <div className="nurse-patient-meds__last-admin-content">
-                <span className="nurse-patient-meds__last-admin-label">Notes</span>
-                <span className="nurse-patient-meds__last-admin-value nurse-patient-meds__last-admin-value--notes">
-                  {prescription.administration?.remarks?.trim()
-                    || '—'}
-                </span>
-              </div>
-            </div>
-          </div>
+    <div className="nurse-patient-meds__last-admin-modal-body">
+      <div className="nurse-patient-meds__last-admin-row nurse-patient-meds__last-admin-row--time">
+        <span className="nurse-patient-meds__last-admin-icon" aria-hidden>
+          <Clock size={14} />
+        </span>
+        <div className="nurse-patient-meds__last-admin-content">
+          <span className="nurse-patient-meds__last-admin-label">Last Given</span>
+          <span className="nurse-patient-meds__last-admin-value">
+            {formatLastGiven(prescription)}
+          </span>
         </div>
-      )}
+      </div>
+      <div className="nurse-patient-meds__last-admin-row nurse-patient-meds__last-admin-row--by">
+        <span className="nurse-patient-meds__last-admin-icon" aria-hidden>
+          <UserRound size={14} />
+        </span>
+        <div className="nurse-patient-meds__last-admin-content">
+          <span className="nurse-patient-meds__last-admin-label">By</span>
+          <span className="nurse-patient-meds__last-admin-value">
+            {formatLastGivenBy(prescription)}
+          </span>
+        </div>
+      </div>
+      <div className="nurse-patient-meds__last-admin-row nurse-patient-meds__last-admin-row--notes">
+        <span className="nurse-patient-meds__last-admin-icon" aria-hidden>
+          <ClipboardList size={14} />
+        </span>
+        <div className="nurse-patient-meds__last-admin-content">
+          <span className="nurse-patient-meds__last-admin-label">Notes</span>
+          <span className="nurse-patient-meds__last-admin-value nurse-patient-meds__last-admin-value--notes">
+            {prescription.administration?.remarks?.trim() || '—'}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -152,6 +95,7 @@ export default function NursePatientMedicationsPage() {
   const adminMut = useAdministerMedicationMutation(patientId);
   const updateAdminMut = useUpdateAdministrationMutation(patientId);
   const [selected, setSelected] = useState(null);
+  const [viewingLastAdmin, setViewingLastAdmin] = useState(null);
   const [adminMode, setAdminMode] = useState('create'); // 'create' | 'update'
   const [adminData, setAdminData] = useState({
     status: 'given',
@@ -184,6 +128,11 @@ export default function NursePatientMedicationsPage() {
       remarks: mode === 'update' ? (rx.administration?.remarks || '') : '',
       scheduled_time: '',
     });
+  }, []);
+
+  const openLastAdmin = useCallback((rx, event) => {
+    event?.stopPropagation?.();
+    setViewingLastAdmin(rx);
   }, []);
 
   const handleConfirm = () => {
@@ -257,7 +206,25 @@ export default function NursePatientMedicationsPage() {
     { header: 'Route', render: (p) => p.route || '—' },
     {
       header: 'Last Administration',
-      render: (p) => <LastAdministrationCell prescription={p} />,
+      render: (p) => {
+        if (!hasAdministrationRecord(p)) {
+          return (
+            <span className="nurse-patient-meds__last-admin-empty">
+              Not yet
+            </span>
+          );
+        }
+        return (
+          <button
+            type="button"
+            className="nurse-btn nurse-btn--sm nurse-btn--secondary nurse-patient-meds__view-btn"
+            onClick={(event) => openLastAdmin(p, event)}
+          >
+            <Eye size={14} aria-hidden />
+            View
+          </button>
+        );
+      },
     },
     {
       header: 'Action',
@@ -285,7 +252,7 @@ export default function NursePatientMedicationsPage() {
         );
       },
     },
-  ], [openAdmin, canCreateMedication]);
+  ], [openAdmin, openLastAdmin, canCreateMedication]);
 
   return (
     <NurseLayout>
@@ -382,6 +349,27 @@ export default function NursePatientMedicationsPage() {
               </div>
             </>
           ) : null}
+
+          <Modal
+            isOpen={Boolean(viewingLastAdmin)}
+            onClose={() => setViewingLastAdmin(null)}
+            title="Last Administration"
+            panelClassName="nurse-patient-meds__last-admin-modal"
+            footer={
+              <Button variant="outline" onClick={() => setViewingLastAdmin(null)}>
+                Close
+              </Button>
+            }
+          >
+            {viewingLastAdmin ? (
+              <>
+                <p className="nurse-patient-meds__last-admin-modal-med">
+                  {viewingLastAdmin.medicine_name || 'Medicine'}
+                </p>
+                <LastAdministrationDetails prescription={viewingLastAdmin} />
+              </>
+            ) : null}
+          </Modal>
 
           <NurseConfirmDialog
             open={!!selected}
