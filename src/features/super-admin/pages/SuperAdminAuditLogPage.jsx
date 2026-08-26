@@ -67,16 +67,16 @@ export default function SuperAdminAuditLogPage() {
 
   return (
     <SuperAdminLayout pageTitle="Audit Log">
-      <div className="admin-page">
+      <div className="admin-page admin-page--compact sa-audit-log-page">
         <SuperAdminPageHeader
           title="Audit log"
           subtitle="System activity and change history"
         />
 
-        <div className="admin-card sa-panel-card" style={{ marginBottom: '1rem' }}>
-          <div className="admin-card__body">
+        <div className="admin-card sa-panel-card sa-audit-filters-card">
+          <div className="admin-card__body sa-audit-filters-card__body">
             <div className="sa-audit-filters">
-              <div style={{ flex: '2 1 200px' }}>
+              <div className="sa-audit-filters__field sa-audit-filters__field--actor">
                 <Label htmlFor="audit-actor">Filter by actor</Label>
                 <Input
                   id="audit-actor"
@@ -85,7 +85,7 @@ export default function SuperAdminAuditLogPage() {
                   placeholder="admin@hospital.org"
                 />
               </div>
-              <div style={{ flex: '1 1 160px' }}>
+              <div className="sa-audit-filters__field sa-audit-filters__field--action">
                 <Label htmlFor="audit-action">Action</Label>
                 <Select
                   value={filters.action}
@@ -94,7 +94,7 @@ export default function SuperAdminAuditLogPage() {
                   placeholder="All actions"
                 />
               </div>
-              <div>
+              <div className="sa-audit-filters__field sa-audit-filters__field--date">
                 <DateInput
                   id="audit-from"
                   label="From"
@@ -102,7 +102,7 @@ export default function SuperAdminAuditLogPage() {
                   onChange={(e) => setFilters((f) => ({ ...f, dateFrom: e.target.value }))}
                 />
               </div>
-              <div>
+              <div className="sa-audit-filters__field sa-audit-filters__field--date">
                 <DateInput
                   id="audit-to"
                   label="To"
@@ -110,7 +110,7 @@ export default function SuperAdminAuditLogPage() {
                   onChange={(e) => setFilters((f) => ({ ...f, dateTo: e.target.value }))}
                 />
               </div>
-              <div style={{ flex: '0 1 140px' }}>
+              <div className="sa-audit-filters__field sa-audit-filters__field--size">
                 <Label htmlFor="audit-page-size">Page size</Label>
                 <Select
                   value={String(pageSize)}
@@ -122,7 +122,7 @@ export default function SuperAdminAuditLogPage() {
           </div>
         </div>
 
-        <div className="admin-card sa-panel-card admin-card--flat">
+        <div className="admin-card sa-panel-card admin-card--flat sa-audit-table-card">
           <QueryFeedback
             isLoading={auditQuery.isLoading}
             isError={auditQuery.isError}

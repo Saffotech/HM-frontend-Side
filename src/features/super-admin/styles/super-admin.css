@@ -237,11 +237,89 @@
   background: var(--color-primary);
 }
 
+.sa-audit-log-page.admin-page {
+  gap: 0.55rem;
+}
+
+.sa-audit-log-page .ui-page-header {
+  margin-bottom: 0;
+  gap: 0.2rem;
+}
+
+.sa-audit-log-page .ui-page-header__subtitle {
+  margin-top: 0;
+}
+
+.sa-audit-filters-card {
+  margin-bottom: 0 !important;
+}
+
+.sa-audit-filters-card__body {
+  padding: 0.55rem 0.75rem !important;
+}
+
 .sa-audit-filters {
   display: flex;
-  gap: 12px;
+  gap: 0.45rem;
   align-items: flex-end;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  justify-content: stretch;
+  width: 100%;
+}
+
+.sa-audit-filters__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  flex: 1 1 0;
+}
+
+.sa-audit-filters__field--actor {
+  flex: 1.4 1 0;
+  width: auto;
+  max-width: none;
+}
+
+.sa-audit-filters__field--action,
+.sa-audit-filters__field--date,
+.sa-audit-filters__field--size {
+  flex: 1 1 0;
+  width: auto;
+}
+
+.sa-audit-filters__field .field,
+.sa-audit-filters__field .searchable-select,
+.sa-audit-filters__field input,
+.sa-audit-filters__field select {
+  width: 100%;
+  max-width: none;
+}
+
+.sa-audit-filters__field .field,
+.sa-audit-filters__field .field__label,
+.sa-audit-filters__field label {
+  margin-bottom: 0;
+}
+
+@media (max-width: 900px) {
+  .sa-audit-filters {
+    flex-wrap: wrap;
+  }
+
+  .sa-audit-filters__field {
+    flex: 1 1 calc(50% - 0.45rem);
+    min-width: 9rem;
+  }
+
+  .sa-audit-filters__field--actor {
+    flex: 1 1 100%;
+  }
+}
+
+.sa-audit-table-card .admin-table th,
+.sa-audit-table-card .admin-table td {
+  padding: 0.4rem 0.65rem;
 }
 
 .sa-audit-time {

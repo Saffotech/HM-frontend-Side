@@ -223,3 +223,11 @@ You don’t need OPD settings permission if `/ipd/beds` always returns the rate.
 3. **Later:** Pass `bed_type` into `resolve_bed_rate` for double prices.
 
 I’m in **Ask mode** — switch to **Agent mode** if you want this applied in the repo.
+---
+
+## Beds `bed_type` (Single / Double) — REVERTED
+
+Backend code for `beds.bed_type` was **undone**.  
+Full re-apply checklist: **`docs/Beds_BedType.md`**.
+
+If the migration was already run on your DB, drop the column or `alembic downgrade` as noted in that file.
