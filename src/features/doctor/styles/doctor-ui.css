@@ -301,6 +301,11 @@
   color: #94a3b8;
 }
 
+.doc-labs-pagination{
+  padding: 0.65rem 0.85rem 0.85rem;
+  border-top: 1px solid var(--color-border);
+}
+
 .doc-labs-table__actions-head,
 .doc-labs-table__actions{
   text-align: center;
@@ -467,6 +472,10 @@
   background: #fff;
   font-size: 0.875rem;
   box-sizing: border-box;
+}
+
+.doc-med-row__duration-unit--error{
+  border-color: var(--color-danger, #dc2626);
 }
 
 .doc-consult-modal,
@@ -714,6 +723,34 @@
   display: grid;
   gap: 0.5rem;
   grid-template-columns: 1fr;
+}
+
+.doc-lab-order__repeat{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.doc-lab-order__repeat--required{
+  padding: 0.45rem 0.55rem;
+  border: 1px solid #f59e0b;
+  border-radius: var(--radius-md);
+  background: #fffbeb;
+}
+
+.doc-lab-order__repeat input{
+  margin: 0;
+}
+
+.doc-lab-order__repeat-hint{
+  flex: 1 1 100%;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
 }
 
 .doc-lab-test-name{
@@ -1390,6 +1427,11 @@
   min-height: 8rem;
   overflow-x: auto;
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.doc-patients-page__pagination{
+  padding: 0.65rem 0.85rem 0.85rem;
+  border-top: 1px solid var(--color-border);
 }
 
 .doc-patients-page__empty{

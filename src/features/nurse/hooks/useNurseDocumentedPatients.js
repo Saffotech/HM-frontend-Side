@@ -19,7 +19,7 @@ function patientIdsWithRecords(items = []) {
  * All bed-assigned patients, with vitals/notes completion flags for the Patient page.
  */
 export function useNurseDocumentedPatients(
-  { search, page = 1, page_size: pageSize = 20 } = {},
+  { search, page = 1, page_size: pageSize = 10 } = {},
   options = {},
 ) {
   const { enabled = true } = options;

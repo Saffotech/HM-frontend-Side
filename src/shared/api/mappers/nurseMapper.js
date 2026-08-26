@@ -459,7 +459,7 @@ export function mapMedicationPatientRow(row) {
 
 /**
  * API returns one row per prescription (any doctor); collapse to one row per patient.
- * medicine_count is the total prescribed items across all of that patient's prescriptions.
+ * medicine_count is summed across all prescriptions for that patient.
  */
 export function dedupeMedicationPatientsByPatientId(rows = []) {
   const byPatient = new Map();
@@ -543,10 +543,37 @@ export function buildLatestAdministrationByPrescriptionItemId(historyRows = []) 
   return byItem;
 }
 
-export function mapMedicationToPrescription(item, latestHistoryRow = null, patientMeta = {}) {
+/**
+ * Earliest administration per prescription_item_id (first given).
+ */
+export function buildFirstAdministrationByPrescriptionItemId(historyRows = []) {
+  const byItem = new Map();
+  for (const raw of historyRows) {
+    const mapped = mapMedicationHistoryRow(raw);
+    if (!mapped?.prescription_item_id) continue;
+    const key = String(mapped.prescription_item_id);
+    const existing = byItem.get(key);
+    const nextAt = parseAdministeredAtMs(mapped.administered_at);
+    const existingAt = existing ? parseAdministeredAtMs(existing.administered_at) : Number.POSITIVE_INFINITY;
+    if (!existing || (nextAt > 0 && nextAt <= existingAt)) {
+      byItem.set(key, mapped);
+    }
+  }
+  return byItem;
+}
+
+export function mapMedicationToPrescription(
+  item,
+  latestHistoryRow = null,
+  patientMeta = {},
+  firstHistoryRow = null,
+) {
   if (!item) return null;
   const itemId = item.prescription_item_id ?? item.id;
   const administration = latestHistoryRow ? mapAdministrationFromHistory(latestHistoryRow) : null;
+  const firstAdministration = firstHistoryRow
+    ? mapAdministrationFromHistory(firstHistoryRow)
+    : null;
   const statusFromItem =
     item.status != null && item.status !== ''
       ? String(item.status).toLowerCase()
@@ -566,6 +593,17 @@ export function mapMedicationToPrescription(item, latestHistoryRow = null, patie
     || patientMeta.department
     || '';
 
+  const firstGivenAt =
+    firstAdministration?.administered_at
+    ?? item.first_administered_at
+    ?? administration?.administered_at
+    ?? null;
+  const firstGivenBy =
+    firstAdministration?.administered_by_name
+    ?? item.first_administered_by
+    ?? (firstGivenAt ? administration?.administered_by_name : null)
+    ?? null;
+
   return {
     id: itemId,
     prescription_item_id: itemId,
@@ -583,20 +621,73 @@ export function mapMedicationToPrescription(item, latestHistoryRow = null, patie
     administration,
     last_administered_at: administration?.administered_at ?? null,
     last_administered_by: administration?.administered_by_name ?? null,
+    first_administered_at: firstGivenAt,
+    first_administered_by: firstGivenBy,
   };
 }
 
-export function mapPatientMedicationsResponse(raw, historyRows = []) {
-  if (!raw) return { prescriptions: [], medications: [] };
-  const meds = raw.medications ?? raw.prescriptions ?? [];
+function extractPatientMedicationItems(raw) {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  const payload =
+    raw.data && typeof raw.data === 'object' && !Array.isArray(raw.data)
+      ? raw.data
+      : raw;
+  if (Array.isArray(payload)) return payload;
+  const list =
+    payload.medications
+    ?? payload.prescriptions
+    ?? payload.items
+    ?? payload.medication_items
+    ?? [];
+  return Array.isArray(list) ? list : [];
+}
+
+/** Build administer-table rows from history when latest Rx has no items. */
+export function prescriptionsFromMedicationHistory(historyRows = [], patientMeta = {}) {
   const latestByItem = buildLatestAdministrationByPrescriptionItemId(historyRows);
+  const firstByItem = buildFirstAdministrationByPrescriptionItemId(historyRows);
+  const prescriptions = [];
+  const seen = new Set();
+  for (const [key, historyRow] of latestByItem.entries()) {
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const mapped = mapMedicationToPrescription(
+      {
+        prescription_item_id: historyRow.prescription_item_id,
+        medicine_name: historyRow.medicine_name,
+        dosage: historyRow.dose ?? historyRow.dosage,
+        dose: historyRow.dose,
+        frequency: historyRow.frequency,
+        duration: historyRow.duration,
+        instructions: historyRow.instructions,
+        route: historyRow.route,
+      },
+      historyRow,
+      patientMeta,
+      firstByItem.get(key) ?? historyRow,
+    );
+    if (mapped) prescriptions.push(mapped);
+  }
+  return prescriptions;
+}
+
+export function mapPatientMedicationsResponse(raw, historyRows = []) {
+  if (!raw && !historyRows?.length) return { prescriptions: [], medications: [] };
+  const payload =
+    raw?.data && typeof raw.data === 'object' && !Array.isArray(raw.data)
+      ? raw.data
+      : raw ?? {};
+  const meds = extractPatientMedicationItems(raw);
+  const latestByItem = buildLatestAdministrationByPrescriptionItemId(historyRows);
+  const firstByItem = buildFirstAdministrationByPrescriptionItemId(historyRows);
   const patientMeta = {
-    doctor_id: raw.doctor_id ?? null,
-    doctor_name: raw.doctor_name || raw.attending_doctor_name || '',
-    department_name: raw.department_name || raw.department || '',
+    doctor_id: payload.doctor_id ?? null,
+    doctor_name: payload.doctor_name || payload.attending_doctor_name || '',
+    department_name: payload.department_name || payload.department || '',
   };
   const seen = new Set();
-  const prescriptions = meds
+  let prescriptions = meds
     .map((m) => {
       const itemKey = m?.prescription_item_id ?? m?.id;
       const key = itemKey != null ? String(itemKey) : '';
@@ -605,18 +696,25 @@ export function mapPatientMedicationsResponse(raw, historyRows = []) {
         seen.add(key);
       }
       const latest = key ? latestByItem.get(key) : null;
-      return mapMedicationToPrescription(m, latest, patientMeta);
+      const first = key ? firstByItem.get(key) : null;
+      return mapMedicationToPrescription(m, latest, patientMeta, first);
     })
     .filter(Boolean);
+
+  // Latest Rx can be empty while older doses exist in history — surface those.
+  if (prescriptions.length === 0 && historyRows?.length) {
+    prescriptions = prescriptionsFromMedicationHistory(historyRows, patientMeta);
+  }
+
   const uidFromHistory = historyRows
     .map((r) => r?.patient_uid ?? r?.patient_uhid)
     .find(Boolean);
   return attachPatientUid({
-    ...raw,
-    ward_name: raw.ward_name ?? raw.ward ?? '',
+    ...payload,
+    ward_name: payload.ward_name ?? payload.ward ?? '',
     doctor_name: patientMeta.doctor_name,
     department_name: patientMeta.department_name,
-    patient_uid: raw.patient_uid ?? raw.patient_uhid ?? uidFromHistory ?? '',
+    patient_uid: payload.patient_uid ?? payload.patient_uhid ?? uidFromHistory ?? '',
     prescriptions,
     medications: meds,
   });

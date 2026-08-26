@@ -29,19 +29,21 @@ export function useDoctorPatientVisitsQuery(params = {}, options = {}) {
 }
 
 export function useDoctorPatientHistoryQuery(patientUhid, options = {}) {
-  const { enabled = true, placeholderVisits } = options;
+  const { enabled = true, placeholderVisits, encounter_type = 'opd' } = options;
   const token = useQueryToken();
   const queryClient = useQueryClient();
   const uid = patientUhid?.patientUid ?? patientUhid;
+  const encounterType = String(encounter_type || 'opd').toLowerCase();
 
   return useQuery({
-    queryKey: queryKeys.doctor.patients.history(uid, { encounter_type: 'all' }),
-    queryFn: () => doctorPatientsApi.fetchPatientHistory(uid, token, { encounter_type: 'all' }),
+    queryKey: queryKeys.doctor.patients.history(uid, { encounter_type: encounterType }),
+    queryFn: () =>
+      doctorPatientsApi.fetchPatientHistory(uid, token, { encounter_type: encounterType }),
     enabled: Boolean(uid) && enabled,
     ...DOCTOR_PATIENT_HISTORY_QUERY_OPTIONS,
     placeholderData: (previousData) => {
       if (previousData) return previousData;
-      return resolvePatientHistoryPlaceholder(queryClient, uid, placeholderVisits);
+      return resolvePatientHistoryPlaceholder(queryClient, uid, placeholderVisits, encounterType);
     },
   });
 }

@@ -20,7 +20,7 @@ import {
 import NursePatientAllocationTags from '@/features/nurse/components/NursePatientAllocationTags';
 import './NurseMedicationPatientsPage.css';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 const FETCH_PAGE_SIZE = 100;
 const WARD_OPTIONS = ['ICU', 'Private', 'General'];
 

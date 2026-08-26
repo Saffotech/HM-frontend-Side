@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useCreateLabTestMutation } from '@/features/doctor/hooks/useDoctorLabQuery';
+import {
+  useCreateLabTestMutation,
+  useDoctorLabTestsQuery,
+} from '@/features/doctor/hooks/useDoctorLabQuery';
 import {
   LAB_DEPARTMENTS,
   LAB_PRIORITIES,
@@ -12,6 +15,7 @@ import {
   resolveLabDepartmentId,
 } from '@/shared/utils/labDepartments';
 import { findPatientLabOrderLink } from '@/features/doctor/utils/patientLabOrderLinks';
+import { isLabRepeatRequired } from '@/features/doctor/utils/labRepeatRequired';
 import LabTestNameField from './LabTestNameField';
 import { Button, Modal, Select, Textarea } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
@@ -23,6 +27,7 @@ const EMPTY_FORM = {
   otherTest: false,
   priority: 'Normal',
   clinicalNotes: '',
+  isRepeat: false,
 };
 
 export default function AddLabTestModal({
@@ -40,17 +45,42 @@ export default function AddLabTestModal({
   const defaultLinkKey = linkOptions[0]?.key ?? '';
   const [linkKey, setLinkKey] = useState(defaultLinkKey);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [repeatError, setRepeatError] = useState('');
 
   useEffect(() => {
     if (!open) return;
     setLinkKey(linkOptions[0]?.key ?? '');
     setForm(EMPTY_FORM);
+    setRepeatError('');
   }, [open, linkOptions]);
 
   const selectedLink = useMemo(
     () => findPatientLabOrderLink(linkOptions, linkKey),
     [linkOptions, linkKey],
   );
+
+  const labListParams = useMemo(() => {
+    if (patientUid) return { patient_uid: String(patientUid), limit: 100 };
+    return { limit: 100 };
+  }, [patientUid]);
+
+  const { data: existingLabTests = [] } = useDoctorLabTestsQuery(labListParams, {
+    enabled: open && Boolean(patientUid),
+  });
+
+  const labVisitContext = useMemo(
+    () => ({
+      appointmentDbId: selectedLink?.appointmentDbId ?? null,
+      admissionId: selectedLink?.admissionId ?? null,
+    }),
+    [selectedLink?.appointmentDbId, selectedLink?.admissionId],
+  );
+
+  const repeatRequired = isLabRepeatRequired(form, 0, {
+    existingOrders: existingLabTests,
+    labOrders: [form],
+    visit: labVisitContext,
+  });
 
   const deptOptions = labRoutingDepts.length
     ? labRoutingDepts.map((d) => ({
@@ -72,6 +102,11 @@ export default function AddLabTestModal({
       toast.error('Please select or enter a test');
       return;
     }
+    if (repeatRequired && !form.isRepeat) {
+      setRepeatError('Check Repeat test — this test was already ordered today');
+      toast.error('Check Repeat test — this test was already ordered today');
+      return;
+    }
 
     const departmentId = resolveLabDepartmentId(labRoutingDepts, form.deptCode);
     const payload = {
@@ -83,6 +118,7 @@ export default function AddLabTestModal({
       departmentId: departmentId ?? undefined,
       priority: form.priority || 'Normal',
       clinicalNotes: form.clinicalNotes,
+      isRepeat: Boolean(form.isRepeat),
     };
 
     if (selectedLink.admissionId != null) {
@@ -98,7 +134,7 @@ export default function AddLabTestModal({
       onClose();
     } catch (err) {
       const msg = String(err?.message ?? '');
-      if (!/already been ordered/i.test(msg)) {
+      if (!/already been ordered|use repeat test/i.test(msg)) {
         // mutationOnError toasts most failures
       }
     }
@@ -180,6 +216,33 @@ export default function AddLabTestModal({
             onChange={(priority) => setForm((prev) => ({ ...prev, priority }))}
             options={LAB_PRIORITIES.map((p) => ({ value: p, label: p }))}
           />
+
+          <label
+            className={`doc-lab-order__repeat${
+              repeatRequired ? ' doc-lab-order__repeat--required' : ''
+            }`}
+          >
+            <input
+              type="checkbox"
+              checked={Boolean(form.isRepeat)}
+              required={repeatRequired}
+              aria-required={repeatRequired}
+              onChange={(e) => {
+                setForm((prev) => ({ ...prev, isRepeat: e.target.checked }));
+                if (repeatError) setRepeatError('');
+              }}
+            />
+            <span>
+              Repeat test
+              {repeatRequired ? ' *' : ''}
+            </span>
+            <span className="doc-lab-order__repeat-hint">
+              {repeatRequired
+                ? 'Required — this test was already ordered today for this visit'
+                : 'Allow ordering again if this test is already in progress'}
+            </span>
+          </label>
+          {repeatError ? <p className="field__error">{repeatError}</p> : null}
 
           <Textarea
             label="Clinical notes"

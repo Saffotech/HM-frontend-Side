@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Clock3, FlaskConical } from 'lucide-react';
 import {
   isOpenStatus,
@@ -8,10 +8,11 @@ import {
   uploadActionLabel,
 } from '@/features/lab/utils/labOrderStatus';
 import { ROUTES } from '@/shared/constants';
+import { TablePagination } from '@/shared/components/common';
 import LabEncounterBadge from '@/features/lab/components/LabEncounterBadge';
 import { visitLocationSummary, normalizeEncounterType } from '@/features/lab/utils/visitLocation';
 
-const PREVIEW_COUNT = 8;
+const PAGE_SIZE = 10;
 
 const labUploadPath = (id) => `/lab/orders/${id}/upload`;
 
@@ -50,6 +51,7 @@ function orderTimeMs(order) {
 export default function LabDashboardRemainingTests({ orders = [] }) {
   const navigate = useNavigate();
   const [filterSource, setFilterSource] = useState('all');
+  const [page, setPage] = useState(1);
 
   const worklistHref = useMemo(() => {
     const params = new URLSearchParams({ view: 'ordered' });
@@ -57,16 +59,27 @@ export default function LabDashboardRemainingTests({ orders = [] }) {
     return `${ROUTES.LAB_ORDERS}?${params.toString()}`;
   }, [filterSource]);
 
-  const sourceFilteredOrders = useMemo(() => {
-    if (filterSource === 'all') return orders;
-    return orders.filter((o) => normalizeEncounterType(o.encounterType) === filterSource);
+  useEffect(() => {
+    setPage(1);
+  }, [filterSource]);
+
+  const openOrders = useMemo(() => {
+    const sourceFiltered =
+      filterSource === 'all'
+        ? orders
+        : orders.filter((o) => normalizeEncounterType(o.encounterType) === filterSource);
+    return [...sourceFiltered]
+      .filter((o) => isOpenStatus(o.status))
+      .sort((a, b) => orderTimeMs(b) - orderTimeMs(a));
   }, [orders, filterSource]);
 
-  const openOrders = [...sourceFilteredOrders]
-    .filter((o) => isOpenStatus(o.status))
-    .sort((a, b) => orderTimeMs(b) - orderTimeMs(a)); // newest first
-  const remaining = openOrders.slice(0, PREVIEW_COUNT);
   const totalOpen = openOrders.length;
+  const pageCount = Math.max(1, Math.ceil(totalOpen / PAGE_SIZE) || 1);
+  const safePage = Math.min(page, pageCount);
+  const remaining = useMemo(
+    () => openOrders.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [openOrders, safePage],
+  );
 
   return (
     <section className="lab-dash-reports lab-dash-remaining-panel" id="lab-remaining-tests">
@@ -119,61 +132,75 @@ export default function LabDashboardRemainingTests({ orders = [] }) {
           </p>
         </div>
       ) : (
-        <ul className="lab-dash-remaining">
-          {remaining.map((order, index) => (
-            <li key={order.id} className="lab-dash-remaining__item">
-              <div
-                className={`lab-dash-remaining__row ${rowToneClass(order.priority)}`.trim()}
-              >
-                <button
-                  type="button"
-                  className="lab-dash-remaining__hit"
-                  onClick={() => navigate(pendingTestsPath(order))}
-                  aria-label={`Open pending tests for ${order.patientName || order.id}`}
+        <>
+          <ul className="lab-dash-remaining">
+            {remaining.map((order, index) => {
+              const rowNumber = (safePage - 1) * PAGE_SIZE + index + 1;
+              return (
+              <li key={order.id} className="lab-dash-remaining__item">
+                <div
+                  className={`lab-dash-remaining__row ${rowToneClass(order.priority)}`.trim()}
                 >
-                  <span className="lab-dash-remaining__index" aria-hidden>
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                  <div className="lab-dash-remaining__main">
-                    <span className="lab-dash-remaining__patient">{order.patientName}</span>
-                    <span className="lab-dash-remaining__test">{order.testName}</span>
-                    <span className="lab-dash-remaining__visit">
-                      <LabEncounterBadge encounterType={order.encounterType} />
-                      {visitLocationSummary(order) ? (
-                        <span className="lab-dash-remaining__visit-meta">{visitLocationSummary(order)}</span>
-                      ) : null}
+                  <button
+                    type="button"
+                    className="lab-dash-remaining__hit"
+                    onClick={() => navigate(pendingTestsPath(order))}
+                    aria-label={`Open pending tests for ${order.patientName || order.id}`}
+                  >
+                    <span className="lab-dash-remaining__index" aria-hidden>
+                      {String(rowNumber).padStart(2, '0')}
                     </span>
-                    <span className="lab-dash-remaining__meta">
-                      <Clock3 size={12} aria-hidden />
-                      <span>
-                        {order.patientId || '—'}
-                        {order.requestedAt && order.requestedAt !== '—'
-                          ? ` · ${order.requestedAt}`
-                          : ''}
+                    <div className="lab-dash-remaining__main">
+                      <span className="lab-dash-remaining__patient">{order.patientName}</span>
+                      <span className="lab-dash-remaining__test">{order.testName}</span>
+                      <span className="lab-dash-remaining__visit">
+                        <LabEncounterBadge encounterType={order.encounterType} />
+                        {visitLocationSummary(order) ? (
+                          <span className="lab-dash-remaining__visit-meta">{visitLocationSummary(order)}</span>
+                        ) : null}
                       </span>
-                    </span>
-                  </div>
-                  <div className="lab-dash-remaining__badges">
-                    <span className={`lab-dash-priority ${priorityClass(order.priority)}`}>
-                      {order.priorityLabel || order.priority || 'Normal'}
-                    </span>
-                    <span className={`lab-badge ${statusBadgeClass(order.status)}`}>
-                      {statusLabel(order.status)}
-                    </span>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  className="lab-dash-remaining__action"
-                  onClick={() => navigate(labUploadPath(order.id))}
-                >
-                  {uploadActionLabel(order.status)}
-                  <ArrowRight size={14} aria-hidden />
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+                      <span className="lab-dash-remaining__meta">
+                        <Clock3 size={12} aria-hidden />
+                        <span>
+                          {order.patientId || '—'}
+                          {order.requestedAt && order.requestedAt !== '—'
+                            ? ` · ${order.requestedAt}`
+                            : ''}
+                        </span>
+                      </span>
+                    </div>
+                    <div className="lab-dash-remaining__badges">
+                      <span className={`lab-dash-priority ${priorityClass(order.priority)}`}>
+                        {order.priorityLabel || order.priority || 'Normal'}
+                      </span>
+                      <span className={`lab-badge ${statusBadgeClass(order.status)}`}>
+                        {statusLabel(order.status)}
+                      </span>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    className="lab-dash-remaining__action"
+                    onClick={() => navigate(labUploadPath(order.id))}
+                  >
+                    {uploadActionLabel(order.status)}
+                    <ArrowRight size={14} aria-hidden />
+                  </button>
+                </div>
+              </li>
+              );
+            })}
+          </ul>
+
+          <TablePagination
+            page={safePage}
+            totalPages={pageCount}
+            totalItems={totalOpen}
+            pageSize={PAGE_SIZE}
+            onPageChange={setPage}
+            itemLabel="tests"
+          />
+        </>
       )}
     </section>
   );

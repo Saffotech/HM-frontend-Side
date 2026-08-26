@@ -1,8 +1,9 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Pill, Eye, Clock, UserRound, ClipboardList, AlertCircle } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseDataTable from '@/features/nurse/components/NurseDataTable';
+import NursePagination from '@/features/nurse/components/NursePagination';
 import NurseConfirmDialog from '@/features/nurse/components/NurseConfirmDialog';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
 import { QueryFeedback, Modal, Button } from '@/shared/components/common';
@@ -18,6 +19,7 @@ import NursePermissionButton from '@/features/nurse/components/NursePermissionBu
 import { toast } from '@/shared/utils/toast';
 import './NursePatientMedicationsPage.css';
 
+const PAGE_SIZE = 10;
 const ACTIONABLE_STATUSES = new Set(['missed', 'delayed']);
 
 /** Local datetime string for `<input type="datetime-local" />` (YYYY-MM-DDTHH:mm). */
@@ -28,12 +30,25 @@ function toDateTimeLocalValue(date = new Date()) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function formatGivenAt(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? null : d.toLocaleString();
+}
+
 function formatLastGiven(prescription) {
-  if (!prescription?.last_administered_at) {
-    return prescription?.administration?.id ? '—' : 'Not yet';
-  }
-  const d = new Date(prescription.last_administered_at);
-  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
+  const formatted = formatGivenAt(prescription?.last_administered_at);
+  if (formatted) return formatted;
+  return prescription?.administration?.id ? '—' : 'Not yet';
+}
+
+function formatFirstGiven(prescription) {
+  const formatted = formatGivenAt(prescription?.first_administered_at);
+  if (formatted) return formatted;
+  // Single dose: first given is the same as last given
+  const last = formatGivenAt(prescription?.last_administered_at);
+  if (last) return last;
+  return prescription?.administration?.id ? '—' : 'Not yet';
 }
 
 function formatLastGivenBy(prescription) {
@@ -43,13 +58,26 @@ function formatLastGivenBy(prescription) {
 
 function hasAdministrationRecord(prescription) {
   return Boolean(
-    prescription?.administration?.id || prescription?.last_administered_at,
+    prescription?.administration?.id
+    || prescription?.last_administered_at
+    || prescription?.first_administered_at,
   );
 }
 
 function LastAdministrationDetails({ prescription }) {
   return (
     <div className="nurse-patient-meds__last-admin-modal-body">
+      <div className="nurse-patient-meds__last-admin-row nurse-patient-meds__last-admin-row--first">
+        <span className="nurse-patient-meds__last-admin-icon" aria-hidden>
+          <Clock size={14} />
+        </span>
+        <div className="nurse-patient-meds__last-admin-content">
+          <span className="nurse-patient-meds__last-admin-label">First Given</span>
+          <span className="nurse-patient-meds__last-admin-value">
+            {formatFirstGiven(prescription)}
+          </span>
+        </div>
+      </div>
       <div className="nurse-patient-meds__last-admin-row nurse-patient-meds__last-admin-row--time">
         <span className="nurse-patient-meds__last-admin-icon" aria-hidden>
           <Clock size={14} />
@@ -157,6 +185,7 @@ export default function NursePatientMedicationsPage() {
   );
   const adminMut = useAdministerMedicationMutation(patientId);
   const updateAdminMut = useUpdateAdministrationMutation(patientId);
+  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(null);
   const [viewingLastAdmin, setViewingLastAdmin] = useState(null);
   const [adminMode, setAdminMode] = useState('create'); // 'create' | 'update'
@@ -167,6 +196,22 @@ export default function NursePatientMedicationsPage() {
   });
 
   const prescriptions = patientData?.prescriptions ?? [];
+  const expectedMedicineCount = Math.max(
+    Number(patientData?.expectedMedicineCount) || 0,
+    Number(location.state?.medicineCount) || 0,
+    prescriptions.length,
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [patientId]);
+
+  const pageCount = Math.max(1, Math.ceil(prescriptions.length / PAGE_SIZE) || 1);
+  const safePage = Math.min(page, pageCount);
+  const pagedPrescriptions = useMemo(
+    () => prescriptions.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [prescriptions, safePage],
+  );
 
   const doctorDepartmentMap = useMemo(() => {
     const map = new Map();
@@ -429,9 +474,21 @@ export default function NursePatientMedicationsPage() {
               >
                 <NurseDataTable
                   columns={columns}
-                  data={prescriptions}
+                  data={pagedPrescriptions}
                   isLoading={false}
-                  emptyMessage="No active prescriptions."
+                  emptyMessage={
+                    expectedMedicineCount > 0
+                      ? `List shows ${expectedMedicineCount} medicine(s), but the latest prescription has no items. Ask the doctor to save the prescription again from Doctor → Consultation / Prescribe.`
+                      : 'No active prescriptions.'
+                  }
+                />
+                <NursePagination
+                  page={safePage}
+                  pageSize={PAGE_SIZE}
+                  total={prescriptions.length}
+                  hasNextPage={safePage < pageCount}
+                  itemCount={pagedPrescriptions.length}
+                  onChange={setPage}
                 />
               </div>
             </>

@@ -145,6 +145,7 @@ export function buildPatientListByCategory({
     .filter(isDoctorSchedulableAppointment)
     .map(appointmentToVisitRow)
     .filter(Boolean);
+  const opdCompletedVisits = (completedVisits ?? []).filter((row) => !isIpdEncounter(row));
   const queueRows = todayRows.filter(
     (row) => !isConsultCompleted(row) && !isConsultCancelled(row)
   );
@@ -161,14 +162,14 @@ export function buildPatientListByCategory({
     case PATIENT_CATEGORY_FILTER.CANCELLED:
       return dedupeVisitRows(cancelledRows);
     case PATIENT_CATEGORY_FILTER.ALL:
-      return dedupeVisitRows([...todayRows, ...completedVisits]);
+      return dedupeVisitRows([...todayRows, ...opdCompletedVisits]);
     case PATIENT_CATEGORY_FILTER.COMPLETED: {
       const completedToday = todayRows.filter(isConsultCompleted);
-      const merged = dedupeVisitRows([...completedVisits, ...completedToday]);
+      const merged = dedupeVisitRows([...opdCompletedVisits, ...completedToday]);
       return dedupeVisitRowsByPatient(merged);
     }
     default:
-      return completedVisits;
+      return opdCompletedVisits;
   }
 }
 

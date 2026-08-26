@@ -21,6 +21,8 @@ import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
 import NursePatientAllocationTags from '@/features/nurse/components/NursePatientAllocationTags';
 import '@/features/nurse/pages/NurseMedicationPatientsPage.css';
 
+const PAGE_SIZE = 10;
+
 const WARD_OPTIONS = [
   { value: 'all', label: 'All wards', Icon: LayoutGrid },
   { value: 'general', label: 'General', Icon: Building2 },
@@ -132,17 +134,24 @@ export default function NurseQueuePage() {
 
   const { data, isLoading, isError, error, refetch } = useNurseDocumentedPatients({
     search: debouncedSearch,
-    page,
-    page_size: 20,
+    page: 1,
+    page_size: 100,
   });
 
-  const patients = data?.items || [];
+  const allPatients = data?.items || [];
   const filteredPatients = useMemo(
-    () => patients.filter((row) => matchesWard(row.ward_name, wardFilter)),
-    [patients, wardFilter],
+    () => allPatients.filter((row) => matchesWard(row.ward_name, wardFilter)),
+    [allPatients, wardFilter],
   );
 
-  const total = wardFilter === 'all' ? (data?.total || 0) : filteredPatients.length;
+  const pageCount = Math.max(1, Math.ceil(filteredPatients.length / PAGE_SIZE) || 1);
+  const safePage = Math.min(page, pageCount);
+  const pagedPatients = useMemo(
+    () => filteredPatients.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [filteredPatients, safePage],
+  );
+
+  const total = filteredPatients.length;
   const pendingCareCount = useMemo(() => {
     if (wardFilter === 'all') return data?.pending_care_count || 0;
     return filteredPatients.filter((row) => !row.has_vitals || !row.has_notes).length;
@@ -269,7 +278,7 @@ export default function NurseQueuePage() {
           <div className="nurse-queue-page__table">
             <NurseDataTable
               columns={columns}
-              data={filteredPatients}
+              data={pagedPatients}
               isLoading={false}
               emptyMessage={
                 hasActiveFilters
@@ -281,10 +290,11 @@ export default function NurseQueuePage() {
           </div>
 
           <NursePagination
-            page={page}
-            pageSize={20}
-            total={wardFilter === 'all' ? data?.total : filteredPatients.length}
-            itemCount={filteredPatients.length}
+            page={safePage}
+            pageSize={PAGE_SIZE}
+            total={total}
+            hasNextPage={safePage < pageCount}
+            itemCount={pagedPatients.length}
             onChange={setPage}
           />
         </QueryFeedback>

@@ -3,6 +3,7 @@ import { formatAppointmentTimeDisplay } from '@/features/doctor/utils/doctorDate
 import { getDoctorDisplayStatus } from '@/features/doctor/utils/appointmentWorkflow';
 import { appointmentToPatientSummary } from '@/shared/api/mappers/doctorPatientMapper';
 import Skeleton from '@/shared/components/common/Skeleton';
+import { TablePagination } from '@/shared/components/common';
 import StatusPill from './StatusPill';
 import AppointmentRowActions from './AppointmentRowActions';
 
@@ -63,9 +64,14 @@ function DashboardAppointmentsTable({
   onOpenPatient,
   onPrescribe,
   onOpenNotes,
+  page = 1,
+  pageSize = 10,
+  total = 0,
+  onPageChange,
 }) {
   const showEmpty = !isLoading && filteredAppointments.length === 0;
   const columnCount = showActions ? 5 : 4;
+  const showPagination = typeof onPageChange === 'function' && total > pageSize;
 
   return (
     <div className="doc-card doc-card__body--flush">
@@ -81,69 +87,70 @@ function DashboardAppointmentsTable({
       {isLoading ? (
         <DashboardTableSkeleton showActions={showActions} />
       ) : (
-        <div className="table-wrap">
-          <table
-            className={`data-table doc-dashboard-table${
-              showActions ? ' doc-dashboard-table--with-actions' : ''
-            }`}
-          >
-            <thead>
-              <tr>
-                <th scope="col">Patient ID</th>
-                <th scope="col">Patient Name</th>
-                <th scope="col">Time</th>
-                <th scope="col">Appointment Status</th>
-                {showActions ? (
-                  <th scope="col" className="doc-dashboard-table__th-actions">
-                    Actions
-                  </th>
-                ) : null}
-              </tr>
-            </thead>
-            <tbody>
-              {showEmpty ? (
+        <>
+          <div className="table-wrap">
+            <table
+              className={`data-table doc-dashboard-table${
+                showActions ? ' doc-dashboard-table--with-actions' : ''
+              }`}
+            >
+              <thead>
                 <tr>
-                  <td colSpan={columnCount} className="doc-dashboard-table__empty">
-                    {emptyMessage}
-                  </td>
+                  <th scope="col">Patient ID</th>
+                  <th scope="col">Patient Name</th>
+                  <th scope="col">Time</th>
+                  <th scope="col">Appointment Status</th>
+                  {showActions ? (
+                    <th scope="col" className="doc-dashboard-table__th-actions">
+                      Actions
+                    </th>
+                  ) : null}
                 </tr>
-              ) : (
-                filteredAppointments.map((a) => {
-                  const statusLabel = getDoctorDisplayStatus(a);
-                  const patient = appointmentToPatientSummary(a);
-                  return (
-                    <tr
-                      key={a.id}
-                      className="doc-dashboard-table__row"
-                      tabIndex={0}
-                      role="button"
-                      aria-label={`Open profile for ${a.patientName}`}
-                      onClick={() => onOpenPatient?.(patient)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          onOpenPatient?.(patient);
-                        }
-                      }}
-                    >
-                      <td className="doc-dashboard-table__patient-id">
-                        {a.patientUid ?? a.patientId ?? '—'}
-                      </td>
-                      <td className="doc-dashboard-table__patient-name-cell">
-                        {a.patientName}
-                      </td>
-                      <td className="doc-dashboard-table__time">
-                        <time dateTime={a.time}>{formatAppointmentTimeDisplay(a.time)}</time>
-                      </td>
-                      <td className="doc-dashboard-table__appt-status">
-                        <StatusPill status={statusLabel} />
-                      </td>
-                      {showActions ? (
-                        <td
-                          className="doc-dashboard-table__actions"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <AppointmentRowActions
+              </thead>
+              <tbody>
+                {showEmpty ? (
+                  <tr>
+                    <td colSpan={columnCount} className="doc-dashboard-table__empty">
+                      {emptyMessage}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredAppointments.map((a) => {
+                    const statusLabel = getDoctorDisplayStatus(a);
+                    const patient = appointmentToPatientSummary(a);
+                    return (
+                      <tr
+                        key={a.id}
+                        className="doc-dashboard-table__row"
+                        tabIndex={0}
+                        role="button"
+                        aria-label={`Open profile for ${a.patientName}`}
+                        onClick={() => onOpenPatient?.(patient)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            onOpenPatient?.(patient);
+                          }
+                        }}
+                      >
+                        <td className="doc-dashboard-table__patient-id">
+                          {a.patientUid ?? a.patientId ?? '—'}
+                        </td>
+                        <td className="doc-dashboard-table__patient-name-cell">
+                          {a.patientName}
+                        </td>
+                        <td className="doc-dashboard-table__time">
+                          <time dateTime={a.time}>{formatAppointmentTimeDisplay(a.time)}</time>
+                        </td>
+                        <td className="doc-dashboard-table__appt-status">
+                          <StatusPill status={statusLabel} />
+                        </td>
+                        {showActions ? (
+                          <td
+                            className="doc-dashboard-table__actions"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <AppointmentRowActions
                               appointment={a}
                               patient={patient}
                               mode={actionMode}
@@ -155,15 +162,28 @@ function DashboardAppointmentsTable({
                               disabled={startingConsult}
                               cancelDisabled={cancellingAppointment}
                             />
-                        </td>
-                      ) : null}
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                          </td>
+                        ) : null}
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+          {showPagination ? (
+            <div className="doc-dashboard-table__pagination">
+              <TablePagination
+                totalPages={Math.max(1, Math.ceil(total / pageSize))}
+                page={page}
+                pageSize={pageSize}
+                totalItems={total}
+                onPageChange={onPageChange}
+                itemLabel="appointments"
+              />
+            </div>
+          ) : null}
+        </>
       )}
     </div>
   );

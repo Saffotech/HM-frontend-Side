@@ -24,6 +24,9 @@ import NursePatientAllocationTags from '@/features/nurse/components/NursePatient
 import { ROUTES } from '@/shared/constants';
 import './NurseMedicationPatientsPage.css';
 
+const PAGE_SIZE = 10;
+const FETCH_PAGE_SIZE = 100;
+
 const WARD_OPTIONS = [
   { value: 'all', label: 'All wards', tone: 'all', Icon: LayoutGrid },
   { value: 'general', label: 'General', tone: 'general', Icon: Building2 },
@@ -113,20 +116,34 @@ export default function NurseMedicationPatientsPage() {
   const debouncedSearch = useDebouncedValue(search, 400);
   const { scopeFilters, scopeReady, allocatedOnly } = useNursePatientScope();
   const { canViewMedication } = useNursePermissionSet();
-  const { data, isLoading, isFetching, isError, error, refetch } = useNurseMedicationPatientsQuery(
-    {
+
+  const filters = useMemo(
+    () => ({
       search: debouncedSearch,
-      page,
-      page_size: 20,
+      page: wardFilter !== 'all' ? 1 : page,
+      page_size: wardFilter !== 'all' ? FETCH_PAGE_SIZE : PAGE_SIZE,
       ...scopeFilters,
-    },
+    }),
+    [debouncedSearch, wardFilter, page, scopeFilters],
+  );
+
+  const { data, isLoading, isFetching, isError, error, refetch } = useNurseMedicationPatientsQuery(
+    filters,
     { enabled: scopeReady && canViewMedication },
   );
-  const patients = data?.items ?? [];
-  const filteredPatients = useMemo(
-    () => patients.filter((patient) => matchesWard(patient.ward_name, wardFilter)),
-    [patients, wardFilter],
-  );
+
+  const allRows = useMemo(() => {
+    const items = data?.items ?? [];
+    if (wardFilter === 'all') return items;
+    return items.filter((patient) => matchesWard(patient.ward_name, wardFilter));
+  }, [data?.items, wardFilter]);
+
+  const wardPageCount = Math.max(1, Math.ceil(allRows.length / PAGE_SIZE) || 1);
+  const safePage = wardFilter !== 'all' ? Math.min(page, wardPageCount) : page;
+  const rows = useMemo(() => {
+    if (wardFilter === 'all') return allRows;
+    return allRows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  }, [allRows, wardFilter, safePage]);
 
   useEffect(() => {
     setPage(1);
@@ -134,28 +151,31 @@ export default function NurseMedicationPatientsPage() {
 
   useNursePagedListGuard({
     isLoading,
-    page,
-    items: data?.items,
+    page: wardFilter !== 'all' ? safePage : page,
+    items: wardFilter !== 'all' ? rows : data?.items,
     onPageChange: setPage,
   });
 
   const listCount = useMemo(() => {
     if (wardFilter !== 'all') {
-      return { count: filteredPatients.length, approximate: false };
+      return { count: allRows.length, approximate: false };
     }
     return getPagedListCount({
       page,
-      page_size: 20,
+      page_size: PAGE_SIZE,
       items: data?.items,
       total: data?.total,
       hasNextPage: data?.hasNextPage,
     });
-  }, [wardFilter, filteredPatients.length, page, data]);
+  }, [wardFilter, allRows.length, page, data]);
 
   const openPatient = useCallback(
     (row) =>
       navigate(`/nurse/medications/patient/${row.patient_id}`, {
-        state: { backTo: ROUTES.NURSE_MEDICATIONS },
+        state: {
+          backTo: ROUTES.NURSE_MEDICATIONS,
+          medicineCount: Number(row.medicine_count) || 0,
+        },
       }),
     [navigate],
   );
@@ -219,7 +239,7 @@ export default function NurseMedicationPatientsPage() {
                     {listCount.count === 1 && !listCount.approximate ? 'patient' : 'patients'}
                   </p>
                   <p className="nurse-notes-registry__hint">
-                    One row per patient. Medicines count includes all prescriptions.
+                    One row per patient. Medicines count includes all prescriptions from doctors.
                   </p>
                 </div>
               </div>
@@ -280,7 +300,7 @@ export default function NurseMedicationPatientsPage() {
               >
                 <NurseDataTable
                   columns={columns}
-                  data={filteredPatients}
+                  data={rows}
                   isLoading={false}
                   emptyMessage={
                     hasFilters
@@ -292,11 +312,13 @@ export default function NurseMedicationPatientsPage() {
               </div>
 
               <NursePagination
-                page={page}
-                pageSize={20}
-                total={data?.total}
-                hasNextPage={data?.hasNextPage}
-                itemCount={patients.length}
+                page={wardFilter !== 'all' ? safePage : page}
+                pageSize={PAGE_SIZE}
+                total={wardFilter !== 'all' ? allRows.length : data?.total}
+                hasNextPage={
+                  wardFilter !== 'all' ? safePage < wardPageCount : data?.hasNextPage
+                }
+                itemCount={rows.length}
                 onChange={setPage}
               />
             </QueryFeedback>

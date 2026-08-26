@@ -26,7 +26,7 @@ export default function NurseMedicationHistoryPage() {
     bed_number: debouncedBed,
     status,
     page,
-    page_size: 20,
+    page_size: 10,
   });
 
   useEffect(() => {
@@ -110,7 +110,7 @@ export default function NurseMedicationHistoryPage() {
         <NurseDataTable columns={columns} data={data?.items || []} isLoading={false} emptyMessage="No medication history found." />
         <NursePagination
           page={page}
-          pageSize={20}
+          pageSize={10}
           total={data?.total}
           hasNextPage={data?.hasNextPage}
           itemCount={data?.items?.length ?? 0}

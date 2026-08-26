@@ -23,7 +23,7 @@ import {
   LAB_DEPT_CODE,
 } from '@/shared/utils/labDepartments';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
-import { EmptyState, QueryFeedback } from '@/shared/components/common';
+import { EmptyState, QueryFeedback, TablePagination } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import { DateInput } from '@/shared/components/common';
 import { ClipboardList } from 'lucide-react';
@@ -32,6 +32,7 @@ import { visitLocationLabel, normalizeEncounterType } from '@/features/lab/utils
 import '../styles/lab.css';
 
 const labUploadPath = (id) => `/lab/orders/${id}/upload`;
+const PAGE_SIZE = 10;
 
 const VIEW_TABS = [
   { id: 'all', label: 'All', hint: 'Every request' },
@@ -43,6 +44,13 @@ const LEGACY_VIEW_MAP = {
   sample_collected: 'ordered',
   processing: 'ordered',
 };
+
+function orderCreatedAtMs(order) {
+  const value = order?.createdAt ?? order?.requestedAt;
+  if (!value) return 0;
+  const ms = new Date(value).getTime();
+  return Number.isFinite(ms) ? ms : 0;
+}
 
 function resolveTechDeptCode(user, profileData) {
   const profile = profileData?.profile ?? profileData;
@@ -91,8 +99,13 @@ export default function LabOrderListPage() {
     const raw = searchParams.get('source') || 'all';
     return raw === 'OPD' || raw === 'IPD' ? raw : 'all';
   });
+  const [page, setPage] = useState(1);
 
   const debouncedSearch = useDebouncedValue(search, 300);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, view, priority, category, date, filterSource]);
 
   // Drop category selections that don't belong to this lab department.
   useEffect(() => {
@@ -128,19 +141,31 @@ export default function LabOrderListPage() {
 
   const orders = useMemo(() => {
     const rows = ordersQuery.data?.data ?? [];
-    return rows.filter((order) => {
-      if (isLabOrRadCode(techDeptCode) && !isOrderForLabDept(order, techDeptCode)) {
-        return false;
-      }
-      return orderMatchesCategoryFilter(order, category);
-    })
-    .filter((order) => {
-      if (filterSource === 'all') return true;
-      return normalizeEncounterType(order.encounterType) === filterSource;
-    });
+    return rows
+      .filter((order) => {
+        if (isLabOrRadCode(techDeptCode) && !isOrderForLabDept(order, techDeptCode)) {
+          return false;
+        }
+        return orderMatchesCategoryFilter(order, category);
+      })
+      .filter((order) => {
+        if (filterSource === 'all') return true;
+        return normalizeEncounterType(order.encounterType) === filterSource;
+      })
+      .sort((a, b) => {
+        const byTime = orderCreatedAtMs(b) - orderCreatedAtMs(a);
+        if (byTime !== 0) return byTime;
+        return Number(b.id) - Number(a.id);
+      });
   }, [ordersQuery.data?.data, techDeptCode, category, filterSource]);
 
   const total = orders.length;
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE) || 1);
+  const safePage = Math.min(page, pageCount);
+  const pagedOrders = useMemo(
+    () => orders.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [orders, safePage],
+  );
 
   const hasExtraFilters = search || priority !== 'all' || category !== 'all' || date || filterSource !== 'all';
 
@@ -150,6 +175,7 @@ export default function LabOrderListPage() {
     setCategory('all');
     setDate('');
     setFilterSource('all');
+    setPage(1);
   };
 
   const handleRowAction = (order) => {
@@ -268,80 +294,91 @@ export default function LabOrderListPage() {
               <p>{activeTab.hint}</p>
             </div>
           ) : (
-            <div className="lab-table-wrap">
-              <table className="lab-table">
-                <thead>
-                  <tr>
-                    <th>Patient Name</th>
-                    <th>Source</th>
-                    <th>Ward</th>
-                    <th>Bed</th>
-                    <th>Doctor</th>
-                    <th>Test</th>
-                    <th>Price</th>
-                    <th>Priority</th>
-                    <th>Requested</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orders.map((o) => {
-                    const location = visitLocationLabel(o);
-                    return (
-                    <tr key={o.id}>
-                      <td className="lab-archive-patient">
-                        <span className="lab-archive-patient__name">{o.patientName}</span>
-                        <span className="lab-archive-meta lab-archive-patient__id">{o.patientId}</span>
-                      </td>
-                      <td>
-                        <LabEncounterBadge encounterType={o.encounterType} />
-                      </td>
-                      <td className="lab-location-cell">{location.ward}</td>
-                      <td className="lab-location-cell">{location.bed}</td>
-                      <td>{o.doctorName}</td>
-                      <td>{o.testName}</td>
-                      <td>{o.price != null ? `₹${o.price}` : '—'}</td>
-                      <td>
-                        <span className={`lab-badge ${o.priority}`}>
-                          {o.priority === 'urgent' || o.priority === 'stat' ? '⚠ ' : ''}
-                          {o.priorityLabel ?? o.priority}
-                        </span>
-                      </td>
-                      <td style={{ color: '#6b7f99', whiteSpace: 'nowrap' }}>{o.requestedAt}</td>
-                      <td>
-                        <span
-                          className={`lab-badge ${statusBadgeClass(o.status)}`}
-                          title={LAB_STATUS_META[o.status]?.description}
-                        >
-                          {statusLabel(o.status)}
-                        </span>
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className={`lab-btn lab-btn-sm ${
-                            o.status === LAB_ORDER_STATUS.COMPLETED || o.status === LAB_ORDER_STATUS.CANCELLED
-                              ? 'lab-btn-secondary'
-                              : 'lab-btn-primary'
-                          }`}
-                          disabled={o.status === LAB_ORDER_STATUS.CANCELLED}
-                          title={
-                            o.status === LAB_ORDER_STATUS.CANCELLED
-                              ? 'This test was cancelled. Start / Upload is not available.'
-                              : undefined
-                          }
-                          onClick={() => handleRowAction(o)}
-                        >
-                          {uploadActionLabel(o.status)}
-                        </button>
-                      </td>
+            <>
+              <div className="lab-table-wrap">
+                <table className="lab-table">
+                  <thead>
+                    <tr>
+                      <th>Patient Name</th>
+                      <th>Source</th>
+                      <th>Ward</th>
+                      <th>Bed</th>
+                      <th>Doctor</th>
+                      <th>Test</th>
+                      <th>Price</th>
+                      <th>Priority</th>
+                      <th>Requested</th>
+                      <th>Status</th>
+                      <th>Action</th>
                     </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {pagedOrders.map((o) => {
+                      const location = visitLocationLabel(o);
+                      return (
+                      <tr key={o.id}>
+                        <td className="lab-archive-patient">
+                          <span className="lab-archive-patient__name">{o.patientName}</span>
+                          <span className="lab-archive-meta lab-archive-patient__id">{o.patientId}</span>
+                        </td>
+                        <td>
+                          <LabEncounterBadge encounterType={o.encounterType} />
+                        </td>
+                        <td className="lab-location-cell">{location.ward}</td>
+                        <td className="lab-location-cell">{location.bed}</td>
+                        <td>{o.doctorName}</td>
+                        <td>{o.testName}</td>
+                        <td>{o.price != null ? `₹${o.price}` : '—'}</td>
+                        <td>
+                          <span className={`lab-badge ${o.priority}`}>
+                            {o.priority === 'urgent' || o.priority === 'stat' ? '⚠ ' : ''}
+                            {o.priorityLabel ?? o.priority}
+                          </span>
+                        </td>
+                        <td style={{ color: '#6b7f99', whiteSpace: 'nowrap' }}>{o.requestedAt}</td>
+                        <td>
+                          <span
+                            className={`lab-badge ${statusBadgeClass(o.status)}`}
+                            title={LAB_STATUS_META[o.status]?.description}
+                          >
+                            {statusLabel(o.status)}
+                          </span>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className={`lab-btn lab-btn-sm ${
+                              o.status === LAB_ORDER_STATUS.COMPLETED || o.status === LAB_ORDER_STATUS.CANCELLED
+                                ? 'lab-btn-secondary'
+                                : 'lab-btn-primary'
+                            }`}
+                            disabled={o.status === LAB_ORDER_STATUS.CANCELLED}
+                            title={
+                              o.status === LAB_ORDER_STATUS.CANCELLED
+                                ? 'This test was cancelled. Start / Upload is not available.'
+                                : undefined
+                            }
+                            onClick={() => handleRowAction(o)}
+                          >
+                            {uploadActionLabel(o.status)}
+                          </button>
+                        </td>
+                      </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <TablePagination
+                page={safePage}
+                totalPages={pageCount}
+                totalItems={total}
+                pageSize={PAGE_SIZE}
+                onPageChange={setPage}
+                itemLabel="tests"
+              />
+            </>
           )}
         </QueryFeedback>
       </div>

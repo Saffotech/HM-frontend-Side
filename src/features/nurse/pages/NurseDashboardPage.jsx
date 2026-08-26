@@ -1,8 +1,9 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { useNavigate } from 'react-router-dom';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseDataTable from '@/features/nurse/components/NurseDataTable';
+import NursePagination from '@/features/nurse/components/NursePagination';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
 import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
 import { QueryFeedback } from '@/shared/components/common';
@@ -13,6 +14,8 @@ import {
 } from '@/shared/api/mappers/nurseMapper';
 import { useNurseBedPatientsQuery } from '@/shared/hooks/queries/useNurseQuery';
 import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
+
+const PAGE_SIZE = 10;
 
 const KPI_FILTERS = {
   all: (row) => true,
@@ -42,6 +45,7 @@ export default function NurseDashboardPage() {
   const { canViewPatients, canCreateVitals, canCreateNotes } = useNursePermissionSet();
   const [activeKpi, setActiveKpi] = useState('all');
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const debouncedSearch = useDebouncedValue(search.trim(), 400);
 
   const {
@@ -52,6 +56,10 @@ export default function NurseDashboardPage() {
     allocationSummary,
     allocatedBedIdSet,
   } = useNursePatientScope();
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, activeKpi, allocatedOnly]);
 
   const bedFilters = useMemo(
     () => ({
@@ -90,6 +98,13 @@ export default function NurseDashboardPage() {
     const filterFn = KPI_FILTERS[activeKpi] ?? KPI_FILTERS.all;
     return patientsWithBadges.filter(filterFn);
   }, [patientsWithBadges, activeKpi]);
+
+  const pageCount = Math.max(1, Math.ceil(filteredPatients.length / PAGE_SIZE) || 1);
+  const safePage = Math.min(page, pageCount);
+  const pagedPatients = useMemo(
+    () => filteredPatients.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [filteredPatients, safePage],
+  );
 
   const kpis = [
     { id: 'all', label: 'Admitted', value: bedPatients?.total ?? kpiCounts.all, border: '' },
@@ -222,12 +237,21 @@ export default function NurseDashboardPage() {
           >
             <NurseDataTable
               columns={columns}
-              data={filteredPatients}
+              data={pagedPatients}
               isLoading={false}
               emptyMessage={emptyMessage}
               onRowClick={canViewPatients ? handleRowClick : undefined}
             />
           </div>
+
+          <NursePagination
+            page={safePage}
+            pageSize={PAGE_SIZE}
+            total={filteredPatients.length}
+            hasNextPage={safePage < pageCount}
+            itemCount={pagedPatients.length}
+            onChange={setPage}
+          />
         </QueryFeedback>
       </div>
     </NurseLayout>

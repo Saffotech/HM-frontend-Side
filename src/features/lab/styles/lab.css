@@ -650,6 +650,12 @@
   font-weight: 600;
 }
 
+.lab-table--archive .lab-archive-col--price {
+  min-width: 5.5rem;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
 .lab-table--archive .lab-archive-col--doctor,
 .lab-table--archive .lab-archive-col--tech {
   min-width: 110px;

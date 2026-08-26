@@ -115,6 +115,8 @@ export function apiToUiLabDashboard(raw) {
 export function apiToUiLabReport(row) {
   if (!row) return null;
   const reportId = row.report_id ?? row.id;
+  const order = row.order ?? {};
+  const priceRaw = row.price ?? order.price ?? null;
   return {
     reportId: reportId != null ? `RPT-${reportId}` : '—',
     reportDbId: reportId,
@@ -122,6 +124,7 @@ export function apiToUiLabReport(row) {
     patientId: row.patient_uhid ?? row.patient_uid ?? String(row.patient_id ?? ''),
     patientName: row.patient_name ?? row.patientName ?? '—',
     testName: row.test_name ?? row.testName ?? '—',
+    price: priceRaw != null && priceRaw !== '' ? String(priceRaw) : null,
     doctorName: row.doctor_name ?? row.doctorName ?? '—',
     uploadedByName: row.uploaded_by_name ?? row.uploadedByName ?? '—',
     uploadedDate: formatDateTime(row.uploaded_at ?? row.created_at ?? row.uploadedAt),

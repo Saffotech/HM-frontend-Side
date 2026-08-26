@@ -2,7 +2,6 @@
 
 import { getAppointmentsHistory } from '@/features/doctor/api/appointments';
 import { getPatientHistory } from '@/features/doctor/api/patients';
-import { createPrescription } from '@/features/doctor/api/prescriptions';
 import { unwrapDoctorResponse } from '@/shared/api/utils/doctorResponseUtils';
 
 function visitToRecordRow(visit) {
@@ -60,24 +59,10 @@ export async function getRecords(token) {
 }
 
 export async function createRecord(data, token) {
+  // Do not create empty prescriptions here — an empty latest Rx hides older
+  // medicines on the nurse medications detail page (latest-only API).
   const notes = buildPrescriptionNotes(data);
-  const appointmentId = data.appointment_id ?? data.appointmentId;
-
-  if (appointmentId != null) {
-    try {
-      await createPrescription(
-        {
-          appointment_id: appointmentId,
-          diagnosis: data.diagnosis || '',
-          notes,
-          items: [],
-        },
-        token
-      );
-    } catch {
-      // Prescription may already exist or appointment not completed — return record shape below
-    }
-  }
+  void token;
 
   return {
     id: `record-${Date.now()}`,

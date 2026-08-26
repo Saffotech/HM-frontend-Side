@@ -153,6 +153,7 @@ export function uiToApiLabTestCreate(ui) {
   if (departmentId != null && departmentId !== '' && Number.isFinite(deptNum)) {
     body.department_id = deptNum;
   }
+  body.is_repeat = Boolean(ui.isRepeat ?? ui.is_repeat);
   return body;
 }
 

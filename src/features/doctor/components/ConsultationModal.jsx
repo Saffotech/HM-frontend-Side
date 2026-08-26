@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
-import { useCreatePrescriptionMutation } from '@/features/doctor/hooks/useDoctorPrescriptionQuery';
-import { useCreateLabTestMutation } from '@/features/doctor/hooks/useDoctorLabQuery';
-import { useSaveConsultationWorkflowMutation, useConsultationContextQuery } from '@/features/doctor/hooks/useDoctorQueueQuery';
-import { useSaveIpdConsultationMutation } from '@/features/doctor/hooks/useSaveIpdConsultationMutation';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useConsultationContextQuery } from '@/features/doctor/hooks/useDoctorQueueQuery';
+import { useDoctorLabTestsQuery } from '@/features/doctor/hooks/useDoctorLabQuery';
 import {
   DEFAULT_MEDICINE,
   LAB_DEPARTMENTS,
@@ -17,11 +16,24 @@ import {
 } from '@/features/doctor/utils/consultationDraftStorage';
 import { parseEmbeddedClinicalNotes } from '@/features/doctor/utils/clinicalNotesParse';
 import { ipdStaticLabRoutingDepartments } from '@/features/doctor/utils/ipdLabRouting';
+import { finalizeConsultationOnSave } from '@/features/doctor/utils/consultationSaveWorkflow';
+import { finalizeIpdConsultationOnSave } from '@/features/doctor/utils/ipdConsultationSaveWorkflow';
+import {
+  invalidateDoctorDashboardAfterComplete,
+  invalidateDoctorDashboardCore,
+  invalidateDoctorIpdAdmissions,
+  optimisticallyCompleteAppointment,
+} from '@/features/doctor/utils/doctorDashboardCache';
+import { isLabRepeatRequired } from '@/features/doctor/utils/labRepeatRequired';
 import { stripInternalAppointmentMarkers } from '@/features/opd/utils/appointmentPaymentUtils';
 import { Modal, Button, Input, Label, Textarea, Select } from '@/shared/components/common';
+import { doctorLabsApi, doctorPrescriptionsApi } from '@/shared/api/services';
+import { uiMedicinesToApiItems } from '@/shared/api/mappers/clinicalMapper';
+import { queryKeys } from '@/shared/api/queryKeys';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { useAuthStore } from '@/shared/store/useAuthStore';
 import { toast } from '@/shared/utils/toast';
+import { bumpDoctorIpdCache } from '@/shared/utils/doctorIpdSync';
 import { useLabRoutingDepartmentsQuery } from '@/shared/hooks/queries/useOpdReferenceQuery';
 import { resolveLabDepartmentId, departmentCode, labDepartmentLabel } from '@/shared/utils/labDepartments';
 import LabTestNameField from './LabTestNameField';
@@ -43,6 +55,7 @@ function emptyLabOrderRow() {
     otherTest: false,
     priority: 'Normal',
     clinicalNotes: '',
+    isRepeat: false,
   };
 }
 
@@ -55,6 +68,7 @@ function labOrdersFromDraft(draft) {
       otherTest: Boolean(row.otherTest),
       priority: row.priority ?? 'Normal',
       clinicalNotes: row.clinicalNotes ?? '',
+      isRepeat: Boolean(row.isRepeat),
     }));
   }
   if (draft?.labTest || draft?.labDeptCode) {
@@ -66,6 +80,7 @@ function labOrdersFromDraft(draft) {
         otherTest: false,
         priority: draft.labPriority ?? 'Normal',
         clinicalNotes: draft.labClinicalNotes ?? '',
+        isRepeat: Boolean(draft.labIsRepeat),
       },
     ];
   }
@@ -106,6 +121,130 @@ function symptomsPrefillFromAppointment(detail) {
   return text;
 }
 
+function filledLabOrderRows(labOrders) {
+  return labOrders.filter(
+    (row) =>
+      row.deptCode
+      && (row.labTestId != null || String(row.testName ?? '').trim()),
+  );
+}
+
+/** Create all lab orders in parallel; ignore duplicate-order conflicts. */
+async function createLabOrdersParallel({
+  rows,
+  labRoutingDepts,
+  token,
+  basePayload,
+}) {
+  if (!rows.length) return;
+
+  const results = await Promise.allSettled(
+    rows.map((row) => {
+      const departmentId = resolveLabDepartmentId(labRoutingDepts, row.deptCode);
+      return doctorLabsApi.addLabTest(
+        {
+          ...basePayload,
+          labTestId: row.labTestId ?? undefined,
+          testName: String(row.testName).trim(),
+          category: inferLabCategory(row.testName, row.deptCode),
+          departmentId: departmentId ?? undefined,
+          priority: row.priority || 'Normal',
+          clinicalNotes: row.clinicalNotes,
+          isRepeat: Boolean(row.isRepeat),
+        },
+        token,
+      );
+    }),
+  );
+
+  const failures = [];
+  for (const result of results) {
+    if (result.status !== 'rejected') continue;
+    const msg = String(result.reason?.message ?? '');
+    if (!/already been ordered/i.test(msg)) {
+      failures.push(msg || 'Could not create lab order');
+    }
+  }
+  if (failures.length) {
+    throw new Error(failures[0]);
+  }
+}
+
+async function createPrescriptionIfNeeded({
+  token,
+  validMeds,
+  payload,
+}) {
+  // Duration filter may drop all rows — never create an empty Rx (shadows nurse detail).
+  const apiItems = uiMedicinesToApiItems(validMeds);
+  if (!apiItems.length) return;
+
+  const rxPayload = {
+    ...payload,
+    medicines: validMeds,
+  };
+
+  const patientId = payload.patientId ?? payload.patient_id ?? null;
+
+  // If latest Rx for this patient is empty, fill it instead of creating another shell.
+  if (patientId != null) {
+    try {
+      const existing = await doctorPrescriptionsApi.fetchPrescriptionsByPatient(
+        patientId,
+        token,
+      );
+      const list = Array.isArray(existing) ? existing : existing?.items ?? [];
+      const match =
+        list.find((rx) => {
+          if (payload.admissionId != null) {
+            return Number(rx.admissionId) === Number(payload.admissionId);
+          }
+          if (payload.appointmentDbId != null) {
+            return Number(rx.appointmentId) === Number(payload.appointmentDbId);
+          }
+          return false;
+        }) ?? list[0];
+      const hasMeds = (match?.medicines?.length ?? 0) > 0;
+      if (match?.id != null && !hasMeds) {
+        await doctorPrescriptionsApi.replacePrescription(match.id, rxPayload, token);
+        return;
+      }
+    } catch {
+      // Fall through to create
+    }
+  }
+
+  try {
+    await doctorPrescriptionsApi.addPrescription(rxPayload, token);
+  } catch (rxErr) {
+    const msg = String(rxErr?.message ?? '');
+    if (!/already exists/i.test(msg)) throw rxErr;
+    if (patientId == null) return;
+    try {
+      const existing = await doctorPrescriptionsApi.fetchPrescriptionsByPatient(
+        patientId,
+        token,
+      );
+      const list = Array.isArray(existing) ? existing : existing?.items ?? [];
+      const match =
+        list.find((rx) => {
+          if (payload.admissionId != null) {
+            return Number(rx.admissionId) === Number(payload.admissionId);
+          }
+          if (payload.appointmentDbId != null) {
+            return Number(rx.appointmentId) === Number(payload.appointmentDbId);
+          }
+          return false;
+        }) ?? list[0];
+      if (match?.id != null) {
+        await doctorPrescriptionsApi.replacePrescription(match.id, rxPayload, token);
+      }
+    } catch {
+      // Ignore — clinical save already succeeded
+    }
+  }
+}
+
 export default function ConsultationModal({
   appointment,
   open,
@@ -113,11 +252,8 @@ export default function ConsultationModal({
   onDone,
 }) {
   const token = useQueryToken();
+  const queryClient = useQueryClient();
   const doctorId = useAuthStore((state) => state.user?.id);
-  const saveConsultation = useSaveConsultationWorkflowMutation();
-  const saveIpdConsultation = useSaveIpdConsultationMutation();
-  const createPrescription = useCreatePrescriptionMutation();
-  const createLabTest = useCreateLabTestMutation();
   const [tab, setTab] = useState('clinical');
   const [symptoms, setSymptoms] = useState('');
   const [diagnosis, setDiagnosis] = useState('');
@@ -128,6 +264,8 @@ export default function ConsultationModal({
   const [fieldErrors, setFieldErrors] = useState({});
   const [hydratedFromDraft, setHydratedFromDraft] = useState(false);
   const skipDraftPersistRef = useRef(false);
+  const draftTimerRef = useRef(null);
+  const saveLockRef = useRef(false);
 
   const isIpdConsult = isIpdEncounter(appointment);
   const admissionId = appointment?.admissionId ?? appointment?.admission_id ?? null;
@@ -148,12 +286,32 @@ export default function ConsultationModal({
     enabled: open && !isIpdConsult && appointmentDbId != null,
   });
 
+  const patientDbId = appointment?.patientDbId ?? appointment?.queueRow?.patientId ?? null;
+  const labListParams = useMemo(() => {
+    if (patientUid) return { patient_uid: String(patientUid), limit: 100 };
+    if (patientDbId != null) return { patient_id: Number(patientDbId), limit: 100 };
+    return { limit: 100 };
+  }, [patientUid, patientDbId]);
+
+  const { data: existingLabTests = [] } = useDoctorLabTestsQuery(labListParams, {
+    enabled: open && Boolean(patientUid || patientDbId != null),
+  });
+
+  const labVisitContext = useMemo(
+    () => ({
+      appointmentDbId,
+      admissionId,
+    }),
+    [appointmentDbId, admissionId],
+  );
+
   useEffect(() => {
     if (!open || consultDraftKey == null) {
       setHydratedFromDraft(false);
       return;
     }
 
+    saveLockRef.current = false;
     skipDraftPersistRef.current = true;
     const draft = loadConsultationDraft(consultDraftKey, doctorId);
     const next = draft ? applyDraftToForm(draft) : resetConsultationFormState();
@@ -215,15 +373,20 @@ export default function ConsultationModal({
   useEffect(() => {
     if (!open || consultDraftKey == null || skipDraftPersistRef.current) return;
 
-    saveConsultationDraft(consultDraftKey, doctorId, {
-      tab,
-      symptoms,
-      diagnosis,
-      notes,
-      followUp,
-      meds,
-      labOrders,
-    });
+    window.clearTimeout(draftTimerRef.current);
+    draftTimerRef.current = window.setTimeout(() => {
+      saveConsultationDraft(consultDraftKey, doctorId, {
+        tab,
+        symptoms,
+        diagnosis,
+        notes,
+        followUp,
+        meds,
+        labOrders,
+      });
+    }, 400);
+
+    return () => window.clearTimeout(draftTimerRef.current);
   }, [
     open,
     consultDraftKey,
@@ -237,15 +400,147 @@ export default function ConsultationModal({
     labOrders,
   ]);
 
+  const runSaveInBackground = useCallback(
+    ({
+      patientDbId,
+      patientName,
+      admissionId: nextAdmissionId,
+      appointmentDbId: nextAppointmentDbId,
+      clinicalPayload,
+      successMessage,
+      isIpd,
+    }) => {
+      const validMeds = meds.filter((m) => m.name.trim());
+      const labsToCreate = filledLabOrderRows(labOrders);
+      const linkPayload =
+        nextAdmissionId != null
+          ? { admissionId: nextAdmissionId }
+          : { appointmentDbId: nextAppointmentDbId };
+
+      // Instant UX: close modal + update queue before network finishes.
+      if (!isIpd && nextAppointmentDbId != null) {
+        optimisticallyCompleteAppointment(queryClient, nextAppointmentDbId);
+      }
+      toast.success(successMessage);
+      clearConsultationDraft(consultDraftKey, doctorId);
+      onDone?.();
+
+      void (async () => {
+        try {
+          if (isIpd) {
+            await finalizeIpdConsultationOnSave({
+              admissionId: nextAdmissionId,
+              patientUid,
+              token,
+              clinical: clinicalPayload,
+            });
+          } else {
+            await finalizeConsultationOnSave({
+              appointmentDbId: nextAppointmentDbId,
+              token,
+              clinical: clinicalPayload,
+            });
+          }
+        } catch (err) {
+          toast.error(err?.message || 'Could not save consultation. Please try again.');
+          if (isIpd) {
+            invalidateDoctorIpdAdmissions(queryClient);
+            bumpDoctorIpdCache();
+          } else {
+            invalidateDoctorDashboardCore(queryClient);
+          }
+          return;
+        }
+
+        try {
+          const tasks = [];
+          if (validMeds.length > 0) {
+            tasks.push(
+              createPrescriptionIfNeeded({
+                token,
+                validMeds,
+                payload: {
+                  ...linkPayload,
+                  patientId: patientDbId,
+                  patientUid,
+                  patientName,
+                  diagnosis,
+                  notes: notes.trim() || undefined,
+                },
+              }),
+            );
+          }
+          if (labsToCreate.length > 0) {
+            tasks.push(
+              createLabOrdersParallel({
+                rows: labsToCreate,
+                labRoutingDepts,
+                token,
+                basePayload: {
+                  ...linkPayload,
+                  patientUid,
+                  patientName,
+                },
+              }),
+            );
+          }
+          if (tasks.length > 0) {
+            await Promise.all(tasks);
+          }
+        } catch (err) {
+          toast.error(
+            err?.message
+              || 'Consultation saved, but a prescription or lab order failed. Check Labs / Prescriptions.',
+          );
+        }
+
+        if (isIpd) {
+          invalidateDoctorIpdAdmissions(queryClient);
+          bumpDoctorIpdCache();
+          queryClient.invalidateQueries({
+            queryKey: ['doctor', 'ipd', 'nurse-visit-count'],
+          });
+        } else {
+          invalidateDoctorDashboardAfterComplete(queryClient, {
+            patientUid,
+            patientId: patientDbId,
+          });
+        }
+        if (labsToCreate.length > 0) {
+          queryClient.invalidateQueries({ queryKey: queryKeys.doctor.labs });
+        }
+        if (validMeds.length > 0) {
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.doctor.prescriptions,
+          });
+        }
+        if (patientUid) {
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.doctor.patients.history(patientUid),
+          });
+        }
+      })();
+    },
+    [
+      meds,
+      labOrders,
+      consultDraftKey,
+      doctorId,
+      onDone,
+      token,
+      patientUid,
+      diagnosis,
+      notes,
+      labRoutingDepts,
+      queryClient,
+    ],
+  );
+
   if (!appointment) return null;
 
-  const saving =
-    saveIpdConsultation.isPending ||
-    saveConsultation.isPending ||
-    createPrescription.isPending ||
-    createLabTest.isPending;
+  const save = () => {
+    if (saveLockRef.current) return;
 
-  const save = async () => {
     const errs = {};
     if (!diagnosis.trim()) errs.diagnosis = 'Diagnosis is required';
     labOrders.forEach((row, i) => {
@@ -258,166 +553,87 @@ export default function ConsultationModal({
       if (row.otherTest && !String(row.testName ?? '').trim()) {
         errs[`labTest_${i}`] = 'Enter a test name';
       }
+      const repeatRequired = isLabRepeatRequired(row, i, {
+        existingOrders: existingLabTests,
+        labOrders,
+        visit: labVisitContext,
+      });
+      if (repeatRequired && !row.isRepeat) {
+        errs[`labRepeat_${i}`] = 'Check Repeat test — this test was already ordered today';
+      }
     });
     meds.forEach((m, i) => {
-      if (m.name.trim()) {
-        const durationValue = parseInt(m.durationValue, 10);
-        if (!durationValue || durationValue <= 0) {
-          errs[`medDuration_${i}`] = 'Duration must be a number greater than 0';
-        }
+      if (!String(m.name ?? '').trim()) return;
+      if (!String(m.dosage ?? '').trim()) {
+        errs[`medDosage_${i}`] = 'Dosage is required';
+      }
+      if (!String(m.frequency ?? '').trim()) {
+        errs[`medFrequency_${i}`] = 'Frequency is required';
+      }
+      if (!String(m.instructions ?? '').trim()) {
+        errs[`medInstructions_${i}`] = 'Instruction is required';
+      }
+      const durationValue = parseInt(m.durationValue, 10);
+      if (!durationValue || durationValue <= 0) {
+        errs[`medDuration_${i}`] = 'Duration must be a number greater than 0';
+      }
+      if (!String(m.durationUnit ?? '').trim()) {
+        errs[`medDurationUnit_${i}`] = 'Duration unit is required';
       }
     });
     setFieldErrors(errs);
-    if (Object.keys(errs).length) return;
+    if (Object.keys(errs).length) {
+      const hasMedErr = Object.keys(errs).some((key) => key.startsWith('med'));
+      if (hasMedErr && tab !== 'rx') setTab('rx');
+      return;
+    }
+
+    saveLockRef.current = true;
 
     if (isIpdConsult) {
       if (admissionId == null) {
+        saveLockRef.current = false;
         toast.error('Admission id missing — cannot save consultation');
         return;
       }
-      try {
-        const patientDbId = appointment.patientDbId ?? null;
-
-        await saveIpdConsultation.mutateAsync({
-          admissionId,
-          patientUid,
-          clinical: {
-            symptoms,
-            diagnosis,
-            notes,
-            followUp,
-            meds,
-            labOrders,
-          },
-        });
-
-        const validMeds = meds.filter((m) => m.name.trim());
-        try {
-          await createPrescription.mutateAsync({
-            admissionId,
-            patientId: patientDbId,
-            patientUid,
-            patientName: appointment.patientName,
-            diagnosis,
-            notes: notes.trim() || undefined,
-            medicines: validMeds,
-          });
-        } catch (rxErr) {
-          const msg = String(rxErr?.message ?? '');
-          if (!/already exists/i.test(msg)) {
-            throw rxErr;
-          }
-        }
-
-        const filledLabOrders = labOrders.filter(
-          (row) =>
-            row.deptCode
-            && (row.labTestId != null || String(row.testName ?? '').trim()),
-        );
-        for (const row of filledLabOrders) {
-          const departmentId = resolveLabDepartmentId(labRoutingDepts, row.deptCode);
-          try {
-            await createLabTest.mutateAsync({
-              admissionId,
-              patientUid,
-              patientName: appointment.patientName,
-              labTestId: row.labTestId ?? undefined,
-              testName: String(row.testName).trim(),
-              category: inferLabCategory(row.testName, row.deptCode),
-              departmentId: departmentId ?? undefined,
-              priority: row.priority || 'Normal',
-              clinicalNotes: row.clinicalNotes,
-            });
-          } catch (labErr) {
-            const msg = String(labErr?.message ?? '');
-            if (!/already been ordered/i.test(msg)) {
-              throw labErr;
-            }
-          }
-        }
-
-        toast.success('IPD consultation saved');
-        clearConsultationDraft(consultDraftKey, doctorId);
-        onDone();
-      } catch {
-        // mutation hooks toast via mutationOnError
-      }
+      runSaveInBackground({
+        patientDbId: appointment.patientDbId ?? null,
+        patientName: appointment.patientName,
+        admissionId,
+        isIpd: true,
+        clinicalPayload: {
+          symptoms,
+          diagnosis,
+          notes,
+          followUp,
+          meds,
+          labOrders,
+        },
+        successMessage: 'IPD consultation saved',
+      });
       return;
     }
 
     if (appointmentDbId == null) {
+      saveLockRef.current = false;
       toast.error('Appointment id missing — cannot save consultation');
       return;
     }
 
-    try {
-      const patientDbId =
-        appointment.patientDbId ?? appointment.queueRow?.patientId ?? null;
-
-      await saveConsultation.mutateAsync({
-        appointmentDbId,
-        patientUid,
-        patientId: patientDbId,
-        clinical: {
-          symptoms: symptoms.trim() || undefined,
-          diagnosis: diagnosis.trim(),
-          notes: notes.trim() || undefined,
-          follow_up_date: followUp || undefined,
-        },
-      });
-
-      const validMeds = meds.filter((m) => m.name.trim());
-      // Keep prescription notes as clinical notes only — symptoms/follow-up have their own fields
-      try {
-        await createPrescription.mutateAsync({
-          appointmentDbId,
-          patientId: patientDbId,
-          patientUid,
-          patientName: appointment.patientName,
-          diagnosis,
-          notes: notes.trim() || undefined,
-          medicines: validMeds,
-        });
-      } catch (rxErr) {
-        const msg = String(rxErr?.message ?? '');
-        if (!/already exists/i.test(msg)) {
-          throw rxErr;
-        }
-      }
-
-      const filledLabOrders = labOrders.filter(
-        (row) =>
-          row.deptCode
-          && (row.labTestId != null || String(row.testName ?? '').trim()),
-      );
-      for (const row of filledLabOrders) {
-        const departmentId = resolveLabDepartmentId(labRoutingDepts, row.deptCode);
-        try {
-          await createLabTest.mutateAsync({
-            appointmentDbId,
-            patientUid,
-            patientName: appointment.patientName,
-            labTestId: row.labTestId ?? undefined,
-            testName: String(row.testName).trim(),
-            category: inferLabCategory(row.testName, row.deptCode),
-            departmentId: departmentId ?? undefined,
-            priority: row.priority || 'Normal',
-            clinicalNotes: row.clinicalNotes,
-          });
-        } catch (labErr) {
-          const msg = String(labErr?.message ?? '');
-          if (!/already been ordered/i.test(msg)) {
-            throw labErr;
-          }
-        }
-      }
-
-      toast.success('Consultation saved');
-      clearConsultationDraft(consultDraftKey, doctorId);
-      onDone();
-    } catch {
-      // mutation hooks toast via mutationOnError
-    }
+    runSaveInBackground({
+      patientDbId:
+        appointment.patientDbId ?? appointment.queueRow?.patientId ?? null,
+      patientName: appointment.patientName,
+      appointmentDbId,
+      isIpd: false,
+      clinicalPayload: {
+        symptoms: symptoms.trim() || undefined,
+        diagnosis: diagnosis.trim(),
+        notes: notes.trim() || undefined,
+        follow_up_date: followUp || undefined,
+      },
+      successMessage: 'Consultation saved',
+    });
   };
 
   return (
@@ -430,9 +646,7 @@ export default function ConsultationModal({
       footer={
         <>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button disabled={saving} onClick={save}>
-            {saving ? 'Saving...' : 'Save Consultation'}
-          </Button>
+          <Button onClick={save}>Save Consultation</Button>
         </>
       }
     >
@@ -466,71 +680,116 @@ export default function ConsultationModal({
       {tab === 'rx' && (
         <div className="doc-consult-panel doc-consult-panel--rx">
           <Label className="doc-consult-rx__label">Medicines</Label>
-          {meds.map((m, i) => (
-            <div key={i} className="doc-med-row doc-med-row--consult">
-              <div className="doc-med-row__pair">
-                <Input
-                  className="doc-med-row__cell"
-                  placeholder="Medicine name"
-                  value={m.name}
-                  onChange={(e) => setMeds(meds.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))}
-                />
-                <Input
-                  className="doc-med-row__cell"
-                  placeholder="Dosage - example 200mg"
-                  value={m.dosage}
-                  onChange={(e) => setMeds(meds.map((x, j) => (j === i ? { ...x, dosage: e.target.value } : x)))}
-                />
-              </div>
-              <div className="doc-med-row__pair">
-                <Input
-                  className="doc-med-row__cell"
-                  placeholder="1-0-1"
-                  value={m.frequency}
-                  onChange={(e) => setMeds(meds.map((x, j) => (j === i ? { ...x, frequency: e.target.value } : x)))}
-                />
-                <Input
-                  className="doc-med-row__cell"
-                  placeholder="Instruction - example after food"
-                  value={m.instructions}
-                  onChange={(e) => setMeds(meds.map((x, j) => (j === i ? { ...x, instructions: e.target.value } : x)))}
-                />
-              </div>
-              <div className="doc-med-row__pair">
-                <Input
-                  className="doc-med-row__cell doc-med-row__duration-value"
-                  type="number"
-                  min={1}
-                  max={365}
-                  placeholder="No. of days / weeks / months"
-                  value={m.durationValue ?? ''}
-                  onChange={(e) => {
-                    setMeds(meds.map((x, j) => (j === i ? { ...x, durationValue: e.target.value } : x)));
-                    if (fieldErrors[`medDuration_${i}`]) {
-                      setFieldErrors((prev) => {
-                        const next = { ...prev };
-                        delete next[`medDuration_${i}`];
-                        return next;
-                      });
+          {meds.map((m, i) => {
+            const nameFilled = Boolean(String(m.name ?? '').trim());
+            const clearMedError = (key) => {
+              if (!fieldErrors[key]) return;
+              setFieldErrors((prev) => {
+                const next = { ...prev };
+                delete next[key];
+                return next;
+              });
+            };
+            return (
+              <div key={i} className="doc-med-row doc-med-row--consult">
+                <div className="doc-med-row__pair">
+                  <Input
+                    className="doc-med-row__cell"
+                    placeholder="Medicine name"
+                    value={m.name}
+                    onChange={(e) => {
+                      setMeds(meds.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)));
+                      if (!String(e.target.value ?? '').trim()) {
+                        setFieldErrors((prev) => {
+                          const next = { ...prev };
+                          delete next[`medDosage_${i}`];
+                          delete next[`medFrequency_${i}`];
+                          delete next[`medInstructions_${i}`];
+                          delete next[`medDuration_${i}`];
+                          delete next[`medDurationUnit_${i}`];
+                          return next;
+                        });
+                      }
+                    }}
+                  />
+                  <Input
+                    className="doc-med-row__cell"
+                    placeholder={nameFilled ? 'Dosage * — e.g. 200mg' : 'Dosage - example 200mg'}
+                    value={m.dosage}
+                    onChange={(e) => {
+                      setMeds(meds.map((x, j) => (j === i ? { ...x, dosage: e.target.value } : x)));
+                      clearMedError(`medDosage_${i}`);
+                    }}
+                    error={fieldErrors[`medDosage_${i}`]}
+                  />
+                </div>
+                <div className="doc-med-row__pair">
+                  <Input
+                    className="doc-med-row__cell"
+                    placeholder={nameFilled ? 'Frequency * — e.g. 1-0-1' : '1-0-1'}
+                    value={m.frequency}
+                    onChange={(e) => {
+                      setMeds(meds.map((x, j) => (j === i ? { ...x, frequency: e.target.value } : x)));
+                      clearMedError(`medFrequency_${i}`);
+                    }}
+                    error={fieldErrors[`medFrequency_${i}`]}
+                  />
+                  <Input
+                    className="doc-med-row__cell"
+                    placeholder={
+                      nameFilled
+                        ? 'Instruction * — e.g. after food'
+                        : 'Instruction - example after food'
                     }
-                  }}
-                  error={fieldErrors[`medDuration_${i}`]}
-                />
-                <select
-                  className="doc-med-row__duration-unit"
-                  value={m.durationUnit ?? 'Days'}
-                  onChange={(e) =>
-                    setMeds(meds.map((x, j) => (j === i ? { ...x, durationUnit: e.target.value } : x)))
-                  }
-                  aria-label="Duration unit"
-                >
-                  <option value="Days">Days</option>
-                  <option value="Weeks">Weeks</option>
-                  <option value="Months">Months</option>
-                </select>
+                    value={m.instructions}
+                    onChange={(e) => {
+                      setMeds(meds.map((x, j) => (j === i ? { ...x, instructions: e.target.value } : x)));
+                      clearMedError(`medInstructions_${i}`);
+                    }}
+                    error={fieldErrors[`medInstructions_${i}`]}
+                  />
+                </div>
+                <div className="doc-med-row__pair">
+                  <Input
+                    className="doc-med-row__cell doc-med-row__duration-value"
+                    type="number"
+                    min={1}
+                    max={365}
+                    placeholder={
+                      nameFilled
+                        ? 'Duration * — days / weeks / months'
+                        : 'No. of days / weeks / months'
+                    }
+                    value={m.durationValue ?? ''}
+                    onChange={(e) => {
+                      setMeds(meds.map((x, j) => (j === i ? { ...x, durationValue: e.target.value } : x)));
+                      clearMedError(`medDuration_${i}`);
+                    }}
+                    error={fieldErrors[`medDuration_${i}`]}
+                  />
+                  <select
+                    className={`doc-med-row__duration-unit${
+                      fieldErrors[`medDurationUnit_${i}`] ? ' doc-med-row__duration-unit--error' : ''
+                    }`}
+                    value={m.durationUnit ?? 'Days'}
+                    onChange={(e) => {
+                      setMeds(meds.map((x, j) => (j === i ? { ...x, durationUnit: e.target.value } : x)));
+                      clearMedError(`medDurationUnit_${i}`);
+                    }}
+                    aria-label="Duration unit"
+                    required={nameFilled}
+                  >
+                    <option value="Days">Days</option>
+                    <option value="Weeks">Weeks</option>
+                    <option value="Months">Months</option>
+                  </select>
+                </div>
+                {fieldErrors[`medDurationUnit_${i}`] ? (
+                  <p className="field__error">{fieldErrors[`medDurationUnit_${i}`]}</p>
+                ) : null}
               </div>
-            </div>
-          ))}
+            );
+          })}
           <Button
             size="sm"
             variant="outline"
@@ -544,6 +803,11 @@ export default function ConsultationModal({
       {tab === 'lab' && (
         <div className="doc-consult-panel doc-consult-panel--lab">
           {labOrders.map((row, i) => {
+            const repeatRequired = isLabRepeatRequired(row, i, {
+              existingOrders: existingLabTests,
+              labOrders,
+              visit: labVisitContext,
+            });
             return (
               <div key={i} className="doc-lab-order">
                 <div className="doc-lab-order__head">
@@ -633,6 +897,44 @@ export default function ConsultationModal({
                     options={LAB_PRIORITIES.map((p) => ({ value: p, label: p }))}
                   />
                 </div>
+                <label
+                  className={`doc-lab-order__repeat${
+                    repeatRequired ? ' doc-lab-order__repeat--required' : ''
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={Boolean(row.isRepeat)}
+                    required={repeatRequired}
+                    aria-required={repeatRequired}
+                    onChange={(e) => {
+                      setLabOrders((rows) =>
+                        rows.map((item, j) =>
+                          j === i ? { ...item, isRepeat: e.target.checked } : item,
+                        ),
+                      );
+                      if (fieldErrors[`labRepeat_${i}`]) {
+                        setFieldErrors((prev) => {
+                          const next = { ...prev };
+                          delete next[`labRepeat_${i}`];
+                          return next;
+                        });
+                      }
+                    }}
+                  />
+                  <span>
+                    Repeat test
+                    {repeatRequired ? ' *' : ''}
+                  </span>
+                  <span className="doc-lab-order__repeat-hint">
+                    {repeatRequired
+                      ? 'Required — this test was already ordered today for this visit'
+                      : 'Allow ordering again if this test is already in progress'}
+                  </span>
+                </label>
+                {fieldErrors[`labRepeat_${i}`] ? (
+                  <p className="field__error">{fieldErrors[`labRepeat_${i}`]}</p>
+                ) : null}
                 {row.testName || row.otherTest ? (
                   <Textarea
                     label="Clinical notes"

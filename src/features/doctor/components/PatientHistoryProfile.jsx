@@ -38,7 +38,7 @@ import { useAuth } from '@/shared/hooks/useAuth';
 import { ACTIONS, canAccessAction } from '@/hooks/permissions';
 import { useDoctorPermission, DOCTOR_PERMISSIONS } from '@/features/doctor/hooks/useDoctorPermission';
 import { buildPatientLabOrderLinks } from '@/features/doctor/utils/patientLabOrderLinks';
-import { DOCTOR_ENCOUNTER_MODE } from '@/features/doctor/utils/encounterType';
+import { DOCTOR_ENCOUNTER_MODE, matchesDoctorEncounterMode, prescriptionMatchesEncounterMode, labOrderMatchesEncounterMode } from '@/features/doctor/utils/encounterType';
 import '../styles/doctor-ui.css';
 
 function formatPrescriptionDate(dateStr) {
@@ -66,6 +66,7 @@ export default function PatientHistoryProfile({
   const canEditPrescription = canAccessAction(user, ACTIONS.UPDATE_PRESCRIPTION);
   const canCreateLabTest = useDoctorPermission(DOCTOR_PERMISSIONS.labCreate);
   const isOpdMode = encounterMode === DOCTOR_ENCOUNTER_MODE.OPD;
+  const isIpdMode = encounterMode === DOCTOR_ENCOUNTER_MODE.IPD;
   const showAddLabTest = canCreateLabTest && isOpdMode;
   const showEditPrescription = canEditPrescription && isOpdMode;
   const patientUid = patient?.patientUid ?? patient?.id;
@@ -74,12 +75,15 @@ export default function PatientHistoryProfile({
   const {
     data: historyData,
     isPending: historyPending,
-  } = useDoctorPatientHistoryQuery(patientUid, { placeholderVisits });
+  } = useDoctorPatientHistoryQuery(patientUid, {
+    placeholderVisits,
+    encounter_type: isIpdMode ? DOCTOR_ENCOUNTER_MODE.IPD : DOCTOR_ENCOUNTER_MODE.OPD,
+  });
 
   const {
     data: ipdAdmissions = [],
     isPending: ipdAdmissionsPending,
-  } = useDoctorIpdPatientAdmissionsQuery(patientUid);
+  } = useDoctorIpdPatientAdmissionsQuery(patientUid, { enabled: isIpdMode });
 
   const [consultCacheTick, setConsultCacheTick] = useState(0);
 
@@ -92,6 +96,20 @@ export default function PatientHistoryProfile({
   const patientId = resolvedPatientId ?? historyData?.patientId ?? null;
 
   const { data: prescriptions = [] } = useDoctorPatientPrescriptionsQuery(patientId);
+
+  const modePrescriptions = useMemo(
+    () =>
+      prescriptions.filter((rx) => prescriptionMatchesEncounterMode(rx, encounterMode)),
+    [prescriptions, encounterMode],
+  );
+
+  const prescriptionsWithMedicines = useMemo(
+    () =>
+      modePrescriptions.filter((rx) =>
+        (rx.medicines ?? []).some((med) => String(med?.name ?? '').trim()),
+      ),
+    [modePrescriptions],
+  );
 
   const [prescriptionModal, setPrescriptionModal] = useState({ id: null, editing: false });
   const [viewLabTest, setViewLabTest] = useState(null);
@@ -133,10 +151,23 @@ export default function PatientHistoryProfile({
   }, [patient, opdProfile?.patient, historyData?.phone]);
 
   const visits = useMemo(() => {
-    const fromApi = historyData?.visits ?? [];
-    const withIpd = mergeIpdIntoVisitHistory(fromApi, ipdAdmissions, patientUid);
-    return mergeVisitTimelineWithPrescriptions(withIpd, prescriptions);
-  }, [historyData?.visits, prescriptions, ipdAdmissions, patientUid, consultCacheTick]);
+    const fromApi = (historyData?.visits ?? []).filter((visit) =>
+      matchesDoctorEncounterMode(visit, encounterMode),
+    );
+    const withIpd = isIpdMode
+      ? mergeIpdIntoVisitHistory(fromApi, ipdAdmissions, patientUid)
+      : fromApi;
+    const merged = mergeVisitTimelineWithPrescriptions(withIpd, modePrescriptions);
+    return merged.filter((visit) => matchesDoctorEncounterMode(visit, encounterMode));
+  }, [
+    historyData?.visits,
+    modePrescriptions,
+    ipdAdmissions,
+    patientUid,
+    consultCacheTick,
+    encounterMode,
+    isIpdMode,
+  ]);
 
   const clinicalByAppointmentId = useMemo(() => {
     const map = new Map();
@@ -170,18 +201,23 @@ export default function PatientHistoryProfile({
   }, [visits]);
 
   const showVisitSkeleton =
-    (historyPending || ipdAdmissionsPending) && visits.length === 0;
+    (historyPending || (isIpdMode && ipdAdmissionsPending)) && visits.length === 0;
 
   const patientLabs = useMemo(
     () =>
-      allLabTests.filter((test) =>
-        matchesLabTestPatient(test, {
-          patientUid,
-          patientId,
-          name: profile.name !== '—' ? profile.name : patient?.name,
-        })
-      ),
-    [allLabTests, patientUid, patientId, profile.name, patient?.name]
+      allLabTests.filter((test) => {
+        if (
+          !matchesLabTestPatient(test, {
+            patientUid,
+            patientId,
+            name: profile.name !== '—' ? profile.name : patient?.name,
+          })
+        ) {
+          return false;
+        }
+        return labOrderMatchesEncounterMode(test, encounterMode);
+      }),
+    [allLabTests, patientUid, patientId, profile.name, patient?.name, encounterMode]
   );
 
   const labOrderLinks = useMemo(() => {
@@ -191,7 +227,7 @@ export default function PatientHistoryProfile({
     );
   }, [visits, ipdAdmissions, isOpdMode]);
 
-  const viewingPrescription = prescriptions.find((rx) => rx.id === prescriptionModal.id);
+  const viewingPrescription = modePrescriptions.find((rx) => rx.id === prescriptionModal.id);
 
   const openPrescriptionModal = (id, editing = false) => {
     setPrescriptionModal({ id, editing: editing && showEditPrescription });
@@ -240,12 +276,12 @@ export default function PatientHistoryProfile({
           <h3 className="doc-profile-panel__title">
             <Pill size={16} aria-hidden />
             Prescriptions
-            {prescriptions.length > 0 ? (
-              <span className="doc-profile-panel__count">{prescriptions.length}</span>
+            {prescriptionsWithMedicines.length > 0 ? (
+              <span className="doc-profile-panel__count">{prescriptionsWithMedicines.length}</span>
             ) : null}
           </h3>
         </div>
-        {prescriptions.length === 0 ? (
+        {prescriptionsWithMedicines.length === 0 ? (
           <p className="text-muted doc-profile-empty">No prescriptions for this patient.</p>
         ) : (
           <div className="table-wrap doc-profile-rx-table-wrap">
@@ -261,26 +297,22 @@ export default function PatientHistoryProfile({
                 </tr>
               </thead>
               <tbody>
-                {prescriptions.map((rx) => (
+                {prescriptionsWithMedicines.map((rx) => (
                   <tr key={rx.id}>
                     <td className="doc-profile-rx-table__date">
                       {formatPrescriptionDate(rx.date)}
                     </td>
                     <td className="doc-profile-rx-table__diagnosis">{rx.diagnosis || '—'}</td>
                     <td className="doc-profile-rx-table__meds">
-                      {(rx.medicines ?? []).length > 0 ? (
-                        <div className="doc-profile-rx-med-chips">
-                          {rx.medicines.map((med, index) =>
-                            med.name ? (
-                              <span key={`${rx.id}-${index}`} className="doc-profile-rx-med-chip">
-                                {med.name}
-                              </span>
-                            ) : null
-                          )}
-                        </div>
-                      ) : (
-                        '—'
-                      )}
+                      <div className="doc-profile-rx-med-chips">
+                        {rx.medicines.map((med, index) =>
+                          med.name ? (
+                            <span key={`${rx.id}-${index}`} className="doc-profile-rx-med-chip">
+                              {med.name}
+                            </span>
+                          ) : null
+                        )}
+                      </div>
                     </td>
                     <td className="doc-profile-rx-table__actions">
                       <div className="doc-profile-rx-table__action-group">

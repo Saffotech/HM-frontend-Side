@@ -29,9 +29,31 @@ export async function fetchLabDashboardStats(token) {
 }
 
 export async function fetchLabOrders(filters = {}, token) {
-  const params = buildLabOrdersQueryParams(filters);
-  const raw = await getLabOrders(params, token);
-  return mapLabOrderList(raw);
+  const pageSize = Math.min(Number(filters.pageSize ?? filters.page_size ?? 100) || 100, 100);
+  // API returns oldest-first; walk pages so the newest pending orders are included.
+  const allItems = [];
+  let page = 1;
+  let total = null;
+
+  while (page <= 20) {
+    const params = buildLabOrdersQueryParams({ ...filters, page, pageSize });
+    const raw = await getLabOrders(params, token);
+    const mapped = mapLabOrderList(raw);
+    const chunk = mapped.data ?? [];
+    allItems.push(...chunk);
+    total = mapped.total ?? total;
+    if (!chunk.length) break;
+    if (total != null && allItems.length >= total) break;
+    if (chunk.length < pageSize) break;
+    page += 1;
+  }
+
+  return {
+    data: allItems,
+    total: total ?? allItems.length,
+    page: 1,
+    pageSize: allItems.length,
+  };
 }
 
 export async function fetchLabOrderById(orderId, token) {

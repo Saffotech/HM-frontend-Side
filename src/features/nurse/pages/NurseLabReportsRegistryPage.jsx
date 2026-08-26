@@ -20,7 +20,7 @@ import { toast } from '@/shared/utils/toast';
 import { ROUTES } from '@/shared/constants';
 import './NurseMedicationPatientsPage.css';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 const FETCH_PAGE_SIZE = 100;
 const WARD_OPTIONS = ['ICU', 'Private', 'General'];
 

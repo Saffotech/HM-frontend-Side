@@ -345,6 +345,16 @@
   background: #f8fafc;
 }
 
+.nurse-patient-meds__last-admin-row--first {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.nurse-patient-meds__last-admin-row--first .nurse-patient-meds__last-admin-icon {
+  color: #15803d;
+  background: #dcfce7;
+}
+
 .nurse-patient-meds__last-admin-icon {
   display: flex;
   align-items: center;

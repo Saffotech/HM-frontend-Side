@@ -4,6 +4,7 @@
 
 import * as nurseApi from '@/features/nurse/api/nurse';
 import * as doctorVisitsApi from '@/features/nurse/api/doctorVisits';
+import { getPrescriptionsByPatient } from '@/features/doctor/api/prescriptions';
 import {
   mapQueueResponse,
   mapBedPatientsResponse,
@@ -281,7 +282,9 @@ function listMedicationPatientsWithClientSearch(params, token) {
   const { search, page = 1, page_size = 20 } = params;
   const term = String(search ?? '').trim();
   return fetchAllMedicationPatientsRegistryItems(params, token).then((enriched) => {
-    const deduped = dedupeMedicationPatientsByPatientId(enriched);
+    const deduped = dedupeMedicationPatientsByPatientId(enriched).filter(
+      (row) => (Number(row?.medicine_count) || 0) > 0,
+    );
     const filtered = term
       ? filterNursePatientRegistryItems(deduped, term)
       : deduped;
@@ -293,6 +296,153 @@ export async function getMedicationPatients(params = {}, token) {
   // Always load + dedupe client-side so the registry is one row per patient
   // (backend returns one row per prescription).
   return listMedicationPatientsWithClientSearch(params, token);
+}
+
+/** Flatten prescription items from GET /prescriptions/patient/{id} (all Rxs). */
+async function collectMedicationItemsFromDoctorPrescriptions(patientId, token) {
+  if (patientId == null || patientId === '') return [];
+  try {
+    const rxs = await getPrescriptionsByPatient(patientId, token);
+    const list = Array.isArray(rxs) ? rxs : [];
+    const items = [];
+    for (const rx of list) {
+      for (const item of rx?.items ?? []) {
+        const itemId = item.id ?? item.prescription_item_id;
+        if (itemId == null) continue;
+        items.push({
+          prescription_item_id: itemId,
+          medicine_name: item.medicine_name ?? item.name ?? '',
+          dosage: item.dosage ?? item.dose ?? '',
+          dose: item.dose ?? item.dosage ?? '',
+          frequency: item.frequency ?? '',
+          duration: item.duration,
+          instructions: item.instructions ?? null,
+          route: item.route ?? item.instructions ?? '',
+          form: item.form ?? null,
+          timing: item.timing ?? null,
+          doctor_id: rx.doctor_id ?? rx.doctorId ?? null,
+          doctor_name: rx.doctor_name ?? rx.doctorName ?? null,
+        });
+      }
+    }
+    return items;
+  } catch {
+    return [];
+  }
+}
+
+function mergeMedicationItemsById(...lists) {
+  const byId = new Map();
+  for (const list of lists) {
+    for (const item of list ?? []) {
+      const key = String(item?.prescription_item_id ?? item?.id ?? '');
+      if (!key || key === 'undefined' || key === 'null') continue;
+      if (!byId.has(key)) byId.set(key, item);
+    }
+  }
+  return [...byId.values()];
+}
+
+function extractNurseMedicationItems(raw) {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  const list = raw.medications ?? raw.prescriptions ?? raw.items ?? [];
+  return Array.isArray(list) ? list : [];
+}
+
+export async function getPatientMedications(patientId, token) {
+  const id = Number(patientId);
+  const historyPatientKey = Number.isFinite(id) && id >= 1 ? id : patientId;
+
+  let rawMeds = null;
+  try {
+    rawMeds = await nurseApi.getPatientMedications(patientId, token);
+  } catch (err) {
+    // 404 Prescription not found — still try other sources so the page is not empty.
+    if (err?.status !== 404) throw err;
+    rawMeds = null;
+  }
+
+  let historyRows = [];
+  try {
+    const historyPaged = await getMedicationHistory(
+      { patient_id: historyPatientKey, page: 1, page_size: 100 },
+      token,
+    );
+    historyRows = historyPaged?.items ?? [];
+  } catch {
+    historyRows = [];
+  }
+
+  if (!historyRows.length) {
+    try {
+      const patientHistory = await getPatientMedicationHistory(patientId, token);
+      historyRows = patientHistory?.items ?? [];
+    } catch {
+      historyRows = [];
+    }
+  }
+
+  // Nurse detail API is latest-Rx only. Merge every Rx's items when available
+  // (doctor prescriptions list) so list count "2" still opens with both medicines.
+  const nurseItems = extractNurseMedicationItems(rawMeds);
+  const doctorItems = await collectMedicationItemsFromDoctorPrescriptions(
+    historyPatientKey,
+    token,
+  );
+  const mergedItems = mergeMedicationItemsById(doctorItems, nurseItems);
+
+  // Expected count from registry (sum across prescriptions) for empty-state messaging.
+  let expectedMedicineCount = mergedItems.length;
+  try {
+    const rawList = await nurseApi.getMedicationPatients(
+      {
+        patient_id: Number.isFinite(id) && id >= 1 ? id : undefined,
+        page: 1,
+        page_size: NURSE_QUEUE_MAX_PAGE_SIZE,
+      },
+      token,
+    );
+    const rows = Array.isArray(rawList)
+      ? rawList
+      : rawList?.items ?? rawList?.data ?? [];
+    const forPatient = rows
+      .map(mapMedicationPatientRow)
+      .filter((row) => row && String(row.patient_id) === String(historyPatientKey));
+    const sum = forPatient.reduce(
+      (acc, row) => acc + (Number(row.medicine_count) || 0),
+      0,
+    );
+    if (sum > expectedMedicineCount) expectedMedicineCount = sum;
+  } catch {
+    // ignore registry enrichment failures
+  }
+
+  let mapped = mapPatientMedicationsResponse(
+    {
+      ...(rawMeds && typeof rawMeds === 'object' && !Array.isArray(rawMeds)
+        ? rawMeds
+        : { patient_id: historyPatientKey }),
+      medications: mergedItems,
+    },
+    historyRows,
+  );
+  mapped = {
+    ...mapped,
+    expectedMedicineCount,
+  };
+
+  try {
+    if (!resolvePatientUid(mapped) && Number.isFinite(id) && id >= 1) {
+      const medList = await getMedicationPatients({ patient_id: id, page: 1, page_size: 1 }, token);
+      const uid = medList?.items?.[0]?.patientUid;
+      if (uid) mapped = attachPatientUid({ ...mapped, patient_uid: uid });
+    }
+    const [enriched] = await enrichRowsWithQueueUid([mapped], token);
+    return enriched ?? mapped;
+  } catch {
+    return mapped;
+  }
 }
 
 export async function listVitals(params = {}, token) {
@@ -317,7 +467,6 @@ export async function searchVitals(params = {}, token) {
   const raw = await nurseApi.searchVitals({ page, page_size, ...rest }, token);
   const wrapped = wrapPagedArray(raw, { page, page_size }, mapVitalItem);
   const items = await enrichNursePatientRows(wrapped.items, token);
-  // Patient-scoped search returns one row per recording — assemble Recorded At history.
   const withHistory = rest.patient_id != null && rest.patient_id !== ''
     ? assembleVitalHistoryFromItems(items)
     : items;
@@ -377,37 +526,6 @@ export async function getMedicationHistory(params = {}, token) {
   const apiParams = mapMedicationHistoryFiltersToApi(rest);
   const raw = await nurseApi.getMedicationHistory({ page, page_size, ...apiParams }, token);
   return wrapPagedArray(raw, { page, page_size }, mapMedicationHistoryRow);
-}
-
-export async function getPatientMedications(patientId, token) {
-  const id = Number(patientId);
-  // Prescribed meds first — history enrichment must not wipe the list on failure.
-  const rawMeds = await nurseApi.getPatientMedications(patientId, token);
-
-  let historyRows = [];
-  try {
-    const historyPaged = await getMedicationHistory(
-      { patient_id: Number.isFinite(id) && id >= 1 ? id : patientId, page: 1, page_size: 100 },
-      token,
-    );
-    historyRows = historyPaged?.items ?? [];
-  } catch {
-    historyRows = [];
-  }
-
-  let mapped = mapPatientMedicationsResponse(rawMeds, historyRows);
-
-  try {
-    if (!resolvePatientUid(mapped) && Number.isFinite(id) && id >= 1) {
-      const medList = await getMedicationPatients({ patient_id: id, page: 1, page_size: 1 }, token);
-      const uid = medList?.items?.[0]?.patientUid;
-      if (uid) mapped = attachPatientUid({ ...mapped, patient_uid: uid });
-    }
-    const [enriched] = await enrichRowsWithQueueUid([mapped], token);
-    return enriched ?? mapped;
-  } catch {
-    return mapped;
-  }
 }
 
 export async function administerMedication(data, token) {
