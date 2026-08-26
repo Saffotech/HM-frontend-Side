@@ -156,6 +156,8 @@ export const queryKeys = {
 
     labs: ['doctor', 'labs'],
 
+    labCatalog: (filters = {}) => ['doctor', 'lab-catalog', filters],
+
     labReport: (testId) => ['doctor', 'labs', 'report', testId],
 
     notifications: ['doctor', 'notifications'],

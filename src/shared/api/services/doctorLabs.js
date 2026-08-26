@@ -6,6 +6,7 @@ import {
   getLabTestReport,
   fetchLabTestReportFileBlob,
 } from '@/features/doctor/api/labs';
+import { getLabCatalog } from '@/features/doctor/api/labCatalog';
 import {
   apiToUiLabTest,
   apiToUiDoctorLabReport,
@@ -13,9 +14,15 @@ import {
   uiToApiLabTestUpdate,
   mapLabTestList,
 } from '@/shared/api/mappers/clinicalMapper';
+import { mapLabCatalogList } from '@/shared/api/mappers/labCatalogMapper';
 
 export async function fetchLabTests(token, params = {}) {
   return mapLabTestList(await getLabTests(token, params));
+}
+
+/** Active catalog for doctor order selectors — never use for historical order pricing. */
+export async function fetchLabCatalog(token, params = {}) {
+  return mapLabCatalogList(await getLabCatalog(token, params));
 }
 
 export async function fetchLabTestReport(testId, token) {

@@ -19,6 +19,7 @@ import { toast } from '@/shared/utils/toast';
 const EMPTY_FORM = {
   deptCode: '',
   testName: '',
+  labTestId: null,
   otherTest: false,
   priority: 'Normal',
   clinicalNotes: '',
@@ -67,7 +68,7 @@ export default function AddLabTestModal({
       toast.error('Please select Laboratory or Radiology');
       return;
     }
-    if (!String(form.testName ?? '').trim()) {
+    if (!String(form.testName ?? '').trim() && form.labTestId == null) {
       toast.error('Please select or enter a test');
       return;
     }
@@ -76,6 +77,7 @@ export default function AddLabTestModal({
     const payload = {
       patientUid,
       patientName,
+      labTestId: form.labTestId ?? undefined,
       testName: String(form.testName).trim(),
       category: inferLabCategory(form.testName, form.deptCode),
       departmentId: departmentId ?? undefined,
@@ -152,6 +154,7 @@ export default function AddLabTestModal({
                 ...prev,
                 deptCode,
                 testName: '',
+                labTestId: null,
                 otherTest: false,
               }))
             }
@@ -162,10 +165,12 @@ export default function AddLabTestModal({
           <LabTestNameField
             label="Test *"
             deptCode={form.deptCode}
+            departmentId={resolveLabDepartmentId(labRoutingDepts, form.deptCode)}
             testName={form.testName}
+            labTestId={form.labTestId}
             otherTest={form.otherTest}
-            onChange={({ testName, otherTest }) =>
-              setForm((prev) => ({ ...prev, testName, otherTest }))
+            onChange={({ testName, otherTest, labTestId }) =>
+              setForm((prev) => ({ ...prev, testName, otherTest, labTestId: labTestId ?? null }))
             }
           />
 

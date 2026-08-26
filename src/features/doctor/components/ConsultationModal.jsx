@@ -23,7 +23,7 @@ import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { useAuthStore } from '@/shared/store/useAuthStore';
 import { toast } from '@/shared/utils/toast';
 import { useLabRoutingDepartmentsQuery } from '@/shared/hooks/queries/useOpdReferenceQuery';
-import { resolveLabDepartmentId } from '@/shared/utils/labDepartments';
+import { resolveLabDepartmentId, departmentCode, labDepartmentLabel } from '@/shared/utils/labDepartments';
 import LabTestNameField from './LabTestNameField';
 
 function emptyMedicineRow() {
@@ -39,6 +39,7 @@ function emptyLabOrderRow() {
   return {
     deptCode: '',
     testName: '',
+    labTestId: null,
     otherTest: false,
     priority: 'Normal',
     clinicalNotes: '',
@@ -50,6 +51,7 @@ function labOrdersFromDraft(draft) {
     return draft.labOrders.map((row) => ({
       deptCode: row.deptCode ?? '',
       testName: row.testName ?? '',
+      labTestId: row.labTestId ?? null,
       otherTest: Boolean(row.otherTest),
       priority: row.priority ?? 'Normal',
       clinicalNotes: row.clinicalNotes ?? '',
@@ -60,6 +62,7 @@ function labOrdersFromDraft(draft) {
       {
         deptCode: draft.labDeptCode ?? '',
         testName: draft.labTest ?? '',
+        labTestId: draft.labTestId ?? null,
         otherTest: false,
         priority: draft.labPriority ?? 'Normal',
         clinicalNotes: draft.labClinicalNotes ?? '',
@@ -134,10 +137,12 @@ export default function ConsultationModal({
     : appointmentDbId;
   const patientUid = appointment?.patientUid ?? appointment?.patientId;
 
-  const labRoutingQuery = useLabRoutingDepartmentsQuery({ enabled: open && !isIpdConsult });
-  const labRoutingDepts = isIpdConsult
-    ? ipdStaticLabRoutingDepartments()
-    : (labRoutingQuery.data ?? []);
+  const labRoutingQuery = useLabRoutingDepartmentsQuery({ enabled: open });
+  const labRoutingDepts = (labRoutingQuery.data?.length
+    ? labRoutingQuery.data
+    : isIpdConsult
+      ? ipdStaticLabRoutingDepartments()
+      : []) ?? [];
 
   const consultationContextQuery = useConsultationContextQuery(appointmentDbId, {
     enabled: open && !isIpdConsult && appointmentDbId != null,
@@ -244,8 +249,11 @@ export default function ConsultationModal({
     const errs = {};
     if (!diagnosis.trim()) errs.diagnosis = 'Diagnosis is required';
     labOrders.forEach((row, i) => {
-      if (row.testName && !row.deptCode) {
+      if ((row.testName || row.labTestId != null) && !row.deptCode) {
         errs[`labDept_${i}`] = 'Select Laboratory or Radiology';
+      }
+      if (row.deptCode && !String(row.testName ?? '').trim() && row.labTestId == null) {
+        errs[`labTest_${i}`] = 'Select a catalog test';
       }
       if (row.otherTest && !String(row.testName ?? '').trim()) {
         errs[`labTest_${i}`] = 'Enter a test name';
@@ -302,7 +310,9 @@ export default function ConsultationModal({
         }
 
         const filledLabOrders = labOrders.filter(
-          (row) => String(row.testName ?? '').trim() && row.deptCode,
+          (row) =>
+            row.deptCode
+            && (row.labTestId != null || String(row.testName ?? '').trim()),
         );
         for (const row of filledLabOrders) {
           const departmentId = resolveLabDepartmentId(labRoutingDepts, row.deptCode);
@@ -311,6 +321,7 @@ export default function ConsultationModal({
               admissionId,
               patientUid,
               patientName: appointment.patientName,
+              labTestId: row.labTestId ?? undefined,
               testName: String(row.testName).trim(),
               category: inferLabCategory(row.testName, row.deptCode),
               departmentId: departmentId ?? undefined,
@@ -375,7 +386,9 @@ export default function ConsultationModal({
       }
 
       const filledLabOrders = labOrders.filter(
-        (row) => String(row.testName ?? '').trim() && row.deptCode,
+        (row) =>
+          row.deptCode
+          && (row.labTestId != null || String(row.testName ?? '').trim()),
       );
       for (const row of filledLabOrders) {
         const departmentId = resolveLabDepartmentId(labRoutingDepts, row.deptCode);
@@ -384,6 +397,7 @@ export default function ConsultationModal({
             appointmentDbId,
             patientUid,
             patientName: appointment.patientName,
+            labTestId: row.labTestId ?? undefined,
             testName: String(row.testName).trim(),
             category: inferLabCategory(row.testName, row.deptCode),
             departmentId: departmentId ?? undefined,
@@ -556,7 +570,13 @@ export default function ConsultationModal({
                       setLabOrders((rows) =>
                         rows.map((item, j) =>
                           j === i
-                            ? { ...item, deptCode: code, testName: '', otherTest: false }
+                            ? {
+                                ...item,
+                                deptCode: code,
+                                testName: '',
+                                labTestId: null,
+                                otherTest: false,
+                              }
                             : item,
                         ),
                       );
@@ -570,21 +590,32 @@ export default function ConsultationModal({
                     }}
                     placeholder="Laboratory or Radiology"
                     error={fieldErrors[`labDept_${i}`]}
-                    options={LAB_DEPARTMENTS.map((d) => ({
-                      value: d.code,
-                      label: d.label,
-                    }))}
+                    options={
+                      labRoutingDepts.length
+                        ? labRoutingDepts.map((d) => ({
+                            value: departmentCode(d) || d.code,
+                            label: d.name || d.label || labDepartmentLabel(d),
+                          }))
+                        : LAB_DEPARTMENTS.map((d) => ({
+                            value: d.code,
+                            label: d.label,
+                          }))
+                    }
                   />
                   <LabTestNameField
                     label="Test *"
                     deptCode={row.deptCode}
+                    departmentId={resolveLabDepartmentId(labRoutingDepts, row.deptCode)}
                     testName={row.testName}
+                    labTestId={row.labTestId}
                     otherTest={row.otherTest}
                     error={fieldErrors[`labTest_${i}`]}
-                    onChange={({ testName, otherTest }) =>
+                    onChange={({ testName, otherTest, labTestId }) =>
                       setLabOrders((rows) =>
                         rows.map((item, j) =>
-                          j === i ? { ...item, testName, otherTest } : item,
+                          j === i
+                            ? { ...item, testName, otherTest, labTestId: labTestId ?? null }
+                            : item,
                         ),
                       )
                     }

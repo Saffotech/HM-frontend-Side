@@ -272,13 +272,13 @@ export default function LabOrderListPage() {
               <table className="lab-table">
                 <thead>
                   <tr>
-                    <th>Request ID</th>
                     <th>Patient Name</th>
                     <th>Source</th>
                     <th>Ward</th>
                     <th>Bed</th>
                     <th>Doctor</th>
                     <th>Test</th>
+                    <th>Price</th>
                     <th>Priority</th>
                     <th>Requested</th>
                     <th>Status</th>
@@ -290,9 +290,6 @@ export default function LabOrderListPage() {
                     const location = visitLocationLabel(o);
                     return (
                     <tr key={o.id}>
-                      <td>
-                        <strong>{o.id}</strong>
-                      </td>
                       <td className="lab-archive-patient">
                         <span className="lab-archive-patient__name">{o.patientName}</span>
                         <span className="lab-archive-meta lab-archive-patient__id">{o.patientId}</span>
@@ -304,6 +301,7 @@ export default function LabOrderListPage() {
                       <td className="lab-location-cell">{location.bed}</td>
                       <td>{o.doctorName}</td>
                       <td>{o.testName}</td>
+                      <td>{o.price != null ? `₹${o.price}` : '—'}</td>
                       <td>
                         <span className={`lab-badge ${o.priority}`}>
                           {o.priority === 'urgent' || o.priority === 'stat' ? '⚠ ' : ''}

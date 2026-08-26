@@ -723,6 +723,11 @@
   min-width: 0;
 }
 
+.doc-lab-test-name__price{
+  margin: 0;
+  font-size: 0.75rem;
+}
+
 @media (min-width: 560px){
   .doc-lab-order__grid{
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(8rem, 0.7fr);

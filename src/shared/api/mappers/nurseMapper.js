@@ -902,6 +902,8 @@ export function mapLabReportItem(row) {
     department_name: row.department_name ?? row.department ?? null,
     department: row.department_name ?? row.department ?? null,
     test_name: row.test_name ?? '',
+    lab_test_id: row.lab_test_id ?? null,
+    price: row.price != null ? String(row.price) : null,
     source: row.source ?? 'NONE',
     report_file: row.report_file ?? null,
     has_file: Boolean(row.report_file),

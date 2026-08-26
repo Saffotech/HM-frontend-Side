@@ -21,7 +21,7 @@ function resolvePreviewKind(fileType, fileName) {
 }
 
 /** Full-screen detail — used only on Completed Reports archive page */
-export default function LabReportDetailModal({ report, onClose }) {
+export default function LabReportDetailModal({ report, onClose, onEdit }) {
   const reportDbId = report?.reportDbId;
   const detailQuery = useLabReportQuery(reportDbId, { enabled: reportDbId != null });
   const downloadFile = useDownloadLabReportFileMutation();
@@ -237,7 +237,19 @@ export default function LabReportDetailModal({ report, onClose }) {
         </div>
 
         <div className="lab-form-actions lab-report-view__actions">
-          <button type="button" className="lab-btn lab-btn-primary" onClick={() => printLabReport(display)}>
+          {typeof onEdit === 'function' ? (
+            <button
+              type="button"
+              className="lab-btn lab-btn-primary"
+              onClick={() => {
+                onEdit(report);
+                onClose();
+              }}
+            >
+              Edit
+            </button>
+          ) : null}
+          <button type="button" className="lab-btn lab-btn-secondary" onClick={() => printLabReport(display)}>
             Print Report
           </button>
           {(detail?.fileName || report.hasFile) && (

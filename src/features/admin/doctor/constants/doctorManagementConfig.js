@@ -68,6 +68,11 @@ export const PERMISSION_GROUPS = [
         name: 'Order / Update Lab Tests',
         description: 'Create, edit, or cancel lab orders from consultation or Labs.',
       },
+      {
+        key: 'lab_catalog:view',
+        name: 'View Lab Catalog',
+        description: 'Load active catalog tests and prices when ordering labs (GET /lab-catalog).',
+      },
     ],
   },
 

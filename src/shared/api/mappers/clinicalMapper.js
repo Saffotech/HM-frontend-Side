@@ -126,16 +126,24 @@ export function apiToUiRecord(api) {
   };
 }
 
-/** POST /lab-tests body — OPD uses appointment_id, IPD uses admission_id. */
+/** POST /lab-tests body — OPD uses appointment_id, IPD uses admission_id.
+ * Prefer lab_test_id so backend snapshots catalog name/price. Do not send price.
+ */
 export function uiToApiLabTestCreate(ui) {
   const departmentId = ui.departmentId ?? ui.department_id;
   const admissionId = ui.admissionId ?? ui.admission_id;
+  const labTestId = ui.labTestId ?? ui.lab_test_id;
   const body = {
-    test_name: ui.testName ?? ui.test,
-    category: ui.category,
     priority: ui.priority || 'Normal',
     clinical_notes: ui.clinicalNotes ?? ui.clinical_notes ?? '',
   };
+  if (labTestId != null && labTestId !== '') {
+    body.lab_test_id = Number(labTestId);
+  } else {
+    // Temporary name-based compatibility until catalog selection is available
+    body.test_name = ui.testName ?? ui.test;
+    body.category = ui.category;
+  }
   if (admissionId != null && admissionId !== '') {
     body.admission_id = Number(admissionId);
   } else if (ui.appointmentDbId != null && ui.appointmentDbId !== '') {
@@ -217,6 +225,8 @@ export function apiToUiLabTest(api) {
     patientDbId: patientDbId != null ? Number(patientDbId) : null,
     patientName: api.patient_name ?? api.patientName,
     testName: api.test_name ?? api.test,
+    labTestId: api.lab_test_id ?? api.labTestId ?? null,
+    price: api.price != null && api.price !== '' ? String(api.price) : null,
     category: api.category ?? 'Other',
     departmentId: api.department_id ?? api.departmentId ?? null,
     departmentName:

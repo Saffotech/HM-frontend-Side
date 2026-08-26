@@ -54,6 +54,8 @@ export function apiToUiLabOrder(row) {
     doctorId: row.doctor_id ?? row.doctorId,
     doctorName: row.doctor_name ?? row.doctorName ?? '—',
     testName: row.test_name ?? row.testName ?? '—',
+    labTestId: row.lab_test_id ?? row.labTestId ?? null,
+    price: row.price != null && row.price !== '' ? String(row.price) : null,
     category: row.category ?? '—',
     departmentId: row.department_id ?? row.departmentId ?? null,
     departmentName:
@@ -141,6 +143,8 @@ export function apiToUiLabReportDetail(row) {
     patientId: order.patient_uhid ?? order.patient_uid ?? '',
     patientName: order.patient_name ?? '—',
     testName: order.test_name ?? '—',
+    labTestId: order.lab_test_id ?? row.lab_test_id ?? null,
+    price: order.price != null ? String(order.price) : (row.price != null ? String(row.price) : null),
     doctorName: order.doctor_name ?? '—',
     category: order.category ?? '—',
     priority: normalizePriority(order.priority),

@@ -54,6 +54,7 @@ function LabEditModal({ test, open, onClose, onSave, saving }) {
   const labRoutingDepts = labRoutingQuery.data ?? [];
   const [deptCode, setDeptCode] = useState('');
   const [testName, setTestName] = useState(test?.testName ?? '');
+  const [labTestId, setLabTestId] = useState(test?.labTestId ?? null);
   const [otherTest, setOtherTest] = useState(false);
   const [priority, setPriority] = useState(test?.priority ?? 'Normal');
   const [clinicalNotes, setClinicalNotes] = useState(test?.clinicalNotes ?? '');
@@ -62,6 +63,7 @@ function LabEditModal({ test, open, onClose, onSave, saving }) {
     if (!open || !test) return;
     setDeptCode(inferLabDeptCodeFromOrder(test, labRoutingQuery.data ?? []));
     setTestName(test.testName);
+    setLabTestId(test.labTestId ?? null);
     setOtherTest(false);
     setPriority(test.priority);
     setClinicalNotes(test.clinicalNotes);
@@ -74,12 +76,13 @@ function LabEditModal({ test, open, onClose, onSave, saving }) {
       toast.error('Please select Laboratory or Radiology');
       return;
     }
-    if (!String(testName ?? '').trim()) {
+    if (!String(testName ?? '').trim() && labTestId == null) {
       toast.error('Please select or enter a test');
       return;
     }
     const departmentId = resolveLabDepartmentId(labRoutingDepts, deptCode);
     onSave({
+      labTestId: labTestId ?? undefined,
       testName: String(testName).trim(),
       category: inferLabCategory(testName, deptCode),
       departmentId: departmentId ?? undefined,
@@ -108,6 +111,7 @@ function LabEditModal({ test, open, onClose, onSave, saving }) {
         onChange={(code) => {
           setDeptCode(code);
           setTestName('');
+          setLabTestId(null);
           setOtherTest(false);
         }}
         placeholder={labRoutingQuery.isLoading ? 'Loading…' : 'Laboratory or Radiology'}
@@ -123,11 +127,14 @@ function LabEditModal({ test, open, onClose, onSave, saving }) {
       <LabTestNameField
         label="Test name"
         deptCode={deptCode}
+        departmentId={resolveLabDepartmentId(labRoutingDepts, deptCode)}
         testName={testName}
+        labTestId={labTestId}
         otherTest={otherTest}
-        onChange={({ testName: nextName, otherTest: nextOther }) => {
+        onChange={({ testName: nextName, otherTest: nextOther, labTestId: nextId }) => {
           setTestName(nextName);
           setOtherTest(nextOther);
+          setLabTestId(nextId ?? null);
         }}
       />
       <Select
@@ -220,6 +227,7 @@ function LabTestsList({
             <tr>
               <th>Patient</th>
               <th>Test</th>
+              <th>Price</th>
               <th>Category</th>
               <th>Ordered</th>
               <th>Status</th>
@@ -229,7 +237,7 @@ function LabTestsList({
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-muted" style={{ textAlign: 'center', padding: '2rem' }}>
+                <td colSpan={7} className="text-muted" style={{ textAlign: 'center', padding: '2rem' }}>
                   {String(search ?? '').trim()
                     ? 'No lab tests match this patient search.'
                     : 'No lab tests in this category.'}
@@ -256,6 +264,7 @@ function LabTestsList({
                     <span className="doc-labs-patient-id">{t.patientId}</span>
                   </td>
                   <td>{t.testName}</td>
+                  <td>{t.price != null ? `₹${t.price}` : '—'}</td>
                   <td>
                     <CategoryCell
                       category={t.category}

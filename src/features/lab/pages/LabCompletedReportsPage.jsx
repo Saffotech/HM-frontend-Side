@@ -73,7 +73,11 @@ export default function LabCompletedReportsPage() {
 
   return (
     <LabLayout pageTitle="Completed Reports">
-      <LabReportDetailModal report={selectedReport} onClose={() => setSelectedReport(null)} />
+      <LabReportDetailModal
+        report={selectedReport}
+        onClose={() => setSelectedReport(null)}
+        onEdit={(report) => setEditingReport(report)}
+      />
       <LabReportEditModal report={editingReport} onClose={() => setEditingReport(null)} />
 
       <div className="lab-card lab-card--archive">
@@ -151,7 +155,6 @@ export default function LabCompletedReportsPage() {
               <table className="lab-table lab-table--archive">
                 <thead>
                   <tr>
-                    <th className="lab-archive-col lab-archive-col--report">Report ID</th>
                     <th className="lab-archive-col lab-archive-col--patient">Patient Name</th>
                     <th className="lab-archive-col lab-archive-col--source">Source</th>
                     <th className="lab-archive-col lab-archive-col--location">Ward / Bed</th>
@@ -168,9 +171,6 @@ export default function LabCompletedReportsPage() {
                     const location = visitLocationLabel(report);
                     return (
                     <tr key={report.reportDbId ?? report.reportId}>
-                      <td className="lab-archive-col lab-archive-col--report">
-                        <strong>{report.reportId}</strong>
-                      </td>
                       <td className="lab-archive-col lab-archive-col--patient lab-archive-patient">
                         <span className="lab-archive-patient__name">{report.patientName}</span>
                         <span className="lab-archive-meta lab-archive-patient__id">{report.patientId}</span>
@@ -203,13 +203,6 @@ export default function LabCompletedReportsPage() {
                             onClick={() => setSelectedReport(report)}
                           >
                             View
-                          </button>
-                          <button
-                            type="button"
-                            className="lab-btn lab-btn-sm lab-archive-btn lab-archive-btn--edit"
-                            onClick={() => setEditingReport(report)}
-                          >
-                            Edit
                           </button>
                         </div>
                       </td>
