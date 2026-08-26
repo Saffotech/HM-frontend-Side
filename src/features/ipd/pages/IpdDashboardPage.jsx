@@ -66,7 +66,11 @@ function buildStats(permissions) {
       to: canListPatients ? `${ROUTES.IPD_PATIENTS}?status=admitted` : null,
     },
     {
+      // Backend `running_bills` counts pending/partial IpdBill rows.
+      // Bills page lists every admitted stay — reuse dashboard admitted count
+      // (`pending_discharges`) so the card matches that list (frontend-only).
       key: "running_bills",
+      valueKey: "pending_discharges",
       label: "Running Bills",
       icon: Receipt,
       tone: "ipd-stat-card--teal",
@@ -143,7 +147,7 @@ export default function IpdDashboardPage() {
           <IpdStatCard
             key={card.key}
             label={card.label}
-            value={data?.[card.key] ?? "—"}
+            value={data?.[card.valueKey ?? card.key] ?? "—"}
             icon={card.icon}
             tone={card.tone}
             to={card.to}

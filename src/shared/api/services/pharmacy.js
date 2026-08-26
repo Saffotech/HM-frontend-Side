@@ -30,14 +30,30 @@ export async function fetchPrescriptionById(id, token) {
 
 export async function submitDispense(prescriptionId, body, token) {
   const items = (body?.items ?? [])
-    .map(({ prescription_item_id, quantity_dispensed }) => {
-      const itemId = Number(prescription_item_id);
-      const qty = Number(quantity_dispensed);
+    .map((row) => {
+      const itemId = Number(row.prescription_item_id);
+      const qty = Number(row.quantity_dispensed);
       if (!Number.isInteger(itemId) || itemId <= 0) return null;
       if (!Number.isInteger(qty) || qty <= 0) return null;
+
+      const amountRaw = Number(row.amount);
+      const unitPriceRaw = Number(row.unit_price);
+      const amount =
+        Number.isFinite(amountRaw) && amountRaw >= 0
+          ? Math.round(amountRaw * 100) / 100
+          : 0;
+      const unit_price =
+        Number.isFinite(unitPriceRaw) && unitPriceRaw >= 0
+          ? Math.round(unitPriceRaw * 100) / 100
+          : qty > 0
+            ? Math.round((amount / qty) * 100) / 100
+            : 0;
+
       return {
         prescription_item_id: itemId,
         quantity_dispensed: qty,
+        amount,
+        unit_price,
       };
     })
     .filter(Boolean);
