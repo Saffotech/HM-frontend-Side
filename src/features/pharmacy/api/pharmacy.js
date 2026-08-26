@@ -57,8 +57,15 @@ export async function getPrescriptionById(id, token) {
 export async function dispenseMedicine(prescriptionId, body, token) {
 
   // Item-level body (target contract):
-
-  // { items: [{ prescription_item_id, quantity_dispensed }], remarks?: string }
+  // {
+  //   items: [{
+  //     prescription_item_id,
+  //     quantity_dispensed,
+  //     amount,      // line total ₹ (frontend sends; backend may persist later)
+  //     unit_price,  // amount / quantity
+  //   }],
+  //   remarks?: string
+  // }
 
   return apiClient(`/pharmacy/dispense/${prescriptionId}`, {
 

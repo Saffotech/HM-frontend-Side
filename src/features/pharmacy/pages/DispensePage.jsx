@@ -128,7 +128,7 @@ export default function DispensePage() {
       return;
     }
 
-    const body = buildDispensePayload(enrichedItems, quantities, remarks);
+    const body = buildDispensePayload(enrichedItems, quantities, remarks, amounts);
     if (!body.items?.length) {
       setFormError('Enter a dispense quantity for at least one medicine.');
       return;
