@@ -4,7 +4,6 @@
 
 import { useEffect, useState } from 'react';
 import { Modal, Button } from '@/shared/components/common';
-import { toast } from '@/shared/utils/toast';
 
 function fromSeed(seed = {}) {
   const claimed = seed.claimed ?? seed.claimedAmount;
@@ -43,7 +42,7 @@ export default function EditInsuranceModal({ open, onClose, initial, onSave }) {
     onClose?.();
   };
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     if (!values.insurer.trim()) {
       setError('Insurance company is required');
@@ -77,17 +76,20 @@ export default function EditInsuranceModal({ open, onClose, initial, onSave }) {
       }
     }
 
-    onSave?.({
-      insurer: values.insurer.trim(),
-      policyNo: values.policyNo.trim(),
-      policyHolder: values.policyHolder.trim(),
-      relationship: values.relationship.trim(),
-      claimed,
-      claimedAmount: claimed,
-      estimateAmount,
-    });
-    toast.success('Insurance details updated');
-    handleClose();
+    try {
+      await onSave?.({
+        insurer: values.insurer.trim(),
+        policyNo: values.policyNo.trim(),
+        policyHolder: values.policyHolder.trim(),
+        relationship: values.relationship.trim(),
+        claimed,
+        claimedAmount: claimed,
+        estimateAmount,
+      });
+      handleClose();
+    } catch {
+      // Parent surfaces API errors
+    }
   };
 
   return (

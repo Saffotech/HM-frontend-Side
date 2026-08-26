@@ -1,6 +1,6 @@
 /**
- * In-memory insurance payloads for post-admit navigation.
- * Not persisted — backend insurance APIs are the source of truth.
+ * Helpers for post-admit insurance navigation state.
+ * Prefer live GET /ipd/insurance/patients/:id after refresh; state is a warm cache.
  */
 
 function formatInsuranceDateLabel(raw) {
@@ -36,7 +36,7 @@ export function buildInsuranceAdmitContext(admission, formValues) {
   const patient = {
     id: routePatientId,
     admissionId: admission?.id ?? null,
-    claimId: admission?.id != null ? `pending-${admission.id}` : null,
+    claimId: admission?.claim_id ?? null,
     patientName:
       admission.patient_name || formValues.selectedLabel?.split(' · ')[0] || '—',
     ageGender: '—',
@@ -51,7 +51,7 @@ export function buildInsuranceAdmitContext(admission, formValues) {
   };
 
   const claim = {
-    id: patient.claimId,
+    id: admission?.claim_id ?? patient.claimId,
     admissionId: admission?.id ?? null,
     ipdId: admission.admission_no || String(admission.id ?? ''),
     createdLabel,
@@ -77,6 +77,12 @@ export function buildInsuranceAdmitContext(admission, formValues) {
     insurancePayments: [],
     patientPayments: [],
   };
+
+  // Prefer real claim id from admit response when present
+  if (admission?.claim_id != null) {
+    patient.claimId = admission.claim_id;
+    claim.id = admission.claim_id;
+  }
 
   return { routePatientId, patient, claim, admission };
 }

@@ -87,3 +87,55 @@ export function matchesPaymentType(record, paymentType) {
 export function matchesSelfBillingPaymentType(record, paymentType) {
   return matchesPaymentType(record, paymentType);
 }
+
+/**
+ * Route for IPD Billing action based on admission payment type.
+ * Cashless → insurance billing; self + copay → bill preview.
+ */
+export function resolveIpdBillingPath(record = {}) {
+  const paymentType =
+    paymentTypeFromRecord(record) ?? IPD_PAYMENT_TYPE.SELF;
+
+  if (paymentType === IPD_PAYMENT_TYPE.INSURANCE_CASHLESS) {
+    const patientKey =
+      record.patient_uid ??
+      record.patientUid ??
+      record.uhid ??
+      record.patientId ??
+      record.patient_id ??
+      record.id;
+    if (patientKey == null || patientKey === '') return null;
+    return `/ipd/billing/insurance/${encodeURIComponent(String(patientKey))}`;
+  }
+
+  const admissionId =
+    record.admission_id ??
+    record.admissionId ??
+    record.id;
+  if (admissionId == null || admissionId === '') return null;
+  return `/ipd/billing/preview/${encodeURIComponent(String(admissionId))}`;
+}
+
+/**
+ * Optional detail route: cashless opens insurance patient profile.
+ */
+export function resolveIpdPatientOpenPath(record = {}) {
+  const paymentType =
+    paymentTypeFromRecord(record) ?? IPD_PAYMENT_TYPE.SELF;
+
+  if (paymentType === IPD_PAYMENT_TYPE.INSURANCE_CASHLESS) {
+    const patientKey =
+      record.patient_uid ??
+      record.patientUid ??
+      record.uhid ??
+      record.patientId ??
+      record.patient_id ??
+      record.id;
+    if (patientKey == null || patientKey === '') return null;
+    return `/ipd/patients/insurance/${encodeURIComponent(String(patientKey))}`;
+  }
+
+  const admissionId = record.admission_id ?? record.admissionId ?? record.id;
+  if (admissionId == null || admissionId === '') return null;
+  return `/ipd/patients/${encodeURIComponent(String(admissionId))}`;
+}

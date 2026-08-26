@@ -498,19 +498,34 @@ export function mapBackendBillingBundleResponse(raw, context = {}) {
     ? raw.transactions.map((row) => normalizeBillingTransaction(row, context))
     : [];
 
-  const dailyCharges = transactions.length
-    ? normalizeDailyCharges(
-        transactions.map((tx) => mapTransactionToDailyChargeRow(tx)),
-      )
-    : initDailyCharges(context.claim);
+  const rawDaily =
+    raw.daily_charges ?? raw.dailyCharges ?? null;
+  const dailyCharges = Array.isArray(rawDaily)
+    ? normalizeDailyCharges(rawDaily)
+    : transactions.length
+      ? normalizeDailyCharges(
+          transactions.map((tx) => mapTransactionToDailyChargeRow(tx)),
+        )
+      : initDailyCharges(context.claim);
 
-  const chargeHeads = Array.isArray(raw.charge_heads)
-    ? sortInsuranceChargeHeads(normalizeInsuranceChargeHeads(raw.charge_heads))
+  const rawHeads = raw.charge_heads ?? raw.chargeHeads ?? raw.charges ?? null;
+  const chargeHeads = Array.isArray(rawHeads)
+    ? sortInsuranceChargeHeads(normalizeInsuranceChargeHeads(rawHeads))
     : initChargeHeadsFromClaim(context.claim);
+
+  const claim = raw.claim
+    ? {
+        ...context.claim,
+        ...raw.claim,
+        charges: chargeHeads,
+        dailyCharges,
+        daily_charges: dailyCharges,
+      }
+    : context.claim;
 
   return {
     patient: raw.patient ?? context.patient ?? null,
-    claim: raw.claim ?? context.claim ?? null,
+    claim,
     admissionId:
       raw.admission_id ?? raw.admissionId ?? context.admissionId ?? null,
     patientId: raw.patient_id ?? raw.patientId ?? context.patientId ?? null,

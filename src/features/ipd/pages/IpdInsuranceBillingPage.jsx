@@ -135,6 +135,21 @@ export default function IpdInsuranceBillingPage() {
     setExpandedDailyDate(null);
   }, [claim?.id]);
 
+  // When live billing bundle arrives (auto bed/visit/pharmacy), refresh UI totals.
+  useEffect(() => {
+    const heads = bundleQuery.data?.finalBilling?.chargeHeads;
+    if (Array.isArray(heads) && heads.length) {
+      setCharges(heads);
+    }
+    const daily = bundleQuery.data?.dailyCharges;
+    if (Array.isArray(daily)) {
+      setDailyCharges(daily);
+    }
+    if (bundleQuery.data?.claim) {
+      setSavedClaim(bundleQuery.data.claim);
+    }
+  }, [bundleQuery.dataUpdatedAt]);
+
   const totals = useMemo(
     () => calculateInsuranceChargeTotals(charges),
     [charges],

@@ -20,7 +20,11 @@ import {
 import { useIpdPermissionSet } from '@/features/ipd/hooks/useIpdPermission';
 import { formatIpdDateTime } from '@/features/ipd/utils/ipdFormat';
 import { resolveIpdBillPreviewPayment } from '@/features/ipd/utils/resolveIpdBillPreviewPayment';
+<<<<<<< HEAD
 import { formatCurrency } from '@/shared/utils/formatCurrency';
+=======
+import { resolveIpdBillingPath } from '@/features/ipd/utils/ipdPaymentTypes';
+>>>>>>> 7a6ca9d (add from my side)
 
 function Field({ label, children, wide = false }) {
   return (
@@ -56,6 +60,11 @@ export default function IpdPatientDetailPage() {
   const bills = data?.bills ?? [];
   const running = data?.running_bill;
   const admitted = admission?.status === 'admitted';
+
+  const goToBilling = () => {
+    const path = resolveIpdBillingPath(admission ?? { id: admissionId });
+    if (path) navigate(path);
+  };
 
   const paymentView = useMemo(
     () =>
@@ -100,14 +109,7 @@ export default function IpdPatientDetailPage() {
                   type="button"
                   variant="secondary"
                   size="sm"
-                  onClick={() =>
-                    navigate(
-                      ROUTES.IPD_BILL_PREVIEW.replace(
-                        ':admissionId',
-                        String(admissionId)
-                      )
-                    )
-                  }
+                  onClick={goToBilling}
                 >
                   Billing
                 </Button>
@@ -293,14 +295,7 @@ export default function IpdPatientDetailPage() {
                   type="button"
                   variant="secondary"
                   size="sm"
-                  onClick={() =>
-                    navigate(
-                      ROUTES.IPD_BILL_PREVIEW.replace(
-                        ':admissionId',
-                        String(admissionId)
-                      )
-                    )
-                  }
+                  onClick={goToBilling}
                 >
                   {billActionLabel}
                 </Button>

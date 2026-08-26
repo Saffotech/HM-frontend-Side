@@ -28,6 +28,8 @@ import {
   isInsuranceCashlessPaymentType,
   matchesPaymentType,
   parseIpdPaymentType,
+  resolveIpdBillingPath,
+  resolveIpdPatientOpenPath,
   paymentTypeQueryValue,
 } from '@/features/ipd/utils/ipdPaymentTypes';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
@@ -613,11 +615,10 @@ export default function IpdPatientListPage() {
                                   allowed={canViewPatient}
                                   type="button"
                                   className="btn btn--sm ipd-action-btn ipd-action-btn--view"
-                                  onClick={() =>
-                                    navigate(
-                                      pathFor(ROUTES.IPD_PATIENT_DETAIL, row.id)
-                                    )
-                                  }
+                                  onClick={() => {
+                                    const path = resolveIpdPatientOpenPath(row);
+                                    if (path) navigate(path);
+                                  }}
                                 >
                                   View
                                 </IpdPermissionButton>
@@ -635,11 +636,10 @@ export default function IpdPatientListPage() {
                                   allowed={canViewBilling}
                                   type="button"
                                   className="btn btn--sm ipd-action-btn ipd-action-btn--billing"
-                                  onClick={() =>
-                                    navigate(
-                                      pathFor(ROUTES.IPD_BILL_PREVIEW, row.id)
-                                    )
-                                  }
+                                  onClick={() => {
+                                    const path = resolveIpdBillingPath(row);
+                                    if (path) navigate(path);
+                                  }}
                                 >
                                   Billing
                                 </IpdPermissionButton>

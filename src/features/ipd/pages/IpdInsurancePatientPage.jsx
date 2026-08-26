@@ -7,13 +7,19 @@ import { useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Button, EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
+import { toast } from '@/shared/utils/toast';
 import EditInsuranceModal from '@/features/ipd/components/EditInsuranceModal';
 import useIpdBackNavigation from '@/features/ipd/hooks/useIpdBackNavigation';
 import {
   useIpdInsurancePatientQuery,
   useUpdateIpdInsurancePatientMutation,
 } from '@/features/ipd/hooks/useIpdBillingQuery';
+<<<<<<< HEAD
 import { formatCurrency } from '@/shared/utils/formatCurrency';
+=======
+import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
+import { mapInsuranceClaim } from '@/features/ipd/utils/mapInsuranceApi';
+>>>>>>> 7a6ca9d (add from my side)
 
 function Fact({ label, value }) {
   return (
@@ -39,8 +45,22 @@ export default function IpdInsurancePatientPage() {
   const { patient, claim: seedClaim } = useMemo(() => {
     if (patientQuery.data?.patient && patientQuery.data?.claim) {
       return {
-        patient: patientQuery.data.patient,
-        claim: patientQuery.data.claim,
+        patient: {
+          id: patientQuery.data.patient.id ?? patientQuery.data.patient.uhid,
+          patientName:
+            patientQuery.data.patient.patientName ??
+            patientQuery.data.patient.patient_name,
+          ageGender:
+            patientQuery.data.patient.ageGender ??
+            patientQuery.data.patient.age_gender,
+          phone: patientQuery.data.patient.phone,
+          uhid: patientQuery.data.patient.uhid,
+          coverage: patientQuery.data.patient.coverage,
+          registeredOn:
+            patientQuery.data.patient.registeredOn ??
+            patientQuery.data.patient.registered_on,
+        },
+        claim: mapInsuranceClaim(patientQuery.data.claim),
       };
     }
     if (navAdmit?.patient && navAdmit?.claim) {
@@ -227,12 +247,17 @@ export default function IpdInsurancePatientPage() {
         open={editOpen}
         onClose={() => setEditOpen(false)}
         initial={claim}
-        onSave={(next) => {
-          setInsurance((prev) => ({ ...(prev ?? {}), ...next }));
-          updatePatientMutation.mutate({
-            patientId,
-            payload: next,
-          });
+        onSave={async (next) => {
+          try {
+            await updatePatientMutation.mutateAsync({
+              patientId,
+              payload: next,
+            });
+            setInsurance((prev) => ({ ...(prev ?? {}), ...next }));
+            toast.success('Insurance details updated');
+          } catch {
+            // mutationOnError already toasts
+          }
         }}
       />
     </div>

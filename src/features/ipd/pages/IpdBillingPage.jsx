@@ -23,6 +23,7 @@ import {
   matchesPaymentType,
   parseIpdPaymentType,
   paymentTypeQueryValue,
+  resolveIpdBillingPath,
 } from '@/features/ipd/utils/ipdPaymentTypes';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
 
@@ -119,6 +120,8 @@ export default function IpdBillingPage() {
         ward: admission.ward_name,
         bed: admission.bed_number,
         days: admission.length_of_stay_days,
+        payment_type: admission.payment_type,
+        coverage: admission.coverage,
         total,
         paid_balance: paidBalance,
         due_balance: dueBalance,
@@ -351,14 +354,10 @@ export default function IpdBillingPage() {
                           allowed={canViewBilling}
                           type="button"
                           className="btn btn--secondary btn--sm"
-                          onClick={() =>
-                            navigate(
-                              ROUTES.IPD_BILL_PREVIEW.replace(
-                                ':admissionId',
-                                String(row.id)
-                              )
-                            )
-                          }
+                          onClick={() => {
+                            const path = resolveIpdBillingPath(row);
+                            if (path) navigate(path);
+                          }}
                         >
                           View
                         </IpdPermissionButton>

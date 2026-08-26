@@ -1,6 +1,5 @@
 /**
  * IPD billing repository — API-only data access for billing UI.
- * No dummy adapter and no sessionStorage fallback.
  */
 
 import {
@@ -9,8 +8,16 @@ import {
   updateIpdDailyBilling,
   updateIpdFinalBilling,
 } from '@/features/ipd/api/ipdBilling';
+import {
+  getIpdInsurancePatient,
+  updateIpdInsuranceClaim,
+} from '@/features/ipd/api/insurance';
 import * as selfPayAdapter from '@/features/ipd/billing/ipdSelfPayBillingAdapter';
-import { mapBackendBillingBundleResponse } from '@/features/ipd/billing/ipdBillingMapper';
+import {
+  mapBackendBillingBundleResponse,
+  resolveAdmissionIdFromBillingContext,
+} from '@/features/ipd/billing/ipdBillingMapper';
+import { mapInsuranceClaim } from '@/features/ipd/utils/mapInsuranceApi';
 
 function pendingBillingSave(feature) {
   const error = new Error(
@@ -18,6 +25,64 @@ function pendingBillingSave(feature) {
   );
   error.code = 'IPD_BILLING_API_NOT_ENABLED';
   return error;
+}
+
+async function resolveInsuranceBillingContext(
+  { patientId, insuranceAdmit },
+  token,
+) {
+  let patient = insuranceAdmit?.patient ?? null;
+  let claim = insuranceAdmit?.claim
+    ? mapInsuranceClaim(insuranceAdmit.claim)
+    : null;
+  let admissionId =
+    insuranceAdmit?.admission?.id ??
+    resolveAdmissionIdFromBillingContext({
+      patient,
+      claim,
+      insuranceAdmit,
+    });
+
+  if ((!admissionId || !claim) && patientId) {
+    const raw = await getIpdInsurancePatient(patientId, token);
+    if (raw?.patient) {
+      patient = {
+        id: raw.patient.id ?? raw.patient.uhid ?? patientId,
+        admissionId: raw.patient.admission_id ?? raw.patient.admissionId ?? null,
+        claimId: raw.patient.claim_id ?? raw.patient.claimId ?? null,
+        patientName: raw.patient.patient_name ?? raw.patient.patientName,
+        ageGender: raw.patient.age_gender ?? raw.patient.ageGender,
+        phone: raw.patient.phone,
+        uhid: raw.patient.uhid,
+        coverage: raw.patient.coverage,
+        insurer: raw.patient.insurer,
+        policyNo: raw.patient.policy_no ?? raw.patient.policyNo,
+        policyStatus: raw.patient.policy_status ?? raw.patient.policyStatus,
+        registeredOn: raw.patient.registered_on ?? raw.patient.registeredOn,
+      };
+    }
+    if (raw?.claim) {
+      claim = mapInsuranceClaim(raw.claim);
+    }
+    admissionId =
+      claim?.admissionId ??
+      patient?.admissionId ??
+      raw?.claim?.admission_id ??
+      raw?.patient?.admission_id ??
+      admissionId;
+  }
+
+  return {
+    admissionId: admissionId != null ? String(admissionId) : null,
+    patient,
+    claim,
+    insuranceAdmit: {
+      ...(insuranceAdmit ?? {}),
+      patient,
+      claim,
+      admission: insuranceAdmit?.admission ?? { id: admissionId },
+    },
+  };
 }
 
 export async function fetchIpdInsuranceBillingBundle(
@@ -28,17 +93,20 @@ export async function fetchIpdInsuranceBillingBundle(
     return null;
   }
 
-  const admissionId = insuranceAdmit?.admission?.id ?? insuranceAdmit?.claim?.admissionId;
-  if (!admissionId) return null;
+  const ctx = await resolveInsuranceBillingContext(
+    { patientId, insuranceAdmit },
+    token,
+  );
+  if (!ctx.admissionId) return null;
 
-  const raw = await getIpdBillingBundle(admissionId, token);
+  const raw = await getIpdBillingBundle(ctx.admissionId, token);
   return mapBackendBillingBundleResponse(raw, {
     patientId,
-    admissionId: String(admissionId),
-    patient: insuranceAdmit?.patient ?? null,
-    claim: insuranceAdmit?.claim ?? null,
-    insuranceAdmit,
-    claimId: insuranceAdmit?.claim?.id ?? null,
+    admissionId: ctx.admissionId,
+    patient: raw?.patient ?? ctx.patient,
+    claim: raw?.claim ? mapInsuranceClaim(raw.claim) : ctx.claim,
+    insuranceAdmit: ctx.insuranceAdmit,
+    claimId: raw?.claim_id ?? ctx.claim?.id ?? null,
   });
 }
 
@@ -97,13 +165,19 @@ export async function saveIpdInsuranceFinalCharges(
   if (!IPD_BILLING_USE_LIVE_API) {
     throw pendingBillingSave('Saving insurance hospital charges');
   }
-  const admissionId = insuranceAdmit?.admission?.id;
-  if (!admissionId) {
+  const ctx = await resolveInsuranceBillingContext(
+    { patientId, insuranceAdmit },
+    token,
+  );
+  if (!ctx.admissionId) {
     throw pendingBillingSave('Saving insurance hospital charges');
   }
   void claimId;
-  await updateIpdFinalBilling(admissionId, { charges }, token);
-  return fetchIpdInsuranceBillingBundle({ patientId, insuranceAdmit }, token);
+  await updateIpdFinalBilling(ctx.admissionId, { charges }, token);
+  return fetchIpdInsuranceBillingBundle(
+    { patientId, insuranceAdmit: ctx.insuranceAdmit },
+    token,
+  );
 }
 
 export async function saveIpdInsuranceDailyCharges(
@@ -113,13 +187,19 @@ export async function saveIpdInsuranceDailyCharges(
   if (!IPD_BILLING_USE_LIVE_API) {
     throw pendingBillingSave('Saving insurance daily charges');
   }
-  const admissionId = insuranceAdmit?.admission?.id;
-  if (!admissionId) {
+  const ctx = await resolveInsuranceBillingContext(
+    { patientId, insuranceAdmit },
+    token,
+  );
+  if (!ctx.admissionId) {
     throw pendingBillingSave('Saving insurance daily charges');
   }
   void claimId;
-  await updateIpdDailyBilling(admissionId, { dailyCharges }, token);
-  return fetchIpdInsuranceBillingBundle({ patientId, insuranceAdmit }, token);
+  await updateIpdDailyBilling(ctx.admissionId, { dailyCharges }, token);
+  return fetchIpdInsuranceBillingBundle(
+    { patientId, insuranceAdmit: ctx.insuranceAdmit },
+    token,
+  );
 }
 
 export async function saveIpdInsuranceClaimAmounts(
@@ -129,8 +209,16 @@ export async function saveIpdInsuranceClaimAmounts(
   if (!IPD_BILLING_USE_LIVE_API) {
     throw pendingBillingSave('Saving insurance claim amounts');
   }
-  void claimId;
-  void patch;
-  void token;
-  return fetchIpdInsuranceBillingBundle({ patientId, insuranceAdmit }, token);
+  const ctx = await resolveInsuranceBillingContext(
+    { patientId, insuranceAdmit },
+    token,
+  );
+  const id = claimId ?? ctx.claim?.id;
+  if (id != null) {
+    await updateIpdInsuranceClaim(id, patch, token);
+  }
+  return fetchIpdInsuranceBillingBundle(
+    { patientId, insuranceAdmit: ctx.insuranceAdmit },
+    token,
+  );
 }

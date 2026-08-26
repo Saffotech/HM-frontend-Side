@@ -56,7 +56,7 @@ const INITIAL = {
   admissionDate: new Date().toISOString().slice(0, 10),
   departmentId: "",
   doctorId: "",
-  // payment (UI only — not sent to admission API)
+  // payment — sent on admit so backend can create insurance claim
   paymentMode: "", // self | insurance
   selfPayMethod: "", // cash | card | upi
   insuranceClaimType: "", // cashless | pay_and_claim
@@ -273,6 +273,24 @@ export default function AdmitPatientForm() {
       admission_date: toIsoAdmissionDate(values.admissionDate),
       diagnosis: null,
       notes: null,
+      payment_mode: values.paymentMode === "insurance" ? "insurance" : "self",
+      self_pay_method:
+        values.paymentMode === "self" ? values.selfPayMethod || null : null,
+      insurance:
+        values.paymentMode === "insurance"
+          ? {
+              claim_type: values.insuranceClaimType,
+              insurer: String(values.insuranceCompany || "").trim(),
+              policy_no: String(values.policyNumber || "").trim(),
+              policy_holder: String(values.policyHolderName || "").trim(),
+              relationship: String(values.relationship || "").trim(),
+              member_id: String(values.memberId || "").trim() || null,
+              claimed_amount: Number(values.claimedAmount) || 0,
+              estimate_amount: String(values.estimateAmount || "").trim()
+                ? Number(values.estimateAmount)
+                : null,
+            }
+          : null,
     };
 
     try {
