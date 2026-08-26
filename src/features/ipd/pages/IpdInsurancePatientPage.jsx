@@ -14,12 +14,8 @@ import {
   useIpdInsurancePatientQuery,
   useUpdateIpdInsurancePatientMutation,
 } from '@/features/ipd/hooks/useIpdBillingQuery';
-<<<<<<< HEAD
 import { formatCurrency } from '@/shared/utils/formatCurrency';
-=======
-import { formatIpdMoney } from '@/features/ipd/utils/ipdFormat';
 import { mapInsuranceClaim } from '@/features/ipd/utils/mapInsuranceApi';
->>>>>>> 7a6ca9d (add from my side)
 
 function Fact({ label, value }) {
   return (

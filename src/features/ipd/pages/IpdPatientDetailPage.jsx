@@ -20,11 +20,8 @@ import {
 import { useIpdPermissionSet } from '@/features/ipd/hooks/useIpdPermission';
 import { formatIpdDateTime } from '@/features/ipd/utils/ipdFormat';
 import { resolveIpdBillPreviewPayment } from '@/features/ipd/utils/resolveIpdBillPreviewPayment';
-<<<<<<< HEAD
-import { formatCurrency } from '@/shared/utils/formatCurrency';
-=======
 import { resolveIpdBillingPath } from '@/features/ipd/utils/ipdPaymentTypes';
->>>>>>> 7a6ca9d (add from my side)
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 function Field({ label, children, wide = false }) {
   return (
