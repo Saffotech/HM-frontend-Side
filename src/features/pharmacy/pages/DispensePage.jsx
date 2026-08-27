@@ -26,7 +26,6 @@ import {
   getPrescriptionItemDbId,
 } from '@/features/pharmacy/utils/dispenseWorkflow';
 import {
-  formatHumanInstructions,
   formatQuantityLabel,
   formatSummaryQuantity,
   inferMedicineUnit,
@@ -217,8 +216,7 @@ export default function DispensePage() {
                       <tbody>
                         {enrichedItems.map((item) => {
                           const disabled = item.quantity_remaining <= 0;
-                          const instructions =
-                            item.instructions_label || formatHumanInstructions(item);
+                          const instructions = String(item.instructions ?? '').trim() || '—';
 
                           return (
                             <tr key={item.id} className={disabled ? 'is-complete' : undefined}>

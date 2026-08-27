@@ -47,7 +47,15 @@ export function apiToUiPharmacyListItem(row) {
  */
 export function apiToUiPharmacyPrescriptionItem(item) {
   if (!item) return null;
-  const duration = Number(item.duration) || 0;
+  const durationRaw = item.duration;
+  const durationNum = Number(durationRaw);
+  const duration =
+    Number.isFinite(durationNum) && durationNum > 0
+      ? durationNum
+      : (() => {
+          const match = String(durationRaw ?? '').match(/(\d+)/);
+          return match ? parseInt(match[1], 10) : 0;
+        })();
   const itemDbId = Number(item.id ?? item.prescription_item_id ?? item.prescriptionItemId);
   const mapped = {
     id: Number.isInteger(itemDbId) && itemDbId > 0 ? itemDbId : null,
@@ -55,13 +63,23 @@ export function apiToUiPharmacyPrescriptionItem(item) {
       Number.isInteger(itemDbId) && itemDbId > 0 ? itemDbId : null,
     medicine_name: item.medicine_name ?? '',
     dosage: item.dosage ?? '',
+    form: item.form ?? null,
+    route: item.route ?? null,
+    timing: item.timing ?? null,
     instructions: item.instructions ?? null,
     frequency: item.frequency ?? null,
-    duration,
+    duration: durationRaw ?? duration,
+    // Prefer explicit prescribed quantity for fallback math when backend omit quantity_prescribed
+    quantity: item.quantity ?? null,
   };
 
   const { quantity_prescribed, quantity_dispensed, quantity_remaining } =
-    resolveItemQuantities(item);
+    resolveItemQuantities({
+      ...item,
+      quantity: item.quantity ?? item.quantity_prescribed,
+      dosage: item.dosage,
+      duration,
+    });
 
   return {
     ...mapped,
@@ -69,7 +87,10 @@ export function apiToUiPharmacyPrescriptionItem(item) {
     quantity_prescribed,
     quantity_dispensed,
     quantity_remaining,
-    instructions_label: formatHumanInstructions(mapped),
+    instructions_label: formatHumanInstructions({
+      ...mapped,
+      duration,
+    }),
   };
 }
 

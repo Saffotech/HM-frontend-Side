@@ -440,21 +440,36 @@
   gap: 0.5rem;
 }
 
-.doc-med-row--consult .doc-med-row__pair{
+.doc-med-row--consult .doc-med-row__pair,
+.doc-med-row--consult .doc-med-row__trio,
+.doc-med-row--consult .doc-med-row__quad{
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0.5rem;
   min-width: 0;
 }
 
-@media (min-width: 520px){
+@media (min-width: 640px){
   .doc-med-row--consult .doc-med-row__pair{
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .doc-med-row--consult .doc-med-row__trio{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .doc-med-row--consult .doc-med-row__quad{
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .doc-med-row--consult .doc-med-row__cell--span-3{
+    grid-column: span 3;
   }
 }
 
 .doc-med-row--consult .doc-med-row__duration-unit{
   align-self: start;
+  margin-top: 0;
 }
 
 .doc-med-row__duration-value .field__input{
@@ -478,6 +493,88 @@
   border-color: var(--color-danger, #dc2626);
 }
 
+.doc-med-row__select{
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: 2.375rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #fff;
+  font-size: 0.875rem;
+  box-sizing: border-box;
+}
+
+.doc-med-row__select--error{
+  border-color: var(--color-danger, #dc2626);
+}
+
+.doc-med-row__pair--nested{
+  margin-top: 0;
+}
+
+.doc-med-card__head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.15rem;
+}
+
+.doc-med-card__title{
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #64748b);
+}
+
+.doc-med-card__actions{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.doc-med-card__add{
+  border: 1px solid var(--color-border, #e2e8f0);
+  background: #fff;
+  color: var(--color-primary, #2563eb);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-md, 6px);
+  line-height: 1.2;
+}
+
+.doc-med-card__add:hover{
+  background: #f8fafc;
+}
+
+.doc-med-card__remove{
+  border: none;
+  background: transparent;
+  color: var(--color-danger, #dc2626);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  padding: 0.15rem 0.25rem;
+}
+
+.doc-med-card__remove:hover{
+  text-decoration: underline;
+}
+
+.doc-med-card__counter{
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  text-align: right;
+}
+
+.doc-consult-rx__hint{
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+}
+
 .doc-consult-modal,
 .doc-rx-detail-modal{
   display: flex;
@@ -486,12 +583,17 @@
   max-height: min(92vh, 52rem);
 }
 
+.doc-rx-detail-modal.modal--lg{
+  max-width: min(94vw, 52rem);
+  width: min(94vw, 52rem);
+}
+
 .doc-consult-modal .modal__body,
 .doc-rx-detail-modal .modal__body{
   flex: 1;
   min-height: 0;
   min-width: 0;
-  overflow-x: hidden;
+  overflow-x: auto;
   overflow-y: auto;
   padding-top: 0.25rem;
 }
@@ -2631,27 +2733,38 @@
 
 .doc-rx-detail__table-wrap{
   border-radius: 0;
-  overflow-x: hidden;
+  overflow-x: auto;
   max-width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .doc-rx-detail__table{
   width: 100%;
-  max-width: 100%;
-  table-layout: fixed;
+  min-width: 46rem;
+  max-width: none;
+  table-layout: auto;
   margin: 0;
   font-size: 0.8125rem;
+  white-space: nowrap;
 }
 
 .doc-rx-detail__table thead th,
 .doc-rx-detail__table tbody td{
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  overflow-wrap: normal;
+  word-break: normal;
+  white-space: nowrap;
+}
+
+.doc-rx-detail__table thead th:last-child,
+.doc-rx-detail__table tbody td:last-child{
+  white-space: normal;
+  min-width: 12rem;
+  max-width: 18rem;
 }
 
 .doc-rx-detail__table thead th{
-  padding: 0.4rem 0.6rem;
-  font-size: 0.625rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -2661,7 +2774,7 @@
 }
 
 .doc-rx-detail__table tbody td{
-  padding: 0.45rem 0.6rem;
+  padding: 0.55rem 0.75rem;
   vertical-align: middle;
   border-bottom: 1px solid #f1f5f9;
 }
@@ -2699,7 +2812,6 @@
   font-size: 0.9375rem;
 }.doc-rx-detail__table{
   margin-top: 0;
-  font-size: 0.8125rem;
 }
 
 .doc-rx-detail__clinical--readonly{
@@ -2769,13 +2881,6 @@
   .doc-profile-rx-table__actions .btn{
     width: 100%;
     justify-content: center;
-  }
-
-  .doc-rx-detail__table thead th:nth-child(4),
-  .doc-rx-detail__table tbody td:nth-child(4),
-  .doc-rx-detail__table thead th:nth-child(5),
-  .doc-rx-detail__table tbody td:nth-child(5){
-    display: none;
   }
 }
 

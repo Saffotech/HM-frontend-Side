@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
   Beaker,
-  ChevronDown,
   Droplet,
   Edit3,
   Eye,
@@ -25,6 +24,7 @@ import DoctorLabReportModal from './DoctorLabReportModal';
 import DoctorPatientVisitsPanel from './DoctorPatientVisitsPanel';
 import DoctorPatientVitalsPanel from './DoctorPatientVitalsPanel';
 import DoctorPatientNotesPanel from './DoctorPatientNotesPanel';
+import DoctorConsultHistorySnapshot from './DoctorConsultHistorySnapshot';
 import { mergeVisitTimelineWithPrescriptions } from '@/features/doctor/utils/patientHistory';
 import { mergeIpdIntoVisitHistory } from '@/features/doctor/utils/ipdVisitHistory';
 import { useDoctorIpdPatientAdmissionsQuery } from '@/features/doctor/hooks/useDoctorIpdPatientAdmissionsQuery';
@@ -205,18 +205,20 @@ export default function PatientHistoryProfile({
 
   const patientLabs = useMemo(
     () =>
-      allLabTests.filter((test) => {
-        if (
-          !matchesLabTestPatient(test, {
-            patientUid,
-            patientId,
-            name: profile.name !== '—' ? profile.name : patient?.name,
-          })
-        ) {
-          return false;
-        }
-        return labOrderMatchesEncounterMode(test, encounterMode);
-      }),
+      allLabTests
+        .filter((test) => {
+          if (
+            !matchesLabTestPatient(test, {
+              patientUid,
+              patientId,
+              name: profile.name !== '—' ? profile.name : patient?.name,
+            })
+          ) {
+            return false;
+          }
+          return labOrderMatchesEncounterMode(test, encounterMode);
+        })
+        .sort((a, b) => new Date(b.orderedAt || 0) - new Date(a.orderedAt || 0)),
     [allLabTests, patientUid, patientId, profile.name, patient?.name, encounterMode]
   );
 
@@ -347,7 +349,7 @@ export default function PatientHistoryProfile({
       </section>
 
       <div className="doc-profile-grid">
-        <section className="doc-card doc-profile-panel">
+        <section className="doc-card doc-profile-panel doc-profile-panel--consulting">
           <div className="doc-profile-panel__head">
             <h3 className="doc-profile-panel__title">
               <FileText size={16} aria-hidden />
@@ -357,17 +359,15 @@ export default function PatientHistoryProfile({
               ) : null}
             </h3>
           </div>
-          {showVisitSkeleton ? (
-            <VisitHistorySkeleton />
-          ) : visits.length === 0 ? (
-            <p className="text-muted doc-profile-empty">No visit records yet.</p>
-          ) : (
-            <div className="doc-visit-list">
-              {visits.map((visit, index) => (
-                <VisitHistoryItem key={visit.id} visit={visit} isLatest={index === 0} />
-              ))}
-            </div>
-          )}
+          <div className="doc-profile-panel__body">
+            {showVisitSkeleton ? (
+              <VisitHistorySkeleton />
+            ) : visits.length === 0 ? (
+              <p className="text-muted doc-profile-empty">No visit records yet.</p>
+            ) : (
+              <DoctorConsultHistorySnapshot visits={visits} />
+            )}
+          </div>
         </section>
 
         <section className="doc-card doc-profile-panel doc-profile-panel--labs">
@@ -462,68 +462,14 @@ export default function PatientHistoryProfile({
   );
 }
 
-function VisitHistorySkeleton({ count = 3 }) {
+function VisitHistorySkeleton() {
   return (
-    <div className="doc-visit-list" aria-busy="true" aria-label="Loading consulting history">
-      {Array.from({ length: count }).map((_, index) => (
-        <div key={index} className="doc-visit-card doc-visit-card--skeleton">
-          <Skeleton height={44} />
-        </div>
-      ))}
+    <div className="doc-consult-snapshot" aria-busy="true" aria-label="Loading consulting history">
+      <Skeleton height={72} />
+      <div style={{ marginTop: '0.75rem' }}>
+        <Skeleton height={140} />
+      </div>
     </div>
   );
 }
 
-function VisitHistoryItem({ visit, isLatest }) {
-  const [expanded, setExpanded] = useState(false);
-
-  return (
-    <article
-      className={`doc-visit-card${isLatest ? ' doc-visit-card--latest' : ''}${
-        expanded ? ' doc-visit-card--expanded' : ''
-      }`}
-    >
-      <button
-        type="button"
-        className="doc-visit-card__toggle"
-        onClick={() => setExpanded((open) => !open)}
-        aria-expanded={expanded}
-        aria-label={`${expanded ? 'Collapse' : 'Expand'} visit on ${visit.dateTime}`}
-      >
-        <ChevronDown
-          size={16}
-          aria-hidden
-          className={`doc-visit-card__chevron${expanded ? ' doc-visit-card__chevron--open' : ''}`}
-        />
-        <time className="doc-visit-card__time">{visit.dateTime}</time>
-        <span className="doc-visit-card__badges">
-          {isLatest && <span className="doc-visit-latest">Latest</span>}
-          {visit.status && <StatusPill status={visit.status} />}
-        </span>
-      </button>
-
-      {expanded && (
-        <div className="doc-visit-card__body">
-          <div className="doc-visit-detail-grid">
-            <div className="doc-visit-detail-tile">
-              <span className="doc-visit-detail-tile__label">Symptoms</span>
-              <p className="doc-visit-detail-tile__value">{visit.symptoms || '—'}</p>
-            </div>
-            <div className="doc-visit-detail-tile">
-              <span className="doc-visit-detail-tile__label">Diagnosis</span>
-              <p className="doc-visit-detail-tile__value">{visit.diagnosis || '—'}</p>
-            </div>
-            <div className="doc-visit-detail-tile">
-              <span className="doc-visit-detail-tile__label">Notes</span>
-              <p className="doc-visit-detail-tile__value">{visit.notes || '—'}</p>
-            </div>
-            <div className="doc-visit-detail-tile">
-              <span className="doc-visit-detail-tile__label">Follow-up</span>
-              <p className="doc-visit-detail-tile__value">{visit.followUp || '—'}</p>
-            </div>
-          </div>
-        </div>
-      )}
-    </article>
-  );
-}

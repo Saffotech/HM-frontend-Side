@@ -3,7 +3,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useConsultationContextQuery } from '@/features/doctor/hooks/useDoctorQueueQuery';
 import { useDoctorLabTestsQuery } from '@/features/doctor/hooks/useDoctorLabQuery';
 import {
-  DEFAULT_MEDICINE,
   LAB_DEPARTMENTS,
   LAB_PRIORITIES,
   inferLabCategory,
@@ -26,7 +25,7 @@ import {
 } from '@/features/doctor/utils/doctorDashboardCache';
 import { isLabRepeatRequired } from '@/features/doctor/utils/labRepeatRequired';
 import { stripInternalAppointmentMarkers } from '@/features/opd/utils/appointmentPaymentUtils';
-import { Modal, Button, Input, Label, Textarea, Select } from '@/shared/components/common';
+import { Modal, Button, Input, Textarea, Select } from '@/shared/components/common';
 import { doctorLabsApi, doctorPrescriptionsApi } from '@/shared/api/services';
 import { uiMedicinesToApiItems } from '@/shared/api/mappers/clinicalMapper';
 import { queryKeys } from '@/shared/api/queryKeys';
@@ -37,15 +36,11 @@ import { bumpDoctorIpdCache } from '@/shared/utils/doctorIpdSync';
 import { useLabRoutingDepartmentsQuery } from '@/shared/hooks/queries/useOpdReferenceQuery';
 import { resolveLabDepartmentId, departmentCode, labDepartmentLabel } from '@/shared/utils/labDepartments';
 import LabTestNameField from './LabTestNameField';
-
-function emptyMedicineRow() {
-  return {
-    ...DEFAULT_MEDICINE,
-    instructions: '',
-    durationValue: '',
-    durationUnit: 'Days',
-  };
-}
+import PrescriptionMedicineCard from './PrescriptionMedicineCard';
+import {
+  emptyMedicineRow,
+  validateMedicineRowOptional,
+} from '@/features/doctor/utils/medicineFields';
 
 function emptyLabOrderRow() {
   return {
@@ -563,28 +558,17 @@ export default function ConsultationModal({
       }
     });
     meds.forEach((m, i) => {
-      if (!String(m.name ?? '').trim()) return;
-      if (!String(m.dosage ?? '').trim()) {
-        errs[`medDosage_${i}`] = 'Dosage is required';
-      }
-      if (!String(m.frequency ?? '').trim()) {
-        errs[`medFrequency_${i}`] = 'Frequency is required';
-      }
-      if (!String(m.instructions ?? '').trim()) {
-        errs[`medInstructions_${i}`] = 'Instruction is required';
-      }
-      const durationValue = parseInt(m.durationValue, 10);
-      if (!durationValue || durationValue <= 0) {
-        errs[`medDuration_${i}`] = 'Duration must be a number greater than 0';
-      }
-      if (!String(m.durationUnit ?? '').trim()) {
-        errs[`medDurationUnit_${i}`] = 'Duration unit is required';
-      }
+      validateMedicineRowOptional(m, i, errs);
     });
     setFieldErrors(errs);
     if (Object.keys(errs).length) {
-      const hasMedErr = Object.keys(errs).some((key) => key.startsWith('med'));
-      if (hasMedErr && tab !== 'rx') setTab('rx');
+      if (errs.diagnosis) {
+        toast.error('Diagnosis is required');
+        if (tab !== 'clinical') setTab('clinical');
+      } else {
+        const hasMedErr = Object.keys(errs).some((key) => key.startsWith('med'));
+        if (hasMedErr && tab !== 'rx') setTab('rx');
+      }
       return;
     }
 
@@ -679,125 +663,56 @@ export default function ConsultationModal({
       )}
       {tab === 'rx' && (
         <div className="doc-consult-panel doc-consult-panel--rx">
-          <Label className="doc-consult-rx__label">Medicines</Label>
-          {meds.map((m, i) => {
-            const nameFilled = Boolean(String(m.name ?? '').trim());
-            const clearMedError = (key) => {
-              if (!fieldErrors[key]) return;
-              setFieldErrors((prev) => {
-                const next = { ...prev };
-                delete next[key];
-                return next;
-              });
-            };
-            return (
-              <div key={i} className="doc-med-row doc-med-row--consult">
-                <div className="doc-med-row__pair">
-                  <Input
-                    className="doc-med-row__cell"
-                    placeholder="Medicine name"
-                    value={m.name}
-                    onChange={(e) => {
-                      setMeds(meds.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)));
-                      if (!String(e.target.value ?? '').trim()) {
-                        setFieldErrors((prev) => {
-                          const next = { ...prev };
-                          delete next[`medDosage_${i}`];
-                          delete next[`medFrequency_${i}`];
-                          delete next[`medInstructions_${i}`];
-                          delete next[`medDuration_${i}`];
-                          delete next[`medDurationUnit_${i}`];
-                          return next;
-                        });
-                      }
-                    }}
-                  />
-                  <Input
-                    className="doc-med-row__cell"
-                    placeholder={nameFilled ? 'Dosage * — e.g. 200mg' : 'Dosage - example 200mg'}
-                    value={m.dosage}
-                    onChange={(e) => {
-                      setMeds(meds.map((x, j) => (j === i ? { ...x, dosage: e.target.value } : x)));
-                      clearMedError(`medDosage_${i}`);
-                    }}
-                    error={fieldErrors[`medDosage_${i}`]}
-                  />
-                </div>
-                <div className="doc-med-row__pair">
-                  <Input
-                    className="doc-med-row__cell"
-                    placeholder={nameFilled ? 'Frequency * — e.g. 1-0-1' : '1-0-1'}
-                    value={m.frequency}
-                    onChange={(e) => {
-                      setMeds(meds.map((x, j) => (j === i ? { ...x, frequency: e.target.value } : x)));
-                      clearMedError(`medFrequency_${i}`);
-                    }}
-                    error={fieldErrors[`medFrequency_${i}`]}
-                  />
-                  <Input
-                    className="doc-med-row__cell"
-                    placeholder={
-                      nameFilled
-                        ? 'Instruction * — e.g. after food'
-                        : 'Instruction - example after food'
-                    }
-                    value={m.instructions}
-                    onChange={(e) => {
-                      setMeds(meds.map((x, j) => (j === i ? { ...x, instructions: e.target.value } : x)));
-                      clearMedError(`medInstructions_${i}`);
-                    }}
-                    error={fieldErrors[`medInstructions_${i}`]}
-                  />
-                </div>
-                <div className="doc-med-row__pair">
-                  <Input
-                    className="doc-med-row__cell doc-med-row__duration-value"
-                    type="number"
-                    min={1}
-                    max={365}
-                    placeholder={
-                      nameFilled
-                        ? 'Duration * — days / weeks / months'
-                        : 'No. of days / weeks / months'
-                    }
-                    value={m.durationValue ?? ''}
-                    onChange={(e) => {
-                      setMeds(meds.map((x, j) => (j === i ? { ...x, durationValue: e.target.value } : x)));
-                      clearMedError(`medDuration_${i}`);
-                    }}
-                    error={fieldErrors[`medDuration_${i}`]}
-                  />
-                  <select
-                    className={`doc-med-row__duration-unit${
-                      fieldErrors[`medDurationUnit_${i}`] ? ' doc-med-row__duration-unit--error' : ''
-                    }`}
-                    value={m.durationUnit ?? 'Days'}
-                    onChange={(e) => {
-                      setMeds(meds.map((x, j) => (j === i ? { ...x, durationUnit: e.target.value } : x)));
-                      clearMedError(`medDurationUnit_${i}`);
-                    }}
-                    aria-label="Duration unit"
-                    required={nameFilled}
-                  >
-                    <option value="Days">Days</option>
-                    <option value="Weeks">Weeks</option>
-                    <option value="Months">Months</option>
-                  </select>
-                </div>
-                {fieldErrors[`medDurationUnit_${i}`] ? (
-                  <p className="field__error">{fieldErrors[`medDurationUnit_${i}`]}</p>
-                ) : null}
-              </div>
-            );
-          })}
-          <Button
-            size="sm"
-            variant="outline"
-            className="doc-consult-rx__add"
-            onClick={() => setMeds([...meds, emptyMedicineRow()])}
-          >
-            + Add medicine
-          </Button>
+          {meds.map((m, i) => (
+            <PrescriptionMedicineCard
+              key={i}
+              medicine={m}
+              index={i}
+              fieldErrors={fieldErrors}
+              showRequiredHints={false}
+              canRemove={meds.length > 1}
+              onAdd={
+                i === 0
+                  ? () => setMeds([...meds, emptyMedicineRow()])
+                  : null
+              }
+              onRemove={() => {
+                setMeds(meds.filter((_, j) => j !== i));
+                setFieldErrors((prev) => {
+                  const next = { ...prev };
+                  Object.keys(next).forEach((key) => {
+                    if (key.startsWith('med') && key.includes('_')) delete next[key];
+                  });
+                  return next;
+                });
+              }}
+              onChange={(nextMed) => {
+                setMeds(meds.map((x, j) => (j === i ? nextMed : x)));
+                setFieldErrors((prev) => {
+                  const next = { ...prev };
+                  if (!String(nextMed.name ?? '').trim()) {
+                    Object.keys(next).forEach((key) => {
+                      if (key.endsWith(`_${i}`)) delete next[key];
+                    });
+                    return next;
+                  }
+                  [
+                    'medDosage',
+                    'medForm',
+                    'medRoute',
+                    'medFrequency',
+                    'medDuration',
+                    'medDurationUnit',
+                    'medQuantity',
+                    'medInstructions',
+                  ].forEach((prefix) => {
+                    delete next[`${prefix}_${i}`];
+                  });
+                  return next;
+                });
+              }}
+            />
+          ))}
         </div>
       )}
       {tab === 'lab' && (

@@ -22,7 +22,7 @@ export function buildIpdConsultVisitNotes({
       `Prescription:\n${validMeds
         .map((m) => {
           const duration = [m.durationValue, m.durationUnit].filter(Boolean).join(' ');
-          return `- ${m.name}${m.dosage ? ` · ${m.dosage}` : ''}${m.frequency ? ` · ${m.frequency}` : ''}${duration ? ` · ${duration}` : ''}${m.instructions ? ` · ${m.instructions}` : ''}`;
+          return `- ${m.name}${m.dosage ? ` · ${m.dosage}` : ''}${m.form ? ` · ${m.form}` : ''}${m.route ? ` · ${m.route}` : ''}${m.frequency ? ` · ${m.frequency}` : ''}${m.timing ? ` · ${m.timing}` : ''}${duration ? ` · ${duration}` : ''}${m.quantity ? ` · qty ${m.quantity}` : ''}${m.instructions ? ` · ${m.instructions}` : ''}`;
         })
         .join('\n')}`,
     );

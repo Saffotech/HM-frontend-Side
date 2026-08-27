@@ -399,9 +399,12 @@ export default function NursePatientOverviewPage() {
                       <thead>
                         <tr>
                           <th>Medicine</th>
-                          <th>Dosage</th>
+                          <th>Strength</th>
+                          <th>Form</th>
                           <th>Duration</th>
                           <th>Frequency</th>
+                          <th>Route</th>
+                          <th>Timing</th>
                           <th>Instruction</th>
                           <th>Action</th>
                         </tr>
@@ -410,10 +413,15 @@ export default function NursePatientOverviewPage() {
                         {prescriptions.map((rx) => (
                           <tr key={rx.id}>
                             <td className="nurse-patient-overview__med-name">{rx.medicine_name}</td>
-                            <td>{rx.dose || '—'}</td>
+                            <td>{rx.strength || rx.dosage || '—'}</td>
+                            <td>{rx.form || '—'}</td>
                             <td>{rx.duration || '—'}</td>
                             <td>{rx.frequency || '—'}</td>
-                            <td>{rx.route || rx.instructions || '—'}</td>
+                            <td>{rx.route || '—'}</td>
+                            <td>{rx.timing || '—'}</td>
+                            <td className="nurse-patient-overview__med-remarks-cell">
+                              {rx.instructions?.trim() || '—'}
+                            </td>
                             <td>
                               <NursePermissionButton
                                 allowed={canCreateMedication}
@@ -447,7 +455,7 @@ export default function NursePatientOverviewPage() {
                       <thead>
                         <tr>
                           <th>Medicine</th>
-                          <th>Dosage</th>
+                          <th>Strength</th>
                           <th>Administered At</th>
                           <th>By</th>
                           <th>Status</th>
@@ -460,7 +468,7 @@ export default function NursePatientOverviewPage() {
                             <td className="nurse-patient-overview__med-name">
                               {row.medicine_name || row.medicine}
                             </td>
-                            <td>{row.dose || '—'}</td>
+                            <td>{row.strength || row.dosage || '—'}</td>
                             <td className="nurse-patient-overview__history-date">
                               {formatDate(row.administered_at)}
                             </td>

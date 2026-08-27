@@ -4,29 +4,40 @@
 
 import { asList } from '@/shared/api/dataSource';
 import { labDepartmentLabel } from '@/shared/utils/labDepartments';
+import {
+  formatDurationForApi,
+  medicineRowFromApi,
+} from '@/features/doctor/utils/medicineFields';
 
-/** DB stores duration as integer — send numeric value only. */
-function durationToApiValue(m) {
-  if (m.durationValue != null && String(m.durationValue).trim() !== '') {
-    const n = parseInt(m.durationValue, 10);
-    return Number.isFinite(n) && n > 0 ? n : 0;
-  }
-  const match = String(m.duration ?? '').trim().match(/^(\d+)/);
-  return match ? parseInt(match[1], 10) : 0;
+function optionalTrim(value) {
+  const s = String(value ?? '').trim();
+  return s;
 }
 
-/** UI medicine row → POST/PUT prescription item */
+/** UI medicine row → POST/PUT / consultation prescription item */
 export function uiMedicinesToApiItems(medicines = []) {
   return medicines
     .filter((m) => (m.name ?? '').trim())
-    .map((m) => ({
-      medicine_name: m.name.trim(),
-      dosage: m.dosage || '',
-      frequency: m.frequency || '',
-      duration: durationToApiValue(m),
-      instructions: m.instructions || '',
-    }))
-    .filter((item) => item.duration > 0);
+    .map((m) => {
+      const duration = formatDurationForApi(m) || '1 Days';
+      const item = {
+        medicine_name: m.name.trim(),
+        dosage: optionalTrim(m.dosage),
+        form: optionalTrim(m.form),
+        route: optionalTrim(m.route),
+        frequency: optionalTrim(m.frequency),
+        timing: optionalTrim(m.timing),
+        duration,
+        instructions: optionalTrim(m.instructions).slice(0, 200),
+      };
+
+      const qty = parseInt(m.quantity, 10);
+      if (Number.isFinite(qty) && qty >= 1) {
+        item.quantity = qty;
+      }
+
+      return item;
+    });
 }
 
 /** POST /prescriptions and PUT /prescriptions/{id} body — OPD uses appointment_id, IPD uses admission_id. */
@@ -57,22 +68,16 @@ export function apiToUiPrescription(api) {
   const legacyMed = api.medication ?? api.medicines?.[0]?.name;
   const medicines =
     items.length > 0
-      ? items.map((item) => ({
-          name: item.medicine_name ?? item.name ?? '',
-          dosage: item.dosage ?? '',
-          frequency: item.frequency ?? '',
-          duration: item.duration ?? '',
-          instructions: item.instructions ?? '',
-        }))
+      ? items.map((item) => medicineRowFromApi(item))
       : legacyMed
         ? [
-            {
-              name: legacyMed,
+            medicineRowFromApi({
+              medicine_name: legacyMed,
               dosage: api.dosage ?? '',
               frequency: api.frequency ?? '',
               duration: api.duration ?? '',
               instructions: api.notes ?? '',
-            },
+            }),
           ]
         : [];
 

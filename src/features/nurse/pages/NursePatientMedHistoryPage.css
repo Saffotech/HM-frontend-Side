@@ -1,0 +1,102 @@
+/* Nurse · patient medication history */
+
+.nurse-patient-med-history-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.nurse-patient-med-history-page .nurse-page-header {
+  padding: 1rem 1.2rem;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background:
+    linear-gradient(145deg, #f4faf6 0%, #ffffff 48%, #f8fafc 100%);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 8px 20px rgba(26, 92, 52, 0.04);
+}
+
+.nurse-patient-med-history-page .nurse-page-header h1,
+.nurse-patient-med-history-page .nurse-page-header__title {
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+
+.nurse-patient-med-history-page .nurse-table-wrap,
+.nurse-patient-med-history-page .nurse-card {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 6px 16px rgba(15, 23, 42, 0.03);
+}
+
+.nurse-patient-med-history-page .nurse-table {
+  width: 100%;
+  min-width: 40rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: auto;
+}
+
+.nurse-patient-med-history-page .nurse-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 0.8rem 0.9rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.nurse-patient-med-history-page .nurse-table td {
+  padding: 0.9rem;
+  font-size: 0.8125rem;
+  color: #334155;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+  line-height: 1.4;
+}
+
+.nurse-patient-med-history-page .nurse-table th:first-child,
+.nurse-patient-med-history-page .nurse-table td:first-child {
+  padding-left: 1.1rem;
+}
+
+.nurse-patient-med-history-page .nurse-table th:last-child,
+.nurse-patient-med-history-page .nurse-table td:last-child {
+  padding-right: 1.1rem;
+}
+
+.nurse-patient-med-history-page .nurse-table tbody tr:nth-child(even) td {
+  background: #fafbfc;
+}
+
+.nurse-patient-med-history-page .nurse-table tbody tr:hover td {
+  background: #f0f7f3;
+}
+
+.nurse-patient-med-history-page .nurse-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.nurse-patient-med-history-page .nurse-table td:first-child {
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+@media (max-width: 640px) {
+  .nurse-patient-med-history-page .nurse-table {
+    min-width: 32rem;
+  }
+}

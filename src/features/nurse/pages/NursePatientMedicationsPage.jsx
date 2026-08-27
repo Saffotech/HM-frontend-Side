@@ -11,7 +11,6 @@ import {
   useNursePatientMedicationsQuery,
   useAdministerMedicationMutation,
   useUpdateAdministrationMutation,
-  useNurseActiveDoctorsQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
 import { ROUTES } from '@/shared/constants';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
@@ -149,7 +148,7 @@ export default function NursePatientMedicationsPage() {
     navigate(ROUTES.NURSE_MEDICATIONS);
   }, [location.state, navigate, patientId]);
 
-  const openHistory = useCallback(() => {
+  const openHistory = useCallback((rx) => {
     if (!patientId) return;
     const administerPath = ROUTES.NURSE_MEDICATIONS_PATIENT.replace(
       ':patientId',
@@ -166,23 +165,28 @@ export default function NursePatientMedicationsPage() {
           ? patientOverviewPath
           : location.state?.backTo;
 
+    const itemId = rx?.prescription_item_id ?? rx?.id;
+    const medicineName = String(rx?.medicine_name || '').trim();
+    const query = new URLSearchParams();
+    if (itemId != null && itemId !== '') query.set('itemId', String(itemId));
+    if (medicineName) query.set('medicine', medicineName);
+    const querySuffix = query.toString() ? `?${query.toString()}` : '';
+
     navigate(
-      ROUTES.NURSE_MEDICATIONS_PATIENT_HISTORY.replace(':patientId', String(patientId)),
+      `${ROUTES.NURSE_MEDICATIONS_PATIENT_HISTORY.replace(':patientId', String(patientId))}${querySuffix}`,
       {
         state: {
           backTo: administerPath,
           overviewTab: location.state?.overviewTab,
           backToAdministerFrom: returnToPatient || location.state?.backTo,
+          prescriptionItemId: itemId != null ? String(itemId) : null,
+          medicineName: medicineName || null,
         },
       },
     );
   }, [navigate, patientId, location.state]);
   const { data: patientData, isLoading, isError, error, refetch } =
     useNursePatientMedicationsQuery(patientId);
-  const { data: doctorsData } = useNurseActiveDoctorsQuery(
-    { page: 1, page_size: 100 },
-    { enabled: Boolean(patientId) },
-  );
   const adminMut = useAdministerMedicationMutation(patientId);
   const updateAdminMut = useUpdateAdministrationMutation(patientId);
   const [page, setPage] = useState(1);
@@ -212,14 +216,6 @@ export default function NursePatientMedicationsPage() {
     () => prescriptions.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
     [prescriptions, safePage],
   );
-
-  const doctorDepartmentMap = useMemo(() => {
-    const map = new Map();
-    for (const doc of doctorsData?.doctors ?? []) {
-      map.set(Number(doc.id), String(doc.specialization || doc.department_name || '').trim());
-    }
-    return map;
-  }, [doctorsData?.doctors]);
 
   const unrecordedCount = useMemo(
     () => prescriptions.filter((p) => !p.administration?.id).length,
@@ -319,27 +315,16 @@ export default function NursePatientMedicationsPage() {
         <span className="nurse-patient-meds__medicine-name">{p.medicine_name}</span>
       ),
     },
-    {
-      header: 'Doctor',
-      render: (p) => (
-        <span className="nurse-patient-meds__doctor">{p.doctor_name || '—'}</span>
-      ),
-    },
-    {
-      header: 'Department',
-      render: (p) => (
-        <span className="nurse-patient-meds__department">
-          {p.department_name
-            || doctorDepartmentMap.get(Number(p.doctor_id))
-            || doctorDepartmentMap.get(Number(patientData?.doctor_id))
-            || '—'}
-        </span>
-      ),
-    },
-    { header: 'Dosage', render: (p) => p.dose || '—' },
+    { header: 'Strength', render: (p) => p.strength || p.dosage || '—' },
+    { header: 'Form', render: (p) => p.form || '—' },
     { header: 'Duration', render: (p) => p.duration || '—' },
     { header: 'Frequency', render: (p) => p.frequency || '—' },
     { header: 'Route', render: (p) => p.route || '—' },
+    { header: 'Timing', render: (p) => p.timing || '—' },
+    {
+      header: 'Instruction',
+      render: (p) => (String(p.instructions ?? '').trim() || '—'),
+    },
     {
       header: 'Last Administration',
       render: (p) => {
@@ -375,18 +360,20 @@ export default function NursePatientMedicationsPage() {
             >
               {hasRecord ? 'Record dose' : 'Administer'}
             </NursePermissionButton>
-            <NursePermissionButton
-              allowed={canViewMedication}
-              className="nurse-btn nurse-btn--sm nurse-btn--secondary nurse-patient-meds__action-btn"
-              onClick={openHistory}
-            >
-              History
-            </NursePermissionButton>
+            {hasRecord ? (
+              <NursePermissionButton
+                allowed={canViewMedication}
+                className="nurse-btn nurse-btn--sm nurse-btn--secondary nurse-patient-meds__action-btn"
+                onClick={() => openHistory(p)}
+              >
+                History
+              </NursePermissionButton>
+            ) : null}
           </div>
         );
       },
     },
-  ], [openAdmin, openLastAdmin, openHistory, canCreateMedication, canViewMedication, doctorDepartmentMap, patientData?.doctor_id]);
+  ], [openAdmin, openLastAdmin, openHistory, canCreateMedication, canViewMedication]);
 
   return (
     <NurseLayout>

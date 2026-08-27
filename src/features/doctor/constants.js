@@ -55,10 +55,61 @@ export function inferLabCategory(testName = '', deptCode = '') {
   return 'Laboratory';
 }
 
+/** Max length for special instructions (UI + API). */
+export const MEDICINE_INSTRUCTIONS_MAX = 200;
+
+export const MEDICINE_FORM_OPTIONS = [
+  'Tablet',
+  'Capsule',
+  'Syrup',
+  'Injection',
+  'Drops',
+  'Cream',
+  'Ointment',
+  'Inhaler',
+];
+
+export const MEDICINE_ROUTE_OPTIONS = [
+  'Oral',
+  'IV',
+  'IM',
+  'SC',
+  'Topical',
+  'Inhalation',
+  'Sublingual',
+];
+
+export const MEDICINE_FREQUENCY_OPTIONS = [
+  '1-0-1',
+  '1-1-1',
+  '1-0-0',
+  '0-0-1',
+  '1-1-0',
+  'SOS',
+  'STAT',
+];
+
+export const MEDICINE_TIMING_OPTIONS = [
+  'After food',
+  'Before food',
+  'Empty stomach',
+  'With food',
+  'At bedtime',
+];
+
+export const MEDICINE_DURATION_UNIT_OPTIONS = ['Days', 'Weeks', 'Months'];
+
+/** Default UI state for one prescription medicine card. */
 export const DEFAULT_MEDICINE = {
   name: '',
   dosage: '',
+  form: 'Tablet',
+  route: 'Oral',
   frequency: '1-0-1',
-  duration: '5 days',
-  instructions: 'After food',
+  timing: 'After food',
+  duration: '',
+  durationValue: '',
+  durationUnit: 'Days',
+  quantity: '',
+  instructions: '',
 };

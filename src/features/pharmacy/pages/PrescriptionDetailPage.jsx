@@ -15,7 +15,7 @@ import {
   getPrescriptionDoctors,
   getPrescriptionDiagnoses,
 } from '@/features/pharmacy/utils/prescriptionMeta';
-import { formatHumanInstructions, formatQuantityLabel } from '@/features/pharmacy/utils/prescriptionQuantity';
+import { formatQuantityLabel } from '@/features/pharmacy/utils/prescriptionQuantity';
 import { ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 import './PrescriptionDetailPage.css';
@@ -195,6 +195,10 @@ export default function PrescriptionDetailPage() {
                   <thead>
                     <tr>
                       <th>Medicine</th>
+                      <th>Strength</th>
+                      <th>Form</th>
+                      <th>Route</th>
+                      <th>Timing</th>
                       <th>Instructions</th>
                       <th>Total quantity</th>
                     </tr>
@@ -203,11 +207,18 @@ export default function PrescriptionDetailPage() {
                     {(rx.prescription_items ?? []).map((item) => (
                       <tr key={item.id}>
                         <td>{item.medicine_name}</td>
+                        <td>{item.dosage || '—'}</td>
+                        <td>{item.form || '—'}</td>
+                        <td>{item.route || '—'}</td>
+                        <td>{item.timing || '—'}</td>
                         <td className="pharmacy-detail-instructions">
-                          {item.instructions_label || formatHumanInstructions(item)}
+                          {String(item.instructions ?? '').trim() || '—'}
                         </td>
                         <td className="pharmacy-detail-qty">
-                          {formatQuantityLabel(item.quantity_prescribed, item.medicine_name)}
+                          {formatQuantityLabel(
+                            item.quantity_prescribed,
+                            item.medicine_name,
+                          )}
                         </td>
                       </tr>
                     ))}
