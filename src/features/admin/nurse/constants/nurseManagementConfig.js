@@ -36,6 +36,16 @@ export const PERMISSION_GROUPS = [
     ],
   },
   {
+    module: 'Lab Reports',
+    permissions: [
+      {
+        key: 'nurse_lab_reports:view',
+        name: 'View Lab Reports',
+        description: 'View and download completed lab reports for occupied-bed patients.',
+      },
+    ],
+  },
+  {
     module: 'Medication',
     permissions: [
       { key: 'nurse_medication:view', name: 'View Medication', description: 'View medication tasks and history.' },

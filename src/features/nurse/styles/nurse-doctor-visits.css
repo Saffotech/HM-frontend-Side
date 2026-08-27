@@ -1,17 +1,25 @@
-/* Nurse Doctor Visits — registry, KPIs, filters, modals */
+/* Nurse Doctor Visits — registry extras, modals, patient history */
 
-.nurse-doctor-visits-page__header{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
+.nurse-doctor-visits__toolbar-filters .nurse-doctor-visits__ward-select {
+  flex-shrink: 0;
+  min-height: 2.5rem;
+  min-width: 9.5rem;
+  max-width: 11rem;
 }
 
-.nurse-doctor-visits-page__header-left{
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+.nurse-doctor-visits__toolbar-filters .nurse-doctor-visits__date-input {
+  flex-shrink: 0;
+  margin: 0;
+  min-width: 10.5rem;
+  max-width: 12.5rem;
+}
+
+.nurse-doctor-visits__toolbar-filters .nurse-doctor-visits__date-input .field__label {
+  display: none;
+}
+
+.nurse-doctor-visits__toolbar-filters .nurse-doctor-visits__date-input .date-input__wrap {
+  min-height: 2.5rem;
 }
 
 .nurse-doctor-visits-page__icon{
@@ -23,128 +31,6 @@
   border-radius: 0.75rem;
   background: #eff6ff;
   color: #1d4ed8;
-}
-
-.nurse-doctor-visits-page__title{
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--color-text, #0f172a);
-}
-
-.nurse-doctor-visits-page__subtitle{
-  margin: 0.125rem 0 0;
-  font-size: 0.8125rem;
-  color: var(--color-text-muted, #64748b);
-}
-
-.nurse-doctor-visits-kpi{
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin-top: 0.75rem;
-}
-
-.nurse-doctor-visits-kpi .nurse-kpi{
-  padding: 0.75rem 1rem;
-  border-left-width: 3px;
-  border-radius: 10px;
-}
-
-.nurse-doctor-visits-filters{
-  margin-top: 0.75rem;
-  padding: 1rem 1.25rem;
-}
-
-.nurse-doctor-visits-filters__grid{
-  display: grid;
-  grid-template-columns: 3fr 1fr 1fr;
-  gap: 0.75rem;
-  align-items: end;
-}
-
-.nurse-doctor-visits-filters__control{
-  width: 100%;
-}
-
-.nurse-doctor-visits-search-wrap{
-  position: relative;
-}
-
-.nurse-doctor-visits-search-icon{
-  position: absolute;
-  left: 0.625rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #94a3b8;
-  pointer-events: none;
-}
-
-.nurse-doctor-visits-search{
-  padding-left: 2rem;
-  width: 100%;
-}
-
-.nurse-doctor-visits-filter-control{
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.nurse-doctor-visits-filter-control .nurse-doctor-visits-filters__control{
-  width: 100%;
-  padding-right: 2rem;
-}
-
-.nurse-doctor-visits-filter-clear{
-  position: absolute;
-  right: 0.375rem;
-  top: 50%;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  padding: 0;
-  border: none;
-  border-radius: 999px;
-  background: #e2e8f0;
-  color: #475569;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.nurse-doctor-visits-filter-clear:hover{
-  background: #cbd5e1;
-  color: #0f172a;
-}
-
-.nurse-doctor-visits-table{
-  margin-top: 0.75rem;
-}
-
-.nurse-doctor-visits-table--fetching{
-  opacity: 0.6;
-  transition: opacity 0.15s ease;
-}
-
-.nurse-doctor-visits-table__head{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-.nurse-doctor-visits-table__count{
-  margin: 0;
-  font-size: 0.8125rem;
-  color: var(--color-text-muted, #64748b);
-}
-
-.nurse-doctor-visits-table__count strong{
-  color: var(--color-text, #0f172a);
 }
 
 .nurse-doctor-visits__actions{
@@ -207,18 +93,6 @@
   resize: vertical;
 }
 
-@media (max-width: 900px){
-  .nurse-doctor-visits-filters__grid{
-    grid-template-columns: 1fr;
-  }
-  .nurse-doctor-visits-filters__control{
-    width: 100%;
-  }
-  .nurse-doctor-visits-kpi{
-    grid-template-columns: 1fr;
-  }
-}
-
 /* Patient visit history modal */
 .nurse-visit-history{
   display: flex;
@@ -278,9 +152,19 @@
 }
 
 .nurse-visit-history__last-grid{
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.nurse-visit-history__last-row{
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
+}
+
+.nurse-visit-history__last-row--secondary{
+  grid-template-columns: 1fr;
 }
 
 .nurse-visit-history__label{
@@ -309,10 +193,9 @@
   color: var(--color-text-muted, #64748b);
 }
 
-/* Last-visit notes — full-width block with distinct styling */
+/* Last-visit notes — fills remaining space in second row */
 .nurse-visit-history__notes-block{
-  grid-column: 1 / -1;
-  margin-top: 0.25rem;
+  min-width: 0;
 }
 
 .nurse-visit-history__notes-text{
@@ -353,7 +236,8 @@
 }
 
 @media (max-width: 640px){
-  .nurse-visit-history__last-grid{
+  .nurse-visit-history__last-row,
+  .nurse-visit-history__last-row--secondary{
     grid-template-columns: 1fr;
   }
 }

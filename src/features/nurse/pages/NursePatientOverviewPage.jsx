@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Activity,
   ArrowLeft,
-  ClipboardList,
   FileText,
+  FlaskConical,
   History,
-  Pencil,
   Pill,
   User,
 } from 'lucide-react';
@@ -16,6 +15,7 @@ import NurseNotesSnapshotView from '@/features/nurse/components/NurseNotesSnapsh
 import NurseVitalsSnapshotView from '@/features/nurse/components/NurseVitalsSnapshotView';
 import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
+import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
 import { QueryFeedback } from '@/shared/components/common';
 import {
   formatPatientIdDisplay,
@@ -27,7 +27,9 @@ import {
   useNursePatientMedicationsQuery,
   useNursePatientMedHistoryQuery,
   useNurseBedPatientsQuery,
+  useNurseLabReportsQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
+import { ROUTES } from '@/shared/constants';
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -45,16 +47,41 @@ function formatDate(iso) {
 export default function NursePatientOverviewPage() {
   const { patientId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     canViewVitals,
     canUpdateVitals,
     canViewNotes,
-    canCreateNotes,
     canUpdateNotes,
+    canViewLabReports,
     canViewMedication,
     canCreateMedication,
   } = useNursePermissionSet();
-  const [activeTab, setActiveTab] = useState('vitals');
+  const { scopeFilters, scopeReady } = useNursePatientScope();
+  const [activeTab, setActiveTab] = useState(
+    () => location.state?.overviewTab || 'vitals',
+  );
+
+  useEffect(() => {
+    if (location.state?.overviewTab) {
+      setActiveTab(location.state.overviewTab);
+    }
+  }, [location.state?.overviewTab, location.key]);
+
+  const openLabReport = useCallback((row, event) => {
+    event?.stopPropagation?.();
+    const id = row.report_id ?? row.id;
+    if (id == null) return;
+    navigate(
+      ROUTES.NURSE_LAB_REPORT_DETAIL.replace(':reportId', String(id)),
+      {
+        state: {
+          backTo: ROUTES.NURSE_PATIENT.replace(':patientId', String(patientId)),
+          overviewTab: 'labs',
+        },
+      },
+    );
+  }, [navigate, patientId]);
 
   const {
     data: vitals,
@@ -64,7 +91,7 @@ export default function NursePatientOverviewPage() {
     refetch: refetchVitals,
   } = useNurseVitalsSearchQuery(
     { patient_id: patientId, page: 1, page_size: 100 },
-    { enabled: canViewVitals && activeTab === 'vitals' }
+    { enabled: Boolean(patientId) && canViewVitals },
   );
   const {
     data: notes,
@@ -74,7 +101,17 @@ export default function NursePatientOverviewPage() {
     refetch: refetchNotes,
   } = useNurseNotesSearchQuery(
     { patient_id: patientId },
-    { enabled: canViewNotes && activeTab === 'notes' }
+    { enabled: Boolean(patientId) && canViewNotes },
+  );
+  const {
+    data: labReports,
+    isLoading: isLabReportsLoading,
+    isError: isLabReportsError,
+    error: labReportsError,
+    refetch: refetchLabReports,
+  } = useNurseLabReportsQuery(
+    { patient_id: patientId, page: 1, page_size: 20, ...scopeFilters },
+    { enabled: Boolean(patientId) && scopeReady && canViewLabReports },
   );
   const {
     data: meds,
@@ -83,7 +120,7 @@ export default function NursePatientOverviewPage() {
     error: medsError,
     refetch: refetchMeds,
   } = useNursePatientMedicationsQuery(patientId, {
-    enabled: canViewMedication && activeTab === 'meds',
+    enabled: Boolean(patientId) && canViewMedication,
   });
   const {
     data: medHistory,
@@ -92,7 +129,7 @@ export default function NursePatientOverviewPage() {
     error: historyError,
     refetch: refetchHistory,
   } = useNursePatientMedHistoryQuery(patientId, {
-    enabled: canViewMedication && activeTab === 'history',
+    enabled: Boolean(patientId) && canViewMedication,
   });
 
   const {
@@ -120,11 +157,14 @@ export default function NursePatientOverviewPage() {
     };
   }, [patientId, meds, vitals, notes, bedData?.items]);
 
+  const labReportItems = labReports?.items ?? [];
+
   const tabs = [
     canViewVitals ? { id: 'vitals', label: 'Vitals', icon: Activity, count: 0 } : null,
     canViewNotes ? { id: 'notes', label: 'Nursing Notes', icon: FileText, count: 0 } : null,
+    canViewLabReports ? { id: 'labs', label: 'Lab Reports', icon: FlaskConical, count: labReportItems.length } : null,
     canViewMedication ? { id: 'meds', label: 'Medications', icon: Pill, count: meds?.prescriptions?.length || 0 } : null,
-    canViewMedication ? { id: 'history', label: 'Med History', icon: History, count: medHistory?.items?.length || 0 } : null,
+    canViewMedication ? { id: 'history', label: 'Medications History', icon: History, count: medHistory?.items?.length || 0 } : null,
   ].filter(Boolean);
 
   const vitalsItems = useMemo(() => {
@@ -165,42 +205,39 @@ export default function NursePatientOverviewPage() {
     return tab;
   });
 
-  const tabAction = useMemo(() => {
-    if (activeTab === 'vitals' && latestVital) {
-      return {
-        label: 'Update',
-        icon: Pencil,
-        disabled: !canUpdateVitals,
-        onClick: () => {
-          if (!canUpdateVitals) return;
-          navigate(`/nurse/vitals/${latestVital.id}/edit`);
-        },
-      };
-    }
-    if (activeTab === 'notes' && latestNote) {
-      return {
-        label: 'Update',
-        icon: Pencil,
-        disabled: !canUpdateNotes,
-        onClick: () => {
-          if (!canUpdateNotes) return;
-          navigate(`/nurse/notes/${latestNote.id}/edit`);
-        },
-      };
-    }
-    if (activeTab === 'meds') {
-      return {
-        label: 'Administer',
-        icon: ClipboardList,
-        disabled: !canCreateMedication,
-        onClick: () => {
-          if (!canCreateMedication) return;
-          navigate(`/nurse/medications/patient/${patientId}`);
-        },
-      };
-    }
-    return null;
-  }, [activeTab, latestVital, latestNote, patientId, navigate, canUpdateVitals, canUpdateNotes, canCreateMedication]);
+  const goToAdminister = useCallback(() => {
+    if (!canCreateMedication) return;
+    navigate(`/nurse/medications/patient/${patientId}`, {
+      state: {
+        backTo: ROUTES.NURSE_PATIENT.replace(':patientId', String(patientId)),
+        overviewTab: 'meds',
+      },
+    });
+  }, [canCreateMedication, navigate, patientId]);
+
+  const vitalsAction = useMemo(() => {
+    if (!latestVital) return null;
+    return {
+      label: 'Update',
+      disabled: !canUpdateVitals,
+      onClick: () => {
+        if (!canUpdateVitals) return;
+        navigate(`/nurse/vitals/${latestVital.id}/edit`);
+      },
+    };
+  }, [latestVital, canUpdateVitals, navigate]);
+
+  const notesAction = useMemo(() => {
+    if (!latestNote) return null;
+    return {
+      label: 'Update',
+      disabled: !canUpdateNotes,
+      onClick: () => {
+        if (!canUpdateNotes) return;
+        navigate(`/nurse/notes/${latestNote.id}/edit`);
+      },
+    };
+  }, [latestNote, canUpdateNotes, navigate]);
 
   useEffect(() => {
     if (!tabsWithCounts.some((tab) => tab.id === activeTab) && tabsWithCounts[0]) {
@@ -208,11 +245,9 @@ export default function NursePatientOverviewPage() {
     }
   }, [activeTab, tabsWithCounts]);
 
-  const TabActionIcon = tabAction?.icon;
-
   return (
     <NurseLayout>
-      <div className="nurse-page nurse-max-w-wide nurse-patient-overview">
+      <div className="nurse-page nurse-patient-overview">
         <div className="nurse-vital-detail__top">
           <div className="nurse-vital-detail__identity">
             <div className="nurse-patient-overview__avatar" aria-hidden>
@@ -230,7 +265,11 @@ export default function NursePatientOverviewPage() {
             </div>
           </div>
           <div className="nurse-vital-detail__actions">
-            <button type="button" className="nurse-btn nurse-btn--secondary" onClick={() => navigate(-1)}>
+            <button
+              type="button"
+              className="nurse-btn nurse-btn--secondary"
+              onClick={() => navigate(location.state?.backTo || ROUTES.NURSE_QUEUE)}
+            >
               <ArrowLeft size={16} />
               Back
             </button>
@@ -247,22 +286,12 @@ export default function NursePatientOverviewPage() {
                   className={`nurse-patient-overview__tab${activeTab === id ? ' nurse-patient-overview__tab--active' : ''}`}
                   onClick={() => setActiveTab(id)}
                 >
-                  <Icon size={18} />
+                  <Icon size={16} />
                   <span>{label}</span>
                   <span className="nurse-patient-overview__tab-count">{count}</span>
                 </button>
               ))}
             </div>
-            {tabAction && TabActionIcon && (
-              <NursePermissionButton
-                allowed={!tabAction.disabled}
-                className="nurse-btn nurse-btn--secondary nurse-patient-overview__tab-action"
-                onClick={tabAction.onClick}
-              >
-                <TabActionIcon size={16} />
-                {tabAction.label}
-              </NursePermissionButton>
-            )}
           </div>
 
           <div className="nurse-patient-overview__panel">
@@ -276,7 +305,7 @@ export default function NursePatientOverviewPage() {
                 {vitalsItems.length === 0 ? (
                   <div className="nurse-patient-overview__empty">No vitals recorded for this patient.</div>
                 ) : (
-                  <NurseVitalsSnapshotView vital={vitalForSnapshot} />
+                  <NurseVitalsSnapshotView vital={vitalForSnapshot} action={vitalsAction} />
                 )}
               </QueryFeedback>
             )}
@@ -291,7 +320,66 @@ export default function NursePatientOverviewPage() {
                 {notesItems.length === 0 ? (
                   <div className="nurse-patient-overview__empty">No nursing notes for this patient.</div>
                 ) : (
-                  <NurseNotesSnapshotView note={latestNote} />
+                  <NurseNotesSnapshotView note={latestNote} action={notesAction} />
+                )}
+              </QueryFeedback>
+            )}
+
+            {activeTab === 'labs' && (
+              <QueryFeedback
+                isLoading={isLabReportsLoading}
+                isError={isLabReportsError}
+                error={labReportsError}
+                onRetry={refetchLabReports}
+              >
+                {labReportItems.length === 0 ? (
+                  <div className="nurse-patient-overview__empty">
+                    No lab reports for this patient on an occupied bed.
+                  </div>
+                ) : (
+                  <div className="nurse-patient-overview__table-wrap">
+                    <table className="nurse-patient-overview__table">
+                      <thead>
+                        <tr>
+                          <th>Test</th>
+                          <th>Reported at</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {labReportItems.map((row) => (
+                          <tr
+                            key={row.report_id ?? row.id}
+                            className="nurse-row--clickable"
+                            onClick={(event) => openLabReport(row, event)}
+                          >
+                            <td>{row.test_name || '—'}</td>
+                            <td>
+                              {row.uploaded_at
+                                ? new Date(row.uploaded_at).toLocaleString()
+                                : '—'}
+                            </td>
+                            <td>{row.status || '—'}</td>
+                            <td>
+                              <div
+                                className="nurse-table__actions"
+                                onClick={(event) => event.stopPropagation()}
+                              >
+                                <button
+                                  type="button"
+                                  className="nurse-btn nurse-btn--secondary nurse-btn--sm"
+                                  onClick={(event) => openLabReport(row, event)}
+                                >
+                                  View
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </QueryFeedback>
             )}
@@ -311,11 +399,11 @@ export default function NursePatientOverviewPage() {
                       <thead>
                         <tr>
                           <th>Medicine</th>
-                          <th>Dose</th>
+                          <th>Dosage</th>
+                          <th>Duration</th>
                           <th>Frequency</th>
-                          <th>Route</th>
-                          <th>Status</th>
-                          <th>Remarks</th>
+                          <th>Instruction</th>
+                          <th>Action</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -323,17 +411,17 @@ export default function NursePatientOverviewPage() {
                           <tr key={rx.id}>
                             <td className="nurse-patient-overview__med-name">{rx.medicine_name}</td>
                             <td>{rx.dose || '—'}</td>
+                            <td>{rx.duration || '—'}</td>
                             <td>{rx.frequency || '—'}</td>
-                            <td>{rx.route || '—'}</td>
+                            <td>{rx.route || rx.instructions || '—'}</td>
                             <td>
-                              {rx.statusKnown && rx.status ? (
-                                <NurseQueueStatusBadge status={rx.status} />
-                              ) : (
-                                <span className="nurse-patient-overview__status-unknown">Not recorded</span>
-                              )}
-                            </td>
-                            <td className="nurse-patient-overview__med-remarks-cell">
-                              {rx.administration?.remarks || '—'}
+                              <NursePermissionButton
+                                allowed={canCreateMedication}
+                                className="nurse-btn nurse-btn--secondary nurse-patient-overview__action-btn"
+                                onClick={goToAdminister}
+                              >
+                                Administer
+                              </NursePermissionButton>
                             </td>
                           </tr>
                         ))}
@@ -359,7 +447,7 @@ export default function NursePatientOverviewPage() {
                       <thead>
                         <tr>
                           <th>Medicine</th>
-                          <th>Dose</th>
+                          <th>Dosage</th>
                           <th>Administered At</th>
                           <th>By</th>
                           <th>Status</th>

@@ -39,9 +39,16 @@ function NurseDataTable({ columns, data, isLoading, emptyMessage, onRowClick, ro
           )}
 
           {!isLoading &&
-            rows.map((row) => (
+            rows.map((row, index) => (
               <tr
-                key={row.id ?? row.history_id}
+                key={
+                  row.patient_id
+                  ?? row.id
+                  ?? row.history_id
+                  ?? row.prescription_item_id
+                  ?? row.administration_id
+                  ?? `row-${index}`
+                }
                 className={[
                   row.priority === 'emergency' ? 'nurse-row--emergency' : '',
                   onRowClick ? 'nurse-row--clickable' : '',

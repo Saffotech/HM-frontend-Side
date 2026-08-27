@@ -29,19 +29,21 @@ export function useDoctorPatientVisitsQuery(params = {}, options = {}) {
 }
 
 export function useDoctorPatientHistoryQuery(patientUhid, options = {}) {
-  const { enabled = true, placeholderVisits } = options;
+  const { enabled = true, placeholderVisits, encounter_type = 'opd' } = options;
   const token = useQueryToken();
   const queryClient = useQueryClient();
   const uid = patientUhid?.patientUid ?? patientUhid;
+  const encounterType = String(encounter_type || 'opd').toLowerCase();
 
   return useQuery({
-    queryKey: queryKeys.doctor.patients.history(uid, { encounter_type: 'all' }),
-    queryFn: () => doctorPatientsApi.fetchPatientHistory(uid, token, { encounter_type: 'all' }),
+    queryKey: queryKeys.doctor.patients.history(uid, { encounter_type: encounterType }),
+    queryFn: () =>
+      doctorPatientsApi.fetchPatientHistory(uid, token, { encounter_type: encounterType }),
     enabled: Boolean(uid) && enabled,
     ...DOCTOR_PATIENT_HISTORY_QUERY_OPTIONS,
     placeholderData: (previousData) => {
       if (previousData) return previousData;
-      return resolvePatientHistoryPlaceholder(queryClient, uid, placeholderVisits);
+      return resolvePatientHistoryPlaceholder(queryClient, uid, placeholderVisits, encounterType);
     },
   });
 }
@@ -105,6 +107,46 @@ export function useDoctorPatientVisitsForPatientQuery(patientId, patientUid, opt
       Boolean(token) &&
       (params.patient_id != null || Boolean(params.patient_uid)) &&
       dates.length > 0,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useDoctorPatientVitalsQuery(patientId, filters = {}, options = {}) {
+  const { enabled = true } = options;
+  const token = useQueryToken();
+  const numericId = Number(patientId);
+  const hasPatientId = Number.isFinite(numericId) && numericId >= 1;
+  const queryFilters = {
+    page: filters.page ?? 1,
+    page_size: filters.page_size ?? 20,
+    ...(filters.from_date ? { from_date: filters.from_date } : {}),
+    ...(filters.to_date ? { to_date: filters.to_date } : {}),
+  };
+
+  return useQuery({
+    queryKey: queryKeys.doctor.patients.vitals(hasPatientId ? numericId : null, queryFilters),
+    queryFn: () => doctorPatientsApi.fetchDoctorPatientVitals(numericId, token, queryFilters),
+    enabled: Boolean(token) && enabled && hasPatientId,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useDoctorPatientNotesQuery(patientId, filters = {}, options = {}) {
+  const { enabled = true } = options;
+  const token = useQueryToken();
+  const numericId = Number(patientId);
+  const hasPatientId = Number.isFinite(numericId) && numericId >= 1;
+  const queryFilters = {
+    page: filters.page ?? 1,
+    page_size: filters.page_size ?? 20,
+    ...(filters.from_date ? { from_date: filters.from_date } : {}),
+    ...(filters.to_date ? { to_date: filters.to_date } : {}),
+  };
+
+  return useQuery({
+    queryKey: queryKeys.doctor.patients.notes(hasPatientId ? numericId : null, queryFilters),
+    queryFn: () => doctorPatientsApi.fetchDoctorPatientNotes(numericId, token, queryFilters),
+    enabled: Boolean(token) && enabled && hasPatientId,
     staleTime: 30 * 1000,
   });
 }

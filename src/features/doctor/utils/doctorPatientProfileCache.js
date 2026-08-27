@@ -3,6 +3,11 @@ import { keepPreviousData } from '@tanstack/react-query';
 import { doctorPatientsApi } from '@/shared/api/services';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { formatVisitDateTime } from '@/features/doctor/utils/patientHistory';
+import {
+  DOCTOR_ENCOUNTER_MODE,
+  matchesDoctorEncounterMode,
+  parseDoctorEncounterMode,
+} from '@/features/doctor/utils/encounterType';
 
 export const DOCTOR_PATIENT_HISTORY_QUERY_OPTIONS = {
   staleTime: 1000 * 60 * 5,
@@ -19,14 +24,22 @@ export const DOCTOR_PATIENT_PRESCRIPTIONS_QUERY_OPTIONS = {
 };
 
 /** Build visit-history shape from already-loaded patient visit list rows (instant placeholder). */
-function visitRowsToHistoryPlaceholder(patientUid, visitRows) {
-  const rows = (visitRows ?? []).filter((row) => row.patientUid === patientUid);
+function visitRowsToHistoryPlaceholder(patientUid, visitRows, encounterMode = null) {
+  const mode = encounterMode ? parseDoctorEncounterMode(encounterMode) : null;
+  const rows = (visitRows ?? []).filter((row) => {
+    if (row.patientUid !== patientUid) return false;
+    if (!mode) return true;
+    return matchesDoctorEncounterMode(row, mode);
+  });
   if (!rows.length) return undefined;
 
   const visits = rows
     .map((row) => ({
       id: row.id,
       appointmentDbId: row.appointmentDbId,
+      admissionId: row.admissionId ?? null,
+      encounterType: row.encounterType ?? (row.admissionId != null ? 'IPD' : 'OPD'),
+      registrationSource: row.registrationSource ?? null,
       scheduledAt: row.scheduledAt,
       dateTime: formatVisitDateTime(null, row.scheduledAt),
       sortTime: row.scheduledAt ? new Date(row.scheduledAt).getTime() : 0,
@@ -48,13 +61,13 @@ function visitRowsToHistoryPlaceholder(patientUid, visitRows) {
 }
 
 /** Read cached patients list queries to show visit history immediately while detail API loads. */
-function getPlaceholderPatientHistory(queryClient, patientUid) {
+function getPlaceholderPatientHistory(queryClient, patientUid, encounterMode = null) {
   const cachedQueries = queryClient.getQueriesData({
     queryKey: queryKeys.doctor.patients.visits,
   });
 
   for (const [, data] of cachedQueries) {
-    const placeholder = visitRowsToHistoryPlaceholder(patientUid, data?.visits);
+    const placeholder = visitRowsToHistoryPlaceholder(patientUid, data?.visits, encounterMode);
     if (placeholder) return placeholder;
   }
 
@@ -65,24 +78,32 @@ export function resolvePatientHistoryPlaceholder(
   queryClient,
   patientUid,
   placeholderVisits,
+  encounterMode = null,
 ) {
   if (placeholderVisits?.length) {
-    return visitRowsToHistoryPlaceholder(patientUid, placeholderVisits);
+    return visitRowsToHistoryPlaceholder(patientUid, placeholderVisits, encounterMode);
   }
-  return getPlaceholderPatientHistory(queryClient, patientUid);
+  return getPlaceholderPatientHistory(queryClient, patientUid, encounterMode);
 }
 
-export async function prefetchPatientProfileData(queryClient, token, { patientUid, patientId }) {
+export async function prefetchPatientProfileData(
+  queryClient,
+  token,
+  { patientUid, patientId, encounterMode = DOCTOR_ENCOUNTER_MODE.OPD },
+) {
   if (!token) return;
 
+  const encounterType = parseDoctorEncounterMode(encounterMode);
   const tasks = [];
 
   if (patientUid) {
     tasks.push(
       queryClient.prefetchQuery({
-        queryKey: queryKeys.doctor.patients.history(patientUid, { encounter_type: 'all' }),
+        queryKey: queryKeys.doctor.patients.history(patientUid, { encounter_type: encounterType }),
         queryFn: () =>
-          doctorPatientsApi.fetchPatientHistory(patientUid, token, { encounter_type: 'all' }),
+          doctorPatientsApi.fetchPatientHistory(patientUid, token, {
+            encounter_type: encounterType,
+          }),
         ...DOCTOR_PATIENT_HISTORY_QUERY_OPTIONS,
       }),
     );

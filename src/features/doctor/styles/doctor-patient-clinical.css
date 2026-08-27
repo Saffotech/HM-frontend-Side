@@ -1,0 +1,107 @@
+/* Nurse snapshot / clinical field styles for doctor patient-history panels */
+@import '../../nurse/styles/nurse-clinical.css';
+@import '../../nurse/styles/nurse-vitals.css';
+@import '../../nurse/styles/nurse-notes.css';
+
+.doc-profile-panel--vitals .doc-profile-panel__body,
+.doc-profile-panel--nursing-notes .doc-profile-panel__body {
+  padding: 0 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.doc-profile-panel--vitals .nurse-card,
+.doc-profile-panel--nursing-notes .nurse-card {
+  background: #fff;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-md, 8px);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.doc-profile-panel--vitals .nurse-card--padded,
+.doc-profile-panel--nursing-notes .nurse-card--padded {
+  padding: 1rem 1.25rem;
+}
+
+/* Doctor patient history: hide redundant section titles (panel already has Vitals / Nursing Notes) */
+.doc-profile-panel--vitals
+  .nurse-vitals-snapshot
+  > .nurse-vital-detail__section:first-of-type
+  > .nurse-vital-detail__section-title,
+.doc-profile-panel--nursing-notes
+  .nurse-notes-snapshot
+  > .nurse-vital-detail__section
+  > .nurse-vital-detail__section-title {
+  display: none;
+}
+
+/* Doctor patient history: hide Status in vitals / nursing notes info bar */
+.doc-profile-panel--vitals .nurse-vital-detail__info-item:has(.nurse-vital-detail__status),
+.doc-profile-panel--nursing-notes .nurse-vital-detail__info-item:has(.nurse-badge) {
+  display: none;
+}
+
+.doc-profile-panel--vitals .nurse-badge,
+.doc-profile-panel--nursing-notes .nurse-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.doc-profile-panel--vitals .nurse-badge--waiting,
+.doc-profile-panel--nursing-notes .nurse-badge--waiting {
+  background: var(--badge-pending-bg, #fef3c7);
+  color: var(--badge-pending-fg, #92400e);
+}
+
+.doc-profile-panel--vitals .nurse-badge--vitals,
+.doc-profile-panel--vitals .nurse-badge--notes,
+.doc-profile-panel--vitals .nurse-badge--consult,
+.doc-profile-panel--nursing-notes .nurse-badge--vitals,
+.doc-profile-panel--nursing-notes .nurse-badge--notes,
+.doc-profile-panel--nursing-notes .nurse-badge--consult {
+  background: var(--badge-scheduled-bg, #dbeafe);
+  color: var(--badge-scheduled-fg, #1e40af);
+}
+
+.doc-profile-panel--vitals .nurse-badge--completed,
+.doc-profile-panel--vitals .nurse-badge--submitted,
+.doc-profile-panel--vitals .nurse-badge--given,
+.doc-profile-panel--nursing-notes .nurse-badge--completed,
+.doc-profile-panel--nursing-notes .nurse-badge--submitted,
+.doc-profile-panel--nursing-notes .nurse-badge--given {
+  background: var(--badge-completed-bg, #dcfce7);
+  color: var(--badge-completed-fg, #166534);
+}
+
+.doc-profile-panel--vitals .nurse-badge--draft,
+.doc-profile-panel--vitals .nurse-badge--refused,
+.doc-profile-panel--nursing-notes .nurse-badge--draft,
+.doc-profile-panel--nursing-notes .nurse-badge--refused {
+  background: var(--badge-inactive-bg, #f1f5f9);
+  color: var(--badge-inactive-fg, #475569);
+}
+
+.doc-profile-panel--vitals .nurse-badge--missed,
+.doc-profile-panel--nursing-notes .nurse-badge--missed {
+  background: var(--badge-cancelled-bg, #fee2e2);
+  color: var(--badge-cancelled-fg, #991b1b);
+}
+
+.doc-profile-panel--vitals .nurse-badge--delayed,
+.doc-profile-panel--nursing-notes .nurse-badge--delayed {
+  background: var(--badge-pending-bg, #fef3c7);
+  color: var(--badge-pending-fg, #92400e);
+}
+
+@media (max-width: 900px) {
+  .doc-profile-panel--vitals .nurse-clinical-fields--notes,
+  .doc-profile-panel--nursing-notes .nurse-clinical-fields--notes {
+    grid-template-columns: 1fr;
+  }
+}

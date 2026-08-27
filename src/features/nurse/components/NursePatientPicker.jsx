@@ -123,10 +123,13 @@ export default function NursePatientPicker({
   };
 
   const isAllocatedPatient = (patient) => {
-    if (allocatedOnly) return true;
     const bedId = Number(patient?.bed_id);
     return Number.isFinite(bedId) && allocatedBedIdSet.has(bedId);
   };
+
+  /** Allocated tag only in All Patients view — redundant when filter is already Allocated. */
+  const showAllocatedBadge = (patient) =>
+    allocationAware && listSource === 'all' && isAllocatedPatient(patient);
 
   const resolvedHint = (() => {
     if (!allocationAware) return hint;
@@ -187,7 +190,7 @@ export default function NursePatientPicker({
           <span className="nurse-patient-picker__selected-text">
             {formatPatientPickerLabel(selected)}
           </span>
-          {allocationAware && isAllocatedPatient(selected) && (
+          {showAllocatedBadge(selected) && (
             <span className="nurse-badge nurse-badge--allocated">Allocated</span>
           )}
           {!disabled && (
@@ -258,7 +261,7 @@ export default function NursePatientPicker({
                 <span className="nurse-patient-picker__option-main">
                   {formatPatientPickerLabel(patient)}
                 </span>
-                {allocationAware && isAllocatedPatient(patient) && (
+                {showAllocatedBadge(patient) && (
                   <span className="nurse-badge nurse-badge--allocated">Allocated</span>
                 )}
               </button>

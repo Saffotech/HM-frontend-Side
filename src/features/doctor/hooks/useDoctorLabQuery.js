@@ -72,3 +72,22 @@ export function useDownloadDoctorLabReportFileMutation() {
     onError: mutationOnError,
   });
 }
+
+/** Active lab catalog for new-order selectors (GET /lab-catalog?active=true). */
+export function useLabCatalogQuery(params = {}, options = {}) {
+  const { enabled = true } = options;
+  const token = useQueryToken();
+  const apiParams = {
+    active: params.active !== false,
+    ...(params.department_id != null ? { department_id: params.department_id } : {}),
+  };
+  return useQuery({
+    queryKey: queryKeys.doctor.labCatalog(apiParams),
+    queryFn: () => doctorLabsApi.fetchLabCatalog(token, apiParams),
+    enabled: Boolean(token) && enabled,
+    // Keep fresh so newly added admin catalog tests appear in order dropdowns.
+    staleTime: 1000 * 30,
+    refetchOnMount: 'always',
+    retry: false,
+  });
+}

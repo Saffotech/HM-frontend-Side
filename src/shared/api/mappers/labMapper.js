@@ -54,6 +54,8 @@ export function apiToUiLabOrder(row) {
     doctorId: row.doctor_id ?? row.doctorId,
     doctorName: row.doctor_name ?? row.doctorName ?? '—',
     testName: row.test_name ?? row.testName ?? '—',
+    labTestId: row.lab_test_id ?? row.labTestId ?? null,
+    price: row.price != null && row.price !== '' ? String(row.price) : null,
     category: row.category ?? '—',
     departmentId: row.department_id ?? row.departmentId ?? null,
     departmentName:
@@ -113,6 +115,8 @@ export function apiToUiLabDashboard(raw) {
 export function apiToUiLabReport(row) {
   if (!row) return null;
   const reportId = row.report_id ?? row.id;
+  const order = row.order ?? {};
+  const priceRaw = row.price ?? order.price ?? null;
   return {
     reportId: reportId != null ? `RPT-${reportId}` : '—',
     reportDbId: reportId,
@@ -120,6 +124,7 @@ export function apiToUiLabReport(row) {
     patientId: row.patient_uhid ?? row.patient_uid ?? String(row.patient_id ?? ''),
     patientName: row.patient_name ?? row.patientName ?? '—',
     testName: row.test_name ?? row.testName ?? '—',
+    price: priceRaw != null && priceRaw !== '' ? String(priceRaw) : null,
     doctorName: row.doctor_name ?? row.doctorName ?? '—',
     uploadedByName: row.uploaded_by_name ?? row.uploadedByName ?? '—',
     uploadedDate: formatDateTime(row.uploaded_at ?? row.created_at ?? row.uploadedAt),
@@ -141,6 +146,8 @@ export function apiToUiLabReportDetail(row) {
     patientId: order.patient_uhid ?? order.patient_uid ?? '',
     patientName: order.patient_name ?? '—',
     testName: order.test_name ?? '—',
+    labTestId: order.lab_test_id ?? row.lab_test_id ?? null,
+    price: order.price != null ? String(order.price) : (row.price != null ? String(row.price) : null),
     doctorName: order.doctor_name ?? '—',
     category: order.category ?? '—',
     priority: normalizePriority(order.priority),

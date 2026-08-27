@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Pencil, Stethoscope, Trash2 } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
+import NursePagination from '@/features/nurse/components/NursePagination';
 import { toast } from '@/shared/utils/toast';
 import NurseConfirmDialog from '@/features/nurse/components/NurseConfirmDialog';
 import NurseEditVisitModal from '@/features/nurse/components/NurseEditVisitModal';
@@ -12,6 +13,8 @@ import {
 } from '@/shared/hooks/queries/useNurseQuery';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
 import { formatIpdDateTime } from '@/features/ipd/utils/ipdFormat';
+
+const PAGE_SIZE = 10;
 
 function formatVisitTime(iso) {
   if (!iso) return '—';
@@ -26,6 +29,7 @@ export default function NursePatientVisitHistoryPage() {
   const location = useLocation();
   const patient = location.state?.patient ?? null;
 
+  const [page, setPage] = useState(1);
   const [editingVisit, setEditingVisit] = useState(null);
   const [voidingVisit, setVoidingVisit] = useState(null);
   const [voidReason, setVoidReason] = useState('');
@@ -50,16 +54,25 @@ export default function NursePatientVisitHistoryPage() {
   }, [doctorsData?.doctors]);
 
   const visits = useMemo(
-    () => (data?.items ?? []).filter((v) => !v.is_voided),
+    () =>
+      (data?.items ?? [])
+        .filter((v) => !v.is_voided)
+        .sort((a, b) => new Date(b.visited_at) - new Date(a.visited_at)),
     [data?.items],
   );
 
-  const lastVisit = useMemo(() => {
-    if (!visits.length) return null;
-    return [...visits].sort(
-      (a, b) => new Date(b.visited_at) - new Date(a.visited_at),
-    )[0];
-  }, [visits]);
+  useEffect(() => {
+    setPage(1);
+  }, [patientId]);
+
+  const pageCount = Math.max(1, Math.ceil(visits.length / PAGE_SIZE) || 1);
+  const safePage = Math.min(page, pageCount);
+  const pagedVisits = useMemo(
+    () => visits.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [visits, safePage],
+  );
+
+  const lastVisit = visits[0] ?? null;
 
   const handleVoid = async () => {
     if (String(voidReason).trim().length < 3) {
@@ -125,29 +138,39 @@ export default function NursePatientVisitHistoryPage() {
             <p className="nurse-visit-history__empty">Could not load visits.</p>
           ) : lastVisit ? (
             <div className="nurse-visit-history__last-grid">
-              <div>
-                <span className="nurse-visit-history__label">Doctor</span>
-                <span className="nurse-visit-history__value">
-                  {lastVisit.doctor_name || '—'}
-                </span>
+              <div className="nurse-visit-history__last-row">
+                <div>
+                  <span className="nurse-visit-history__label">Visited at</span>
+                  <span className="nurse-visit-history__value">
+                    {formatVisitTime(lastVisit.visited_at)}
+                  </span>
+                </div>
+                <div>
+                  <span className="nurse-visit-history__label">Doctor</span>
+                  <span className="nurse-visit-history__value">
+                    {lastVisit.doctor_name || '—'}
+                  </span>
+                </div>
+                <div>
+                  <span className="nurse-visit-history__label">Department</span>
+                  <span className="nurse-visit-history__value">
+                    {doctorDepartmentMap.get(Number(lastVisit.doctor_id)) || '—'}
+                  </span>
+                </div>
+                <div>
+                  <span className="nurse-visit-history__label">Logged by</span>
+                  <span className="nurse-visit-history__value">
+                    {lastVisit.recorded_by_name || '—'}
+                  </span>
+                </div>
               </div>
-              <div>
-                <span className="nurse-visit-history__label">Visited at</span>
-                <span className="nurse-visit-history__value">
-                  {formatVisitTime(lastVisit.visited_at)}
-                </span>
-              </div>
-              <div>
-                <span className="nurse-visit-history__label">Logged by</span>
-                <span className="nurse-visit-history__value">
-                  {lastVisit.recorded_by_name || '—'}
-                </span>
-              </div>
-              <div className="nurse-visit-history__notes-block">
-                <span className="nurse-visit-history__label">Notes</span>
-                <span className="nurse-visit-history__notes-text">
-                  {lastVisit.notes || '—'}
-                </span>
+              <div className="nurse-visit-history__last-row nurse-visit-history__last-row--secondary">
+                <div className="nurse-visit-history__notes-block">
+                  <span className="nurse-visit-history__label">Notes</span>
+                  <span className="nurse-visit-history__notes-text">
+                    {lastVisit.notes || '—'}
+                  </span>
+                </div>
               </div>
             </div>
           ) : (
@@ -167,64 +190,75 @@ export default function NursePatientVisitHistoryPage() {
           ) : visits.length === 0 ? (
             <p className="nurse-visit-history__empty">No visits recorded.</p>
           ) : (
-            <div className="nurse-table-wrap">
-              <table className="nurse-table">
-                <thead>
-                  <tr>
-                    <th>Visited at</th>
-                    <th>Doctor</th>
-                    <th>Doctor department</th>
-                    <th>Logged by</th>
-                    <th>Notes</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {visits.map((visit) => (
-                    <tr key={visit.id}>
-                      <td>{formatVisitTime(visit.visited_at)}</td>
-                      <td>{visit.doctor_name || '—'}</td>
-                      <td>{doctorDepartmentMap.get(Number(visit.doctor_id)) || '—'}</td>
-                      <td>{visit.recorded_by_name || '—'}</td>
-                      <td className="nurse-visit-history__notes">
-                        {visit.notes ? (
-                          <span className="nurse-visit-history__notes-cell">
-                            {visit.notes}
-                          </span>
-                        ) : (
-                          '—'
-                        )}
-                      </td>
-                      <td>
-                        <div className="nurse-doctor-visits__actions">
-                          <button
-                            type="button"
-                            className="nurse-btn nurse-btn--ghost nurse-doctor-visits__action"
-                            onClick={() => setEditingVisit(visit)}
-                            aria-label={`Edit visit for ${patient?.patient_name || 'patient'}`}
-                          >
-                            <Pencil size={15} />
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            className="nurse-btn nurse-btn--ghost nurse-doctor-visits__action nurse-doctor-visits__action--danger"
-                            onClick={() => {
-                              setVoidingVisit(visit);
-                              setVoidReason('');
-                            }}
-                            aria-label={`Delete visit for ${patient?.patient_name || 'patient'}`}
-                          >
-                            <Trash2 size={15} />
-                            Delete
-                          </button>
-                        </div>
-                      </td>
+            <>
+              <div className="nurse-table-wrap">
+                <table className="nurse-table">
+                  <thead>
+                    <tr>
+                      <th>Visited at</th>
+                      <th>Doctor</th>
+                      <th>Doctor department</th>
+                      <th>Logged by</th>
+                      <th>Notes</th>
+                      <th>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {pagedVisits.map((visit) => (
+                      <tr key={visit.id}>
+                        <td>{formatVisitTime(visit.visited_at)}</td>
+                        <td>{visit.doctor_name || '—'}</td>
+                        <td>{doctorDepartmentMap.get(Number(visit.doctor_id)) || '—'}</td>
+                        <td>{visit.recorded_by_name || '—'}</td>
+                        <td className="nurse-visit-history__notes">
+                          {visit.notes ? (
+                            <span className="nurse-visit-history__notes-cell">
+                              {visit.notes}
+                            </span>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                        <td>
+                          <div className="nurse-doctor-visits__actions">
+                            <button
+                              type="button"
+                              className="nurse-btn nurse-btn--ghost nurse-doctor-visits__action"
+                              onClick={() => setEditingVisit(visit)}
+                              aria-label={`Edit visit for ${patient?.patient_name || 'patient'}`}
+                            >
+                              <Pencil size={15} />
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              className="nurse-btn nurse-btn--ghost nurse-doctor-visits__action nurse-doctor-visits__action--danger"
+                              onClick={() => {
+                                setVoidingVisit(visit);
+                                setVoidReason('');
+                              }}
+                              aria-label={`Delete visit for ${patient?.patient_name || 'patient'}`}
+                            >
+                              <Trash2 size={15} />
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <NursePagination
+                page={safePage}
+                pageSize={PAGE_SIZE}
+                total={visits.length}
+                hasNextPage={safePage < pageCount}
+                itemCount={pagedVisits.length}
+                onChange={setPage}
+              />
+            </>
           )}
         </div>
       </div>

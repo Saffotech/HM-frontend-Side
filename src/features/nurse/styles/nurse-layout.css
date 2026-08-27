@@ -478,6 +478,22 @@
   border: 1px solid #e2e8f0;
 }
 
+.nurse-patient-allocation-tags{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.2rem;
+}
+
+.nurse-patient-name-with-tags{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  min-width: 0;
+}
+
 .nurse-dashboard-page .nurse-kpi-grid{
   gap: 0.5rem;
   width: 100%;
@@ -682,6 +698,19 @@
   box-shadow: 0 1px 4px rgba(5, 150, 105, 0.2);
 }
 
+.nurse-dashboard-page__action-btn--meds{
+  color: #6d28d9;
+  background: var(--color-surface);
+  border-color: #c4b5fd;
+}
+
+.nurse-dashboard-page__action-btn--meds:hover:not(:disabled){
+  color: #5b21b6;
+  background: var(--color-surface);
+  border-color: #a78bfa;
+  box-shadow: 0 1px 4px rgba(109, 40, 217, 0.2);
+}
+
 .nurse-dashboard-page__action-btn:focus-visible{
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
@@ -806,6 +835,10 @@
 }.nurse-badge--waiting{ background: var(--badge-pending-bg); color: var(--badge-pending-fg); }
 .nurse-badge--vitals{ background: var(--badge-scheduled-bg); color: var(--badge-scheduled-fg); }
 .nurse-badge--notes{ background: var(--badge-scheduled-bg); color: var(--badge-scheduled-fg); }
+.nurse-badge--not-done{
+  background: var(--badge-pending-bg, #fef3c7);
+  color: var(--badge-pending-fg, #92400e);
+}
 .nurse-badge--consult{ background: var(--badge-scheduled-bg); color: var(--badge-scheduled-fg); }
 .nurse-badge--completed{ background: var(--badge-completed-bg); color: var(--badge-completed-fg); }
 .nurse-badge--draft{ background: var(--badge-inactive-bg); color: var(--badge-inactive-fg); }
@@ -1201,6 +1234,28 @@
   display: flex;
   align-items: center;
   gap: 0.625rem;
+  min-width: 0;
+}
+
+.nurse-queue-page__header-search{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 18rem;
+  min-width: min(100%, 18rem);
+  max-width: 40rem;
+  margin-left: auto;
+  justify-content: flex-end;
+}
+
+.nurse-queue-page__header-search .nurse-queue-page__search-wrap{
+  flex: 1 1 12rem;
+  max-width: 18rem;
+}
+
+.nurse-queue-page__header-search .nurse-med-patients__ward-dropdown {
+  min-width: 9.5rem;
 }
 
 .nurse-queue-page__icon{

@@ -68,6 +68,32 @@ export const PERMISSION_GROUPS = [
         name: 'Order / Update Lab Tests',
         description: 'Create, edit, or cancel lab orders from consultation or Labs.',
       },
+      {
+        key: 'lab_catalog:view',
+        name: 'View Lab Catalog',
+        description: 'Load active catalog tests and prices when ordering labs (GET /lab-catalog).',
+      },
+    ],
+  },
+
+  {
+    module: 'Nurse clinical read',
+    permissions: [
+      {
+        key: 'doctor_vitals:view',
+        name: 'View patient vitals',
+        description: 'Read nurse-recorded vitals on assigned patient EMR (GET /doctor/patients/{id}/vitals).',
+      },
+      {
+        key: 'doctor_notes:view',
+        name: 'View nursing notes',
+        description: 'Read nurse observations on assigned patient EMR (GET /doctor/patients/{id}/notes).',
+      },
+      {
+        key: 'doctor_patient_visits:view',
+        name: 'View doctor visits',
+        description: 'Read nurse-logged doctor visits on IPD patient EMR.',
+      },
     ],
   },
   {

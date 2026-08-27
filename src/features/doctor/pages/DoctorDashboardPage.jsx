@@ -44,15 +44,21 @@ export default function DoctorDashboardPage() {
   const handleEncounterModeChange = useCallback(
     (mode) => {
       const nextMode = parseDoctorEncounterMode(mode);
-      setActive('dashboard');
+      // Keep the current sidebar section (e.g. Lab Tests) when switching OPD ↔ IPD.
       const next = new URLSearchParams(searchParams);
       next.set('mode', nextMode);
       navigate(
-        { pathname: ROUTES.DOCTOR_DASHBOARD, search: `?${next.toString()}` },
-        { replace: false, state: { ...(location.state ?? {}), doctorSection: undefined } },
+        {
+          pathname: ROUTES.DOCTOR_DASHBOARD,
+          search: `?${next.toString()}`,
+        },
+        {
+          replace: true,
+          state: { ...(location.state ?? {}), doctorSection: active },
+        },
       );
     },
-    [navigate, searchParams, location.state],
+    [active, navigate, searchParams, location.state],
   );
 
   useEffect(() => {

@@ -16,10 +16,10 @@ function patientIdsWithRecords(items = []) {
 }
 
 /**
- * Bed-assigned patients who have both vitals and nursing notes recorded.
+ * All bed-assigned patients, with vitals/notes completion flags for the Patient page.
  */
 export function useNurseDocumentedPatients(
-  { search, page = 1, page_size: pageSize = 20 } = {},
+  { search, page = 1, page_size: pageSize = 10 } = {},
   options = {},
 ) {
   const { enabled = true } = options;
@@ -43,19 +43,30 @@ export function useNurseDocumentedPatients(
     { enabled: enabled && scopeReady },
   );
 
-  const documentedPatients = useMemo(() => {
+  const patients = useMemo(() => {
     const vitalIds = patientIdsWithRecords(vitalsQuery.data?.items);
     const noteIds = patientIdsWithRecords(notesQuery.data?.items);
-    return (bedQuery.data?.items ?? []).filter((patient) => {
+    return (bedQuery.data?.items ?? []).map((patient) => {
       const id = Number(patient.patient_id);
-      return vitalIds.has(id) && noteIds.has(id);
+      const hasVitals = Boolean(patient.has_vitals) || vitalIds.has(id);
+      const hasNotes = noteIds.has(id);
+      return {
+        ...patient,
+        has_vitals: hasVitals,
+        has_notes: hasNotes,
+      };
     });
   }, [bedQuery.data?.items, vitalsQuery.data?.items, notesQuery.data?.items]);
 
+  const pendingCareCount = useMemo(
+    () => patients.filter((row) => !row.has_vitals || !row.has_notes).length,
+    [patients],
+  );
+
   const paged = useMemo(() => {
     const start = (page - 1) * pageSize;
-    return documentedPatients.slice(start, start + pageSize);
-  }, [documentedPatients, page, pageSize]);
+    return patients.slice(start, start + pageSize);
+  }, [patients, page, pageSize]);
 
   const isLoading =
     bedQuery.isLoading || vitalsQuery.isLoading || notesQuery.isLoading;
@@ -71,7 +82,8 @@ export function useNurseDocumentedPatients(
   return {
     data: {
       items: paged,
-      total: documentedPatients.length,
+      total: patients.length,
+      pending_care_count: pendingCareCount,
       page,
       page_size: pageSize,
     },

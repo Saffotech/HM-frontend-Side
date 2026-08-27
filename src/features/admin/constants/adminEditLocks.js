@@ -69,6 +69,9 @@ export const MODULE_CARD_PERMISSION_KEYS = Object.freeze({
     'prescriptions:delete',
     'lab:view',
     'lab:create',
+    'doctor_patient_visits:view',
+    'doctor_vitals:view',
+    'doctor_notes:view',
   ],
   doctor_profile: [
     'doctor_profile:view',
@@ -113,6 +116,7 @@ export const MODULE_CARD_PERMISSION_KEYS = Object.freeze({
     'nurse_notes:view',
     'nurse_notes:create',
     'nurse_notes:update',
+    'nurse_lab_reports:view',
     'nurse_medication:view',
     'nurse_medication:create',
     'nurse_medication:update',

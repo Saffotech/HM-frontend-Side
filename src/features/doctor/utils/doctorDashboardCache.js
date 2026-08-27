@@ -70,6 +70,30 @@ export function invalidateDoctorIpdAdmissions(queryClient) {
   queryClient.invalidateQueries({ queryKey: ['doctor', 'ipd'] });
 }
 
+/** Instant UI feedback after save — mark appointment Completed in live caches. */
+export function optimisticallyCompleteAppointment(queryClient, appointmentDbId) {
+  if (appointmentDbId == null) return;
+
+  const mark = (item) => {
+    if (!item || typeof item !== 'object') return item;
+    const id = item.dbId ?? item.id ?? item.appointmentId ?? item.appointment_id;
+    if (Number(id) !== Number(appointmentDbId)) return item;
+    return { ...item, status: 'Completed' };
+  };
+
+  const patchList = (key) => {
+    queryClient.setQueryData(key, (prev) => {
+      if (!Array.isArray(prev)) return prev;
+      return prev.map(mark);
+    });
+  };
+
+  patchList(queryKeys.doctor.appointments.today);
+  patchList(queryKeys.doctor.appointments.byDate(todayOpdDate()));
+  patchList(queryKeys.doctor.queue.today);
+  patchList(queryKeys.doctor.queue.current);
+}
+
 /** After consultation completes — also refresh patient-centric lists. */
 export function invalidateDoctorDashboardAfterComplete(
   queryClient,

@@ -246,6 +246,9 @@ export function mapDoctorPatientVisitItem(row) {
     patient_name: row.patient_name ?? '',
     doctor_id: row.doctor_id,
     doctor_name: row.doctor_name ?? '',
+    department_name: row.department_name ?? row.department ?? null,
+    department: row.department ?? row.department_name ?? null,
+    specialization: row.specialization ?? null,
     visited_at: row.visited_at ?? null,
     notes: row.notes ?? null,
     visit_number: row.visit_number ?? null,
@@ -269,5 +272,165 @@ export function mapDoctorPatientVisitsResponse(raw) {
     visit_date: raw.visit_date ?? null,
     visit_count: raw.visit_count ?? 0,
     visits: (raw.visits ?? []).map(mapDoctorPatientVisitItem).filter(Boolean),
+  };
+}
+
+function mapDoctorVitalHistoryEntry(vital) {
+  return {
+    history_id: vital.history_id ?? vital.id,
+    recorded_at: vital.recorded_at,
+    recorded_by: vital.recorded_by_name ?? vital.recorded_by ?? null,
+    status: vital.status ?? 'recorded',
+    temperature: vital.temperature,
+    blood_pressure: vital.blood_pressure,
+    heart_rate: vital.heart_rate,
+    respiratory_rate: vital.respiratory_rate,
+    oxygen_saturation: vital.oxygen_saturation,
+    blood_sugar: vital.blood_sugar,
+    weight: vital.weight,
+    pain_level: vital.pain_level,
+    observation_notes: vital.observation_notes,
+  };
+}
+
+/**
+ * Prefer nested history when richer; otherwise build Recorded At options from flat list.
+ */
+export function withAssembledDoctorVitalHistory(latest, items = []) {
+  if (!latest) return null;
+  const list = items.length ? items : [latest];
+  const maxNested = Math.max(0, ...list.map((item) => item.history?.length ?? 0));
+  if (maxNested >= list.length) return latest;
+  const history = [...list]
+    .map(mapDoctorVitalHistoryEntry)
+    .sort((a, b) => new Date(b.recorded_at) - new Date(a.recorded_at));
+  if ((latest.history?.length ?? 0) >= history.length) return latest;
+  return { ...latest, history };
+}
+
+/** Map one vitals row from GET /doctor/patients/{id}/vitals (nurse fields, doctor read-only). */
+export function mapDoctorVitalItem(row) {
+  if (!row) return null;
+  const recordedByName = row.recorded_by_name ?? row.nurse_name ?? null;
+  const history =
+    Array.isArray(row.history) && row.history.length
+      ? [...row.history]
+          .map(mapDoctorVitalHistoryEntry)
+          .sort((a, b) => new Date(b.recorded_at) - new Date(a.recorded_at))
+      : [mapDoctorVitalHistoryEntry({ ...row, recorded_by_name: recordedByName })];
+  return {
+    id: row.id,
+    appointment_id: row.appointment_id ?? null,
+    patient_id: row.patient_id ?? null,
+    patient_uid: row.patient_uid ?? null,
+    patient_name: row.patient_name ?? '',
+    bed_number: row.bed_number ?? null,
+    ward_name: row.ward_name ?? null,
+    doctor_id: row.doctor_id ?? null,
+    doctor_name: row.doctor_name ?? null,
+    recorded_by: recordedByName,
+    recorded_by_name: recordedByName,
+    temperature: row.temperature ?? null,
+    blood_pressure: row.blood_pressure ?? null,
+    heart_rate: row.heart_rate ?? null,
+    respiratory_rate: row.respiratory_rate ?? null,
+    oxygen_saturation: row.oxygen_saturation ?? null,
+    blood_sugar: row.blood_sugar ?? null,
+    weight: row.weight ?? null,
+    pain_level: row.pain_level ?? null,
+    observation_notes: row.observation_notes ?? null,
+    status: row.status ?? null,
+    recorded_at: row.recorded_at ?? null,
+    updated_at: row.updated_at ?? null,
+    history,
+  };
+}
+
+/** Map GET /doctor/patients/{id}/vitals paginated response. */
+export function mapDoctorPatientVitalsResponse(raw) {
+  if (!raw) return { success: true, total: 0, page: 1, page_size: 20, items: [] };
+  return {
+    success: raw.success !== false,
+    total: Number(raw.total) || 0,
+    page: Number(raw.page) || 1,
+    page_size: Number(raw.page_size) || 20,
+    items: (raw.items ?? []).map(mapDoctorVitalItem).filter(Boolean),
+  };
+}
+
+function mapDoctorNoteHistoryEntry(note, fallbackCreatedBy = null) {
+  return {
+    history_id: note.history_id ?? note.id,
+    created_at: note.created_at,
+    created_by:
+      note.created_by ??
+      note.created_by_name ??
+      note.nurse_name ??
+      fallbackCreatedBy,
+    status: note.status ?? 'active',
+    symptoms: note.symptoms,
+    treatment_response: note.treatment_response,
+    additional_notes: note.additional_notes,
+  };
+}
+
+/**
+ * Prefer nested history when richer; otherwise build Created At options from flat list.
+ */
+export function withAssembledDoctorNoteHistory(latest, items = []) {
+  if (!latest) return null;
+  const list = items.length ? items : [latest];
+  const maxNested = Math.max(0, ...list.map((item) => item.history?.length ?? 0));
+  if (maxNested >= list.length) return latest;
+  const history = [...list]
+    .map((note) => mapDoctorNoteHistoryEntry(note))
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  if ((latest.history?.length ?? 0) >= history.length) return latest;
+  return { ...latest, history };
+}
+
+/** Map one nursing note from GET /doctor/patients/{id}/notes. */
+export function mapDoctorNoteItem(row) {
+  if (!row) return null;
+  const createdBy = row.created_by_name ?? row.nurse_name ?? null;
+  const history =
+    Array.isArray(row.history) && row.history.length
+      ? [...row.history]
+          .map((entry) => mapDoctorNoteHistoryEntry(entry, createdBy))
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      : [mapDoctorNoteHistoryEntry({ ...row, created_by: createdBy })];
+  return {
+    id: row.id,
+    appointment_id: row.appointment_id ?? null,
+    patient_id: row.patient_id ?? null,
+    patient_uid: row.patient_uid ?? null,
+    patient_name: row.patient_name ?? '',
+    bed_number: row.bed_number ?? null,
+    ward_name: row.ward_name ?? null,
+    doctor_id: row.doctor_id ?? null,
+    doctor_name: row.doctor_name ?? null,
+    nurse_id: row.nurse_id ?? null,
+    nurse_name: row.nurse_name ?? createdBy,
+    created_by: createdBy,
+    created_by_name: createdBy,
+    symptoms: row.symptoms ?? null,
+    treatment_response: row.treatment_response ?? null,
+    additional_notes: row.additional_notes ?? null,
+    status: row.status ?? null,
+    created_at: row.created_at ?? null,
+    updated_at: row.updated_at ?? null,
+    history,
+  };
+}
+
+/** Map GET /doctor/patients/{id}/notes paginated response. */
+export function mapDoctorPatientNotesResponse(raw) {
+  if (!raw) return { success: true, total: 0, page: 1, page_size: 20, items: [] };
+  return {
+    success: raw.success !== false,
+    total: Number(raw.total) || 0,
+    page: Number(raw.page) || 1,
+    page_size: Number(raw.page_size) || 20,
+    items: (raw.items ?? []).map(mapDoctorNoteItem).filter(Boolean),
   };
 }

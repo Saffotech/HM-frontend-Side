@@ -1,0 +1,282 @@
+.nurse-lab-reports__search-wrap {
+  position: relative;
+}
+
+/* Fit columns in viewport — no horizontal scroll */
+.nurse-lab-reports .nurse-table-wrap,
+.nurse-lab-reports .nurse-notes-registry__table .nurse-table-wrap {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+.nurse-lab-reports .nurse-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.nurse-lab-reports .nurse-table th,
+.nurse-lab-reports .nurse-table td {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+  vertical-align: middle;
+}
+
+.nurse-lab-reports .nurse-table th:nth-child(1),
+.nurse-lab-reports .nurse-table td:nth-child(1) { width: 9%; }
+.nurse-lab-reports .nurse-table th:nth-child(2),
+.nurse-lab-reports .nurse-table td:nth-child(2) { width: 14%; }
+.nurse-lab-reports .nurse-table th:nth-child(3),
+.nurse-lab-reports .nurse-table td:nth-child(3) { width: 12%; }
+.nurse-lab-reports .nurse-table th:nth-child(4),
+.nurse-lab-reports .nurse-table td:nth-child(4) { width: 11%; }
+.nurse-lab-reports .nurse-table th:nth-child(5),
+.nurse-lab-reports .nurse-table td:nth-child(5) { width: 11%; }
+.nurse-lab-reports .nurse-table th:nth-child(6),
+.nurse-lab-reports .nurse-table td:nth-child(6) { width: 12%; }
+.nurse-lab-reports .nurse-table th:nth-child(7),
+.nurse-lab-reports .nurse-table td:nth-child(7) { width: 13%; }
+.nurse-lab-reports .nurse-table th:nth-child(8),
+.nurse-lab-reports .nurse-table td:nth-child(8) { width: 18%; }
+
+.nurse-lab-reports .nurse-table__actions {
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.nurse-lab-reports .nurse-notes-registry__ward-bed {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.nurse-lab-reports .nurse-notes-registry__ward {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.25;
+}
+
+.nurse-lab-reports .nurse-notes-registry__ward-bed .nurse-notes-registry__bed {
+  align-self: flex-start;
+}
+
+.nurse-lab-reports .nurse-notes-registry__reported-at {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.nurse-lab-reports .nurse-notes-registry__reported-date {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.nurse-lab-reports .nurse-notes-registry__reported-time {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+}
+
+.nurse-lab-report-detail {
+  max-width: 100%;
+  overflow-x: clip;
+  min-width: 0;
+}
+
+.nurse-lab-reports__search-wrap--has-clear .nurse-notes-registry__search {
+  padding-right: 2.25rem;
+}
+
+.nurse-lab-reports__search-clear {
+  position: absolute;
+  top: 50%;
+  right: 0.4rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.nurse-lab-reports__search-clear:hover {
+  color: #0f172a;
+  background: #f1f5f9;
+}
+
+.nurse-lab-reports__search-clear:focus-visible {
+  outline: 2px solid var(--color-primary, #2563eb);
+  outline-offset: 1px;
+}
+
+.nurse-lab-reports__toolbar-filters .nurse-lab-reports__ward-select {
+  flex-shrink: 0;
+  min-height: 2.5rem;
+  min-width: 9.5rem;
+  max-width: 11rem;
+}
+
+.nurse-lab-reports__toolbar-filters .nurse-lab-reports__date-input {
+  flex-shrink: 0;
+  margin: 0;
+  min-width: 10.5rem;
+  max-width: 12.5rem;
+}
+
+.nurse-lab-reports__toolbar-filters .nurse-lab-reports__date-input .field__label {
+  display: none;
+}
+
+.nurse-lab-reports__toolbar-filters .nurse-lab-reports__date-input .date-input__wrap {
+  min-height: 2.5rem;
+}
+
+.nurse-lab-report-detail__summary {
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.85rem;
+}
+
+.nurse-lab-report-detail__summary-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.nurse-lab-report-detail__summary-title h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.nurse-lab-report-detail__meta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem 0.85rem;
+  margin: 0;
+}
+
+.nurse-lab-report-detail__meta-grid > div {
+  min-width: 0;
+}
+
+.nurse-lab-report-detail__meta-grid dt {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--nurse-muted, #64748b);
+  font-weight: 500;
+}
+
+.nurse-lab-report-detail__meta-grid dd {
+  margin: 0.15rem 0 0;
+  font-size: 0.9375rem;
+  word-break: break-word;
+}
+
+.nurse-lab-report-detail__remarks {
+  grid-column: 1 / -1;
+}
+
+.nurse-lab-report-detail__params {
+  margin-top: 1rem;
+  padding: 1rem 1.25rem;
+}
+
+.nurse-lab-report-detail__params-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.nurse-lab-report-detail__params-wrap {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+.nurse-lab-report-detail__params-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.nurse-lab-report-detail__params-table th,
+.nurse-lab-report-detail__params-table td {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.nurse-lab-report-detail__file-only {
+  margin-top: 1rem;
+  padding: 1rem 1.25rem;
+  color: var(--nurse-muted, #64748b);
+}
+
+.nurse-lab-report-detail__file {
+  margin-top: 1rem;
+  padding: 1rem 1.25rem;
+}
+
+.nurse-lab-report-detail__file-wrap {
+  margin-top: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background: #f8fafc;
+  overflow: hidden;
+  min-height: 12rem;
+}
+
+.nurse-lab-report-detail__file-image {
+  display: block;
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  background: #fff;
+}
+
+.nurse-lab-report-detail__file-frame {
+  display: block;
+  width: 100%;
+  height: min(70vh, 48rem);
+  border: 0;
+  background: #fff;
+}
+
+.nurse-lab-report-detail__file-muted,
+.nurse-lab-report-detail__file-error {
+  margin: 0;
+  padding: 1.25rem;
+}
+
+.nurse-lab-report-detail__file-error {
+  color: #b91c1c;
+}
+
+@media (max-width: 900px) {
+  .nurse-lab-report-detail__meta-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .nurse-lab-report-detail__meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nurse-lab-report-detail__file-frame {
+    height: 60vh;
+  }
+}

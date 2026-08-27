@@ -26,7 +26,7 @@ export default function NurseMedicationHistoryPage() {
     bed_number: debouncedBed,
     status,
     page,
-    page_size: 20,
+    page_size: 10,
   });
 
   useEffect(() => {
@@ -45,6 +45,7 @@ export default function NurseMedicationHistoryPage() {
     { header: 'Patient ID', render: (row) => formatPatientIdDisplay(row) },
     { header: 'Medicine', accessor: 'medicine_name' },
     { header: 'Dose', accessor: 'dose' },
+    { header: 'Duration', render: (row) => row.duration || '—' },
     { header: 'Status', render: (row) => <NurseQueueStatusBadge status={row.status} /> },
     { header: 'Administered At', render: (row) => (row.administered_at ? new Date(row.administered_at).toLocaleString() : '-') },
     { header: 'By', accessor: 'administered_by_name' },
@@ -109,7 +110,7 @@ export default function NurseMedicationHistoryPage() {
         <NurseDataTable columns={columns} data={data?.items || []} isLoading={false} emptyMessage="No medication history found." />
         <NursePagination
           page={page}
-          pageSize={20}
+          pageSize={10}
           total={data?.total}
           hasNextPage={data?.hasNextPage}
           itemCount={data?.items?.length ?? 0}

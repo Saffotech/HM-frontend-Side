@@ -249,6 +249,8 @@ export function mapBedPatientItem(row) {
     phone: row.patient_phone ?? row.phone ?? '',
     bed_number: row.bed_number ?? '',
     ward_name: row.ward_name ?? '',
+    doctor_id: row.doctor_id ?? null,
+    doctor_name: row.doctor_name ?? '',
     department: row.department_name ?? row.department ?? '',
     pending_medications: row.pending_medication_count ?? 0,
     has_vitals: Boolean(row.last_vitals),
@@ -451,12 +453,45 @@ export function mapMedicationPatientRow(row) {
   return attachPatientUid({
     ...row,
     ward_name: row.ward_name ?? row.ward ?? '',
+    medicine_count: Number(row.medicine_count) || 0,
   });
+}
+
+/**
+ * API returns one row per prescription (any doctor); collapse to one row per patient.
+ * medicine_count is summed across all prescriptions for that patient.
+ */
+export function dedupeMedicationPatientsByPatientId(rows = []) {
+  const byPatient = new Map();
+  for (const row of rows) {
+    if (!row) continue;
+    const key = String(row.patient_id ?? '').trim();
+    if (!key || key === 'undefined' || key === 'null') continue;
+    const count = Number(row.medicine_count) || 0;
+    const existing = byPatient.get(key);
+    if (!existing) {
+      byPatient.set(key, { ...row, medicine_count: count });
+      continue;
+    }
+    byPatient.set(key, {
+      ...existing,
+      medicine_count: (Number(existing.medicine_count) || 0) + count,
+      bed_number: existing.bed_number || row.bed_number,
+      ward_name: existing.ward_name || row.ward_name,
+      doctor_name: existing.doctor_name || row.doctor_name,
+      patient_name: existing.patient_name || row.patient_name,
+      patient_uid: existing.patient_uid || row.patient_uid,
+      patientUid: existing.patientUid || row.patientUid,
+    });
+  }
+  return [...byPatient.values()];
 }
 
 export function mapMedicationPatientsResponse(raw, { page = 1, page_size = 20 } = {}) {
   const rows = Array.isArray(raw) ? raw : raw?.data ?? raw?.items ?? [];
-  return wrapPagedArray(rows, { page, page_size }, mapMedicationPatientRow);
+  const mapped = rows.map(mapMedicationPatientRow).filter(Boolean);
+  const deduped = dedupeMedicationPatientsByPatientId(mapped);
+  return paginateClientItems(deduped, { page, page_size });
 }
 
 function parseAdministeredAtMs(value) {
@@ -508,15 +543,66 @@ export function buildLatestAdministrationByPrescriptionItemId(historyRows = []) 
   return byItem;
 }
 
-export function mapMedicationToPrescription(item, latestHistoryRow = null) {
+/**
+ * Earliest administration per prescription_item_id (first given).
+ */
+export function buildFirstAdministrationByPrescriptionItemId(historyRows = []) {
+  const byItem = new Map();
+  for (const raw of historyRows) {
+    const mapped = mapMedicationHistoryRow(raw);
+    if (!mapped?.prescription_item_id) continue;
+    const key = String(mapped.prescription_item_id);
+    const existing = byItem.get(key);
+    const nextAt = parseAdministeredAtMs(mapped.administered_at);
+    const existingAt = existing ? parseAdministeredAtMs(existing.administered_at) : Number.POSITIVE_INFINITY;
+    if (!existing || (nextAt > 0 && nextAt <= existingAt)) {
+      byItem.set(key, mapped);
+    }
+  }
+  return byItem;
+}
+
+export function mapMedicationToPrescription(
+  item,
+  latestHistoryRow = null,
+  patientMeta = {},
+  firstHistoryRow = null,
+) {
   if (!item) return null;
   const itemId = item.prescription_item_id ?? item.id;
   const administration = latestHistoryRow ? mapAdministrationFromHistory(latestHistoryRow) : null;
+  const firstAdministration = firstHistoryRow
+    ? mapAdministrationFromHistory(firstHistoryRow)
+    : null;
   const statusFromItem =
     item.status != null && item.status !== ''
       ? String(item.status).toLowerCase()
       : null;
   const status = administration?.status ?? statusFromItem ?? null;
+  const doctorName =
+    item.doctor_name
+    || item.prescribed_by_name
+    || item.prescribed_by
+    || patientMeta.doctor_name
+    || '';
+  const doctorId = item.doctor_id ?? patientMeta.doctor_id ?? null;
+  const departmentName =
+    item.department_name
+    || item.department
+    || patientMeta.department_name
+    || patientMeta.department
+    || '';
+
+  const firstGivenAt =
+    firstAdministration?.administered_at
+    ?? item.first_administered_at
+    ?? administration?.administered_at
+    ?? null;
+  const firstGivenBy =
+    firstAdministration?.administered_by_name
+    ?? item.first_administered_by
+    ?? (firstGivenAt ? administration?.administered_by_name : null)
+    ?? null;
 
   return {
     id: itemId,
@@ -527,32 +613,108 @@ export function mapMedicationToPrescription(item, latestHistoryRow = null) {
     route: item.route ?? item.instructions ?? '',
     duration: item.duration,
     instructions: item.instructions ?? null,
+    doctor_id: doctorId,
+    doctor_name: doctorName,
+    department_name: departmentName,
     status,
     statusKnown: status != null,
     administration,
     last_administered_at: administration?.administered_at ?? null,
     last_administered_by: administration?.administered_by_name ?? null,
+    first_administered_at: firstGivenAt,
+    first_administered_by: firstGivenBy,
   };
 }
 
-export function mapPatientMedicationsResponse(raw, historyRows = []) {
-  if (!raw) return { prescriptions: [], medications: [] };
-  const meds = raw.medications ?? raw.prescriptions ?? [];
+function extractPatientMedicationItems(raw) {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  const payload =
+    raw.data && typeof raw.data === 'object' && !Array.isArray(raw.data)
+      ? raw.data
+      : raw;
+  if (Array.isArray(payload)) return payload;
+  const list =
+    payload.medications
+    ?? payload.prescriptions
+    ?? payload.items
+    ?? payload.medication_items
+    ?? [];
+  return Array.isArray(list) ? list : [];
+}
+
+/** Build administer-table rows from history when latest Rx has no items. */
+export function prescriptionsFromMedicationHistory(historyRows = [], patientMeta = {}) {
   const latestByItem = buildLatestAdministrationByPrescriptionItemId(historyRows);
-  const prescriptions = meds
+  const firstByItem = buildFirstAdministrationByPrescriptionItemId(historyRows);
+  const prescriptions = [];
+  const seen = new Set();
+  for (const [key, historyRow] of latestByItem.entries()) {
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const mapped = mapMedicationToPrescription(
+      {
+        prescription_item_id: historyRow.prescription_item_id,
+        medicine_name: historyRow.medicine_name,
+        dosage: historyRow.dose ?? historyRow.dosage,
+        dose: historyRow.dose,
+        frequency: historyRow.frequency,
+        duration: historyRow.duration,
+        instructions: historyRow.instructions,
+        route: historyRow.route,
+      },
+      historyRow,
+      patientMeta,
+      firstByItem.get(key) ?? historyRow,
+    );
+    if (mapped) prescriptions.push(mapped);
+  }
+  return prescriptions;
+}
+
+export function mapPatientMedicationsResponse(raw, historyRows = []) {
+  if (!raw && !historyRows?.length) return { prescriptions: [], medications: [] };
+  const payload =
+    raw?.data && typeof raw.data === 'object' && !Array.isArray(raw.data)
+      ? raw.data
+      : raw ?? {};
+  const meds = extractPatientMedicationItems(raw);
+  const latestByItem = buildLatestAdministrationByPrescriptionItemId(historyRows);
+  const firstByItem = buildFirstAdministrationByPrescriptionItemId(historyRows);
+  const patientMeta = {
+    doctor_id: payload.doctor_id ?? null,
+    doctor_name: payload.doctor_name || payload.attending_doctor_name || '',
+    department_name: payload.department_name || payload.department || '',
+  };
+  const seen = new Set();
+  let prescriptions = meds
     .map((m) => {
       const itemKey = m?.prescription_item_id ?? m?.id;
-      const latest = itemKey != null ? latestByItem.get(String(itemKey)) : null;
-      return mapMedicationToPrescription(m, latest);
+      const key = itemKey != null ? String(itemKey) : '';
+      if (key) {
+        if (seen.has(key)) return null;
+        seen.add(key);
+      }
+      const latest = key ? latestByItem.get(key) : null;
+      const first = key ? firstByItem.get(key) : null;
+      return mapMedicationToPrescription(m, latest, patientMeta, first);
     })
     .filter(Boolean);
+
+  // Latest Rx can be empty while older doses exist in history — surface those.
+  if (prescriptions.length === 0 && historyRows?.length) {
+    prescriptions = prescriptionsFromMedicationHistory(historyRows, patientMeta);
+  }
+
   const uidFromHistory = historyRows
     .map((r) => r?.patient_uid ?? r?.patient_uhid)
     .find(Boolean);
   return attachPatientUid({
-    ...raw,
-    ward_name: raw.ward_name ?? raw.ward ?? '',
-    patient_uid: raw.patient_uid ?? raw.patient_uhid ?? uidFromHistory ?? '',
+    ...payload,
+    ward_name: payload.ward_name ?? payload.ward ?? '',
+    doctor_name: patientMeta.doctor_name,
+    department_name: patientMeta.department_name,
+    patient_uid: payload.patient_uid ?? payload.patient_uhid ?? uidFromHistory ?? '',
     prescriptions,
     medications: meds,
   });
@@ -566,6 +728,7 @@ export function mapMedicationHistoryRow(row) {
     prescription_item_id: row.prescription_item_id,
     medicine_name: row.medicine_name ?? row.medicine ?? '',
     dose: row.dosage ?? row.dose ?? '',
+    duration: row.duration ?? null,
     patient_name: row.patient_name ?? '',
     administered_by_name:
       row.administered_by_name ??
@@ -820,4 +983,86 @@ export function toApiDoctorVisitUpdateBody(body = {}) {
   if (body.visited_at != null) payload.visited_at = body.visited_at;
   if (body.notes != null) payload.notes = body.notes;
   return payload;
+}
+
+/** Map GET /nurse/lab-reports list item (report_id from list; id on detail). */
+export function mapLabReportItem(row) {
+  if (!row) return null;
+  const reportId = row.report_id ?? row.id;
+  return attachPatientUid({
+    ...row,
+    id: reportId,
+    report_id: reportId,
+    patient_name: row.patient_name ?? '',
+    ward_name: row.ward_name ?? null,
+    bed_number: row.bed_number ?? null,
+    doctor_name: row.doctor_name ?? null,
+    department_name: row.department_name ?? row.department ?? null,
+    department: row.department_name ?? row.department ?? null,
+    test_name: row.test_name ?? '',
+    lab_test_id: row.lab_test_id ?? null,
+    price: row.price != null ? String(row.price) : null,
+    source: row.source ?? 'NONE',
+    report_file: row.report_file ?? null,
+    has_file: Boolean(row.report_file),
+    uploaded_at: row.uploaded_at ?? row.created_at ?? null,
+    status: row.status ?? 'completed',
+  });
+}
+
+/** Map GET /nurse/lab-reports/{id} detail (id + nested order + parameters). */
+export function mapLabReportDetail(row) {
+  if (!row) return null;
+  const order = row.order ?? {};
+  const reportId = row.report_id ?? row.id;
+  const parameters = Array.isArray(row.parameters) ? row.parameters : [];
+  return attachPatientUid({
+    ...row,
+    id: reportId,
+    report_id: reportId,
+    patient_id: order.patient_id ?? row.patient_id,
+    patient_name: order.patient_name ?? row.patient_name ?? '',
+    patient_uid: order.patient_uid ?? row.patient_uid,
+    ward_name: order.ward_name ?? row.ward_name ?? null,
+    bed_number: order.bed_number ?? row.bed_number ?? null,
+    doctor_name: order.doctor_name ?? row.doctor_name ?? null,
+    doctor_id: order.doctor_id ?? row.doctor_id ?? null,
+    department_id: order.department_id ?? row.department_id ?? null,
+    department_name: order.department_name ?? row.department_name ?? order.department ?? row.department ?? null,
+    department: order.department_name ?? row.department_name ?? order.department ?? row.department ?? null,
+    test_name: order.test_name ?? row.test_name ?? '',
+    category: order.category ?? null,
+    priority: order.priority ?? null,
+    order_status: order.status ?? null,
+    parameters,
+    report_file: row.report_file ?? null,
+    has_file: Boolean(row.report_file),
+    uploaded_at: row.created_at ?? row.uploaded_at ?? null,
+    uploaded_by_name: row.uploaded_by_name ?? null,
+    sample_collected_at: row.sample_collected_at ?? null,
+    test_performed_at: row.test_performed_at ?? null,
+    remarks: row.remarks ?? null,
+    file_name: row.file_name ?? null,
+    file_type: row.file_type ?? null,
+    file_size: row.file_size ?? null,
+    file_size_display: row.file_size_display ?? null,
+    source: row.source ?? 'NONE',
+    status: order.status ?? row.status ?? 'completed',
+  });
+}
+
+/** Map GET /nurse/lab-reports paginated list response. */
+export function mapLabReportListResponse(raw) {
+  if (!raw) return { items: [], total: 0, page: 1, page_size: 20, hasNextPage: false };
+  const items = (raw.items ?? []).map(mapLabReportItem).filter(Boolean);
+  const page = raw.page ?? 1;
+  const pageSize = raw.page_size ?? 20;
+  const total = raw.total ?? items.length;
+  return {
+    items,
+    total,
+    page,
+    page_size: pageSize,
+    hasNextPage: page * pageSize < total,
+  };
 }

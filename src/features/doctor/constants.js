@@ -29,6 +29,7 @@ export const LAB_TESTS_BY_DEPARTMENT = {
   ],
 };
 
+/** @deprecated Prefer GET /lab-catalog?active=true — kept as temporary fallback. */
 export const LAB_TEST_OPTIONS = [
   ...LAB_TESTS_BY_DEPARTMENT.LAB,
   ...LAB_TESTS_BY_DEPARTMENT.RAD,

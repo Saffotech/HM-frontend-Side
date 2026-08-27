@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient, useQueries } from '@tanstack/react-query';
 
-import { Users, Filter, ChevronRight, ChevronDown, CalendarDays, RotateCcw, Check } from 'lucide-react';
+import { Users, Filter, ChevronRight, ChevronDown, CalendarDays, RotateCcw, Check, X } from 'lucide-react';
 
 import { useDoctorPatientVisitsQuery } from '@/features/doctor/hooks/useDoctorPatientQuery';
 
@@ -10,7 +10,7 @@ import { useDoctorIpdAdmissionsQuery } from '@/features/doctor/hooks/useDoctorIp
 
 import { visitRowToPatientSummary, appointmentToVisitRow } from '@/shared/api/mappers/doctorPatientMapper';
 
-import { Input, EmptyState } from '@/shared/components/common';
+import { Input, EmptyState, TablePagination } from '@/shared/components/common';
 
 import PatientHistoryProfile from './PatientHistoryProfile';
 
@@ -90,6 +90,7 @@ const IPD_CATEGORY_HINTS = {
 };
 
 const IPD_PATIENTS_PAGE_SIZE = 100;
+const PATIENTS_PAGE_SIZE = 10;
 
 function resolveInitialCategoryFilter(initial, encounterMode) {
   if (encounterMode === DOCTOR_ENCOUNTER_MODE.IPD) {
@@ -326,6 +327,7 @@ export default function PatientsEMRSection({
   );
 
   const [view, setView] = useState(null);
+  const [page, setPage] = useState(1);
 
   const categoryOptions = isIpdMode ? IPD_PATIENT_CATEGORY_OPTIONS : PATIENT_CATEGORY_OPTIONS;
   const categoryHints = isIpdMode ? IPD_CATEGORY_HINTS : OPD_CATEGORY_HINTS;
@@ -346,6 +348,10 @@ export default function PatientsEMRSection({
         : PATIENT_CATEGORY_FILTER.COMPLETED;
     });
   }, [isIpdMode]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [categoryFilter, q, dateFilters, encounterMode]);
 
   const needsCompletedApi =
     !isIpdMode &&
@@ -401,9 +407,11 @@ export default function PatientsEMRSection({
 
     const visits = visitsData?.visits ?? [];
 
-    return visits.filter((row) => matchesPatientDateFilters(row, dateFilters));
+    return visits
+      .filter((row) => matchesDoctorEncounterMode(row, encounterMode))
+      .filter((row) => matchesPatientDateFilters(row, dateFilters));
 
-  }, [visitsData?.visits, dateFilters]);
+  }, [visitsData?.visits, dateFilters, encounterMode]);
 
   const dateFiltersDisabled = !isIpdMode && DATE_FILTER_DISABLED_CATEGORIES.has(categoryFilter);
 
@@ -514,6 +522,13 @@ export default function PatientsEMRSection({
     [list, dobByPatientId],
   );
 
+  const pageCount = Math.max(1, Math.ceil(displayList.length / PATIENTS_PAGE_SIZE) || 1);
+  const safePage = Math.min(page, pageCount);
+  const pagedList = useMemo(
+    () => displayList.slice((safePage - 1) * PATIENTS_PAGE_SIZE, safePage * PATIENTS_PAGE_SIZE),
+    [displayList, safePage],
+  );
+
   const isLoading = isIpdMode
     ? ipdLoading
     : (needsCompletedApi && visitsLoading) || (needsTodayApi && todayLoading);
@@ -542,6 +557,7 @@ export default function PatientsEMRSection({
     void prefetchPatientProfileData(queryClient, token, {
       patientUid: summary?.patientUid,
       patientId: summary?.patientId,
+      encounterMode,
     });
     setView(summary);
   };
@@ -604,12 +620,27 @@ export default function PatientsEMRSection({
 
           <div className="doc-patients-page__toolbar">
           <div className="doc-patient-search doc-patient-search--inline">
-            <Input
-              className="doc-patient-search__field"
-              placeholder="Search by name or patient ID…"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
+            <div
+              className={`doc-patient-search__wrap${q.trim() ? ' doc-patient-search__wrap--has-clear' : ''}`}
+            >
+              <Input
+                className="doc-patient-search__field"
+                placeholder="Search by name or patient ID…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                aria-label="Search patients"
+              />
+              {q.trim() ? (
+                <button
+                  type="button"
+                  className="doc-patient-search__clear"
+                  onClick={() => setQ('')}
+                  aria-label="Clear search"
+                >
+                  <X size={14} aria-hidden />
+                </button>
+              ) : null}
+            </div>
           </div>
 
           <div
@@ -677,7 +708,7 @@ export default function PatientsEMRSection({
                   </td>
                 </tr>
               ) : (
-                displayList.map((row) => (
+                pagedList.map((row) => (
                   <tr
                     key={row.id}
                     className="doc-patient-row"
@@ -717,6 +748,19 @@ export default function PatientsEMRSection({
             </tbody>
           </table>
         </div>
+
+        {displayList.length > PATIENTS_PAGE_SIZE ? (
+          <div className="doc-patients-page__pagination">
+            <TablePagination
+              totalPages={pageCount}
+              page={safePage}
+              pageSize={PATIENTS_PAGE_SIZE}
+              totalItems={displayList.length}
+              onPageChange={setPage}
+              itemLabel="patients"
+            />
+          </div>
+        ) : null}
 
       </div>
 

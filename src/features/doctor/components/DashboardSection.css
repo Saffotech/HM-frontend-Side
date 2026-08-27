@@ -423,7 +423,8 @@
   white-space: nowrap;
 }
 
-.doc-dashboard-table__visit-count{
+.doc-dashboard-table thead th.doc-dashboard-table__visit-count,
+.doc-dashboard-table td.doc-dashboard-table__visit-count{
   width: 12%;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
@@ -431,6 +432,20 @@
   font-size: 0.8125rem;
   color: var(--color-text);
   text-align: center;
+  vertical-align: middle;
+  padding-right: 1.25rem;
+}
+
+.doc-dashboard-table thead th.doc-dashboard-table__visit-count{
+  font-size: 0.6875rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-brand-green-dark, var(--color-primary-hover));
+}
+
+.doc-dashboard-table--with-actions .doc-dashboard-table__th-actions,
+.doc-dashboard-table--with-actions .doc-dashboard-table__actions{
+  padding-left: 1.25rem;
 }.doc-dashboard-table__actions-row .doc-appt-actions{
   width: auto;
   flex-shrink: 0;

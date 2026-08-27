@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { Beaker, Eye, Scan } from 'lucide-react';
+import { Beaker, Eye, Scan, X } from 'lucide-react';
 import {
   useDoctorLabTestsQuery,
   useUpdateLabTestMutation,
@@ -31,11 +31,13 @@ import {
   DOCTOR_ENCOUNTER_MODE,
   labOrderMatchesEncounterMode,
 } from '@/features/doctor/utils/encounterType';
-import { Button, Input, Label, Select, Modal } from '@/shared/components/common';
+import { Button, Input, Label, Select, Modal, TablePagination } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
 import StatusPill from './StatusPill';
 import DoctorLabReportModal from './DoctorLabReportModal';
 import '../styles/doctor-ui.css';
+
+const LABS_PAGE_SIZE = 10;
 
 function CategoryCell({ category, testName, departmentName }) {
   const label = inferTestCategory(testName, category, departmentName);
@@ -54,6 +56,7 @@ function LabEditModal({ test, open, onClose, onSave, saving }) {
   const labRoutingDepts = labRoutingQuery.data ?? [];
   const [deptCode, setDeptCode] = useState('');
   const [testName, setTestName] = useState(test?.testName ?? '');
+  const [labTestId, setLabTestId] = useState(test?.labTestId ?? null);
   const [otherTest, setOtherTest] = useState(false);
   const [priority, setPriority] = useState(test?.priority ?? 'Normal');
   const [clinicalNotes, setClinicalNotes] = useState(test?.clinicalNotes ?? '');
@@ -62,6 +65,7 @@ function LabEditModal({ test, open, onClose, onSave, saving }) {
     if (!open || !test) return;
     setDeptCode(inferLabDeptCodeFromOrder(test, labRoutingQuery.data ?? []));
     setTestName(test.testName);
+    setLabTestId(test.labTestId ?? null);
     setOtherTest(false);
     setPriority(test.priority);
     setClinicalNotes(test.clinicalNotes);
@@ -74,12 +78,13 @@ function LabEditModal({ test, open, onClose, onSave, saving }) {
       toast.error('Please select Laboratory or Radiology');
       return;
     }
-    if (!String(testName ?? '').trim()) {
+    if (!String(testName ?? '').trim() && labTestId == null) {
       toast.error('Please select or enter a test');
       return;
     }
     const departmentId = resolveLabDepartmentId(labRoutingDepts, deptCode);
     onSave({
+      labTestId: labTestId ?? undefined,
       testName: String(testName).trim(),
       category: inferLabCategory(testName, deptCode),
       departmentId: departmentId ?? undefined,
@@ -108,6 +113,7 @@ function LabEditModal({ test, open, onClose, onSave, saving }) {
         onChange={(code) => {
           setDeptCode(code);
           setTestName('');
+          setLabTestId(null);
           setOtherTest(false);
         }}
         placeholder={labRoutingQuery.isLoading ? 'Loading…' : 'Laboratory or Radiology'}
@@ -123,11 +129,14 @@ function LabEditModal({ test, open, onClose, onSave, saving }) {
       <LabTestNameField
         label="Test name"
         deptCode={deptCode}
+        departmentId={resolveLabDepartmentId(labRoutingDepts, deptCode)}
         testName={testName}
+        labTestId={labTestId}
         otherTest={otherTest}
-        onChange={({ testName: nextName, otherTest: nextOther }) => {
+        onChange={({ testName: nextName, otherTest: nextOther, labTestId: nextId }) => {
           setTestName(nextName);
           setOtherTest(nextOther);
+          setLabTestId(nextId ?? null);
         }}
       />
       <Select
@@ -153,6 +162,8 @@ function LabTestsList({
   onCancel,
   onViewReport,
 }) {
+  const [page, setPage] = useState(1);
+
   const searched = useMemo(() => {
     const q = String(search ?? '').trim().toLowerCase();
     if (!q) return tests;
@@ -169,18 +180,45 @@ function LabTestsList({
     [searched, filter]
   );
 
+  useEffect(() => {
+    setPage(1);
+  }, [filter, search, tests]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / LABS_PAGE_SIZE) || 1);
+  const safePage = Math.min(page, pageCount);
+  const paged = useMemo(
+    () => filtered.slice((safePage - 1) * LABS_PAGE_SIZE, safePage * LABS_PAGE_SIZE),
+    [filtered, safePage],
+  );
+
+  const hasSearch = Boolean(String(search ?? '').trim());
+
   return (
     <>
       <header className="doc-labs-toolbar">
         <h2>Lab Tests</h2>
         <div className="doc-labs-search">
-          <Input
-            className="doc-labs-search__field"
-            placeholder="Search patient by name or ID…"
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            aria-label="Search patient"
-          />
+          <div
+            className={`doc-labs-search__wrap${hasSearch ? ' doc-labs-search__wrap--has-clear' : ''}`}
+          >
+            <Input
+              className="doc-labs-search__field"
+              placeholder="Search patient by name or ID…"
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+              aria-label="Search patient"
+            />
+            {hasSearch ? (
+              <button
+                type="button"
+                className="doc-labs-search__clear"
+                onClick={() => onSearchChange('')}
+                aria-label="Clear search"
+              >
+                <X size={14} aria-hidden />
+              </button>
+            ) : null}
+          </div>
         </div>
         <div className="doc-labs-filters" role="tablist" aria-label="Filter lab tests">
           {DOCTOR_LAB_FILTERS.map((f) => (
@@ -198,99 +236,113 @@ function LabTestsList({
         </div>
       </header>
 
-      <div className="doc-card doc-card__body--flush table-wrap">
-        <table className="data-table doc-labs-table">
-          <thead>
-            <tr>
-              <th>Patient</th>
-              <th>Test</th>
-              <th>Category</th>
-              <th>Ordered</th>
-              <th>Status</th>
-              <th className="doc-labs-table__actions-head">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 ? (
+      <div className="doc-card doc-card__body--flush">
+        <div className="table-wrap">
+          <table className="data-table doc-labs-table">
+            <thead>
               <tr>
-                <td colSpan={6} className="text-muted" style={{ textAlign: 'center', padding: '2rem' }}>
-                  {String(search ?? '').trim()
-                    ? 'No lab tests match this patient search.'
-                    : 'No lab tests in this category.'}
-                </td>
+                <th>Patient</th>
+                <th>Test</th>
+                <th>Category</th>
+                <th>Ordered</th>
+                <th>Status</th>
+                <th className="doc-labs-table__actions-head">Action</th>
               </tr>
-            ) : (
-              filtered.map((t) => (
-                <tr
-                  key={t.id}
-                  className="doc-labs-row"
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`View profile for ${t.patientName}`}
-                  onClick={() => onRowClick(t)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      onRowClick(t);
-                    }
-                  }}
-                >
-                  <td>
-                    <strong>{t.patientName}</strong>
-                    <span className="doc-labs-patient-id">{t.patientId}</span>
-                  </td>
-                  <td>{t.testName}</td>
-                  <td>
-                    <CategoryCell
-                      category={t.category}
-                      testName={t.testName}
-                      departmentName={t.departmentName}
-                    />
-                  </td>
-                  <td>{t.orderedDisplay}</td>
-                  <td>
-                    <StatusPill status={t.doctorStatus} />
-                  </td>
-                  <td
-                    className="doc-labs-table__actions"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="doc-labs-table__actions-inner">
-                      {(t.canUpdate || t.canCancel) && (
-                        <div className="doc-labs-table__actions-btns">
-                          {t.canUpdate && (
-                            <Button size="sm" variant="outline" className="doc-labs-edit-btn" onClick={() => onEdit(t)}>
-                              Edit
-                            </Button>
-                          )}
-                          {t.canCancel && (
-                            <Button size="sm" variant="outline" className="doc-labs-cancel-btn" onClick={() => onCancel(t)}>
-                              Cancel
-                            </Button>
-                          )}
-                        </div>
-                      )}
-                      {t.reportAvailable && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="doc-labs-view-btn"
-                          onClick={() => onViewReport?.(t)}
-                        >
-                          <Eye size={14} aria-hidden />
-                          View report
-                        </Button>
-                      )}
-                      {!t.reportAvailable && !t.canCancel && !t.canUpdate && (
-                        <span className="doc-labs-awaiting">Awaiting lab</span>
-                      )}
-                    </div>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-muted" style={{ textAlign: 'center', padding: '2rem' }}>
+                    {String(search ?? '').trim()
+                      ? 'No lab tests match this patient search.'
+                      : 'No lab tests in this category.'}
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                paged.map((t) => (
+                  <tr
+                    key={t.id}
+                    className="doc-labs-row"
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`View profile for ${t.patientName}`}
+                    onClick={() => onRowClick(t)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onRowClick(t);
+                      }
+                    }}
+                  >
+                    <td>
+                      <strong>{t.patientName}</strong>
+                      <span className="doc-labs-patient-id">{t.patientId}</span>
+                    </td>
+                    <td>{t.testName}</td>
+                    <td>
+                      <CategoryCell
+                        category={t.category}
+                        testName={t.testName}
+                        departmentName={t.departmentName}
+                      />
+                    </td>
+                    <td>{t.orderedDisplay}</td>
+                    <td>
+                      <StatusPill status={t.doctorStatus} />
+                    </td>
+                    <td
+                      className="doc-labs-table__actions"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="doc-labs-table__actions-inner">
+                        {(t.canUpdate || t.canCancel) && (
+                          <div className="doc-labs-table__actions-btns">
+                            {t.canUpdate && (
+                              <Button size="sm" variant="outline" className="doc-labs-edit-btn" onClick={() => onEdit(t)}>
+                                Edit
+                              </Button>
+                            )}
+                            {t.canCancel && (
+                              <Button size="sm" variant="outline" className="doc-labs-cancel-btn" onClick={() => onCancel(t)}>
+                                Cancel
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                        {t.reportAvailable && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="doc-labs-view-btn"
+                            onClick={() => onViewReport?.(t)}
+                          >
+                            <Eye size={14} aria-hidden />
+                            View report
+                          </Button>
+                        )}
+                        {!t.reportAvailable && !t.canCancel && !t.canUpdate && (
+                          <span className="doc-labs-awaiting">Awaiting lab</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        {filtered.length > LABS_PAGE_SIZE ? (
+          <div className="doc-labs-pagination">
+            <TablePagination
+              totalPages={pageCount}
+              page={safePage}
+              pageSize={LABS_PAGE_SIZE}
+              totalItems={filtered.length}
+              onPageChange={setPage}
+              itemLabel="lab tests"
+            />
+          </div>
+        ) : null}
       </div>
     </>
   );
@@ -300,16 +352,20 @@ export default function LabsSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD 
   const { data: tests = [], isLoading } = useDoctorLabTestsQuery();
   const updateLab = useUpdateLabTestMutation();
   const cancelLab = useCancelLabTestMutation();
-  const { data: patientVisitsData } = useDoctorPatientVisitsQuery({ limit: 500 });
+  const { data: patientVisitsData } = useDoctorPatientVisitsQuery({
+    limit: 500,
+    encounter_type: encounterMode,
+  });
   const patientVisits = patientVisitsData?.visits ?? [];
   const patientSourceByDbId = useMemo(() => {
     const map = new Map();
     for (const row of patientVisits) {
       if (row.patientId == null) continue;
-      map.set(
-        Number(row.patientId),
-        row.registrationSource ?? row.encounterType ?? 'OPD',
-      );
+      // Prefer IPD when any visit marks the patient as IPD (avoid OPD overwrite).
+      const next = String(row.registrationSource ?? row.encounterType ?? 'OPD').toUpperCase();
+      const prev = map.get(Number(row.patientId));
+      if (prev === 'IPD') continue;
+      map.set(Number(row.patientId), next === 'IPD' ? 'IPD' : 'OPD');
     }
     return map;
   }, [patientVisits]);

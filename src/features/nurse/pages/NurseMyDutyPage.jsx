@@ -135,15 +135,6 @@ function groupConsecutiveRosterDays(items = []) {
   return groups;
 }
 
-function todayLabel() {
-  return new Date().toLocaleDateString('en-GB', {
-    weekday: 'short',
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-}
-
 export default function NurseMyDutyPage() {
   const { data, isLoading, isError, error, refetch } = useNurseMyDutyQuery();
 
@@ -163,7 +154,6 @@ export default function NurseMyDutyPage() {
   const rosterLabel = hasRosterPeriod
     ? formatDateRange(rosterPeriod?.from_date, rosterPeriod?.to_date)
     : 'Not rostered today';
-  const occupiedCount = myBeds.filter((b) => b.is_occupied || b.patient_name).length;
 
   return (
     <NurseLayout>
@@ -179,30 +169,12 @@ export default function NurseMyDutyPage() {
                   <ShiftIcon tone={tone} size={14} />
                   Current shift
                 </p>
-                <div className="nurse-my-duty__today-chip">
-                  <CalendarDays size={14} aria-hidden />
-                  {todayLabel()}
-                </div>
               </div>
               <h2 className="nurse-my-duty__shift-name">{shiftName}</h2>
               <p className="nurse-my-duty__shift-time">
                 <Clock3 size={18} aria-hidden />
                 {shiftTime}
               </p>
-              <div className="nurse-my-duty__meta">
-                <span className="nurse-my-duty__pill">
-                  <CalendarDays size={14} aria-hidden />
-                  Roster: {rosterLabel}
-                </span>
-                <span className="nurse-my-duty__pill">
-                  <BedDouble size={14} aria-hidden />
-                  {myBeds.length} bed{myBeds.length === 1 ? '' : 's'} assigned
-                </span>
-                <span className="nurse-my-duty__pill">
-                  <UserRound size={14} aria-hidden />
-                  {occupiedCount} occupied
-                </span>
-              </div>
             </div>
 
             <div className="nurse-my-duty__hero-stats">
@@ -293,14 +265,6 @@ export default function NurseMyDutyPage() {
                             {until.label}
                           </span>
                         </div>
-                      </div>
-
-                      <div className="nurse-my-duty__bed-shift">
-                        <Clock3 size={13} aria-hidden />
-                        {bed.shift_name || shiftName}
-                        {formatShiftTime(bed.shift_start, bed.shift_end) !== '—'
-                          ? ` · ${formatShiftTime(bed.shift_start, bed.shift_end)}`
-                          : ''}
                       </div>
                     </article>
                   );

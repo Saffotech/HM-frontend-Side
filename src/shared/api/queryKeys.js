@@ -114,6 +114,8 @@ export const queryKeys = {
     doctorVisits: (filters) => ['nurse', 'doctor-visits', filters],
     doctorVisitsDoctors: (filters = {}) => ['nurse', 'doctor-visits', 'doctors', filters],
     doctorVisitsDepartments: (filters = {}) => ['nurse', 'doctor-visits', 'departments', filters],
+    labReports: (filters) => ['nurse', 'lab-reports', filters],
+    labReport: (id, filters = {}) => ['nurse', 'lab-reports', 'detail', id, filters],
     // Nurse Phase 2 by Atharva — profile + notifications cache keys
     profile: ['nurse', 'profile'],
     notifications: ['nurse', 'notifications'],
@@ -153,6 +155,8 @@ export const queryKeys = {
     prescriptionDetail: (id) => ['doctor', 'prescriptions', 'detail', id],
 
     labs: ['doctor', 'labs'],
+
+    labCatalog: (filters = {}) => ['doctor', 'lab-catalog', filters],
 
     labReport: (testId) => ['doctor', 'labs', 'report', testId],
 
@@ -203,6 +207,10 @@ export const queryKeys = {
       history: (uhid, params) => ['doctor', 'patients', 'history', uhid, params],
 
       prescriptions: (patientId) => ['doctor', 'patients', 'prescriptions', patientId],
+
+      vitals: (patientId, filters) => ['doctor', 'patients', 'vitals', patientId, filters],
+
+      notes: (patientId, filters) => ['doctor', 'patients', 'notes', patientId, filters],
 
     },
 

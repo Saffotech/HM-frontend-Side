@@ -49,6 +49,13 @@
   max-width: 22rem;
 }
 
+.nurse-vitals-registry__ward-select{
+  flex-shrink: 0;
+  min-height: 2.5rem;
+  min-width: 9.5rem;
+  max-width: 11rem;
+}
+
 .nurse-vitals-registry__search-icon{
   position: absolute;
   left: 0.75rem;
@@ -362,6 +369,13 @@
   border-radius: 999px;
   background: #dcfce7;
   color: #15803d;
+}
+
+.nurse-vital-detail__action-btn{
+  margin-top: 0.15rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 650;
 }
 
 .nurse-vital-detail__section{

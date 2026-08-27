@@ -14,7 +14,7 @@ import {
 } from '@/features/doctor/utils/doctorDates';
 import { isCalendarVisible, getDoctorDisplayStatus, compareCalendarDayAppointments } from '@/features/doctor/utils/appointmentWorkflow';
 import { appointmentToPatientSummary } from '@/shared/api/mappers/doctorPatientMapper';
-import { DOCTOR_ENCOUNTER_MODE } from '@/features/doctor/utils/encounterType';
+import { DOCTOR_ENCOUNTER_MODE, isIpdEncounter } from '@/features/doctor/utils/encounterType';
 import { Button, DateInput } from '@/shared/components/common';
 import AppointmentDetailModal from './AppointmentDetailModal';
 import PatientHistoryProfile from './PatientHistoryProfile';
@@ -96,9 +96,9 @@ export default function ScheduleSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.
 
   const selectedDayAppointments = useMemo(() => {
     const source = byDate[selectedDay] ?? dateAppointments;
-    return dedupeAppointments(source.filter(isCalendarVisible)).sort((a, b) =>
-      compareCalendarDayAppointments(a, b, { selectedDay, today })
-    );
+    return dedupeAppointments(
+      source.filter(isCalendarVisible).filter((a) => !isIpdEncounter(a)),
+    ).sort((a, b) => compareCalendarDayAppointments(a, b, { selectedDay, today }));
   }, [selectedDay, byDate, dateAppointments, today]);
 
   const selectedDayIpdRows = useMemo(() => {
@@ -162,7 +162,9 @@ export default function ScheduleSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.
                 {calendarDays.map((d) => {
                   const count = isIpdMode
                     ? (ipdByDate[d] ?? []).length
-                    : (byDate[d] ?? []).filter(isCalendarVisible).length;
+                    : (byDate[d] ?? [])
+                        .filter(isCalendarVisible)
+                        .filter((a) => !isIpdEncounter(a)).length;
                   const isSelected = d === selectedDay;
                   const isToday = d === today;
                   return (

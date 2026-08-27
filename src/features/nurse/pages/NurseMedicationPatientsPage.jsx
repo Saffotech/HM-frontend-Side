@@ -2,29 +2,33 @@ import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { useNavigate } from 'react-router-dom';
 import {
-  Users,
-  ClipboardList,
   Pill,
-  ChevronRight,
   ChevronDown,
   LayoutGrid,
   Building2,
   Activity,
   Shield,
   Check,
+  X,
 } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseDataTable from '@/features/nurse/components/NurseDataTable';
 import NursePagination from '@/features/nurse/components/NursePagination';
 import { QueryFeedback } from '@/shared/components/common';
-import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
+import { formatPatientIdDisplay, getPagedListCount } from '@/shared/api/mappers/nurseMapper';
 import { useNurseMedicationPatientsQuery } from '@/shared/hooks/queries/useNurseQuery';
 import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
+import { useNursePagedListGuard } from '@/features/nurse/hooks/useNursePagedListGuard';
+import NursePatientAllocationTags from '@/features/nurse/components/NursePatientAllocationTags';
+import { ROUTES } from '@/shared/constants';
 import './NurseMedicationPatientsPage.css';
 
+const PAGE_SIZE = 10;
+const FETCH_PAGE_SIZE = 100;
+
 const WARD_OPTIONS = [
-  { value: 'all', label: 'All Ward', tone: 'all', Icon: LayoutGrid },
+  { value: 'all', label: 'All wards', tone: 'all', Icon: LayoutGrid },
   { value: 'general', label: 'General', tone: 'general', Icon: Building2 },
   { value: 'icu', label: 'ICU', tone: 'icu', Icon: Activity },
   { value: 'private', label: 'Private', tone: 'private', Icon: Shield },
@@ -55,30 +59,21 @@ function WardFilterDropdown({ value, onChange }) {
   }, [open]);
 
   return (
-    <div className="nurse-med-patients-page__ward-dropdown" ref={rootRef}>
+    <div className="nurse-med-patients__ward-dropdown" ref={rootRef}>
       <button
         type="button"
-        id="med-patients-ward"
-        className={`nurse-med-patients-page__ward-trigger nurse-med-patients-page__ward-trigger--${selected.tone}${
-          open ? ' nurse-med-patients-page__ward-trigger--open' : ''
-        }`}
+        className={`nurse-input nurse-med-patients__ward-trigger${open ? ' is-open' : ''}`}
         onClick={() => setOpen((isOpen) => !isOpen)}
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-label={`Ward filter: ${selected.label}`}
       >
-        <span className="nurse-med-patients-page__ward-trigger-icon" aria-hidden>
-          <SelectedIcon size={16} />
-        </span>
-        <span className="nurse-med-patients-page__ward-trigger-label">{selected.label}</span>
-        <ChevronDown
-          size={16}
-          className={`nurse-med-patients-page__ward-trigger-chevron${open ? ' is-open' : ''}`}
-          aria-hidden
-        />
+        <SelectedIcon size={15} aria-hidden />
+        <span>{selected.label}</span>
+        <ChevronDown size={15} className={open ? 'is-open' : undefined} aria-hidden />
       </button>
-      {open && (
-        <ul className="nurse-med-patients-page__ward-menu" role="listbox" aria-label="Select ward">
+      {open ? (
+        <ul className="nurse-med-patients__ward-menu" role="listbox" aria-label="Select ward">
           {WARD_OPTIONS.map((option) => {
             const OptionIcon = option.Icon;
             const isActive = value === option.value;
@@ -88,27 +83,21 @@ function WardFilterDropdown({ value, onChange }) {
                   type="button"
                   role="option"
                   aria-selected={isActive}
-                  className={`nurse-med-patients-page__ward-option nurse-med-patients-page__ward-option--${option.tone}${
-                    isActive ? ' nurse-med-patients-page__ward-option--active' : ''
-                  }`}
+                  className={`nurse-med-patients__ward-option${isActive ? ' is-active' : ''}`}
                   onClick={() => {
                     onChange(option.value);
                     setOpen(false);
                   }}
                 >
-                  <span className="nurse-med-patients-page__ward-option-icon" aria-hidden>
-                    <OptionIcon size={15} />
-                  </span>
-                  <span className="nurse-med-patients-page__ward-option-label">{option.label}</span>
-                  {isActive && (
-                    <Check size={14} className="nurse-med-patients-page__ward-option-check" aria-hidden />
-                  )}
+                  <OptionIcon size={15} aria-hidden />
+                  <span>{option.label}</span>
+                  {isActive ? <Check size={14} aria-hidden /> : null}
                 </button>
               </li>
             );
           })}
         </ul>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -119,20 +108,6 @@ function matchesWard(wardName, wardFilter) {
   return normalized === wardFilter || normalized.includes(wardFilter);
 }
 
-function getWardTone(wardName) {
-  const ward = String(wardName ?? '').trim().toLowerCase();
-  if (ward.includes('icu')) return 'icu';
-  if (ward.includes('private')) return 'private';
-  if (ward.includes('general')) return 'general';
-  if (ward.includes('ward')) return 'ward';
-  return 'default';
-}
-
-function patientInitial(name) {
-  const trimmed = String(name ?? '').trim();
-  return trimmed ? trimmed.charAt(0).toUpperCase() : '?';
-}
-
 export default function NurseMedicationPatientsPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
@@ -141,72 +116,99 @@ export default function NurseMedicationPatientsPage() {
   const debouncedSearch = useDebouncedValue(search, 400);
   const { scopeFilters, scopeReady, allocatedOnly } = useNursePatientScope();
   const { canViewMedication } = useNursePermissionSet();
-  const { data, isLoading, isFetching, isError, error, refetch } = useNurseMedicationPatientsQuery(
-    {
+
+  const filters = useMemo(
+    () => ({
       search: debouncedSearch,
-      page,
-      page_size: 20,
+      page: wardFilter !== 'all' ? 1 : page,
+      page_size: wardFilter !== 'all' ? FETCH_PAGE_SIZE : PAGE_SIZE,
       ...scopeFilters,
-    },
+    }),
+    [debouncedSearch, wardFilter, page, scopeFilters],
+  );
+
+  const { data, isLoading, isFetching, isError, error, refetch } = useNurseMedicationPatientsQuery(
+    filters,
     { enabled: scopeReady && canViewMedication },
   );
-  const patients = data?.items ?? [];
-  const filteredPatients = useMemo(
-    () => patients.filter((patient) => matchesWard(patient.ward_name, wardFilter)),
-    [patients, wardFilter],
-  );
+
+  const allRows = useMemo(() => {
+    const items = data?.items ?? [];
+    if (wardFilter === 'all') return items;
+    return items.filter((patient) => matchesWard(patient.ward_name, wardFilter));
+  }, [data?.items, wardFilter]);
+
+  const wardPageCount = Math.max(1, Math.ceil(allRows.length / PAGE_SIZE) || 1);
+  const safePage = wardFilter !== 'all' ? Math.min(page, wardPageCount) : page;
+  const rows = useMemo(() => {
+    if (wardFilter === 'all') return allRows;
+    return allRows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  }, [allRows, wardFilter, safePage]);
 
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, wardFilter, allocatedOnly]);
 
-  const totalMedicines = useMemo(
-    () => filteredPatients.reduce((sum, p) => sum + (p.medicine_count || 0), 0),
-    [filteredPatients],
-  );
+  useNursePagedListGuard({
+    isLoading,
+    page: wardFilter !== 'all' ? safePage : page,
+    items: wardFilter !== 'all' ? rows : data?.items,
+    onPageChange: setPage,
+  });
+
+  const listCount = useMemo(() => {
+    if (wardFilter !== 'all') {
+      return { count: allRows.length, approximate: false };
+    }
+    return getPagedListCount({
+      page,
+      page_size: PAGE_SIZE,
+      items: data?.items,
+      total: data?.total,
+      hasNextPage: data?.hasNextPage,
+    });
+  }, [wardFilter, allRows.length, page, data]);
 
   const openPatient = useCallback(
-    (row) => navigate(`/nurse/medications/patient/${row.patient_id}`),
+    (row) =>
+      navigate(`/nurse/medications/patient/${row.patient_id}`, {
+        state: {
+          backTo: ROUTES.NURSE_MEDICATIONS,
+          medicineCount: Number(row.medicine_count) || 0,
+        },
+      }),
     [navigate],
   );
 
   const columns = useMemo(() => [
     {
-      header: 'Patient Name',
+      header: 'Patient ID',
       render: (row) => (
-        <div className="nurse-med-patients__name-cell">
-          <span className="nurse-med-patients__avatar" aria-hidden>
-            {patientInitial(row.patient_name)}
-          </span>
-          <span className="nurse-med-patients__name">{row.patient_name}</span>
-          <ChevronRight size={14} className="nurse-med-patients__row-chevron" aria-hidden />
-        </div>
+        <span className="nurse-notes-registry__id">{formatPatientIdDisplay(row)}</span>
       ),
     },
     {
-      header: 'Patient ID',
-      render: (row) => <span className="nurse-med-patients__uhid">{formatPatientIdDisplay(row)}</span>,
-    },
-    {
-      header: 'Bed',
-      render: (row) => <span className="nurse-med-patients__bed">{row.bed_number || '—'}</span>,
+      header: 'Patient Name',
+      render: (row) => (
+        <span className="nurse-patient-name-with-tags">
+          <span className="nurse-notes-registry__name">{row.patient_name || '—'}</span>
+          <NursePatientAllocationTags patientId={row.patient_id} />
+        </span>
+      ),
     },
     {
       header: 'Ward',
-      render: (row) => {
-        const tone = getWardTone(row.ward_name);
-        return (
-          <span className={`nurse-med-patients__ward nurse-med-patients__ward--${tone}`}>
-            {row.ward_name || '—'}
-          </span>
-        );
-      },
+      render: (row) => <span>{row.ward_name || '—'}</span>,
+    },
+    {
+      header: 'Bed',
+      render: (row) => (
+        <span className="nurse-notes-registry__bed">{row.bed_number || '—'}</span>
+      ),
     },
     {
       header: 'Medicines',
-      render: (row) => (
-        <span className="nurse-med-patients__count">{row.medicine_count ?? 0}</span>
-      ),
+      render: (row) => <span>{row.medicine_count ?? 0}</span>,
     },
   ], []);
 
@@ -214,142 +216,115 @@ export default function NurseMedicationPatientsPage() {
 
   return (
     <NurseLayout>
-      {!canViewMedication ? (
-        <div className="nurse-page">
+      <div className="nurse-page nurse-notes-registry nurse-med-patients">
+        {!canViewMedication ? (
           <div className="nurse-alert nurse-alert--error">
             You do not have permission to view medications.
           </div>
-        </div>
-      ) : (
-      <div className="nurse-page nurse-med-patients-page">
-        <header className="nurse-med-patients-page__hero">
-          <div className="nurse-med-patients-page__hero-icon" aria-hidden>
-            <Pill size={22} />
-          </div>
-          <div className="nurse-med-patients-page__hero-text">
-            <h1 className="nurse-med-patients-page__title">Medication Patients</h1>
-            {/* <p className="nurse-med-patients-page__subtitle">
-              Patients with active prescriptions — tap a row to administer
-            </p> */}
-          </div>
-        </header>
-
-        <div className="nurse-card nurse-med-patients-page__panel">
-          <div className="nurse-med-patients-page__toolbar">
-            <div className="nurse-med-patients-page__filters">
-              <div className="nurse-med-patients-page__filter-row">
-                <div className="nurse-field nurse-med-patients-page__search-field">
-                  <label htmlFor="med-patients-search">Patient Search</label>
-                  <div className="nurse-med-patients-page__search-wrap">
-                    <input
-                      id="med-patients-search"
-                      type="search"
-                      className="nurse-input nurse-med-patients-page__search-input"
-                      value={search}
-                      onChange={(e) => {
-                        setSearch(e.target.value);
-                        setPage(1);
-                      }}
-                      placeholder="Search by name, patient ID, or bed number…"
-                    />
-                  </div>
+        ) : (
+          <>
+            <div className="nurse-notes-registry__toolbar nurse-card">
+              <div className="nurse-notes-registry__toolbar-left">
+                <div className="nurse-notes-registry__icon" aria-hidden>
+                  <Pill size={22} />
                 </div>
+                <div>
+                  <p className="nurse-notes-registry__count">
+                    {isLoading && !data ? '…' : (
+                      <>
+                        {listCount.approximate ? `${listCount.count}+` : listCount.count}
+                      </>
+                    )}
+                    {' '}
+                    {listCount.count === 1 && !listCount.approximate ? 'patient' : 'patients'}
+                  </p>
+                  <p className="nurse-notes-registry__hint">
+                    One row per patient. Medicines count includes all prescriptions from doctors.
+                  </p>
+                </div>
+              </div>
 
-                <div className="nurse-field nurse-med-patients-page__ward-field">
-                  <WardFilterDropdown
-                    value={wardFilter}
-                    onChange={(next) => {
-                      setWardFilter(next);
-                      setPage(1);
-                    }}
+              <div className="nurse-med-patients__toolbar-filters">
+                <div
+                  className={`nurse-notes-registry__search-wrap nurse-med-patients__search-wrap${
+                    search ? ' nurse-med-patients__search-wrap--has-clear' : ''
+                  }`}
+                >
+                  <input
+                    type="text"
+                    className="nurse-input nurse-notes-registry__search"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by name, patient ID, or bed…"
+                    aria-label="Search medication patients"
                   />
+                  {search ? (
+                    <button
+                      type="button"
+                      className="nurse-med-patients__search-clear"
+                      onClick={() => setSearch('')}
+                      aria-label="Clear search"
+                    >
+                      <X size={14} aria-hidden />
+                    </button>
+                  ) : null}
                 </div>
 
-                {hasFilters && (
+                <WardFilterDropdown value={wardFilter} onChange={setWardFilter} />
+
+                {hasFilters ? (
                   <button
                     type="button"
-                    className="nurse-med-patients-page__clear"
+                    className="nurse-btn nurse-btn--secondary nurse-btn--sm"
                     onClick={() => {
                       setSearch('');
                       setWardFilter('all');
-                      setPage(1);
                     }}
                   >
-                    Clear filters
+                    Clear
                   </button>
-                )}
+                ) : null}
               </div>
             </div>
 
-            <div className="nurse-med-patients-page__summary" aria-label="Patient summary">
-              {isLoading && !data ? (
-                <span className="nurse-med-patients-page__summary-loading">Loading…</span>
-              ) : (
-                <>
-                  <div className="nurse-med-patients-page__stat nurse-med-patients-page__stat--patients">
-                    <span className="nurse-med-patients-page__stat-icon" aria-hidden>
-                      <Users size={15} />
-                    </span>
-                    <span className="nurse-med-patients-page__stat-text">
-                      <span className="nurse-med-patients-page__stat-value">
-                        {filteredPatients.length}
-                      </span>
-                      <span className="nurse-med-patients-page__stat-label">
-                        {filteredPatients.length === 1 ? 'Patient' : 'Patients'}
-                      </span>
-                    </span>
-                  </div>
-                  <div className="nurse-med-patients-page__stat nurse-med-patients-page__stat--meds">
-                    <span className="nurse-med-patients-page__stat-icon" aria-hidden>
-                      <ClipboardList size={15} />
-                    </span>
-                    <span className="nurse-med-patients-page__stat-text">
-                      <span className="nurse-med-patients-page__stat-value">{totalMedicines}</span>
-                      <span className="nurse-med-patients-page__stat-label">
-                        {totalMedicines === 1 ? 'Medicine due' : 'Medicines due'}
-                      </span>
-                    </span>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          <QueryFeedback
-            isLoading={isLoading && !data}
-            isError={isError}
-            error={error}
-            onRetry={refetch}
-          >
-            <div
-              className={`nurse-med-patients-page__table${
-                isFetching ? ' nurse-med-patients-page__table--fetching' : ''
-              }`}
+            <QueryFeedback
+              isLoading={isLoading && !data}
+              isError={isError}
+              error={error}
+              onRetry={refetch}
             >
-              <NurseDataTable
-                columns={columns}
-                data={filteredPatients}
-                isLoading={false}
-                emptyMessage={
-                  hasFilters
-                    ? 'No patients match your filters.'
-                    : 'No patients with active prescriptions.'
+              <div
+                className={`nurse-notes-registry__table${
+                  isFetching ? ' nurse-notes-registry__table--fetching' : ''
+                }`}
+              >
+                <NurseDataTable
+                  columns={columns}
+                  data={rows}
+                  isLoading={false}
+                  emptyMessage={
+                    hasFilters
+                      ? 'No patients match your filters.'
+                      : 'No patients with active prescriptions.'
+                  }
+                  onRowClick={openPatient}
+                />
+              </div>
+
+              <NursePagination
+                page={wardFilter !== 'all' ? safePage : page}
+                pageSize={PAGE_SIZE}
+                total={wardFilter !== 'all' ? allRows.length : data?.total}
+                hasNextPage={
+                  wardFilter !== 'all' ? safePage < wardPageCount : data?.hasNextPage
                 }
-                onRowClick={openPatient}
+                itemCount={rows.length}
+                onChange={setPage}
               />
-            </div>
-            <NursePagination
-              page={page}
-              pageSize={20}
-              total={data?.total}
-              hasNextPage={data?.hasNextPage}
-              itemCount={patients.length}
-              onChange={setPage}
-            />
-          </QueryFeedback>
-        </div>
+            </QueryFeedback>
+          </>
+        )}
       </div>
-      )}
     </NurseLayout>
   );
 }

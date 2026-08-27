@@ -87,7 +87,8 @@ const IPD_STATUS_FILTER = {
   DISCHARGED: 'discharged',
 };
 
-const IPD_PAGE_SIZE = 20;
+const IPD_PAGE_SIZE = 10;
+const OPD_PAGE_SIZE = 10;
 
 function comparePatientQueueDashboard(a, b, queueMetaByAppointmentId) {
   const aMeta = queueMetaByAppointmentId.get(a.dbId);
@@ -138,6 +139,7 @@ function DashboardSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD, onViewAll
   const [ipdFromDate, setIpdFromDate] = useState('');
   const [ipdToDate, setIpdToDate] = useState('');
   const [ipdPage, setIpdPage] = useState(1);
+  const [opdPage, setOpdPage] = useState(1);
   const [patientIdSearch, setPatientIdSearch] = useState('');
   const patientIdQuery = patientIdSearch.trim().toLowerCase();
 
@@ -187,6 +189,10 @@ function DashboardSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD, onViewAll
   useEffect(() => {
     setIpdPage(1);
   }, [ipdStatusFilter, ipdSearch, ipdFromDate, ipdToDate]);
+
+  useEffect(() => {
+    setOpdPage(1);
+  }, [activeFilter, patientIdQuery]);
 
   const todaysAll = useMemo(
     () => todayAppointments.filter((a) => !isIpdEncounter(a)),
@@ -304,12 +310,12 @@ function DashboardSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD, onViewAll
 
   const recentPatients = useMemo(() => {
     const uniqueCompleted = dedupeAppointmentsByPatient(
-      todayAppointments.filter((a) => a.status === 'Completed')
+      todaysAll.filter((a) => a.status === 'Completed')
     );
     return uniqueCompleted
       .slice(0, DASHBOARD_PREVIEW_LIMIT)
       .map((a) => appointmentToPatientSummary(a));
-  }, [todayAppointments]);
+  }, [todaysAll]);
 
 
 
@@ -351,13 +357,14 @@ function DashboardSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD, onViewAll
     });
   }, [filteredByCard, patientIdQuery]);
 
-  const dashboardQueuePreview = useMemo(
-    () =>
-      patientIdQuery
-        ? searchedByPatientId
-        : searchedByPatientId.slice(0, DASHBOARD_PREVIEW_LIMIT),
-    [searchedByPatientId, patientIdQuery]
-  );
+  const dashboardQueuePreview = useMemo(() => {
+    const pageCount = Math.max(1, Math.ceil(searchedByPatientId.length / OPD_PAGE_SIZE) || 1);
+    const safePage = Math.min(opdPage, pageCount);
+    return searchedByPatientId.slice((safePage - 1) * OPD_PAGE_SIZE, safePage * OPD_PAGE_SIZE);
+  }, [searchedByPatientId, opdPage]);
+
+  const opdPageCount = Math.max(1, Math.ceil(searchedByPatientId.length / OPD_PAGE_SIZE) || 1);
+  const safeOpdPage = Math.min(opdPage, opdPageCount);
 
   const dashboardRecentPreview = useMemo(
     () => recentPatients.slice(0, DASHBOARD_PREVIEW_LIMIT),
@@ -379,6 +386,7 @@ function DashboardSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD, onViewAll
       await prefetchPatientProfileData(queryClient, token, {
         patientUid,
         patientId: patientDbId,
+        encounterMode: DOCTOR_ENCOUNTER_MODE.IPD,
       });
 
       setConsultFor({
@@ -412,6 +420,7 @@ function DashboardSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD, onViewAll
         prefetchPatientProfileData(queryClient, token, {
           patientUid,
           patientId: patientDbId,
+          encounterMode: DOCTOR_ENCOUNTER_MODE.OPD,
         }),
         queryClient.prefetchQuery({
           queryKey: queryKeys.doctor.consultations.context(appt.dbId),
@@ -465,9 +474,10 @@ function DashboardSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD, onViewAll
     void prefetchPatientProfileData(queryClient, token, {
       patientUid: patientSummary?.patientUid ?? patientSummary?.id,
       patientId: patientSummary?.patientId,
+      encounterMode,
     });
     setProfilePatient(patientSummary);
-  }, [queryClient, token]);
+  }, [queryClient, token, encounterMode]);
 
   const handlePrescribe = useCallback((p, appt) => {
     setRxFor(p);
@@ -677,6 +687,11 @@ function DashboardSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD, onViewAll
             onPrescribe={handlePrescribe}
 
             onOpenNotes={setNotesFor}
+
+            page={safeOpdPage}
+            pageSize={OPD_PAGE_SIZE}
+            total={searchedByPatientId.length}
+            onPageChange={setOpdPage}
 
           />
 

@@ -17,6 +17,8 @@ export function isIpdEncounter(row) {
   if (!row) return false;
   const enc = String(row.encounterType ?? row.encounter_type ?? '').toUpperCase();
   if (enc === 'IPD') return true;
+  const source = String(row.registrationSource ?? row.registration_source ?? '').toUpperCase();
+  if (source === 'IPD') return true;
   const apptType = String(row.type ?? row.appointment_type ?? row.appointmentType ?? '').toLowerCase();
   if (apptType === 'ipd') return true;
   if (row.admissionId != null || row.admission_id != null) return true;
@@ -41,6 +43,15 @@ export function matchesDoctorEncounterMode(row, mode) {
   return true;
 }
 
+/** Prescriptions: admission_id → IPD; otherwise OPD. */
+export function prescriptionMatchesEncounterMode(rx, mode) {
+  if (!rx) return false;
+  const isIpd = rx.admissionId != null || rx.admission_id != null;
+  if (mode === DOCTOR_ENCOUNTER_MODE.IPD) return isIpd;
+  if (mode === DOCTOR_ENCOUNTER_MODE.OPD) return !isIpd;
+  return true;
+}
+
 /** Lab orders: prefer admission_id / appointment_id, then registration_source. */
 export function labOrderMatchesEncounterMode(test, mode, patientSourceByDbId = null) {
   if (!test) return false;
@@ -52,12 +63,16 @@ export function labOrderMatchesEncounterMode(test, mode, patientSourceByDbId = n
   }
   const source =
     test.registrationSource
+    ?? test.registration_source
     ?? (test.patientDbId != null ? patientSourceByDbId?.get(Number(test.patientDbId)) : null);
   if (source) {
     const isIpd = String(source).trim().toUpperCase() === 'IPD';
     return mode === DOCTOR_ENCOUNTER_MODE.IPD ? isIpd : !isIpd;
   }
-  return matchesDoctorEncounterMode(test, mode);
+  // Ambiguous orders: never show under the opposite mode.
+  if (mode === DOCTOR_ENCOUNTER_MODE.OPD) return isOpdEncounter(test);
+  if (mode === DOCTOR_ENCOUNTER_MODE.IPD) return isIpdEncounter(test);
+  return true;
 }
 
 export function resolveNumericAppointmentDbId(raw) {

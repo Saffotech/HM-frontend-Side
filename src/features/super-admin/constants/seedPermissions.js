@@ -40,6 +40,7 @@ export const SEED_PERMISSION_NAMES = [
   'nurse_notes:view',
   'nurse_notes:create',
   'nurse_notes:update',
+  'nurse_lab_reports:view',
   'nurse_medication:view',
   'nurse_medication:create',
   'nurse_medication:update',
@@ -51,6 +52,9 @@ export const SEED_PERMISSION_NAMES = [
   'emergency_alerts:create',
   'emergency_alerts:update',
   'receptionist:view_doctor_schedule',
+  'doctor_patient_visits:view',
+  'doctor_vitals:view',
+  'doctor_notes:view',
 ];
 
 export function buildSeedPermissionCatalog() {

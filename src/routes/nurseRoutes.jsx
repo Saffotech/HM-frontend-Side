@@ -38,6 +38,10 @@ const NurseNoteDetailPage = lazy(() => import('@/features/nurse/pages/NurseNoteD
 
 const NurseEditNotePage = lazy(() => import('@/features/nurse/pages/NurseEditNotePage'));
 
+const NurseLabReportsRegistryPage = lazy(() => import('@/features/nurse/pages/NurseLabReportsRegistryPage'));
+
+const NurseLabReportDetailPage = lazy(() => import('@/features/nurse/pages/NurseLabReportDetailPage'));
+
 const NurseMedicationPatientsPage = lazy(() => import('@/features/nurse/pages/NurseMedicationPatientsPage'));
 
 const NursePatientMedicationsPage = lazy(() => import('@/features/nurse/pages/NursePatientMedicationsPage'));
@@ -103,6 +107,10 @@ export const nurseRoutes = [
           { path: ROUTES.NURSE_NOTE_DETAIL, element: <LazyRoute><NurseNoteDetailPage /></LazyRoute> },
 
           { path: ROUTES.NURSE_NOTE_EDIT, element: <LazyRoute><NurseEditNotePage /></LazyRoute> },
+
+          { path: ROUTES.NURSE_LAB_REPORTS, element: <LazyRoute><NurseLabReportsRegistryPage /></LazyRoute> },
+
+          { path: ROUTES.NURSE_LAB_REPORT_DETAIL, element: <LazyRoute><NurseLabReportDetailPage /></LazyRoute> },
 
           { path: ROUTES.NURSE_MEDICATIONS, element: <LazyRoute><NurseMedicationPatientsPage /></LazyRoute> },
 
