@@ -104,9 +104,8 @@
   color: var(--color-text);
   font-size: 0.9rem;
   line-height: 1.45;
-  overflow-wrap: anywhere;
-  word-break: normal;
-  white-space: normal;
+  max-width: 18rem;
+  vertical-align: middle;
 }
 
 .pharmacy-detail-qty,

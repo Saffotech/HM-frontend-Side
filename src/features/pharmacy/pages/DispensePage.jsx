@@ -36,6 +36,7 @@ import {
   recordPharmacyDispenseWithPricing,
   resolveAdmissionIdForPharmacyPatient,
 } from '@/features/pharmacy/utils/dispensePricing';
+import PharmacyTruncatedText from '@/features/pharmacy/components/PharmacyTruncatedText';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
 import './DispensePage.css';
 
@@ -266,7 +267,6 @@ export default function DispensePage() {
                       <tbody>
                         {enrichedItems.map((item) => {
                           const disabled = item.quantity_remaining <= 0;
-                          const instructions = String(item.instructions ?? '').trim() || '—';
                           const giveNowQty = parseDispenseQuantityInput(quantities[item.id]) ?? 0;
                           const lineAmount = parseDispenseAmountInput(amounts[item.id]) ?? 0;
                           const unitPrice = calculateUnitPriceFromLineAmount(lineAmount, giveNowQty);
@@ -279,7 +279,7 @@ export default function DispensePage() {
                                 </span>
                               </td>
                               <td className="pharmacy-dispense-table__instructions">
-                                {instructions}
+                                <PharmacyTruncatedText text={item.instructions} maxLength={40} />
                               </td>
                               <td className="pharmacy-dispense-table__qty pharmacy-dispense-table__qty--emphasis">
                                 {formatQuantityLabel(item.quantity_prescribed, item.medicine_name)}

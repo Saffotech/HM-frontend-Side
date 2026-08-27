@@ -5,7 +5,7 @@
   margin: 0;
   padding: 0;
   border: none;
-  background: none;
+  background: transparent;
   font: inherit;
   color: inherit;
   text-align: left;
@@ -21,11 +21,13 @@
 
 .pharmacy-truncated-text.is-expanded {
   white-space: normal;
-  word-break: break-word;
-  cursor: pointer;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  overflow: visible;
+  background: transparent;
 }
 
-.pharmacy-truncated-text:hover:not(.is-expanded) {
+.pharmacy-truncated-text:hover {
   color: var(--color-primary, var(--color-primary));
 }
 

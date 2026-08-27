@@ -21,6 +21,7 @@ import {
   loadPrescriptionDispensePricing,
   matchDispenseHistoryPricing,
 } from '@/features/pharmacy/utils/dispensePricing';
+import PharmacyTruncatedText from '@/features/pharmacy/components/PharmacyTruncatedText';
 import { ROUTES } from '@/shared/constants';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
 import { toast } from '@/shared/utils/toast';
@@ -234,7 +235,10 @@ export default function PrescriptionDetailPage() {
                         <td>{item.medicine_name}</td>
                         <td>{item.dosage || '—'}</td>
                         <td className="pharmacy-detail-instructions">
-                          {String(item.instructions ?? '').trim() || '—'}
+                          <PharmacyTruncatedText
+                            text={item.instructions}
+                            maxLength={40}
+                          />
                         </td>
                         <td className="pharmacy-detail-qty">
                           {formatQuantityLabel(

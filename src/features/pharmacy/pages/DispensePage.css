@@ -142,11 +142,12 @@
 }
 
 .pharmacy-dispense-table__instructions {
-  min-width: 11rem;
-  max-width: 18rem;
+  min-width: 10rem;
+  max-width: 16rem;
   font-size: 0.8125rem;
   line-height: 1.5;
   color: var(--color-text);
+  vertical-align: middle;
 }
 
 .pharmacy-dispense-table__qty {
