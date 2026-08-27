@@ -85,7 +85,9 @@ export function useLabCatalogQuery(params = {}, options = {}) {
     queryKey: queryKeys.doctor.labCatalog(apiParams),
     queryFn: () => doctorLabsApi.fetchLabCatalog(token, apiParams),
     enabled: Boolean(token) && enabled,
-    staleTime: 1000 * 60 * 5,
+    // Keep fresh so newly added admin catalog tests appear in order dropdowns.
+    staleTime: 1000 * 30,
+    refetchOnMount: 'always',
     retry: false,
   });
 }

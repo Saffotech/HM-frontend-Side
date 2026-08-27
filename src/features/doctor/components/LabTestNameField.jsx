@@ -1,11 +1,14 @@
+import { useMemo } from 'react';
 import { Input, Select } from '@/shared/components/common';
 import { OTHER_LAB_TEST, testsForLabDepartment } from '@/features/doctor/constants';
 import { useLabCatalogQuery } from '@/features/doctor/hooks/useDoctorLabQuery';
+import { filterCatalogTestsForDept } from '@/features/doctor/utils/labCatalogOptions';
 
 /**
  * Test selector for new lab orders.
- * Prefers active catalog options (lab_test_id). Falls back to hardcoded names
- * when catalog is empty or unavailable (temporary compatibility path).
+ * Always loads the active backend catalog (GET /lab-catalog?active=true) when a
+ * department is chosen, so newly added tests appear without a frontend hardcode.
+ * Falls back to hardcoded names only when the catalog is empty or unavailable.
  */
 export default function LabTestNameField({
   deptCode,
@@ -19,11 +22,17 @@ export default function LabTestNameField({
   label = 'Test *',
 }) {
   const catalogQuery = useLabCatalogQuery(
-    { active: true, department_id: departmentId },
-    { enabled: Boolean(departmentId) },
+    { active: true },
+    { enabled: Boolean(deptCode) },
   );
-  const catalogTests = catalogQuery.data ?? [];
-  const useCatalog = Boolean(departmentId) && catalogTests.length > 0 && !catalogQuery.isError;
+  const allCatalog = catalogQuery.data ?? [];
+  const catalogTests = useMemo(
+    () => filterCatalogTestsForDept(allCatalog, deptCode, departmentId),
+    [allCatalog, deptCode, departmentId],
+  );
+
+  const catalogLoaded = Boolean(deptCode) && !catalogQuery.isLoading && !catalogQuery.isError;
+  const useCatalog = catalogLoaded && allCatalog.length > 0;
 
   const listed = useCatalog
     ? catalogTests.map((t) => t.testName)
@@ -32,6 +41,8 @@ export default function LabTestNameField({
   const selectedCatalog = useCatalog
     ? catalogTests.find((t) => Number(t.id) === Number(labTestId))
       || catalogTests.find((t) => t.testName === testName)
+      || allCatalog.find((t) => Number(t.id) === Number(labTestId))
+      || allCatalog.find((t) => t.testName === testName)
     : null;
 
   const isListed = useCatalog
@@ -46,7 +57,7 @@ export default function LabTestNameField({
       : testName;
 
   const options = useCatalog
-    ? catalogTests.map((t) => ({ value: String(t.id), label: t.label }))
+    ? catalogTests.map((t) => ({ value: String(t.id), label: t.testName }))
     : [
         ...listed.map((t) => ({ value: t, label: t })),
         { value: OTHER_LAB_TEST, label: 'Other' },
@@ -57,7 +68,9 @@ export default function LabTestNameField({
     : catalogQuery.isLoading
       ? 'Loading catalog…'
       : useCatalog
-        ? 'Select catalog test'
+        ? catalogTests.length
+          ? 'Select catalog test'
+          : 'No catalog tests for this department'
         : 'Select test';
 
   return (
@@ -80,7 +93,9 @@ export default function LabTestNameField({
             return;
           }
           if (useCatalog) {
-            const picked = catalogTests.find((t) => String(t.id) === String(value));
+            const picked =
+              catalogTests.find((t) => String(t.id) === String(value))
+              || allCatalog.find((t) => String(t.id) === String(value));
             if (picked) {
               onChange({
                 testName: picked.testName,
@@ -113,11 +128,6 @@ export default function LabTestNameField({
             })
           }
         />
-      ) : null}
-      {useCatalog && selectedCatalog?.price != null ? (
-        <p className="doc-lab-test-name__price text-muted">
-          Catalog price: ₹{selectedCatalog.price} (stored on the order when saved)
-        </p>
       ) : null}
     </div>
   );

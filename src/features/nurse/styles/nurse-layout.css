@@ -698,6 +698,19 @@
   box-shadow: 0 1px 4px rgba(5, 150, 105, 0.2);
 }
 
+.nurse-dashboard-page__action-btn--meds{
+  color: #6d28d9;
+  background: var(--color-surface);
+  border-color: #c4b5fd;
+}
+
+.nurse-dashboard-page__action-btn--meds:hover:not(:disabled){
+  color: #5b21b6;
+  background: var(--color-surface);
+  border-color: #a78bfa;
+  box-shadow: 0 1px 4px rgba(109, 40, 217, 0.2);
+}
+
 .nurse-dashboard-page__action-btn:focus-visible{
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;

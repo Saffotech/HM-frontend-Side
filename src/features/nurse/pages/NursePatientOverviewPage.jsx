@@ -268,7 +268,7 @@ export default function NursePatientOverviewPage() {
             <button
               type="button"
               className="nurse-btn nurse-btn--secondary"
-              onClick={() => navigate(ROUTES.NURSE_QUEUE)}
+              onClick={() => navigate(location.state?.backTo || ROUTES.NURSE_QUEUE)}
             >
               <ArrowLeft size={16} />
               Back

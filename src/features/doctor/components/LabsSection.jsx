@@ -243,7 +243,6 @@ function LabTestsList({
               <tr>
                 <th>Patient</th>
                 <th>Test</th>
-                <th>Price</th>
                 <th>Category</th>
                 <th>Ordered</th>
                 <th>Status</th>
@@ -253,7 +252,7 @@ function LabTestsList({
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-muted" style={{ textAlign: 'center', padding: '2rem' }}>
+                  <td colSpan={6} className="text-muted" style={{ textAlign: 'center', padding: '2rem' }}>
                     {String(search ?? '').trim()
                       ? 'No lab tests match this patient search.'
                       : 'No lab tests in this category.'}
@@ -280,7 +279,6 @@ function LabTestsList({
                       <span className="doc-labs-patient-id">{t.patientId}</span>
                     </td>
                     <td>{t.testName}</td>
-                    <td>{t.price != null ? `₹${t.price}` : '—'}</td>
                     <td>
                       <CategoryCell
                         category={t.category}

@@ -18,6 +18,7 @@ import { useNurseDocumentedPatients } from '@/features/nurse/hooks/useNurseDocum
 import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
 import { QueryFeedback } from '@/shared/components/common';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
+import { ROUTES } from '@/shared/constants';
 import NursePatientAllocationTags from '@/features/nurse/components/NursePatientAllocationTags';
 import '@/features/nurse/pages/NurseMedicationPatientsPage.css';
 
@@ -160,7 +161,9 @@ export default function NurseQueuePage() {
   const handleRowClick = useCallback(
     (row) => {
       if (canViewPatients) {
-        navigate(`/nurse/patients/${row.patient_id}`);
+        navigate(`/nurse/patients/${row.patient_id}`, {
+          state: { backTo: ROUTES.NURSE_QUEUE },
+        });
       }
     },
     [navigate, canViewPatients],
