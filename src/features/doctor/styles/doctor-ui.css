@@ -855,6 +855,10 @@
   color: var(--color-text-muted);
 }
 
+.doc-lab-order__clinical-notes{
+  margin-top: 0.15rem;
+}
+
 .doc-lab-test-name{
   display: flex;
   flex-direction: column;
@@ -2039,16 +2043,11 @@
 
 .doc-profile-grid{
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.65rem;
   align-items: start;
   min-width: 0;
   max-width: 100%;
-}
-
-@media (min-width: 768px){
-  .doc-profile-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
 }
 
 .doc-profile-panel{

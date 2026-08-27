@@ -25,6 +25,7 @@ import DoctorPatientVisitsPanel from './DoctorPatientVisitsPanel';
 import DoctorPatientVitalsPanel from './DoctorPatientVitalsPanel';
 import DoctorPatientNotesPanel from './DoctorPatientNotesPanel';
 import DoctorConsultHistorySnapshot from './DoctorConsultHistorySnapshot';
+import DoctorLabReportsSnapshot from './DoctorLabReportsSnapshot';
 import { mergeVisitTimelineWithPrescriptions } from '@/features/doctor/utils/patientHistory';
 import { mergeIpdIntoVisitHistory } from '@/features/doctor/utils/ipdVisitHistory';
 import { useDoctorIpdPatientAdmissionsQuery } from '@/features/doctor/hooks/useDoctorIpdPatientAdmissionsQuery';
@@ -33,7 +34,6 @@ import { patientsApi } from '@/shared/api/services';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { Button, Skeleton } from '@/shared/components/common';
-import StatusPill from './StatusPill';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { ACTIONS, canAccessAction } from '@/hooks/permissions';
 import { useDoctorPermission, DOCTOR_PERMISSIONS } from '@/features/doctor/hooks/useDoctorPermission';
@@ -393,27 +393,16 @@ export default function PatientHistoryProfile({
               </div>
             ) : null}
           </div>
-          {patientLabs.length === 0 ? (
-            <p className="text-muted doc-profile-empty">No lab tests</p>
-          ) : (
-            <ul className="doc-profile-lab-list">
-              {patientLabs.map((t) => (
-                <li key={t.id}>
-                  <button
-                    type="button"
-                    className="doc-profile-lab-item doc-profile-lab-item--clickable"
-                    onClick={() => setViewLabTest(t)}
-                  >
-                    <div>
-                      <strong>{t.testName}</strong>
-                      <span className="text-muted">{t.orderedDisplay}</span>
-                    </div>
-                    <StatusPill status={t.doctorStatus} />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+          <div className="doc-profile-panel__body">
+            {patientLabs.length === 0 ? (
+              <p className="text-muted doc-profile-empty">No lab tests</p>
+            ) : (
+              <DoctorLabReportsSnapshot
+                labs={patientLabs}
+                onViewReport={setViewLabTest}
+              />
+            )}
+          </div>
         </section>
       </div>
 

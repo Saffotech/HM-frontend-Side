@@ -850,20 +850,20 @@ export default function ConsultationModal({
                 {fieldErrors[`labRepeat_${i}`] ? (
                   <p className="field__error">{fieldErrors[`labRepeat_${i}`]}</p>
                 ) : null}
-                {row.testName || row.otherTest ? (
-                  <Textarea
-                    label="Clinical notes"
-                    rows={2}
-                    value={row.clinicalNotes}
-                    onChange={(e) =>
-                      setLabOrders((rows) =>
-                        rows.map((item, j) =>
-                          j === i ? { ...item, clinicalNotes: e.target.value } : item,
-                        ),
-                      )
-                    }
-                  />
-                ) : null}
+                <Textarea
+                  className="doc-lab-order__clinical-notes"
+                  label="Clinical notes"
+                  placeholder="Notes for this test (optional)"
+                  rows={2}
+                  value={row.clinicalNotes ?? ''}
+                  onChange={(e) =>
+                    setLabOrders((rows) =>
+                      rows.map((item, j) =>
+                        j === i ? { ...item, clinicalNotes: e.target.value } : item,
+                      ),
+                    )
+                  }
+                />
               </div>
             );
           })}
