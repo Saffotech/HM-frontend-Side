@@ -231,3 +231,38 @@ Backend code for `beds.bed_type` was **undone**.
 Full re-apply checklist: **`docs/Beds_BedType.md`**.
 
 If the migration was already run on your DB, drop the column or `alembic downgrade` as noted in that file.
+
+---
+
+## Doctor console — lab list 500 + departments 403 (2026-08-27)
+
+Frontend workaround for **403 `/opd/departments`**: when that call fails with 403, doctor UI builds LAB/RAD routing from `GET /lab-catalog` (`useLabRoutingDepartmentsQuery`).
+
+**500 `/api/lab-tests` cannot be fixed on frontend** — backend must align the Postgres enum.
+
+### 1. Fix `labteststatus` enum mismatch (causes 500)
+
+- **Symptom:** `GET /lab-tests` → 500  
+  `invalid input value for enum labteststatus: "cancelled"`
+- **Cause:** PG enum still has **NAME** labels (`ORDERED`, `CANCELLED`, …) while SQLAlchemy sends **`.value`** strings (`ordered`, `cancelled`, …). Model already uses `values_callable` on `LabTestOrder.status`.
+- **Fix:** Alembic migration (same approach as existing `u9v0w1x2y3z4_lab_status_enum_use_values.py`):
+  1. `ALTER COLUMN status TYPE VARCHAR USING status::text`
+  2. Normalize rows: `ORDERED`→`ordered`, `SAMPLE_COLLECTED`→`sample_collected`, `PROCESSING`→`sample_collected`, `COMPLETED`→`completed`, `CANCELLED`→`cancelled`
+  3. Drop/recreate enum as `('ordered','sample_collected','completed','cancelled')`
+  4. Cast column back to enum; default `'ordered'`
+- **Verify:** after upgrade, enum labels must be lowercase values only.
+
+### 2. Allow doctors to list departments for lab routing (403)
+
+- **Symptom:** Doctor UI → `GET /opd/departments` → 403 (`opd:view` required)
+- **Cause:** Doctor role has `lab:view` / `lab_catalog:view` but **not** `opd:view` (`seed.py`).
+- **Preferred fix (pick one):**
+  - **A.** `GET /opd/departments` accept `opd:view` **or** `lab:view`, or  
+  - **B.** Dedicated `GET /lab/routing-departments` (LAB+RAD only) gated by `lab:view`, or  
+  - **C.** Grant doctor `opd:view` (broader than needed)
+- Frontend already falls back via catalog when OPD returns 403; backend fix still preferred so IDs come from departments master, not inference.
+
+### Checklist
+1. Migrate `labteststatus` → lowercase values matching `LabTestStatus`
+2. Open departments (or lab-routing) list to roles with `lab:view`
+3. Smoke: doctor login → Labs list loads; Add Lab Test shows Laboratory / Radiology with real `department_id`

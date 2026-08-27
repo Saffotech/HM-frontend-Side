@@ -50,6 +50,16 @@ export function inferLabRadDepartmentIds(catalogTests = []) {
   return { [LAB_DEPT_CODE.LAB]: labId, [LAB_DEPT_CODE.RAD]: radId };
 }
 
+/** Build LAB/RAD routing rows with real department ids (from catalog inference). */
+export function labRoutingDepartmentsFromCatalog(catalogTests = []) {
+  const ids = inferLabRadDepartmentIds(catalogTests);
+  const rows = [
+    { code: LAB_DEPT_CODE.LAB, name: 'Laboratory', id: ids[LAB_DEPT_CODE.LAB] },
+    { code: LAB_DEPT_CODE.RAD, name: 'Radiology', id: ids[LAB_DEPT_CODE.RAD] },
+  ];
+  return rows.filter((d) => d.id != null && Number.isFinite(Number(d.id)));
+}
+
 /**
  * Filter active catalog tests for the selected Laboratory / Radiology dept.
  * Prefers an explicit numeric departmentId; otherwise infers from catalog data.

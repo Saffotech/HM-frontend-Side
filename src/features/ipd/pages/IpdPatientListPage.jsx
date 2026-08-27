@@ -53,7 +53,6 @@ const INSURANCE_TABLE_COLUMNS = [
   'Coverage',
   'Insurance Company',
   'Policy No',
-  'Available SI',
   'Policy Status',
   'Action',
 ];
@@ -136,15 +135,45 @@ export default function IpdPatientListPage() {
     );
     const fromAdmissions = (data?.items ?? [])
       .filter((row) => matchesPaymentType(row, IPD_PAYMENT_TYPE.INSURANCE_CASHLESS))
-      .map(mapInsurancePatientRow);
-    const seen = new Set();
-    return [...fromApi, ...fromAdmissions].filter((row) => {
-      const key = String(row.id ?? row.uhid ?? '');
-      if (!key || seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }, [insurancePatientsQuery.data?.items, data?.items]);
+      .map((row) =>
+        mapInsurancePatientRow({
+          ...row,
+          // Admission list uses admission id as `id` — normalize to patient key.
+          id: row.patient_uid ?? row.uhid ?? row.patientId ?? row.patient_id ?? row.id,
+          uhid: row.uhid ?? row.patient_uid ?? row.patientUid,
+          admissionId: row.admission_id ?? row.admissionId ?? row.id,
+          admission_id: row.admission_id ?? row.admissionId ?? row.id,
+          patientName: row.patient_name ?? row.patientName ?? row.name,
+          ageGender: row.age_gender ?? row.ageGender,
+        }),
+      );
+
+    // Prefer insurance API rows; keep admissions only as gap-fill.
+    const merged = fromApi.length > 0 ? fromApi : fromAdmissions;
+    const byPatient = new Map();
+
+    for (const row of merged) {
+      const patientKey = String(row.uhid || row.id || '')
+        .trim()
+        .toLowerCase();
+      if (!patientKey || patientKey === '—') continue;
+
+      // Admitted filter: hide rows with no linked admission (cannot transfer / not in ward).
+      if (stay === STAY_FILTER.ADMITTED && !row.admissionId) continue;
+
+      const prev = byPatient.get(patientKey);
+      if (!prev) {
+        byPatient.set(patientKey, row);
+        continue;
+      }
+      // One row per patient — keep the one with an active admission link.
+      if (!prev.admissionId && row.admissionId) {
+        byPatient.set(patientKey, row);
+      }
+    }
+
+    return [...byPatient.values()];
+  }, [insurancePatientsQuery.data?.items, data?.items, stay]);
 
   const rows = useMemo(() => {
     const items = data?.items ?? [];
@@ -408,7 +437,7 @@ export default function IpdPatientListPage() {
                         const admissionId = row.admissionId ?? null;
                         const canTransfer = canTransferBed && Boolean(admissionId);
                         return (
-                        <tr key={row.id}>
+                        <tr key={`${row.uhid}-${row.admissionId ?? row.claimId ?? row.id}`}>
                           <td>
                             <strong>{row.patientName}</strong>
                             <div className="ipd-ins-meta">{row.ageGender}</div>
@@ -421,7 +450,6 @@ export default function IpdPatientListPage() {
                           </td>
                           <td>{row.insurer}</td>
                           <td>{row.policyNo}</td>
-                          <td>{formatCurrency(row.availableSi, { empty: '—' })}</td>
                           <td>
                             <span className="ipd-ins-chip ipd-ins-chip--active">
                               {row.policyStatus}

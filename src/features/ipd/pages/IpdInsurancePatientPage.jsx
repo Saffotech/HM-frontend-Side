@@ -223,7 +223,7 @@ export default function IpdInsurancePatientPage() {
             <div className="ipd-ins-history-row__money">
               <span>Bill {formatCurrency(claim.netBill, { empty: '—' })}</span>
               <span className="ipd-claim-amt--ok">
-                Approved {formatCurrency(claim.approved, { empty: '—' })}
+                Estimate Amount {formatCurrency(claim.estimateAmount, { empty: '—' })}
               </span>
               <span>Patient {formatCurrency(claim.patientResponsibility, { empty: '—' })}</span>
             </div>

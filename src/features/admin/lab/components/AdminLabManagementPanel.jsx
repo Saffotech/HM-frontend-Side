@@ -3,6 +3,7 @@ import {
   ChevronDown,
   ClipboardList,
   FlaskConical,
+  ListChecks,
   Save,
   UserCircle2,
 } from 'lucide-react';
@@ -13,6 +14,7 @@ import {
 import { useRolePermissionsCatalogQuery } from '@/features/admin/nurse/hooks/useNurseAdminQueries';
 import { useAdminEditLocks } from '@/features/admin/hooks/useAdminEditLocks';
 import { PERMISSION_GROUPS } from '@/features/admin/lab/constants/labManagementConfig';
+import AdminLabCatalogSection from '@/features/admin/lab/components/AdminLabCatalogSection';
 import { Button, QueryFeedback } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
 import '@/features/admin/styles/adminOpdSettings.css';
@@ -22,11 +24,13 @@ const SECTION_TABS = [
   { id: 'access', label: 'Access', icon: ClipboardList },
   { id: 'results', label: 'Results', icon: FlaskConical },
   { id: 'profile', label: 'Profile', icon: UserCircle2 },
+  { id: 'catalog', label: 'Catalog', icon: ListChecks },
 ];
 const SECTION_LOCK_KEYS = {
   access: 'lab_access',
   results: 'lab_results',
   profile: 'lab_profile',
+  catalog: 'lab_catalog',
 };
 
 function SectionCard({
@@ -321,23 +325,38 @@ export default function AdminLabManagementPanel({ manageAdminEditLocks = false }
           </SectionCard>
         ) : null}
 
-        <div className="aos-form__footer">
-          <Button
-            type="button"
-            onClick={() => persistRolePermissions()}
-            disabled={saveMut.isPending || !targetRoleKey || !canEdit(activeSectionLockKey)}
-            title={
-              !canEdit(activeSectionLockKey)
-                ? 'Locked by Super Admin'
-                : targetRoleKey
-                  ? `Saving on role: ${targetRoleKey}`
-                  : 'Lab technician role not available for permission control'
-            }
+        {activeSection === 'catalog' ? (
+          <SectionCard
+            title="Catalog"
+            icon={ListChecks}
+            tone="rose"
+            defaultOpen
+            action={lockToggle('lab_catalog')}
+            locked={!canEdit('lab_catalog')}
           >
-            <Save size={16} />
-            {saveMut.isPending ? 'Saving…' : 'Save LAB Permissions'}
-          </Button>
-        </div>
+            <AdminLabCatalogSection locked={!canEdit('lab_catalog')} />
+          </SectionCard>
+        ) : null}
+
+        {activeSection !== 'catalog' ? (
+          <div className="aos-form__footer">
+            <Button
+              type="button"
+              onClick={() => persistRolePermissions()}
+              disabled={saveMut.isPending || !targetRoleKey || !canEdit(activeSectionLockKey)}
+              title={
+                !canEdit(activeSectionLockKey)
+                  ? 'Locked by Super Admin'
+                  : targetRoleKey
+                    ? `Saving on role: ${targetRoleKey}`
+                    : 'Lab technician role not available for permission control'
+              }
+            >
+              <Save size={16} />
+              {saveMut.isPending ? 'Saving…' : 'Save LAB Permissions'}
+            </Button>
+          </div>
+        ) : null}
       </QueryFeedback>
     </div>
   );

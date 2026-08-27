@@ -31,6 +31,7 @@ export const ADMIN_EDIT_DEFAULTS = Object.freeze({
   lab_access: true,
   lab_results: true,
   lab_profile: true,
+  lab_catalog: true,
   // Nurse
   nurse_access: true,
   nurse_clinical: true,
@@ -143,7 +144,7 @@ export const MODULE_CARD_PERMISSION_KEYS = Object.freeze({
 export const ROLE_MODULE_LOCK_KEYS = Object.freeze({
   doctor: ['doctor_access', 'doctor_clinical', 'doctor_profile'],
   receptionist: ['receptionist_access', 'receptionist_profile'],
-  lab_technician: ['lab_access', 'lab_results', 'lab_profile'],
+  lab_technician: ['lab_access', 'lab_results', 'lab_profile', 'lab_catalog'],
   nurse: ['nurse_access', 'nurse_clinical', 'nurse_operations'],
   pharmacist: ['pharmacy_access', 'pharmacy_dispense', 'pharmacy_profile'],
 });

@@ -543,10 +543,6 @@ export default function AdmitPatientForm() {
               </div>
             ) : (
               <div className="ipd-form-grid">
-                <p className="ipd-page__subtitle ipd-form-grid--full">
-                  Creates Patient Master only (UHID). No OPD visit, token, or
-                  consultation bill.
-                </p>
                 <div className="ipd-toolbar__field ipd-form-grid--full">
                   <label className="ipd-toolbar__label" htmlFor="ipd-reg-name">
                     Full name *

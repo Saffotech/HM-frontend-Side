@@ -8,8 +8,8 @@ export function formatCatalogPrice(price) {
   const n = Number(price);
   if (!Number.isFinite(n)) return String(price);
   return n.toLocaleString('en-IN', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   });
 }
 

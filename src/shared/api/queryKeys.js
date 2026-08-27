@@ -144,6 +144,7 @@ export const queryKeys = {
     notificationsList: (filters) => ['admin', 'notifications', 'list', filters],
     notificationsUnreadCount: ['admin', 'notifications', 'unread-count'],
     opdSettings: ['admin', 'settings', 'opd'],
+    labCatalog: (filters = {}) => ['admin', 'lab-catalog', filters],
   },
 
   doctor: {
