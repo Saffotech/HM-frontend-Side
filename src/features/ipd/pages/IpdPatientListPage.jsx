@@ -138,11 +138,12 @@ export default function IpdPatientListPage() {
       .map((row) =>
         mapInsurancePatientRow({
           ...row,
-          // Admission list uses admission id as `id` — normalize to patient key.
-          id: row.patient_uid ?? row.uhid ?? row.patientId ?? row.patient_id ?? row.id,
+          // Admission list `id` is admission id — pass patient fields explicitly.
+          patient_id: row.patient_id ?? row.patientId ?? undefined,
+          patient_uid: row.patient_uid ?? row.uhid ?? row.patientUid ?? undefined,
           uhid: row.uhid ?? row.patient_uid ?? row.patientUid,
-          admissionId: row.admission_id ?? row.admissionId ?? row.id,
           admission_id: row.admission_id ?? row.admissionId ?? row.id,
+          admissionId: row.admission_id ?? row.admissionId ?? row.id,
           patientName: row.patient_name ?? row.patientName ?? row.name,
           ageGender: row.age_gender ?? row.ageGender,
         }),
@@ -461,14 +462,14 @@ export default function IpdPatientListPage() {
                                 type="button"
                                 variant="secondary"
                                 size="sm"
-                              onClick={() =>
-                                navigate(
-                                  ROUTES.IPD_INSURANCE_PATIENT.replace(
-                                    ':patientId',
-                                    row.id,
-                                  ),
-                                )
-                              }
+                              onClick={() => {
+                                const path = resolveIpdPatientOpenPath({
+                                  ...row,
+                                  payment_type: IPD_PAYMENT_TYPE.INSURANCE_CASHLESS,
+                                  paymentType: IPD_PAYMENT_TYPE.INSURANCE_CASHLESS,
+                                });
+                                if (path) navigate(path);
+                              }}
                               >
                                 Open
                               </Button>
@@ -492,14 +493,14 @@ export default function IpdPatientListPage() {
                                 variant="secondary"
                                 size="sm"
                                 className="ipd-action-btn ipd-action-btn--billing"
-                                onClick={() =>
-                                  navigate(
-                                    ROUTES.IPD_INSURANCE_BILLING.replace(
-                                      ':patientId',
-                                      row.id,
-                                    ),
-                                  )
-                                }
+                                onClick={() => {
+                                  const path = resolveIpdBillingPath({
+                                    ...row,
+                                    payment_type: IPD_PAYMENT_TYPE.INSURANCE_CASHLESS,
+                                    paymentType: IPD_PAYMENT_TYPE.INSURANCE_CASHLESS,
+                                  });
+                                  if (path) navigate(path);
+                                }}
                               >
                                 Billing
                               </Button>

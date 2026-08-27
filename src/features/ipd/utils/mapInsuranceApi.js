@@ -11,8 +11,18 @@ function pick(row, ...keys) {
 }
 
 export function mapInsurancePatientRow(row = {}) {
+  // Never treat API `id` as patient id — for insurance/admission lists it is often admission id.
+  const patientKey = pick(
+    row,
+    'patient_id',
+    'patientId',
+    'patient_uid',
+    'patientUid',
+    'uhid',
+  );
   return {
-    id: pick(row, 'id', 'patient_id', 'patientId'),
+    id: patientKey,
+    patientId: pick(row, 'patient_id', 'patientId') ?? null,
     admissionId: pick(row, 'admission_id', 'admissionId') ?? null,
     claimId: pick(row, 'claim_id', 'claimId') ?? null,
     patientName: pick(row, 'patient_name', 'patientName') ?? '—',

@@ -89,6 +89,27 @@ export function matchesSelfBillingPaymentType(record, paymentType) {
 }
 
 /**
+ * Cashless routes need a real patient key (uid / patient_id).
+ * Never fall back to record.id — that is often admission id → 404.
+ */
+function cashlessPatientKey(record = {}) {
+  const candidates = [
+    record.patient_uid,
+    record.patientUid,
+    record.uhid,
+    record.patientId,
+    record.patient_id,
+  ];
+  for (const value of candidates) {
+    if (value == null || value === '') continue;
+    const key = String(value).trim();
+    if (!key || key === '—') continue;
+    return key;
+  }
+  return null;
+}
+
+/**
  * Route for IPD Billing action based on admission payment type.
  * Cashless → insurance billing; self + copay → bill preview.
  */
@@ -97,15 +118,9 @@ export function resolveIpdBillingPath(record = {}) {
     paymentTypeFromRecord(record) ?? IPD_PAYMENT_TYPE.SELF;
 
   if (paymentType === IPD_PAYMENT_TYPE.INSURANCE_CASHLESS) {
-    const patientKey =
-      record.patient_uid ??
-      record.patientUid ??
-      record.uhid ??
-      record.patientId ??
-      record.patient_id ??
-      record.id;
-    if (patientKey == null || patientKey === '') return null;
-    return `/ipd/billing/insurance/${encodeURIComponent(String(patientKey))}`;
+    const patientKey = cashlessPatientKey(record);
+    if (!patientKey) return null;
+    return `/ipd/billing/insurance/${encodeURIComponent(patientKey)}`;
   }
 
   const admissionId =
@@ -124,15 +139,9 @@ export function resolveIpdPatientOpenPath(record = {}) {
     paymentTypeFromRecord(record) ?? IPD_PAYMENT_TYPE.SELF;
 
   if (paymentType === IPD_PAYMENT_TYPE.INSURANCE_CASHLESS) {
-    const patientKey =
-      record.patient_uid ??
-      record.patientUid ??
-      record.uhid ??
-      record.patientId ??
-      record.patient_id ??
-      record.id;
-    if (patientKey == null || patientKey === '') return null;
-    return `/ipd/patients/insurance/${encodeURIComponent(String(patientKey))}`;
+    const patientKey = cashlessPatientKey(record);
+    if (!patientKey) return null;
+    return `/ipd/patients/insurance/${encodeURIComponent(patientKey)}`;
   }
 
   const admissionId = record.admission_id ?? record.admissionId ?? record.id;
