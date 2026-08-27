@@ -15,14 +15,14 @@ import {
   getPrescriptionDoctors,
   getPrescriptionDiagnoses,
 } from '@/features/pharmacy/utils/prescriptionMeta';
-import { formatHumanInstructions, formatQuantityLabel } from '@/features/pharmacy/utils/prescriptionQuantity';
+import { formatQuantityLabel } from '@/features/pharmacy/utils/prescriptionQuantity';
 import {
   getPrescriptionItemPricingSummary,
   loadPrescriptionDispensePricing,
   matchDispenseHistoryPricing,
 } from '@/features/pharmacy/utils/dispensePricing';
-import { formatCurrency } from '@/shared/utils/formatCurrency';
 import { ROUTES } from '@/shared/constants';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 import { toast } from '@/shared/utils/toast';
 import './PrescriptionDetailPage.css';
 
@@ -210,6 +210,7 @@ export default function PrescriptionDetailPage() {
                 <table className="data-table pharmacy-detail-table">
                   <colgroup>
                     <col className="pharmacy-detail-col pharmacy-detail-col--med" />
+                    <col className="pharmacy-detail-col pharmacy-detail-col--strength" />
                     <col className="pharmacy-detail-col pharmacy-detail-col--instr" />
                     <col className="pharmacy-detail-col pharmacy-detail-col--qty" />
                     <col className="pharmacy-detail-col pharmacy-detail-col--money" />
@@ -218,6 +219,7 @@ export default function PrescriptionDetailPage() {
                   <thead>
                     <tr>
                       <th>Medicine</th>
+                      <th>Strength</th>
                       <th>Instructions</th>
                       <th className="pharmacy-detail-qty-head">Total quantity</th>
                       <th className="pharmacy-detail-money">Price</th>
@@ -230,11 +232,15 @@ export default function PrescriptionDetailPage() {
                       return (
                       <tr key={item.id}>
                         <td>{item.medicine_name}</td>
+                        <td>{item.dosage || '—'}</td>
                         <td className="pharmacy-detail-instructions">
-                          {item.instructions_label || formatHumanInstructions(item)}
+                          {String(item.instructions ?? '').trim() || '—'}
                         </td>
                         <td className="pharmacy-detail-qty">
-                          {formatQuantityLabel(item.quantity_prescribed, item.medicine_name)}
+                          {formatQuantityLabel(
+                            item.quantity_prescribed,
+                            item.medicine_name,
+                          )}
                         </td>
                         <td className="pharmacy-detail-money">
                           {formatCurrency(pricing?.unitPrice, { empty: '—' })}

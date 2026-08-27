@@ -26,18 +26,17 @@ import {
   getPrescriptionItemDbId,
 } from '@/features/pharmacy/utils/dispenseWorkflow';
 import {
+  formatQuantityLabel,
+  formatSummaryQuantity,
+  inferMedicineUnit,
+} from '@/features/pharmacy/utils/prescriptionQuantity';
+import {
   calculateUnitPriceFromLineAmount,
   parseDispenseAmountInput,
   recordPharmacyDispenseWithPricing,
   resolveAdmissionIdForPharmacyPatient,
 } from '@/features/pharmacy/utils/dispensePricing';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
-import {
-  formatHumanInstructions,
-  formatQuantityLabel,
-  formatSummaryQuantity,
-  inferMedicineUnit,
-} from '@/features/pharmacy/utils/prescriptionQuantity';
 import './DispensePage.css';
 
 function dispenseWasApplied(beforeItems, afterItems, quantitiesByItemId) {
@@ -267,8 +266,7 @@ export default function DispensePage() {
                       <tbody>
                         {enrichedItems.map((item) => {
                           const disabled = item.quantity_remaining <= 0;
-                          const instructions =
-                            item.instructions_label || formatHumanInstructions(item);
+                          const instructions = String(item.instructions ?? '').trim() || '—';
                           const giveNowQty = parseDispenseQuantityInput(quantities[item.id]) ?? 0;
                           const lineAmount = parseDispenseAmountInput(amounts[item.id]) ?? 0;
                           const unitPrice = calculateUnitPriceFromLineAmount(lineAmount, giveNowQty);

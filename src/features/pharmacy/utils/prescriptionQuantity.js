@@ -110,11 +110,11 @@ export function parseTimesPerDay(frequency) {
 export function computePrescribedQuantity(item) {
   if (!item) return 0;
 
-  const explicit = Number(item.quantity);
-  if (Number.isFinite(explicit) && explicit > 0) return explicit;
+  const explicitQty = Number(item.quantity);
+  if (Number.isFinite(explicitQty) && explicitQty > 0) return explicitQty;
 
   const schedule = parseDoseScheduleCode(item.frequency);
-  const days = Math.max(Number(item.duration) || 0, 1);
+  const days = Math.max(firstNumber(item.duration) || Number(item.duration) || 0, 1);
 
   if (schedule) {
     const daily = schedule.morning + schedule.afternoon + schedule.night;
@@ -134,33 +134,33 @@ export function formatHumanInstructions(item) {
   if (!item) return '—';
 
   const explicit = String(item.instructions ?? '').trim();
-  const days = Number(item.duration) || 0;
+  const timing = String(item.timing ?? '').trim();
+  const dosage = String(item.dosage ?? '').trim();
+  const route = String(item.route ?? '').trim();
+  const form = String(item.form ?? '').trim();
+  const days = firstNumber(item.duration) || Number(item.duration) || 0;
   const schedule = parseDoseScheduleCode(item.frequency);
 
   if (schedule) {
-    const timing = formatDoseScheduleInstructions(schedule);
-    if (timing && days > 0) {
-      return `${timing} for ${days} Day${days === 1 ? '' : 's'}`;
-    }
-    if (timing) return timing;
+    const scheduleText = formatDoseScheduleInstructions(schedule);
+    const parts = [scheduleText];
+    if (timing) parts.push(timing);
+    if (days > 0) parts.push(`for ${days} Day${days === 1 ? '' : 's'}`);
+    if (explicit) parts.push(`(${explicit})`);
+    return parts.filter(Boolean).join(' ');
   }
 
   const frequency = String(item.frequency ?? '').trim();
-  const dosage = String(item.dosage ?? '').trim();
-
-  if (explicit) {
-    if (days > 0 && !explicit.toLowerCase().includes('day')) {
-      return `${explicit} for ${days} Day${days === 1 ? '' : 's'}`;
-    }
-    return explicit;
-  }
-
   const parts = [];
+  if (form) parts.push(form);
   if (dosage) parts.push(dosage);
+  if (route) parts.push(route);
   if (frequency && !parseDoseScheduleCode(frequency)) parts.push(frequency);
+  if (timing) parts.push(timing);
   if (days > 0) parts.push(`${days} Day${days === 1 ? '' : 's'}`);
+  if (explicit) parts.push(explicit);
 
-  return parts.length ? parts.join(', ') : 'As directed';
+  return parts.length ? parts.join(' · ') : 'As directed';
 }
 
 /** Summary label for footer totals across one or more medicines. */

@@ -312,14 +312,14 @@ async function collectMedicationItemsFromDoctorPrescriptions(patientId, token) {
         items.push({
           prescription_item_id: itemId,
           medicine_name: item.medicine_name ?? item.name ?? '',
-          dosage: item.dosage ?? item.dose ?? '',
-          dose: item.dose ?? item.dosage ?? '',
+          dosage: item.dosage ?? '',
           frequency: item.frequency ?? '',
           duration: item.duration,
           instructions: item.instructions ?? null,
-          route: item.route ?? item.instructions ?? '',
+          route: item.route ?? '',
           form: item.form ?? null,
           timing: item.timing ?? null,
+          quantity: item.quantity ?? null,
           doctor_id: rx.doctor_id ?? rx.doctorId ?? null,
           doctor_name: rx.doctor_name ?? rx.doctorName ?? null,
         });

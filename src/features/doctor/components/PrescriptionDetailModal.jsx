@@ -4,12 +4,18 @@ import {
   useReplacePrescriptionMutation,
 } from '@/features/doctor/hooks/useDoctorPrescriptionQuery';
 import { useDoctorAppointmentDetailQuery } from '@/features/doctor/hooks/useDoctorAppointmentQuery';
-import { DEFAULT_MEDICINE } from '@/features/doctor/constants';
 import { parseEmbeddedClinicalNotes } from '@/features/doctor/utils/clinicalNotesParse';
+import {
+  dash,
+  emptyMedicineRow,
+  medicineRowFromApi,
+  validateNamedMedicineRow,
+} from '@/features/doctor/utils/medicineFields';
 import { Modal, Button, Input, Label, Textarea } from '@/shared/components/common';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { ACTIONS, canAccessAction } from '@/hooks/permissions';
 import { toast } from '@/shared/utils/toast';
+import PrescriptionMedicineCard from './PrescriptionMedicineCard';
 import '../styles/doctor-ui.css';
 
 function formatDetailDate(dateStr) {
@@ -131,41 +137,11 @@ function clinicalFieldsFromDetail(detail, appointmentClinical = null, { ipdPresc
   };
 }
 
-function emptyMedicineRow() {
-  return { ...DEFAULT_MEDICINE, durationValue: '', durationUnit: 'Days' };
-}
-
-function parseDurationFields(raw) {
-  const text = String(raw ?? '').trim();
-  if (!text) return { durationValue: '', durationUnit: 'Days' };
-  const match = text.match(/^(\d+)\s*(days?|weeks?|months?)?$/i);
-  if (match) {
-    const unitRaw = (match[2] || 'Days').toLowerCase();
-    let durationUnit = 'Days';
-    if (unitRaw.startsWith('week')) durationUnit = 'Weeks';
-    else if (unitRaw.startsWith('month')) durationUnit = 'Months';
-    return { durationValue: match[1], durationUnit };
-  }
-  const digits = text.match(/(\d+)/);
-  return { durationValue: digits ? digits[1] : '', durationUnit: 'Days' };
-}
-
 function medicinesFromDetail(detail) {
   if (!detail?.medicines?.length) {
     return [emptyMedicineRow()];
   }
-  return detail.medicines.map((m) => {
-    const { durationValue, durationUnit } = parseDurationFields(m.duration);
-    return {
-      name: m.name ?? '',
-      dosage: m.dosage ?? '',
-      frequency: m.frequency ?? '',
-      duration: m.duration != null ? String(m.duration) : '',
-      durationValue,
-      durationUnit,
-      instructions: m.instructions ?? '',
-    };
-  });
+  return detail.medicines.map((m) => medicineRowFromApi(m));
 }
 
 function PrescriptionDetailView({ detail, appointmentClinical, ipdPrescription = false }) {
@@ -224,20 +200,28 @@ function PrescriptionDetailView({ detail, appointmentClinical, ipdPrescription =
               <thead>
                 <tr>
                   <th scope="col">Medicine</th>
-                  <th scope="col">Dosage</th>
+                  <th scope="col">Strength</th>
+                  <th scope="col">Form</th>
+                  <th scope="col">Route</th>
                   <th scope="col">Frequency</th>
+                  <th scope="col">Timing</th>
                   <th scope="col">Duration</th>
+                  <th scope="col">Qty</th>
                   <th scope="col">Instructions</th>
                 </tr>
               </thead>
               <tbody>
                 {detail.medicines.map((m, i) => (
                   <tr key={i}>
-                    <td className="doc-rx-detail__med-name">{m.name || '—'}</td>
-                    <td>{m.dosage || '—'}</td>
-                    <td>{m.frequency || '—'}</td>
-                    <td>{m.duration ?? '—'}</td>
-                    <td>{m.instructions || '—'}</td>
+                    <td className="doc-rx-detail__med-name">{dash(m.name)}</td>
+                    <td>{dash(m.dosage)}</td>
+                    <td>{dash(m.form)}</td>
+                    <td>{dash(m.route)}</td>
+                    <td>{dash(m.frequency)}</td>
+                    <td>{dash(m.timing)}</td>
+                    <td>{dash(m.duration)}</td>
+                    <td>{m.quantity != null && m.quantity !== '' ? String(m.quantity) : '—'}</td>
+                    <td>{dash(m.instructions)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -264,6 +248,47 @@ function PrescriptionEditForm({
   clinical = null,
   lockedMedCount = 0,
 }) {
+  const editableStart = addMedicineOnly ? lockedMedCount : 0;
+
+  const renderMedicineCards = (rows, indexOffset = 0) =>
+    rows.map((m, offset) => {
+      const i = indexOffset + offset;
+      return (
+        <PrescriptionMedicineCard
+          key={i}
+          medicine={m}
+          index={i}
+          fieldErrors={fieldErrors}
+          canRemove={
+            addMedicineOnly
+              ? meds.length > lockedMedCount + 1
+              : meds.length > 1
+          }
+          onRemove={() => {
+            if (addMedicineOnly && i < lockedMedCount) return;
+            setMeds(meds.filter((_, j) => j !== i));
+            setFieldErrors((prev) => {
+              const next = { ...prev };
+              Object.keys(next).forEach((key) => {
+                if (key.startsWith('med')) delete next[key];
+              });
+              return next;
+            });
+          }}
+          onChange={(nextMed) => {
+            setMeds(meds.map((x, j) => (j === i ? nextMed : x)));
+            setFieldErrors((prev) => {
+              const next = { ...prev };
+              Object.keys(next).forEach((key) => {
+                if (key.endsWith(`_${i}`)) delete next[key];
+              });
+              return next;
+            });
+          }}
+        />
+      );
+    });
+
   if (addMedicineOnly) {
     return (
       <form onSubmit={(e) => e.preventDefault()} className="doc-rx-detail__form">
@@ -293,20 +318,24 @@ function PrescriptionEditForm({
                 <thead>
                   <tr>
                     <th scope="col">Medicine</th>
-                    <th scope="col">Dosage</th>
+                    <th scope="col">Strength</th>
+                    <th scope="col">Route</th>
                     <th scope="col">Frequency</th>
                     <th scope="col">Duration</th>
-                    <th scope="col">Instructions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {meds.slice(0, lockedMedCount).map((m, i) => (
                     <tr key={`locked-${i}`}>
-                      <td className="doc-rx-detail__med-name">{m.name || '—'}</td>
-                      <td>{m.dosage || '—'}</td>
-                      <td>{m.frequency || '—'}</td>
-                      <td>{m.duration ?? '—'}</td>
-                      <td>{m.instructions || '—'}</td>
+                      <td className="doc-rx-detail__med-name">{dash(m.name)}</td>
+                      <td>{dash(m.dosage)}</td>
+                      <td>{dash(m.route)}</td>
+                      <td>{dash(m.frequency)}</td>
+                      <td>
+                        {m.durationValue
+                          ? `${m.durationValue} ${m.durationUnit || 'Days'}`
+                          : dash(m.duration)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -317,86 +346,7 @@ function PrescriptionEditForm({
 
         <Label>Add medicines</Label>
         {fieldErrors.medicines && <p className="field__error">{fieldErrors.medicines}</p>}
-        {meds.slice(lockedMedCount).map((m, offset) => {
-          const i = lockedMedCount + offset;
-          return (
-            <div key={i} className="doc-med-row doc-med-row--consult">
-              <div className="doc-med-row__pair">
-                <Input
-                  className="doc-med-row__cell"
-                  placeholder="Name"
-                  value={m.name}
-                  onChange={(e) =>
-                    setMeds(meds.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))
-                  }
-                />
-                <Input
-                  className="doc-med-row__cell"
-                  placeholder="Dosage"
-                  value={m.dosage}
-                  onChange={(e) =>
-                    setMeds(meds.map((x, j) => (j === i ? { ...x, dosage: e.target.value } : x)))
-                  }
-                />
-              </div>
-              <div className="doc-med-row__pair">
-                <Input
-                  className="doc-med-row__cell"
-                  placeholder="1-0-1"
-                  value={m.frequency}
-                  onChange={(e) =>
-                    setMeds(meds.map((x, j) => (j === i ? { ...x, frequency: e.target.value } : x)))
-                  }
-                />
-                <Input
-                  className="doc-med-row__cell"
-                  placeholder="Instructions"
-                  value={m.instructions}
-                  onChange={(e) =>
-                    setMeds(meds.map((x, j) =>
-                      j === i ? { ...x, instructions: e.target.value } : x,
-                    ))
-                  }
-                />
-              </div>
-              <div className="doc-med-row__pair">
-                <Input
-                  className="doc-med-row__cell doc-med-row__duration-value"
-                  type="number"
-                  min={1}
-                  max={365}
-                  placeholder="e.g. 5"
-                  value={m.durationValue ?? ''}
-                  onChange={(e) => {
-                    setMeds(
-                      meds.map((x, j) => (j === i ? { ...x, durationValue: e.target.value } : x)),
-                    );
-                    if (fieldErrors[`medDuration_${i}`]) {
-                      setFieldErrors((prev) => {
-                        const next = { ...prev };
-                        delete next[`medDuration_${i}`];
-                        return next;
-                      });
-                    }
-                  }}
-                  error={fieldErrors[`medDuration_${i}`]}
-                />
-                <select
-                  className="doc-med-row__duration-unit"
-                  value={m.durationUnit ?? 'Days'}
-                  onChange={(e) =>
-                    setMeds(meds.map((x, j) => (j === i ? { ...x, durationUnit: e.target.value } : x)))
-                  }
-                  aria-label="Duration unit"
-                >
-                  <option value="Days">Days</option>
-                  <option value="Weeks">Weeks</option>
-                  <option value="Months">Months</option>
-                </select>
-              </div>
-            </div>
-          );
-        })}
+        {renderMedicineCards(meds.slice(lockedMedCount), lockedMedCount)}
         <Button
           type="button"
           size="sm"
@@ -426,75 +376,7 @@ function PrescriptionEditForm({
       <Textarea label="Notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
       <Label>Medicines</Label>
       {fieldErrors.medicines && <p className="field__error">{fieldErrors.medicines}</p>}
-      {meds.map((m, i) => (
-        <div key={i} className="doc-med-row doc-med-row--consult">
-          <div className="doc-med-row__pair">
-            <Input
-              className="doc-med-row__cell"
-              placeholder="Name"
-              value={m.name}
-              onChange={(e) => setMeds(meds.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))}
-            />
-            <Input
-              className="doc-med-row__cell"
-              placeholder="Dosage"
-              value={m.dosage}
-              onChange={(e) => setMeds(meds.map((x, j) => (j === i ? { ...x, dosage: e.target.value } : x)))}
-            />
-          </div>
-          <div className="doc-med-row__pair">
-            <Input
-              className="doc-med-row__cell"
-              placeholder="1-0-1"
-              value={m.frequency}
-              onChange={(e) => setMeds(meds.map((x, j) => (j === i ? { ...x, frequency: e.target.value } : x)))}
-            />
-            <Input
-              className="doc-med-row__cell"
-              placeholder="Instructions"
-              value={m.instructions}
-              onChange={(e) =>
-                setMeds(meds.map((x, j) => (j === i ? { ...x, instructions: e.target.value } : x)))
-              }
-            />
-          </div>
-          <div className="doc-med-row__pair">
-            <Input
-              className="doc-med-row__cell doc-med-row__duration-value"
-              type="number"
-              min={1}
-              max={365}
-              placeholder="e.g. 5"
-              value={m.durationValue ?? ''}
-              onChange={(e) => {
-                setMeds(
-                  meds.map((x, j) => (j === i ? { ...x, durationValue: e.target.value } : x)),
-                );
-                if (fieldErrors[`medDuration_${i}`]) {
-                  setFieldErrors((prev) => {
-                    const next = { ...prev };
-                    delete next[`medDuration_${i}`];
-                    return next;
-                  });
-                }
-              }}
-              error={fieldErrors[`medDuration_${i}`]}
-            />
-            <select
-              className="doc-med-row__duration-unit"
-              value={m.durationUnit ?? 'Days'}
-              onChange={(e) =>
-                setMeds(meds.map((x, j) => (j === i ? { ...x, durationUnit: e.target.value } : x)))
-              }
-              aria-label="Duration unit"
-            >
-              <option value="Days">Days</option>
-              <option value="Weeks">Weeks</option>
-              <option value="Months">Months</option>
-            </select>
-          </div>
-        </div>
-      ))}
+      {renderMedicineCards(meds, editableStart)}
       <Button type="button" size="sm" variant="outline" onClick={() => setMeds([...meds, emptyMedicineRow()])}>
         + Add medicine
       </Button>
@@ -665,20 +547,11 @@ export default function PrescriptionDetailModal({
 
     if (addMedicineOnly) {
       newMedSlice.forEach((m, offset) => {
-        if (!m.name.trim()) return;
-        const formIndex = lockedMedCount + offset;
-        const durationValue = parseInt(m.durationValue, 10);
-        if (!durationValue || durationValue <= 0) {
-          errs[`medDuration_${formIndex}`] = 'Duration must be a number greater than 0';
-        }
+        validateNamedMedicineRow(m, lockedMedCount + offset, errs);
       });
     } else {
       meds.forEach((m, i) => {
-        if (!m.name.trim()) return;
-        const durationValue = parseInt(m.durationValue, 10);
-        if (!durationValue || durationValue <= 0) {
-          errs[`medDuration_${i}`] = 'Duration must be a number greater than 0';
-        }
+        validateNamedMedicineRow(m, i, errs);
       });
     }
 

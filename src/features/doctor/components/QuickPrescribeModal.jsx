@@ -1,22 +1,26 @@
 import { useEffect, useState } from 'react';
 import { useCreatePrescriptionMutation } from '@/features/doctor/hooks/useDoctorPrescriptionQuery';
-import { DEFAULT_MEDICINE } from '@/features/doctor/constants';
 import { Modal, Button, Input, Label, Textarea } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
+import {
+  emptyMedicineRow,
+  validateNamedMedicineRow,
+} from '@/features/doctor/utils/medicineFields';
+import PrescriptionMedicineCard from './PrescriptionMedicineCard';
 import '../styles/doctor-ui.css';
 
 export default function QuickPrescribeModal({ patient, appointment, open, onClose }) {
   const createPrescription = useCreatePrescriptionMutation();
   const [diagnosis, setDiagnosis] = useState('');
   const [notes, setNotes] = useState('');
-  const [meds, setMeds] = useState([{ ...DEFAULT_MEDICINE }]);
+  const [meds, setMeds] = useState([emptyMedicineRow()]);
   const [fieldErrors, setFieldErrors] = useState({});
 
   useEffect(() => {
     if (!open) return;
     setDiagnosis('');
     setNotes('');
-    setMeds([{ ...DEFAULT_MEDICINE }]);
+    setMeds([emptyMedicineRow()]);
     setFieldErrors({});
   }, [open]);
 
@@ -30,6 +34,7 @@ export default function QuickPrescribeModal({ patient, appointment, open, onClos
     if (!diagnosis.trim()) errs.diagnosis = 'Diagnosis is required';
     const validMeds = meds.filter((m) => m.name.trim());
     if (!validMeds.length) errs.medicines = 'Add at least one medicine';
+    meds.forEach((m, i) => validateNamedMedicineRow(m, i, errs));
     setFieldErrors(errs);
     if (Object.keys(errs).length) return;
 
@@ -88,25 +93,31 @@ export default function QuickPrescribeModal({ patient, appointment, open, onClos
         <Label>Medicines</Label>
         {fieldErrors.medicines && <p className="field__error">{fieldErrors.medicines}</p>}
         {meds.map((m, i) => (
-          <div key={i} className="doc-med-row">
-            <Input
-              placeholder="Name"
-              value={m.name}
-              onChange={(e) => setMeds(meds.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))}
-            />
-            <Input placeholder="Dosage" value={m.dosage} onChange={(e) => setMeds(meds.map((x, j) => (j === i ? { ...x, dosage: e.target.value } : x)))} />
-            <Input placeholder="1-0-1" value={m.frequency} onChange={(e) => setMeds(meds.map((x, j) => (j === i ? { ...x, frequency: e.target.value } : x)))} />
-            <Input placeholder="Duration" value={m.duration} onChange={(e) => setMeds(meds.map((x, j) => (j === i ? { ...x, duration: e.target.value } : x)))} />
-            <Input
-              placeholder="Instructions"
-              value={m.instructions}
-              onChange={(e) =>
-                setMeds(meds.map((x, j) => (j === i ? { ...x, instructions: e.target.value } : x)))
-              }
-            />
-          </div>
+          <PrescriptionMedicineCard
+            key={i}
+            medicine={m}
+            index={i}
+            fieldErrors={fieldErrors}
+            canRemove={meds.length > 1}
+            onRemove={() => setMeds(meds.filter((_, j) => j !== i))}
+            onChange={(nextMed) => {
+              setMeds(meds.map((x, j) => (j === i ? nextMed : x)));
+              setFieldErrors((prev) => {
+                const next = { ...prev };
+                Object.keys(next).forEach((key) => {
+                  if (key.endsWith(`_${i}`)) delete next[key];
+                });
+                return next;
+              });
+            }}
+          />
         ))}
-        <Button type="button" size="sm" variant="outline" onClick={() => setMeds([...meds, { ...DEFAULT_MEDICINE }])}>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => setMeds([...meds, emptyMedicineRow()])}
+        >
           + Add medicine
         </Button>
       </form>

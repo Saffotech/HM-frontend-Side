@@ -72,15 +72,20 @@
 
 .pharmacy-detail-page .pharmacy-detail-table {
   width: 100%;
+  min-width: 40rem;
   table-layout: fixed;
 }
 
 .pharmacy-detail-page .pharmacy-detail-col--med {
-  width: 16%;
+  width: 18%;
+}
+
+.pharmacy-detail-page .pharmacy-detail-col--strength {
+  width: 12%;
 }
 
 .pharmacy-detail-page .pharmacy-detail-col--instr {
-  width: 34%;
+  width: 28%;
 }
 
 .pharmacy-detail-page .pharmacy-detail-col--date {
@@ -92,14 +97,16 @@
 }
 
 .pharmacy-detail-page .pharmacy-detail-col--money {
-  width: 9rem;
+  width: 7rem;
 }
 
 .pharmacy-detail-instructions {
   color: var(--color-text);
   font-size: 0.9rem;
   line-height: 1.45;
-  word-break: break-word;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  white-space: normal;
 }
 
 .pharmacy-detail-qty,
@@ -134,9 +141,6 @@
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
-  width: 9rem;
-  min-width: 9rem;
-  max-width: 9rem;
   padding-left: 0.5rem;
   padding-right: 0.75rem;
 }

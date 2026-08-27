@@ -268,23 +268,51 @@ export function getPrescriptionItemPricingSummary(prescriptionId, prescriptionIt
 
 export function matchDispenseHistoryPricing(
   prescriptionId,
-  { prescription_item_id, prescriptionItemId, quantity, dispensed_at, dispensedAt },
+  {
+    prescription_item_id,
+    prescriptionItemId,
+    quantity,
+    quantity_dispensed,
+    quantityDispensed,
+    dispensed_at,
+    dispensedAt,
+    medicine_name,
+    medicineName,
+  } = {},
 ) {
   const records = loadPrescriptionDispensePricing(prescriptionId);
-  const qty = Number(quantity) || 0;
+  if (!records.length) return null;
+
+  const qty =
+    Number(quantity ?? quantity_dispensed ?? quantityDispensed) || 0;
   const itemId = Number(prescription_item_id ?? prescriptionItemId);
   const dateKey = String(dispensed_at ?? dispensedAt ?? '').slice(0, 16);
+  const medName = String(medicine_name ?? medicineName ?? '')
+    .trim()
+    .toLowerCase();
 
-  const exact = records.find((row) => {
-    if (Number(row.prescriptionItemId) !== itemId) return false;
-    if (Number(row.quantity) !== qty) return false;
+  const byItem = Number.isFinite(itemId) && itemId > 0
+    ? records.filter((row) => Number(row.prescriptionItemId) === itemId)
+    : records.filter(
+        (row) =>
+          String(row.medicineName ?? '')
+            .trim()
+            .toLowerCase() === medName,
+      );
+
+  const pool = byItem.length ? byItem : records;
+
+  const exact = pool.find((row) => {
+    if (qty > 0 && Number(row.quantity) !== qty) return false;
+    if (!dateKey) return true;
     return String(row.dispensedAt ?? '').slice(0, 16) === dateKey;
   });
   if (exact) return exact;
 
-  return records.find(
-    (row) =>
-      Number(row.prescriptionItemId) === itemId &&
-      Number(row.quantity) === qty,
-  );
+  if (qty > 0) {
+    const byQty = pool.find((row) => Number(row.quantity) === qty);
+    if (byQty) return byQty;
+  }
+
+  return pool[0] ?? null;
 }

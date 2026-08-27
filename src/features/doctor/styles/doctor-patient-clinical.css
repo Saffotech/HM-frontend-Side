@@ -4,7 +4,9 @@
 @import '../../nurse/styles/nurse-notes.css';
 
 .doc-profile-panel--vitals .doc-profile-panel__body,
-.doc-profile-panel--nursing-notes .doc-profile-panel__body {
+.doc-profile-panel--nursing-notes .doc-profile-panel__body,
+.doc-profile-panel--consulting .doc-profile-panel__body,
+.doc-profile-panel--labs .doc-profile-panel__body {
   padding: 0 1rem 1rem;
   display: flex;
   flex-direction: column;
@@ -12,7 +14,9 @@
 }
 
 .doc-profile-panel--vitals .nurse-card,
-.doc-profile-panel--nursing-notes .nurse-card {
+.doc-profile-panel--nursing-notes .nurse-card,
+.doc-profile-panel--consulting .nurse-card,
+.doc-profile-panel--labs .nurse-card {
   background: #fff;
   border: 1px solid var(--border-color, #e2e8f0);
   border-radius: var(--radius-md, 8px);
@@ -20,7 +24,9 @@
 }
 
 .doc-profile-panel--vitals .nurse-card--padded,
-.doc-profile-panel--nursing-notes .nurse-card--padded {
+.doc-profile-panel--nursing-notes .nurse-card--padded,
+.doc-profile-panel--consulting .nurse-card--padded,
+.doc-profile-panel--labs .nurse-card--padded {
   padding: 1rem 1.25rem;
 }
 
@@ -31,6 +37,14 @@
   > .nurse-vital-detail__section-title,
 .doc-profile-panel--nursing-notes
   .nurse-notes-snapshot
+  > .nurse-vital-detail__section
+  > .nurse-vital-detail__section-title,
+.doc-profile-panel--consulting
+  .doc-consult-snapshot
+  > .nurse-vital-detail__section
+  > .nurse-vital-detail__section-title,
+.doc-profile-panel--labs
+  .doc-lab-snapshot
   > .nurse-vital-detail__section
   > .nurse-vital-detail__section-title {
   display: none;
@@ -103,5 +117,72 @@
   .doc-profile-panel--vitals .nurse-clinical-fields--notes,
   .doc-profile-panel--nursing-notes .nurse-clinical-fields--notes {
     grid-template-columns: 1fr;
+  }
+}
+
+.doc-consult-snapshot__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.doc-lab-snapshot__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.doc-lab-snapshot__status-item {
+  flex: 1 1 auto;
+  min-width: 0;
+  justify-content: flex-start;
+  gap: 0.65rem;
+}
+
+.doc-lab-snapshot__status-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.doc-lab-snapshot__report-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.doc-lab-snapshot__view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+.doc-profile-panel--consulting .doc-visit-detail-grid,
+.doc-profile-panel--labs .doc-visit-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.doc-profile-panel--labs .doc-visit-detail-tile--wide {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 640px) {
+  .doc-profile-panel--consulting .doc-visit-detail-grid,
+  .doc-profile-panel--labs .doc-visit-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .doc-lab-snapshot__report-block {
+    align-items: flex-start;
+    margin-left: 0;
   }
 }
