@@ -859,6 +859,13 @@
   margin-top: 0.15rem;
 }
 
+.doc-med-row__form-other,
+.doc-med-row__route-other,
+.doc-med-row__frequency-other,
+.doc-med-row__timing-other{
+  margin-top: 0.45rem;
+}
+
 .doc-lab-test-name{
   display: flex;
   flex-direction: column;

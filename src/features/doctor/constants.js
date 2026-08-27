@@ -69,15 +69,50 @@ export const MEDICINE_FORM_OPTIONS = [
   'Inhaler',
 ];
 
+/** Dropdown sentinel — custom text is stored in `form`. */
+export const MEDICINE_FORM_OTHER = 'Other';
+
+export const MEDICINE_FORM_CUSTOM_MAX = 100;
+
+export function isMedicineFormPreset(value) {
+  return MEDICINE_FORM_OPTIONS.includes(String(value ?? '').trim());
+}
+
 export const MEDICINE_ROUTE_OPTIONS = [
   'Oral',
-  'IV',
-  'IM',
-  'SC',
+  'Intravenous (IV)',
+  'Intramuscular (IM)',
+  'Subcutaneous (SC)',
   'Topical',
   'Inhalation',
   'Sublingual',
 ];
+
+/** Dropdown sentinel — custom text is stored in `route`. */
+export const MEDICINE_ROUTE_OTHER = 'Other';
+
+export const MEDICINE_ROUTE_CUSTOM_MAX = 100;
+
+/** Map legacy short codes to current dropdown labels. */
+const MEDICINE_ROUTE_ALIASES = {
+  IV: 'Intravenous (IV)',
+  IM: 'Intramuscular (IM)',
+  SC: 'Subcutaneous (SC)',
+};
+
+export function normalizeMedicineRoute(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  if (MEDICINE_ROUTE_OPTIONS.includes(raw)) return raw;
+  const aliased = MEDICINE_ROUTE_ALIASES[raw.toUpperCase()];
+  if (aliased) return aliased;
+  return raw;
+}
+
+export function isMedicineRoutePreset(value) {
+  const normalized = normalizeMedicineRoute(value);
+  return MEDICINE_ROUTE_OPTIONS.includes(normalized);
+}
 
 export const MEDICINE_FREQUENCY_OPTIONS = [
   '1-0-1',
@@ -85,9 +120,16 @@ export const MEDICINE_FREQUENCY_OPTIONS = [
   '1-0-0',
   '0-0-1',
   '1-1-0',
-  'SOS',
-  'STAT',
 ];
+
+/** Dropdown sentinel — custom text is stored in `frequency`. */
+export const MEDICINE_FREQUENCY_OTHER = 'Other';
+
+export const MEDICINE_FREQUENCY_CUSTOM_MAX = 100;
+
+export function isMedicineFrequencyPreset(value) {
+  return MEDICINE_FREQUENCY_OPTIONS.includes(String(value ?? '').trim());
+}
 
 export const MEDICINE_TIMING_OPTIONS = [
   'After food',
@@ -96,6 +138,15 @@ export const MEDICINE_TIMING_OPTIONS = [
   'With food',
   'At bedtime',
 ];
+
+/** Dropdown sentinel — custom text is stored in `timing`. */
+export const MEDICINE_TIMING_OTHER = 'Other';
+
+export const MEDICINE_TIMING_CUSTOM_MAX = 100;
+
+export function isMedicineTimingPreset(value) {
+  return MEDICINE_TIMING_OPTIONS.includes(String(value ?? '').trim());
+}
 
 export const MEDICINE_DURATION_UNIT_OPTIONS = ['Days', 'Weeks', 'Months'];
 

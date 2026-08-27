@@ -39,7 +39,7 @@ import LabTestNameField from './LabTestNameField';
 import PrescriptionMedicineCard from './PrescriptionMedicineCard';
 import {
   emptyMedicineRow,
-  validateMedicineRowOptional,
+  validateConsultationMedicineRow,
 } from '@/features/doctor/utils/medicineFields';
 
 function emptyLabOrderRow() {
@@ -558,7 +558,7 @@ export default function ConsultationModal({
       }
     });
     meds.forEach((m, i) => {
-      validateMedicineRowOptional(m, i, errs);
+      validateConsultationMedicineRow(m, i, errs);
     });
     setFieldErrors(errs);
     if (Object.keys(errs).length) {
@@ -669,7 +669,14 @@ export default function ConsultationModal({
               medicine={m}
               index={i}
               fieldErrors={fieldErrors}
-              showRequiredHints={false}
+              showRequiredHints
+              requiredWhenNamed={[
+                'dosage',
+                'frequency',
+                'timing',
+                'duration',
+                'durationUnit',
+              ]}
               canRemove={meds.length > 1}
               onAdd={
                 i === 0
@@ -701,6 +708,7 @@ export default function ConsultationModal({
                     'medForm',
                     'medRoute',
                     'medFrequency',
+                    'medTiming',
                     'medDuration',
                     'medDurationUnit',
                     'medQuantity',

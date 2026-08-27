@@ -1,6 +1,19 @@
 import {
   DEFAULT_MEDICINE,
+  MEDICINE_FORM_CUSTOM_MAX,
+  MEDICINE_FORM_OTHER,
+  MEDICINE_FREQUENCY_CUSTOM_MAX,
+  MEDICINE_FREQUENCY_OTHER,
   MEDICINE_INSTRUCTIONS_MAX,
+  MEDICINE_ROUTE_CUSTOM_MAX,
+  MEDICINE_ROUTE_OTHER,
+  MEDICINE_TIMING_CUSTOM_MAX,
+  MEDICINE_TIMING_OTHER,
+  isMedicineFormPreset,
+  isMedicineFrequencyPreset,
+  isMedicineRoutePreset,
+  isMedicineTimingPreset,
+  normalizeMedicineRoute,
 } from '@/features/doctor/constants';
 
 /** Fresh empty medicine row for consult / edit forms. */
@@ -10,6 +23,10 @@ export function emptyMedicineRow() {
     instructions: '',
     durationValue: '',
     durationUnit: 'Days',
+    formOther: false,
+    routeOther: false,
+    frequencyOther: false,
+    timingOther: false,
   };
 }
 
@@ -55,16 +72,72 @@ function nullToEmpty(value) {
   return String(value);
 }
 
+function validateFrequencyValue(m, index, errs) {
+  const frequency = String(m.frequency ?? '').trim();
+  if (!frequency || frequency === MEDICINE_FREQUENCY_OTHER) {
+    errs[`medFrequency_${index}`] = 'Frequency is required';
+    return;
+  }
+  if (frequency.length > MEDICINE_FREQUENCY_CUSTOM_MAX) {
+    errs[`medFrequency_${index}`] = `Max ${MEDICINE_FREQUENCY_CUSTOM_MAX} characters`;
+  }
+}
+
+function validateTimingValue(m, index, errs) {
+  const timing = String(m.timing ?? '').trim();
+  if (!timing || timing === MEDICINE_TIMING_OTHER) {
+    errs[`medTiming_${index}`] = 'Timing is required';
+    return;
+  }
+  if (timing.length > MEDICINE_TIMING_CUSTOM_MAX) {
+    errs[`medTiming_${index}`] = `Max ${MEDICINE_TIMING_CUSTOM_MAX} characters`;
+  }
+}
+
+function validateFormValue(m, index, errs, { required = false } = {}) {
+  const form = String(m.form ?? '').trim();
+  if (!form || form === MEDICINE_FORM_OTHER) {
+    if (required || m.formOther) {
+      errs[`medForm_${index}`] = 'Form is required';
+    }
+    return;
+  }
+  if (form.length > MEDICINE_FORM_CUSTOM_MAX) {
+    errs[`medForm_${index}`] = `Max ${MEDICINE_FORM_CUSTOM_MAX} characters`;
+  }
+}
+
+function validateRouteValue(m, index, errs, { required = false } = {}) {
+  const route = String(m.route ?? '').trim();
+  if (!route || route === MEDICINE_ROUTE_OTHER) {
+    if (required || m.routeOther) {
+      errs[`medRoute_${index}`] = 'Route is required';
+    }
+    return;
+  }
+  if (route.length > MEDICINE_ROUTE_CUSTOM_MAX) {
+    errs[`medRoute_${index}`] = `Max ${MEDICINE_ROUTE_CUSTOM_MAX} characters`;
+  }
+}
+
 /** API prescription item → UI medicine row. */
 export function medicineRowFromApi(item = {}) {
   const { durationValue, durationUnit } = parseDurationFields(item.duration);
+  const form = nullToEmpty(item.form);
+  const route = normalizeMedicineRoute(item.route);
+  const frequency = nullToEmpty(item.frequency);
+  const timing = nullToEmpty(item.timing);
   return {
     name: item.medicine_name ?? item.name ?? '',
     dosage: nullToEmpty(item.dosage),
-    form: nullToEmpty(item.form),
-    route: nullToEmpty(item.route),
-    frequency: nullToEmpty(item.frequency),
-    timing: nullToEmpty(item.timing),
+    form,
+    formOther: Boolean(form && !isMedicineFormPreset(form)),
+    route,
+    routeOther: Boolean(route && !isMedicineRoutePreset(route)),
+    frequency,
+    frequencyOther: Boolean(frequency && !isMedicineFrequencyPreset(frequency)),
+    timing,
+    timingOther: Boolean(timing && !isMedicineTimingPreset(timing)),
     duration: item.duration != null ? String(item.duration) : '',
     durationValue,
     durationUnit,
@@ -82,6 +155,36 @@ export function validateMedicineRowOptional(m, index, errs = {}) {
   return errs;
 }
 
+/**
+ * Consultation Rx: when medicine name is set, require strength, frequency,
+ * timing, duration, and duration unit (frontend only).
+ */
+export function validateConsultationMedicineRow(m, index, errs = {}) {
+  if (!String(m?.name ?? '').trim()) return errs;
+
+  if (!String(m.dosage ?? '').trim()) {
+    errs[`medDosage_${index}`] = 'Strength is required';
+  }
+  validateFrequencyValue(m, index, errs);
+  validateTimingValue(m, index, errs);
+  validateFormValue(m, index, errs, { required: false });
+  validateRouteValue(m, index, errs, { required: false });
+
+  const durationValue = parseInt(m.durationValue, 10);
+  if (!durationValue || durationValue <= 0) {
+    errs[`medDuration_${index}`] = 'Duration must be a number greater than 0';
+  }
+  if (!String(m.durationUnit ?? '').trim()) {
+    errs[`medDurationUnit_${index}`] = 'Duration unit is required';
+  }
+
+  if (String(m.instructions ?? '').length > MEDICINE_INSTRUCTIONS_MAX) {
+    errs[`medInstructions_${index}`] = `Max ${MEDICINE_INSTRUCTIONS_MAX} characters`;
+  }
+
+  return errs;
+}
+
 /** Validate a named medicine row into errs map (mutates errs). */
 export function validateNamedMedicineRow(m, index, errs = {}) {
   if (!String(m?.name ?? '').trim()) return errs;
@@ -89,15 +192,9 @@ export function validateNamedMedicineRow(m, index, errs = {}) {
   if (!String(m.dosage ?? '').trim()) {
     errs[`medDosage_${index}`] = 'Strength is required';
   }
-  if (!String(m.form ?? '').trim()) {
-    errs[`medForm_${index}`] = 'Form is required';
-  }
-  if (!String(m.route ?? '').trim()) {
-    errs[`medRoute_${index}`] = 'Route is required';
-  }
-  if (!String(m.frequency ?? '').trim()) {
-    errs[`medFrequency_${index}`] = 'Frequency is required';
-  }
+  validateFormValue(m, index, errs, { required: true });
+  validateRouteValue(m, index, errs, { required: true });
+  validateFrequencyValue(m, index, errs);
 
   const durationValue = parseInt(m.durationValue, 10);
   if (!durationValue || durationValue <= 0) {
