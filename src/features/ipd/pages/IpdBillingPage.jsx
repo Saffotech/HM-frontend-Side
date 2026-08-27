@@ -28,7 +28,7 @@ import {
 import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 const INSURANCE_BILL_COLUMNS = [
-  'IPD ID',
+  'Admission ID',
   'Patient',
   'Admitted',
   'Doctor / Ward',
@@ -234,7 +234,7 @@ export default function IpdBillingPage() {
                         }
                         description={
                           debouncedSearch.trim()
-                            ? 'Try a different patient, IPD ID, or ward.'
+                            ? 'Try a different patient, admission ID, or ward.'
                             : 'Cashless insurance claims will appear here when connected.'
                         }
                       />
