@@ -15,7 +15,11 @@ import {
   resolveLabDepartmentId,
 } from '@/shared/utils/labDepartments';
 import { findPatientLabOrderLink } from '@/features/doctor/utils/patientLabOrderLinks';
-import { isLabRepeatRequired } from '@/features/doctor/utils/labRepeatRequired';
+import {
+  isLabRepeatRequired,
+  isLabDuplicateOrderError,
+  resolveLabIsRepeat,
+} from '@/features/doctor/utils/labRepeatRequired';
 import LabTestNameField from './LabTestNameField';
 import { Button, Modal, Select, Textarea } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
@@ -45,13 +49,11 @@ export default function AddLabTestModal({
   const defaultLinkKey = linkOptions[0]?.key ?? '';
   const [linkKey, setLinkKey] = useState(defaultLinkKey);
   const [form, setForm] = useState(EMPTY_FORM);
-  const [repeatError, setRepeatError] = useState('');
 
   useEffect(() => {
     if (!open) return;
     setLinkKey(linkOptions[0]?.key ?? '');
     setForm(EMPTY_FORM);
-    setRepeatError('');
   }, [open, linkOptions]);
 
   const selectedLink = useMemo(
@@ -103,7 +105,6 @@ export default function AddLabTestModal({
       return;
     }
     if (repeatRequired && !form.isRepeat) {
-      setRepeatError('Check Repeat test — this test was already ordered today');
       toast.error('Check Repeat test — this test was already ordered today');
       return;
     }
@@ -118,7 +119,6 @@ export default function AddLabTestModal({
       departmentId: departmentId ?? undefined,
       priority: form.priority || 'Normal',
       clinicalNotes: form.clinicalNotes,
-      isRepeat: Boolean(form.isRepeat),
     };
 
     if (selectedLink.admissionId != null) {
@@ -127,15 +127,33 @@ export default function AddLabTestModal({
       payload.appointmentDbId = selectedLink.appointmentDbId;
     }
 
+    const repeatContext = {
+      existingOrders: existingLabTests,
+      labOrders: [form],
+      visit: labVisitContext,
+    };
+    payload.isRepeat = resolveLabIsRepeat(form, 0, repeatContext);
+
     try {
       await createLabTest.mutateAsync(payload);
       toast.success('Lab test ordered');
       onSuccess?.();
       onClose();
     } catch (err) {
-      const msg = String(err?.message ?? '');
-      if (!/already been ordered|use repeat test/i.test(msg)) {
-        // mutationOnError toasts most failures
+      if (
+        !payload.isRepeat
+        && isLabDuplicateOrderError(err)
+        && !isLabRepeatRequired(form, 0, repeatContext)
+      ) {
+        try {
+          await createLabTest.mutateAsync({ ...payload, isRepeat: true });
+          toast.success('Lab test ordered');
+          onSuccess?.();
+          onClose();
+          return;
+        } catch {
+          // mutationOnError toasts most failures
+        }
       }
     }
   };
@@ -229,7 +247,6 @@ export default function AddLabTestModal({
               aria-required={repeatRequired}
               onChange={(e) => {
                 setForm((prev) => ({ ...prev, isRepeat: e.target.checked }));
-                if (repeatError) setRepeatError('');
               }}
             />
             <span>
@@ -239,10 +256,9 @@ export default function AddLabTestModal({
             <span className="doc-lab-order__repeat-hint">
               {repeatRequired
                 ? 'Required — this test was already ordered today for this visit'
-                : 'Allow ordering again if this test is already in progress'}
+                : 'Check to order again if this test is already in progress from an earlier day'}
             </span>
           </label>
-          {repeatError ? <p className="field__error">{repeatError}</p> : null}
 
           <Textarea
             label="Clinical notes"

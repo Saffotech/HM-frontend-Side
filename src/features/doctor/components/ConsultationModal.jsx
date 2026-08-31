@@ -23,7 +23,11 @@ import {
   invalidateDoctorIpdAdmissions,
   optimisticallyCompleteAppointment,
 } from '@/features/doctor/utils/doctorDashboardCache';
-import { isLabRepeatRequired } from '@/features/doctor/utils/labRepeatRequired';
+import {
+  isLabRepeatRequired,
+  isLabDuplicateOrderError,
+  resolveLabIsRepeat,
+} from '@/features/doctor/utils/labRepeatRequired';
 import { stripInternalAppointmentMarkers } from '@/features/opd/utils/appointmentPaymentUtils';
 import { Modal, Button, Input, Textarea, Select } from '@/shared/components/common';
 import { doctorLabsApi, doctorPrescriptionsApi } from '@/shared/api/services';
@@ -116,49 +120,78 @@ function symptomsPrefillFromAppointment(detail) {
   return text;
 }
 
-function filledLabOrderRows(labOrders) {
-  return labOrders.filter(
-    (row) =>
-      row.deptCode
-      && (row.labTestId != null || String(row.testName ?? '').trim()),
-  );
+function filledLabOrderEntries(labOrders) {
+  return labOrders
+    .map((row, index) => ({ row, index }))
+    .filter(
+      ({ row }) =>
+        row.deptCode
+        && (row.labTestId != null || String(row.testName ?? '').trim()),
+    );
 }
 
-/** Create all lab orders in parallel; ignore duplicate-order conflicts. */
-async function createLabOrdersParallel({
-  rows,
+async function createSingleLabOrder({
+  row,
+  index,
   labRoutingDepts,
   token,
   basePayload,
+  repeatContext,
 }) {
-  if (!rows.length) return;
+  const departmentId = resolveLabDepartmentId(labRoutingDepts, row.deptCode);
+  const payload = {
+    ...basePayload,
+    labTestId: row.labTestId ?? undefined,
+    testName: String(row.testName).trim(),
+    category: inferLabCategory(row.testName, row.deptCode),
+    departmentId: departmentId ?? undefined,
+    priority: row.priority || 'Normal',
+    clinicalNotes: row.clinicalNotes,
+  };
+  const isRepeat = resolveLabIsRepeat(row, index, repeatContext);
+
+  try {
+    return await doctorLabsApi.addLabTest({ ...payload, isRepeat }, token);
+  } catch (err) {
+    if (
+      !isRepeat
+      && isLabDuplicateOrderError(err)
+      && !isLabRepeatRequired(row, index, repeatContext)
+    ) {
+      return doctorLabsApi.addLabTest({ ...payload, isRepeat: true }, token);
+    }
+    throw err;
+  }
+}
+
+/** Create all lab orders in parallel; auto-repeat when a duplicate is detected. */
+async function createLabOrdersParallel({
+  labOrders,
+  labRoutingDepts,
+  token,
+  basePayload,
+  repeatContext,
+}) {
+  const entries = filledLabOrderEntries(labOrders);
+  if (!entries.length) return;
 
   const results = await Promise.allSettled(
-    rows.map((row) => {
-      const departmentId = resolveLabDepartmentId(labRoutingDepts, row.deptCode);
-      return doctorLabsApi.addLabTest(
-        {
-          ...basePayload,
-          labTestId: row.labTestId ?? undefined,
-          testName: String(row.testName).trim(),
-          category: inferLabCategory(row.testName, row.deptCode),
-          departmentId: departmentId ?? undefined,
-          priority: row.priority || 'Normal',
-          clinicalNotes: row.clinicalNotes,
-          isRepeat: Boolean(row.isRepeat),
-        },
+    entries.map(({ row, index }) =>
+      createSingleLabOrder({
+        row,
+        index,
+        labRoutingDepts,
         token,
-      );
-    }),
+        basePayload,
+        repeatContext,
+      }),
+    ),
   );
 
   const failures = [];
   for (const result of results) {
     if (result.status !== 'rejected') continue;
-    const msg = String(result.reason?.message ?? '');
-    if (!/already been ordered/i.test(msg)) {
-      failures.push(msg || 'Could not create lab order');
-    }
+    failures.push(String(result.reason?.message ?? 'Could not create lab order'));
   }
   if (failures.length) {
     throw new Error(failures[0]);
@@ -406,7 +439,15 @@ export default function ConsultationModal({
       isIpd,
     }) => {
       const validMeds = meds.filter((m) => m.name.trim());
-      const labsToCreate = filledLabOrderRows(labOrders);
+      const labsToCreate = filledLabOrderEntries(labOrders);
+      const labRepeatContext = {
+        existingOrders: existingLabTests,
+        labOrders,
+        visit: {
+          appointmentDbId: nextAppointmentDbId,
+          admissionId: nextAdmissionId,
+        },
+      };
       const linkPayload =
         nextAdmissionId != null
           ? { admissionId: nextAdmissionId }
@@ -468,7 +509,7 @@ export default function ConsultationModal({
           if (labsToCreate.length > 0) {
             tasks.push(
               createLabOrdersParallel({
-                rows: labsToCreate,
+                labOrders,
                 labRoutingDepts,
                 token,
                 basePayload: {
@@ -476,6 +517,7 @@ export default function ConsultationModal({
                   patientUid,
                   patientName,
                 },
+                repeatContext: labRepeatContext,
               }),
             );
           }
@@ -528,6 +570,7 @@ export default function ConsultationModal({
       notes,
       labRoutingDepts,
       queryClient,
+      existingLabTests,
     ],
   );
 
@@ -567,7 +610,9 @@ export default function ConsultationModal({
         if (tab !== 'clinical') setTab('clinical');
       } else {
         const hasMedErr = Object.keys(errs).some((key) => key.startsWith('med'));
+        const hasLabRepeatErr = Object.keys(errs).some((key) => key.startsWith('labRepeat_'));
         if (hasMedErr && tab !== 'rx') setTab('rx');
+        if (hasLabRepeatErr && tab !== 'lab') setTab('lab');
       }
       return;
     }
@@ -852,7 +897,7 @@ export default function ConsultationModal({
                   <span className="doc-lab-order__repeat-hint">
                     {repeatRequired
                       ? 'Required — this test was already ordered today for this visit'
-                      : 'Allow ordering again if this test is already in progress'}
+                      : 'Check to order again if this test is already in progress from an earlier day'}
                   </span>
                 </label>
                 {fieldErrors[`labRepeat_${i}`] ? (
