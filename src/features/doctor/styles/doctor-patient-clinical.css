@@ -164,6 +164,36 @@
   white-space: nowrap;
 }
 
+/* Patient history — lab reports table */
+.doc-profile-labs-table-wrap {
+  overflow-x: auto;
+  margin: 0;
+}
+
+.doc-profile-labs-table {
+  width: 100%;
+  min-width: 36rem;
+}
+
+.doc-profile-labs-table th,
+.doc-profile-labs-table td {
+  vertical-align: middle;
+}
+
+.doc-profile-labs-table__test {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.doc-profile-labs-table tbody tr:hover td {
+  background: #f8fafc;
+}
+
+.doc-profile-labs-table__pagination {
+  padding: 0.75rem 0.25rem 0.15rem;
+  border-top: 1px solid #e2e8f0;
+}
+
 .doc-profile-panel--consulting .doc-visit-detail-grid,
 .doc-profile-panel--labs .doc-visit-detail-grid {
   display: grid;

@@ -1,125 +1,103 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Beaker, Calendar, Eye } from 'lucide-react';
-import NurseHistoryFilter from '@/features/nurse/components/NurseHistoryFilter';
+import { Beaker, Eye, Scan } from 'lucide-react';
 import StatusPill from '@/features/doctor/components/StatusPill';
-import { Button } from '@/shared/components/common';
+import { Button, TablePagination } from '@/shared/components/common';
+import { inferTestCategory } from '@/shared/utils/doctorLabView';
 import '../styles/doctor-patient-clinical.css';
 
-function formatLabFilterDate(test) {
-  if (!test) return '—';
-  const when = test.orderedDisplay || '—';
-  const name = String(test.testName ?? '').trim();
-  const status = String(test.doctorStatus ?? test.status ?? '').trim();
-  const parts = [when];
-  if (name) parts.push(name);
-  if (status) parts.push(status);
-  return parts.join(' · ');
+const LABS_PAGE_SIZE = 5;
+
+function CategoryCell({ category, testName, departmentName }) {
+  const label = inferTestCategory(testName, category, departmentName);
+  const isRad = label === 'Radiology';
+  const Icon = isRad ? Scan : Beaker;
+  return (
+    <span className="doc-labs-category">
+      <Icon size={14} aria-hidden />
+      {label}
+    </span>
+  );
 }
 
 /**
- * Lab reports — same UX as consulting history: one snapshot + date dropdown.
+ * Lab reports for patient history — tabular list with view action per row.
  */
 export default function DoctorLabReportsSnapshot({ labs = [], onViewReport }) {
-  const latestId = labs[0]?.id != null ? String(labs[0].id) : '';
-  const [selectedId, setSelectedId] = useState(latestId);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    setSelectedId(latestId);
-  }, [latestId, labs.length]);
+    setPage(1);
+  }, [labs.length]);
 
-  const activeId = useMemo(() => {
-    if (!labs.length) return '';
-    if (selectedId && labs.some((t) => String(t.id) === String(selectedId))) {
-      return String(selectedId);
-    }
-    return String(labs[0].id);
-  }, [labs, selectedId]);
-
-  const snapshot = useMemo(
-    () => labs.find((t) => String(t.id) === String(activeId)) || labs[0],
-    [labs, activeId],
+  const pageCount = Math.max(1, Math.ceil(labs.length / LABS_PAGE_SIZE) || 1);
+  const safePage = Math.min(page, pageCount);
+  const pagedLabs = useMemo(
+    () => labs.slice((safePage - 1) * LABS_PAGE_SIZE, safePage * LABS_PAGE_SIZE),
+    [labs, safePage],
   );
 
-  if (!snapshot) return null;
-
-  const isLatest = String(snapshot.id) === String(labs[0]?.id);
+  if (!labs.length) return null;
 
   return (
-    <div className="nurse-vitals-snapshot doc-lab-snapshot">
-      <div className="nurse-vital-detail__info-bar nurse-card nurse-card--padded">
-        <div className="nurse-vital-detail__info-item nurse-vital-detail__info-item--filter">
-          <Calendar size={18} aria-hidden />
-          <NurseHistoryFilter
-            label="Ordered"
-            items={labs}
-            value={activeId}
-            onChange={setSelectedId}
-            getItemId={(item) => String(item.id)}
-            getItemDate={(item) => item}
-            formatDate={formatLabFilterDate}
+    <div className="doc-profile-labs-table-wrap">
+      <div className="table-wrap">
+        <table className="data-table doc-labs-table doc-profile-labs-table">
+          <thead>
+            <tr>
+              <th>Test</th>
+              <th>Category</th>
+              <th>Ordered</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th className="doc-labs-table__actions-head">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pagedLabs.map((test, index) => (
+              <tr key={test.id ?? `${test.testName}-${index}`}>
+                <td className="doc-profile-labs-table__test">{test.testName || '—'}</td>
+                <td>
+                  <CategoryCell
+                    category={test.category}
+                    testName={test.testName}
+                    departmentName={test.departmentName}
+                  />
+                </td>
+                <td>{test.orderedDisplay || '—'}</td>
+                <td>{test.priority || '—'}</td>
+                <td>
+                  <StatusPill status={test.doctorStatus ?? test.status} />
+                </td>
+                <td className="doc-labs-table__actions">
+                  <div className="doc-labs-table__actions-inner">
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="doc-labs-view-btn"
+                      onClick={() => onViewReport?.(test)}
+                    >
+                      <Eye size={14} aria-hidden />
+                      View report
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {labs.length > LABS_PAGE_SIZE ? (
+        <div className="doc-profile-labs-table__pagination">
+          <TablePagination
+            totalPages={pageCount}
+            page={safePage}
+            pageSize={LABS_PAGE_SIZE}
+            totalItems={labs.length}
+            onPageChange={setPage}
+            itemLabel="lab reports"
           />
         </div>
-        <div className="nurse-vital-detail__info-item doc-lab-snapshot__status-item">
-          <Beaker size={18} aria-hidden />
-          <div className="doc-lab-snapshot__status-block">
-            <span className="nurse-vital-detail__info-label">Status</span>
-            <span className="nurse-vital-detail__info-value doc-lab-snapshot__status">
-              {isLatest ? <span className="doc-visit-latest">Latest</span> : null}
-              {snapshot.doctorStatus || snapshot.status ? (
-                <StatusPill status={snapshot.doctorStatus ?? snapshot.status} />
-              ) : (
-                '—'
-              )}
-            </span>
-          </div>
-          <div className="doc-lab-snapshot__report-block">
-            <span className="nurse-vital-detail__info-label">Report</span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="doc-lab-snapshot__view-btn"
-              onClick={() => onViewReport?.(snapshot)}
-            >
-              <Eye size={14} aria-hidden />
-              View report
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <section className="nurse-vital-detail__section">
-        <h2 className="nurse-vital-detail__section-title">
-          <Beaker size={16} aria-hidden />
-          Lab report
-        </h2>
-        <div className="doc-visit-detail-grid nurse-card nurse-card--padded">
-          <div className="doc-visit-detail-tile">
-            <span className="doc-visit-detail-tile__label">Test</span>
-            <p className="doc-visit-detail-tile__value">{snapshot.testName || '—'}</p>
-          </div>
-          <div className="doc-visit-detail-tile">
-            <span className="doc-visit-detail-tile__label">Category</span>
-            <p className="doc-visit-detail-tile__value">
-              {snapshot.departmentName || snapshot.category || '—'}
-            </p>
-          </div>
-          <div className="doc-visit-detail-tile">
-            <span className="doc-visit-detail-tile__label">Priority</span>
-            <p className="doc-visit-detail-tile__value">{snapshot.priority || '—'}</p>
-          </div>
-          <div className="doc-visit-detail-tile">
-            <span className="doc-visit-detail-tile__label">Ordered</span>
-            <p className="doc-visit-detail-tile__value">{snapshot.orderedDisplay || '—'}</p>
-          </div>
-          <div className="doc-visit-detail-tile doc-visit-detail-tile--wide">
-            <span className="doc-visit-detail-tile__label">Clinical notes</span>
-            <p className="doc-visit-detail-tile__value">
-              {String(snapshot.clinicalNotes ?? '').trim() || '—'}
-            </p>
-          </div>
-        </div>
-      </section>
+      ) : null}
     </div>
   );
 }
