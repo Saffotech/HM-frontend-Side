@@ -253,7 +253,7 @@ export default function NurseQueuePage() {
                 className="nurse-input nurse-queue-page__search"
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                placeholder="Name, UHID, bed, or ward…"
+                placeholder="Name, Patient ID, bed, or ward…"
                 aria-label="Search patients"
               />
             </div>
