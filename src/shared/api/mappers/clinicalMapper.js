@@ -198,9 +198,9 @@ function formatLabOrderedAt(iso) {
   if (!iso) return '—';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return String(iso);
-  return d.toLocaleString('en-US', {
-    month: 'numeric',
+  return d.toLocaleString('en-GB', {
     day: 'numeric',
+    month: 'numeric',
     year: 'numeric',
     hour: 'numeric',
     minute: '2-digit',

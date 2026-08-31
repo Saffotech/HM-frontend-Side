@@ -1,0 +1,18 @@
+.nurse-prescribed-doctor-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.nurse-prescribed-doctor-cell__name {
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.35;
+}
+
+.nurse-prescribed-doctor-cell__dept {
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.35;
+}

@@ -13,6 +13,7 @@ import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseQueueStatusBadge from '@/features/nurse/components/NurseQueueStatusBadge';
 import NurseNotesSnapshotView from '@/features/nurse/components/NurseNotesSnapshotView';
 import NurseVitalsSnapshotView from '@/features/nurse/components/NurseVitalsSnapshotView';
+import NurseMedicineCell from '@/features/nurse/components/NurseMedicineCell';
 import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
 import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
@@ -28,6 +29,7 @@ import {
   useNursePatientMedHistoryQuery,
   useNurseBedPatientsQuery,
   useNurseLabReportsQuery,
+  useNurseDoctorVisitsQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
 import { ROUTES } from '@/shared/constants';
 
@@ -56,6 +58,7 @@ export default function NursePatientOverviewPage() {
     canViewLabReports,
     canViewMedication,
     canCreateMedication,
+    canViewDoctorVisits,
   } = useNursePermissionSet();
   const { scopeFilters, scopeReady } = useNursePatientScope();
   const [activeTab, setActiveTab] = useState(
@@ -133,6 +136,19 @@ export default function NursePatientOverviewPage() {
   });
 
   const {
+    data: doctorVisitsData,
+    isLoading: isDoctorVisitsLoading,
+  } = useNurseDoctorVisitsQuery(
+    { patient_id: patientId ? Number(patientId) : undefined, page: 1, page_size: 100 },
+    { enabled: Boolean(patientId) && canViewDoctorVisits },
+  );
+
+  const doctorVisitCount = useMemo(
+    () => (doctorVisitsData?.items ?? []).filter((visit) => !visit.is_voided).length,
+    [doctorVisitsData?.items],
+  );
+
+  const {
     data: bedData,
   } = useNurseBedPatientsQuery({ page: 1, page_size: 100 });
 
@@ -154,6 +170,7 @@ export default function NursePatientOverviewPage() {
       patient_name: fromMeds?.patient_name || fromVital?.patient_name || fromNote?.patient_name || bedPatient?.patient_name || 'Unknown Patient',
       bed_number: fromMeds?.bed_number || fromVital?.bed_number || fromNote?.bed_number || bedPatient?.bed_number || '—',
       ward_name: fromMeds?.ward_name || bedPatient?.ward_name || '—',
+      admitted_at: bedPatient?.admitted_at ?? null,
     };
   }, [patientId, meds, vitals, notes, bedData?.items]);
 
@@ -215,6 +232,16 @@ export default function NursePatientOverviewPage() {
     });
   }, [canCreateMedication, navigate, patientId]);
 
+  const goToDoctorVisits = useCallback(() => {
+    if (!canViewDoctorVisits || !patientId) return;
+    navigate(
+      ROUTES.NURSE_DOCTOR_VISITS_PATIENT.replace(':patientId', String(patientId)),
+      {
+        state: { patient },
+      },
+    );
+  }, [canViewDoctorVisits, navigate, patient, patientId]);
+
   const vitalsAction = useMemo(() => {
     if (!latestVital) return null;
     return {
@@ -261,6 +288,19 @@ export default function NursePatientOverviewPage() {
                 <span>Bed: <strong>{patient.bed_number}</strong></span>
                 <span className="nurse-vital-detail__dot" aria-hidden>·</span>
                 <span>Ward: <strong>{patient.ward_name}</strong></span>
+                {canViewDoctorVisits ? (
+                  <>
+                    <span className="nurse-vital-detail__dot" aria-hidden>·</span>
+                    <button
+                      type="button"
+                      className="nurse-patient-overview__meta-link"
+                      onClick={goToDoctorVisits}
+                    >
+                      Doctor visits:{' '}
+                      <strong>{isDoctorVisitsLoading ? '—' : doctorVisitCount}</strong>
+                    </button>
+                  </>
+                ) : null}
               </p>
             </div>
           </div>
@@ -412,7 +452,9 @@ export default function NursePatientOverviewPage() {
                       <tbody>
                         {prescriptions.map((rx) => (
                           <tr key={rx.id}>
-                            <td className="nurse-patient-overview__med-name">{rx.medicine_name}</td>
+                            <td className="nurse-patient-overview__med-name">
+                              <NurseMedicineCell prescription={rx} />
+                            </td>
                             <td>{rx.strength || rx.dosage || '—'}</td>
                             <td>{rx.form || '—'}</td>
                             <td>{rx.duration || '—'}</td>
