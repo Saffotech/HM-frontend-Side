@@ -27,7 +27,7 @@ import {
   useIpdInsuranceClaimQuery,
   useUpdateIpdInsuranceClaimMutation,
 } from '@/features/ipd/hooks/useIpdBillingQuery';
-import { formatCurrency } from '@/shared/utils/formatCurrency';
+import { formatCurrency, currencyAmountLabel } from '@/shared/utils/formatCurrency';
 import { toast } from '@/shared/utils/toast';
 
 const TABS = [
@@ -323,7 +323,7 @@ export default function IpdInsuranceClaimDetailPage() {
               <>
                 <div className="ipd-claim-kv">
                   <dt>
-                    <label htmlFor="ipd-cd-claimed">Claimed Amount (₹)</label>
+                    <label htmlFor="ipd-cd-claimed">{currencyAmountLabel('Claimed Amount')}</label>
                   </dt>
                   <dd>
                     <input
@@ -669,7 +669,7 @@ export default function IpdInsuranceClaimDetailPage() {
                   </div>
                   <div className="ipd-toolbar__field">
                     <label className="ipd-toolbar__label" htmlFor="ipd-cd-line-amt">
-                      Amount (₹)
+                      {currencyAmountLabel('Amount')}
                     </label>
                     <input
                       id="ipd-cd-line-amt"

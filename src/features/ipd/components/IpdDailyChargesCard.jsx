@@ -2,7 +2,7 @@
  * Date-wise daily charge lines — shared by insurance cashless and self / pay-and-claim.
  */
 
-import { useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Button, DateInput } from '@/shared/components/common';
 import {
@@ -32,7 +32,81 @@ function todayIsoDate() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export default function IpdDailyChargesCard({
+function dailyChargeGroupEqual(a, b) {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.charge_date !== b.charge_date) return false;
+  if (a.total !== b.total) return false;
+  if (a.itemCount !== b.itemCount) return false;
+  if (a.categories.join('|') !== b.categories.join('|')) return false;
+  const ai = a.items;
+  const bi = b.items;
+  if (ai === bi) return true;
+  if (!ai || !bi || ai.length !== bi.length) return false;
+  for (let i = 0; i < ai.length; i++) {
+    if (ai[i] !== bi[i]) return false;
+  }
+  return true;
+}
+
+const IpdDailyChargeDateGroup = memo(function IpdDailyChargeDateGroup({
+  group,
+  isOpen,
+  onToggle,
+  updateDailyCharge,
+  removeDailyCharge,
+}) {
+  return (
+    <div
+      className={`ipd-ins-daily-group${
+        isOpen ? ' ipd-ins-daily-group--open' : ''
+      }`}
+    >
+      <button
+        type="button"
+        className="ipd-ins-daily-group__trigger"
+        onClick={() => onToggle(group.charge_date)}
+        aria-expanded={isOpen}
+      >
+        <span className="ipd-ins-daily-group__date">
+          {formatChargeDate(group.charge_date)}
+        </span>
+        <span className="ipd-ins-daily-group__meta">
+          {group.itemCount} item{group.itemCount === 1 ? '' : 's'} ·{' '}
+          {group.categories.join(' · ')}
+        </span>
+        <strong className="ipd-ins-daily-group__total">
+          {formatCurrency(group.total, { empty: '—' })}
+        </strong>
+        <ChevronDown
+          size={18}
+          aria-hidden
+          className={`ipd-ins-daily-group__chev${
+            isOpen ? ' ipd-ins-daily-group__chev--open' : ''
+          }`}
+        />
+      </button>
+      {isOpen ? (
+        <div className="ipd-ins-daily-group__panel">
+          <IpdDailyChargesGroupItems
+            items={group.items}
+            chargeDate={group.charge_date}
+            updateDailyCharge={updateDailyCharge}
+            removeDailyCharge={removeDailyCharge}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}, (prev, next) => {
+  if (prev.isOpen !== next.isOpen) return false;
+  if (prev.onToggle !== next.onToggle) return false;
+  if (prev.updateDailyCharge !== next.updateDailyCharge) return false;
+  if (prev.removeDailyCharge !== next.removeDailyCharge) return false;
+  return dailyChargeGroupEqual(prev.group, next.group);
+});
+
+function IpdDailyChargesCard({
   dailyCharges,
   onDailyChargesChange,
   onSave,
@@ -46,25 +120,37 @@ export default function IpdDailyChargesCard({
   const [newDailyAmount, setNewDailyAmount] = useState('');
   const [expandedDailyDate, setExpandedDailyDate] = useState(null);
 
+  const dailyChargesRef = useRef(dailyCharges);
+  dailyChargesRef.current = dailyCharges;
+
   const dailyChargeGroups = useMemo(
     () => groupDailyChargesByDate(dailyCharges),
     [dailyCharges],
   );
-  const dailyChargesTotal = calculateDailyChargesTotal(dailyCharges);
+  const dailyChargesTotal = useMemo(
+    () => calculateDailyChargesTotal(dailyCharges),
+    [dailyCharges],
+  );
 
-  const updateDailyCharge = (id, patch) => {
+  const updateDailyCharge = useCallback((id, patch) => {
     onDailyChargesChange(
       sortDailyCharges(
-        dailyCharges.map((row) =>
+        dailyChargesRef.current.map((row) =>
           row.id === id ? patchDailyCharge(row, patch) : row,
         ),
       ),
     );
-  };
+  }, [onDailyChargesChange]);
 
-  const removeDailyCharge = (id) => {
-    onDailyChargesChange(dailyCharges.filter((row) => row.id !== id));
-  };
+  const removeDailyCharge = useCallback((id) => {
+    onDailyChargesChange(
+      dailyChargesRef.current.filter((row) => row.id !== id),
+    );
+  }, [onDailyChargesChange]);
+
+  const toggleDailyDate = useCallback((chargeDate) => {
+    setExpandedDailyDate((prev) => (prev === chargeDate ? null : chargeDate));
+  }, []);
 
   const addDailyCharge = () => {
     const amount = Number(newDailyAmount);
@@ -97,7 +183,9 @@ export default function IpdDailyChargesCard({
       toast.error('Unable to add daily charge');
       return;
     }
-    onDailyChargesChange(sortDailyCharges([...dailyCharges, created]));
+    onDailyChargesChange(
+      sortDailyCharges([...dailyChargesRef.current, created]),
+    );
     setNewDailyItem('');
     setNewDailyQty('1');
     setNewDailyAmount('');
@@ -127,57 +215,16 @@ export default function IpdDailyChargesCard({
           </p>
         ) : (
           <div className="ipd-ins-daily-groups">
-            {dailyChargeGroups.map((group) => {
-              const isOpen = expandedDailyDate === group.charge_date;
-              return (
-                <div
-                  key={group.charge_date}
-                  className={`ipd-ins-daily-group${
-                    isOpen ? ' ipd-ins-daily-group--open' : ''
-                  }`}
-                >
-                  <button
-                    type="button"
-                    className="ipd-ins-daily-group__trigger"
-                    onClick={() =>
-                      setExpandedDailyDate((prev) =>
-                        prev === group.charge_date ? null : group.charge_date,
-                      )
-                    }
-                    aria-expanded={isOpen}
-                  >
-                    <span className="ipd-ins-daily-group__date">
-                      {formatChargeDate(group.charge_date)}
-                    </span>
-                    <span className="ipd-ins-daily-group__meta">
-                      {group.itemCount} item{group.itemCount === 1 ? '' : 's'} ·{' '}
-                      {group.categories.join(' · ')}
-                    </span>
-                    <strong className="ipd-ins-daily-group__total">
-                      {formatCurrency(group.total, { empty: '—' })}
-                    </strong>
-                    <ChevronDown
-                      size={18}
-                      aria-hidden
-                      className={`ipd-ins-daily-group__chev${
-                        isOpen ? ' ipd-ins-daily-group__chev--open' : ''
-                      }`}
-                    />
-                  </button>
-                    {isOpen ? (
-                      <div className="ipd-ins-daily-group__panel">
-                        <IpdDailyChargesGroupItems
-                          items={group.items}
-                          chargeDate={group.charge_date}
-                          updateDailyCharge={updateDailyCharge}
-                          removeDailyCharge={removeDailyCharge}
-                        />
-                      </div>
-                    ) : null}
-
-                </div>
-              );
-            })}
+            {dailyChargeGroups.map((group) => (
+              <IpdDailyChargeDateGroup
+                key={group.charge_date}
+                group={group}
+                isOpen={expandedDailyDate === group.charge_date}
+                onToggle={toggleDailyDate}
+                updateDailyCharge={updateDailyCharge}
+                removeDailyCharge={removeDailyCharge}
+              />
+            ))}
           </div>
         )}
 
@@ -242,3 +289,5 @@ export default function IpdDailyChargesCard({
     </div>
   );
 }
+
+export default memo(IpdDailyChargesCard);

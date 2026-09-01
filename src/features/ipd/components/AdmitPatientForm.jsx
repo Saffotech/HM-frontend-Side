@@ -151,7 +151,7 @@ export default function AdmitPatientForm() {
     (bed) => bed.status === "available",
   );
   const { wardOptions, isLoading: wardsLoading } = useIpdWardOptions();
-  const { getRate, ratesAvailable } = useIpdBedRateLookup();
+  const { getRate } = useIpdBedRateLookup();
 
   const departmentsQuery = useIpdDepartmentsQuery();
   const doctorsQuery = useIpdDoctorsByDepartmentQuery(
@@ -736,7 +736,7 @@ export default function AdmitPatientForm() {
                       : "Select ward…"}
                 </option>
                 {wardOptions.map((w) => {
-                  const rate = ratesAvailable ? getRate(w) : null;
+                  const rate = getRate(w);
                   return (
                     <option key={w} value={w}>
                       {rate != null
@@ -771,7 +771,7 @@ export default function AdmitPatientForm() {
                         : "Select bed…"}
                 </option>
                 {availableBeds.map((bed) => {
-                  const rate = ratesAvailable ? getRate(bed) : null;
+                  const rate = getRate(bed);
                   return (
                     <option key={bed.id} value={bed.id}>
                       {rate != null

@@ -3,7 +3,11 @@
  */
 
 import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { queryKeys } from "@/shared/api/queryKeys";
+import { useQueryToken } from "@/shared/hooks/useQueryToken";
+import { getIpdPatients } from "@/features/ipd/api";
 import { Button, EmptyState, QueryFeedback } from "@/shared/components/common";
 import { ROUTES } from "@/shared/constants";
 import { toast } from "@/shared/utils/toast";
@@ -18,14 +22,25 @@ import {
   useIpdPatientsQuery,
   useIpdWardStatsQuery,
 } from "@/features/ipd/hooks/useIpdQuery";
-import { useIpdWardOptions } from "@/features/ipd/hooks/useIpdWardOptions";
 import { useIpdBedRateLookup } from "@/features/ipd/hooks/useIpdBedRateLookup";
 import { IPD_ADMISSION_STATUS } from "@/features/ipd/utils/constants";
 import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 const PAGE_SIZE = 25;
 
+const ADMITTED_PATIENTS_QUERY_PARAMS = {
+  search: undefined,
+  status: IPD_ADMISSION_STATUS.ADMITTED,
+  ward: undefined,
+  doctor_id: undefined,
+  admission_date: undefined,
+  page: 1,
+  limit: 100,
+};
+
 export default function IpdBedsPage() {
+  const queryClient = useQueryClient();
+  const token = useQueryToken();
   const navigate = useNavigate();
   const { canAssignBed, canTransferBed, canAdmit, canDischarge } =
     useIpdPermissionSet();
@@ -56,17 +71,59 @@ export default function IpdBedsPage() {
     ward: wardFilter || undefined,
     bed_type: bedTypeFilter || undefined,
   });
-  const admissionsQuery = useIpdPatientsQuery({
-    status: IPD_ADMISSION_STATUS.ADMITTED,
-    limit: 100,
-  });
-  const { wardOptions } = useIpdWardOptions();
-  const { getRate, ratesAvailable } = useIpdBedRateLookup();
+
+  /** Skip admitted-patient fetch when all beds are available (no ward filter). */
+  const shouldFetchAdmissions = useMemo(() => {
+    if (wardFilter) return true;
+    if (!bedsQuery.isSuccess) return true;
+    return (bedsQuery.data?.beds ?? []).some((b) => b.status === "occupied");
+  }, [bedsQuery.isSuccess, bedsQuery.data, wardFilter]);
+
+  const admissionsQuery = useIpdPatientsQuery(
+    {
+      status: IPD_ADMISSION_STATUS.ADMITTED,
+      limit: 100,
+    },
+    { enabled: shouldFetchAdmissions },
+  );
+
+  const fetchAdmittedPatients = async () => {
+    return queryClient.fetchQuery({
+      queryKey: queryKeys.ipd.patients(ADMITTED_PATIENTS_QUERY_PARAMS),
+      queryFn: () => getIpdPatients(ADMITTED_PATIENTS_QUERY_PARAMS, token),
+    });
+  };
+
+  const wardOptions = useMemo(() => {
+    const fromStats = (wardsQuery.data?.wards ?? [])
+      .map((row) => String(row.ward || row.ward_name || "").trim())
+      .filter(Boolean);
+
+    if (fromStats.length) {
+      return [...new Set(fromStats)].sort((a, b) => a.localeCompare(b));
+    }
+
+    const fromFilteredBeds = (bedsQuery.data?.beds ?? [])
+      .map((bed) => String(bed.ward_name || "").trim())
+      .filter(Boolean);
+    if (fromFilteredBeds.length) {
+      return [...new Set(fromFilteredBeds)].sort((a, b) => a.localeCompare(b));
+    }
+
+    const cachedAllBeds =
+      queryClient.getQueryData(queryKeys.ipd.beds({}))?.beds ?? [];
+    const fromCachedBeds = cachedAllBeds
+      .map((bed) => String(bed.ward_name || "").trim())
+      .filter(Boolean);
+    return [...new Set(fromCachedBeds)].sort((a, b) => a.localeCompare(b));
+  }, [wardsQuery.data, bedsQuery.data, queryClient]);
+
+  const { getRate } = useIpdBedRateLookup();
 
   const loading = wardsQuery.isLoading || bedsQuery.isLoading;
   const wards = (wardsQuery.data?.wards ?? []).map((ward) => {
     const name = ward.ward;
-    const rate = ratesAvailable ? getRate(name) : null;
+    const rate = getRate(name);
     return {
       name,
       occupied: ward.occupied ?? 0,
@@ -154,8 +211,8 @@ export default function IpdBedsPage() {
     // Admissions list may still be loading / stale — refresh once.
     if (!admissionId) {
       try {
-        const fresh = await admissionsQuery.refetch();
-        const items = fresh.data?.items ?? [];
+        const fresh = await fetchAdmittedPatients();
+        const items = fresh?.items ?? [];
         const match = items.find(
           (row) =>
             (bed.id != null && String(row.bed_id) === String(bed.id)) ||
@@ -185,8 +242,8 @@ export default function IpdBedsPage() {
     let admissionId = resolveAdmissionId(bed);
     if (!admissionId) {
       try {
-        const fresh = await admissionsQuery.refetch();
-        const items = fresh.data?.items ?? [];
+        const fresh = await fetchAdmittedPatients();
+        const items = fresh?.items ?? [];
         const match = items.find(
           (row) =>
             (bed.id != null && String(row.bed_id) === String(bed.id)) ||
@@ -413,7 +470,7 @@ export default function IpdBedsPage() {
                   <tbody>
                     {pageBeds.map((bed) => {
                       const occupied = bed.status === "occupied";
-                      const rate = ratesAvailable ? getRate(bed) : null;
+                      const rate = getRate(bed);
                       return (
                         <tr
                           key={bed.id}

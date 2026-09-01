@@ -70,7 +70,7 @@ export default function BedAssignModal({
     (bed) => bed.status === 'available'
   );
   const { wardOptions, isLoading: wardsLoading } = useIpdWardOptions();
-  const { getRate, ratesAvailable } = useIpdBedRateLookup();
+  const { getRate } = useIpdBedRateLookup();
   const departmentsQuery = useIpdDepartmentsQuery();
   const doctorsQuery = useIpdDoctorsByDepartmentQuery(values.departmentId || null);
 
@@ -202,7 +202,7 @@ export default function BedAssignModal({
                   : 'Select ward…'}
             </option>
             {wardOptions.map((w) => {
-              const rate = ratesAvailable ? getRate(w) : null;
+              const rate = getRate(w);
               return (
                 <option key={w} value={w}>
                   {rate != null ? `${w} · ${formatCurrency(rate, { empty: '—' })}/day` : w}
@@ -226,7 +226,7 @@ export default function BedAssignModal({
               {!values.ward ? 'Select ward first…' : 'Select bed…'}
             </option>
             {availableBeds.map((bed) => {
-              const rate = ratesAvailable ? getRate(bed) : null;
+              const rate = getRate(bed);
               return (
                 <option key={bed.id} value={bed.id}>
                   {rate != null

@@ -6,8 +6,9 @@ import {
 
 /**
  * Smart currency display.
- * - Below ₹10,000: full amount (e.g. ₹9,999).
- * - From ₹10,000: compact K / L / Cr (e.g. ₹10 K, ₹12 K, ₹10.2 K).
+ * - Below compact threshold: full amount (e.g. $9,999).
+ * - From threshold: compact K / M / B (or K / L / Cr for INR).
+ *   Full amount is always accessible via tooltip (title).
  *   Full amount is always accessible via tooltip (title).
  * - compact prop: always use short form on screen when applicable.
  * - exact prop: always show full digits (for totals that must add up).

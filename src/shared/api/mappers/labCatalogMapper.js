@@ -3,20 +3,17 @@
  * Catalog price is current configuration only — never use it to reprice old orders.
  */
 
+import {
+  formatCurrency,
+  formatMoneyDigits,
+} from '@/shared/utils/formatCurrency';
+
 export function formatCatalogPrice(price) {
-  if (price == null || price === '') return '';
-  const n = Number(price);
-  if (!Number.isFinite(n)) return String(price);
-  return n.toLocaleString('en-IN', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
+  return formatMoneyDigits(price, { maximumFractionDigits: 0, minimumFractionDigits: 0 });
 }
 
 export function formatOrderPrice(price) {
-  if (price == null || price === '') return '—';
-  const formatted = formatCatalogPrice(price);
-  return formatted ? `₹${formatted}` : '—';
+  return formatCurrency(price, { empty: '—' });
 }
 
 export function apiToUiLabCatalogTest(api) {
@@ -25,14 +22,14 @@ export function apiToUiLabCatalogTest(api) {
   if (id == null) return null;
   const testName = api.test_name ?? api.testName ?? '';
   const price = api.price != null ? String(api.price) : null;
-  const priceLabel = formatCatalogPrice(price);
+  const priceDisplay = formatOrderPrice(price);
   return {
     id: Number(id),
     testName,
     departmentId: api.department_id ?? api.departmentId ?? null,
     price,
     active: api.active !== false,
-    label: priceLabel ? `${testName} (₹${priceLabel})` : testName,
+    label: priceDisplay !== '—' ? `${testName} (${priceDisplay})` : testName,
     createdAt: api.created_at ?? api.createdAt ?? null,
     updatedAt: api.updated_at ?? api.updatedAt ?? null,
   };

@@ -36,8 +36,37 @@ import { IPD_PAGE_SIZE } from '@/features/ipd/utils/constants';
 import { invalidateDoctorIpdAdmissions } from '@/features/doctor/utils/doctorDashboardCache';
 import { bumpDoctorIpdCache } from '@/shared/utils/doctorIpdSync';
 
-function invalidateIpdDomain(queryClient) {
-  queryClient.invalidateQueries({ queryKey: queryKeys.ipd.all });
+function invalidateIpdDashboard(queryClient) {
+  queryClient.invalidateQueries({ queryKey: queryKeys.ipd.dashboard });
+}
+
+function invalidateIpdPatientLists(queryClient) {
+  queryClient.invalidateQueries({ queryKey: ['ipd', 'patients'] });
+}
+
+function invalidateIpdBedViews(queryClient) {
+  queryClient.invalidateQueries({ queryKey: ['ipd', 'beds'] });
+  queryClient.invalidateQueries({ queryKey: queryKeys.ipd.wards });
+}
+
+function invalidateIpdRunningBills(queryClient) {
+  queryClient.invalidateQueries({ queryKey: ['ipd', 'billing', 'running'] });
+}
+
+function invalidateIpdPaymentHistory(queryClient) {
+  queryClient.invalidateQueries({ queryKey: ['ipd', 'payments'] });
+}
+
+function invalidateIpdAdmissionDetails(queryClient) {
+  queryClient.invalidateQueries({ queryKey: ['ipd', 'admission'] });
+}
+
+function invalidateIpdInsurancePatientLists(queryClient) {
+  queryClient.invalidateQueries({ queryKey: ['ipd', 'insurance', 'patients'] });
+}
+
+function invalidateIpdInsuranceBills(queryClient) {
+  queryClient.invalidateQueries({ queryKey: ['ipd', 'insurance', 'bills'] });
 }
 
 function notifyDoctorIpdChange(queryClient) {
@@ -94,8 +123,9 @@ export function useIpdAdmissionDetailQuery(admissionId) {
   });
 }
 
-export function useIpdBedsQuery(filters = {}) {
+export function useIpdBedsQuery(filters = {}, options = {}) {
   const token = useQueryToken();
+  const { enabled = true } = options;
   const params = {
     ward: filters.ward || undefined,
     status: filters.status || undefined,
@@ -105,6 +135,7 @@ export function useIpdBedsQuery(filters = {}) {
   return useQuery({
     queryKey: queryKeys.ipd.beds(params),
     queryFn: () => getIpdBeds(params, token),
+    enabled: enabled && Boolean(token),
     staleTime: 15_000,
   });
 }
@@ -131,12 +162,13 @@ export function useIpdRunningBillsQuery(filters = {}) {
   });
 }
 
-export function useIpdBillPreviewQuery(admissionId) {
+export function useIpdBillPreviewQuery(admissionId, options = {}) {
   const token = useQueryToken();
+  const { enabled = true } = options;
   return useQuery({
     queryKey: queryKeys.ipd.billPreview(admissionId),
     queryFn: () => getIpdBillPreview(admissionId, token),
-    enabled: Boolean(admissionId),
+    enabled: enabled !== false && Boolean(admissionId),
   });
 }
 
@@ -215,7 +247,11 @@ export function useCreateIpdAdmissionMutation() {
   return useMutation({
     mutationFn: (payload) => createIpdAdmission(payload, token),
     onSuccess: () => {
-      invalidateIpdDomain(queryClient);
+      invalidateIpdDashboard(queryClient);
+      invalidateIpdPatientLists(queryClient);
+      invalidateIpdBedViews(queryClient);
+      invalidateIpdRunningBills(queryClient);
+      invalidateIpdInsurancePatientLists(queryClient);
       notifyDoctorIpdChange(queryClient);
     },
     onError: mutationOnError,
@@ -229,11 +265,16 @@ export function useUpdateIpdAdmissionMutation() {
     mutationFn: ({ admissionId, payload }) =>
       updateIpdAdmission(admissionId, payload, token),
     onSuccess: (_data, variables) => {
-      invalidateIpdDomain(queryClient);
+      invalidateIpdDashboard(queryClient);
+      invalidateIpdPatientLists(queryClient);
+      invalidateIpdRunningBills(queryClient);
       notifyDoctorIpdChange(queryClient);
       if (variables?.admissionId) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.ipd.admission(variables.admissionId),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.ipd.billPreview(variables.admissionId),
         });
       }
     },
@@ -246,9 +287,16 @@ export function useTransferIpdBedMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload) => transferIpdBed(payload, token),
-    onSuccess: () => {
-      invalidateIpdDomain(queryClient);
+    onSuccess: (_data, variables) => {
+      invalidateIpdDashboard(queryClient);
+      invalidateIpdPatientLists(queryClient);
+      invalidateIpdBedViews(queryClient);
       notifyDoctorIpdChange(queryClient);
+      if (variables?.admission_id) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.ipd.admission(variables.admission_id),
+        });
+      }
     },
     onError: mutationOnError,
   });
@@ -260,13 +308,16 @@ export function useGenerateIpdBillMutation() {
   return useMutation({
     mutationFn: (payload) => generateIpdBill(payload, token),
     onSuccess: (_data, variables) => {
-      invalidateIpdDomain(queryClient);
+      invalidateIpdRunningBills(queryClient);
       if (variables?.admission_id) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.ipd.billPreview(variables.admission_id),
         });
         queryClient.invalidateQueries({
           queryKey: queryKeys.ipd.admission(variables.admission_id),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.ipd.billingAdmission(variables.admission_id),
         });
       }
     },
@@ -279,8 +330,16 @@ export function usePayIpdBillMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ billId, payload }) => payIpdBill(billId, payload, token),
-    onSuccess: () => {
-      invalidateIpdDomain(queryClient);
+    onSuccess: (_data, variables) => {
+      invalidateIpdDashboard(queryClient);
+      invalidateIpdRunningBills(queryClient);
+      invalidateIpdPaymentHistory(queryClient);
+      invalidateIpdAdmissionDetails(queryClient);
+      if (variables?.billId) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.ipd.billInvoice(variables.billId),
+        });
+      }
       notifyDoctorIpdChange(queryClient);
     },
     onError: mutationOnError,
@@ -293,9 +352,22 @@ export function useCompleteIpdDischargeMutation() {
   return useMutation({
     mutationFn: ({ admissionId, payload }) =>
       completeIpdDischarge(admissionId, payload ?? {}, token),
-    onSuccess: () => {
-      invalidateIpdDomain(queryClient);
+    onSuccess: (_data, variables) => {
+      invalidateIpdDashboard(queryClient);
+      invalidateIpdPatientLists(queryClient);
+      invalidateIpdBedViews(queryClient);
+      invalidateIpdRunningBills(queryClient);
+      invalidateIpdInsurancePatientLists(queryClient);
+      invalidateIpdInsuranceBills(queryClient);
       notifyDoctorIpdChange(queryClient);
+      if (variables?.admissionId) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.ipd.admission(variables.admissionId),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.ipd.billPreview(variables.admissionId),
+        });
+      }
     },
     onError: mutationOnError,
   });

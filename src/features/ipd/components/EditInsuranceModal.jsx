@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import { Modal, Button } from '@/shared/components/common';
+import { currencyAmountLabel } from '@/shared/utils/formatCurrency';
 
 function fromSeed(seed = {}) {
   const claimed = seed.claimed ?? seed.claimedAmount;
@@ -163,7 +164,7 @@ export default function EditInsuranceModal({ open, onClose, initial, onSave }) {
 
           <div className="ipd-toolbar__field">
             <label className="ipd-toolbar__label" htmlFor="ipd-edit-claimed">
-              Claimed Amount (₹)
+              {currencyAmountLabel('Claimed Amount')}
             </label>
             <input
               id="ipd-edit-claimed"
@@ -178,7 +179,7 @@ export default function EditInsuranceModal({ open, onClose, initial, onSave }) {
 
           <div className="ipd-toolbar__field">
             <label className="ipd-toolbar__label" htmlFor="ipd-edit-estimate">
-              Estimate Amount (₹) (optional)
+              {`${currencyAmountLabel('Estimate Amount')} (optional)`}
             </label>
             <input
               id="ipd-edit-estimate"

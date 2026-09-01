@@ -6,9 +6,10 @@
 
 
 
+import { memo } from 'react';
 import { BrandLogo, BrandName } from '@/shared/components/common';
 import { APP_NAME } from '@/shared/constants';
-import { formatCurrency } from '@/shared/utils/formatCurrency';
+import { formatCurrency, currencyAmountLabel } from '@/shared/utils/formatCurrency';
 import './IpdInsuranceBillPrint.css';
 
 function textOrNa(value) {
@@ -71,7 +72,7 @@ function SettlementRow({ label, value, muted }) {
 
 
 
-export default function IpdInsuranceBillPrintSheet({ model, className = '' }) {
+function IpdInsuranceBillPrintSheet({ model, className = '' }) {
 
   if (!model) return null;
 
@@ -268,9 +269,9 @@ export default function IpdInsuranceBillPrintSheet({ model, className = '' }) {
 
               <th className="col-qty">Qty</th>
 
-              <th className="col-money">Rate (₹)</th>
+              <th className="col-money">{currencyAmountLabel('Rate')}</th>
 
-              <th className="col-money">Amount (₹)</th>
+              <th className="col-money">{currencyAmountLabel('Amount')}</th>
 
             </tr>
 
@@ -569,5 +570,7 @@ export default function IpdInsuranceBillPrintSheet({ model, className = '' }) {
   );
 
 }
+
+export default memo(IpdInsuranceBillPrintSheet);
 
 

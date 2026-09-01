@@ -7,7 +7,7 @@ import {
 } from '@/shared/hooks/queries/useBillingQuery';
 import { useOpdPaymentControls } from '@/features/opd/hooks/useOpdBillingSettingsQuery';
 import { asBillList } from '@/shared/hooks/queries/listDataUtils';
-import { formatCurrency } from '@/shared/utils/formatCurrency';
+import { formatCurrency, currencyAmountLabel } from '@/shared/utils/formatCurrency';
 import { billItemsWithNonZeroAmount, billLineAmount } from '@/shared/utils/billHelpers';
 import { trimForm } from '@/shared/utils/trimForm';
 import { validatePaymentTransactionRef, requiresTransactionReference } from '@/shared/utils/validators';
@@ -384,7 +384,7 @@ export default function CollectPaymentModal({
 
             <div className="collect-payment__fields">
               <Input
-                label="Amount to Collect (₹)"
+                label={currencyAmountLabel('Amount to Collect')}
                 type="number"
                 min={1}
                 max={bill.balance}

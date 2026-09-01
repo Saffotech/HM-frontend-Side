@@ -8,32 +8,43 @@ import { useIpdBedsQuery, useIpdWardStatsQuery } from '@/features/ipd/hooks/useI
 
 export function useIpdWardOptions() {
   const wardsQuery = useIpdWardStatsQuery();
-  const bedsQuery = useIpdBedsQuery({});
+
+  const wardNamesFromStats = useMemo(
+    () =>
+      (wardsQuery.data?.wards ?? [])
+        .map((row) => String(row.ward || row.ward_name || '').trim())
+        .filter(Boolean),
+    [wardsQuery.data],
+  );
+
+  const needsBedsFallback =
+    wardsQuery.isSuccess && wardNamesFromStats.length === 0;
+
+  const bedsQuery = useIpdBedsQuery({}, { enabled: needsBedsFallback });
 
   const wardOptions = useMemo(() => {
-    const fromStats = (wardsQuery.data?.wards ?? [])
-      .map((row) => String(row.ward || row.ward_name || '').trim())
-      .filter(Boolean);
-
-    if (fromStats.length) {
-      return [...new Set(fromStats)].sort((a, b) => a.localeCompare(b));
+    if (wardNamesFromStats.length) {
+      return [...new Set(wardNamesFromStats)].sort((a, b) => a.localeCompare(b));
     }
 
-    // Fallback if wards endpoint empty but beds exist
     const fromBeds = (bedsQuery.data?.beds ?? [])
       .map((bed) => String(bed.ward_name || '').trim())
       .filter(Boolean);
     return [...new Set(fromBeds)].sort((a, b) => a.localeCompare(b));
-  }, [wardsQuery.data, bedsQuery.data]);
+  }, [wardNamesFromStats, bedsQuery.data]);
 
   return {
     wardOptions,
-    isLoading: wardsQuery.isLoading && bedsQuery.isLoading,
-    isError: wardsQuery.isError && bedsQuery.isError,
+    isLoading:
+      wardsQuery.isLoading || (needsBedsFallback && bedsQuery.isLoading),
+    isError:
+      wardsQuery.isError || (needsBedsFallback && bedsQuery.isError),
     error: wardsQuery.error || bedsQuery.error,
     refetch: () => {
       wardsQuery.refetch();
-      bedsQuery.refetch();
+      if (needsBedsFallback) {
+        bedsQuery.refetch();
+      }
     },
   };
 }

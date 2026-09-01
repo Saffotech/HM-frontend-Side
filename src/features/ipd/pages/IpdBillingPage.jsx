@@ -32,9 +32,10 @@ const INSURANCE_BILL_COLUMNS = [
   'Patient',
   'Admitted',
   'Doctor / Ward',
-  'Net Bill',
-  'Approved',
-  'Claim',
+  'Total Bill',
+  'Claimed Amount',
+  'Estimate Amount',
+  'Pending Due',
   'Action',
 ];
 
@@ -92,7 +93,9 @@ export default function IpdBillingPage() {
         row.doctor,
         row.wardRoom,
         row.coverage,
-        row.claimLabel,
+        row.claimedAmount,
+        row.estimateAmount,
+        row.pendingDue,
       ]
         .filter(Boolean)
         .join(' ')
@@ -255,15 +258,20 @@ export default function IpdBillingPage() {
                         {row.doctor}
                         <div className="ipd-ins-meta">{row.wardRoom}</div>
                       </td>
-                      <td>{formatCurrency(row.netBill, { empty: '—' })}</td>
+                      <td>{formatCurrency(row.totalBill, { empty: '—' })}</td>
                       <td>
                         <span className="ipd-claim-amt--ok">
-                          {formatCurrency(row.approved, { empty: '—' })}
+                          {formatCurrency(row.claimedAmount, { empty: '—' })}
                         </span>
                       </td>
                       <td>
-                        <span className="ipd-ins-chip ipd-ins-chip--warn">
-                          {row.claimLabel}
+                        {row.estimateAmount != null
+                          ? formatCurrency(row.estimateAmount, { empty: '—' })
+                          : '—'}
+                      </td>
+                      <td>
+                        <span className="ipd-claim-amt--due">
+                          {formatCurrency(row.pendingDue, { empty: '—' })}
                         </span>
                       </td>
                       <td>

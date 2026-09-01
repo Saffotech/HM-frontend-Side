@@ -34,6 +34,7 @@ import {
 import { normalizeAdminEdit } from '@/features/admin/constants/adminEditLocks';
 import { Button, Input, Label, QueryFeedback, SearchableSelect } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
+import { getCurrencySymbol } from '@/shared/utils/formatCurrency';
 import '@/features/admin/styles/adminOpdSettings.css';
 
 const SECTION_TABS = [
@@ -544,7 +545,7 @@ export default function AdminOpdSettingsPanel({ manageAdminEditLocks = false }) 
                               }
                             />
                             <div className="aos-bill-list__price">
-                              <span aria-hidden>₹</span>
+                              <span aria-hidden>{getCurrencySymbol()}</span>
                               <Input
                                 type="number"
                                 min={0}

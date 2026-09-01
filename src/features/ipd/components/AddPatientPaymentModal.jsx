@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react';
 import { Modal, Button, DateInput } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
-import { formatCurrency } from '@/shared/utils/formatCurrency';
+import { formatCurrency, currencyAmountLabel } from '@/shared/utils/formatCurrency';
 
 const PAYMENT_MODES = ['Cash', 'Card', 'UPI', 'Cheque', 'Other'];
 
@@ -103,7 +103,7 @@ export default function AddPatientPaymentModal({
         <div className="ipd-form-grid ipd-ins-pay-modal__grid">
           <div className="ipd-toolbar__field">
             <label className="ipd-toolbar__label" htmlFor="ipd-pat-pay-amount">
-              Amount (₹)
+              {currencyAmountLabel('Amount')}
             </label>
             <input
               id="ipd-pat-pay-amount"

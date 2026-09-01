@@ -5,8 +5,10 @@
 
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button, DateInput, EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
+import { queryKeys } from '@/shared/api/queryKeys';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import IpdPageHeader from '@/features/ipd/components/IpdPageHeader';
 import IpdStatusBadge from '@/features/ipd/components/IpdStatusBadge';
@@ -81,8 +83,34 @@ function parsePaymentType(raw) {
   return parseIpdPaymentType(raw);
 }
 
+/** One row per patient — prefer rows linked to an active admission. */
+function dedupeCashlessInsurancePatients(rows, stay) {
+  const byPatient = new Map();
+
+  for (const row of rows) {
+    const patientKey = String(row.uhid || row.id || '')
+      .trim()
+      .toLowerCase();
+    if (!patientKey || patientKey === '—') continue;
+
+    if (stay === STAY_FILTER.ADMITTED && !row.admissionId) continue;
+
+    const prev = byPatient.get(patientKey);
+    if (!prev) {
+      byPatient.set(patientKey, row);
+      continue;
+    }
+    if (!prev.admissionId && row.admissionId) {
+      byPatient.set(patientKey, row);
+    }
+  }
+
+  return [...byPatient.values()];
+}
+
 export default function IpdPatientListPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const {
     canViewPatient,
     canTransferBed,
@@ -109,36 +137,58 @@ export default function IpdPatientListPage() {
   const statusParam = stay === STAY_FILTER.ALL ? undefined : stay;
   const admissionDateParam = toIsoAdmissionDateParam(admissionDate);
 
-  const { data, isLoading, isError, error, refetch, isFetching } = useIpdPatientsQuery({
-    search: debouncedSearch,
-    status: statusParam,
-    ward,
-    admissionDate: admissionDateParam,
-    page,
-  });
-  const insurancePatientsQuery = useIpdInsurancePatientsQuery(
-    {
+  const patientsQueryParams = useMemo(
+    () => ({
       search: debouncedSearch,
       status: statusParam,
       ward,
       admissionDate: admissionDateParam,
       page,
-    },
-    { enabled: isInsuranceCashlessPaymentType(paymentType) },
+    }),
+    [debouncedSearch, statusParam, ward, admissionDateParam, page],
   );
 
   const showInsuranceCashless = isInsuranceCashlessPaymentType(paymentType);
   const paymentTypeGroup = getPaymentTypeGroup(paymentType);
+  const cachedPatientsPage = queryClient.getQueryData(
+    queryKeys.ipd.patients(patientsQueryParams),
+  );
+
+  const insurancePatientsQuery = useIpdInsurancePatientsQuery(
+    patientsQueryParams,
+    { enabled: showInsuranceCashless },
+  );
+
+  const insuranceHasRows =
+    (insurancePatientsQuery.data?.items?.length ?? 0) > 0;
+
+  const patientsQueryEnabled =
+    !showInsuranceCashless ||
+    !cachedPatientsPage ||
+    (insurancePatientsQuery.isFetched && !insuranceHasRows);
+
+  const { data, isLoading, isError, error, refetch } =
+    useIpdPatientsQuery(patientsQueryParams, {
+      enabled: patientsQueryEnabled,
+    });
+
+  const admissionListItems =
+    data?.items ?? cachedPatientsPage?.items ?? [];
+
   const cashlessPatients = useMemo(() => {
     const fromApi = (insurancePatientsQuery.data?.items ?? []).map(
       mapInsurancePatientRow,
     );
-    const fromAdmissions = (data?.items ?? [])
+
+    if (fromApi.length > 0) {
+      return dedupeCashlessInsurancePatients(fromApi, stay);
+    }
+
+    const fromAdmissions = admissionListItems
       .filter((row) => matchesPaymentType(row, IPD_PAYMENT_TYPE.INSURANCE_CASHLESS))
       .map((row) =>
         mapInsurancePatientRow({
           ...row,
-          // Admission list `id` is admission id — pass patient fields explicitly.
           patient_id: row.patient_id ?? row.patientId ?? undefined,
           patient_uid: row.patient_uid ?? row.uhid ?? row.patientUid ?? undefined,
           uhid: row.uhid ?? row.patient_uid ?? row.patientUid,
@@ -149,47 +199,21 @@ export default function IpdPatientListPage() {
         }),
       );
 
-    // Prefer insurance API rows; keep admissions only as gap-fill.
-    const merged = fromApi.length > 0 ? fromApi : fromAdmissions;
-    const byPatient = new Map();
-
-    for (const row of merged) {
-      const patientKey = String(row.uhid || row.id || '')
-        .trim()
-        .toLowerCase();
-      if (!patientKey || patientKey === '—') continue;
-
-      // Admitted filter: hide rows with no linked admission (cannot transfer / not in ward).
-      if (stay === STAY_FILTER.ADMITTED && !row.admissionId) continue;
-
-      const prev = byPatient.get(patientKey);
-      if (!prev) {
-        byPatient.set(patientKey, row);
-        continue;
-      }
-      // One row per patient — keep the one with an active admission link.
-      if (!prev.admissionId && row.admissionId) {
-        byPatient.set(patientKey, row);
-      }
-    }
-
-    return [...byPatient.values()];
-  }, [insurancePatientsQuery.data?.items, data?.items, stay]);
+    return dedupeCashlessInsurancePatients(fromAdmissions, stay);
+  }, [insurancePatientsQuery.data?.items, admissionListItems, stay]);
 
   const rows = useMemo(() => {
-    const items = data?.items ?? [];
-    return items.filter((row) => matchesPaymentType(row, paymentType));
-  }, [data?.items, paymentType]);
+    return admissionListItems.filter((row) => matchesPaymentType(row, paymentType));
+  }, [admissionListItems, paymentType]);
 
   const total = showInsuranceCashless
     ? cashlessPatients.length
     : rows.length;
   const paymentTypeSummary = useMemo(() => {
-    const items = data?.items ?? [];
-    const selfCount = items.filter((row) =>
+    const selfCount = admissionListItems.filter((row) =>
       matchesPaymentType(row, IPD_PAYMENT_TYPE.SELF),
     ).length;
-    const copayCount = items.filter((row) =>
+    const copayCount = admissionListItems.filter((row) =>
       matchesPaymentType(row, IPD_PAYMENT_TYPE.INSURANCE_COPAY),
     ).length;
 
@@ -198,8 +222,16 @@ export default function IpdPatientListPage() {
       cashless: cashlessPatients.length,
       copay: copayCount,
     };
-  }, [data?.items, cashlessPatients]);
-  const limit = data?.limit ?? 20;
+  }, [admissionListItems, cashlessPatients]);
+
+  const limit = data?.limit ?? cachedPatientsPage?.limit ?? 20;
+  const insuranceListLoading =
+    showInsuranceCashless &&
+    insurancePatientsQuery.isLoading &&
+    !insurancePatientsQuery.data;
+  const headerSummaryLoading = showInsuranceCashless
+    ? insuranceListLoading || (patientsQueryEnabled && isLoading)
+    : isLoading;
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const showDischargeDate =
     stay === STAY_FILTER.COMPLETED || stay === STAY_FILTER.ALL;
@@ -288,7 +320,7 @@ export default function IpdPatientListPage() {
       <div className="ipd-card">
         <div className="ipd-card__head ipd-pl-card__head">
           <h2 className="ipd-card__title">Patients</h2>
-          {!isLoading ? (
+          {!headerSummaryLoading ? (
             <div className="ipd-pl-summary">
               <span className="ipd-pl-chip ipd-pl-chip--slate">
                 Self: {paymentTypeSummary.self}
@@ -406,6 +438,18 @@ export default function IpdPatientListPage() {
           </div>
 
           {showInsuranceCashless ? (
+            insurancePatientsQuery.isError ? (
+              <QueryFeedback
+                isError
+                error={insurancePatientsQuery.error}
+                onRetry={insurancePatientsQuery.refetch}
+              />
+            ) : insuranceListLoading ? (
+              <div className="ipd-pl-skeletons">
+                <div className="ipd-skeleton" />
+                <div className="ipd-skeleton" />
+              </div>
+            ) : (
             <>
               <div className="ipd-table-wrap ipd-ins-table-wrap">
                 <table className="ipd-table ipd-table--insurance">
@@ -539,6 +583,7 @@ export default function IpdPatientListPage() {
                 </div>
               </div>
             </>
+            )
           ) : isError ? (
             <QueryFeedback isError error={error} onRetry={refetch} />
           ) : isLoading ? (

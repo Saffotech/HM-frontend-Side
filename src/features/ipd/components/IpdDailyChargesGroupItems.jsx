@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { getDailyChargeItemPlaceholder } from '@/features/ipd/utils/insuranceDailyCharges';
-import { formatCurrency } from '@/shared/utils/formatCurrency';
+import { formatCurrency, currencyAmountLabel } from '@/shared/utils/formatCurrency';
 
 function formatChargeDate(iso) {
   if (!iso) return '—';
@@ -21,9 +21,24 @@ function isPharmacyItem(row) {
   );
 }
 
-function DailyChargeRow({ row, chargeDate, updateDailyCharge, removeDailyCharge }) {
+/** Shallow row-reference equality — unchanged rows keep the same object ref after edits. */
+function dailyChargeItemsEqual(a, b) {
+  if (a === b) return true;
+  if (!a || !b || a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
+const DailyChargeRow = memo(function DailyChargeRow({
+  row,
+  chargeDate,
+  updateDailyCharge,
+  removeDailyCharge,
+}) {
   return (
-    <div key={row.id} className="ipd-ins-daily-detail-row">
+    <div className="ipd-ins-daily-detail-row">
       <input
         className="ipd-input"
         value={row.head}
@@ -69,9 +84,69 @@ function DailyChargeRow({ row, chargeDate, updateDailyCharge, removeDailyCharge 
       </button>
     </div>
   );
-}
+}, (prev, next) =>
+  prev.row === next.row &&
+  prev.chargeDate === next.chargeDate &&
+  prev.updateDailyCharge === next.updateDailyCharge &&
+  prev.removeDailyCharge === next.removeDailyCharge,
+);
 
-export default function IpdDailyChargesGroupItems({
+const PharmacyChargeRow = memo(function PharmacyChargeRow({
+  row,
+  chargeDate,
+  updateDailyCharge,
+  removeDailyCharge,
+}) {
+  return (
+    <div className="ipd-ins-daily-pharmacy-card__row">
+      <input
+        className="ipd-input"
+        value={row.item_name}
+        onChange={(e) =>
+          updateDailyCharge(row.id, { item_name: e.target.value })
+        }
+        placeholder="Medicine name"
+        aria-label={`Item for ${formatChargeDate(chargeDate)}`}
+      />
+      <input
+        className="ipd-input ipd-ins-daily-qty-input"
+        value={row.quantity}
+        onChange={(e) =>
+          updateDailyCharge(row.id, {
+            quantity: e.target.value.replace(/[^\d.]/g, ''),
+          })
+        }
+        inputMode="decimal"
+        aria-label={`Quantity for ${row.item_name}`}
+      />
+      <input
+        className="ipd-input ipd-ins-charge-input"
+        value={row.amount}
+        onChange={(e) =>
+          updateDailyCharge(row.id, {
+            amount: e.target.value.replace(/[^\d.]/g, ''),
+          })
+        }
+        inputMode="decimal"
+        aria-label={`Amount for ${row.item_name}`}
+      />
+      <button
+        type="button"
+        className="ipd-text-link ipd-ins-charge-remove"
+        onClick={() => removeDailyCharge(row.id)}
+      >
+        Remove
+      </button>
+    </div>
+  );
+}, (prev, next) =>
+  prev.row === next.row &&
+  prev.chargeDate === next.chargeDate &&
+  prev.updateDailyCharge === next.updateDailyCharge &&
+  prev.removeDailyCharge === next.removeDailyCharge,
+);
+
+function IpdDailyChargesGroupItems({
   items,
   chargeDate,
   updateDailyCharge,
@@ -108,7 +183,7 @@ export default function IpdDailyChargesGroupItems({
         <span>Head</span>
         <span>Item / medicine / treatment</span>
         <span>Qty</span>
-        <span>Amount (₹)</span>
+        <span>{currencyAmountLabel('Amount')}</span>
         <span aria-hidden />
       </div>
 
@@ -189,50 +264,17 @@ export default function IpdDailyChargesGroupItems({
               <div className="ipd-ins-daily-pharmacy-card__head">
                 <span>Medicine</span>
                 <span>Qty</span>
-                <span>Amount (₹)</span>
+                <span>{currencyAmountLabel('Amount')}</span>
                 <span aria-hidden />
               </div>
               {pharmacyItems.map((row) => (
-                <div key={row.id} className="ipd-ins-daily-pharmacy-card__row">
-                  <input
-                    className="ipd-input"
-                    value={row.item_name}
-                    onChange={(e) =>
-                      updateDailyCharge(row.id, { item_name: e.target.value })
-                    }
-                    placeholder="Medicine name"
-                    aria-label={`Item for ${formatChargeDate(chargeDate)}`}
-                  />
-                  <input
-                    className="ipd-input ipd-ins-daily-qty-input"
-                    value={row.quantity}
-                    onChange={(e) =>
-                      updateDailyCharge(row.id, {
-                        quantity: e.target.value.replace(/[^\d.]/g, ''),
-                      })
-                    }
-                    inputMode="decimal"
-                    aria-label={`Quantity for ${row.item_name}`}
-                  />
-                  <input
-                    className="ipd-input ipd-ins-charge-input"
-                    value={row.amount}
-                    onChange={(e) =>
-                      updateDailyCharge(row.id, {
-                        amount: e.target.value.replace(/[^\d.]/g, ''),
-                      })
-                    }
-                    inputMode="decimal"
-                    aria-label={`Amount for ${row.item_name}`}
-                  />
-                  <button
-                    type="button"
-                    className="ipd-text-link ipd-ins-charge-remove"
-                    onClick={() => removeDailyCharge(row.id)}
-                  >
-                    Remove
-                  </button>
-                </div>
+                <PharmacyChargeRow
+                  key={row.id}
+                  row={row}
+                  chargeDate={chargeDate}
+                  updateDailyCharge={updateDailyCharge}
+                  removeDailyCharge={removeDailyCharge}
+                />
               ))}
             </div>
           ) : null}
@@ -241,3 +283,10 @@ export default function IpdDailyChargesGroupItems({
     </>
   );
 }
+
+export default memo(IpdDailyChargesGroupItems, (prev, next) => {
+  if (prev.chargeDate !== next.chargeDate) return false;
+  if (prev.updateDailyCharge !== next.updateDailyCharge) return false;
+  if (prev.removeDailyCharge !== next.removeDailyCharge) return false;
+  return dailyChargeItemsEqual(prev.items, next.items);
+});

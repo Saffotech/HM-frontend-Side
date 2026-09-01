@@ -56,7 +56,7 @@ export default function BedTransferModal({
     (bed) => bed.status === 'available'
   );
   const { wardOptions, isLoading: wardsLoading } = useIpdWardOptions();
-  const { getRate, ratesAvailable } = useIpdBedRateLookup();
+  const { getRate } = useIpdBedRateLookup();
   const transferMutation = useTransferIpdBedMutation();
 
   const seededFromBed = Boolean(initialBed?.id);
@@ -312,7 +312,7 @@ export default function BedTransferModal({
                   : 'Select ward…'}
             </option>
             {wardOptions.map((w) => {
-              const rate = ratesAvailable ? getRate(w) : null;
+              const rate = getRate(w);
               return (
                 <option key={w} value={w}>
                   {rate != null ? `${w} · ${formatCurrency(rate, { empty: '—' })}/day` : w}
@@ -334,7 +334,7 @@ export default function BedTransferModal({
           >
             <option value="">{!ward ? 'Select ward first…' : 'Select bed…'}</option>
             {availableBeds.map((bed) => {
-              const rate = ratesAvailable ? getRate(bed) : null;
+              const rate = getRate(bed);
               return (
                 <option key={bed.id} value={bed.id}>
                   {rate != null

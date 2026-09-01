@@ -36,7 +36,49 @@ export function mapInsurancePatientRow(row = {}) {
   };
 }
 
+function resolveInsuranceBillPendingDue(row = {}) {
+  const explicit = pick(
+    row,
+    'pending_due',
+    'pendingDue',
+    'patient_outstanding',
+    'patientOutstanding',
+    'outstanding',
+  );
+  if (explicit != null && explicit !== '') {
+    const n = Number(explicit);
+    if (Number.isFinite(n)) return Math.max(0, n);
+  }
+
+  const totalBill = Number(pick(row, 'net_bill', 'netBill', 'total_bill', 'totalBill') ?? 0);
+  const approved = Number(pick(row, 'approved', 'approved_amount') ?? 0);
+  const estimateRaw = pick(row, 'estimate_amount', 'estimateAmount');
+  const estimate =
+    estimateRaw != null && estimateRaw !== '' ? Number(estimateRaw) : null;
+  const patientPaid = Number(pick(row, 'patient_paid', 'patientPaid') ?? 0);
+
+  if (estimate != null && Number.isFinite(estimate) && estimate > 0) {
+    return Math.max(0, totalBill - estimate - patientPaid);
+  }
+
+  const patientResponsibility = pick(row, 'patient_responsibility', 'patientResponsibility');
+  const responsibility =
+    patientResponsibility != null && patientResponsibility !== ''
+      ? Number(patientResponsibility)
+      : Math.max(0, totalBill - approved);
+
+  return Math.max(0, responsibility - patientPaid);
+}
+
 export function mapInsuranceBillRow(row = {}) {
+  const totalBill = Number(pick(row, 'net_bill', 'netBill', 'total_bill', 'totalBill') ?? 0);
+  const claimedRaw = pick(row, 'claimed', 'claimed_amount', 'claimedAmount');
+  const claimedAmount =
+    claimedRaw != null && claimedRaw !== '' ? Number(claimedRaw) : null;
+  const estimateRaw = pick(row, 'estimate_amount', 'estimateAmount');
+  const estimateAmount =
+    estimateRaw != null && estimateRaw !== '' ? Number(estimateRaw) : null;
+
   return {
     id: pick(row, 'id', 'claim_id', 'claimId'),
     patientId: pick(row, 'patient_id', 'patientId'),
@@ -48,8 +90,16 @@ export function mapInsuranceBillRow(row = {}) {
     doctor: pick(row, 'doctor', 'doctor_name') ?? '—',
     wardRoom: pick(row, 'ward_room', 'wardRoom') ?? '—',
     coverage: pick(row, 'coverage') ?? 'Cashless Insurance',
-    netBill: Number(pick(row, 'net_bill', 'netBill') ?? 0),
+    totalBill,
+    netBill: totalBill,
+    claimedAmount:
+      claimedAmount != null && Number.isFinite(claimedAmount) ? claimedAmount : null,
     approved: Number(pick(row, 'approved', 'approved_amount') ?? 0),
+    estimateAmount:
+      estimateAmount != null && Number.isFinite(estimateAmount)
+        ? estimateAmount
+        : null,
+    pendingDue: resolveInsuranceBillPendingDue(row),
     claimLabel: pick(row, 'claim_label', 'claimLabel', 'status_label') ?? '—',
   };
 }
@@ -79,6 +129,8 @@ export function mapInsuranceClaim(row = {}) {
     estimateAmount: pick(row, 'estimate_amount', 'estimateAmount') ?? null,
     approved: Number(pick(row, 'approved', 'approved_amount') ?? 0),
     netBill: Number(pick(row, 'net_bill', 'netBill') ?? 0),
+    patientPaid: Number(pick(row, 'patient_paid', 'patientPaid') ?? 0),
+    insurancePaid: Number(pick(row, 'insurance_paid', 'insurancePaid') ?? 0),
     patientResponsibility: pick(
       row,
       'patient_responsibility',

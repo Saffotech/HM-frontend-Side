@@ -1,6 +1,7 @@
 import { ArrowLeft } from 'lucide-react';
 import { Label, Input, Button, MoneyAmount } from '@/shared/components/common';
 import { PAYMENT_MODES } from '@/shared/constants';
+import { currencyAmountLabel } from '@/shared/utils/formatCurrency';
 import { requiresTransactionReference } from '@/shared/utils/validators';
 
 export default function OpdBillPaymentFooter({
@@ -67,7 +68,7 @@ export default function OpdBillPaymentFooter({
         {!payLater && (
           <>
             <Input
-              label="Amount Received (₹)"
+              label={currencyAmountLabel('Amount Received')}
               type="number"
               min={0}
               max={grandTotal}

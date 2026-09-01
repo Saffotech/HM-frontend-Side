@@ -2,7 +2,7 @@
  * Bill preview for an admission — daily charges, hospital totals, generate + pay.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Printer } from 'lucide-react';
 import { Button, QueryFeedback } from '@/shared/components/common';
@@ -37,42 +37,92 @@ import {
   useSaveIpdSelfPayFinalBillingMutation,
   useIpdAdmissionInsuranceQuery,
 } from '@/features/ipd/hooks/useIpdBillingQuery';
-import { initChargeHeadsFromClaim, buildSelfPayBillingBundle } from '@/features/ipd/billing/ipdBillingMapper';
+import { initChargeHeadsFromClaim } from '@/features/ipd/billing/ipdBillingMapper';
 import { initDailyCharges } from '@/features/ipd/utils/insuranceDailyCharges';
 import { buildIpdProvisionalInvoice } from '@/features/ipd/utils/ipdBillPrintModel';
 import { resolveIpdBillPreviewPayment } from '@/features/ipd/utils/resolveIpdBillPreviewPayment';
+import { IPD_PAYMENT_TYPE_INSURANCE_PAY_AND_CLAIM } from '@/features/ipd/utils/ipdPaymentTypes';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 import '@/features/opd/billing/pages/ViewBillPage.css';
+
+function chargeHeadsMatch(prev, next) {
+  if (prev === next) return true;
+  if (!Array.isArray(prev) || !Array.isArray(next) || prev.length !== next.length) {
+    return false;
+  }
+  return prev.every((row, i) => {
+    const n = next[i];
+    return (
+      row.id === n.id &&
+      String(row.amount) === String(n.amount) &&
+      row.label === n.label
+    );
+  });
+}
+
+function dailyChargesMatch(prev, next) {
+  if (prev === next) return true;
+  if (!Array.isArray(prev) || !Array.isArray(next) || prev.length !== next.length) {
+    return false;
+  }
+  return prev.every((row, i) => {
+    const n = next[i];
+    return (
+      row.id === n.id &&
+      String(row.amount) === String(n.amount) &&
+      String(row.quantity) === String(n.quantity) &&
+      row.item_name === n.item_name &&
+      row.head === n.head &&
+      row.charge_date === n.charge_date
+    );
+  });
+}
 
 export default function IpdBillPreviewPage() {
   const { admissionId } = useParams();
   const goBack = useIpdBackNavigation(ROUTES.IPD_BILLING);
   const { canGenerateBill, canPayBill } = useIpdPermissionSet();
 
-  const previewQuery = useIpdBillPreviewQuery(admissionId);
   const detailQuery = useIpdAdmissionDetailQuery(admissionId);
+  const billingQuery = useIpdSelfPayBillingBundleQuery({
+    admissionId,
+    enabled: Boolean(admissionId),
+  });
   const generateMutation = useGenerateIpdBillMutation();
   const payMutation = usePayIpdBillMutation();
 
-  const patientId =
-    detailQuery.data?.patient_id ?? detailQuery.data?.patient?.id ?? null;
+  const previewFromBundle = billingQuery.data?.preview ?? null;
+  const previewFallbackQuery = useIpdBillPreviewQuery(admissionId, {
+    enabled:
+      Boolean(admissionId) &&
+      billingQuery.isFetched &&
+      !previewFromBundle,
+  });
+  const preview = previewFromBundle ?? previewFallbackQuery.data ?? null;
 
-  const preview = previewQuery.data;
+  const patientId =
+    billingQuery.data?.patientId ??
+    detailQuery.data?.patient_id ??
+    detailQuery.data?.patient?.id ??
+    null;
 
   const admission = detailQuery.data?.admission;
   const doctorVisits = detailQuery.data?.doctor_visits ?? [];
   const admittedAt = admission?.admitted_at ?? null;
 
-  const billingQuery = useIpdSelfPayBillingBundleQuery({
-    admissionId,
-    patientId,
-    preview,
-    admittedAt,
-    doctorVisits,
-    enabled: Boolean(admissionId),
+  const paymentType =
+    admission?.payment_type ??
+    detailQuery.data?.payment_type ??
+    billingQuery.data?.paymentType ??
+    null;
+  const isPayAndClaim =
+    paymentType === IPD_PAYMENT_TYPE_INSURANCE_PAY_AND_CLAIM ||
+    paymentType === 'insurance_pay_and_claim';
+
+  const admissionInsuranceQuery = useIpdAdmissionInsuranceQuery(admissionId, {
+    enabled: Boolean(admissionId) && isPayAndClaim,
   });
-  const admissionInsuranceQuery = useIpdAdmissionInsuranceQuery(admissionId);
   const saveFinalBillingMutation = useSaveIpdSelfPayFinalBillingMutation();
   const saveDailyBillingMutation = useSaveIpdSelfPayDailyBillingMutation();
 
@@ -80,44 +130,23 @@ export default function IpdBillPreviewPage() {
 
   const [charges, setCharges] = useState(() => initChargeHeadsFromClaim(null));
   const [dailyCharges, setDailyCharges] = useState([]);
+  const [printSheetMounted, setPrintSheetMounted] = useState(false);
 
-  // Sync from billing bundle or live preview (do not wipe while user edits).
+  // Sync from billing bundle (do not wipe while user edits).
   useEffect(() => {
     if (!admissionId) return;
 
-    const bundle =
-      billingQuery.data ??
-      (preview
-        ? buildSelfPayBillingBundle(
-            preview,
-            {
-              admissionId: String(admissionId),
-              patientId,
-              admittedAt,
-              doctorVisits,
-            },
-            null,
-          )
-        : null);
-
+    const bundle = billingQuery.data;
     if (!bundle) return;
 
-    setCharges(
-      sortInsuranceChargeHeads(
-        normalizeInsuranceChargeHeads(
-          bundle.finalBilling?.chargeHeads ?? [],
-        ),
-      ),
+    const heads = sortInsuranceChargeHeads(
+      normalizeInsuranceChargeHeads(bundle.finalBilling?.chargeHeads ?? []),
     );
-    setDailyCharges(initDailyCharges({ dailyCharges: bundle.dailyCharges }));
-  }, [
-    admissionId,
-    patientId,
-    admittedAt,
-    preview?.admission_id,
-    preview?.length_of_stay_days,
-    billingQuery.dataUpdatedAt,
-  ]);
+    setCharges((prev) => (chargeHeadsMatch(prev, heads) ? prev : heads));
+
+    const daily = initDailyCharges({ dailyCharges: bundle.dailyCharges });
+    setDailyCharges((prev) => (dailyChargesMatch(prev, daily) ? prev : daily));
+  }, [admissionId, billingQuery.dataUpdatedAt]);
 
   const [payMode, setPayMode] = useState('Cash');
   const [payAmount, setPayAmount] = useState('');
@@ -209,7 +238,7 @@ export default function IpdBillPreviewPage() {
   const collectDisabled =
     paymentBusy
     || !hasValidPayAmount
-    || !previewQuery.isSuccess
+    || !preview
     || !canCollectPayment
     || isFullyPaid;
   const canCollect = openBill ? canPayBill : canPayBill && canGenerateBill;
@@ -220,14 +249,14 @@ export default function IpdBillPreviewPage() {
   const billingContext = { admittedAt, doctorVisits };
 
   const refreshBilling = async () => {
-    await Promise.all([
-      previewQuery.refetch(),
-      detailQuery.refetch(),
-      billingQuery.refetch(),
-    ]);
+    const tasks = [detailQuery.refetch(), billingQuery.refetch()];
+    if (isPayAndClaim) {
+      tasks.push(admissionInsuranceQuery.refetch());
+    }
+    await Promise.all(tasks);
   };
 
-  const onPrint = () => {
+  const onPrint = useCallback(() => {
     if (printLoading) {
       toast.error('Loading invoice…');
       return;
@@ -236,8 +265,13 @@ export default function IpdBillPreviewPage() {
       toast.error('Nothing to print yet');
       return;
     }
+    if (!printSheetMounted) {
+      setPrintSheetMounted(true);
+      window.setTimeout(() => window.print(), 100);
+      return;
+    }
     window.print();
-  };
+  }, [printLoading, printInvoice, printSheetMounted]);
 
   const handleSaveCharges = () => {
     saveFinalBillingMutation.mutate(
@@ -370,6 +404,18 @@ export default function IpdBillPreviewPage() {
 
   const pageTitle = payClaimInsurance ? 'IPD Billing — Pay & Claim' : 'IPD Billing';
 
+  const previewLoadError =
+    billingQuery.isError
+      ? billingQuery.error
+      : !previewFromBundle && previewFallbackQuery.isError
+        ? previewFallbackQuery.error
+        : null;
+
+  const previewLoading =
+    !preview &&
+    (billingQuery.isLoading ||
+      (previewFallbackQuery.isFetching && !previewFallbackQuery.data));
+
   return (
     <div className="ipd-page ipd-ins-billing">
       <div className="no-print">
@@ -399,31 +445,24 @@ export default function IpdBillPreviewPage() {
         )}
       />
 
-      {previewQuery.isError ? (
+      {previewLoadError ? (
         <div className="ipd-card">
           <div className="ipd-card__body">
             <QueryFeedback
               isError
-              error={previewQuery.error}
-              onRetry={previewQuery.refetch}
+              error={previewLoadError}
+              onRetry={() => {
+                billingQuery.refetch();
+                if (!previewFromBundle) {
+                  previewFallbackQuery.refetch();
+                }
+              }}
             />
           </div>
         </div>
       ) : null}
 
-      {billingQuery.isError ? (
-        <div className="ipd-card">
-          <div className="ipd-card__body">
-            <QueryFeedback
-              isError
-              error={billingQuery.error}
-              onRetry={billingQuery.refetch}
-            />
-          </div>
-        </div>
-      ) : null}
-
-      {billingQuery.isLoading && !preview ? (
+      {previewLoading ? (
         <div className="ipd-card">
           <div className="ipd-card__body">
             <QueryFeedback isLoading />
@@ -568,7 +607,7 @@ export default function IpdBillPreviewPage() {
       />
       </div>
 
-      {printInvoice ? (
+      {printSheetMounted && printInvoice ? (
         <IpdBillPrintSheet invoice={printInvoice} className="bill-print-zone--offscreen" />
       ) : null}
     </div>
