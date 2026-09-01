@@ -1,0 +1,55 @@
+.nurse-med-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.nurse-med-cell__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+}
+
+.nurse-med-cell__name {
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.35;
+}
+
+.nurse-med-source-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.nurse-med-source-badge--opd {
+  color: #1d4ed8;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.nurse-med-source-badge--ipd {
+  color: #047857;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+
+.nurse-med-cell__prescriber {
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.nurse-med-cell__prescriber::before {
+  content: 'Prescribed by: ';
+  color: #94a3b8;
+}
