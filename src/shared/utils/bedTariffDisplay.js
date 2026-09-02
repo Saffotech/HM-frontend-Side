@@ -149,7 +149,8 @@ export function buildSpecialBedDisplayRows(bedTariff) {
         charge,
       };
     })
-    .filter(Boolean);
+    .filter(Boolean)
+    .sort((a, b) => a.bed.localeCompare(b.bed, undefined, { numeric: true }));
 }
 
 function wardsMatch(wardLabel, specialWardLabel) {
@@ -160,29 +161,36 @@ function wardsMatch(wardLabel, specialWardLabel) {
 }
 
 /**
- * Group custom bed rows under ward tariff rows for inline display.
+ * Ward default rates for a custom bed, if the ward exists in the tariff table.
  */
-export function groupSpecialBedsForWardTable(wardRows, specialRows) {
-  const byWard = new Map();
-  const unmatched = [];
+export function findWardDefaultForSpecial(wardRows, special) {
+  if (!special) return null;
+  return wardRows.find((row) => wardsMatch(row.ward, special.ward)) ?? null;
+}
 
-  for (const special of specialRows) {
-    const wardRow = wardRows.find((row) => wardsMatch(row.ward, special.ward));
-    if (wardRow) {
-      const key = wardRow.ward;
-      if (!byWard.has(key)) byWard.set(key, []);
-      byWard.get(key).push(special);
-    } else {
-      unmatched.push(special);
-    }
-  }
+export function specialBedMatchesWardFilter(special, wardFilter) {
+  if (!wardFilter || wardFilter === 'all') return true;
+  return wardsMatch(special?.ward, wardFilter);
+}
 
-  for (const list of byWard.values()) {
-    list.sort((a, b) => a.bed.localeCompare(b.bed, undefined, { numeric: true }));
-  }
-  unmatched.sort((a, b) => a.bed.localeCompare(b.bed, undefined, { numeric: true }));
-
-  return { byWard, unmatched };
+/**
+ * Inventory wards first (Super Admin Beds & wards order), then any extra names.
+ */
+export function buildWardFilterOptions({ inventoryWardNames, wardRows, specialRows }) {
+  const seen = new Set();
+  const names = [];
+  const add = (raw) => {
+    const name = String(raw || '').trim();
+    if (!name || name === '—') return;
+    const key = wardKey(name);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    names.push(name);
+  };
+  for (const name of inventoryWardNames ?? []) add(name);
+  for (const row of wardRows ?? []) add(row.ward);
+  for (const row of specialRows ?? []) add(row.ward);
+  return names;
 }
 
 export function hasBedTariffData(bedTariff) {

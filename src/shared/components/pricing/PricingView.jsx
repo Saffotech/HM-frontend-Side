@@ -14,6 +14,11 @@ import {
   mapCatalogTestsToLabRows,
 } from '@/features/ipd/utils/ipdPricingLabRows';
 import { getIpdDepartments, getIpdDoctorsByDepartment } from '@/features/ipd/api/reference';
+import {
+  getReceptionistDepartments,
+  getReceptionistDoctorsByDepartment,
+} from '@/features/receptionist/api/reference';
+import { getReceptionistPricing } from '@/features/receptionist/api/pricing';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { getLabCatalog } from '@/features/doctor/api/labCatalog';
 import { mapLabCatalogList } from '@/shared/api/mappers/labCatalogMapper';
@@ -26,6 +31,7 @@ import {
 import { formatCurrency } from '@/shared/utils/formatCurrency';
 import { QueryFeedback, Tabs } from '@/shared/components/common';
 import BedTariffPanel from '@/shared/components/pricing/BedTariffPanel';
+import PricingFilterMenu from '@/shared/components/pricing/PricingFilterMenu';
 import './PricingView.css';
 
 function SummaryCard({ icon: Icon, label, value }) {
@@ -87,6 +93,12 @@ function flattenDoctorsByDepartment(departments, doctorLists) {
   );
 }
 
+const LAB_DEPT_FILTER_OPTIONS = [
+  { value: 'all', label: 'All' },
+  { value: 'laboratory', label: 'Laboratory' },
+  { value: 'radiology', label: 'Radiology' },
+];
+
 function LabChargesPanel({ rows, labChargeSource, catalogAccessDenied }) {
   const [search, setSearch] = useState('');
   const [labFilter, setLabFilter] = useState('all');
@@ -107,19 +119,13 @@ function LabChargesPanel({ rows, labChargeSource, catalogAccessDenied }) {
   return (
     <div className="pricing-table-shell">
       <div className="pricing-lab-filters">
-        <label className="pricing-lab-filters__field">
-          <span className="pricing-lab-filters__label">Department</span>
-          <select
-            className="pricing-lab-filters__select"
-            value={labFilter}
-            onChange={(e) => setLabFilter(e.target.value)}
-            aria-label="Filter by laboratory or radiology"
-          >
-            <option value="all">All</option>
-            <option value="laboratory">Laboratory</option>
-            <option value="radiology">Radiology</option>
-          </select>
-        </label>
+        <PricingFilterMenu
+          label="Department"
+          value={labFilter}
+          options={LAB_DEPT_FILTER_OPTIONS}
+          ariaLabel="Filter by laboratory or radiology"
+          onChange={setLabFilter}
+        />
         <SearchField
           value={search}
           onChange={setSearch}
@@ -256,15 +262,23 @@ export default function PricingView({
     setIsError(false);
     setError(null);
     try {
-      if (dataSource === 'ipd') {
+      if (dataSource === 'ipd' || dataSource === 'receptionist') {
         const [pricingRes, departments] = await Promise.all([
-          getIpdPricing(token),
-          getIpdDepartments(token),
+          dataSource === 'ipd'
+            ? getIpdPricing(token)
+            : getReceptionistPricing(token),
+          dataSource === 'ipd'
+            ? getIpdDepartments(token)
+            : getReceptionistDepartments(token),
         ]);
+
+        const loadDoctors = dataSource === 'ipd'
+          ? getIpdDoctorsByDepartment
+          : getReceptionistDoctorsByDepartment;
 
         const doctorResults = await Promise.all(
           departments.map((d) =>
-            getIpdDoctorsByDepartment(d.id, token).catch(() => []),
+            loadDoctors(d.id, token).catch(() => []),
           ),
         );
         const doctors = flattenDoctorsByDepartment(departments, doctorResults);

@@ -26,3 +26,6 @@ After backend fix
 Restart the backend and refresh IPD Pricing → Lab Charges. You should see all active tests from Admin → Lab catalog, not just the 4 OPD bill items.
 
 If you want Option A, B, or C implemented on the backend, say which one.
+
+2nd 
+

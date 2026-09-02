@@ -34,7 +34,7 @@ const NAV_LINKS = [
     href: ROUTES.RECEPTIONIST_PRICING,
     label: 'Pricing',
     icon: CircleDollarSign,
-    requires: 'queues',
+    requires: 'pricing',
   },
   {
     href: ROUTES.RECEPTIONIST_QUEUE_HISTORY,
@@ -53,15 +53,16 @@ export default function ReceptionistLayout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const onProfilePage = location.pathname === ROUTES.RECEPTIONIST_PROFILE;
-  const { canViewQueues, canViewNotifications } = useReceptionistPermissionSet();
+  const { canViewQueues, canViewPricing, canViewNotifications } = useReceptionistPermissionSet();
 
   const navLinks = useMemo(
     () =>
       NAV_LINKS.filter((link) => {
         if (link.requires === 'queues') return canViewQueues;
+        if (link.requires === 'pricing') return canViewPricing;
         return true;
       }),
-    [canViewQueues],
+    [canViewQueues, canViewPricing],
   );
 
   return (
