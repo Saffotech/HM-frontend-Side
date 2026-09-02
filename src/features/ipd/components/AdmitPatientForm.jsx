@@ -26,7 +26,6 @@ import {
   useRegisterIpdPatientMutation,
 } from "@/features/ipd/hooks/useIpdQuery";
 import { useIpdWardOptions } from "@/features/ipd/hooks/useIpdWardOptions";
-import { useIpdBedRateLookup } from "@/features/ipd/hooks/useIpdBedRateLookup";
 import { toIsoAdmissionDate } from '@/features/ipd/utils/ipdFormat';
 import {
   buildInsuranceAdmitContext,
@@ -34,7 +33,6 @@ import {
   insuranceAdmitRouteId,
 } from "@/features/ipd/utils/insuranceAdmitPayload";
 import { validateRegisterPatient } from "@/features/opd/utils/registerPatientUtils";
-import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 const INITIAL = {
   patientMode: "existing", // existing | register
@@ -151,7 +149,6 @@ export default function AdmitPatientForm() {
     (bed) => bed.status === "available",
   );
   const { wardOptions, isLoading: wardsLoading } = useIpdWardOptions();
-  const { getRate } = useIpdBedRateLookup();
 
   const departmentsQuery = useIpdDepartmentsQuery();
   const doctorsQuery = useIpdDoctorsByDepartmentQuery(
@@ -735,16 +732,9 @@ export default function AdmitPatientForm() {
                       ? "No wards in inventory"
                       : "Select ward…"}
                 </option>
-                {wardOptions.map((w) => {
-                  const rate = getRate(w);
-                  return (
-                    <option key={w} value={w}>
-                      {rate != null
-                        ? `${w} · ${formatCurrency(rate, { empty: '—' })}/day`
-                        : w}
-                    </option>
-                  );
-                })}
+                {wardOptions.map((w) => (
+                  <option key={w} value={w}>{w}</option>
+                ))}
               </select>
               {show("ward") ? (
                 <span className="ipd-field-error">{errors.ward}</span>
@@ -770,16 +760,11 @@ export default function AdmitPatientForm() {
                         ? "No available beds"
                         : "Select bed…"}
                 </option>
-                {availableBeds.map((bed) => {
-                  const rate = getRate(bed);
-                  return (
-                    <option key={bed.id} value={bed.id}>
-                      {rate != null
-                        ? `${bed.bed_number} · ${formatCurrency(rate, { empty: '—' })}/day`
-                        : bed.bed_number}
-                    </option>
-                  );
-                })}
+                {availableBeds.map((bed) => (
+                  <option key={bed.id} value={bed.id}>
+                    {bed.bed_number}
+                  </option>
+                ))}
               </select>
               {show("bed") ? (
                 <span className="ipd-field-error">{errors.bed}</span>

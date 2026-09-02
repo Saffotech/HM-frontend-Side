@@ -3,6 +3,18 @@
   max-width: 100%;
 }
 
+/* Hide number input steppers on pricing pages */
+.pricing-page input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.pricing-page input[type='number']::-webkit-outer-spin-button,
+.pricing-page input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .pricing-page__subtitle {
   margin: 0.25rem 0 0;
   color: var(--color-text-muted);
@@ -74,13 +86,76 @@
   padding: 1rem 1.125rem 1.125rem;
 }
 
+.pricing-page .tabs {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
+}
+
+.pricing-page .tabs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.pricing-page .tabs::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+  border-radius: 999px;
+}
+
+.pricing-page .tabs::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 /* Search */
 .pricing-search {
   position: relative;
   display: flex;
   align-items: center;
+  flex: 1 1 220px;
+  min-width: 0;
   max-width: 360px;
+  margin-bottom: 0;
+}
+
+.pricing-lab-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
   margin-bottom: 1rem;
+}
+
+.pricing-lab-filters__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 10rem;
+}
+
+.pricing-lab-filters__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.pricing-lab-filters__select {
+  height: 2.5rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--color-border-strong, var(--color-border));
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.pricing-lab-filters__select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+
+.pricing-lab-filters .pricing-search {
+  margin-bottom: 0;
 }
 
 .pricing-search__icon {
@@ -135,6 +210,27 @@
 .pricing-table-wrap {
   overflow-x: auto;
   padding-right: 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
+}
+
+.pricing-table-wrap::-webkit-scrollbar {
+  height: 6px;
+}
+
+.pricing-table-wrap::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+  border-radius: 999px;
+}
+
+.pricing-table-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pricing-table-wrap::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .pricing-table {

@@ -1412,6 +1412,16 @@
   color: var(--color-primary, #1a5c34);
 }
 
+.ipd-dw-step--pending-pay .ipd-dw-step__num {
+  border-color: #f59e0b;
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.ipd-dw-step--pending-pay .ipd-dw-step__label {
+  color: #b45309;
+}
+
 .ipd-dw-step__label {
   font-size: 0.78rem;
   font-weight: 600;

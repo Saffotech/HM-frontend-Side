@@ -1,11 +1,16 @@
 /** Resolve IPD bill preview payment status + amounts from one source of truth. */
 
 function isOpenBill(bill) {
-  return (
-    bill
-    && bill.status !== 'void'
-    && ['pending', 'partial'].includes(String(bill.payment_status || '').toLowerCase())
-  );
+  if (!bill || bill.status === 'void') return false;
+  const balance = Number(bill.balance_due ?? 0);
+  const status = String(bill.payment_status || '').toLowerCase();
+  if (balance > 0.01 && status !== 'paid') return true;
+  return ['pending', 'partial'].includes(status);
+}
+
+/** Unpaid bill row from admission detail — use before generating a new bill. */
+export function findOpenUnpaidBill(bills = []) {
+  return (bills ?? []).find(isOpenBill) ?? null;
 }
 
 function nonVoidBills(bills = []) {

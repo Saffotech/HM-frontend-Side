@@ -4,9 +4,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button, EmptyState, QueryFeedback } from '@/shared/components/common';
 import { IPD_COLLECT_PAYMENT_MODES, ROUTES } from '@/shared/constants';
+import { queryKeys } from '@/shared/api/queryKeys';
 import { toast } from '@/shared/utils/toast';
+import { getIpdPatientDetail } from '@/features/ipd/api/patients';
 import { IPD_DISCHARGE_STEPS } from '@/features/ipd/utils/constants';
 import { cn } from '@/features/ipd/utils/cn';
 import ChargeTable from '@/features/ipd/components/ChargeTable';
@@ -21,17 +24,21 @@ import {
   usePayIpdBillMutation,
 } from '@/features/ipd/hooks/useIpdQuery';
 import { formatIpdDateTime } from '@/features/ipd/utils/ipdFormat';
-import { resolveIpdBillPreviewPayment } from '@/features/ipd/utils/resolveIpdBillPreviewPayment';
+import { resolveIpdBillPreviewPayment, findOpenUnpaidBill } from '@/features/ipd/utils/resolveIpdBillPreviewPayment';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
+import { useQueryToken } from '@/shared/hooks/useQueryToken';
 
 export default function DischargeWizard({ admissionId }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const token = useQueryToken();
   const { canDischarge, canPayBill, canGenerateBill } = useIpdPermissionSet();
   const [stepIndex, setStepIndex] = useState(0);
   const [payMode, setPayMode] = useState('Cash');
   const [payAmount, setPayAmount] = useState('');
   const [notes, setNotes] = useState('');
   const [paymentReady, setPaymentReady] = useState(false);
+  const [paymentCollected, setPaymentCollected] = useState(false);
 
   const detailQuery = useIpdAdmissionDetailQuery(admissionId);
   const previewQuery = useIpdBillPreviewQuery(admissionId);
@@ -67,8 +74,10 @@ export default function DischargeWizard({ admissionId }) {
   const goNext = () => setStepIndex((i) => Math.min(i + 1, IPD_DISCHARGE_STEPS.length - 1));
   const goBack = () => setStepIndex((i) => Math.max(i - 1, 0));
 
-  const ensureBill = async () => {
-    if (openBill) return openBill;
+  const ensureBill = async (billList = bills) => {
+    const existing = findOpenUnpaidBill(billList) ?? openBill;
+    if (existing) return existing;
+
     if (!canGenerateBill) {
       throw new Error('No open bill and you cannot generate one');
     }
@@ -98,13 +107,24 @@ export default function DischargeWizard({ admissionId }) {
 
   const onConfirmDischarge = async () => {
     try {
-      const amount = Number(exactAmount ?? payAmount ?? 0);
-      if (amount > 0.01 && canCollectPayment) {
+      const freshDetail = await queryClient.fetchQuery({
+        queryKey: queryKeys.ipd.admission(admissionId),
+        queryFn: () => getIpdPatientDetail(admissionId, token),
+      });
+      const freshBills = freshDetail?.bills ?? bills;
+      const freshPaymentView = resolveIpdBillPreviewPayment({
+        bills: freshBills,
+        preview,
+      });
+      const amount = Number(freshPaymentView.balance ?? exactAmount ?? payAmount ?? 0);
+      const needsPayment = amount > 0.01 && freshPaymentView.canCollectPayment;
+
+      if (needsPayment) {
         if (!paymentReady) {
           toast.error('Complete the payment step before confirming discharge');
           return;
         }
-        const bill = await ensureBill();
+        const bill = await ensureBill(freshBills);
         const due = Number(bill.balance_due ?? amount);
         if (due > 0.01) {
           await payMutation.mutateAsync({
@@ -114,6 +134,7 @@ export default function DischargeWizard({ admissionId }) {
               payment_mode: payMode.toLowerCase(),
             },
           });
+          setPaymentCollected(true);
         }
       }
 
@@ -181,7 +202,11 @@ export default function DischargeWizard({ admissionId }) {
     <div className="ipd-discharge-wizard">
       <nav className="ipd-dw-steps" aria-label="Discharge steps">
         {IPD_DISCHARGE_STEPS.map((s, index) => {
-          const done = index < stepIndex;
+          const visited = index < stepIndex;
+          const paymentSettled = exactAmount <= 0.01 || paymentCollected;
+          const done =
+            visited &&
+            (s.id !== 'payment' || paymentSettled);
           const active = index === stepIndex;
           return (
             <div
@@ -190,6 +215,7 @@ export default function DischargeWizard({ admissionId }) {
                 'ipd-dw-step',
                 active && 'ipd-dw-step--active',
                 done && 'ipd-dw-step--done',
+                visited && s.id === 'payment' && !paymentSettled && 'ipd-dw-step--pending-pay',
               )}
             >
               {index > 0 ? <span className="ipd-dw-step__rail" aria-hidden /> : null}
