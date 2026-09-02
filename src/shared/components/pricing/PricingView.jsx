@@ -8,16 +8,13 @@ import {
 import { getOpdBillingSettings } from '@/features/opd/api/opdSettings';
 import { getDepartments, getDoctorsByDepartment } from '@/features/opd/api/reference';
 import { getIpdPricing } from '@/features/ipd/api/pricing';
+import { useIpdWardStatsQuery } from '@/features/ipd/hooks/useIpdQuery';
 import {
   mapBillItemsToLabRows,
   mapCatalogTestsToLabRows,
 } from '@/features/ipd/utils/ipdPricingLabRows';
 import { getIpdDepartments, getIpdDoctorsByDepartment } from '@/features/ipd/api/reference';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
-import {
-  DOUBLE_WARD_PREFIX,
-  isDoubleWardStorageKey,
-} from '@/features/admin/utils/bedTariffRates';
 import { getLabCatalog } from '@/features/doctor/api/labCatalog';
 import { mapLabCatalogList } from '@/shared/api/mappers/labCatalogMapper';
 import {
@@ -28,6 +25,7 @@ import {
 } from '@/shared/utils/labDepartments';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
 import { QueryFeedback, Tabs } from '@/shared/components/common';
+import BedTariffPanel from '@/shared/components/pricing/BedTariffPanel';
 import './PricingView.css';
 
 function SummaryCard({ icon: Icon, label, value }) {
@@ -273,13 +271,18 @@ export default function PricingView({
 
         let labCatalogTests = [];
         let labCatalogAccessDenied = false;
-        try {
-          labCatalogTests = mapLabCatalogList(
-            await getLabCatalog(token, { active: true }),
-          );
-        } catch {
-          labCatalogAccessDenied = true;
-          labCatalogTests = [];
+        const catalogFromPricing = mapLabCatalogList(pricingRes?.lab_catalog_tests);
+        if (catalogFromPricing.length) {
+          labCatalogTests = catalogFromPricing;
+        } else {
+          try {
+            labCatalogTests = mapLabCatalogList(
+              await getLabCatalog(token, { active: true }),
+            );
+          } catch {
+            labCatalogAccessDenied = true;
+            labCatalogTests = [];
+          }
         }
 
         setData({
@@ -422,23 +425,14 @@ export default function PricingView({
   );
 
   const bedTariff = pricing?.bed_tariff;
-  const wardRates = (bedTariff?.ward_rates ?? []).filter(
-    (row) => String(row?.ward_name || '').trim() && !isDoubleWardStorageKey(row.ward_name),
-  );
-  const doubleWardRates = (bedTariff?.ward_rates ?? []).filter(
-    (row) => String(row?.ward_name || '').trim() && isDoubleWardStorageKey(row.ward_name),
-  );
-  const specialBedRates = (bedTariff?.special_bed_rates ?? []).filter(
-    (row) => String(row?.bed_number || '').trim(),
-  );
-  const hasBedTariff =
-    bedTariff &&
-    (Number(bedTariff.general_ward_charge) > 0 ||
-      Number(bedTariff.private_ward_charge) > 0 ||
-      Number(bedTariff.icu_charge) > 0 ||
-      wardRates.length > 0 ||
-      doubleWardRates.length > 0 ||
-      specialBedRates.length > 0);
+
+  const ipdWardsQuery = useIpdWardStatsQuery({ enabled: dataSource === 'ipd' });
+  const bedInventoryWardNames = useMemo(() => {
+    if (dataSource !== 'ipd') return undefined;
+    return (ipdWardsQuery.data?.wards ?? [])
+      .map((row) => String(row.ward || row.ward_name || '').trim())
+      .filter(Boolean);
+  }, [dataSource, ipdWardsQuery.data]);
 
   const showBed = tabIds.includes('bed');
 
@@ -446,7 +440,7 @@ export default function PricingView({
     <div className="page-stack pricing-page">
       <div className="page-header">
         <h2 className="page-title">{title}</h2>
-        <p className="pricing-page__subtitle">{subtitle}</p>
+        {subtitle ? <p className="pricing-page__subtitle">{subtitle}</p> : null}
       </div>
 
       <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={load}>
@@ -507,72 +501,12 @@ export default function PricingView({
               />
             )}
 
-            {showBed &&
-              activeTab === 'bed' &&
-              (hasBedTariff ? (
-                <div className="pricing-bed">
-                  {Number(bedTariff.general_ward_charge) > 0 && (
-                    <div className="pricing-bed__row">
-                      <span>General Ward</span>
-                      <span>{formatCurrency(bedTariff.general_ward_charge)} / day</span>
-                    </div>
-                  )}
-                  {Number(bedTariff.private_ward_charge) > 0 && (
-                    <div className="pricing-bed__row">
-                      <span>Private Ward</span>
-                      <span>{formatCurrency(bedTariff.private_ward_charge)} / day</span>
-                    </div>
-                  )}
-                  {Number(bedTariff.icu_charge) > 0 && (
-                    <div className="pricing-bed__row">
-                      <span>ICU</span>
-                      <span>{formatCurrency(bedTariff.icu_charge)} / day</span>
-                    </div>
-                  )}
-                  {wardRates.length > 0 && (
-                    <div className="pricing-bed__sub">
-                      <h4 className="pricing-bed__sub-title">Ward Rates (Single)</h4>
-                      {wardRates.map((row, idx) => (
-                        <div className="pricing-bed__row" key={`ward-${idx}`}>
-                          <span>{row.ward_name}</span>
-                          <span>{formatCurrency(row.charge_per_day)} / day</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {doubleWardRates.length > 0 && (
-                    <div className="pricing-bed__sub">
-                      <h4 className="pricing-bed__sub-title">Ward Rates (Double)</h4>
-                      {doubleWardRates.map((row, idx) => (
-                        <div className="pricing-bed__row" key={`ward-dbl-${idx}`}>
-                          <span>
-                            {String(row.ward_name || '')
-                              .replace(new RegExp(`^${DOUBLE_WARD_PREFIX}`, 'i'), '')
-                              .trim() || row.ward_name}
-                          </span>
-                          <span>{formatCurrency(row.charge_per_day)} / day</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {specialBedRates.length > 0 && (
-                    <div className="pricing-bed__sub">
-                      <h4 className="pricing-bed__sub-title">Special Bed Rates</h4>
-                      {specialBedRates.map((row, idx) => (
-                        <div className="pricing-bed__row" key={`bed-${idx}`}>
-                          <span>
-                            {row.bed_number}
-                            {row.ward_name ? ` · ${row.ward_name}` : ''}
-                          </span>
-                          <span>{formatCurrency(row.charge_per_day)} / day</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p className="pricing-empty">No bed tariff configured.</p>
-              ))}
+            {showBed && activeTab === 'bed' && (
+              <BedTariffPanel
+                bedTariff={bedTariff}
+                inventoryWardNames={bedInventoryWardNames}
+              />
+            )}
           </div>
         </div>
       </QueryFeedback>

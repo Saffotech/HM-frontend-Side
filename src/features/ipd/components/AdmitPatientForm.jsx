@@ -3,7 +3,7 @@
  * Registration creates UHID demographics via POST /ipd/patients/register — no OPD visit/bill.
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, DateInput } from "@/shared/components/common";
 import { BLOOD_GROUPS, GENDERS, ROUTES } from "@/shared/constants";
@@ -33,6 +33,10 @@ import {
   insuranceAdmitRouteId,
 } from "@/features/ipd/utils/insuranceAdmitPayload";
 import { validateRegisterPatient } from "@/features/opd/utils/registerPatientUtils";
+import {
+  BED_TYPE_OPTIONS,
+  filterBedsByType,
+} from "@/shared/utils/bedTypeOverlay";
 
 const INITIAL = {
   patientMode: "existing", // existing | register
@@ -50,6 +54,7 @@ const INITIAL = {
   aadhaar: "",
   // admission
   ward: "",
+  bedType: "single",
   bedId: "",
   admissionDate: new Date().toISOString().slice(0, 10),
   departmentId: "",
@@ -144,10 +149,14 @@ export default function AdmitPatientForm() {
   const bedsQuery = useIpdBedsQuery({
     ward: values.ward || undefined,
     status: "available",
+    bed_type: values.bedType || undefined,
   });
-  const availableBeds = (bedsQuery.data?.beds ?? []).filter(
-    (bed) => bed.status === "available",
-  );
+  const availableBeds = useMemo(() => {
+    const beds = (bedsQuery.data?.beds ?? []).filter(
+      (bed) => bed.status === "available",
+    );
+    return filterBedsByType(beds, values.bedType);
+  }, [bedsQuery.data, values.bedType]);
   const { wardOptions, isLoading: wardsLoading } = useIpdWardOptions();
 
   const departmentsQuery = useIpdDepartmentsQuery();
@@ -161,7 +170,7 @@ export default function AdmitPatientForm() {
   const set = (key, value) => {
     setValues((prev) => {
       const next = { ...prev, [key]: value };
-      if (key === "ward") next.bedId = "";
+      if (key === "ward" || key === "bedType") next.bedId = "";
       if (key === "departmentId") next.doctorId = "";
       if (key === "patientSearch") {
         next.patientDbId = "";
@@ -341,6 +350,12 @@ export default function AdmitPatientForm() {
   const summaryRows = [
     { label: "Patient", value: values.selectedLabel },
     { label: "Ward", value: values.ward },
+    {
+      label: "Bed type",
+      value:
+        BED_TYPE_OPTIONS.find((o) => o.value === values.bedType)?.label ??
+        values.bedType,
+    },
     { label: "Bed", value: selectedBed?.bed_number },
     { label: "Admission date", value: values.admissionDate },
     { label: "Department", value: selectedDepartment?.name },
@@ -741,6 +756,24 @@ export default function AdmitPatientForm() {
               ) : null}
             </div>
             <div className="ipd-toolbar__field">
+              <label className="ipd-toolbar__label" htmlFor="ipd-admit-bed-type">
+                Bed type
+              </label>
+              <select
+                id="ipd-admit-bed-type"
+                className="ipd-select"
+                value={values.bedType}
+                onChange={(e) => set("bedType", e.target.value)}
+                disabled={!values.ward}
+              >
+                {BED_TYPE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="ipd-toolbar__field">
               <label className="ipd-toolbar__label" htmlFor="ipd-admit-bed">
                 Bed
               </label>
@@ -757,7 +790,7 @@ export default function AdmitPatientForm() {
                     : bedsQuery.isLoading
                       ? "Loading beds…"
                       : availableBeds.length === 0
-                        ? "No available beds"
+                        ? `No available ${values.bedType} beds`
                         : "Select bed…"}
                 </option>
                 {availableBeds.map((bed) => (

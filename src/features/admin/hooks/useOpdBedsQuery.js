@@ -9,6 +9,7 @@ import {
   updateInventoryBed,
 } from '@/features/admin/api/opdBeds';
 import { queryKeys } from '@/shared/api/queryKeys';
+import { mergeBedTypes } from '@/shared/utils/bedTypeOverlay';
 
 const inventoryKey = ['admin', 'opd-bed-inventory'];
 
@@ -35,6 +36,10 @@ export function useBedInventoryListQuery(filters = {}, options = {}) {
     queryKey: [...inventoryKey, 'list', filters],
     queryFn: () => listInventoryBeds(filters),
     enabled,
+    select: (data) => ({
+      ...data,
+      beds: mergeBedTypes(data?.beds ?? []),
+    }),
   });
 }
 

@@ -29,9 +29,17 @@ import {
 import SuperAdminLayout from '@/features/super-admin/components/SuperAdminLayout';
 import SuperAdminPageHeader from '@/features/super-admin/components/SuperAdminPageHeader';
 import { ROUTES } from '@/shared/constants';
-import { Button, ConfirmDialog, EmptyState, ProfilePhotoCropDialog } from '@/shared/components/common';
+import {
+  Button,
+  ConfirmDialog,
+  DateInput,
+  EmptyState,
+  ProfilePhoneField,
+  ProfilePhotoCropDialog,
+} from '@/shared/components/common';
 import PageSpinner from '@/shared/components/PageSpinner';
 import { toast } from '@/shared/utils/toast';
+import { formatPhoneDisplay } from '@/shared/utils/phoneCountryCode';
 import { formatPhoneInput } from '@/shared/utils/validators';
 import {
   capitalizeFirst,
@@ -696,25 +704,13 @@ export default function SuperAdminProfilePage() {
                   {editing && form ? (
                     <>
                       <label className="sa-profile-field">
-                        <span className="sa-profile-field__label">Phone code</span>
-                        <input
-                          className="sa-profile-input"
-                          maxLength={8}
-                          value={form.phone_code}
-                          onChange={(e) => setField('phone_code', e.target.value)}
-                        />
-                      </label>
-                      <label className="sa-profile-field">
                         <span className="sa-profile-field__label">Phone</span>
-                        <input
-                          className="sa-profile-input"
-                          type="tel"
-                          inputMode="numeric"
-                          autoComplete="tel"
-                          maxLength={10}
-                          placeholder="10-digit number"
-                          value={form.phone}
-                          onChange={(e) => setField('phone', formatPhoneInput(e.target.value))}
+                        <ProfilePhoneField
+                          inputClassName="sa-profile-input"
+                          phoneCode={form.phone_code}
+                          phone={form.phone}
+                          onPhoneCodeChange={(value) => setField('phone_code', value)}
+                          onPhoneChange={(value) => setField('phone', value)}
                         />
                       </label>
                       <label className="sa-profile-field">
@@ -763,20 +759,22 @@ export default function SuperAdminProfilePage() {
                           ))}
                         </select>
                       </label>
-                      <label className="sa-profile-field">
-                        <span className="sa-profile-field__label">Date of birth</span>
-                        <input
-                          className="sa-profile-input"
-                          type="date"
+                      <div className="sa-profile-field">
+                        <DateInput
+                          label="Date of birth"
+                          className="profile-page-date-input"
                           value={form.date_of_birth || ''}
                           onChange={(e) => setField('date_of_birth', e.target.value)}
+                          placeholder="DD/MM/YYYY"
                         />
-                      </label>
+                      </div>
                     </>
                   ) : (
                     <>
-                      <ReadField label="Phone code" value={profile.phone_code} />
-                      <ReadField label="Phone" value={profile.phone} />
+                      <ReadField
+                        label="Phone"
+                        value={formatPhoneDisplay(profile.phone_code, profile.phone)}
+                      />
                       <ReadField
                         label="Emergency contact name"
                         value={profile.emergency_contact?.name}

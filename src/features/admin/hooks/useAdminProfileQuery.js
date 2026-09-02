@@ -1,5 +1,5 @@
 /**
- * TanStack Query hooks for Hospital Admin profile against live /opd/profile APIs.
+ * TanStack Query hooks for Hospital Admin profile against live /admin/profile APIs.
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';

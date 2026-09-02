@@ -2,7 +2,7 @@
  * Assign bed modal — admits patient onto an available bed (POST /ipd/admissions).
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal, Button } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
@@ -20,11 +20,16 @@ import { useIpdWardOptions } from '@/features/ipd/hooks/useIpdWardOptions';
 import { useIpdBedRateLookup } from '@/features/ipd/hooks/useIpdBedRateLookup';
 import { toIsoAdmissionDate } from '@/features/ipd/utils/ipdFormat';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
+import {
+  BED_TYPE_OPTIONS,
+  filterBedsByType,
+} from '@/shared/utils/bedTypeOverlay';
 
 const INITIAL = {
   patientSearch: '',
   patientDbId: '',
   ward: '',
+  bedType: 'single',
   bedId: '',
   departmentId: '',
   doctorId: '',
@@ -65,10 +70,14 @@ export default function BedAssignModal({
   const bedsQuery = useIpdBedsQuery({
     ward: values.ward || undefined,
     status: 'available',
+    bed_type: values.bedType || undefined,
   });
-  const availableBeds = (bedsQuery.data?.beds ?? []).filter(
-    (bed) => bed.status === 'available'
-  );
+  const availableBeds = useMemo(() => {
+    const beds = (bedsQuery.data?.beds ?? []).filter(
+      (bed) => bed.status === 'available',
+    );
+    return filterBedsByType(beds, values.bedType);
+  }, [bedsQuery.data, values.bedType]);
   const { wardOptions, isLoading: wardsLoading } = useIpdWardOptions();
   const { getRate } = useIpdBedRateLookup();
   const departmentsQuery = useIpdDepartmentsQuery();
@@ -87,7 +96,7 @@ export default function BedAssignModal({
   const set = (key, value) => {
     setValues((prev) => {
       const next = { ...prev, [key]: value };
-      if (key === 'ward') next.bedId = '';
+      if (key === 'ward' || key === 'bedType') next.bedId = '';
       if (key === 'patientSearch') next.patientDbId = '';
       if (key === 'departmentId') next.doctorId = '';
       return next;
@@ -212,6 +221,24 @@ export default function BedAssignModal({
           </select>
         </div>
         <div className="ipd-toolbar__field">
+          <label className="ipd-toolbar__label" htmlFor="ipd-assign-bed-type">
+            Bed type
+          </label>
+          <select
+            id="ipd-assign-bed-type"
+            className="ipd-select"
+            value={values.bedType}
+            onChange={(e) => set('bedType', e.target.value)}
+            disabled={!values.ward}
+          >
+            {BED_TYPE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="ipd-toolbar__field">
           <label className="ipd-toolbar__label" htmlFor="ipd-assign-bed">
             Bed
           </label>
@@ -220,10 +247,16 @@ export default function BedAssignModal({
             className="ipd-select"
             value={values.bedId}
             onChange={(e) => set('bedId', e.target.value)}
-            disabled={!values.ward}
+            disabled={!values.ward || bedsQuery.isLoading}
           >
             <option value="">
-              {!values.ward ? 'Select ward first…' : 'Select bed…'}
+              {!values.ward
+                ? 'Select ward first…'
+                : bedsQuery.isLoading
+                  ? 'Loading beds…'
+                  : availableBeds.length === 0
+                    ? `No available ${values.bedType} beds`
+                    : 'Select bed…'}
             </option>
             {availableBeds.map((bed) => {
               const rate = getRate(bed);

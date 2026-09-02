@@ -27,9 +27,17 @@ import {
   useUploadOpdBillingProfileImageMutation,
 } from '@/features/opd/hooks/useOpdBillingProfileQuery';
 import { ROUTES } from '@/shared/constants';
-import { Button, ConfirmDialog, EmptyState, ProfilePhotoCropDialog } from '@/shared/components/common';
+import {
+  Button,
+  ConfirmDialog,
+  DateInput,
+  EmptyState,
+  ProfilePhoneField,
+  ProfilePhotoCropDialog,
+} from '@/shared/components/common';
 import PageSpinner from '@/shared/components/PageSpinner';
 import { toast } from '@/shared/utils/toast';
+import { formatPhoneDisplay } from '@/shared/utils/phoneCountryCode';
 import { formatPhoneInput } from '@/shared/utils/validators';
 import {
   capitalizeFirst,
@@ -62,17 +70,6 @@ function isValidGender(value) {
 
 function genderLabel(code) {
   return GENDER_OPTIONS.find((o) => o.value === code)?.label ?? null;
-}
-
-function fmtShift(shift) {
-  if (!shift) return null;
-  const name = shift.name || null;
-  const start = shift.start_time || null;
-  const end = shift.end_time || null;
-  if (start && end) {
-    return name ? `${name} · ${start} – ${end}` : `${start} – ${end}`;
-  }
-  return name;
 }
 
 function formatUpdatedAgo(iso) {
@@ -633,7 +630,7 @@ export default function OpdBillingProfilePage() {
                   <Shield size={16} aria-hidden /> Account
                 </h3>
                 <p className="opd-profile-hint">
-                  Employee ID and shift are managed by admin.
+                  Employee ID is managed by admin.
                 </p>
                 <div className="opd-profile-grid">
                   <ReadField label="First name" value={profile.first_name} />
@@ -642,7 +639,6 @@ export default function OpdBillingProfilePage() {
                   <ReadField label="Employee ID" value={profile.employee_id} />
                   <ReadField label="Joining date" value={profile.joining_date} />
                   <ReadField label="Role" value={roleName} />
-                  <ReadField label="Shift" value={fmtShift(profile.shift)} />
                 </div>
               </section>
             )}
@@ -765,25 +761,13 @@ export default function OpdBillingProfilePage() {
                   {editing && form ? (
                     <>
                       <label className="opd-profile-field">
-                        <span className="opd-profile-field__label">Phone code</span>
-                        <input
-                          className="opd-profile-input"
-                          maxLength={8}
-                          value={form.phone_code}
-                          onChange={(e) => setField('phone_code', e.target.value)}
-                        />
-                      </label>
-                      <label className="opd-profile-field">
                         <span className="opd-profile-field__label">Phone</span>
-                        <input
-                          className="opd-profile-input"
-                          type="tel"
-                          inputMode="numeric"
-                          autoComplete="tel"
-                          maxLength={10}
-                          placeholder="10-digit number"
-                          value={form.phone}
-                          onChange={(e) => setField('phone', formatPhoneInput(e.target.value))}
+                        <ProfilePhoneField
+                          inputClassName="opd-profile-input"
+                          phoneCode={form.phone_code}
+                          phone={form.phone}
+                          onPhoneCodeChange={(value) => setField('phone_code', value)}
+                          onPhoneChange={(value) => setField('phone', value)}
                         />
                       </label>
                       <label className="opd-profile-field">
@@ -836,15 +820,15 @@ export default function OpdBillingProfilePage() {
                           ))}
                         </select>
                       </label>
-                      <label className="opd-profile-field">
-                        <span className="opd-profile-field__label">Date of birth</span>
-                        <input
-                          className="opd-profile-input"
-                          type="date"
+                      <div className="opd-profile-field">
+                        <DateInput
+                          label="Date of birth"
+                          className="profile-page-date-input"
                           value={form.date_of_birth || ''}
                           onChange={(e) => setField('date_of_birth', e.target.value)}
+                          placeholder="DD/MM/YYYY"
                         />
-                      </label>
+                      </div>
                       <label className="opd-profile-field">
                         <span className="opd-profile-field__label">City</span>
                         <input
@@ -875,8 +859,10 @@ export default function OpdBillingProfilePage() {
                     </>
                   ) : (
                     <>
-                      <ReadField label="Phone code" value={profile.phone_code} />
-                      <ReadField label="Phone" value={profile.phone} />
+                      <ReadField
+                        label="Phone"
+                        value={formatPhoneDisplay(profile.phone_code, profile.phone)}
+                      />
                       <ReadField
                         label="Emergency contact name"
                         value={profile.emergency_contact?.name}

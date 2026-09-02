@@ -30,7 +30,7 @@ import {
 } from '@/features/nurse/hooks/useNurseProfileQuery';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
 import { ROUTES } from '@/shared/constants';
-import { Button, ConfirmDialog, EmptyState, ProfilePhoneField, ProfilePhotoCropDialog } from '@/shared/components/common';
+import { Button, ConfirmDialog, DateInput, EmptyState, ProfilePhoneField, ProfilePhotoCropDialog } from '@/shared/components/common';
 import PageSpinner from '@/shared/components/PageSpinner';
 import { toast } from '@/shared/utils/toast';
 import { formatPhoneInput } from '@/shared/utils/validators';
@@ -931,15 +931,15 @@ export default function NurseProfilePage() {
                           ))}
                         </select>
                       </label>
-                      <label className="nurse-profile-field">
-                        <span className="nurse-profile-field__label">Date of birth</span>
-                        <input
-                          className="nurse-profile-input"
-                          type="date"
+                      <div className="nurse-profile-field">
+                        <DateInput
+                          label="Date of birth"
+                          className="profile-page-date-input"
                           value={form.date_of_birth || ''}
                           onChange={(e) => setField('date_of_birth', e.target.value)}
+                          placeholder="DD/MM/YYYY"
                         />
-                      </label>
+                      </div>
                       <label className="nurse-profile-field">
                         <span className="nurse-profile-field__label">City</span>
                         <input

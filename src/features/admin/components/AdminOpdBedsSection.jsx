@@ -20,6 +20,7 @@ import {
 } from '@/features/admin/hooks/useOpdBedsQuery';
 import { Button, Input, QueryFeedback } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
+import { setBedTypesInOverlay } from '@/shared/utils/bedTypeOverlay';
 
 const WARD_PREFIX = {
   General: 'G-',
@@ -379,11 +380,12 @@ export default function AdminOpdBedsSection({
         return;
       }
       try {
-        await createMut.mutateAsync({
+        const result = await createMut.mutateAsync({
           ward_name: wardName.trim(),
           bed_number: bedNumber,
           bed_type: bedType,
         });
+        if (result?.id) setBedTypesInOverlay({ id: result.id, bed_type: bedType });
         toast.success(`Bed ${bedNumber} added`);
         setSingleTouched(false);
         setStartTouched(false);
@@ -417,6 +419,9 @@ export default function AdminOpdBedsSection({
         pad_width: Number(bulkForm.pad_width) || 0,
         bed_type: bedType,
       });
+      setBedTypesInOverlay(
+        (result?.beds ?? []).map((b) => ({ id: b.id, bed_type: bedType })),
+      );
       toast.success(`${result?.created_count ?? count} bed(s) added to ${wardName}`);
       setStartTouched(false);
       setSingleTouched(false);
@@ -463,6 +468,10 @@ export default function AdminOpdBedsSection({
           ward_name: editForm.ward_name.trim(),
           bed_type: editForm.bed_type === 'double' ? 'double' : 'single',
         },
+      });
+      setBedTypesInOverlay({
+        id: bedId,
+        bed_type: editForm.bed_type === 'double' ? 'double' : 'single',
       });
       toast.success('Bed updated');
       cancelEdit();

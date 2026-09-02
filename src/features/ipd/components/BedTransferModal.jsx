@@ -15,6 +15,10 @@ import { useIpdWardOptions } from '@/features/ipd/hooks/useIpdWardOptions';
 import { useIpdBedRateLookup } from '@/features/ipd/hooks/useIpdBedRateLookup';
 import { IPD_ADMISSION_STATUS } from '@/features/ipd/utils/constants';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
+import {
+  BED_TYPE_OPTIONS,
+  filterBedsByType,
+} from '@/shared/utils/bedTypeOverlay';
 
 function patientLabel(row) {
   const name = row.patient_name || 'Patient';
@@ -33,6 +37,7 @@ export default function BedTransferModal({
   const [admissionId, setAdmissionId] = useState('');
   const [fromBedId, setFromBedId] = useState('');
   const [ward, setWard] = useState('');
+  const [bedType, setBedType] = useState('single');
   const [newBedId, setNewBedId] = useState('');
   const [error, setError] = useState('');
 
@@ -51,10 +56,14 @@ export default function BedTransferModal({
   const bedsQuery = useIpdBedsQuery({
     ward: ward || undefined,
     status: 'available',
+    bed_type: bedType || undefined,
   });
-  const availableBeds = (bedsQuery.data?.beds ?? []).filter(
-    (bed) => bed.status === 'available'
-  );
+  const availableBeds = useMemo(() => {
+    const beds = (bedsQuery.data?.beds ?? []).filter(
+      (bed) => bed.status === 'available',
+    );
+    return filterBedsByType(beds, bedType);
+  }, [bedsQuery.data, bedType]);
   const { wardOptions, isLoading: wardsLoading } = useIpdWardOptions();
   const { getRate } = useIpdBedRateLookup();
   const transferMutation = useTransferIpdBedMutation();
@@ -95,6 +104,7 @@ export default function BedTransferModal({
     if (!open) return;
     setError('');
     setNewBedId('');
+    setBedType('single');
     if (initialAdmissionId) {
       setAdmissionId(String(initialAdmissionId));
       setFromBedId('');
@@ -129,6 +139,7 @@ export default function BedTransferModal({
     setAdmissionId('');
     setFromBedId('');
     setWard('');
+    setBedType('single');
     setNewBedId('');
     setError('');
   };
@@ -300,6 +311,7 @@ export default function BedTransferModal({
             value={ward}
             onChange={(e) => {
               setWard(e.target.value);
+              setBedType('single');
               setNewBedId('');
             }}
             disabled={wardsLoading}
@@ -322,6 +334,27 @@ export default function BedTransferModal({
           </select>
         </div>
         <div className="ipd-toolbar__field">
+          <label className="ipd-toolbar__label" htmlFor="ipd-xfer-bed-type">
+            Bed type
+          </label>
+          <select
+            id="ipd-xfer-bed-type"
+            className="ipd-select"
+            value={bedType}
+            onChange={(e) => {
+              setBedType(e.target.value);
+              setNewBedId('');
+            }}
+            disabled={!ward}
+          >
+            {BED_TYPE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="ipd-toolbar__field">
           <label className="ipd-toolbar__label" htmlFor="ipd-xfer-bed">
             New bed
           </label>
@@ -330,9 +363,17 @@ export default function BedTransferModal({
             className="ipd-select"
             value={newBedId}
             onChange={(e) => setNewBedId(e.target.value)}
-            disabled={!ward}
+            disabled={!ward || bedsQuery.isLoading}
           >
-            <option value="">{!ward ? 'Select ward first…' : 'Select bed…'}</option>
+            <option value="">
+              {!ward
+                ? 'Select ward first…'
+                : bedsQuery.isLoading
+                  ? 'Loading beds…'
+                  : availableBeds.length === 0
+                    ? `No available ${bedType} beds`
+                    : 'Select bed…'}
+            </option>
             {availableBeds.map((bed) => {
               const rate = getRate(bed);
               return (

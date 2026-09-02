@@ -1,5 +1,5 @@
 /**
- * Admin Profile — live GET/PUT /opd/profile + image APIs.
+ * Admin Profile — live GET/PUT /admin/profile + image APIs.
  * Admin-owned fields stay read-only.
  */
 
@@ -28,9 +28,17 @@ import {
 } from '@/features/admin/hooks/useAdminProfileQuery';
 import AdminLayout from '@/features/admin/components/AdminLayout';
 import { ROUTES } from '@/shared/constants';
-import { Button, ConfirmDialog, EmptyState, ProfilePhotoCropDialog } from '@/shared/components/common';
+import {
+  Button,
+  ConfirmDialog,
+  DateInput,
+  EmptyState,
+  ProfilePhoneField,
+  ProfilePhotoCropDialog,
+} from '@/shared/components/common';
 import PageSpinner from '@/shared/components/PageSpinner';
 import { toast } from '@/shared/utils/toast';
+import { formatPhoneDisplay } from '@/shared/utils/phoneCountryCode';
 import { formatPhoneInput } from '@/shared/utils/validators';
 import {
   capitalizeFirst,
@@ -766,25 +774,13 @@ export default function AdminProfilePage() {
                   {editing && form ? (
                     <>
                       <label className="admin-profile-field">
-                        <span className="admin-profile-field__label">Phone code</span>
-                        <input
-                          className="admin-profile-input"
-                          maxLength={8}
-                          value={form.phone_code}
-                          onChange={(e) => setField('phone_code', e.target.value)}
-                        />
-                      </label>
-                      <label className="admin-profile-field">
                         <span className="admin-profile-field__label">Phone</span>
-                        <input
-                          className="admin-profile-input"
-                          type="tel"
-                          inputMode="numeric"
-                          autoComplete="tel"
-                          maxLength={10}
-                          placeholder="10-digit number"
-                          value={form.phone}
-                          onChange={(e) => setField('phone', formatPhoneInput(e.target.value))}
+                        <ProfilePhoneField
+                          inputClassName="admin-profile-input"
+                          phoneCode={form.phone_code}
+                          phone={form.phone}
+                          onPhoneCodeChange={(value) => setField('phone_code', value)}
+                          onPhoneChange={(value) => setField('phone', value)}
                         />
                       </label>
                       <label className="admin-profile-field">
@@ -837,15 +833,15 @@ export default function AdminProfilePage() {
                           ))}
                         </select>
                       </label>
-                      <label className="admin-profile-field">
-                        <span className="admin-profile-field__label">Date of birth</span>
-                        <input
-                          className="admin-profile-input"
-                          type="date"
+                      <div className="admin-profile-field">
+                        <DateInput
+                          label="Date of birth"
+                          className="profile-page-date-input"
                           value={form.date_of_birth || ''}
                           onChange={(e) => setField('date_of_birth', e.target.value)}
+                          placeholder="DD/MM/YYYY"
                         />
-                      </label>
+                      </div>
                       <label className="admin-profile-field">
                         <span className="admin-profile-field__label">City</span>
                         <input
@@ -876,8 +872,10 @@ export default function AdminProfilePage() {
                     </>
                   ) : (
                     <>
-                      <ReadField label="Phone code" value={profile.phone_code} />
-                      <ReadField label="Phone" value={profile.phone} />
+                      <ReadField
+                        label="Phone"
+                        value={formatPhoneDisplay(profile.phone_code, profile.phone)}
+                      />
                       <ReadField
                         label="Emergency contact name"
                         value={profile.emergency_contact?.name}

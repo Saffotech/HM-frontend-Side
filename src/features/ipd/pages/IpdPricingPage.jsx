@@ -12,7 +12,6 @@ export default function IpdPricingPage() {
   return (
     <PricingView
       title="IPD Pricing"
-      subtitle="Hospital IPD charges — current configured pricing"
       tabs={TABS}
       dataSource="ipd"
       showSummary={false}

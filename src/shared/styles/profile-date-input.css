@@ -1,0 +1,22 @@
+/* DateInput inside role profile edit forms (matches profile field labels + inputs). */
+.profile-page-date-input.field {
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+.profile-page-date-input .field__label {
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--rp-muted, var(--color-text-muted));
+}
+
+.profile-page-date-input .date-input__wrap {
+  min-height: 2.2rem;
+}
+
+.profile-page-date-input .date-input__text {
+  font-size: 0.875rem;
+  padding: 0.45rem 0.65rem;
+}

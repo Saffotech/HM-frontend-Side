@@ -34,10 +34,16 @@ import {
 } from '@/features/doctor/hooks/useDoctorProfileQuery';
 import { useDoctorPermissionSet } from '@/features/doctor/hooks/useDoctorPermission';
 import { ROUTES } from '@/shared/constants';
-import { Button, ConfirmDialog, EmptyState, ProfilePhotoCropDialog } from '@/shared/components/common';
+import { Button, ConfirmDialog, DateInput, EmptyState, ProfilePhoneField, ProfilePhotoCropDialog } from '@/shared/components/common';
 import PageSpinner from '@/shared/components/PageSpinner';
 import { toast } from '@/shared/utils/toast';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
+import {
+  formatPhoneCodeInput,
+  formatPhoneDisplay,
+  normalizePhoneCode,
+  PHONE_CODE_PATTERN,
+} from '@/shared/utils/phoneCountryCode';
 import { formatPhoneInput } from '@/shared/utils/validators';
 import {
   capitalizeFirst,
@@ -53,42 +59,6 @@ const GENDER_OPTIONS = [
   { value: 3, label: 'Other' },
   { value: 4, label: 'Prefer not to say' },
 ];
-
-const PHONE_COUNTRY_CODES = [
-  { value: '+91', label: '+91 (IN)' },
-  { value: '+92', label: '+92 (PK)' },
-  { value: '+880', label: '+880 (BD)' },
-  { value: '+977', label: '+977 (NP)' },
-  { value: '+94', label: '+94 (LK)' },
-  { value: '+971', label: '+971 (AE)' },
-  { value: '+65', label: '+65 (SG)' },
-  { value: '+44', label: '+44 (UK)' },
-  { value: '+1', label: '+1 (US/CA)' },
-  { value: '+61', label: '+61 (AU)' },
-];
-const CUSTOM_PHONE_CODE = '__other__';
-const PHONE_CODE_PATTERN = /^\+\d{1,4}$/;
-
-function isPresetPhoneCode(code) {
-  return PHONE_COUNTRY_CODES.some((o) => o.value === code);
-}
-
-function formatPhoneCodeInput(value) {
-  const digits = String(value ?? '').replace(/[^\d]/g, '').slice(0, 4);
-  return digits ? `+${digits}` : '+';
-}
-
-function normalizePhoneCode(code) {
-  const formatted = formatPhoneCodeInput(code);
-  return PHONE_CODE_PATTERN.test(formatted) ? formatted : '+91';
-}
-
-function formatPhoneDisplay(code, phone) {
-  const digits = String(phone ?? '').trim();
-  const dial = normalizePhoneCode(code);
-  if (!digits) return null;
-  return `${dial} ${digits}`;
-}
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -786,7 +756,7 @@ export default function DoctorProfilePage() {
                 <Shield size={16} aria-hidden /> Account
               </h3>
               <p className="doc-profile-hint">
-                License, fee, specialization, department, employee ID, joining date, and shift are
+                License, fee, specialization, department, employee ID, and joining date are
                 managed by admin.
               </p>
               <div className="doc-profile-grid">
@@ -807,9 +777,6 @@ export default function DoctorProfilePage() {
                       : null
                   }
                 />
-                <ReadField label="Shift" value={fmtShift(profile.shift)} />
-                <ReadField label="Shift start" value={profile.shift?.start_time} />
-                <ReadField label="Shift end" value={profile.shift?.end_time} />
               </div>
             </section>
             )}
@@ -927,64 +894,13 @@ export default function DoctorProfilePage() {
                   <>
                     <label className="doc-profile-field">
                       <span className="doc-profile-field__label">Phone</span>
-                      <div
-                        className={`doc-profile-phone${
-                          !isPresetPhoneCode(form.phone_code) ? ' doc-profile-phone--custom' : ''
-                        }`}
-                      >
-                        <select
-                          className="doc-input doc-profile-phone__code"
-                          value={
-                            isPresetPhoneCode(form.phone_code)
-                              ? form.phone_code
-                              : CUSTOM_PHONE_CODE
-                          }
-                          onChange={(e) => {
-                            const next = e.target.value;
-                            if (next === CUSTOM_PHONE_CODE) {
-                              setField(
-                                'phone_code',
-                                isPresetPhoneCode(form.phone_code) ? '+' : form.phone_code || '+'
-                              );
-                              return;
-                            }
-                            setField('phone_code', next);
-                          }}
-                          aria-label="Phone country code"
-                        >
-                          {PHONE_COUNTRY_CODES.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </option>
-                          ))}
-                          <option value={CUSTOM_PHONE_CODE}>Other</option>
-                        </select>
-                        {!isPresetPhoneCode(form.phone_code) ? (
-                          <input
-                            className="doc-input doc-profile-phone__custom"
-                            type="tel"
-                            inputMode="tel"
-                            autoComplete="tel-country-code"
-                            maxLength={5}
-                            placeholder="+___"
-                            value={form.phone_code || '+'}
-                            onChange={(e) =>
-                              setField('phone_code', formatPhoneCodeInput(e.target.value))
-                            }
-                            aria-label="Custom phone code"
-                          />
-                        ) : null}
-                        <input
-                          className="doc-input doc-profile-phone__number"
-                          type="tel"
-                          inputMode="numeric"
-                          autoComplete="tel-national"
-                          maxLength={10}
-                          placeholder="10-digit number"
-                          value={form.phone}
-                          onChange={(e) => setField('phone', formatPhoneInput(e.target.value))}
-                        />
-                      </div>
+                      <ProfilePhoneField
+                        inputClassName="doc-input"
+                        phoneCode={form.phone_code}
+                        phone={form.phone}
+                        onPhoneCodeChange={(value) => setField('phone_code', value)}
+                        onPhoneChange={(value) => setField('phone', value)}
+                      />
                     </label>
                     <label className="doc-profile-field">
                       <span className="doc-profile-field__label">Emergency contact name</span>
@@ -1032,15 +948,15 @@ export default function DoctorProfilePage() {
                         ))}
                       </select>
                     </label>
-                    <label className="doc-profile-field">
-                      <span className="doc-profile-field__label">Date of birth</span>
-                      <input
-                        className="doc-input"
-                        type="date"
+                    <div className="doc-profile-field">
+                      <DateInput
+                        label="Date of birth"
+                        className="profile-page-date-input"
                         value={form.date_of_birth || ''}
                         onChange={(e) => setField('date_of_birth', e.target.value)}
+                        placeholder="DD/MM/YYYY"
                       />
-                    </label>
+                    </div>
                     <label className="doc-profile-field">
                       <span className="doc-profile-field__label">City</span>
                       <input

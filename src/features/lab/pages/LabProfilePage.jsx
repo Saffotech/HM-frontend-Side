@@ -29,7 +29,7 @@ import {
 } from '@/features/lab/hooks/useLabTechnicianProfileQuery';
 import { useLabPermissionSet } from '@/features/lab/hooks/useLabPermission';
 import { ROUTES } from '@/shared/constants';
-import { Button, ConfirmDialog, EmptyState, ProfilePhoneField, ProfilePhotoCropDialog } from '@/shared/components/common';
+import { Button, ConfirmDialog, DateInput, EmptyState, ProfilePhoneField, ProfilePhotoCropDialog } from '@/shared/components/common';
 import PageSpinner from '@/shared/components/PageSpinner';
 import { toast } from '@/shared/utils/toast';
 import {
@@ -964,15 +964,15 @@ export default function LabProfilePage() {
                           ))}
                         </select>
                       </label>
-                      <label className="lab-profile-field">
-                        <span className="lab-profile-field__label">Date of birth</span>
-                        <input
-                          className="lab-profile-input"
-                          type="date"
+                      <div className="lab-profile-field">
+                        <DateInput
+                          label="Date of birth"
+                          className="profile-page-date-input"
                           value={form.date_of_birth || ''}
                           onChange={(e) => setField('date_of_birth', e.target.value)}
+                          placeholder="DD/MM/YYYY"
                         />
-                      </label>
+                      </div>
                       <label className="lab-profile-field">
                         <span className="lab-profile-field__label">City</span>
                         <input

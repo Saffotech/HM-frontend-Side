@@ -8,6 +8,7 @@ import { queryKeys } from '@/shared/api/queryKeys';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { mutationOnError } from '@/shared/utils/mutationErrors';
 import { syncAuthProfileAvatar } from '@/shared/utils/syncAuthProfileAvatar';
+import { mergeBedTypes } from '@/shared/utils/bedTypeOverlay';
 import {
   getIpdDashboardStats,
   getIpdPatients,
@@ -137,15 +138,21 @@ export function useIpdBedsQuery(filters = {}, options = {}) {
     queryFn: () => getIpdBeds(params, token),
     enabled: enabled && Boolean(token),
     staleTime: 15_000,
+    select: (data) => ({
+      ...data,
+      beds: mergeBedTypes(data?.beds ?? []),
+    }),
   });
 }
 
-export function useIpdWardStatsQuery() {
+export function useIpdWardStatsQuery(options = {}) {
+  const { enabled = true } = options;
   const token = useQueryToken();
   return useQuery({
     queryKey: queryKeys.ipd.wards,
     queryFn: () => getIpdWardStats(token),
     staleTime: 20_000,
+    enabled,
   });
 }
 

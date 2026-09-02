@@ -4,9 +4,11 @@ import {
   CalendarDays,
   LayoutDashboard,
   Settings,
+  User,
   UserCog,
   Users,
 } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { ROUTES } from '@/shared/constants';
 import RoleLayout from '@/shared/components/layout/RoleLayout';
 import '../styles/admin.css';
@@ -19,9 +21,11 @@ const NAV_LINKS = [
   { href: ROUTES.ADMIN_REPORTS, label: 'Reports', icon: BarChart3 },
   { href: ROUTES.ADMIN_ROLES, label: 'Roles', icon: UserCog },
   { href: ROUTES.ADMIN_SETTINGS, label: 'Settings', icon: Settings },
+  { href: ROUTES.ADMIN_PROFILE, label: 'Profile', icon: User },
 ];
 
 const PAGE_TITLES = [
+  { prefix: ROUTES.ADMIN_PROFILE, title: 'My Profile' },
   { prefix: ROUTES.ADMIN_SETTINGS, title: 'Settings' },
   { prefix: ROUTES.ADMIN_NURSE_WORKFORCE, title: 'Nurse Workforce' },
   { prefix: ROUTES.ADMIN_BED_ALLOCATION, title: 'Nurse Bed Allocation' },
@@ -94,6 +98,9 @@ function isNavLinkActive(pathname, link) {
 }
 
 export default function AdminLayout({ children, pageTitle, compact = false }) {
+  const location = useLocation();
+  const onProfilePage = location.pathname === ROUTES.ADMIN_PROFILE;
+
   return (
     <RoleLayout
       navLinks={NAV_LINKS}
@@ -106,6 +113,8 @@ export default function AdminLayout({ children, pageTitle, compact = false }) {
       compact={compact}
       isNavLinkActive={isNavLinkActive}
       showBell={false}
+      profileHref={ROUTES.ADMIN_PROFILE}
+      logoutMenuOnly={onProfilePage}
     >
       <div className="admin-shell">{children}</div>
     </RoleLayout>
