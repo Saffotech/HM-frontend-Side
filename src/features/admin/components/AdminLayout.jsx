@@ -24,38 +24,11 @@ const NAV_LINKS = [
   { href: ROUTES.ADMIN_PROFILE, label: 'Profile', icon: User },
 ];
 
-const PAGE_TITLES = [
-  { prefix: ROUTES.ADMIN_PROFILE, title: 'My Profile' },
-  { prefix: ROUTES.ADMIN_SETTINGS, title: 'Settings' },
-  { prefix: ROUTES.ADMIN_NURSE_WORKFORCE, title: 'Nurse Workforce' },
-  { prefix: ROUTES.ADMIN_BED_ALLOCATION, title: 'Nurse Bed Allocation' },
-  { prefix: ROUTES.ADMIN_STAFF, title: 'Staff' },
-  { prefix: ROUTES.ADMIN_REPORTS, title: 'Reports' },
-  { prefix: ROUTES.ADMIN_ROLES, title: 'Roles' },
-  { prefix: ROUTES.ADMIN_DASHBOARD, title: 'Dashboard' },
-];
+/** Top shell title stays "Admin"; page names live in each screen header. */
+const HEADER_TITLE = 'Admin';
 
-function resolveTitle(pathname, pageTitleOverride) {
-  if (pathname.startsWith(`${ROUTES.ADMIN_STAFF}/`) && pathname !== ROUTES.ADMIN_STAFF_NEW) {
-    return pageTitleOverride || 'Staff Details';
-  }
-  if (pathname === ROUTES.ADMIN_STAFF_NEW) {
-    return 'Register Staff';
-  }
-  if (pathname.startsWith(ROUTES.ADMIN_REPORTS)) {
-    return pageTitleOverride || 'Reports';
-  }
-  if (pathname === ROUTES.ADMIN_BED_ALLOCATION_NEW) {
-    return 'New Bed Allocation';
-  }
-  if (pathname.includes('/bed-allocation/') && pathname.endsWith('/edit')) {
-    return pageTitleOverride || 'Edit Bed Allocation';
-  }
-  if (pathname.startsWith(`${ROUTES.ADMIN_BED_ALLOCATION}/`)) {
-    return pageTitleOverride || 'Allocation Details';
-  }
-  const match = PAGE_TITLES.find((p) => pathname.startsWith(p.prefix));
-  return pageTitleOverride || match?.title || 'Admin';
+function resolveTitle() {
+  return HEADER_TITLE;
 }
 
 function isStaffActive(pathname) {
@@ -97,7 +70,7 @@ function isNavLinkActive(pathname, link) {
   return pathname === link.href || pathname.startsWith(link.href);
 }
 
-export default function AdminLayout({ children, pageTitle, compact = false }) {
+export default function AdminLayout({ children, compact = false }) {
   const location = useLocation();
   const onProfilePage = location.pathname === ROUTES.ADMIN_PROFILE;
 
@@ -106,10 +79,7 @@ export default function AdminLayout({ children, pageTitle, compact = false }) {
       navLinks={NAV_LINKS}
       resolveTitle={resolveTitle}
       homeRoute={ROUTES.ADMIN_DASHBOARD}
-      roleLabel="Administration"
-      roleLabelClassName="admin-role-label"
-      defaultTitle="Dashboard"
-      pageTitleOverride={pageTitle}
+      defaultTitle={HEADER_TITLE}
       compact={compact}
       isNavLinkActive={isNavLinkActive}
       showBell={false}

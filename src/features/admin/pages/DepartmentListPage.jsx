@@ -12,11 +12,13 @@ import {
   SearchBar,
   Select,
 } from '@/shared/components/common';
+import { isLabOrRadDepartment } from '@/shared/utils/labDepartments';
 import { ROUTES } from '@/shared/constants';
 
 export default function DepartmentListPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
 
   const queryFilters = useMemo(() => {
@@ -29,19 +31,27 @@ export default function DepartmentListPage() {
     useAdminDepartmentsQuery(queryFilters);
 
   const filtered = useMemo(() => {
+    let rows = departments ?? [];
+    if (typeFilter === 'lab') {
+      rows = rows.filter((dept) => isLabOrRadDepartment(dept));
+    } else if (typeFilter === 'doctor') {
+      rows = rows.filter((dept) => !isLabOrRadDepartment(dept));
+    }
     const term = search.trim().toLowerCase();
-    if (!term) return departments ?? [];
-    return (departments ?? []).filter(
+    if (!term) return rows;
+    return rows.filter(
       (dept) =>
         dept.name?.toLowerCase().includes(term) ||
         (dept.code || '').toLowerCase().includes(term)
     );
-  }, [departments, search]);
+  }, [departments, search, typeFilter]);
 
-  const hasActiveFilters = Boolean(search.trim()) || statusFilter !== 'all';
+  const hasActiveFilters =
+    Boolean(search.trim()) || typeFilter !== 'all' || statusFilter !== 'all';
 
   const resetFilters = () => {
     setSearch('');
+    setTypeFilter('all');
     setStatusFilter('all');
   };
 
@@ -61,11 +71,21 @@ export default function DepartmentListPage() {
         />
 
         <div className="admin-card admin-card--flat admin-datatable">
-          <div className="admin-datatable__toolbar admin-datatable__toolbar--2">
+          <div className="admin-datatable__toolbar">
             <SearchBar
               value={search}
               onChange={setSearch}
               placeholder="Search by name or code…"
+            />
+            <Select
+              value={typeFilter}
+              onChange={setTypeFilter}
+              options={[
+                { value: 'all', label: 'All types' },
+                { value: 'doctor', label: 'Doctor' },
+                { value: 'lab', label: 'Lab' },
+              ]}
+              placeholder="All types"
             />
             <Select
               value={statusFilter}
@@ -120,6 +140,7 @@ export default function DepartmentListPage() {
                       <tr>
                         <th>Name</th>
                         <th>Code</th>
+                        <th>Type</th>
                         <th>Description</th>
                         <th>Status</th>
                         <th className="admin-table__actions">Actions</th>
@@ -130,6 +151,13 @@ export default function DepartmentListPage() {
                         <tr key={dept.id}>
                           <td className="admin-table__primary">{dept.name}</td>
                           <td className="admin-table__muted">{dept.code || '—'}</td>
+                          <td>
+                            {isLabOrRadDepartment(dept) ? (
+                              <span className="sa-dept-type sa-dept-type--lab">Lab</span>
+                            ) : (
+                              <span className="sa-dept-type sa-dept-type--doctor">Doctor</span>
+                            )}
+                          </td>
                           <td className="admin-table__muted">
                             {dept.description || '—'}
                           </td>

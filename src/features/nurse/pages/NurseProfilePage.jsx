@@ -73,12 +73,6 @@ function genderLabel(code) {
   return GENDER_OPTIONS.find((o) => o.value === code)?.label ?? null;
 }
 
-function fmtShift(shift) {
-  if (!shift) return null;
-  // Nurse Phase 2 by Atharva — show shift name only (no start/end times)
-  return shift.name || null;
-}
-
 /** Nurse Phase 2 by Atharva — relative “updated ago” for hero status */
 function formatUpdatedAgo(iso) {
   if (!iso) return null;
@@ -727,23 +721,19 @@ export default function NurseProfilePage() {
                   <Shield size={16} aria-hidden /> Account
                 </h3>
                 <p className="nurse-profile-hint">
-                  License number, employee ID, and shift are managed by admin.
+                  Employee ID is managed by admin.
                   Daily patient responsibility comes from bed allocation, not department.
                 </p>
                 <div className="nurse-profile-grid">
                   <ReadField label="First name" value={profile.first_name} />
                   <ReadField label="Last name" value={profile.last_name} />
                   <ReadField label="Email" value={profile.email} />
-                  <ReadField label="License number" value={profile.registration_number} />
                   <ReadField label="Employee ID" value={profile.employee_id} />
                   <ReadField label="Joining date" value={profile.joining_date} />
                   {departmentName ? (
                     <ReadField label="Department" value={departmentName} />
                   ) : null}
                   <ReadField label="Role" value={roleName} />
-                  <ReadField label="Shift" value={fmtShift(profile.shift)} />
-                  <ReadField label="Shift start" value={profile.shift?.start_time} />
-                  <ReadField label="Shift end" value={profile.shift?.end_time} />
                 </div>
               </section>
             )}

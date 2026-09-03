@@ -2398,6 +2398,16 @@
   }
 }
 
+.layout--super-admin .layout-content:has(.dept-create-page) {
+  padding-top: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .layout--super-admin .layout-content:has(.dept-create-page) {
+    padding: 1rem 1.5rem 1.5rem;
+  }
+}
+
 .layout--super-admin .sa-shell:has(.sa-register-page) {
   flex: 1;
   min-height: 0;
@@ -2933,6 +2943,118 @@
   grid-column: 1 / -1;
 }
 
+.sa-staff-detail__panel--edit {
+  padding: 0.85rem 1rem 1rem;
+}
+
+.sa-staff-detail:has(.sa-staff-detail__panel--edit) {
+  gap: 0.65rem;
+}
+
+.sa-staff-detail:has(.sa-staff-detail__panel--edit) .sa-staff-detail__hero-main {
+  gap: 0.85rem;
+  padding: 0.95rem 1.1rem 0.85rem;
+}
+
+.sa-staff-detail:has(.sa-staff-detail__panel--edit) .sa-staff-detail__avatar {
+  width: 3.5rem;
+  height: 3.5rem;
+  font-size: 1rem;
+}
+
+.sa-staff-detail:has(.sa-staff-detail__panel--edit) .sa-staff-detail__stat {
+  padding: 0.65rem 1rem;
+}
+
+.sa-staff-detail__panel--edit .sa-staff-detail__panel-head {
+  margin-bottom: 0.7rem;
+  padding-bottom: 0.55rem;
+}
+
+.sa-staff-detail__panel--edit .sa-staff-detail__panel-title {
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.sa-staff-detail__panel--edit .sa-staff-detail__panel-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 6px;
+}
+
+.sa-staff-detail__panel--edit .sa-staff-detail__panel-title h2 {
+  font-size: 1.125rem;
+}
+
+.sa-staff-detail__panel--edit .sa-staff-detail__panel-title p {
+  margin: 0.15rem 0 0;
+  font-size: 0.875rem;
+}
+
+.sa-staff-detail__panel--edit .sa-staff-detail__form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.sa-staff-detail__panel--edit .sa-staff-detail__form-section {
+  padding: 0.6rem 0.7rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--panel-accent) 14%, var(--admin-border-soft));
+  border-radius: 8px;
+  background: #fff;
+}
+
+.sa-staff-detail__panel--edit .sa-staff-detail__form-section h3 {
+  margin: 0 0 0.5rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--panel-accent) 14%, var(--admin-border-soft));
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--panel-ink);
+}
+
+.sa-staff-detail__panel--edit .sa-staff-detail__fields {
+  gap: 0.55rem 0.75rem;
+}
+
+.sa-staff-detail__panel--edit .form-label {
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.sa-staff-detail__panel--edit .field {
+  gap: 0;
+}
+
+.sa-staff-detail__panel--edit .field__input,
+.sa-staff-detail__panel--edit .searchable-select__input {
+  height: 2.5rem;
+  padding: 0 0.75rem;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.sa-staff-detail__panel--edit .searchable-select__input {
+  padding-right: 2rem;
+}
+
+.sa-staff-detail__panel--edit .date-input__wrap {
+  border-radius: 6px;
+}
+
+.sa-staff-detail__panel--edit .date-input__text {
+  height: 2.5rem;
+  padding: 0 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
 .sa-staff-detail__panel-head {
   margin-bottom: 1rem;
   padding-bottom: 0.85rem;
@@ -3266,15 +3388,35 @@
 }
 
 /* ── Departments list / detail ─────────────────────────────── */
-.sa-dept-list-page .admin-page__head--row {
-  align-items: center;
-  margin-bottom: 1rem;
+.layout--super-admin .sa-shell:has(.sa-dept-list-page) {
+  padding-top: 0;
 }
 
+.sa-dept-list-page.admin-page {
+  gap: 0.65rem;
+}
+
+.sa-dept-list-page .ui-page-header {
+  margin-top: 0;
+  margin-bottom: 0;
+  gap: 0.75rem;
+  align-items: center;
+  padding-block: 0;
+}
+
+.sa-dept-list-page .admin-page__head--row {
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.sa-dept-list-page .ui-page-header__title,
 .sa-dept-list-page .admin-page__title {
   margin: 0;
   font-size: 1.5rem;
+  font-weight: 700;
   line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: #0f172a;
 }
 
 .sa-dept-list-page .admin-table__actions {
@@ -3283,6 +3425,29 @@
 
 .sa-dept-list-page .admin-table thead th.admin-table__actions {
   text-align: center;
+}
+
+.sa-dept-type {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+}
+
+.sa-dept-type--doctor {
+  color: #1d4ed8;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.sa-dept-type--lab {
+  color: #0f766e;
+  background: #f0fdfa;
+  border-color: #99f6e4;
 }
 
 .sa-dept-list__doctor-count {

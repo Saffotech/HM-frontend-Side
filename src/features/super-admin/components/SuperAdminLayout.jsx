@@ -24,23 +24,11 @@ const NAV_LINKS = [
   { href: ROUTES.SUPER_ADMIN_PROFILE, label: 'Profile', icon: User },
 ];
 
-const SUPER_ADMIN_HEADER_TITLE = 'SuperAdmin Panel';
+/** Top shell title stays "Super Admin"; page names live in each screen header. */
+const HEADER_TITLE = 'Super Admin';
 
-const PAGE_TITLES = [
-  { prefix: ROUTES.SUPER_ADMIN_PROFILE, title: 'My Profile' },
-  { prefix: ROUTES.SUPER_ADMIN_STAFF, title: 'Staff' },
-  { prefix: ROUTES.SUPER_ADMIN_DEPARTMENTS, title: 'Departments' },
-  { prefix: ROUTES.SUPER_ADMIN_ROLES, title: 'Roles' },
-  { prefix: ROUTES.SUPER_ADMIN_SETTINGS, title: 'Settings' },
-  { prefix: ROUTES.SUPER_ADMIN_REPORTS, title: 'Reports' },
-  { prefix: ROUTES.SUPER_ADMIN_AUDIT, title: 'Audit Log' },
-  { prefix: ROUTES.SUPER_ADMIN_DASHBOARD, title: 'Dashboard' },
-];
-
-function resolveTitle(pathname, pageTitleOverride) {
-  if (pageTitleOverride) return pageTitleOverride;
-  const match = PAGE_TITLES.find((p) => pathname.startsWith(p.prefix));
-  return match?.title || SUPER_ADMIN_HEADER_TITLE;
+function resolveTitle() {
+  return HEADER_TITLE;
 }
 
 function isStaffActive(pathname) {
@@ -63,7 +51,7 @@ function isNavLinkActive(pathname, link) {
   return pathname === link.href || pathname.startsWith(`${link.href}/`);
 }
 
-export default function SuperAdminLayout({ children, pageTitle, compact = false }) {
+export default function SuperAdminLayout({ children, compact = false }) {
   const location = useLocation();
   const onProfilePage = location.pathname === ROUTES.SUPER_ADMIN_PROFILE;
 
@@ -72,11 +60,8 @@ export default function SuperAdminLayout({ children, pageTitle, compact = false 
       navLinks={NAV_LINKS}
       resolveTitle={resolveTitle}
       homeRoute={ROUTES.SUPER_ADMIN_DASHBOARD}
-      roleLabel="Super Admin"
-      roleLabelClassName="sa-role-label"
       layoutClassName="layout--super-admin"
-      defaultTitle={SUPER_ADMIN_HEADER_TITLE}
-      pageTitleOverride={pageTitle}
+      defaultTitle={HEADER_TITLE}
       compact={compact}
       isNavLinkActive={isNavLinkActive}
       showBell={false}

@@ -70,8 +70,6 @@ export default function NurseLayout({ children }) {
       navLinks={navLinks}
       resolveTitle={resolveLayoutTitle}
       homeRoute={ROUTES.NURSE_DASHBOARD}
-      roleLabel="Nursing"
-      roleLabelClassName="nurse-role-label"
       defaultTitle={NURSE_HEADER_TITLE}
       showBell
       profileHref={ROUTES.NURSE_PROFILE}

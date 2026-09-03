@@ -18,6 +18,7 @@ import { ROUTES } from '@/shared/constants';
 export default function SuperAdminDepartmentsListPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
 
   const queryFilters = useMemo(() => {
@@ -39,22 +40,30 @@ export default function SuperAdminDepartmentsListPage() {
   } = useDepartmentDoctorsData();
 
   const filtered = useMemo(() => {
+    let rows = departments ?? [];
+    if (typeFilter === 'lab') {
+      rows = rows.filter((dept) => isLabOrRadDepartment(dept));
+    } else if (typeFilter === 'doctor') {
+      rows = rows.filter((dept) => !isLabOrRadDepartment(dept));
+    }
     const term = search.trim().toLowerCase();
-    if (!term) return departments ?? [];
-    return (departments ?? []).filter(
+    if (!term) return rows;
+    return rows.filter(
       (dept) =>
         dept.name?.toLowerCase().includes(term)
         || (dept.code || '').toLowerCase().includes(term),
     );
-  }, [departments, search]);
+  }, [departments, search, typeFilter]);
 
-  const hasActiveFilters = Boolean(search.trim()) || statusFilter !== 'all';
+  const hasActiveFilters =
+    Boolean(search.trim()) || typeFilter !== 'all' || statusFilter !== 'all';
   const tableLoading = isLoading || doctorsLoading;
   const tableError = isError || doctorsError;
   const tableErrorObj = error || doctorsErrorObj;
 
   const resetFilters = () => {
     setSearch('');
+    setTypeFilter('all');
     setStatusFilter('all');
   };
 
@@ -64,8 +73,8 @@ export default function SuperAdminDepartmentsListPage() {
   };
 
   return (
-    <SuperAdminLayout pageTitle="Departments">
-      <div className="admin-page sa-dept-list-page">
+    <SuperAdminLayout compact>
+      <div className="admin-page sa-dept-list-page admin-page--compact">
         <SuperAdminPageHeader
           title="Departments"
           actions={(
@@ -77,11 +86,21 @@ export default function SuperAdminDepartmentsListPage() {
         />
 
         <div className="admin-card sa-panel-card admin-card--flat admin-datatable">
-          <div className="admin-datatable__toolbar admin-datatable__toolbar--2">
+          <div className="admin-datatable__toolbar">
             <SearchBar
               value={search}
               onChange={setSearch}
               placeholder="Search by name or code…"
+            />
+            <Select
+              value={typeFilter}
+              onChange={setTypeFilter}
+              options={[
+                { value: 'all', label: 'All types' },
+                { value: 'doctor', label: 'Doctor' },
+                { value: 'lab', label: 'Lab' },
+              ]}
+              placeholder="All types"
             />
             <Select
               value={statusFilter}
@@ -135,6 +154,7 @@ export default function SuperAdminDepartmentsListPage() {
                       <tr>
                         <th>Name</th>
                         <th>Code</th>
+                        <th>Type</th>
                         <th>Assigned</th>
                         <th>Status</th>
                         <th className="admin-table__actions">Actions</th>
@@ -145,6 +165,13 @@ export default function SuperAdminDepartmentsListPage() {
                         <tr key={dept.id}>
                           <td className="admin-table__primary">{dept.name}</td>
                           <td className="admin-table__muted">{dept.code || '—'}</td>
+                          <td>
+                            {isLabOrRadDepartment(dept) ? (
+                              <span className="sa-dept-type sa-dept-type--lab">Lab</span>
+                            ) : (
+                              <span className="sa-dept-type sa-dept-type--doctor">Doctor</span>
+                            )}
+                          </td>
                           <td>
                             <span className="sa-dept-list__doctor-count">
                               {isLabOrRadDepartment(dept)

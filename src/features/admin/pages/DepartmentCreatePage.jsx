@@ -1,26 +1,35 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Save } from 'lucide-react';
+import { ArrowLeft, Building2, Save } from 'lucide-react';
 import AdminLayout from '@/features/admin/components/AdminLayout';
-import AdminBackBar from '@/features/admin/components/AdminBackBar';
 import DepartmentForm, {
   buildDepartmentPayload,
   emptyDepartmentForm,
 } from '@/features/admin/components/DepartmentForm';
 import { useCreateDepartmentMutation } from '@/shared/hooks/queries/useAdminQuery';
-import { Button, QueryFeedback } from '@/shared/components/common';
+import { Button } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
+import { isLabOrRadCode } from '@/shared/utils/labDepartments';
 import { toast } from '@/shared/utils/toast';
 
 export default function DepartmentCreatePage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState(emptyDepartmentForm);
+  const [form, setForm] = useState(() => emptyDepartmentForm());
   const createMutation = useCreateDepartmentMutation();
+
+  useEffect(() => {
+    setForm(emptyDepartmentForm());
+  }, []);
+  const listRoute = ROUTES.ADMIN_DEPARTMENTS;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name.trim()) {
       toast.error('Department name is required');
+      return;
+    }
+    if (form.kind !== 'lab' && isLabOrRadCode(form.code)) {
+      toast.error('Choose Lab department for Laboratory or Radiology');
       return;
     }
 
@@ -31,7 +40,7 @@ export default function DepartmentCreatePage() {
       if (id) {
         navigate(ROUTES.ADMIN_DEPARTMENT_DETAIL.replace(':id', id));
       } else {
-        navigate('/admin/departments');
+        navigate(listRoute);
       }
     } catch (err) {
       toast.error(err?.message || 'Failed to create department');
@@ -39,28 +48,53 @@ export default function DepartmentCreatePage() {
   };
 
   return (
-    <AdminLayout pageTitle="New department">
-      <div className="admin-page">
-        <AdminBackBar onBack={() => navigate('/admin/departments')} />
+    <AdminLayout compact>
+      <div className="admin-page dept-create-page">
+        <div className="admin-card dept-create-shell">
+          <header className="dept-create-shell__toolbar">
+            <Button
+              type="button"
+              variant="ghost"
+              className="dept-create-back"
+              onClick={() => navigate(listRoute)}
+            >
+              <ArrowLeft size={16} aria-hidden />
+              Back
+            </Button>
+            <div className="dept-create-shell__title-wrap">
+              <span className="dept-create-shell__icon" aria-hidden>
+                <Building2 size={20} strokeWidth={2} />
+              </span>
+              <div>
+                <h1 className="dept-create-shell__title">Create department</h1>
+              </div>
+            </div>
+          </header>
 
-        <div className="admin-card admin-card--narrow">
-          <div className="admin-card__header">
-            <h2 className="admin-card__title">Create department</h2>
-            <p className="admin-card__desc">Add a new department to the hospital directory.</p>
-          </div>
-          <div className="admin-card__body">
-            <QueryFeedback isLoading={false} isError={false}>
-              <form onSubmit={handleSubmit} className="admin-form-grid">
-                <DepartmentForm form={form} onChange={setForm} idPrefix="create" />
-                <div className="admin-form-actions">
-                  <Button type="submit" disabled={createMutation.isPending}>
-                    {createMutation.isPending ? 'Creating…' : 'Create department'}
-                    <Save size={16} aria-hidden />
-                  </Button>
-                </div>
-              </form>
-            </QueryFeedback>
-          </div>
+          <form onSubmit={handleSubmit} className="dept-create-form" autoComplete="off">
+            <div className="dept-create-shell__body">
+              <DepartmentForm
+                form={form}
+                onChange={setForm}
+                showKind
+                hideDescription
+                idPrefix="new-dept"
+              />
+            </div>
+            <div className="dept-create-actions">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => navigate(listRoute)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createMutation.isPending}>
+                <Save size={16} aria-hidden />
+                {createMutation.isPending ? 'Creating…' : 'Create department'}
+              </Button>
+            </div>
+          </form>
         </div>
       </div>
     </AdminLayout>

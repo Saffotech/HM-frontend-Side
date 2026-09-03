@@ -76,17 +76,6 @@ function genderLabel(code) {
   return GENDER_OPTIONS.find((o) => o.value === code)?.label ?? null;
 }
 
-function fmtShift(shift) {
-  if (!shift) return null;
-  const name = shift.name || null;
-  const start = shift.start_time || null;
-  const end = shift.end_time || null;
-  if (start && end) {
-    return name ? `${name} · ${start} – ${end}` : `${start} – ${end}`;
-  }
-  return name;
-}
-
 /** Nurse Phase 2 by Atharva — relative “updated ago” for hero status */
 function formatUpdatedAgo(iso) {
   if (!iso) return null;
@@ -761,20 +750,16 @@ export default function LabProfilePage() {
                   <Shield size={16} aria-hidden /> Account
                 </h3>
                 <p className="lab-profile-hint">
-                  Employee ID, license number, department, and shift are managed by admin.
+                  Employee ID and department are managed by admin.
                 </p>
                 <div className="lab-profile-grid">
                   <ReadField label="First name" value={profile.first_name} />
                   <ReadField label="Last name" value={profile.last_name} />
                   <ReadField label="Email" value={profile.email} />
                   <ReadField label="Employee ID" value={profile.employee_id} />
-                  <ReadField label="License number" value={profile.license_number} />
                   <ReadField label="Joining date" value={profile.joining_date} />
                   <ReadField label="Department" value={departmentName} />
                   <ReadField label="Role" value={roleName} />
-                  <ReadField label="Shift" value={fmtShift(profile.shift)} />
-                  <ReadField label="Shift start" value={profile.shift?.start_time} />
-                  <ReadField label="Shift end" value={profile.shift?.end_time} />
                 </div>
               </section>
             )}
