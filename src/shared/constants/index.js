@@ -160,7 +160,6 @@ export const ROUTES = {
   IPD_PAYMENT_HISTORY: '/ipd/payment-history',
   IPD_DISCHARGE: '/ipd/discharge',
   IPD_DISCHARGE_ADMISSION: '/ipd/discharge/:admissionId',
-  IPD_INSURANCE_CLAIM_DETAIL: '/ipd/insurance-claim/view/:claimId',
   IPD_PRICING: '/ipd/pricing',
   IPD_PROFILE: '/ipd/profile',
   ADMIN_LOGIN: '/admin/login',

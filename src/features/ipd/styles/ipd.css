@@ -720,7 +720,12 @@
   font-size: 0.75rem;
 }
 
-.ipd-table--patients tbody tr:hover td {
+.ipd-table tbody tr.ipd-table__row--clickable {
+  cursor: pointer;
+}
+
+.ipd-table--patients tbody tr:hover td,
+.ipd-table--insurance tbody tr.ipd-table__row--clickable:hover td {
   background: #f8fafc;
 }
 
@@ -2124,6 +2129,10 @@
   padding: 0.35rem 0.65rem 0.5rem;
 }
 
+.ipd-table--dash-recent tbody tr.ipd-table__row--clickable:hover td {
+  background: #f8fafc;
+}
+
 .ipd-table--dash-recent th,
 .ipd-table--dash-recent td {
   padding: 0.32rem 0.55rem;
@@ -2944,7 +2953,12 @@
 }
 
 .ipd-ins-patient {
-  gap: 0.75rem;
+  gap: 0.65rem;
+}
+
+.ipd-ins-patient .ipd-page__header-middle {
+  display: flex;
+  align-items: center;
 }
 
 .ipd-ins-patient__header {
@@ -2959,12 +2973,13 @@
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  margin-top: 0.55rem;
 }
 
 .ipd-ins-patient__coverage-label {
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: #64748b;
 }
 
@@ -2999,13 +3014,24 @@
   padding: 0.45rem 0.35rem;
 }
 
-.ipd-ins-history-row--clickable:hover {
+.ipd-ins-history-row--card {
+  border: 1px solid var(--color-border, #e5e7eb);
   background: #f8fafc;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.65rem;
+}
+
+.ipd-ins-history-row--clickable:hover {
+  background: #f1f5f9;
 }
 
 .ipd-ins-history-row__main {
   min-width: 12rem;
   flex: 1 1 14rem;
+}
+
+.ipd-ins-history-row__main strong {
+  font-size: 0.9rem;
 }
 
 .ipd-ins-history-row__main .ipd-page__subtitle {
@@ -3019,6 +3045,13 @@
   font-size: 0.8125rem;
   font-weight: 600;
   color: #0f172a;
+}
+
+.ipd-ins-history-row__money em {
+  font-style: normal;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-right: 0.2rem;
 }
 
 .ipd-ins-pay-modal__grid {

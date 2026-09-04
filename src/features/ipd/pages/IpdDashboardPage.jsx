@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   BedDouble,
   Bed,
@@ -22,11 +22,18 @@ import IpdStatusBadge from "@/features/ipd/components/IpdStatusBadge";
 import { useIpdDashboardQuery } from "@/features/ipd/hooks/useIpdQuery";
 import { useIpdPermissionSet } from "@/features/ipd/hooks/useIpdPermission";
 import { formatIpdDateTime } from "@/features/ipd/utils/ipdFormat";
+import { resolveIpdPatientOpenPath } from "@/features/ipd/utils/ipdPaymentTypes";
 
 /** Matches backend `/ipd/dashboard` recent_admissions `.limit(8)`. */
 const RECENT_PAGE_SIZE = 8;
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
+
+function isInteractiveTableTarget(target) {
+  return Boolean(
+    target?.closest?.("a, button, input, select, textarea, label"),
+  );
+}
 
 /**
  * Each metric drills into the list it counts, pre-filtered to match the number
@@ -80,6 +87,7 @@ function buildStats(permissions) {
 }
 
 export default function IpdDashboardPage() {
+  const navigate = useNavigate();
   const { data, isLoading, isError, error, refetch } = useIpdDashboardQuery();
   const permissions = useIpdPermissionSet();
   const { canAdmit } = permissions;
@@ -215,17 +223,31 @@ export default function IpdDashboardPage() {
                         </td>
                       </tr>
                     ) : (
-                      pageRows.map((row) => (
-                        <tr key={row.id}>
+                      pageRows.map((row) => {
+                        const profilePath = resolveIpdPatientOpenPath(row);
+                        return (
+                        <tr
+                          key={row.id}
+                          className="ipd-table__row--clickable"
+                          tabIndex={profilePath ? 0 : undefined}
+                          onClick={(e) => {
+                            if (isInteractiveTableTarget(e.target)) return;
+                            if (profilePath) navigate(profilePath);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key !== "Enter") return;
+                            if (isInteractiveTableTarget(e.target)) return;
+                            e.currentTarget.click();
+                          }}
+                        >
                           <td>
-                            <Link
-                              to={ROUTES.IPD_PATIENT_DETAIL.replace(
-                                ":admissionId",
-                                String(row.id),
-                              )}
-                            >
-                              {row.admission_no || `#${row.id}`}
-                            </Link>
+                            {profilePath ? (
+                              <Link to={profilePath}>
+                                {row.admission_no || `#${row.id}`}
+                              </Link>
+                            ) : (
+                              row.admission_no || `#${row.id}`
+                            )}
                           </td>
                           <td>
                             <div className="ipd-dash-recent__patient">
@@ -242,15 +264,8 @@ export default function IpdDashboardPage() {
                           </td>
                           <td>
                             {row.doctor_name ||
-                              (row.status === "admitted" ? (
-                                <Link
-                                  to={ROUTES.IPD_PATIENT_DETAIL.replace(
-                                    ":admissionId",
-                                    String(row.id),
-                                  )}
-                                >
-                                  Assign doctor
-                                </Link>
+                              (row.status === "admitted" && profilePath ? (
+                                <Link to={profilePath}>Assign doctor</Link>
                               ) : (
                                 "—"
                               ))}
@@ -260,7 +275,8 @@ export default function IpdDashboardPage() {
                           </td>
                           <td>{formatIpdDateTime(row.admitted_at)}</td>
                         </tr>
-                      ))
+                        );
+                      })
                     )}
                   </tbody>
                 </table>

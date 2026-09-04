@@ -1,6 +1,7 @@
 /**
  * Care team on an IPD admission detail page.
- * Primary doctor stays on the admission; associated doctors come from care_team APIs.
+ * If no doctor was set at admit, the first assign becomes Primary via PUT admission.
+ * Extra doctors use care_team APIs.
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -11,6 +12,7 @@ import {
   useIpdDepartmentsQuery,
   useIpdDoctorsByDepartmentQuery,
   useRemoveIpdCareTeamDoctorMutation,
+  useUpdateIpdAdmissionMutation,
 } from '@/features/ipd/hooks/useIpdQuery';
 
 function memberKey(doctorId, doctorName) {
@@ -22,12 +24,24 @@ function memberKey(doctorId, doctorName) {
     .toLowerCase()}`;
 }
 
+function displayName(value) {
+  const name = String(value || '').trim();
+  if (!name || name === '—') return '';
+  return name;
+}
+
+function hasPrimaryDoctor(admission) {
+  const id = admission?.doctor_id;
+  if (id != null && String(id).trim() !== '') return true;
+  return Boolean(displayName(admission?.doctor_name));
+}
+
 function buildCareTeamMembers(admission, visits = [], careTeam = []) {
   const members = [];
   const seen = new Set();
 
   const primaryId = admission?.doctor_id != null ? String(admission.doctor_id) : '';
-  const primaryName = String(admission?.doctor_name || '').trim();
+  const primaryName = displayName(admission?.doctor_name);
   if (primaryId || primaryName) {
     const key = memberKey(primaryId, primaryName);
     seen.add(key);
@@ -44,7 +58,7 @@ function buildCareTeamMembers(admission, visits = [], careTeam = []) {
 
   for (const extra of careTeam) {
     const id = extra?.doctor_id != null ? String(extra.doctor_id) : '';
-    const name = String(extra?.doctor_name || '').trim();
+    const name = displayName(extra?.doctor_name);
     if (!id && !name) continue;
     const key = memberKey(id, name);
     if (seen.has(key)) continue;
@@ -62,7 +76,7 @@ function buildCareTeamMembers(admission, visits = [], careTeam = []) {
 
   for (const visit of visits) {
     const id = visit?.doctor_id != null ? String(visit.doctor_id) : '';
-    const name = String(visit?.doctor_name || '').trim();
+    const name = displayName(visit?.doctor_name);
     if (!id && !name) continue;
     const key = memberKey(id, name);
     if (seen.has(key)) continue;
@@ -106,7 +120,11 @@ export default function AdmissionCareTeamEditor({
   const doctorsQuery = useIpdDoctorsByDepartmentQuery(departmentId || null);
   const addMutation = useAddIpdCareTeamDoctorMutation();
   const removeMutation = useRemoveIpdCareTeamDoctorMutation();
-  const busy = addMutation.isPending || removeMutation.isPending;
+  const assignPrimaryMutation = useUpdateIpdAdmissionMutation();
+  const busy =
+    addMutation.isPending ||
+    removeMutation.isPending ||
+    assignPrimaryMutation.isPending;
 
   useEffect(() => {
     setDepartmentId('');
@@ -118,6 +136,7 @@ export default function AdmissionCareTeamEditor({
     () => buildCareTeamMembers(admission, visits, careTeam),
     [admission, visits, careTeam],
   );
+  const needsPrimary = !hasPrimaryDoctor(admission);
 
   if (!admission) return null;
 
@@ -130,7 +149,11 @@ export default function AdmissionCareTeamEditor({
     e.preventDefault();
     setError('');
     if (!departmentId || !doctorId || !selectedDoctor) {
-      setError('Select department and doctor to add.');
+      setError(
+        needsPrimary
+          ? 'Select department and doctor to assign as primary.'
+          : 'Select department and doctor to add.',
+      );
       return;
     }
 
@@ -144,6 +167,20 @@ export default function AdmissionCareTeamEditor({
     }
 
     try {
+      if (needsPrimary) {
+        await assignPrimaryMutation.mutateAsync({
+          admissionId: admission.id,
+          payload: {
+            doctor_id: Number(doctorId),
+            department_id: Number(departmentId),
+          },
+        });
+        setDepartmentId('');
+        setDoctorId('');
+        toast.success('Primary doctor assigned');
+        return;
+      }
+
       await addMutation.mutateAsync({
         admissionId: admission.id,
         payload: {
@@ -178,15 +215,18 @@ export default function AdmissionCareTeamEditor({
       <div className="ipd-care-team__meta">
         <span className="ipd-care-team__count">
           {members.length === 0
-            ? 'No doctors associated yet'
+            ? needsPrimary
+              ? 'No primary doctor assigned yet'
+              : 'No doctors associated yet'
             : `${members.length} doctor${members.length === 1 ? '' : 's'} associated`}
         </span>
       </div>
 
       {members.length === 0 ? (
         <p className="ipd-pd-muted">
-          The primary doctor stays as assigned at admit. Add more doctors below to
-          show everyone associated with this patient.
+          {needsPrimary
+            ? 'No doctor was assigned at admit. Assign a primary doctor below.'
+            : 'The primary doctor stays as assigned at admit. Add more doctors below to show everyone associated with this patient.'}
         </p>
       ) : (
         <div className="ipd-table-wrap ipd-care-team__table-wrap">
@@ -244,7 +284,7 @@ export default function AdmissionCareTeamEditor({
         <form className="ipd-care-team-form ipd-care-team-form--row" onSubmit={onAdd}>
           <div className="ipd-toolbar__field">
             <label className="ipd-toolbar__label" htmlFor="ipd-care-add-dept">
-              Add doctor — Department
+              {needsPrimary ? 'Assign primary — Department' : 'Add doctor — Department'}
             </label>
             <select
               id="ipd-care-add-dept"
@@ -303,7 +343,13 @@ export default function AdmissionCareTeamEditor({
               size="sm"
               disabled={!departmentId || !doctorId || busy}
             >
-              {addMutation.isPending ? 'Adding…' : 'Add doctor'}
+              {needsPrimary
+                ? assignPrimaryMutation.isPending
+                  ? 'Assigning…'
+                  : 'Assign primary'
+                : addMutation.isPending
+                  ? 'Adding…'
+                  : 'Add doctor'}
             </Button>
           </div>
           {error ? (

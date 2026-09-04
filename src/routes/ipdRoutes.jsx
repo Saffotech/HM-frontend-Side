@@ -15,7 +15,6 @@ const IpdBillPreviewPage = lazy(() => import('@/features/ipd/pages/IpdBillPrevie
 const IpdViewBillPage = lazy(() => import('@/features/ipd/pages/IpdViewBillPage'));
 const IpdPaymentHistoryPage = lazy(() => import('@/features/ipd/pages/IpdPaymentHistoryPage'));
 const IpdDischargePage = lazy(() => import('@/features/ipd/pages/IpdDischargePage'));
-const IpdInsuranceClaimDetailPage = lazy(() => import('@/features/ipd/pages/IpdInsuranceClaimDetailPage'));
 const IpdInsurancePatientPage = lazy(() => import('@/features/ipd/pages/IpdInsurancePatientPage'));
 const IpdInsuranceBillingPage = lazy(() => import('@/features/ipd/pages/IpdInsuranceBillingPage'));
 const IpdPricingPage = lazy(() => import('@/features/ipd/pages/IpdPricingPage'));
@@ -143,14 +142,6 @@ export const ipdRoutes = [
             element: (
               <LazyRoute>
                 <IpdDischargePage />
-              </LazyRoute>
-            ),
-          },
-          {
-            path: ROUTES.IPD_INSURANCE_CLAIM_DETAIL,
-            element: (
-              <LazyRoute>
-                <IpdInsuranceClaimDetailPage />
               </LazyRoute>
             ),
           },

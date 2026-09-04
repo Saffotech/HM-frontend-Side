@@ -4,7 +4,7 @@
  */
 
 import { useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button, DateInput, EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
@@ -35,6 +35,7 @@ import {
   paymentTypeQueryValue,
 } from '@/features/ipd/utils/ipdPaymentTypes';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
+import { toast } from '@/shared/utils/toast';
 
 const WARD_CHIP = {
   General: 'ipd-pl-chip--green',
@@ -67,6 +68,12 @@ function toIsoAdmissionDateParam(value) {
 
 function wardChipClass(ward) {
   return WARD_CHIP[ward] || 'ipd-pl-chip--slate';
+}
+
+function isInteractiveTableTarget(target) {
+  return Boolean(
+    target?.closest?.('a, button, input, select, textarea, label'),
+  );
 }
 
 function parseStayFilter(raw) {
@@ -237,12 +244,9 @@ export default function IpdPatientListPage() {
     stay === STAY_FILTER.COMPLETED || stay === STAY_FILTER.ALL;
   const showStatusColumn = stay !== STAY_FILTER.COMPLETED;
   const colSpan =
-    7 + (showStatusColumn ? 1 : 0) + (showDischargeDate ? 1 : 0);
+    6 + (showStatusColumn ? 1 : 0) + (showDischargeDate ? 1 : 0);
 
   const { wardOptions } = useIpdWardOptions();
-
-  const pathFor = (template, admissionId) =>
-    template.replace(':admissionId', String(admissionId));
 
   const onFilterChange = (setter, paramKey) => (e) => {
     const { value } = e.target;
@@ -482,7 +486,25 @@ export default function IpdPatientListPage() {
                         const admissionId = row.admissionId ?? null;
                         const canTransfer = canTransferBed && Boolean(admissionId);
                         return (
-                        <tr key={`${row.uhid}-${row.admissionId ?? row.claimId ?? row.id}`}>
+                        <tr
+                          key={`${row.uhid}-${row.admissionId ?? row.claimId ?? row.id}`}
+                          className="ipd-table__row--clickable"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            if (isInteractiveTableTarget(e.target)) return;
+                            const path = resolveIpdPatientOpenPath({
+                              ...row,
+                              payment_type: IPD_PAYMENT_TYPE.INSURANCE_CASHLESS,
+                              paymentType: IPD_PAYMENT_TYPE.INSURANCE_CASHLESS,
+                            });
+                            if (path) navigate(path);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key !== 'Enter') return;
+                            if (isInteractiveTableTarget(e.target)) return;
+                            e.currentTarget.click();
+                          }}
+                        >
                           <td>
                             <strong>{row.patientName}</strong>
                             <div className="ipd-ins-meta">{row.ageGender}</div>
@@ -602,7 +624,6 @@ export default function IpdPatientListPage() {
                       {showStatusColumn ? <th>Status</th> : null}
                       <th>Ward</th>
                       <th>Bed</th>
-                      <th>Doctor</th>
                       <th>Admission date</th>
                       {showDischargeDate ? <th>Discharge date</th> : null}
                       <th className="ipd-table__col-actions">Actions</th>
@@ -622,11 +643,27 @@ export default function IpdPatientListPage() {
                         return (
                           <tr
                             key={row.id}
-                            className={
+                            className={[
+                              'ipd-table__row--clickable',
                               admitted
                                 ? 'ipd-pl-row--admitted'
-                                : 'ipd-pl-row--discharged'
-                            }
+                                : 'ipd-pl-row--discharged',
+                            ].join(' ')}
+                            tabIndex={canViewPatient ? 0 : undefined}
+                            onClick={(e) => {
+                              if (isInteractiveTableTarget(e.target)) return;
+                              if (!canViewPatient) {
+                                toast.error('You do not have permission');
+                                return;
+                              }
+                              const path = resolveIpdPatientOpenPath(row);
+                              if (path) navigate(path);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key !== 'Enter') return;
+                              if (isInteractiveTableTarget(e.target)) return;
+                              e.currentTarget.click();
+                            }}
                           >
                             <td>
                               <strong>{row.patient_name || '—'}</strong>
@@ -659,19 +696,6 @@ export default function IpdPatientListPage() {
                               ) : (
                                 '—'
                               )}
-                            </td>
-                            <td>
-                              {row.doctor_name ||
-                                (admitted ? (
-                                  <Link
-                                    to={pathFor(ROUTES.IPD_PATIENT_DETAIL, row.id)}
-                                    className="ipd-pl-assign-link"
-                                  >
-                                    Assign doctor
-                                  </Link>
-                                ) : (
-                                  '—'
-                                ))}
                             </td>
                             <td className="ipd-pl-date">
                               {formatIpdDateTime(row.admitted_at)}

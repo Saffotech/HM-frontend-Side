@@ -262,7 +262,6 @@ export default function IpdPatientDetailPage() {
                         <th>Doctor</th>
                         <th>Visited</th>
                         <th>Charge</th>
-                        <th>Notes</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -271,7 +270,6 @@ export default function IpdPatientDetailPage() {
                           <td>{visit.doctor_name || '—'}</td>
                           <td>{formatIpdDateTime(visit.visited_at)}</td>
                           <td>{formatCurrency(visit.charge, { empty: '—' })}</td>
-                          <td>{visit.notes || '—'}</td>
                         </tr>
                       ))}
                     </tbody>
