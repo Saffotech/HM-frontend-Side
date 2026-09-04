@@ -6,7 +6,6 @@ import {
   Moon,
   Sun,
   Sunset,
-  UserRound,
 } from 'lucide-react';
 
 import NurseLayout from '@/features/nurse/components/NurseLayout';
@@ -22,22 +21,16 @@ function todayIso() {
   return `${y}-${m}-${day}`;
 }
 
-function isTodayIso(value) {
-  return Boolean(value) && String(value).slice(0, 10) === todayIso();
-}
-
 function formatDateShort(value) {
   if (!value) return '—';
-  if (isTodayIso(value)) return 'Today';
-  const d = new Date(`${value}T00:00:00`);
+  const d = new Date(`${String(value).slice(0, 10)}T00:00:00`);
   if (Number.isNaN(d.getTime())) return '—';
   return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
 }
 
 function formatDate(value) {
   if (!value) return '—';
-  if (isTodayIso(value)) return 'Today';
-  const d = new Date(`${value}T00:00:00`);
+  const d = new Date(`${String(value).slice(0, 10)}T00:00:00`);
   if (Number.isNaN(d.getTime())) return '—';
   return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
@@ -164,26 +157,26 @@ export default function NurseMyDutyPage() {
             aria-label="Current shift"
           >
             <div className="nurse-my-duty__hero-main">
-              <div className="nurse-my-duty__hero-topline">
-                <p className="nurse-my-duty__hero-label">
-                  <ShiftIcon tone={tone} size={14} />
-                  Current shift
+              <p className="nurse-my-duty__hero-label">
+                <ShiftIcon tone={tone} size={13} />
+                Current shift
+              </p>
+              <div className="nurse-my-duty__hero-shift">
+                <h2 className="nurse-my-duty__shift-name">{shiftName}</h2>
+                <p className="nurse-my-duty__shift-time">
+                  <Clock3 size={14} aria-hidden />
+                  {shiftTime}
                 </p>
               </div>
-              <h2 className="nurse-my-duty__shift-name">{shiftName}</h2>
-              <p className="nurse-my-duty__shift-time">
-                <Clock3 size={18} aria-hidden />
-                {shiftTime}
-              </p>
             </div>
 
             <div className="nurse-my-duty__hero-stats">
               <div className="nurse-my-duty__stat">
-                <span className="nurse-my-duty__stat-label">Roster period</span>
+                <span className="nurse-my-duty__stat-label">Roster</span>
                 <span className="nurse-my-duty__stat-value">{rosterLabel}</span>
               </div>
               <div className="nurse-my-duty__stat">
-                <span className="nurse-my-duty__stat-label">Beds allocated</span>
+                <span className="nurse-my-duty__stat-label">Beds</span>
                 <span className="nurse-my-duty__stat-value nurse-my-duty__stat-value--lg">
                   {myBeds.length}
                 </span>
@@ -209,66 +202,62 @@ export default function NurseMyDutyPage() {
                 </p>
               </div>
             ) : (
-              <div className="nurse-my-duty__beds">
-                {myBeds.map((bed) => {
-                  const until = formatAssignedUntil(bed.assigned_until);
-                  const occupied = Boolean(bed.is_occupied || bed.patient_name);
-                  return (
-                    <article
-                      key={bed.id ?? `${bed.ward_name}-${bed.bed_number}`}
-                      className={`nurse-my-duty__bed${
-                        occupied ? ' nurse-my-duty__bed--occupied' : ' nurse-my-duty__bed--vacant'
-                      }`}
-                    >
-                      <div className="nurse-my-duty__bed-top">
-                        <div className="nurse-my-duty__bed-id">
-                          <span className="nurse-my-duty__bed-icon">
-                            <BedDouble size={18} aria-hidden />
-                          </span>
-                          <div>
-                            <p className="nurse-my-duty__bed-number">{bed.bed_number || '—'}</p>
-                            <p className="nurse-my-duty__bed-ward">{bed.ward_name || 'Ward —'}</p>
-                          </div>
-                        </div>
-                        <span
-                          className={`nurse-my-duty__status ${
-                            occupied ? 'nurse-my-duty__status--occupied' : 'nurse-my-duty__status--vacant'
-                          }`}
+              <div className="nurse-my-duty__beds-wrap">
+                <table className="nurse-my-duty__beds-table">
+                  <thead>
+                    <tr>
+                      <th>Bed</th>
+                      <th>Ward</th>
+                      <th>Status</th>
+                      <th>Patient</th>
+                      <th>From</th>
+                      <th>Till</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {myBeds.map((bed) => {
+                      const until = formatAssignedUntil(bed.assigned_until);
+                      const occupied = Boolean(bed.is_occupied || bed.patient_name);
+                      return (
+                        <tr
+                          key={bed.id ?? `${bed.ward_name}-${bed.bed_number}`}
+                          className={
+                            occupied
+                              ? 'nurse-my-duty__bed-row--occupied'
+                              : 'nurse-my-duty__bed-row--vacant'
+                          }
                         >
-                          {occupied ? 'Occupied' : 'Vacant'}
-                        </span>
-                      </div>
-
-                      <div
-                        className={`nurse-my-duty__bed-patient${
-                          occupied ? '' : ' nurse-my-duty__bed-patient--empty'
-                        }`}
-                      >
-                        <UserRound size={14} aria-hidden />
-                        {occupied ? bed.patient_name : 'No patient on this bed'}
-                      </div>
-
-                      <div className="nurse-my-duty__bed-dates">
-                        <div className="nurse-my-duty__date-block">
-                          <span className="nurse-my-duty__date-label">Assigned from</span>
-                          <span className="nurse-my-duty__date-value">
-                            {formatDateShort(bed.assigned_from ?? bed.shift_date)}
-                          </span>
-                        </div>
-                        <div className="nurse-my-duty__date-block">
-                          <span className="nurse-my-duty__date-label">Assigned till</span>
-                          <span
-                            className={`nurse-my-duty__date-value${
-                              until.ongoing ? ' nurse-my-duty__date-value--ongoing' : ''
-                            }`}
+                          <td className="nurse-my-duty__bed-num">
+                            {bed.bed_number || '—'}
+                          </td>
+                          <td>{bed.ward_name || '—'}</td>
+                          <td>
+                            <span
+                              className={`nurse-my-duty__status ${
+                                occupied
+                                  ? 'nurse-my-duty__status--occupied'
+                                  : 'nurse-my-duty__status--vacant'
+                              }`}
+                            >
+                              {occupied ? 'Occupied' : 'Vacant'}
+                            </span>
+                          </td>
+                          <td className={occupied ? '' : 'nurse-my-duty__muted'}>
+                            {occupied ? bed.patient_name : '—'}
+                          </td>
+                          <td>{formatDateShort(bed.assigned_from ?? bed.shift_date)}</td>
+                          <td
+                            className={
+                              until.ongoing ? 'nurse-my-duty__date-value--ongoing' : ''
+                            }
                           >
                             {until.label}
-                          </span>
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
           </section>
@@ -304,10 +293,10 @@ export default function NurseMyDutyPage() {
                       <div className="nurse-my-duty__roster-body">
                         <p className="nurse-my-duty__roster-dates">
                           {formatDateRange(g.from_date, g.to_date)}
-                        </p>
-                        <p className="nurse-my-duty__roster-days">
-                          {days} day{days === 1 ? '' : 's'}
-                          {g.from_date ? ` · from ${formatDate(g.from_date)}` : ''}
+                          <span className="nurse-my-duty__roster-days">
+                            {days} day{days === 1 ? '' : 's'}
+                            {g.from_date ? ` · from ${formatDate(g.from_date)}` : ''}
+                          </span>
                         </p>
                       </div>
                       <div className="nurse-my-duty__roster-side">

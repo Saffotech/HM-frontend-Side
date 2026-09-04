@@ -96,7 +96,7 @@ export default function NurseWorkforceShiftsPage() {
                   <th>Grace</th>
                   <th>Color</th>
                   <th>Template</th>
-                  <th />
+                  <th className="admin-table__actions">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -111,10 +111,10 @@ export default function NurseWorkforceShiftsPage() {
                       <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 4, background: s.color }} />
                     </td>
                     <td>{s.is_template ? 'Yes' : 'No'}</td>
-                    <td>
+                    <td className="admin-table__actions">
                       {canDelete && (
                         <Button
-                          variant="ghost"
+                          variant="danger"
                           size="sm"
                           onClick={() =>
                             deleteMut.mutate(s.id, {

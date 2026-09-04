@@ -45,6 +45,7 @@ export default function PatientListPage() {
     search: debouncedSearch || undefined,
     page: useClientDateFilter ? undefined : serverPage,
     limit: pageSize,
+    keepPreviousData: !useClientDateFilter,
   });
 
   const patients = asPatientList(data);
@@ -62,16 +63,18 @@ export default function PatientListPage() {
 
   const { sorted, sortKey, sortDir, toggleSort } = useTableSort(filtered, 'name', 'asc');
   const clientPagination = usePagination(sorted, pageSize);
+  const payloadOverflowsPage = sorted.length > pageSize;
+  const paginateLocally = useClientDateFilter || payloadOverflowsPage;
 
-  const paginatedItems = useClientDateFilter
-    ? clientPagination.paginatedItems
-    : sorted;
-  const page = useClientDateFilter ? clientPagination.page : pageMeta.page;
-  const totalPages = useClientDateFilter ? clientPagination.totalPages : pageMeta.totalPages;
-  const totalItems = useClientDateFilter ? clientPagination.totalItems : pageMeta.total;
-  const goToPage = useClientDateFilter
-    ? clientPagination.goToPage
-    : (p) => setServerPage(p);
+  const paginatedItems = paginateLocally ? clientPagination.paginatedItems : sorted;
+  const page = paginateLocally ? clientPagination.page : pageMeta.page || 1;
+  const totalItems = paginateLocally
+    ? clientPagination.totalItems
+    : Number(pageMeta.total) > 0
+      ? pageMeta.total
+      : sorted.length;
+  const totalPages = Math.max(1, Math.ceil((totalItems || 0) / pageSize));
+  const goToPage = paginateLocally ? clientPagination.goToPage : (p) => setServerPage(p);
 
   useEffect(() => {
     if (useClientDateFilter) clientPagination.resetPage();
@@ -126,13 +129,15 @@ export default function PatientListPage() {
         </div>
 
         <DataTableShell
-          maxHeight="480px"
+          className="patients-page__table-shell"
           pagination={{
             page,
             totalPages,
             totalItems,
             pageSize,
             onPageChange: goToPage,
+            itemLabel: 'patients',
+            alwaysVisible: true,
           }}
         >
           <table className="data-table patients-table">
@@ -155,7 +160,7 @@ export default function PatientListPage() {
                 >
                   <td>
                     <div className="patient-cell">
-                      <Avatar name={p.name} />
+                      <Avatar name={p.name} size={32} />
                       <div className="patient-cell__meta">
                         <strong>{p.name}</strong>
                         <span className="id-badge">{p.id}</span>

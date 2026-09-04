@@ -11,31 +11,30 @@
 /** Extract list arrays from common backend pagination/wrapper shapes. */
 
 export function asList(payload) {
-
   if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== 'object') return [];
 
-  if (payload?.results) return payload.results;
+  const named = [
+    payload.results,
+    payload.patients,
+    payload.appointments,
+    payload.bills,
+    payload.payments,
+    payload.queue,
+    payload.beds,
+    payload.lab_tests,
+    payload.items,
+  ];
+  for (const candidate of named) {
+    if (Array.isArray(candidate)) return candidate;
+  }
 
-  if (payload?.data) return payload.data;
-
-  if (payload?.patients) return payload.patients;
-
-  if (payload?.appointments) return payload.appointments;
-
-  if (payload?.bills) return payload.bills;
-
-  if (payload?.payments) return payload.payments;
-
-  if (payload?.queue) return payload.queue;
-
-  if (payload?.beds) return payload.beds;
-
-  if (payload?.lab_tests) return payload.lab_tests;
-
-  if (payload?.items) return payload.items;
+  if (Array.isArray(payload.data)) return payload.data;
+  if (payload.data && typeof payload.data === 'object') {
+    return asList(payload.data);
+  }
 
   return [];
-
 }
 
 

@@ -13,7 +13,7 @@
 
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.05rem;
   max-width: 72rem;
 }
 
@@ -37,51 +37,43 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem 0.75rem;
-  margin-bottom: 0.75rem;
+  gap: 0.35rem 0.75rem;
+  margin-bottom: 0;
 }
 
 .nurse-my-duty__hero-topline .nurse-my-duty__hero-label {
   margin: 0;
 }
 
-/* Hero: current shift */
+/* Hero: current shift — compact strip */
 .nurse-my-duty__hero {
   position: relative;
   overflow: hidden;
-  display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(15rem, 0.85fr);
-  gap: 1.35rem;
-  padding: 1.5rem 1.6rem 1.5rem 1.75rem;
-  border-radius: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 1.25rem;
+  padding: 0.75rem 1rem 0.75rem 1.1rem;
+  border-radius: 12px;
   border: 1px solid var(--duty-green-border);
   background:
-    radial-gradient(ellipse 80% 70% at 100% 0%, rgba(47, 143, 87, 0.12), transparent 55%),
-    linear-gradient(145deg, #f4faf6 0%, #ffffff 48%, #ffffff 100%);
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 12px 28px rgba(26, 92, 52, 0.07);
+    radial-gradient(ellipse 80% 70% at 100% 0%, rgba(47, 143, 87, 0.1), transparent 55%),
+    linear-gradient(145deg, #f4faf6 0%, #ffffff 55%, #ffffff 100%);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .nurse-my-duty__hero::before {
   content: '';
   position: absolute;
   inset: 0 auto 0 0;
-  width: 5px;
+  width: 4px;
   background: linear-gradient(180deg, var(--duty-green), var(--duty-green-mid));
-  border-radius: 18px 0 0 18px;
+  border-radius: 12px 0 0 12px;
 }
 
 .nurse-my-duty__hero::after {
-  content: '';
-  position: absolute;
-  right: -2.5rem;
-  top: -2.5rem;
-  width: 10rem;
-  height: 10rem;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(26, 92, 52, 0.08), transparent 70%);
-  pointer-events: none;
+  display: none;
 }
 
 .nurse-my-duty__hero--morning {
@@ -90,8 +82,7 @@
     radial-gradient(ellipse 80% 70% at 100% 0%, rgba(245, 158, 11, 0.14), transparent 55%),
     linear-gradient(145deg, #fffbeb 0%, #ffffff 50%, #ffffff 100%);
   box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 12px 28px rgba(245, 158, 11, 0.1);
+    0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .nurse-my-duty__hero--morning::before {
@@ -104,8 +95,7 @@
     radial-gradient(ellipse 80% 70% at 100% 0%, rgba(59, 130, 246, 0.14), transparent 55%),
     linear-gradient(145deg, #eff6ff 0%, #ffffff 50%, #ffffff 100%);
   box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 12px 28px rgba(37, 99, 235, 0.1);
+    0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .nurse-my-duty__hero--evening::before {
@@ -118,8 +108,7 @@
     radial-gradient(ellipse 80% 70% at 100% 0%, rgba(99, 102, 241, 0.16), transparent 55%),
     linear-gradient(145deg, #eef2ff 0%, #ffffff 50%, #ffffff 100%);
   box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 12px 28px rgba(79, 70, 229, 0.1);
+    0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .nurse-my-duty__hero--night::before {
@@ -130,14 +119,24 @@
   position: relative;
   z-index: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.nurse-my-duty__hero-shift {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.85rem;
 }
 
 .nurse-my-duty__hero-label {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  margin: 0 0 0.65rem;
-  font-size: 0.6875rem;
+  gap: 0.3rem;
+  margin: 0;
+  font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -182,19 +181,19 @@
 
 .nurse-my-duty__shift-name {
   margin: 0;
-  font-size: clamp(1.85rem, 2.6vw, 2.35rem);
+  font-size: 1.15rem;
   font-weight: 800;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.02em;
   color: var(--duty-ink);
-  line-height: 1.08;
+  line-height: 1.15;
 }
 
 .nurse-my-duty__shift-time {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  margin: 0.6rem 0 0;
-  font-size: 1.125rem;
+  gap: 0.3rem;
+  margin: 0;
+  font-size: 0.875rem;
   font-weight: 650;
   color: #334155;
   font-variant-numeric: tabular-nums;
@@ -234,29 +233,29 @@
 .nurse-my-duty__hero-stats {
   position: relative;
   z-index: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  align-content: center;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
 }
 
 .nurse-my-duty__stat {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 0.35rem;
-  min-height: 5.25rem;
-  padding: 1rem 1.05rem;
-  border-radius: 14px;
+  gap: 0.1rem;
+  min-height: 0;
+  min-width: 0;
+  padding: 0.35rem 0.7rem;
+  border-radius: 8px;
   border: 1px solid rgba(226, 232, 240, 0.95);
   background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(8px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  min-width: 0;
+  backdrop-filter: none;
+  box-shadow: none;
 }
 
 .nurse-my-duty__stat-label {
-  font-size: 0.6875rem;
+  font-size: 0.5625rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -264,7 +263,7 @@
 }
 
 .nurse-my-duty__stat-value {
-  font-size: 1.0625rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   color: var(--duty-ink);
   line-height: 1.25;
@@ -272,8 +271,8 @@
 }
 
 .nurse-my-duty__stat-value--lg {
-  font-size: 2rem;
-  letter-spacing: -0.03em;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
   color: var(--duty-green);
 }
@@ -294,9 +293,9 @@
 .nurse-my-duty__section {
   display: flex;
   flex-direction: column;
-  gap: 0.95rem;
-  padding: 1.15rem 1.2rem 1.25rem;
-  border-radius: 16px;
+  gap: 0.85rem;
+  padding: 0.95rem 1.05rem 1.05rem;
+  border-radius: 12px;
   border: 1px solid var(--duty-line);
   background: var(--duty-surface);
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.035);
@@ -307,16 +306,16 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem 1rem;
-  padding-bottom: 0.15rem;
+  gap: 0.35rem 0.75rem;
+  padding-bottom: 0;
 }
 
 .nurse-my-duty__section-title {
   margin: 0;
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
-  font-size: 1.0625rem;
+  gap: 0.4rem;
+  font-size: 0.9375rem;
   font-weight: 750;
   letter-spacing: -0.01em;
   color: var(--duty-ink);
@@ -347,133 +346,72 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Bed cards — horizontal row */
-.nurse-my-duty__beds {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-items: stretch;
-  gap: 0.9rem;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 0.15rem 0.1rem 0.65rem;
-  margin: 0 -0.1rem;
-  scroll-snap-type: x proximity;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: var(--duty-green-border) transparent;
-}
-
-.nurse-my-duty__beds::-webkit-scrollbar {
-  height: 6px;
-}
-
-.nurse-my-duty__beds::-webkit-scrollbar-thumb {
-  background: var(--duty-green-border);
-  border-radius: 999px;
-}
-
-.nurse-my-duty__beds::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.nurse-my-duty__bed {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  flex: 0 0 280px;
-  width: 280px;
-  max-width: 85vw;
-  padding: 1.05rem 1.1rem 1.05rem 1.15rem;
-  border-radius: 14px;
+/* Beds — dense table so 20–30 assignments stay scannable */
+.nurse-my-duty__beds-wrap {
+  overflow: auto;
+  max-height: 22.5rem;
   border: 1px solid var(--duty-line);
-  background: linear-gradient(180deg, #ffffff 0%, #fcfdfd 100%);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-  overflow: hidden;
-  scroll-snap-align: start;
-  transition:
-    border-color 0.18s ease,
-    box-shadow 0.18s ease,
-    transform 0.18s ease;
+  border-radius: 10px;
 }
 
-.nurse-my-duty__bed::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  background: #cbd5e1;
+.nurse-my-duty__beds-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
 }
 
-.nurse-my-duty__bed--occupied::before {
-  background: linear-gradient(180deg, #10b981, #047857);
+.nurse-my-duty__beds-table th,
+.nurse-my-duty__beds-table td {
+  padding: 0.38rem 0.65rem;
+  text-align: left;
+  white-space: nowrap;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
 }
 
-.nurse-my-duty__bed--vacant::before {
-  background: #cbd5e1;
+.nurse-my-duty__beds-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  font-size: 0.625rem;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--duty-muted);
+  background: #f8fafc;
 }
 
-.nurse-my-duty__bed:hover {
-  border-color: var(--duty-green-border);
-  box-shadow: 0 8px 20px rgba(26, 92, 52, 0.09);
-  transform: translateY(-1px);
+.nurse-my-duty__beds-table tbody tr:last-child td {
+  border-bottom: 0;
 }
 
-.nurse-my-duty__bed-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
+.nurse-my-duty__beds-table tbody tr:hover td {
+  background: #f8fafc;
 }
 
-.nurse-my-duty__bed-id {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  min-width: 0;
+.nurse-my-duty__bed-row--occupied td:first-child {
+  box-shadow: inset 3px 0 0 #10b981;
 }
 
-.nurse-my-duty__bed-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 12px;
-  background: var(--duty-green-soft);
-  color: var(--duty-green);
-  flex-shrink: 0;
-  box-shadow: inset 0 0 0 1px rgba(26, 92, 52, 0.06);
+.nurse-my-duty__bed-row--vacant td:first-child {
+  box-shadow: inset 3px 0 0 #cbd5e1;
 }
 
-.nurse-my-duty__bed--vacant .nurse-my-duty__bed-icon {
-  background: #f1f5f9;
-  color: #64748b;
-  box-shadow: none;
-}
-
-.nurse-my-duty__bed-number {
-  margin: 0;
-  font-size: 1.0625rem;
+.nurse-my-duty__bed-num {
   font-weight: 750;
   color: var(--duty-ink);
-  line-height: 1.2;
-  letter-spacing: -0.01em;
 }
 
-.nurse-my-duty__bed-ward {
-  margin: 0.2rem 0 0;
-  font-size: 0.8125rem;
-  color: var(--duty-muted);
+.nurse-my-duty__muted {
+  color: #94a3b8;
 }
 
 .nurse-my-duty__status {
   display: inline-flex;
   align-items: center;
-  padding: 0.25rem 0.6rem;
+  padding: 0.12rem 0.4rem;
   border-radius: 999px;
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   font-weight: 750;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -492,86 +430,9 @@
   border: 1px solid var(--duty-line);
 }
 
-.nurse-my-duty__bed-patient {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-height: 2.35rem;
-  padding: 0.55rem 0.7rem;
-  border-radius: 10px;
-  background: #f3faf6;
-  border: 1px solid #e2f0e8;
-  font-size: 0.875rem;
-  font-weight: 550;
-  color: #334155;
-}
-
-.nurse-my-duty__bed-patient svg {
-  color: var(--duty-green-mid);
-  flex-shrink: 0;
-}
-
-.nurse-my-duty__bed-patient--empty {
-  background: var(--duty-wash);
-  border-color: #eef2f7;
-  color: #94a3b8;
-  font-style: italic;
-  font-weight: 500;
-}
-
-.nurse-my-duty__bed-patient--empty svg {
-  color: #94a3b8;
-}
-
-.nurse-my-duty__bed-dates {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
-  padding-top: 0.2rem;
-  border-top: 1px solid #f1f5f9;
-}
-
-.nurse-my-duty__date-block {
-  min-width: 0;
-  padding: 0.35rem 0.15rem 0;
-}
-
-.nurse-my-duty__date-label {
-  display: block;
-  margin-bottom: 0.25rem;
-  font-size: 0.625rem;
-  font-weight: 750;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: #94a3b8;
-}
-
-.nurse-my-duty__date-value {
-  font-size: 0.875rem;
-  font-weight: 650;
-  color: var(--duty-ink);
-  font-variant-numeric: tabular-nums;
-}
-
 .nurse-my-duty__date-value--ongoing {
   color: var(--duty-green);
-}
-
-.nurse-my-duty__bed-shift {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  align-self: flex-start;
-  padding: 0.3rem 0.55rem;
-  border-radius: 8px;
-  background: var(--duty-wash);
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #475569;
-}
-
-.nurse-my-duty__bed-shift svg {
-  color: var(--duty-green);
+  font-weight: 650;
 }
 
 /* Empty / roster */
@@ -580,9 +441,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 2.25rem 1.35rem;
-  border-radius: 14px;
+  gap: 0.35rem;
+  padding: 1.1rem 1rem;
+  border-radius: 10px;
   border: 1px dashed #cbd5e1;
   background:
     radial-gradient(ellipse at top, rgba(232, 242, 236, 0.7), transparent 60%),
@@ -613,7 +474,7 @@
 .nurse-my-duty__roster {
   display: flex;
   flex-direction: column;
-  border-radius: 14px;
+  border-radius: 10px;
   border: 1px solid var(--duty-line);
   background: var(--duty-surface);
   overflow: hidden;
@@ -622,9 +483,9 @@
 .nurse-my-duty__roster-row {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 0.9rem 1.1rem;
+  gap: 0.55rem 0.85rem;
   align-items: center;
-  padding: 1rem 1.15rem;
+  padding: 0.52rem 0.85rem;
   border-bottom: 1px solid #f1f5f9;
   transition: background 0.15s ease;
 }
@@ -638,26 +499,26 @@
 }
 
 .nurse-my-duty__roster-accent {
-  width: 0.4rem;
-  height: 2.6rem;
+  width: 0.28rem;
+  height: 1.55rem;
   border-radius: 999px;
   background: #94a3b8;
-  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.12);
+  box-shadow: none;
 }
 
 .nurse-my-duty__roster-accent--morning {
   background: linear-gradient(180deg, #f59e0b, #ea580c);
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12);
+  box-shadow: none;
 }
 
 .nurse-my-duty__roster-accent--evening {
   background: linear-gradient(180deg, #3b82f6, #1d4ed8);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  box-shadow: none;
 }
 
 .nurse-my-duty__roster-accent--night {
   background: linear-gradient(180deg, #6366f1, #312e81);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  box-shadow: none;
 }
 
 .nurse-my-duty__roster-body {
@@ -666,32 +527,37 @@
 
 .nurse-my-duty__roster-dates {
   margin: 0;
-  font-size: 0.9375rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.55rem;
+  font-size: 0.8125rem;
   font-weight: 750;
   letter-spacing: -0.01em;
   color: var(--duty-ink);
 }
 
 .nurse-my-duty__roster-days {
-  margin: 0.25rem 0 0;
-  font-size: 0.75rem;
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 500;
   color: var(--duty-muted);
 }
 
 .nurse-my-duty__roster-side {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.4rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.45rem;
   text-align: right;
 }
 
 .nurse-my-duty__shift-badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.25rem 0.6rem;
+  padding: 0.1rem 0.45rem;
   border-radius: 999px;
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   font-weight: 750;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -722,7 +588,7 @@
 }
 
 .nurse-my-duty__roster-time {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 650;
   color: #475569;
   font-variant-numeric: tabular-nums;
@@ -730,50 +596,35 @@
 
 @media (max-width: 860px) {
   .nurse-my-duty__hero {
-    grid-template-columns: 1fr;
-    padding: 1.35rem 1.25rem 1.35rem 1.4rem;
-  }
-
-  .nurse-my-duty__hero-stats {
-    grid-template-columns: 1fr 1fr;
+    padding: 0.6rem 0.75rem 0.6rem 0.85rem;
   }
 
   .nurse-my-duty__section {
-    padding: 1rem;
+    padding: 0.85rem;
   }
 }
 
 @media (max-width: 520px) {
   .nurse-my-duty {
-    gap: 1.15rem;
+    gap: 0.75rem;
   }
 
   .nurse-my-duty__hero {
-    padding: 1.15rem 1rem 1.15rem 1.15rem;
-    border-radius: 14px;
+    padding: 0.55rem 0.7rem 0.55rem 0.8rem;
+    border-radius: 10px;
   }
 
   .nurse-my-duty__shift-name {
-    font-size: 1.65rem;
-  }
-
-  .nurse-my-duty__hero-stats,
-  .nurse-my-duty__bed-dates {
-    grid-template-columns: 1fr;
+    font-size: 1.05rem;
   }
 
   .nurse-my-duty__stat {
     min-height: 0;
   }
 
-  .nurse-my-duty__bed {
-    flex-basis: 260px;
-    width: 260px;
-  }
-
   .nurse-my-duty__roster-row {
     grid-template-columns: auto minmax(0, 1fr);
-    padding: 0.9rem 0.95rem;
+    padding: 0.45rem 0.7rem;
   }
 
   .nurse-my-duty__roster-side {
@@ -782,15 +633,5 @@
     align-items: center;
     justify-content: flex-start;
     flex-wrap: wrap;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .nurse-my-duty__bed {
-    transition: none;
-  }
-
-  .nurse-my-duty__bed:hover {
-    transform: none;
   }
 }
