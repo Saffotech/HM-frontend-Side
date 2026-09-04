@@ -18,6 +18,8 @@ import {
   getIpdDoctorsByDepartment,
   createIpdAdmission,
   updateIpdAdmission,
+  addIpdCareTeamDoctor,
+  removeIpdCareTeamDoctor,
   getIpdBeds,
   getIpdWardStats,
   transferIpdBed,
@@ -284,6 +286,41 @@ export function useUpdateIpdAdmissionMutation() {
           queryKey: queryKeys.ipd.billPreview(variables.admissionId),
         });
       }
+    },
+    onError: mutationOnError,
+  });
+}
+
+function invalidateAfterCareTeamChange(queryClient, admissionId) {
+  notifyDoctorIpdChange(queryClient);
+  if (admissionId) {
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.ipd.admission(admissionId),
+    });
+  }
+}
+
+export function useAddIpdCareTeamDoctorMutation() {
+  const token = useQueryToken();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ admissionId, payload }) =>
+      addIpdCareTeamDoctor(admissionId, payload, token),
+    onSuccess: (_data, variables) => {
+      invalidateAfterCareTeamChange(queryClient, variables?.admissionId);
+    },
+    onError: mutationOnError,
+  });
+}
+
+export function useRemoveIpdCareTeamDoctorMutation() {
+  const token = useQueryToken();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ admissionId, doctorId }) =>
+      removeIpdCareTeamDoctor(admissionId, doctorId, token),
+    onSuccess: (_data, variables) => {
+      invalidateAfterCareTeamChange(queryClient, variables?.admissionId);
     },
     onError: mutationOnError,
   });

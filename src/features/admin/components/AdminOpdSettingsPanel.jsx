@@ -365,7 +365,7 @@ export default function AdminOpdSettingsPanel({ manageAdminEditLocks = false }) 
     <div className="aos-page">
       <div className="aos-page__intro">
         <div>
-          <h2 className="admin-card__title">OPD settings</h2>
+          <h2 className="admin-card__title">OPD/IPD settings</h2>
         </div>
         {sourceLabel ? <span className="aos-source-pill">{sourceLabel}</span> : null}
       </div>

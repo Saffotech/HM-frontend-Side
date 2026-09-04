@@ -22,7 +22,7 @@ import {
   useUpdateBedAllocationMutation,
 } from '@/shared/hooks/queries/useAdminQuery';
 import { useBedsQuery } from '@/shared/hooks/queries/useBedsQuery';
-import { Button, QueryFeedback, Select } from '@/shared/components/common';
+import { Button, DateInput, QueryFeedback, Select } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import {
   SHIFT_OPTIONS,
@@ -354,16 +354,14 @@ export default function NurseBedAllocationEditPage() {
                     </div>
                   </header>
                   <div className="nba-edit-grid">
-                    <label className="nba-field">
-                      <span>Shift date *</span>
-                      <input
-                        type="date"
-                        className="nba-input"
+                    <div className="nba-field">
+                      <DateInput
+                        label="Shift date"
+                        required
                         value={shiftDate}
                         onChange={(e) => setShiftDate(e.target.value)}
-                        required
                       />
-                    </label>
+                    </div>
                     <label className="nba-field">
                       <span>Shift *</span>
                       <Select

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Pencil, Plus, RotateCcw, UserX } from 'lucide-react';
+import { Eye, Plus, RotateCcw, UserX } from 'lucide-react';
 import AdminLayout from '@/features/admin/components/AdminLayout';
 import AdminEmptyState from '@/features/admin/components/AdminEmptyState';
 import AdminAllocationStatusBadge from '@/features/admin/components/AdminAllocationStatusBadge';
@@ -15,6 +15,7 @@ import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import {
   Button,
   ConfirmDialog,
+  DateInput,
   Modal,
   QueryFeedback,
   SearchBar,
@@ -25,9 +26,7 @@ import { ROUTES } from '@/shared/constants';
 import {
   SHIFT_OPTIONS,
   formatAllocationDate,
-  formatAllocationDateTime,
   formatAssignedUntil,
-  formatShiftWithTime,
   groupAllocationListItems,
 } from '@/shared/api/mappers/adminBedAllocationMapper';
 import { toast } from '@/shared/utils/toast';
@@ -169,15 +168,14 @@ export default function NurseBedAllocationListPage() {
               }}
               placeholder="Search nurse, bed, ward, allocation ID…"
             />
-            <input
-              type="date"
-              className="nba-input"
+            <DateInput
+              aria-label="Filter by date"
               value={shiftDate}
               onChange={(e) => {
                 setShiftDate(e.target.value);
                 setPage(1);
               }}
-              aria-label="Filter by date"
+              className="nba-toolbar-date"
             />
             <Select
               value={shiftName}
@@ -259,7 +257,6 @@ export default function NurseBedAllocationListPage() {
                         <th>Assigned From</th>
                         <th>Assigned Until</th>
                         <th>Allocated Beds</th>
-                        <th>Total Beds</th>
                         <th>Status</th>
                         <th>Assigned By</th>
                         <th>Created</th>
@@ -270,9 +267,7 @@ export default function NurseBedAllocationListPage() {
                       {items.map((row) => (
                         <tr key={`${row.nurseId}-${row.isActive ? 'a' : 'i'}-${row.id}`}>
                           <td>{row.nurseName}</td>
-                          <td>
-                            {formatShiftWithTime(row.shiftName, row.shiftStart, row.shiftEnd)}
-                          </td>
+                          <td>{row.shiftName || '—'}</td>
                           <td>{formatAllocationDate(row.shiftDate)}</td>
                           <td>{formatAssignedUntil(row.assignedUntil, row.isActive)}</td>
                           <td>
@@ -300,12 +295,11 @@ export default function NurseBedAllocationListPage() {
                               View beds
                             </Button>
                           </td>
-                          <td>{row.totalBeds}</td>
                           <td>
                             <AdminAllocationStatusBadge isActive={row.isActive} />
                           </td>
                           <td>{row.assignedByName}</td>
-                          <td>{formatAllocationDateTime(row.createdAt)}</td>
+                          <td>{formatAllocationDate(row.createdAt)}</td>
                           <td className="nba-td-actions">
                             <div className="nba-table__actions">
                               <Button
@@ -324,24 +318,6 @@ export default function NurseBedAllocationListPage() {
                                 <Eye size={14} aria-hidden />
                                 View
                               </Button>
-                              {canUpdate && (
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="warning"
-                                  onClick={() =>
-                                    navigate(
-                                      ROUTES.ADMIN_BED_ALLOCATION_EDIT.replace(
-                                        ':id',
-                                        String(row.id),
-                                      ),
-                                    )
-                                  }
-                                >
-                                  <Pencil size={14} aria-hidden />
-                                  Edit
-                                </Button>
-                              )}
                               {canUpdate && row.isActive && (
                                 <Button
                                   type="button"

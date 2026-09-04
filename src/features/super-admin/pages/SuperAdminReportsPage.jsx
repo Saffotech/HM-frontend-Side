@@ -16,6 +16,8 @@ import SuperAdminLayout from '@/features/super-admin/components/SuperAdminLayout
 import {
   defaultReportDateRange,
   formatReportDate,
+  scopeReportsOverview,
+  scopeReportsVisits,
 } from '@/features/admin/utils/reportUtils';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
 import {
@@ -33,6 +35,45 @@ import {
 import { formatRoleLabel } from '@/features/super-admin/utils/permissionPresentation';
 
 const PAGE_SIZE = 20;
+
+const SOURCE_OPTIONS = [
+  { value: 'all', label: 'All' },
+  { value: 'opd', label: 'OPD' },
+  { value: 'ipd', label: 'IPD' },
+];
+
+const SOURCE_COPY = {
+  all: {
+    volumeLabel: 'Encounters',
+    volumeHint: 'completed',
+    ledgerTitle: 'Encounter ledger',
+    ledgerItem: 'encounters',
+    ledgerEmpty: 'No encounters match the current filters.',
+    deptTitle: 'Encounters by department',
+    deptEmpty: 'No department encounters in this period.',
+    stripLabel: 'encounters in table',
+  },
+  opd: {
+    volumeLabel: 'Total visits',
+    volumeHint: 'completed',
+    ledgerTitle: 'Visit ledger',
+    ledgerItem: 'visits',
+    ledgerEmpty: 'No visits match the current filters.',
+    deptTitle: 'Visits by department',
+    deptEmpty: 'No department visits in this period.',
+    stripLabel: 'visits in table',
+  },
+  ipd: {
+    volumeLabel: 'Admissions',
+    volumeHint: 'discharged',
+    ledgerTitle: 'IPD ledger',
+    ledgerItem: 'admissions',
+    ledgerEmpty: 'No admissions match the current filters.',
+    deptTitle: 'Admissions by department',
+    deptEmpty: 'No department admissions in this period.',
+    stripLabel: 'admissions in table',
+  },
+};
 
 const ROLE_BAR_TONES = {
   super_admin: '#1A5C34',
@@ -67,6 +108,25 @@ function PaymentStatusBadge({ status }) {
   );
 }
 
+function SourceBadge({ source }) {
+  const normalized = String(source || 'opd').toLowerCase() === 'ipd' ? 'ipd' : 'opd';
+  return (
+    <span className={`sa-reports-status sa-reports-status--${normalized}`}>
+      {normalized.toUpperCase()}
+    </span>
+  );
+}
+
+function ledgerRowKey(row, index) {
+  const source = String(row?.source || 'opd').toLowerCase();
+  const id = row?.visit_id ?? row?.admission_id ?? row?.bill_id ?? index;
+  return `${source}-${id}`;
+}
+
+function ledgerRowSource(row) {
+  return String(row?.source || 'opd').toLowerCase() === 'ipd' ? 'ipd' : 'opd';
+}
+
 function KpiCard({ label, value, hint, icon: Icon, tone = 'default' }) {
   return (
     <article className={`sa-reports-kpi-card sa-reports-kpi-card--${tone}`}>
@@ -96,31 +156,38 @@ function InsightPanel({ title, subtitle, children, className = '' }) {
 
 export default function SuperAdminReportsPage() {
   const [range, setRange] = useState(defaultReportDateRange);
+  const [source, setSource] = useState('all');
   const [departmentId, setDepartmentId] = useState('all');
   const [page, setPage] = useState(1);
 
   const dashboardQuery = useAdminDashboardQuery();
   const departmentsQuery = useAdminDepartmentsQuery();
+  const copy = SOURCE_COPY[source] || SOURCE_COPY.all;
 
   useEffect(() => {
     setPage(1);
-  }, [range.from_date, range.to_date, departmentId]);
+  }, [range.from_date, range.to_date, departmentId, source]);
 
-  const reportFilters = useMemo(() => {
+  const overviewFilters = useMemo(() => {
     const params = {
       from_date: range.from_date,
       to_date: range.to_date,
-      page,
-      limit: PAGE_SIZE,
+      source,
     };
     if (departmentId !== 'all') params.department_id = Number(departmentId);
     return params;
-  }, [range.from_date, range.to_date, departmentId, page]);
+  }, [range.from_date, range.to_date, source, departmentId]);
 
-  const overviewQuery = useAdminReportsOverviewQuery({
-    from_date: range.from_date,
-    to_date: range.to_date,
-  });
+  const reportFilters = useMemo(
+    () => ({
+      ...overviewFilters,
+      page,
+      limit: PAGE_SIZE,
+    }),
+    [overviewFilters, page],
+  );
+
+  const overviewQuery = useAdminReportsOverviewQuery(overviewFilters);
   const visitsQuery = useAdminReportsVisitsQuery(reportFilters);
 
   const isLoading = overviewQuery.isLoading || visitsQuery.isLoading;
@@ -128,9 +195,16 @@ export default function SuperAdminReportsPage() {
   const error = overviewQuery.error || visitsQuery.error;
 
   const dashboard = dashboardQuery.data;
-  const overview = overviewQuery.data;
-  const visits = visitsQuery.data?.visits ?? [];
-  const visitsTotal = visitsQuery.data?.total ?? 0;
+  const overview = useMemo(
+    () => scopeReportsOverview(overviewQuery.data, source),
+    [overviewQuery.data, source],
+  );
+  const scopedVisits = useMemo(
+    () => scopeReportsVisits(visitsQuery.data, source),
+    [visitsQuery.data, source],
+  );
+  const visits = scopedVisits.visits;
+  const visitsTotal = scopedVisits.total;
   const totalPages = Math.max(1, Math.ceil(visitsTotal / PAGE_SIZE));
   const departments = departmentsQuery.data;
 
@@ -176,6 +250,7 @@ export default function SuperAdminReportsPage() {
 
   const resetFilters = () => {
     setRange(defaultReportDateRange());
+    setSource('all');
     setDepartmentId('all');
     setPage(1);
   };
@@ -214,6 +289,13 @@ export default function SuperAdminReportsPage() {
               className="sa-reports-toolbar__date"
             />
             <Select
+              label="Source"
+              value={source}
+              onChange={setSource}
+              options={SOURCE_OPTIONS}
+              className="sa-reports-toolbar__source"
+            />
+            <Select
               label="Department"
               value={departmentId}
               onChange={setDepartmentId}
@@ -225,9 +307,6 @@ export default function SuperAdminReportsPage() {
               Reset
             </button>
           </div>
-          <p className="sa-reports-toolbar__note" role="note">
-            Department filter applies to the visit ledger only.
-          </p>
         </div>
 
         <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
@@ -237,14 +316,17 @@ export default function SuperAdminReportsPage() {
               icon={IndianRupee}
               label="Collected revenue"
               value={formatCurrency(overview?.collected_revenue ?? 0)}
-              hint={`${formatCurrency(overview?.outstanding_revenue ?? 0)} outstanding`}
             />
             <KpiCard
               tone="visits"
               icon={Activity}
-              label="Total visits"
+              label={copy.volumeLabel}
               value={overview?.total_visits?.toLocaleString() ?? '0'}
-              hint={`${overview?.completed_visits ?? 0} completed · ${completionRate}`}
+              hint={
+                overview?.total_visits
+                  ? `${overview?.completed_visits ?? 0} ${copy.volumeHint} · ${completionRate}`
+                  : null
+              }
             />
             <KpiCard
               tone="patients"
@@ -258,7 +340,6 @@ export default function SuperAdminReportsPage() {
               icon={Wallet}
               label="Pending payments"
               value={overview?.pending_payments?.toLocaleString() ?? '0'}
-              hint={`Billed ${formatCurrency(overview?.total_revenue ?? 0)}`}
             />
           </section>
 
@@ -292,7 +373,7 @@ export default function SuperAdminReportsPage() {
               <span>
                 <strong>{visitsTotal.toLocaleString()}</strong>
                 {' '}
-                visits in table
+                {copy.stripLabel}
               </span>
             </div>
           </section>
@@ -330,12 +411,12 @@ export default function SuperAdminReportsPage() {
             </InsightPanel>
 
             <InsightPanel
-              title="Visits by department"
+              title={copy.deptTitle}
               subtitle="Volume in selected period"
               className="sa-reports-insights__departments"
             >
               {!visitsByDepartment.length ? (
-                <p className="sa-reports-empty">No department visits in this period.</p>
+                <p className="sa-reports-empty">{copy.deptEmpty}</p>
               ) : (
                 <ul className="sa-reports-dept-list">
                   {visitsByDepartment.slice(0, 8).map((row) => {
@@ -392,12 +473,12 @@ export default function SuperAdminReportsPage() {
           </div>
 
           <InsightPanel
-            title="Visit ledger"
-            subtitle={`${visitsTotal.toLocaleString()} visits · filtered results`}
+            title={copy.ledgerTitle}
+            subtitle={`${visitsTotal.toLocaleString()} ${copy.ledgerItem} · filtered results`}
             className="sa-reports-visits"
           >
             {!visits.length ? (
-              <p className="sa-reports-empty">No visits match the current filters.</p>
+              <p className="sa-reports-empty">{copy.ledgerEmpty}</p>
             ) : (
               <>
                 <div className="sa-reports-table-wrap">
@@ -405,6 +486,7 @@ export default function SuperAdminReportsPage() {
                     <thead>
                       <tr>
                         <th>Date</th>
+                        <th>Source</th>
                         <th>Department</th>
                         <th>Bill</th>
                         <th>Token</th>
@@ -413,14 +495,19 @@ export default function SuperAdminReportsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {visits.map((row) => (
-                        <tr key={row.visit_id}>
+                      {visits.map((row, index) => (
+                        <tr key={ledgerRowKey(row, index)}>
                           <td className="sa-reports-table__date">
                             {row.visit_date ? formatReportDate(row.visit_date) : '—'}
                           </td>
+                          <td>
+                            <SourceBadge source={ledgerRowSource(row)} />
+                          </td>
                           <td>{row.department_name || '—'}</td>
                           <td className="sa-reports-table__mono">{row.bill_number || '—'}</td>
-                          <td className="sa-reports-table__mono">{row.token_number || '—'}</td>
+                          <td className="sa-reports-table__mono">
+                            {row.token_number || row.admission_no || '—'}
+                          </td>
                           <td className="sa-reports-table__num sa-reports-table__amount">
                             {formatCurrency(row.grand_total)}
                           </td>
@@ -438,7 +525,7 @@ export default function SuperAdminReportsPage() {
                   totalItems={visitsTotal}
                   pageSize={PAGE_SIZE}
                   onPageChange={setPage}
-                  itemLabel="visits"
+                  itemLabel={copy.ledgerItem}
                 />
               </>
             )}

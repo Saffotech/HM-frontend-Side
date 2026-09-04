@@ -12,7 +12,7 @@ import {
   useBulkCreateBedAllocationsMutation,
 } from '@/shared/hooks/queries/useAdminQuery';
 import { useBedsQuery } from '@/shared/hooks/queries/useBedsQuery';
-import { Button, Select } from '@/shared/components/common';
+import { Button, DateInput, Select } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import {
   SHIFT_OPTIONS,
@@ -148,11 +148,10 @@ export default function NurseBedAllocationCreatePage() {
 
         <form className="admin-card nba-form-card nba-form-card--compact" onSubmit={handleSubmit}>
           <div className="nba-form-grid nba-form-grid--create">
-            <label className="nba-field">
-              <span>Assigned from *</span>
-              <input
-                type="date"
-                className="nba-input"
+            <div className="nba-field">
+              <DateInput
+                label="Assigned from"
+                required
                 value={shiftDate}
                 onChange={(e) => {
                   const next = e.target.value;
@@ -161,20 +160,17 @@ export default function NurseBedAllocationCreatePage() {
                     setAssignedUntil(next);
                   }
                 }}
-                required
               />
-            </label>
-            <label className="nba-field">
-              <span>Assigned till *</span>
-              <input
-                type="date"
-                className="nba-input"
+            </div>
+            <div className="nba-field">
+              <DateInput
+                label="Assigned till"
+                required
                 value={assignedUntil}
                 min={shiftDate || undefined}
                 onChange={(e) => setAssignedUntil(e.target.value)}
-                required
               />
-            </label>
+            </div>
             <label className="nba-field">
               <span>Shift *</span>
               <Select

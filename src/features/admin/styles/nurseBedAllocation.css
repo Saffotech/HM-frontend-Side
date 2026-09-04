@@ -84,12 +84,22 @@
   min-width: 12rem;
 }
 
+.nba-field .date-input {
+  width: 100%;
+}
+
 .nba-list-card .nba-toolbar .nba-input,
 .nba-list-card .nba-toolbar .searchable-select,
-.nba-list-card .nba-toolbar .ui-select {
+.nba-list-card .nba-toolbar .ui-select,
+.nba-list-card .nba-toolbar .nba-toolbar-date {
   flex: 0 0 auto;
   min-width: 8.5rem;
   width: 9.5rem;
+}
+
+.nba-list-card .nba-toolbar .nba-toolbar-date {
+  min-width: 10.5rem;
+  width: 11.5rem;
 }
 
 .nba-list-card .nba-toolbar__reset {
@@ -108,6 +118,7 @@
 
 .nba-table__actions .btn {
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .nba-form-grid {

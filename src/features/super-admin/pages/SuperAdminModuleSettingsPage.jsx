@@ -14,7 +14,7 @@ const SUPER_ADMIN_SETTINGS_ROUTES = {
 };
 
 const SUPER_ADMIN_SETTINGS_NAV = [
-  { to: ROUTES.SUPER_ADMIN_SETTINGS_OPD, label: 'OPD', end: true },
+  { to: ROUTES.SUPER_ADMIN_SETTINGS_OPD, label: 'OPD/IPD', end: true },
   { to: ROUTES.SUPER_ADMIN_SETTINGS_DOCTOR, label: 'Doctor' },
   { to: ROUTES.SUPER_ADMIN_SETTINGS_RECEPTIONIST, label: 'Receptionist' },
   { to: ROUTES.SUPER_ADMIN_SETTINGS_LAB, label: 'LAB' },

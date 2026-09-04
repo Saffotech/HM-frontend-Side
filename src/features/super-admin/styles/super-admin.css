@@ -3525,12 +3525,6 @@
   font-weight: 500;
 }
 
-.sa-reports-toolbar__note {
-  margin: 0;
-  font-size: 0.75rem;
-  color: #94a3b8;
-}
-
 .sa-reports-toolbar {
   display: flex;
   flex-direction: column;
@@ -3551,6 +3545,11 @@
 }
 
 .sa-reports-toolbar__date {
+  flex: 0 0 148px;
+  min-width: 148px;
+}
+
+.sa-reports-toolbar__source {
   flex: 0 0 148px;
   min-width: 148px;
 }
@@ -3927,6 +3926,18 @@
   border-color: #e2e8f0;
 }
 
+.sa-reports-status--opd {
+  color: #1d4ed8;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.sa-reports-status--ipd {
+  color: #0f766e;
+  background: #f0fdfa;
+  border-color: #99f6e4;
+}
+
 @media (max-width: 1100px) {
   .sa-reports-kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3952,6 +3963,7 @@
   }
 
   .sa-reports-toolbar__date,
+  .sa-reports-toolbar__source,
   .sa-reports-toolbar__select {
     flex: 1 1 100%;
     min-width: 0;

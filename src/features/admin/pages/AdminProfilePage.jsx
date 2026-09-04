@@ -73,17 +73,6 @@ function genderLabel(code) {
   return GENDER_OPTIONS.find((o) => o.value === code)?.label ?? null;
 }
 
-function fmtShift(shift) {
-  if (!shift) return null;
-  const name = shift.name || null;
-  const start = shift.start_time || null;
-  const end = shift.end_time || null;
-  if (start && end) {
-    return name ? `${name} · ${start} – ${end}` : `${start} – ${end}`;
-  }
-  return name;
-}
-
 function formatUpdatedAgo(iso) {
   if (!iso) return null;
   const then = new Date(iso);
@@ -642,7 +631,7 @@ export default function AdminProfilePage() {
                   <Shield size={16} aria-hidden /> Account
                 </h3>
                 <p className="admin-profile-hint">
-                  Employee ID and shift are managed by admin.
+                  Employee ID is managed by admin.
                 </p>
                 <div className="admin-profile-grid">
                   <ReadField label="First name" value={profile.first_name} />
@@ -651,7 +640,6 @@ export default function AdminProfilePage() {
                   <ReadField label="Employee ID" value={profile.employee_id} />
                   <ReadField label="Joining date" value={profile.joining_date} />
                   <ReadField label="Role" value={roleName} />
-                  <ReadField label="Shift" value={fmtShift(profile.shift)} />
                 </div>
               </section>
             )}

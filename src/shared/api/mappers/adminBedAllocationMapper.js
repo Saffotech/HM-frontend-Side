@@ -230,9 +230,9 @@ export function toUpdateAllocationBody(form) {
 }
 
 export const SHIFT_OPTIONS = [
-  { value: 'Morning', label: 'Morning (06:00–14:00)' },
-  { value: 'Evening', label: 'Evening (14:00–22:00)' },
-  { value: 'Night', label: 'Night (22:00–06:00)' },
+  { value: 'Morning', label: 'Morning' },
+  { value: 'Evening', label: 'Evening' },
+  { value: 'Night', label: 'Night' },
 ];
 
 export function todayIsoDate() {

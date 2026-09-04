@@ -195,6 +195,7 @@ export default function IpdPatientDetailPage() {
                 <AdmissionCareTeamEditor
                   admission={admission}
                   visits={visits}
+                  careTeam={data?.care_team ?? []}
                   canEdit={canAdmit}
                   compact
                 />

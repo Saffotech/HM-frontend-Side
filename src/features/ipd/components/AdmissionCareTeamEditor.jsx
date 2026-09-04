@@ -1,20 +1,17 @@
 /**
  * Care team on an IPD admission detail page.
- * Keeps the admission primary doctor as-is; staff can add more associated doctors.
- * Extra members are stored in localStorage until a backend care-team API exists.
+ * Primary doctor stays on the admission; associated doctors come from care_team APIs.
  */
 
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
 import {
+  useAddIpdCareTeamDoctorMutation,
   useIpdDepartmentsQuery,
   useIpdDoctorsByDepartmentQuery,
+  useRemoveIpdCareTeamDoctorMutation,
 } from '@/features/ipd/hooks/useIpdQuery';
-import {
-  loadExtraCareTeamDoctors,
-  saveExtraCareTeamDoctors,
-} from '@/features/ipd/utils/careTeamLocalStore';
 
 function memberKey(doctorId, doctorName) {
   if (doctorId != null && String(doctorId).trim() !== '') {
@@ -25,7 +22,7 @@ function memberKey(doctorId, doctorName) {
     .toLowerCase()}`;
 }
 
-function buildCareTeamMembers(admission, visits = [], extras = []) {
+function buildCareTeamMembers(admission, visits = [], careTeam = []) {
   const members = [];
   const seen = new Set();
 
@@ -42,6 +39,24 @@ function buildCareTeamMembers(admission, visits = [], extras = []) {
       role: 'Primary',
       source: 'admission',
       removable: false,
+    });
+  }
+
+  for (const extra of careTeam) {
+    const id = extra?.doctor_id != null ? String(extra.doctor_id) : '';
+    const name = String(extra?.doctor_name || '').trim();
+    if (!id && !name) continue;
+    const key = memberKey(id, name);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    members.push({
+      key: `associated-${key}`,
+      doctorId: id || null,
+      doctorName: name || '—',
+      departmentName: extra?.department_name || '—',
+      role: 'Associated',
+      source: 'care_team',
+      removable: Boolean(id),
     });
   }
 
@@ -63,55 +78,45 @@ function buildCareTeamMembers(admission, visits = [], extras = []) {
     });
   }
 
-  for (const extra of extras) {
-    const id = extra?.doctorId != null ? String(extra.doctorId) : '';
-    const name = String(extra?.doctorName || '').trim();
-    if (!id && !name) continue;
-    const key = memberKey(id, name);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    members.push({
-      key: `extra-${key}`,
-      doctorId: id || null,
-      doctorName: name || '—',
-      departmentName: extra?.departmentName || '—',
-      role: 'Associated',
-      source: 'extra',
-      removable: true,
-    });
-  }
-
   return members;
+}
+
+function careTeamErrorMessage(err) {
+  if (err?.status === 409) {
+    return err.message || 'This doctor is already associated with this patient.';
+  }
+  if (err?.status === 400) {
+    return err.message || 'This doctor cannot be added to the care team.';
+  }
+  return err?.message || 'Could not update care team. Please try again.';
 }
 
 export default function AdmissionCareTeamEditor({
   admission,
   visits = [],
+  careTeam = [],
   canEdit = false,
   compact = false,
 }) {
   const [departmentId, setDepartmentId] = useState('');
   const [doctorId, setDoctorId] = useState('');
   const [error, setError] = useState('');
-  const [extras, setExtras] = useState([]);
 
   const departmentsQuery = useIpdDepartmentsQuery();
   const doctorsQuery = useIpdDoctorsByDepartmentQuery(departmentId || null);
+  const addMutation = useAddIpdCareTeamDoctorMutation();
+  const removeMutation = useRemoveIpdCareTeamDoctorMutation();
+  const busy = addMutation.isPending || removeMutation.isPending;
 
   useEffect(() => {
-    if (!admission?.id) {
-      setExtras([]);
-      return;
-    }
-    setExtras(loadExtraCareTeamDoctors(admission.id));
     setDepartmentId('');
     setDoctorId('');
     setError('');
   }, [admission?.id]);
 
   const members = useMemo(
-    () => buildCareTeamMembers(admission, visits, extras),
-    [admission, visits, extras],
+    () => buildCareTeamMembers(admission, visits, careTeam),
+    [admission, visits, careTeam],
   );
 
   if (!admission) return null;
@@ -120,16 +125,8 @@ export default function AdmissionCareTeamEditor({
   const selectedDoctor = (doctorsQuery.data ?? []).find(
     (doc) => String(doc.id) === String(doctorId),
   );
-  const selectedDepartment = (departmentsQuery.data ?? []).find(
-    (dept) => String(dept.id) === String(departmentId),
-  );
 
-  const persistExtras = (next) => {
-    setExtras(next);
-    saveExtraCareTeamDoctors(admission.id, next);
-  };
-
-  const onAdd = (e) => {
+  const onAdd = async (e) => {
     e.preventDefault();
     setError('');
     if (!departmentId || !doctorId || !selectedDoctor) {
@@ -146,29 +143,34 @@ export default function AdmissionCareTeamEditor({
       return;
     }
 
-    const next = [
-      ...extras,
-      {
-        doctorId: String(doctorId),
-        doctorName: selectedDoctor.name || '—',
-        departmentId: String(departmentId),
-        departmentName: selectedDepartment?.name || '—',
-      },
-    ];
-    persistExtras(next);
-    setDepartmentId('');
-    setDoctorId('');
-    toast.success('Doctor added to care team');
+    try {
+      await addMutation.mutateAsync({
+        admissionId: admission.id,
+        payload: {
+          doctor_id: Number(doctorId),
+          department_id: Number(departmentId),
+        },
+      });
+      setDepartmentId('');
+      setDoctorId('');
+      toast.success('Doctor added to care team');
+    } catch (err) {
+      setError(careTeamErrorMessage(err));
+    }
   };
 
-  const onRemove = (row) => {
-    if (!row?.removable) return;
-    const key = memberKey(row.doctorId, row.doctorName);
-    const next = extras.filter(
-      (item) => memberKey(item.doctorId, item.doctorName) !== key,
-    );
-    persistExtras(next);
-    toast.success('Doctor removed from care team');
+  const onRemove = async (row) => {
+    if (!row?.removable || !row.doctorId || busy) return;
+    setError('');
+    try {
+      await removeMutation.mutateAsync({
+        admissionId: admission.id,
+        doctorId: Number(row.doctorId),
+      });
+      toast.success('Doctor removed from care team');
+    } catch (err) {
+      setError(careTeamErrorMessage(err));
+    }
   };
 
   return (
@@ -223,6 +225,7 @@ export default function AdmissionCareTeamEditor({
                           variant="ghost"
                           size="sm"
                           onClick={() => onRemove(row)}
+                          disabled={busy}
                           aria-label={`Remove ${row.doctorName}`}
                         >
                           Remove
@@ -247,6 +250,7 @@ export default function AdmissionCareTeamEditor({
               id="ipd-care-add-dept"
               className="ipd-select"
               value={departmentId}
+              disabled={busy}
               onChange={(e) => {
                 setDepartmentId(e.target.value);
                 setDoctorId('');
@@ -275,7 +279,7 @@ export default function AdmissionCareTeamEditor({
                 setDoctorId(e.target.value);
                 setError('');
               }}
-              disabled={!departmentId || doctorsQuery.isLoading}
+              disabled={!departmentId || doctorsQuery.isLoading || busy}
             >
               <option value="">
                 {!departmentId
@@ -294,8 +298,12 @@ export default function AdmissionCareTeamEditor({
             </select>
           </div>
           <div className="ipd-care-team-form__save">
-            <Button type="submit" size="sm" disabled={!departmentId || !doctorId}>
-              Add doctor
+            <Button
+              type="submit"
+              size="sm"
+              disabled={!departmentId || !doctorId || busy}
+            >
+              {addMutation.isPending ? 'Adding…' : 'Add doctor'}
             </Button>
           </div>
           {error ? (
