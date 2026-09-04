@@ -25,7 +25,6 @@ import { useBedsQuery } from '@/shared/hooks/queries/useBedsQuery';
 import { Button, DateInput, QueryFeedback, Select } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import {
-  SHIFT_OPTIONS,
   formatGroupedBedsLabel,
   groupAllocationListItems,
 } from '@/shared/api/mappers/adminBedAllocationMapper';
@@ -44,19 +43,15 @@ export default function NurseBedAllocationEditPage() {
   const allocation = data?.data;
 
   const siblingFilters = useMemo(() => {
-    if (!allocation?.nurseId || !allocation?.shiftDate || !allocation?.shiftName) return null;
+    if (!allocation?.nurseId) return null;
     return {
       nurse_id: Number(allocation.nurseId),
-      shift_date: allocation.shiftDate,
-      shift_name: allocation.shiftName,
       is_active: allocation.isActive,
       page: 1,
       page_size: 100,
     };
   }, [
     allocation?.nurseId,
-    allocation?.shiftDate,
-    allocation?.shiftName,
     allocation?.isActive,
   ]);
 
@@ -71,15 +66,12 @@ export default function NurseBedAllocationEditPage() {
   const siblingRows = useMemo(() => {
     if (!allocation) return [];
     const siblings = siblingsData?.items ?? [];
-    const sameShift = siblings.filter(
+    const sameNurse = siblings.filter(
       (row) =>
         Number(row.nurseId) === Number(allocation.nurseId) &&
-        String(row.shiftDate) === String(allocation.shiftDate) &&
-        String(row.shiftName ?? '').trim().toLowerCase() ===
-          String(allocation.shiftName ?? '').trim().toLowerCase() &&
         Boolean(row.isActive) === Boolean(allocation.isActive),
     );
-    return (sameShift.length ? sameShift : [allocation])
+    return (sameNurse.length ? sameNurse : [allocation])
       .slice()
       .sort((a, b) =>
         String(a.bedNumber ?? '').localeCompare(String(b.bedNumber ?? ''), undefined, {
@@ -94,7 +86,6 @@ export default function NurseBedAllocationEditPage() {
   }, [siblingRows]);
 
   const [shiftDate, setShiftDate] = useState('');
-  const [shiftName, setShiftName] = useState('Morning');
   const [nurseId, setNurseId] = useState('');
   const [bedIds, setBedIds] = useState([]);
   const [notes, setNotes] = useState('');
@@ -110,7 +101,6 @@ export default function NurseBedAllocationEditPage() {
     if (siblingFilters && siblingsData == null) return;
 
     setShiftDate(allocation.shiftDate || '');
-    setShiftName(allocation.shiftName || 'Morning');
     setNurseId(allocation.nurseId != null ? String(allocation.nurseId) : '');
     setNotes(allocation.notes || '');
     setIsActive(Boolean(allocation.isActive));
@@ -203,8 +193,8 @@ export default function NurseBedAllocationEditPage() {
       toast.error('You do not have permission to update allocations');
       return;
     }
-    if (!shiftDate || !shiftName || !nurseId) {
-      toast.error('Date, shift, and nurse are required');
+    if (!shiftDate || !nurseId) {
+      toast.error('Date and nurse are required');
       return;
     }
     if (!bedIds.length) {
@@ -228,7 +218,6 @@ export default function NurseBedAllocationEditPage() {
             nurseId,
             bedId,
             shiftDate,
-            shiftName,
             notes,
             isActive,
           },
@@ -245,7 +234,6 @@ export default function NurseBedAllocationEditPage() {
           nurseId,
           bedIds: toAdd,
           shiftDate,
-          shiftName,
           notes,
         });
         const skipped = res?.skipped ?? 0;
@@ -319,7 +307,7 @@ export default function NurseBedAllocationEditPage() {
                   </div>
                   <h1 className="nba-detail-hero__title">{selectedNurseLabel}</h1>
                   <p className="nba-detail-hero__subtitle">
-                    Update nurse, beds, shift, date, notes, or active status for this assignment.
+                    Update nurse, beds, date, notes, or active status for this assignment.
                   </p>
                   <div className="nba-detail-hero__meta">
                     <span className="nba-detail-pill">
@@ -338,7 +326,7 @@ export default function NurseBedAllocationEditPage() {
                     <span className="nba-detail-stat__label">Total beds</span>
                     <strong className="nba-detail-stat__value">{bedIds.length}</strong>
                     <span className="nba-detail-stat__hint">
-                      {shiftName || 'Shift'} · {isActive ? 'Active' : 'Inactive'}
+                      {isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
                 </div>
@@ -350,26 +338,18 @@ export default function NurseBedAllocationEditPage() {
                     <CalendarDays size={18} aria-hidden />
                     <div>
                       <h2>Schedule</h2>
-                      <p>Shift date and timing for this allocation</p>
+                      <p>Assigned from date for this allocation</p>
                     </div>
                   </header>
                   <div className="nba-edit-grid">
                     <div className="nba-field">
                       <DateInput
-                        label="Shift date"
+                        label="Assigned from"
                         required
                         value={shiftDate}
                         onChange={(e) => setShiftDate(e.target.value)}
                       />
                     </div>
-                    <label className="nba-field">
-                      <span>Shift *</span>
-                      <Select
-                        value={shiftName}
-                        onChange={setShiftName}
-                        options={SHIFT_OPTIONS}
-                      />
-                    </label>
                     <label className="nba-field">
                       <span>Status</span>
                       <Select

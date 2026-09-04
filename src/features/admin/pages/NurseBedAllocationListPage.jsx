@@ -24,7 +24,6 @@ import {
 } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import {
-  SHIFT_OPTIONS,
   formatAllocationDate,
   formatAssignedUntil,
   groupAllocationListItems,
@@ -41,7 +40,6 @@ export default function NurseBedAllocationListPage() {
 
   const [search, setSearch] = useState('');
   const [shiftDate, setShiftDate] = useState('');
-  const [shiftName, setShiftName] = useState('');
   const [nurseId, setNurseId] = useState('');
   const [statusFilter, setStatusFilter] = useState('true');
   const [page, setPage] = useState(1);
@@ -69,13 +67,12 @@ export default function NurseBedAllocationListPage() {
     () => ({
       search: debouncedSearch || undefined,
       shift_date: shiftDate || undefined,
-      shift_name: shiftName || undefined,
       nurse_id: nurseId ? Number(nurseId) : undefined,
       is_active: statusFilter === 'all' ? undefined : statusFilter === 'true',
       page,
       page_size: PAGE_SIZE,
     }),
-    [debouncedSearch, shiftDate, shiftName, nurseId, statusFilter, page],
+    [debouncedSearch, shiftDate, nurseId, statusFilter, page],
   );
 
   const { data, isLoading, isError, error, refetch } = useAdminBedAllocationsQuery(
@@ -94,7 +91,6 @@ export default function NurseBedAllocationListPage() {
   const hasFilters = Boolean(
     search.trim() ||
       shiftDate ||
-      shiftName ||
       nurseId ||
       statusFilter !== 'true',
   );
@@ -102,7 +98,6 @@ export default function NurseBedAllocationListPage() {
   const resetFilters = () => {
     setSearch('');
     setShiftDate('');
-    setShiftName('');
     setNurseId('');
     setStatusFilter('true');
     setPage(1);
@@ -178,14 +173,6 @@ export default function NurseBedAllocationListPage() {
               className="nba-toolbar-date"
             />
             <Select
-              value={shiftName}
-              onChange={(v) => {
-                setShiftName(v);
-                setPage(1);
-              }}
-              options={[{ value: '', label: 'All shifts' }, ...SHIFT_OPTIONS]}
-            />
-            <Select
               value={nurseId}
               onChange={(v) => {
                 setNurseId(v);
@@ -253,7 +240,6 @@ export default function NurseBedAllocationListPage() {
                     <thead>
                       <tr>
                         <th>Nurse</th>
-                        <th>Shift</th>
                         <th>Assigned From</th>
                         <th>Assigned Until</th>
                         <th>Allocated Beds</th>
@@ -267,7 +253,6 @@ export default function NurseBedAllocationListPage() {
                       {items.map((row) => (
                         <tr key={`${row.nurseId}-${row.isActive ? 'a' : 'i'}-${row.id}`}>
                           <td>{row.nurseName}</td>
-                          <td>{row.shiftName || '—'}</td>
                           <td>{formatAllocationDate(row.shiftDate)}</td>
                           <td>{formatAssignedUntil(row.assignedUntil, row.isActive)}</td>
                           <td>

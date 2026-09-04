@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   BedDouble,
   CalendarDays,
-  Clock3,
   Mail,
   Pencil,
   UserRound,
@@ -40,16 +39,14 @@ export default function NurseBedAllocationDetailPage() {
   const primary = data?.data;
 
   const siblingFilters = useMemo(() => {
-    if (!primary?.nurseId || !primary?.shiftDate || !primary?.shiftName) return null;
+    if (!primary?.nurseId) return null;
     return {
       nurse_id: Number(primary.nurseId),
-      shift_date: primary.shiftDate,
-      shift_name: primary.shiftName,
       is_active: primary.isActive,
       page: 1,
       page_size: 100,
     };
-  }, [primary?.nurseId, primary?.shiftDate, primary?.shiftName, primary?.isActive]);
+  }, [primary?.nurseId, primary?.isActive]);
 
   const {
     data: siblingsData,
@@ -64,15 +61,12 @@ export default function NurseBedAllocationDetailPage() {
   const siblingRows = useMemo(() => {
     if (!primary) return [];
     const siblings = siblingsData?.items ?? [];
-    const sameShift = siblings.filter(
+    const sameNurse = siblings.filter(
       (row) =>
         Number(row.nurseId) === Number(primary.nurseId) &&
-        String(row.shiftDate) === String(primary.shiftDate) &&
-        String(row.shiftName ?? '').trim().toLowerCase() ===
-          String(primary.shiftName ?? '').trim().toLowerCase() &&
         Boolean(row.isActive) === Boolean(primary.isActive),
     );
-    const pool = sameShift.length ? sameShift : [primary];
+    const pool = sameNurse.length ? sameNurse : [primary];
     return pool
       .slice()
       .sort((a, b) => {
@@ -144,13 +138,9 @@ export default function NurseBedAllocationDetailPage() {
                   </div>
                   <h1 className="nba-detail-hero__title">{group.nurseName}</h1>
                   <p className="nba-detail-hero__subtitle">
-                    Bed responsibility for this shift — patients are not owned by the nurse.
+                    Bed responsibility for this period — patients are not owned by the nurse.
                   </p>
                   <div className="nba-detail-hero__meta">
-                    <span className="nba-detail-pill">
-                      <Clock3 size={14} aria-hidden />
-                      {group.shiftName || '—'}
-                    </span>
                     <span className="nba-detail-pill">
                       <CalendarDays size={14} aria-hidden />
                       {group.shiftDate || '—'}
@@ -190,7 +180,7 @@ export default function NurseBedAllocationDetailPage() {
                     <BedDouble size={18} aria-hidden />
                     <div>
                       <h2>Allocated beds</h2>
-                      <p>{siblingRows.length} bed{siblingRows.length === 1 ? '' : 's'} on this shift</p>
+                      <p>{siblingRows.length} bed{siblingRows.length === 1 ? '' : 's'} on this assignment</p>
                     </div>
                   </header>
                   <div className="nba-detail-beds">
@@ -222,10 +212,6 @@ export default function NurseBedAllocationDetailPage() {
                     <div className="nba-detail-fact">
                       <dt>Email</dt>
                       <dd>{group.nurseEmail || '—'}</dd>
-                    </div>
-                    <div className="nba-detail-fact">
-                      <dt>Shift</dt>
-                      <dd>{group.shiftName || '—'}</dd>
                     </div>
                     <div className="nba-detail-fact">
                       <dt>Date</dt>

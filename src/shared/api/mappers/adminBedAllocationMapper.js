@@ -183,31 +183,33 @@ export function mapAllocationDetailResponse(raw) {
 }
 
 export function toCreateAllocationBody(form) {
-  return {
+  const body = {
     nurse_id: Number(form.nurseId),
     bed_id: Number(form.bedId),
     shift_date: form.shiftDate,
     assigned_until: form.assignedUntil || null,
-    shift_name: form.shiftName,
-    shift_start: form.shiftStart || null,
-    shift_end: form.shiftEnd || null,
     department_id: form.departmentId ? Number(form.departmentId) : null,
     notes: form.notes?.trim() || null,
   };
+  if (form.shiftName) body.shift_name = form.shiftName;
+  if (form.shiftStart) body.shift_start = form.shiftStart;
+  if (form.shiftEnd) body.shift_end = form.shiftEnd;
+  return body;
 }
 
 export function toBulkCreateAllocationBody(form) {
-  return {
+  const body = {
     nurse_id: Number(form.nurseId),
     bed_ids: (form.bedIds ?? []).map(Number),
     shift_date: form.shiftDate,
     assigned_until: form.assignedUntil || null,
-    shift_name: form.shiftName,
-    shift_start: form.shiftStart || null,
-    shift_end: form.shiftEnd || null,
     department_id: form.departmentId ? Number(form.departmentId) : null,
     notes: form.notes?.trim() || null,
   };
+  if (form.shiftName) body.shift_name = form.shiftName;
+  if (form.shiftStart) body.shift_start = form.shiftStart;
+  if (form.shiftEnd) body.shift_end = form.shiftEnd;
+  return body;
 }
 
 export function toUpdateAllocationBody(form) {
@@ -228,12 +230,6 @@ export function toUpdateAllocationBody(form) {
   if (typeof form.isActive === 'boolean') body.is_active = form.isActive;
   return body;
 }
-
-export const SHIFT_OPTIONS = [
-  { value: 'Morning', label: 'Morning' },
-  { value: 'Evening', label: 'Evening' },
-  { value: 'Night', label: 'Night' },
-];
 
 export function todayIsoDate() {
   const d = new Date();

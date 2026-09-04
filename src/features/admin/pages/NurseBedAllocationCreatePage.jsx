@@ -15,7 +15,6 @@ import { useBedsQuery } from '@/shared/hooks/queries/useBedsQuery';
 import { Button, DateInput, Select } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import {
-  SHIFT_OPTIONS,
   todayIsoDate,
 } from '@/shared/api/mappers/adminBedAllocationMapper';
 import { toast } from '@/shared/utils/toast';
@@ -28,7 +27,6 @@ export default function NurseBedAllocationCreatePage() {
 
   const [shiftDate, setShiftDate] = useState(todayIsoDate());
   const [assignedUntil, setAssignedUntil] = useState(todayIsoDate());
-  const [shiftName, setShiftName] = useState('Morning');
   const [nurseId, setNurseId] = useState('');
   const [bedIds, setBedIds] = useState([]);
   const [bedSearch, setBedSearch] = useState('');
@@ -83,10 +81,6 @@ export default function NurseBedAllocationCreatePage() {
       toast.error('Assigned till must be on or after assigned from');
       return;
     }
-    if (!shiftName) {
-      toast.error('Select a shift');
-      return;
-    }
     if (!nurseId) {
       toast.error('Select a nurse');
       return;
@@ -102,7 +96,6 @@ export default function NurseBedAllocationCreatePage() {
         bedIds,
         shiftDate,
         assignedUntil,
-        shiftName,
       },
       {
         onSuccess: (res) => {
@@ -171,14 +164,6 @@ export default function NurseBedAllocationCreatePage() {
                 onChange={(e) => setAssignedUntil(e.target.value)}
               />
             </div>
-            <label className="nba-field">
-              <span>Shift *</span>
-              <Select
-                value={shiftName}
-                onChange={setShiftName}
-                options={SHIFT_OPTIONS}
-              />
-            </label>
             <label className="nba-field">
               <span>Nurse *</span>
               <Select

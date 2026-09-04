@@ -425,7 +425,6 @@ export default function NurseWorkforceDashboardPage() {
                 <th>Ward</th>
                 <th>Bed Number</th>
                 <th>Nurse</th>
-                <th>Shift</th>
                 <th>Assigned From</th>
                 <th>Assigned Till</th>
                 <th>Status</th>
@@ -433,13 +432,12 @@ export default function NurseWorkforceDashboardPage() {
             </thead>
             <tbody>
               {!assignedBeds.length
-                ? renderEmptyRow(7, activePanel.empty)
+                ? renderEmptyRow(6, activePanel.empty)
                 : assignedBeds.map((row) => (
                   <tr key={row.id ?? `${row.bedId}-${row.nurseId}`}>
                     <td>{row.wardName || '—'}</td>
                     <td>{row.bedNumber || '—'}</td>
                     <td>{row.nurseName || '—'}</td>
-                    <td>{row.shiftName || '—'}</td>
                     <td>{formatAllocationDate(row.shiftDate)}</td>
                     <td>{formatAssignedUntil(row.assignedUntil, row.isActive)}</td>
                     <td>
