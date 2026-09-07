@@ -238,7 +238,7 @@ function LabTestsList({
 
       <div className="doc-card doc-card__body--flush">
         <div className="table-wrap">
-          <table className="data-table doc-labs-table">
+          <table className="data-table doc-labs-table doc-table--stack">
             <thead>
               <tr>
                 <th>Patient</th>
@@ -274,24 +274,27 @@ function LabTestsList({
                       }
                     }}
                   >
-                    <td>
-                      <strong>{t.patientName}</strong>
-                      <span className="doc-labs-patient-id">{t.patientId}</span>
+                    <td data-label="Patient">
+                      <div className="doc-labs-patient">
+                        <strong>{t.patientName}</strong>
+                        <span className="doc-labs-patient-id">{t.patientId}</span>
+                      </div>
                     </td>
-                    <td>{t.testName}</td>
-                    <td>
+                    <td data-label="Test">{t.testName}</td>
+                    <td data-label="Category">
                       <CategoryCell
                         category={t.category}
                         testName={t.testName}
                         departmentName={t.departmentName}
                       />
                     </td>
-                    <td>{t.orderedDisplay}</td>
-                    <td>
+                    <td data-label="Ordered">{t.orderedDisplay}</td>
+                    <td data-label="Status">
                       <StatusPill status={t.doctorStatus} />
                     </td>
                     <td
                       className="doc-labs-table__actions"
+                      data-label="Action"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="doc-labs-table__actions-inner">

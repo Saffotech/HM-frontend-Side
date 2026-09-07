@@ -192,7 +192,7 @@ export default function NursePatientVisitHistoryPage() {
           ) : (
             <>
               <div className="nurse-table-wrap">
-                <table className="nurse-table">
+                <table className="nurse-table nurse-table--stack">
                   <thead>
                     <tr>
                       <th>Visited at</th>
@@ -206,11 +206,11 @@ export default function NursePatientVisitHistoryPage() {
                   <tbody>
                     {pagedVisits.map((visit) => (
                       <tr key={visit.id}>
-                        <td>{formatVisitTime(visit.visited_at)}</td>
-                        <td>{visit.doctor_name || '—'}</td>
-                        <td>{doctorDepartmentMap.get(Number(visit.doctor_id)) || '—'}</td>
-                        <td>{visit.recorded_by_name || '—'}</td>
-                        <td className="nurse-visit-history__notes">
+                        <td data-label="Visited at">{formatVisitTime(visit.visited_at)}</td>
+                        <td data-label="Doctor">{visit.doctor_name || '—'}</td>
+                        <td data-label="Doctor department">{doctorDepartmentMap.get(Number(visit.doctor_id)) || '—'}</td>
+                        <td data-label="Logged by">{visit.recorded_by_name || '—'}</td>
+                        <td className="nurse-visit-history__notes" data-label="Notes">
                           {visit.notes ? (
                             <span className="nurse-visit-history__notes-cell">
                               {visit.notes}
@@ -219,7 +219,7 @@ export default function NursePatientVisitHistoryPage() {
                             '—'
                           )}
                         </td>
-                        <td>
+                        <td data-label="Actions">
                           <div className="nurse-doctor-visits__actions">
                             <button
                               type="button"

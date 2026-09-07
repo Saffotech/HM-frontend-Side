@@ -149,7 +149,7 @@ export default function PaymentHistoryPage() {
               onPageChange: setPage,
             }}
           >
-            <table className="data-table payment-history-table">
+            <table className="data-table payment-history-table data-table--stack">
               <colgroup>
                 <col className="col-patient" />
                 <col className="col-bill-id" />
@@ -173,28 +173,32 @@ export default function PaymentHistoryPage() {
                   const href = invoiceLink(r);
                   return (
                     <tr key={r.id}>
-                      <td className="col-patient">
-                        <strong>{r.patientName}</strong>
-                        <div className="text-muted">{r.patientId}</div>
+                      <td className="col-patient" data-label="Patient">
+                        <div>
+                          <strong>{r.patientName}</strong>
+                          <div className="text-muted">{r.patientId}</div>
+                        </div>
                       </td>
-                      <td className="col-bill-id">
+                      <td className="col-bill-id" data-label="Bill">
                         <span className="id-badge">{r.billId}</span>
                       </td>
-                      <td className="col-date">{r.date}</td>
-                      <td className="col-mode">
+                      <td className="col-date" data-label="Date">{r.date}</td>
+                      <td className="col-mode" data-label="Mode">
                         <span className={`mode-badge ${MODE_CLASS[r.mode] || 'mode-cash'}`}>
                           {r.mode}
                         </span>
                       </td>
-                      <td className="text-green col-money">
-                        <MoneyAmount amount={r.amount} strong />
-                        {r.billBalance > 0 && (
-                          <div className="text-muted payment-history-table__due">
-                            Bill due: <MoneyAmount amount={r.billBalance} />
-                          </div>
-                        )}
+                      <td className="text-green col-money" data-label="Amount">
+                        <div>
+                          <MoneyAmount amount={r.amount} strong />
+                          {r.billBalance > 0 && (
+                            <div className="text-muted payment-history-table__due">
+                              Bill due: <MoneyAmount amount={r.billBalance} />
+                            </div>
+                          )}
+                        </div>
                       </td>
-                      <td className="col-action actions-cell">
+                      <td className="col-action actions-cell" data-label="Action">
                         {href ? (
                           <Link to={href} className="profile-link-btn">
                             <Button variant="outline" size="sm">

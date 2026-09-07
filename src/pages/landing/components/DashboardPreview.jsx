@@ -4,6 +4,7 @@ import dashboardDoctor from '@/assets/Doctor2.png';
 import dashboardReception from '@/assets/Receptionist1.png';
 import dashboardSuperAdmin from '@/assets/Super_Admin1.png';
 import dashboardOpd from '@/assets/OPD1.png';
+import dashboardIpd from '@/assets/IPD1.png';
 import dashboardNurse from '@/assets/Nurse1.png';
 import dashboardLab from '@/assets/Lab1.png';
 import dashboardPharmacy from '@/assets/Pharmacy1.png';
@@ -13,6 +14,7 @@ const TABS = [
   { id: 'super-admin', label: 'Super Admin', img: dashboardSuperAdmin },
   { id: 'admin', label: 'Admin', img: dashboardAdmin },
   { id: 'opd', label: 'OPD', img: dashboardOpd },
+  { id: 'ipd', label: 'IPD', img: dashboardIpd },
   { id: 'doctor', label: 'Doctor', img: dashboardDoctor },
   { id: 'nurse', label: 'Nurse', img: dashboardNurse },
   { id: 'lab', label: 'Lab', img: dashboardLab },

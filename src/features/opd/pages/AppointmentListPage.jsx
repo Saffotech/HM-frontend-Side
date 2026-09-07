@@ -392,7 +392,7 @@ export default function AppointmentListPage() {
               itemLabel: 'Appointments',
             }}
           >
-            <table className="data-table appointment-table">
+            <table className="data-table appointment-table data-table--stack">
               <thead>
                 <tr>
                   <th>Patient</th>
@@ -413,7 +413,7 @@ export default function AppointmentListPage() {
                       if (uid) navigate(`/patients/${uid}/profile`);
                     }}
                   >
-                    <td>
+                    <td data-label="Patient">
                       <strong>{appt.patientName}</strong>
                       {(appt.patientUid ?? appt.patientId) && (
                         <div className="text-muted">{appt.patientUid ?? appt.patientId}</div>
@@ -423,24 +423,27 @@ export default function AppointmentListPage() {
                         <span className="text-muted">{appt.deptName}</span>
                       </div>
                     </td>
-                    <td className="col-optional">
+                    <td className="col-optional" data-label="Doctor / Dept">
                       <span className="text-teal">{appt.doctorName}</span>
                       <div className="text-muted">{appt.deptName}</div>
                     </td>
-                    <td>
-                      {appt.date}
-                      <span className="time-pill">{appt.time}</span>
+                    <td data-label="Schedule">
+                      <span>
+                        {appt.date}
+                        <span className="time-pill">{appt.time}</span>
+                      </span>
                     </td>
-                    <td>
+                    <td data-label="Status">
                       <StatusBadge status={appt.displayStatus ?? appt.status} />
                     </td>
                     {showPaymentActions && (
-                      <td>
+                      <td data-label="Payment">
                         <StatusBadge status={appt.payment?.label ?? 'Unpaid'} />
                       </td>
                     )}
                     <td
                       className="actions-cell actions-cell--center appointments-table__actions"
+                      data-label="Actions"
                       onClick={(e) => e.stopPropagation()}
                     >
                       {showPaymentActions && isAppointmentPending(appt, appt.payment) && (

@@ -265,7 +265,7 @@ export default function ReceptionistDashboardPage() {
         </div>
 
         <div className="rec-table-wrap">
-          <table className="rec-table">
+          <table className="rec-table rec-table--stack">
             <thead>
               <tr>
                 <th>Patient ID</th>
@@ -293,15 +293,25 @@ export default function ReceptionistDashboardPage() {
               ) : (
                 patients.map((patient, index) => (
                   <tr key={patient.appointment_id ?? `patient-${index}`}>
-                    <td className="rec-font-semibold">{patient.patient_uid}</td>
-                    <td className="rec-font-semibold">{patient.name}</td>
-                    <td className="rec-text-muted">{doctorName(patient)}</td>
-                    <td className="rec-text-muted">{patient.department ?? '—'}</td>
-                    <td className="rec-text-muted rec-tabular">{patient.scheduled_at}</td>
-                    <td>
+                    <td className="rec-font-semibold" data-label="Patient ID">
+                      <span>{patient.patient_uid}</span>
+                    </td>
+                    <td className="rec-font-semibold" data-label="Patient Name">
+                      <span>{patient.name}</span>
+                    </td>
+                    <td className="rec-text-muted" data-label="Doctor">
+                      <span>{doctorName(patient)}</span>
+                    </td>
+                    <td className="rec-text-muted" data-label="Department">
+                      <span>{patient.department ?? '—'}</span>
+                    </td>
+                    <td className="rec-text-muted rec-tabular" data-label="Time">
+                      <span>{patient.scheduled_at}</span>
+                    </td>
+                    <td data-label="Status">
                       <StatusBadge status={patient.display_status ?? patient.status} />
                     </td>
-                    <td>
+                    <td data-label="Payment">
                       <StatusBadge
                         status={derivePaymentDisplayStatus(patient.payment_status)}
                       />

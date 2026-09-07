@@ -907,7 +907,7 @@ export default function AdminOpdBedsSection({
             </div>
           ) : (
             <div className="aos-table-wrap aos-beds__table-wrap">
-              <table className="aos-table aos-beds__table">
+              <table className="aos-table aos-beds__table admin-table--stack">
                 <thead>
                   <tr>
                     <th>Bed</th>
@@ -929,7 +929,7 @@ export default function AdminOpdBedsSection({
                           occupiedBed ? 'aos-beds__row--occupied' : 'aos-beds__row--available'
                         }
                       >
-                        <td>
+                        <td data-label="Bed">
                           {isEditing ? (
                             <Input
                               value={editForm.bed_number}
@@ -941,7 +941,7 @@ export default function AdminOpdBedsSection({
                             <span className="aos-beds__bed-id">{bed.bed_number}</span>
                           )}
                         </td>
-                        <td>
+                        <td data-label="Type">
                           {isEditing ? (
                             <select
                               className="aos-select aos-select--sm"
@@ -964,7 +964,7 @@ export default function AdminOpdBedsSection({
                             </span>
                           )}
                         </td>
-                        <td>
+                        <td data-label="Ward">
                           {isEditing ? (
                             <select
                               className="aos-select aos-select--sm"
@@ -986,7 +986,7 @@ export default function AdminOpdBedsSection({
                             <span className="aos-beds__ward">{bed.ward_name}</span>
                           )}
                         </td>
-                        <td>
+                        <td data-label="Status">
                           <span
                             className={`aos-beds__status aos-beds__status--${
                               occupiedBed ? 'occupied' : 'available'
@@ -996,12 +996,12 @@ export default function AdminOpdBedsSection({
                             {occupiedBed ? 'Occupied' : 'Available'}
                           </span>
                         </td>
-                        <td className="aos-beds__patient">
+                        <td className="aos-beds__patient" data-label="Patient">
                           {bed.patient_name || bed.patient_uid || (
                             <span className="aos-table__muted">—</span>
                           )}
                         </td>
-                        <td className="aos-beds__td-actions">
+                        <td className="aos-beds__td-actions" data-label="Actions">
                           {!canEditAllBeds ? (
                             <span className="aos-table__muted">—</span>
                           ) : isEditing ? (

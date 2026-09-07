@@ -29,7 +29,7 @@ export default function PatientProfileBillingTab({
         <p className="pp-placeholder">{errBi?.message ?? 'Could not load bills.'}</p>
       ) : (
       <div className="pp-table-wrap">
-        <table className="data-table pp-table">
+        <table className="data-table pp-table data-table--stack">
           <thead>
             <tr>
               <th>Bill</th>
@@ -48,17 +48,17 @@ export default function PatientProfileBillingTab({
                 className="pp-table__row"
                 onClick={() => navigate(`${ROUTES.BILLING}/${b.id}`)}
               >
-                <td><span className="id-badge">{b.id}</span></td>
-                <td className="text-muted">{b.date.split(' ').slice(0, 2).join(' ')}</td>
-                <td className="col-money"><MoneyAmount amount={b.total} strong /></td>
-                <td className="col-money text-green">
+                <td data-label="Bill"><span className="id-badge">{b.id}</span></td>
+                <td className="text-muted" data-label="Date">{b.date.split(' ').slice(0, 2).join(' ')}</td>
+                <td className="col-money" data-label="Total"><MoneyAmount amount={b.total} strong /></td>
+                <td className="col-money text-green" data-label="Paid">
                   <MoneyAmount amount={b.paid} strong />
                 </td>
-                <td className={`col-money ${b.balance > 0 ? 'text-red' : ''}`}>
+                <td className={`col-money ${b.balance > 0 ? 'text-red' : ''}`} data-label="Due">
                   <MoneyAmount amount={b.balance} strong />
                 </td>
-                <td><StatusBadge status={b.status} /></td>
-                <td className="pp-table__link">
+                <td data-label="Status"><StatusBadge status={b.status} /></td>
+                <td className="pp-table__link" data-label="View">
                   <ExternalLink size={14} aria-hidden />
                 </td>
               </tr>

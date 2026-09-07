@@ -158,7 +158,7 @@ export default function PrescriptionListPage() {
             onRetry={refetch}
           >
             <DataTableShell>
-              <table className="data-table pharmacy-rx-table">
+              <table className="data-table pharmacy-rx-table pharmacy-table--stack">
                 <thead>
                   <tr>
                     <th>Patient ID</th>
@@ -194,12 +194,12 @@ export default function PrescriptionListPage() {
                         className="pharmacy-rx-table__row"
                         onClick={() => navigate(`/pharmacy/prescriptions/${rx.id}`)}
                       >
-                        <td>
+                        <td data-label="Patient ID">
                           <span className="pharmacy-rx-table__id">
                             {formatPharmacyPatientIdDisplay(rx)}
                           </span>
                         </td>
-                        <td className="pharmacy-rx-table__patient-cell">
+                        <td className="pharmacy-rx-table__patient-cell" data-label="Patient">
                           <span className="pharmacy-rx-table__patient">
                             {rx.patient_name || '—'}
                           </span>
@@ -207,12 +207,12 @@ export default function PrescriptionListPage() {
                             <span className="pharmacy-allergy-tag">Allergies</span>
                           )}
                         </td>
-                        <td className="pharmacy-rx-table__doctor">{rx.doctor_name}</td>
-                        <td className="pharmacy-rx-table__diagnosis">{rx.diagnosis}</td>
-                        <td>
+                        <td className="pharmacy-rx-table__doctor" data-label="Doctor">{rx.doctor_name}</td>
+                        <td className="pharmacy-rx-table__diagnosis" data-label="Diagnosis">{rx.diagnosis}</td>
+                        <td data-label="Status">
                           <PharmacyStatusBadge status={rx.status} />
                         </td>
-                        <td className="pharmacy-rx-table__date">{formatDate(rx.created_at)}</td>
+                        <td className="pharmacy-rx-table__date" data-label="Date">{formatDate(rx.created_at)}</td>
                       </tr>
                     ))
                   )}

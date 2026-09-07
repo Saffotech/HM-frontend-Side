@@ -38,7 +38,7 @@ export default function OpdBillItemsTable({
       </div>
 
       <div className="items-table-wrap__scroll" ref={itemsScrollRef}>
-        <table className="data-table">
+        <table className="data-table data-table--stack">
           <thead>
             <tr>
               <th>Item</th>
@@ -51,7 +51,7 @@ export default function OpdBillItemsTable({
           <tbody>
             {items.map((item) => (
               <tr key={item.id}>
-                <td>
+                <td data-label="Item">
                   <Input
                     value={item.name}
                     onChange={(e) => onUpdateItem(item.id, 'name', e.target.value)}
@@ -59,7 +59,7 @@ export default function OpdBillItemsTable({
                     disabled={!allowManualPriceEntry && Boolean(item.fromCatalog)}
                   />
                 </td>
-                <td>
+                <td data-label="Qty">
                   <Input
                     type="number"
                     min={1}
@@ -67,7 +67,7 @@ export default function OpdBillItemsTable({
                     onChange={(e) => onUpdateItem(item.id, 'qty', Number(e.target.value))}
                   />
                 </td>
-                <td>
+                <td data-label="Unit Price">
                   <Input
                     type="number"
                     min={0}
@@ -79,10 +79,10 @@ export default function OpdBillItemsTable({
                     readOnly={!allowManualPriceEntry}
                   />
                 </td>
-                <td className="col-money">
+                <td className="col-money" data-label="Subtotal">
                   <MoneyAmount amount={item.qty * item.unitPrice} strong />
                 </td>
-                <td>
+                <td data-label="Remove">
                   <Button
                     type="button"
                     variant="ghost"

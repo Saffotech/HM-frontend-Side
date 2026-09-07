@@ -6,11 +6,11 @@ import { BrandLogo, BrandName, UserProfileMenu } from '@/shared/components/commo
 import DoctorNotificationsBell from './DoctorNotificationsBell';
 import DoctorEncounterModeToggle from './DoctorEncounterModeToggle';
 import './DoctorShell.css';
+import '../styles/doctor-mobile.css';
 
 const DOCTOR_HEADER_TITLE = 'Doctor';
 
 export default function DoctorShell({
-  title = DOCTOR_HEADER_TITLE,
   nav,
   active,
   onSelect,
@@ -63,7 +63,6 @@ export default function DoctorShell({
             <X size={20} />
           </button>
         </div>
-        <p className="doctor-shell__role-label">{title}</p>
         <nav className="doctor-shell__nav">
           {nav.map((item) => (
             <button

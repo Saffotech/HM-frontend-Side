@@ -343,7 +343,7 @@ export default function StaffListPage() {
 
                   <div className="admin-table-wrap">
 
-                    <table className="admin-table">
+                    <table className="admin-table admin-table--stack">
 
                       <thead>
 
@@ -373,13 +373,13 @@ export default function StaffListPage() {
 
                             <tr key={member.id}>
 
-                              <td>
+                              <td data-label="Staff member">
 
                                 <AdminUserCell name={fullName} email={member.email} />
 
                               </td>
 
-                              <td>
+                              <td data-label="Role">
 
                                 <AdminRoleBadge roleName={member.role_name} />
 
@@ -387,7 +387,7 @@ export default function StaffListPage() {
 
                               {showDepartmentColumn ? (
 
-                                <td className="admin-table__muted">
+                                <td className="admin-table__muted" data-label="Department">
 
                                   {member.department_name || '—'}
 
@@ -395,13 +395,13 @@ export default function StaffListPage() {
 
                               ) : null}
 
-                              <td>
+                              <td data-label="Status">
 
                                 <AdminStaffStatusBadge isActive={member.is_active} />
 
                               </td>
 
-                              <td className="admin-table__actions">
+                              <td className="admin-table__actions" data-label="Actions">
 
                                 <div className="admin-table__actions-inner admin-staff-list__actions">
 

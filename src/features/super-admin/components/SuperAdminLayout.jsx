@@ -12,6 +12,7 @@ import { useLocation } from 'react-router-dom';
 import { ROUTES } from '@/shared/constants';
 import RoleLayout from '@/shared/components/layout/RoleLayout';
 import '../styles/super-admin.css';
+import '../styles/super-admin-mobile.css';
 
 const NAV_LINKS = [
   { href: ROUTES.SUPER_ADMIN_DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },

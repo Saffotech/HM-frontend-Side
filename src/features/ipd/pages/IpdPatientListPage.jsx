@@ -456,7 +456,7 @@ export default function IpdPatientListPage() {
             ) : (
             <>
               <div className="ipd-table-wrap ipd-ins-table-wrap">
-                <table className="ipd-table ipd-table--insurance">
+                <table className="ipd-table ipd-table--insurance ipd-table--stack">
                   <thead>
                     <tr>
                       {INSURANCE_TABLE_COLUMNS.map((col) => (
@@ -505,24 +505,24 @@ export default function IpdPatientListPage() {
                             e.currentTarget.click();
                           }}
                         >
-                          <td>
+                          <td data-label="Patient">
                             <strong>{row.patientName}</strong>
                             <div className="ipd-ins-meta">{row.ageGender}</div>
                           </td>
-                          <td>{row.uhid}</td>
-                          <td>
+                          <td data-label="Patient ID">{row.uhid}</td>
+                          <td data-label="Coverage">
                             <span className="ipd-ins-chip ipd-ins-chip--coverage">
                               {row.coverage}
                             </span>
                           </td>
-                          <td>{row.insurer}</td>
-                          <td>{row.policyNo}</td>
-                          <td>
+                          <td data-label="Insurance Company">{row.insurer}</td>
+                          <td data-label="Policy No">{row.policyNo}</td>
+                          <td data-label="Policy Status">
                             <span className="ipd-ins-chip ipd-ins-chip--active">
                               {row.policyStatus}
                             </span>
                           </td>
-                          <td>
+                          <td data-label="Action">
                             <div className="ipd-table__actions">
                               <Button
                                 type="button"
@@ -616,7 +616,7 @@ export default function IpdPatientListPage() {
           ) : (
             <>
               <div className="ipd-table-wrap">
-                <table className="ipd-table ipd-table--patients">
+                <table className="ipd-table ipd-table--patients ipd-table--stack">
                   <thead>
                     <tr>
                       <th>Patient</th>
@@ -665,19 +665,19 @@ export default function IpdPatientListPage() {
                               e.currentTarget.click();
                             }}
                           >
-                            <td>
+                            <td data-label="Patient">
                               <strong>{row.patient_name || '—'}</strong>
                               <div className="ipd-pl-patient__id">
                                 {row.patient_uid || '—'}
                               </div>
                             </td>
-                            <td>{row.admission_no || '—'}</td>
+                            <td data-label="Admission NO">{row.admission_no || '—'}</td>
                             {showStatusColumn ? (
-                              <td>
+                              <td data-label="Status">
                                 <IpdStatusBadge status={row.status} />
                               </td>
                             ) : null}
-                            <td>
+                            <td data-label="Ward">
                               {row.ward_name ? (
                                 <span
                                   className={`ipd-pl-chip ${wardChipClass(row.ward_name)}`}
@@ -688,7 +688,7 @@ export default function IpdPatientListPage() {
                                 '—'
                               )}
                             </td>
-                            <td>
+                            <td data-label="Bed">
                               {row.bed_number ? (
                                 <span className="ipd-pl-chip ipd-pl-chip--bed">
                                   {row.bed_number}
@@ -697,17 +697,17 @@ export default function IpdPatientListPage() {
                                 '—'
                               )}
                             </td>
-                            <td className="ipd-pl-date">
+                            <td className="ipd-pl-date" data-label="Admission date">
                               {formatIpdDateTime(row.admitted_at)}
                             </td>
                             {showDischargeDate ? (
-                              <td className="ipd-pl-date">
+                              <td className="ipd-pl-date" data-label="Discharge date">
                                 {row.discharged_at
                                   ? formatIpdDateTime(row.discharged_at)
                                   : '—'}
                               </td>
                             ) : null}
-                            <td className="ipd-table__col-actions">
+                            <td className="ipd-table__col-actions" data-label="Actions">
                               <div className="ipd-table__actions">
                                 <IpdPermissionButton
                                   allowed={canViewPatient}

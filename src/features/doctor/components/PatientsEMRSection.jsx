@@ -663,7 +663,7 @@ export default function PatientsEMRSection({
 
         <div className="doc-patients-page__table-wrap table-wrap">
           <table
-            className={`data-table doc-patient-table doc-patient-table--compact${showPatientActions ? '' : ' doc-patient-table--no-action'}`}
+            className={`data-table doc-patient-table doc-table--stack doc-patient-table--compact${showPatientActions ? '' : ' doc-patient-table--no-action'}`}
           >
             <colgroup>
               <col className="doc-patient-col doc-patient-col--uid" />
@@ -723,19 +723,19 @@ export default function PatientsEMRSection({
                     role="button"
                     aria-label={`Open profile for ${row.name}`}
                   >
-                    <td className="doc-patient-table__uid">{row.patientUid}</td>
-                    <td className="doc-patient-table__name">
+                    <td className="doc-patient-table__uid" data-label="Patient Id">{row.patientUid}</td>
+                    <td className="doc-patient-table__name" data-label="Name">
                       <strong>{row.name}</strong>
                     </td>
-                    <td className="doc-patient-table__meta">{formatAgeGender(row)}</td>
-                    <td className="doc-patient-table__date">
+                    <td className="doc-patient-table__meta" data-label="Age/Gender">{formatAgeGender(row)}</td>
+                    <td className="doc-patient-table__date" data-label="Visit date">
                       {formatVisitDateCompact(row)}
                     </td>
-                    <td className="doc-patient-table__status">
+                    <td className="doc-patient-table__status" data-label="Status">
                       <StatusPill status={row.status} />
                     </td>
                     {showPatientActions ? (
-                      <td className="doc-patient-table__action">
+                      <td className="doc-patient-table__action" data-label="Action">
                         <span className="doc-patient-table__view">
                           View
                           <ChevronRight size={14} aria-hidden />

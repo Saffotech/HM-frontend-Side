@@ -455,7 +455,7 @@ export default function IpdBedsPage() {
           ) : (
             <>
               <div className="ipd-table-wrap">
-                <table className="ipd-table ipd-table--beds">
+                <table className="ipd-table ipd-table--beds ipd-table--stack">
                   <thead>
                     <tr>
                       <th>Ward</th>
@@ -480,23 +480,23 @@ export default function IpdBedsPage() {
                               : "ipd-bed-row--available"
                           }
                         >
-                          <td>{bed.ward_name || "—"}</td>
-                          <td>
+                          <td data-label="Ward">{bed.ward_name || "—"}</td>
+                          <td data-label="Bed">
                             <strong>{bed.bed_number || bed.id}</strong>
                           </td>
-                          <td>
+                          <td data-label="Type">
                             {bed.bed_type
                               ? bed.bed_type.charAt(0).toUpperCase() +
                                 bed.bed_type.slice(1)
                               : "—"}
                           </td>
-                          <td>
+                          <td data-label="Rate / day">
                             {formatCurrency(rate, { empty: '—' })}
                           </td>
-                          <td>
+                          <td data-label="Status">
                             <IpdStatusBadge status={bed.status} />
                           </td>
-                          <td>
+                          <td data-label="Patient">
                             {occupied ? (
                               <>
                                 {bed.patient_name || "—"}
@@ -511,7 +511,7 @@ export default function IpdBedsPage() {
                               <span className="ipd-page__subtitle">Free</span>
                             )}
                           </td>
-                          <td>
+                          <td data-label="Actions">
                             <div className="ipd-table__actions">
                               {occupied ? (
                                 <>

@@ -135,7 +135,7 @@ export default function DepartmentListPage() {
                 />
               ) : (
                 <div className="admin-table-wrap">
-                  <table className="admin-table">
+                  <table className="admin-table admin-table--stack">
                     <thead>
                       <tr>
                         <th>Name</th>
@@ -149,22 +149,26 @@ export default function DepartmentListPage() {
                     <tbody>
                       {filtered.map((dept) => (
                         <tr key={dept.id}>
-                          <td className="admin-table__primary">{dept.name}</td>
-                          <td className="admin-table__muted">{dept.code || '—'}</td>
-                          <td>
+                          <td className="admin-table__primary" data-label="Name">
+                            <span>{dept.name}</span>
+                          </td>
+                          <td className="admin-table__muted" data-label="Code">
+                            <span>{dept.code || '—'}</span>
+                          </td>
+                          <td data-label="Type">
                             {isLabOrRadDepartment(dept) ? (
                               <span className="sa-dept-type sa-dept-type--lab">Lab</span>
                             ) : (
                               <span className="sa-dept-type sa-dept-type--doctor">Doctor</span>
                             )}
                           </td>
-                          <td className="admin-table__muted">
-                            {dept.description || '—'}
+                          <td className="admin-table__muted" data-label="Description">
+                            <span>{dept.description || '—'}</span>
                           </td>
-                          <td>
+                          <td data-label="Status">
                             <AdminStaffStatusBadge isActive={dept.is_active} />
                           </td>
-                          <td className="admin-table__actions">
+                          <td className="admin-table__actions" data-label="Actions">
                             <Button
                               variant="ghost"
                               size="sm"

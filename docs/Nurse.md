@@ -54,7 +54,7 @@ row = NurseShiftBedAllocation(
     shift_name=shift_name,
     shift_start=start,
     shift_end=end,
-    ...
+    ... 
 )
 Chahiye:
 

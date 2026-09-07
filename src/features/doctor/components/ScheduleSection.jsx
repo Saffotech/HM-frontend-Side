@@ -252,7 +252,7 @@ function ApptTable({ items, loading, onOpenPatient, onView }) {
   }
   return (
     <div className="doc-card doc-card__body--flush doc-schedule__table-card">
-      <table className="data-table doc-schedule-table">
+      <table className="data-table doc-schedule-table doc-table--stack">
         <thead>
           <tr>
             <th>Time / Date</th>
@@ -277,16 +277,16 @@ function ApptTable({ items, loading, onOpenPatient, onView }) {
                 }
               }}
             >
-              <td>
-                {a.date} {a.time}
+              <td data-label="Time / Date">
+                <span>{a.date} {a.time}</span>
               </td>
-              <td>
+              <td data-label="Patient">
                 <strong>{a.patientName}</strong>
               </td>
-              <td>
+              <td data-label="Status">
                 <StatusPill status={getDoctorDisplayStatus(a)} />
               </td>
-              <td className="doc-schedule-table__actions" onClick={(e) => e.stopPropagation()}>
+              <td className="doc-schedule-table__actions" data-label="Action" onClick={(e) => e.stopPropagation()}>
                 <Button
                   size="sm"
                   variant="outline"

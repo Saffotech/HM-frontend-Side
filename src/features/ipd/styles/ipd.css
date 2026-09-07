@@ -4308,3 +4308,385 @@
     font-size: 0.75rem;
   }
 }
+
+/* Phone only — laptop/desktop table layout is unchanged */
+@media (max-width: 767px) {
+  .ipd-toolbar,
+  .ipd-pl-filters,
+  .ipd-beds-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ipd-toolbar__field,
+  .ipd-toolbar__field--sm,
+  .ipd-pl-filters .ipd-toolbar__field:first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
+
+  .ipd-beds-pager {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ipd-beds-pager__controls {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .ipd-beds-pager__controls .btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .ipd-kv {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+
+  .ipd-table-wrap:has(.ipd-table--stack),
+  .ipd-ins-table-wrap:has(.ipd-table--stack) {
+    overflow: visible;
+    max-height: none;
+  }
+
+  .ipd-table--stack {
+    min-width: 0 !important;
+  }
+
+  .ipd-table--stack thead {
+    display: none;
+  }
+
+  .ipd-table--stack,
+  .ipd-table--stack tbody,
+  .ipd-table--stack tr,
+  .ipd-table--stack td {
+    display: block;
+    width: 100%;
+  }
+
+  .ipd-table--stack tbody tr {
+    margin-bottom: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 0.75rem;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  .ipd-table--stack tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .ipd-table--stack td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: right;
+  }
+
+  .ipd-table--stack td::before {
+    content: attr(data-label);
+    flex: 0 0 42%;
+    max-width: 8.5rem;
+    text-align: left;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .ipd-table--stack td:last-child {
+    border-bottom: none;
+    padding-bottom: 0.15rem;
+  }
+
+  .ipd-table--stack td[colspan] {
+    display: block;
+    text-align: left;
+    border-bottom: none;
+    padding: 0.5rem 0;
+  }
+
+  .ipd-table--stack td[colspan]::before {
+    display: none;
+  }
+
+  .ipd-table--stack td[data-label='Action'],
+  .ipd-table--stack td[data-label='Actions'] {
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .ipd-table--stack td[data-label='Action'] .ipd-table__actions,
+  .ipd-table--stack td[data-label='Actions'] .ipd-table__actions {
+    flex: 1;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .ipd-table--stack td[data-label='Action'] .btn,
+  .ipd-table--stack td[data-label='Actions'] .btn,
+  .ipd-table--stack td[data-label='Action'] .profile-link-btn,
+  .ipd-table--stack td[data-label='Actions'] .profile-link-btn {
+    flex: 1 1 calc(50% - 0.25rem);
+    justify-content: center;
+  }
+
+  .ipd-table--stack tbody tr:nth-child(even) td {
+    background: transparent;
+  }
+
+  .ipd-table--stack .ipd-bed-row--occupied td:first-child,
+  .ipd-table--stack .ipd-bed-row--available td:first-child,
+  .ipd-table--stack .ipd-pl-row--admitted td:first-child,
+  .ipd-table--stack .ipd-pl-row--discharged td:first-child {
+    box-shadow: none;
+  }
+
+  .ipd-table--stack .ipd-bed-row--occupied {
+    box-shadow: inset 3px 0 0 #e11d48;
+  }
+
+  .ipd-table--stack .ipd-bed-row--available {
+    box-shadow: inset 3px 0 0 #16a34a;
+  }
+
+  .ipd-table--stack .ipd-pl-row--admitted {
+    box-shadow: inset 3px 0 0 #10b981;
+  }
+
+  .ipd-table--stack .ipd-pl-row--discharged {
+    box-shadow: inset 3px 0 0 #94a3b8;
+  }
+
+  .ipd-admit-layout .ipd-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ipd-pd-grid,
+  .ipd-pd-grid--care,
+  .ipd-claim-ins-grid,
+  .ipd-claim-facts,
+  .ipd-pay-panel__fields {
+    grid-template-columns: 1fr;
+  }
+
+  .ipd-totals {
+    grid-template-columns: 1fr;
+  }
+
+  .ipd-table--stack .ipd-care-team__col-actions:not(:has(button)) {
+    display: none;
+  }
+
+  .ipd-care-team-form--row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ipd-care-team-form--row .ipd-toolbar__field {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
+
+  .ipd-care-team-form__save,
+  .ipd-care-team-form__save .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ipd-card__head .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ipd-billing-search,
+  .ipd-billing-pay-type {
+    flex: 1 1 100%;
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .ipd-ins-charge-table thead {
+    display: none;
+  }
+
+  .ipd-ins-charge-table,
+  .ipd-ins-charge-table tbody,
+  .ipd-ins-charge-table tfoot,
+  .ipd-ins-charge-table tr,
+  .ipd-ins-charge-table td,
+  .ipd-ins-charge-table th {
+    display: block;
+    width: 100%;
+  }
+
+  .ipd-ins-charge-table__section th {
+    padding: 0.45rem 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .ipd-ins-charge-table__row {
+    margin-bottom: 0.65rem;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 0.65rem;
+    background: #fff;
+  }
+
+  .ipd-ins-charge-table__row td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.35rem 0;
+    border: 0;
+    text-align: right;
+  }
+
+  .ipd-ins-charge-table__row td::before {
+    content: attr(data-label);
+    text-align: left;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .ipd-ins-charge-table__amount-input {
+    max-width: none;
+    margin-left: 0;
+  }
+
+  .ipd-ins-charge-table__action:not(:has(button)):not(:has(.ipd-text-link)) {
+    display: none;
+  }
+
+  .ipd-ins-charge-table__add {
+    grid-template-columns: 1fr;
+  }
+
+  .ipd-ins-charge-table__add .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ipd-ins-charge-table__add-row td,
+  .ipd-ins-charge-table__total-row th,
+  .ipd-ins-charge-table__total-row td {
+    display: block;
+    width: 100%;
+    max-width: none;
+    text-align: left;
+  }
+
+  .ipd-ins-daily-detail-row,
+  .ipd-ins-daily-add,
+  .ipd-ins-daily-pharmacy-card__row {
+    grid-template-columns: 1fr;
+  }
+
+  .ipd-dw-steps {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ipd-dw-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ipd-layout .pricing-table-wrap {
+    overflow: visible;
+    max-height: none;
+  }
+
+  .ipd-layout .pricing-table thead {
+    display: none;
+  }
+
+  .ipd-layout .pricing-table,
+  .ipd-layout .pricing-table tbody,
+  .ipd-layout .pricing-table tr,
+  .ipd-layout .pricing-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .ipd-layout .pricing-table tbody tr {
+    margin-bottom: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 0.75rem;
+    background: #fff;
+  }
+
+  .ipd-layout .pricing-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: right;
+  }
+
+  .ipd-layout .pricing-table td::before {
+    content: attr(data-label);
+    flex: 0 0 42%;
+    max-width: 8.5rem;
+    text-align: left;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .ipd-layout .pricing-table td:last-child {
+    border-bottom: none;
+  }
+
+  .ipd-layout .pricing-table td[colspan]::before {
+    display: none;
+  }
+
+  .ipd-layout .pricing-lab-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ipd-layout .pricing-search {
+    max-width: none;
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .modal.ipd-xfer-modal {
+    max-width: calc(100vw - 1rem);
+    max-height: min(92vh, 100%);
+  }
+
+  .ipd-xfer-modal .modal__footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .ipd-xfer-modal .modal__footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -206,7 +206,7 @@ export default function DoctorLabReportModal({ test, open, onClose }) {
               <div className="doc-lab-report-modal__section">
                 <h4>Results</h4>
                 <div className="table-wrap">
-                  <table className="data-table doc-lab-report-modal__table">
+                  <table className="data-table doc-lab-report-modal__table doc-table--stack">
                     <thead>
                       <tr>
                         <th>Parameter</th>
@@ -219,11 +219,11 @@ export default function DoctorLabReportModal({ test, open, onClose }) {
                     <tbody>
                       {summary.parameters.map((row) => (
                         <tr key={row.id ?? row.parameter_name}>
-                          <td>{row.parameter_name}</td>
-                          <td>{row.value || '—'}</td>
-                          <td>{row.unit || '—'}</td>
-                          <td>{row.normal_range || '—'}</td>
-                          <td>{row.flag || '—'}</td>
+                          <td data-label="Parameter">{row.parameter_name}</td>
+                          <td data-label="Value">{row.value || '—'}</td>
+                          <td data-label="Unit">{row.unit || '—'}</td>
+                          <td data-label="Range">{row.normal_range || '—'}</td>
+                          <td data-label="Flag">{row.flag || '—'}</td>
                         </tr>
                       ))}
                     </tbody>

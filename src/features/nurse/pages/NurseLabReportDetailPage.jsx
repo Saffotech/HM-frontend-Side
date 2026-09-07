@@ -319,7 +319,7 @@ export default function NurseLabReportDetailPage() {
                 <div className="nurse-card nurse-lab-report-detail__params">
                   <h3 className="nurse-lab-report-detail__params-title">Parameters</h3>
                   <div className="nurse-lab-report-detail__params-wrap">
-                    <table className="nurse-table nurse-lab-report-detail__params-table">
+                    <table className="nurse-table nurse-lab-report-detail__params-table nurse-table--stack">
                       <thead>
                         <tr>
                           <th>Parameter</th>
@@ -332,11 +332,11 @@ export default function NurseLabReportDetailPage() {
                       <tbody>
                         {parameters.map((p) => (
                           <tr key={p.id ?? p.parameter_name}>
-                            <td>{p.parameter_name || '—'}</td>
-                            <td>{p.value ?? '—'}</td>
-                            <td>{p.unit || '—'}</td>
-                            <td>{p.normal_range || '—'}</td>
-                            <td>
+                            <td data-label="Parameter">{p.parameter_name || '—'}</td>
+                            <td data-label="Value">{p.value ?? '—'}</td>
+                            <td data-label="Unit">{p.unit || '—'}</td>
+                            <td data-label="Range">{p.normal_range || '—'}</td>
+                            <td data-label="Flag">
                               {p.flag ? (
                                 <span className={`nurse-badge ${flagBadgeClass(p.flag)}`}>
                                   {p.flag}

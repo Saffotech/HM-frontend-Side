@@ -256,7 +256,7 @@ export default function IpdPatientDetailPage() {
                 </div>
               ) : (
                 <div className="ipd-table-wrap">
-                  <table className="ipd-table ipd-table--dense">
+                  <table className="ipd-table ipd-table--dense ipd-table--stack">
                     <thead>
                       <tr>
                         <th>Doctor</th>
@@ -267,9 +267,9 @@ export default function IpdPatientDetailPage() {
                     <tbody>
                       {visits.map((visit) => (
                         <tr key={visit.id}>
-                          <td>{visit.doctor_name || '—'}</td>
-                          <td>{formatIpdDateTime(visit.visited_at)}</td>
-                          <td>{formatCurrency(visit.charge, { empty: '—' })}</td>
+                          <td data-label="Doctor">{visit.doctor_name || '—'}</td>
+                          <td data-label="Visited">{formatIpdDateTime(visit.visited_at)}</td>
+                          <td data-label="Charge">{formatCurrency(visit.charge, { empty: '—' })}</td>
                         </tr>
                       ))}
                     </tbody>

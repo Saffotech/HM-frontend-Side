@@ -128,7 +128,7 @@ export default function IpdDischargePage() {
           </div>
         ) : (
           <div className="ipd-table-wrap">
-            <table className="ipd-table">
+            <table className="ipd-table ipd-table--stack">
               <thead>
                 <tr>
                   <th>Admission</th>
@@ -164,7 +164,7 @@ export default function IpdDischargePage() {
                       row.status === IPD_ADMISSION_STATUS.ADMITTED;
                     return (
                       <tr key={row.id}>
-                        <td>
+                        <td data-label="Admission">
                           <Link
                             to={ROUTES.IPD_PATIENT_DETAIL.replace(
                               ':admissionId',
@@ -174,7 +174,7 @@ export default function IpdDischargePage() {
                             {row.admission_no || `#${row.id}`}
                           </Link>
                         </td>
-                        <td>
+                        <td data-label="Patient">
                           <strong>{row.patient_name || '—'}</strong>
                           {row.patient_uid ? (
                             <div className="ipd-page__subtitle">
@@ -182,21 +182,21 @@ export default function IpdDischargePage() {
                             </div>
                           ) : null}
                         </td>
-                        <td>
+                        <td data-label="Ward / Bed">
                           {row.ward_name || '—'} / {row.bed_number || '—'}
                         </td>
-                        <td>{row.doctor_name || '—'}</td>
-                        <td>
+                        <td data-label="Doctor">{row.doctor_name || '—'}</td>
+                        <td data-label="Status">
                           <IpdStatusBadge status={row.status} />
                         </td>
-                        <td>
+                        <td data-label={showingDischarged ? 'Discharged' : 'Admitted'}>
                           {formatIpdDateTime(
                             showingDischarged
                               ? row.discharged_at || row.admitted_at
                               : row.admitted_at,
                           )}
                         </td>
-                        <td>
+                        <td data-label="Actions">
                           {admitted ? (
                             <IpdPermissionButton
                               allowed={canDischarge}

@@ -173,7 +173,7 @@ export default function IpdPaymentHistoryPage() {
         ) : (
           <>
             <div className="ipd-table-wrap">
-              <table className="ipd-table ipd-table--payments">
+              <table className="ipd-table ipd-table--payments ipd-table--stack">
                 <thead>
                   <tr>
                     <th>Date</th>
@@ -199,23 +199,23 @@ export default function IpdPaymentHistoryPage() {
                       const modeKey = String(row.mode || '').toLowerCase();
                       return (
                         <tr key={row.id}>
-                          <td>{formatIpdDateTime(row.paid_at)}</td>
-                          <td>
+                          <td data-label="Date">{formatIpdDateTime(row.paid_at)}</td>
+                          <td data-label="Patient">
                             <strong>{row.patient_name || '—'}</strong>
                             {row.patient_uid ? (
                               <div className="ipd-page__subtitle">{row.patient_uid}</div>
                             ) : null}
                           </td>
-                          <td>
+                          <td data-label="Bill">
                             <span className="id-badge">{row.bill_number || '—'}</span>
                           </td>
-                          <td>{row.admission_no || row.admission_id || '—'}</td>
-                          <td>
+                          <td data-label="Admission">{row.admission_no || row.admission_id || '—'}</td>
+                          <td data-label="Mode">
                             <span className={`mode-badge ${MODE_CLASS[modeKey] || 'mode-cash'}`}>
                               {titleCaseMode(row.mode)}
                             </span>
                           </td>
-                          <td className="text-green">
+                          <td className="text-green" data-label="Amount">
                             {formatCurrency(row.amount, { empty: '—' })}
                             {Number(row.bill_balance) > 0 ? (
                               <div className="ipd-page__subtitle">
@@ -223,7 +223,7 @@ export default function IpdPaymentHistoryPage() {
                               </div>
                             ) : null}
                           </td>
-                          <td>
+                          <td data-label="Action">
                             <div className="ipd-table__actions">
                               {viewHref ? (
                                 <>

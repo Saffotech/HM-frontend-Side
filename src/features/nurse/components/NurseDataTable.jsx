@@ -7,7 +7,7 @@ function NurseDataTable({ columns, data, isLoading, emptyMessage, onRowClick, ro
 
   return (
     <div className="nurse-card nurse-table-wrap">
-      <table className="nurse-table">
+      <table className="nurse-table nurse-table--stack">
         <thead>
           <tr>
             {columns.map((col) => (
@@ -19,8 +19,8 @@ function NurseDataTable({ columns, data, isLoading, emptyMessage, onRowClick, ro
           {isLoading &&
             [1, 2, 3, 4, 5].map((row) => (
               <tr key={row}>
-                {columns.map((_, i) => (
-                  <td key={i}>
+                {columns.map((col, i) => (
+                  <td key={i} data-label={col.header || 'Details'}>
                     <div className="nurse-skeleton-line" />
                   </td>
                 ))}
@@ -69,7 +69,7 @@ function NurseDataTable({ columns, data, isLoading, emptyMessage, onRowClick, ro
                 }
               >
                 {columns.map((col) => (
-                  <td key={col.header}>
+                  <td key={col.header} data-label={col.header || 'Details'}>
                     {col.render ? col.render(row) : row[col.accessor]}
                   </td>
                 ))}

@@ -19,6 +19,7 @@ import BrandLogo from './BrandLogo';
 import BrandName from './BrandName';
 import UserProfileMenu from './UserProfileMenu';
 import './Layout.css';
+import '@/features/opd/styles/opd-mobile.css';
 
 const NAV_LINKS = [
   { href: ROUTES.DASHBOARD, label: 'Dashboard', icon: Home, permission: ACTIONS.VIEW_OPD_DASHBOARD },

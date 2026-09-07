@@ -113,7 +113,7 @@ export default function DashboardPage() {
                 <Link to={ROUTES.APPOINTMENTS}>View All</Link>
               </div>
               <div className="table-wrap dashboard-table-wrap">
-                <table className="data-table data-table--animated dashboard-appointments-table">
+                <table className="data-table data-table--animated dashboard-appointments-table data-table--stack">
                   <thead>
                     <tr>
                       <th className="col-optional">#</th>
@@ -142,8 +142,8 @@ export default function DashboardPage() {
                               : 'Unpaid');
                         return (
                         <tr key={appt.id}>
-                          <td className="text-muted-num col-optional">{i + 1}</td>
-                          <td>
+                          <td className="text-muted-num col-optional" data-label="#">{i + 1}</td>
+                          <td data-label="Patient">
                             <div className="dashboard-patient-cell">
                               <Avatar name={appt.patientName ?? 'Patient'} size={32} />
                               <div>
@@ -156,17 +156,17 @@ export default function DashboardPage() {
                               </div>
                             </div>
                           </td>
-                          <td className="text-teal col-optional">{appt.doctorName}</td>
-                          <td>
+                          <td className="text-teal col-optional" data-label="Doctor">{appt.doctorName}</td>
+                          <td data-label="Time">
                             <span className="time-pill">
                               <Clock size={12} />
                               {appt.time ?? '—'}
                             </span>
                           </td>
-                          <td>
+                          <td data-label="Status">
                             <StatusBadge status={appt.displayStatus ?? appt.status} />
                           </td>
-                          <td>
+                          <td data-label="Payment Status">
                             <StatusBadge status={paymentLabel} />
                           </td>
                         </tr>

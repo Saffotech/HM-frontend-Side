@@ -132,9 +132,9 @@ export default function BedTariffPanel({ bedTariff, inventoryWardNames }) {
               <tbody>
                 {wardRows.map((row) => (
                   <tr key={row.ward}>
-                    <td className="pricing-table__name">{row.ward}</td>
-                    <td className="pricing-table__amount">{dayRate(row.single)}</td>
-                    <td className="pricing-table__amount">{dayRate(row.double)}</td>
+                    <td className="pricing-table__name" data-label="Ward">{row.ward}</td>
+                    <td className="pricing-table__amount" data-label="Single bed">{dayRate(row.single)}</td>
+                    <td className="pricing-table__amount" data-label="Double bed">{dayRate(row.double)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -166,9 +166,9 @@ export default function BedTariffPanel({ bedTariff, inventoryWardNames }) {
                       defaultCharge != null && Number(row.charge) !== Number(defaultCharge);
                     return (
                       <tr key={row.key}>
-                        <td className="pricing-table__name">Bed {row.bed}</td>
-                        <td className="pricing-table__department">{row.ward}</td>
-                        <td className="pricing-table__amount">
+                        <td className="pricing-table__name" data-label="Bed">Bed {row.bed}</td>
+                        <td className="pricing-table__department" data-label="Ward">{row.ward}</td>
+                        <td className="pricing-table__amount" data-label="Price">
                           <div className="pricing-bed-tariff__rate-cell">
                             <span>{dayRate(row.charge)}</span>
                             {differs ? (

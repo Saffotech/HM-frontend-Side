@@ -129,16 +129,6 @@
   height: var(--topbar-height);
 }
 
-.doctor-shell__role-label{
-  margin: 0.5rem 1rem 0.35rem;
-  font-family: var(--font-sidebar);
-  font-size: 0.75rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-sidebar-text-active);
-}
-
 .doctor-shell__nav{
   flex: 1;
   padding: 0.75rem 0.625rem;

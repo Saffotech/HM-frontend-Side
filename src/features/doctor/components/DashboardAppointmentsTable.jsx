@@ -13,7 +13,7 @@ function DashboardTableSkeleton({ showActions }) {
   return (
     <div className="table-wrap" aria-busy="true" aria-label="Loading appointments">
       <table
-        className={`data-table doc-dashboard-table doc-dashboard-table--loading${
+        className={`data-table doc-dashboard-table doc-table--stack doc-dashboard-table--loading${
           showActions ? ' doc-dashboard-table--with-actions' : ''
         }`}
       >
@@ -33,12 +33,12 @@ function DashboardTableSkeleton({ showActions }) {
         <tbody>
           {Array.from({ length: TABLE_SKELETON_ROWS }).map((_, index) => (
             <tr key={index} className="doc-dashboard-table__row doc-dashboard-table__row--skeleton">
-              <td><Skeleton height={14} width="70%" /></td>
-              <td><Skeleton height={14} width="85%" /></td>
-              <td><Skeleton height={14} width={56} /></td>
-              <td><Skeleton height={22} width={88} /></td>
+              <td data-label="Patient ID"><Skeleton height={14} width="70%" /></td>
+              <td data-label="Patient Name"><Skeleton height={14} width="85%" /></td>
+              <td data-label="Time"><Skeleton height={14} width={56} /></td>
+              <td data-label="Appointment Status"><Skeleton height={22} width={88} /></td>
               {showActions ? (
-                <td><Skeleton height={30} width={72} /></td>
+                <td data-label="Actions"><Skeleton height={30} width={72} /></td>
               ) : null}
             </tr>
           ))}
@@ -90,7 +90,7 @@ function DashboardAppointmentsTable({
         <>
           <div className="table-wrap">
             <table
-              className={`data-table doc-dashboard-table${
+              className={`data-table doc-dashboard-table doc-table--stack${
                 showActions ? ' doc-dashboard-table--with-actions' : ''
               }`}
             >
@@ -133,21 +133,22 @@ function DashboardAppointmentsTable({
                           }
                         }}
                       >
-                        <td className="doc-dashboard-table__patient-id">
+                        <td className="doc-dashboard-table__patient-id" data-label="Patient ID">
                           {a.patientUid ?? a.patientId ?? '—'}
                         </td>
-                        <td className="doc-dashboard-table__patient-name-cell">
+                        <td className="doc-dashboard-table__patient-name-cell" data-label="Patient Name">
                           {a.patientName}
                         </td>
-                        <td className="doc-dashboard-table__time">
+                        <td className="doc-dashboard-table__time" data-label="Time">
                           <time dateTime={a.time}>{formatAppointmentTimeDisplay(a.time)}</time>
                         </td>
-                        <td className="doc-dashboard-table__appt-status">
+                        <td className="doc-dashboard-table__appt-status" data-label="Appointment Status">
                           <StatusPill status={statusLabel} />
                         </td>
                         {showActions ? (
                           <td
                             className="doc-dashboard-table__actions"
+                            data-label="Actions"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <AppointmentRowActions

@@ -199,6 +199,27 @@
   line-height: 1.1;
 }
 
+.admin-stats .ui-stat-card,
+.admin-stats .admin-stat-card {
+  min-width: 0;
+  overflow: visible;
+}
+
+.admin-stats .ui-stat-card__content {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.admin-stats .ui-stat-card__value,
+.admin-stats .admin-stat-card__value {
+  min-width: 0;
+  max-width: 100%;
+  overflow: visible;
+  white-space: nowrap;
+  font-size: clamp(1.05rem, 3.4vw, 1.875rem) !important;
+  line-height: 1.2 !important;
+}
+
 .admin-stat-card__subtitle {
   display: block;
   margin-top: 0.25rem;

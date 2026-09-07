@@ -378,7 +378,7 @@ export default function NursePatientOverviewPage() {
                   </div>
                 ) : (
                   <div className="nurse-patient-overview__table-wrap">
-                    <table className="nurse-patient-overview__table">
+                    <table className="nurse-patient-overview__table nurse-table--stack">
                       <thead>
                         <tr>
                           <th>Test</th>
@@ -394,14 +394,14 @@ export default function NursePatientOverviewPage() {
                             className="nurse-row--clickable"
                             onClick={(event) => openLabReport(row, event)}
                           >
-                            <td>{row.test_name || '—'}</td>
-                            <td>
+                            <td data-label="Test">{row.test_name || '—'}</td>
+                            <td data-label="Reported at">
                               {row.uploaded_at
                                 ? new Date(row.uploaded_at).toLocaleString()
                                 : '—'}
                             </td>
-                            <td>{row.status || '—'}</td>
-                            <td>
+                            <td data-label="Status">{row.status || '—'}</td>
+                            <td data-label="Actions">
                               <div
                                 className="nurse-table__actions"
                                 onClick={(event) => event.stopPropagation()}
@@ -435,7 +435,7 @@ export default function NursePatientOverviewPage() {
                   <div className="nurse-patient-overview__empty">No active medications for this patient.</div>
                 ) : (
                   <div className="nurse-patient-overview__table-wrap">
-                    <table className="nurse-patient-overview__table nurse-patient-overview__med-table">
+                    <table className="nurse-patient-overview__table nurse-patient-overview__med-table nurse-table--stack">
                       <thead>
                         <tr>
                           <th>Medicine</th>
@@ -452,19 +452,19 @@ export default function NursePatientOverviewPage() {
                       <tbody>
                         {prescriptions.map((rx) => (
                           <tr key={rx.id}>
-                            <td className="nurse-patient-overview__med-name">
+                            <td className="nurse-patient-overview__med-name" data-label="Medicine">
                               <NurseMedicineCell prescription={rx} />
                             </td>
-                            <td>{rx.strength || rx.dosage || '—'}</td>
-                            <td>{rx.form || '—'}</td>
-                            <td>{rx.duration || '—'}</td>
-                            <td>{rx.frequency || '—'}</td>
-                            <td>{rx.route || '—'}</td>
-                            <td>{rx.timing || '—'}</td>
-                            <td className="nurse-patient-overview__med-remarks-cell">
+                            <td data-label="Strength">{rx.strength || rx.dosage || '—'}</td>
+                            <td data-label="Form">{rx.form || '—'}</td>
+                            <td data-label="Duration">{rx.duration || '—'}</td>
+                            <td data-label="Frequency">{rx.frequency || '—'}</td>
+                            <td data-label="Route">{rx.route || '—'}</td>
+                            <td data-label="Timing">{rx.timing || '—'}</td>
+                            <td className="nurse-patient-overview__med-remarks-cell" data-label="Instruction">
                               {rx.instructions?.trim() || '—'}
                             </td>
-                            <td>
+                            <td data-label="Action">
                               <NursePermissionButton
                                 allowed={canCreateMedication}
                                 className="nurse-btn nurse-btn--secondary nurse-patient-overview__action-btn"
@@ -493,7 +493,7 @@ export default function NursePatientOverviewPage() {
                   <div className="nurse-patient-overview__empty">No medication history for this patient.</div>
                 ) : (
                   <div className="nurse-patient-overview__table-wrap">
-                    <table className="nurse-patient-overview__table nurse-patient-overview__history-table">
+                    <table className="nurse-patient-overview__table nurse-patient-overview__history-table nurse-table--stack">
                       <thead>
                         <tr>
                           <th>Medicine</th>
@@ -507,16 +507,16 @@ export default function NursePatientOverviewPage() {
                       <tbody>
                         {historyItems.map((row) => (
                           <tr key={row.id}>
-                            <td className="nurse-patient-overview__med-name">
+                            <td className="nurse-patient-overview__med-name" data-label="Medicine">
                               {row.medicine_name || row.medicine}
                             </td>
-                            <td>{row.strength || row.dosage || '—'}</td>
-                            <td className="nurse-patient-overview__history-date">
+                            <td data-label="Strength">{row.strength || row.dosage || '—'}</td>
+                            <td className="nurse-patient-overview__history-date" data-label="Administered At">
                               {formatDate(row.administered_at)}
                             </td>
-                            <td>{row.administered_by_name || row.administered_by || '—'}</td>
-                            <td><NurseQueueStatusBadge status={row.status} /></td>
-                            <td className="nurse-patient-overview__med-remarks-cell">
+                            <td data-label="By">{row.administered_by_name || row.administered_by || '—'}</td>
+                            <td data-label="Status"><NurseQueueStatusBadge status={row.status} /></td>
+                            <td className="nurse-patient-overview__med-remarks-cell" data-label="Remarks">
                               {row.remarks || '—'}
                             </td>
                           </tr>

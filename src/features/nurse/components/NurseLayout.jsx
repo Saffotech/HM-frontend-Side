@@ -21,6 +21,7 @@ import NurseNotificationsBell from '@/features/nurse/components/NurseNotificatio
 import NursePatientScopeBar from '@/features/nurse/components/NursePatientScopeBar';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
 import '../styles/nurse.css';
+import '../styles/nurse-mobile.css';
 
 const NURSE_HEADER_TITLE = 'Nurse';
 

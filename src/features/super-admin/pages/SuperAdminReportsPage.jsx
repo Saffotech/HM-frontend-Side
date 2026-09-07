@@ -482,7 +482,7 @@ export default function SuperAdminReportsPage() {
             ) : (
               <>
                 <div className="sa-reports-table-wrap">
-                  <table className="sa-reports-table">
+                  <table className="sa-reports-table admin-table--stack">
                     <thead>
                       <tr>
                         <th>Date</th>
@@ -497,21 +497,23 @@ export default function SuperAdminReportsPage() {
                     <tbody>
                       {visits.map((row, index) => (
                         <tr key={ledgerRowKey(row, index)}>
-                          <td className="sa-reports-table__date">
-                            {row.visit_date ? formatReportDate(row.visit_date) : '—'}
+                          <td className="sa-reports-table__date" data-label="Date">
+                            <span>{row.visit_date ? formatReportDate(row.visit_date) : '—'}</span>
                           </td>
-                          <td>
+                          <td data-label="Source">
                             <SourceBadge source={ledgerRowSource(row)} />
                           </td>
-                          <td>{row.department_name || '—'}</td>
-                          <td className="sa-reports-table__mono">{row.bill_number || '—'}</td>
-                          <td className="sa-reports-table__mono">
-                            {row.token_number || row.admission_no || '—'}
+                          <td data-label="Department"><span>{row.department_name || '—'}</span></td>
+                          <td className="sa-reports-table__mono" data-label="Bill">
+                            <span>{row.bill_number || '—'}</span>
                           </td>
-                          <td className="sa-reports-table__num sa-reports-table__amount">
-                            {formatCurrency(row.grand_total)}
+                          <td className="sa-reports-table__mono" data-label="Token">
+                            <span>{row.token_number || row.admission_no || '—'}</span>
                           </td>
-                          <td>
+                          <td className="sa-reports-table__num sa-reports-table__amount" data-label="Amount">
+                            <span>{formatCurrency(row.grand_total)}</span>
+                          </td>
+                          <td data-label="Status">
                             <PaymentStatusBadge status={row.payment_status || row.status} />
                           </td>
                         </tr>

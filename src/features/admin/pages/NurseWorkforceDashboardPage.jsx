@@ -355,7 +355,7 @@ export default function NurseWorkforceDashboardPage() {
   const renderPanelBody = () => {
     if (activeFilter === FILTERS.ON_DUTY) {
       return (
-        <table className="admin-table">
+        <table className="admin-table admin-table--stack">
           <thead>
             <tr>
               <th>Nurse</th>
@@ -372,11 +372,11 @@ export default function NurseWorkforceDashboardPage() {
                 const period = getRosterPeriod(row);
                 return (
                   <tr key={row.id ?? `${row.nurse_id}-${row.shift_id}`}>
-                    <td>{displayName(row)}</td>
-                    <td>{formatShiftLabel(row.shift_name, row.start_time, row.end_time)}</td>
-                    <td>{formatDashboardDate(period.from) || '—'}</td>
-                    <td>{formatDashboardDate(period.to) || '—'}</td>
-                    <td>
+                    <td data-label="Nurse"><span>{displayName(row)}</span></td>
+                    <td data-label="Shift"><span>{formatShiftLabel(row.shift_name, row.start_time, row.end_time)}</span></td>
+                    <td data-label="From"><span>{formatDashboardDate(period.from) || '—'}</span></td>
+                    <td data-label="To"><span>{formatDashboardDate(period.to) || '—'}</span></td>
+                    <td data-label="Status">
                       <span className="nwf-badge nwf-badge--balanced">{row.status ?? 'scheduled'}</span>
                     </td>
                   </tr>
@@ -389,7 +389,7 @@ export default function NurseWorkforceDashboardPage() {
 
     if (activeFilter === FILTERS.OFF_DUTY) {
       return (
-        <table className="admin-table">
+        <table className="admin-table admin-table--stack">
           <thead>
             <tr>
               <th>Nurse</th>
@@ -402,9 +402,9 @@ export default function NurseWorkforceDashboardPage() {
               ? renderEmptyRow(3, activePanel.empty)
               : offDutyNurses.map((row) => (
                 <tr key={row.id ?? row.user_id}>
-                  <td>{displayName(row)}</td>
-                  <td>{row.email ?? '—'}</td>
-                  <td>
+                  <td data-label="Nurse"><span>{displayName(row)}</span></td>
+                  <td data-label="Email"><span>{row.email ?? '—'}</span></td>
+                  <td data-label="Status">
                     <span className="nwf-badge nwf-badge--balanced">
                       {row.is_active === false ? 'Inactive' : 'Active'}
                     </span>
@@ -419,7 +419,7 @@ export default function NurseWorkforceDashboardPage() {
     if (activeFilter === FILTERS.BEDS_ASSIGNED) {
       return (
         <>
-          <table className="admin-table">
+          <table className="admin-table admin-table--stack">
             <thead>
               <tr>
                 <th>Ward</th>
@@ -435,12 +435,12 @@ export default function NurseWorkforceDashboardPage() {
                 ? renderEmptyRow(6, activePanel.empty)
                 : assignedBeds.map((row) => (
                   <tr key={row.id ?? `${row.bedId}-${row.nurseId}`}>
-                    <td>{row.wardName || '—'}</td>
-                    <td>{row.bedNumber || '—'}</td>
-                    <td>{row.nurseName || '—'}</td>
-                    <td>{formatAllocationDate(row.shiftDate)}</td>
-                    <td>{formatAssignedUntil(row.assignedUntil, row.isActive)}</td>
-                    <td>
+                    <td data-label="Ward"><span>{row.wardName || '—'}</span></td>
+                    <td data-label="Bed Number"><span>{row.bedNumber || '—'}</span></td>
+                    <td data-label="Nurse"><span>{row.nurseName || '—'}</span></td>
+                    <td data-label="Assigned From"><span>{formatAllocationDate(row.shiftDate)}</span></td>
+                    <td data-label="Assigned Till"><span>{formatAssignedUntil(row.assignedUntil, row.isActive)}</span></td>
+                    <td data-label="Status">
                       <span className="nwf-badge nwf-badge--balanced">
                         {row.isActive ? 'Assigned' : 'Inactive'}
                       </span>
@@ -463,7 +463,7 @@ export default function NurseWorkforceDashboardPage() {
 
     if (activeFilter === FILTERS.BEDS_UNASSIGNED) {
       return (
-        <table className="admin-table">
+        <table className="admin-table admin-table--stack">
           <thead>
             <tr>
               <th>Ward</th>
@@ -477,10 +477,10 @@ export default function NurseWorkforceDashboardPage() {
               ? renderEmptyRow(4, activePanel.empty)
               : unassignedBeds.map((bed) => (
                 <tr key={bed.dbId ?? `${bed.ward}-${bed.bedNo}`}>
-                  <td>{bed.ward || '—'}</td>
-                  <td>{bed.bedNo || '—'}</td>
-                  <td>{bed.status || '—'}</td>
-                  <td>{bed.patientName || '—'}</td>
+                  <td data-label="Ward"><span>{bed.ward || '—'}</span></td>
+                  <td data-label="Bed Number"><span>{bed.bedNo || '—'}</span></td>
+                  <td data-label="Status"><span>{bed.status || '—'}</span></td>
+                  <td data-label="Patient"><span>{bed.patientName || '—'}</span></td>
                 </tr>
               ))}
           </tbody>
@@ -490,7 +490,7 @@ export default function NurseWorkforceDashboardPage() {
 
     if (activeFilter === FILTERS.CURRENT_SHIFT) {
       return (
-        <table className="admin-table">
+        <table className="admin-table admin-table--stack">
           <thead>
             <tr>
               <th>Nurse</th>
@@ -507,17 +507,17 @@ export default function NurseWorkforceDashboardPage() {
                 const period = getRosterPeriod(row);
                 return (
                   <tr key={row.id ?? `${row.nurse_id}-${row.shift_id}`}>
-                    <td>{displayName(row)}</td>
-                    <td>
+                    <td data-label="Nurse"><span>{displayName(row)}</span></td>
+                    <td data-label="Shift">
                       {formatShiftLabel(
                         row.shift_name ?? data?.current_shift,
                         row.start_time ?? data?.current_shift_start,
                         row.end_time ?? data?.current_shift_end,
                       )}
                     </td>
-                    <td>{formatDashboardDate(period.from) || '—'}</td>
-                    <td>{formatDashboardDate(period.to) || '—'}</td>
-                    <td>
+                    <td data-label="From"><span>{formatDashboardDate(period.from) || '—'}</span></td>
+                    <td data-label="To"><span>{formatDashboardDate(period.to) || '—'}</span></td>
+                    <td data-label="Status">
                       <span className="nwf-badge nwf-badge--balanced">{row.status ?? 'scheduled'}</span>
                     </td>
                   </tr>

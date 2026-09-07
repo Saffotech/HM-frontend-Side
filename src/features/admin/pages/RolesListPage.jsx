@@ -29,7 +29,7 @@ export default function RolesListPage() {
                 />
               ) : (
                 <div className="admin-table-wrap">
-                  <table className="admin-table">
+                  <table className="admin-table admin-table--stack">
                     <thead>
                       <tr>
                         <th className="admin-table__col--md">Role name</th>
@@ -39,10 +39,10 @@ export default function RolesListPage() {
                     <tbody>
                       {roles.map((role) => (
                         <tr key={role.id}>
-                          <td>
+                          <td data-label="Role name">
                             <AdminRoleBadge roleName={role.name} />
                           </td>
-                          <td>
+                          <td data-label="Permissions">
                             {role.permissions?.length ? (
                               role.permissions.map((perm) => (
                                 <span key={perm} className="admin-perm-badge">

@@ -210,7 +210,7 @@ export default function IpdBillingPage() {
         </div>
         {showInsuranceCashless ? (
           <div className="ipd-table-wrap ipd-ins-table-wrap">
-            <table className="ipd-table ipd-table--insurance-bills">
+            <table className="ipd-table ipd-table--insurance-bills ipd-table--stack">
               <thead>
                 <tr>
                   {INSURANCE_BILL_COLUMNS.map((col) => (
@@ -246,35 +246,35 @@ export default function IpdBillingPage() {
                 ) : (
                   insuranceRows.map((row) => (
                     <tr key={row.id}>
-                      <td>
+                      <td data-label="Admission ID">
                         <strong>{row.ipdId}</strong>
                       </td>
-                      <td>
+                      <td data-label="Patient">
                         <strong>{row.patientName}</strong>
                         <div className="ipd-ins-meta">{row.ageGender}</div>
                       </td>
-                      <td>{row.admitted}</td>
-                      <td>
+                      <td data-label="Admitted">{row.admitted}</td>
+                      <td data-label="Doctor / Ward">
                         {row.doctor}
                         <div className="ipd-ins-meta">{row.wardRoom}</div>
                       </td>
-                      <td>{formatCurrency(row.totalBill, { empty: '—' })}</td>
-                      <td>
+                      <td data-label="Total Bill">{formatCurrency(row.totalBill, { empty: '—' })}</td>
+                      <td data-label="Claimed Amount">
                         <span className="ipd-claim-amt--ok">
                           {formatCurrency(row.claimedAmount, { empty: '—' })}
                         </span>
                       </td>
-                      <td>
+                      <td data-label="Estimate Amount">
                         {row.estimateAmount != null
                           ? formatCurrency(row.estimateAmount, { empty: '—' })
                           : '—'}
                       </td>
-                      <td>
+                      <td data-label="Pending Due">
                         <span className="ipd-claim-amt--due">
                           {formatCurrency(row.pendingDue, { empty: '—' })}
                         </span>
                       </td>
-                      <td>
+                      <td data-label="Action">
                         <div className="ipd-table__actions">
                           <Button
                             type="button"
@@ -312,7 +312,7 @@ export default function IpdBillingPage() {
           </div>
         ) : showSelfBilling ? (
           <div className="ipd-table-wrap">
-            <table className="ipd-table">
+            <table className="ipd-table ipd-table--stack">
               <thead>
                 <tr>
                   <th>Admission</th>
@@ -348,16 +348,16 @@ export default function IpdBillingPage() {
                 ) : (
                   rows.map((row) => (
                     <tr key={row.id}>
-                      <td>{row.admission_no || row.id}</td>
-                      <td>{row.patient_name || '—'}</td>
-                      <td>
+                      <td data-label="Admission">{row.admission_no || row.id}</td>
+                      <td data-label="Patient">{row.patient_name || '—'}</td>
+                      <td data-label="Ward / Bed">
                         {row.ward || '—'} / {row.bed || '—'}
                       </td>
-                      <td>{row.days ?? '—'}</td>
-                      <td>{formatCurrency(row.total, { empty: '—' })}</td>
-                      <td>{formatCurrency(row.paid_balance, { empty: '—' })}</td>
-                      <td>{formatCurrency(row.due_balance, { empty: '—' })}</td>
-                      <td>
+                      <td data-label="Days">{row.days ?? '—'}</td>
+                      <td data-label="Total">{formatCurrency(row.total, { empty: '—' })}</td>
+                      <td data-label="Paid Balance">{formatCurrency(row.paid_balance, { empty: '—' })}</td>
+                      <td data-label="Due Balance">{formatCurrency(row.due_balance, { empty: '—' })}</td>
+                      <td data-label="Actions">
                         <IpdPermissionButton
                           allowed={canViewBilling}
                           type="button"

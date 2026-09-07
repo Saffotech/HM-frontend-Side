@@ -208,7 +208,7 @@ export default function PrescriptionDetailPage() {
                 )}
               </div>
               <DataTableShell>
-                <table className="data-table pharmacy-detail-table">
+                <table className="data-table pharmacy-detail-table pharmacy-table--stack">
                   <colgroup>
                     <col className="pharmacy-detail-col pharmacy-detail-col--med" />
                     <col className="pharmacy-detail-col pharmacy-detail-col--strength" />
@@ -232,24 +232,24 @@ export default function PrescriptionDetailPage() {
                       const pricing = getPrescriptionItemPricingSummary(id, item.id);
                       return (
                       <tr key={item.id}>
-                        <td>{item.medicine_name}</td>
-                        <td>{item.dosage || '—'}</td>
-                        <td className="pharmacy-detail-instructions">
+                        <td data-label="Medicine">{item.medicine_name}</td>
+                        <td data-label="Strength">{item.dosage || '—'}</td>
+                        <td className="pharmacy-detail-instructions" data-label="Instructions">
                           <PharmacyTruncatedText
                             text={item.instructions}
                             maxLength={40}
                           />
                         </td>
-                        <td className="pharmacy-detail-qty">
+                        <td className="pharmacy-detail-qty" data-label="Total quantity">
                           {formatQuantityLabel(
                             item.quantity_prescribed,
                             item.medicine_name,
                           )}
                         </td>
-                        <td className="pharmacy-detail-money">
+                        <td className="pharmacy-detail-money" data-label="Price per unit">
                           {formatCurrency(pricing?.unitPrice, { empty: '—' })}
                         </td>
-                        <td className="pharmacy-detail-money">
+                        <td className="pharmacy-detail-money" data-label="Total amount">
                           {formatCurrency(pricing?.totalAmount, { empty: '—' })}
                         </td>
                       </tr>
@@ -266,7 +266,7 @@ export default function PrescriptionDetailPage() {
                   <h3>Previous dispensings</h3>
                 </div>
                 <DataTableShell>
-                  <table className="data-table pharmacy-detail-table">
+                  <table className="data-table pharmacy-detail-table pharmacy-table--stack">
                     <colgroup>
                       <col className="pharmacy-detail-col pharmacy-detail-col--date" />
                       <col className="pharmacy-detail-col pharmacy-detail-col--med" />
@@ -288,13 +288,13 @@ export default function PrescriptionDetailPage() {
                         const pricing = matchDispenseHistoryPricing(id, row);
                         return (
                         <tr key={row.id}>
-                          <td>{fmtDt(row.dispensed_at)}</td>
-                          <td>{row.medicine_name || '—'}</td>
-                          <td className="pharmacy-detail-qty">{row.quantity_dispensed ?? '—'}</td>
-                          <td className="pharmacy-detail-money">
+                          <td data-label="Date">{fmtDt(row.dispensed_at)}</td>
+                          <td data-label="Medicine">{row.medicine_name || '—'}</td>
+                          <td className="pharmacy-detail-qty" data-label="Quantity dispensed">{row.quantity_dispensed ?? '—'}</td>
+                          <td className="pharmacy-detail-money" data-label="Price per unit">
                             {formatCurrency(pricing?.unitPrice, { empty: '—' })}
                           </td>
-                          <td className="pharmacy-detail-money">
+                          <td className="pharmacy-detail-money" data-label="Total amount">
                             {formatCurrency(pricing?.amount, { empty: '—' })}
                           </td>
                         </tr>

@@ -236,7 +236,7 @@ export default function NurseBedAllocationListPage() {
                   {hasFilters ? ' (filtered)' : ''}
                 </div>
                 <div className="nba-table-wrap">
-                  <table className="nba-table">
+                  <table className="nba-table admin-table--stack">
                     <thead>
                       <tr>
                         <th>Nurse</th>
@@ -252,10 +252,10 @@ export default function NurseBedAllocationListPage() {
                     <tbody>
                       {items.map((row) => (
                         <tr key={`${row.nurseId}-${row.isActive ? 'a' : 'i'}-${row.id}`}>
-                          <td>{row.nurseName}</td>
-                          <td>{formatAllocationDate(row.shiftDate)}</td>
-                          <td>{formatAssignedUntil(row.assignedUntil, row.isActive)}</td>
-                          <td>
+                          <td data-label="Nurse"><span>{row.nurseName}</span></td>
+                          <td data-label="Assigned From"><span>{formatAllocationDate(row.shiftDate)}</span></td>
+                          <td data-label="Assigned Until"><span>{formatAssignedUntil(row.assignedUntil, row.isActive)}</span></td>
+                          <td data-label="Allocated Beds">
                             <Button
                               type="button"
                               size="sm"
@@ -280,12 +280,12 @@ export default function NurseBedAllocationListPage() {
                               View beds
                             </Button>
                           </td>
-                          <td>
+                          <td data-label="Status">
                             <AdminAllocationStatusBadge isActive={row.isActive} />
                           </td>
-                          <td>{row.assignedByName}</td>
-                          <td>{formatAllocationDate(row.createdAt)}</td>
-                          <td className="nba-td-actions">
+                          <td data-label="Assigned By"><span>{row.assignedByName}</span></td>
+                          <td data-label="Created"><span>{formatAllocationDate(row.createdAt)}</span></td>
+                          <td className="nba-td-actions" data-label="Actions">
                             <div className="nba-table__actions">
                               <Button
                                 type="button"
@@ -360,7 +360,7 @@ export default function NurseBedAllocationListPage() {
               {bedsPreview.beds.length} bed{bedsPreview.beds.length === 1 ? '' : 's'}
             </p>
             <div className="nba-table-wrap">
-              <table className="nba-table nba-table--compact">
+              <table className="nba-table nba-table--compact admin-table--stack">
                 <thead>
                   <tr>
                     <th>Ward</th>
@@ -370,8 +370,8 @@ export default function NurseBedAllocationListPage() {
                 <tbody>
                   {bedsPreview.beds.map((bed) => (
                     <tr key={bed.id ?? `${bed.wardName}-${bed.bedNumber}`}>
-                      <td>{bed.wardName || '—'}</td>
-                      <td>{bed.bedNumber || '—'}</td>
+                      <td data-label="Ward"><span>{bed.wardName || '—'}</span></td>
+                      <td data-label="Bed"><span>{bed.bedNumber || '—'}</span></td>
                     </tr>
                   ))}
                 </tbody>

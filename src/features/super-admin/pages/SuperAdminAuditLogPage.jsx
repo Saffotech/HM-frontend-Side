@@ -134,7 +134,7 @@ export default function SuperAdminAuditLogPage() {
             ) : (
               <>
                 <div className="admin-table-wrap">
-                  <table className="admin-table">
+                  <table className="admin-table admin-table--stack">
                     <thead>
                       <tr>
                         <th>Timestamp</th>
@@ -148,18 +148,18 @@ export default function SuperAdminAuditLogPage() {
                     <tbody>
                       {displayLogs.map((log) => (
                         <tr key={log.id}>
-                          <td className="sa-audit-time">
-                            {new Date(log.timestamp).toLocaleString()}
+                          <td className="sa-audit-time" data-label="Timestamp">
+                            <span>{new Date(log.timestamp).toLocaleString()}</span>
                           </td>
-                          <td>{log.actor}</td>
-                          <td>
+                          <td data-label="Actor"><span>{log.actor}</span></td>
+                          <td data-label="Action">
                             <span className={`admin-badge ${getAuditActionBadgeClass(log.action)}`}>
                               {formatAuditActionLabel(log.action)}
                             </span>
                           </td>
-                          <td>{log.target}</td>
-                          <td>{log.target_type}</td>
-                          <td>{log.ip}</td>
+                          <td data-label="Description"><span>{log.target}</span></td>
+                          <td data-label="Target Type"><span>{log.target_type}</span></td>
+                          <td data-label="IP"><span>{log.ip}</span></td>
                         </tr>
                       ))}
                     </tbody>

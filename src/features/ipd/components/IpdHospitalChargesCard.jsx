@@ -99,7 +99,7 @@ function IpdHospitalChargesCard({
                         focusHead === row.id ? ' ipd-ins-charge-table__row--focus' : ''
                       }${isDiscountCharge(row) ? ' ipd-ins-charge-table__row--discount' : ''}`}
                     >
-                      <td>
+                      <td data-label="Charge head">
                         {isDefaultChargeHead(row) ? (
                           <span className="ipd-ins-charge-table__label">{row.label}</span>
                         ) : (
@@ -112,7 +112,7 @@ function IpdHospitalChargesCard({
                           />
                         )}
                       </td>
-                      <td className="ipd-num">
+                      <td className="ipd-num" data-label="Amount">
                         <input
                           className="ipd-input ipd-ins-charge-input ipd-ins-charge-table__amount-input"
                           value={row.amount}
@@ -124,7 +124,7 @@ function IpdHospitalChargesCard({
                           aria-label={`Amount for ${row.label}`}
                         />
                       </td>
-                      <td className="ipd-ins-charge-table__action">
+                      <td className="ipd-ins-charge-table__action" data-label="Actions">
                         {!isDefaultChargeHead(row) ? (
                           <button
                             type="button"

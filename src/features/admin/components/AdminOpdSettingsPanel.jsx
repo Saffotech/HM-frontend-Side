@@ -1061,7 +1061,7 @@ export default function AdminOpdSettingsPanel({ manageAdminEditLocks = false }) 
                     </p>
                   ) : (
                     <div className="aos-table-wrap">
-                      <table className="aos-table">
+                      <table className="aos-table admin-table--stack">
                         <thead>
                           <tr>
                             <th>Provider name</th>
@@ -1073,7 +1073,7 @@ export default function AdminOpdSettingsPanel({ manageAdminEditLocks = false }) 
                         <tbody>
                           {form.payment_modes.insurance_providers.map((provider) => (
                             <tr key={provider.id}>
-                              <td>
+                              <td data-label="Provider name">
                                 <Input
                                   value={provider.name}
                                   placeholder="e.g. Star Health"
@@ -1083,7 +1083,7 @@ export default function AdminOpdSettingsPanel({ manageAdminEditLocks = false }) 
                                   }
                                 />
                               </td>
-                              <td>
+                              <td data-label="Code">
                                 <Input
                                   value={provider.code}
                                   placeholder="STAR"
@@ -1093,7 +1093,7 @@ export default function AdminOpdSettingsPanel({ manageAdminEditLocks = false }) 
                                   }
                                 />
                               </td>
-                              <td>
+                              <td data-label="Active">
                                 <input
                                   type="checkbox"
                                   checked={Boolean(provider.is_active)}
@@ -1108,7 +1108,7 @@ export default function AdminOpdSettingsPanel({ manageAdminEditLocks = false }) 
                                   aria-label={`Active ${provider.name || 'provider'}`}
                                 />
                               </td>
-                              <td>
+                              <td data-label="Remove">
                                 {canEdit('insurance_providers') ? (
                                   <Button
                                     type="button"

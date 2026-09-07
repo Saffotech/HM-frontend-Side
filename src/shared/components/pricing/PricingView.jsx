@@ -145,11 +145,11 @@ function LabChargesPanel({ rows, labChargeSource, catalogAccessDenied }) {
             {filtered.length > 0 ? (
               filtered.map((row, idx) => (
                 <tr key={`${row.key}-${idx}`}>
-                  <td className="pricing-table__name">{row.name}</td>
-                  <td className="pricing-table__department">
+                  <td className="pricing-table__name" data-label="Test">{row.name}</td>
+                  <td className="pricing-table__department" data-label="Department">
                     {row.departmentName || '—'}
                   </td>
-                  <td className="pricing-table__amount">{formatCurrency(row.fee)}</td>
+                  <td className="pricing-table__amount" data-label="Price">{formatCurrency(row.fee)}</td>
                 </tr>
               ))
             ) : (
@@ -209,13 +209,13 @@ function FeeTable({ rows, nameLabel, placeholder, showDepartment = false }) {
             {filtered.length > 0 ? (
               filtered.map((row, idx) => (
                 <tr key={`${row.key}-${idx}`}>
-                  <td className="pricing-table__name">{row.name}</td>
+                  <td className="pricing-table__name" data-label={nameLabel}>{row.name}</td>
                   {showDepartment && (
-                    <td className="pricing-table__department">
+                    <td className="pricing-table__department" data-label="Department">
                       {row.departmentName || '—'}
                     </td>
                   )}
-                  <td className="pricing-table__amount">{formatCurrency(row.fee)}</td>
+                  <td className="pricing-table__amount" data-label="Price">{formatCurrency(row.fee)}</td>
                 </tr>
               ))
             ) : (

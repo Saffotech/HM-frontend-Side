@@ -12,6 +12,7 @@ import { useLocation } from 'react-router-dom';
 import { ROUTES } from '@/shared/constants';
 import RoleLayout from '@/shared/components/layout/RoleLayout';
 import '../styles/admin.css';
+import '../styles/admin-mobile.css';
 
 const NAV_LINKS = [
   { href: ROUTES.ADMIN_DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
@@ -81,6 +82,7 @@ export default function AdminLayout({ children, compact = false }) {
       homeRoute={ROUTES.ADMIN_DASHBOARD}
       defaultTitle={HEADER_TITLE}
       compact={compact}
+      layoutClassName="admin-layout"
       isNavLinkActive={isNavLinkActive}
       showBell={false}
       profileHref={ROUTES.ADMIN_PROFILE}

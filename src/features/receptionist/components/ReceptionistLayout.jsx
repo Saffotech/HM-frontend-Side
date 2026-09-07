@@ -10,6 +10,7 @@ import RoleLayout from '@/shared/components/layout/RoleLayout';
 import ReceptionistNotificationsBell from '@/features/receptionist/components/ReceptionistNotificationsBell';
 import { useReceptionistPermissionSet } from '@/features/receptionist/hooks/useReceptionistPermission';
 import '../styles/receptionist.css';
+import '../styles/receptionist-mobile.css';
 
 const NAV_LINKS = [
   {
@@ -73,6 +74,7 @@ export default function ReceptionistLayout({ children }) {
         canViewQueues ? ROUTES.RECEPTIONIST_DASHBOARD : ROUTES.RECEPTIONIST_PROFILE
       }
       defaultTitle="Receptionist"
+      layoutClassName="receptionist-layout"
       showBell={canViewNotifications}
       profileHref={ROUTES.RECEPTIONIST_PROFILE}
       logoutMenuOnly={onProfilePage}

@@ -1,0 +1,248 @@
+/* Doctor phone layout — laptop/desktop tables stay unchanged */
+
+@media (max-width: 767px) {
+  .doctor-shell .table-wrap:has(.doc-table--stack),
+  .doctor-shell .doc-patients-page__table-wrap:has(.doc-table--stack),
+  .doctor-shell .doc-profile-visits-table-wrap:has(.doc-table--stack),
+  .doctor-shell .doc-profile-labs-table-wrap:has(.doc-table--stack),
+  .doctor-shell .doc-profile-rx-table-wrap:has(.doc-table--stack),
+  .doctor-shell .doc-rx-detail__table-wrap:has(.doc-table--stack) {
+    overflow: visible;
+    max-height: none !important;
+  }
+
+  .doctor-shell .doc-table--stack {
+    min-width: 0 !important;
+    width: 100% !important;
+    table-layout: auto !important;
+    white-space: normal !important;
+  }
+
+  .doctor-shell .doc-table--stack thead,
+  .doctor-shell .doc-table--stack colgroup {
+    display: none !important;
+  }
+
+  .doctor-shell .doc-table--stack,
+  .doctor-shell .doc-table--stack tbody,
+  .doctor-shell .doc-table--stack tr {
+    display: block;
+    width: 100%;
+  }
+
+  .doctor-shell .doc-table--stack tbody tr {
+    margin-bottom: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 0.75rem;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  .doctor-shell .doc-table--stack tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .doctor-shell .doc-table--stack tbody tr:hover,
+  .doctor-shell .doc-table--stack tbody tr:hover td {
+    background: #fff;
+  }
+
+  .doctor-shell .doc-table--stack td {
+    display: grid !important;
+    grid-template-columns: minmax(5.5rem, 38%) minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0.75rem;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    padding: 0.4rem 0 !important;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: right;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+  }
+
+  .doctor-shell .doc-table--stack td::before {
+    content: attr(data-label);
+    grid-column: 1;
+    grid-row: 1;
+    text-align: left;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .doctor-shell .doc-table--stack td > * {
+    grid-column: 2;
+    min-width: 0;
+    justify-self: end;
+    text-align: right;
+  }
+
+  .doctor-shell .doc-table--stack td:last-child {
+    border-bottom: none;
+    padding-bottom: 0.15rem !important;
+  }
+
+  .doctor-shell .doc-table--stack td[colspan] {
+    display: block !important;
+    text-align: left;
+    border-bottom: none;
+    padding: 0.5rem 0 !important;
+  }
+
+  .doctor-shell .doc-table--stack td[colspan]::before {
+    display: none;
+  }
+
+  .doctor-shell .doc-table--stack td[data-label='Action'] > *,
+  .doctor-shell .doc-table--stack td[data-label='Actions'] > * {
+    justify-self: end;
+    width: auto;
+    max-width: 100%;
+  }
+
+  .doctor-shell .doc-table--stack td[data-label='Action'] .btn,
+  .doctor-shell .doc-table--stack td[data-label='Actions'] .btn {
+    width: auto !important;
+    min-width: 5.5rem;
+    max-width: 100%;
+    white-space: nowrap;
+    justify-content: center;
+  }
+
+  .doctor-shell .doc-table--stack .doc-labs-table__actions-inner,
+  .doctor-shell .doc-table--stack .doc-labs-table__actions-btns,
+  .doctor-shell .doc-table--stack .doc-profile-rx-table__action-group,
+  .doctor-shell .doc-table--stack .doc-appt-actions,
+  .doctor-shell .doc-table--stack .doc-appt-actions__bar {
+    width: auto;
+    max-width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .doctor-shell .doc-table--stack .doc-labs-patient,
+  .doctor-shell .doc-table--stack .doc-profile-rx-med-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.25rem;
+  }
+
+  .doctor-shell .doc-table--stack .doc-labs-patient {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.1rem;
+  }
+
+  .doctor-shell .doc-table--stack .doc-patient-table__name strong {
+    overflow: visible;
+    text-overflow: unset;
+    white-space: normal;
+  }
+
+  .doctor-shell .doc-queue-card__head,
+  .doctor-shell .doc-patients-page__head,
+  .doctor-shell .doc-patients-page__toolbar,
+  .doctor-shell .doc-labs-toolbar,
+  .doctor-shell .doc-week-toolbar,
+  .doctor-shell .doc-dashboard-ipd-dates,
+  .doctor-shell .doc-profile-page__toolbar,
+  .doctor-shell .doc-profile-hero__main {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .doctor-shell .doc-queue-card__title-group,
+  .doctor-shell .doc-queue-card__actions,
+  .doctor-shell .doc-queue-card__head-end,
+  .doctor-shell .doc-queue-card__patient-search,
+  .doctor-shell .doc-patients-page__toolbar .doc-patient-search,
+  .doctor-shell .doc-patients-page__toolbar .doc-patient-search--inline,
+  .doctor-shell .doc-patient-search,
+  .doctor-shell .doc-labs-search,
+  .doctor-shell .doc-patients-page__date-strip,
+  .doctor-shell .doc-patient-filters,
+  .doctor-shell .doc-patient-filters--pill,
+  .doctor-shell .doc-patient-category,
+  .doctor-shell .doc-patient-category__trigger,
+  .doctor-shell .doc-week-date-picker,
+  .doctor-shell .doc-dashboard-ipd-dates__field,
+  .doctor-shell .doc-dashboard-ipd-dates__clear,
+  .doctor-shell .doc-profile-hero__identity,
+  .doctor-shell .doc-profile-hero__tags {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+  }
+
+  .doctor-shell .doc-patient-filters--pill {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.4rem;
+  }
+
+  .doctor-shell .doc-patient-filters--pill .doc-patient-filters__field,
+  .doctor-shell .doc-patient-filters--pill .doc-patient-filters__field select,
+  .doctor-shell .doc-patient-filters--pill .doc-patient-filters__field input,
+  .doctor-shell .doc-patient-filters--pill .doc-patient-filters__reset,
+  .doctor-shell .doc-dashboard-ipd-dates__field input,
+  .doctor-shell .doc-week-date-picker__date,
+  .doctor-shell .doc-queue-card__patient-search-input {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .doctor-shell .doc-patient-category__trigger {
+    justify-content: space-between;
+  }
+
+  .doctor-shell .doc-queue-card__actions,
+  .doctor-shell .doc-queue-card__head-end {
+    justify-content: stretch;
+  }
+
+  .doctor-shell .doc-queue-card__actions .btn,
+  .doctor-shell .doc-profile-page__actions,
+  .doctor-shell .doc-profile-page__actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .doctor-shell .doc-week-grid {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 0.35rem;
+  }
+
+  .doctor-shell .doc-week-day {
+    flex: 0 0 3.35rem;
+    min-width: 3.35rem;
+  }
+
+  .doctor-shell .doc-profile-grid,
+  .doctor-shell .doc-profile-grid--contact,
+  .doctor-shell .doc-visit-detail-grid,
+  .doctor-shell .doc-profile-panel--consulting .doc-visit-detail-grid,
+  .doctor-shell .doc-profile-panel--labs .doc-visit-detail-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .doctor-shell .doc-labs-filters {
+    width: 100%;
+  }
+
+  .doctor-shell .doc-labs-filter {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}

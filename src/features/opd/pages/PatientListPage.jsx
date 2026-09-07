@@ -140,7 +140,7 @@ export default function PatientListPage() {
             alwaysVisible: true,
           }}
         >
-          <table className="data-table patients-table">
+          <table className="data-table patients-table data-table--stack">
             <thead>
               <tr>
                 <SortTh label="Patient" field="name" />
@@ -158,7 +158,7 @@ export default function PatientListPage() {
                   onClick={() => navigate(`/patients/${p.id}/profile`)}
                   style={{ cursor: 'pointer' }}
                 >
-                  <td>
+                  <td data-label="Patient">
                     <div className="patient-cell">
                       <Avatar name={p.name} size={32} />
                       <div className="patient-cell__meta">
@@ -169,15 +169,17 @@ export default function PatientListPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="col-optional">
-                    {p.phone}
-                    <div className="text-muted">{p.gender}</div>
+                  <td className="col-optional" data-label="Contact">
+                    <div>
+                      {p.phone}
+                      <div className="text-muted">{p.gender}</div>
+                    </div>
                   </td>
-                  <td className="col-optional">
+                  <td className="col-optional" data-label="Blood">
                     <span className="blood-badge">{p.bloodGroup}</span>
                   </td>
-                  <td className="col-optional">{p.registeredDate}</td>
-                  <td className="actions-cell patients-table__actions">
+                  <td className="col-optional" data-label="Registered">{p.registeredDate}</td>
+                  <td className="actions-cell patients-table__actions" data-label="Actions">
                     <AdminGatedDeleteButton
                       disabledByAdmin={!allowPatientDelete}
                       onClick={(e) => {

@@ -41,7 +41,7 @@ export default function DoctorLabReportsSnapshot({ labs = [], onViewReport }) {
   return (
     <div className="doc-profile-labs-table-wrap">
       <div className="table-wrap">
-        <table className="data-table doc-labs-table doc-profile-labs-table">
+        <table className="data-table doc-labs-table doc-profile-labs-table doc-table--stack">
           <thead>
             <tr>
               <th>Test</th>
@@ -55,20 +55,20 @@ export default function DoctorLabReportsSnapshot({ labs = [], onViewReport }) {
           <tbody>
             {pagedLabs.map((test, index) => (
               <tr key={test.id ?? `${test.testName}-${index}`}>
-                <td className="doc-profile-labs-table__test">{test.testName || '—'}</td>
-                <td>
+                <td className="doc-profile-labs-table__test" data-label="Test">{test.testName || '—'}</td>
+                <td data-label="Category">
                   <CategoryCell
                     category={test.category}
                     testName={test.testName}
                     departmentName={test.departmentName}
                   />
                 </td>
-                <td>{test.orderedDisplay || '—'}</td>
-                <td>{test.priority || '—'}</td>
-                <td>
+                <td data-label="Ordered">{test.orderedDisplay || '—'}</td>
+                <td data-label="Priority">{test.priority || '—'}</td>
+                <td data-label="Status">
                   <StatusPill status={test.doctorStatus ?? test.status} />
                 </td>
-                <td className="doc-labs-table__actions">
+                <td className="doc-labs-table__actions" data-label="Action">
                   <div className="doc-labs-table__actions-inner">
                     <Button
                       type="button"

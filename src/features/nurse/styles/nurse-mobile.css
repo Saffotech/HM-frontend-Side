@@ -1,0 +1,246 @@
+/* Nurse phone layout — laptop/desktop tables stay unchanged */
+
+@media (max-width: 767px) {
+  .nurse-layout .nurse-table-wrap:has(.nurse-table--stack),
+  .nurse-layout .nurse-patient-overview__table-wrap:has(.nurse-table--stack),
+  .nurse-layout .nurse-my-duty__beds-wrap:has(.nurse-table--stack),
+  .nurse-layout .nurse-lab-report-detail__params-wrap:has(.nurse-table--stack) {
+    overflow: visible;
+    max-height: none !important;
+  }
+
+  .nurse-layout .nurse-table--stack {
+    min-width: 0 !important;
+    table-layout: auto !important;
+  }
+
+  .nurse-layout .nurse-table--stack thead {
+    display: none;
+  }
+
+  .nurse-layout .nurse-table--stack,
+  .nurse-layout .nurse-table--stack tbody,
+  .nurse-layout .nurse-table--stack tr {
+    display: block;
+    width: 100%;
+  }
+
+  .nurse-layout .nurse-table--stack tbody tr {
+    margin-bottom: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 0.75rem;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  .nurse-layout .nurse-table--stack tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .nurse-layout .nurse-table--stack tbody tr:hover,
+  .nurse-layout .nurse-table--stack tbody tr:hover td {
+    background: #fff;
+  }
+
+  .nurse-layout .nurse-table--stack tbody tr.nurse-row--clickable:hover,
+  .nurse-layout .nurse-table--stack tbody tr.nurse-row--clickable:hover td {
+    background: #f8fafc;
+  }
+
+  .nurse-layout .nurse-table--stack tbody tr.nurse-row--emergency {
+    box-shadow: inset 4px 0 0 #dc2626;
+  }
+
+  .nurse-layout .nurse-table--stack tr.nurse-row--emergency td:first-child {
+    box-shadow: none;
+  }
+
+  .nurse-layout .nurse-table--stack td {
+    display: grid !important;
+    grid-template-columns: minmax(5.5rem, 38%) minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0.75rem;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: right;
+    white-space: normal !important;
+  }
+
+  .nurse-layout .nurse-table--stack td::before {
+    content: attr(data-label);
+    grid-column: 1;
+    grid-row: 1;
+    text-align: left;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .nurse-layout .nurse-table--stack td > * {
+    grid-column: 2;
+    min-width: 0;
+    justify-self: end;
+    text-align: right;
+  }
+
+  .nurse-layout .nurse-table--stack td:last-child {
+    border-bottom: none;
+    padding-bottom: 0.15rem;
+  }
+
+  .nurse-layout .nurse-table--stack td[colspan] {
+    display: block !important;
+    text-align: left;
+    border-bottom: none;
+    padding: 0.5rem 0;
+  }
+
+  .nurse-layout .nurse-table--stack td[colspan]::before {
+    display: none;
+  }
+
+  .nurse-layout .nurse-table--stack td[data-label='Action'] > *,
+  .nurse-layout .nurse-table--stack td[data-label='Actions'] > * {
+    justify-self: end;
+    width: auto;
+    max-width: 100%;
+  }
+
+  .nurse-layout .nurse-table--stack td[data-label='Action'] .nurse-btn,
+  .nurse-layout .nurse-table--stack td[data-label='Actions'] .nurse-btn,
+  .nurse-layout .nurse-table--stack td[data-label='Action'] .btn,
+  .nurse-layout .nurse-table--stack td[data-label='Actions'] .btn {
+    width: auto;
+    min-width: 5.5rem;
+    max-width: 100%;
+    white-space: nowrap;
+    justify-content: center;
+  }
+
+  .nurse-layout .nurse-table--stack .nurse-table__actions,
+  .nurse-layout .nurse-table--stack .nurse-doctor-visits__actions {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .nurse-layout .nurse-scope-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .nurse-layout .nurse-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nurse-layout .nurse-dashboard-table__header,
+  .nurse-layout .nurse-dashboard-page__toolbar,
+  .nurse-layout .nurse-queue-page__header,
+  .nurse-layout .nurse-queue-page__header-search,
+  .nurse-layout .nurse-queue-page__toolbar-row,
+  .nurse-layout .nurse-vitals-registry__toolbar,
+  .nurse-layout .nurse-notes-registry__toolbar,
+  .nurse-layout .nurse-med-patients__toolbar-filters,
+  .nurse-layout .nurse-alerts-filters__toolbar,
+  .nurse-layout .nurse-profile-page__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .nurse-layout .nurse-dashboard-table__search,
+  .nurse-layout .nurse-queue-page__header-search,
+  .nurse-layout .nurse-queue-page__search-wrap,
+  .nurse-layout .nurse-med-patients__search-wrap,
+  .nurse-layout .nurse-med-patients__ward-dropdown,
+  .nurse-layout .nurse-notes-registry__search-wrap,
+  .nurse-layout .nurse-vitals-registry__search-wrap,
+  .nurse-layout .nurse-notes-registry__ward-select,
+  .nurse-layout .nurse-vitals-registry__ward-select,
+  .nurse-layout .nurse-doctor-visits__toolbar-filters .nurse-doctor-visits__ward-select,
+  .nurse-layout .nurse-doctor-visits__toolbar-filters .nurse-doctor-visits__date-input,
+  .nurse-layout .nurse-lab-reports__toolbar-filters .nurse-lab-reports__ward-select,
+  .nurse-layout .nurse-lab-reports__toolbar-filters .nurse-lab-reports__date-input,
+  .nurse-layout .nurse-med-patients__toolbar-filters .nurse-select,
+  .nurse-layout .nurse-med-patients__toolbar-filters .date-input,
+  .nurse-layout .nurse-med-patients__toolbar-filters .nurse-btn,
+  .nurse-layout .nurse-queue-page__header-search .nurse-med-patients__ward-dropdown {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin-left: 0;
+  }
+
+  .nurse-layout .nurse-doctor-visits__date-input .date-input__wrap,
+  .nurse-layout .nurse-lab-reports__date-input .date-input__wrap,
+  .nurse-layout .nurse-med-patients__toolbar-filters .date-input__wrap {
+    width: 100%;
+  }
+
+  .nurse-layout .nurse-queue-page__header-search {
+    justify-content: stretch;
+  }
+
+  .nurse-layout .nurse-profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nurse-layout .nurse-profile-page__actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .nurse-layout .nurse-form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .nurse-layout .nurse-form-actions .nurse-btn,
+  .nurse-layout .nurse-form-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .nurse-layout .nurse-patient-overview__tab-bar {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nurse-layout .nurse-patient-overview__toolbar-actions .nurse-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .nurse-layout .nurse-alerts-filters__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nurse-layout .nurse-alerts-filters__search,
+  .nurse-layout .nurse-alerts-filters__type,
+  .nurse-layout .nurse-alerts-filters__ward,
+  .nurse-layout .nurse-alerts-filters__severity,
+  .nurse-layout .nurse-alerts-filters__date {
+    grid-column: 1 / -1;
+  }
+
+  .nurse-layout .nurse-my-duty__roster-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .nurse-layout .nurse-my-duty__roster-side {
+    grid-column: 2;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .nurse-layout .nurse-lab-reports .nurse-table--stack th,
+  .nurse-layout .nurse-lab-reports .nurse-table--stack td {
+    width: 100% !important;
+  }
+}

@@ -230,7 +230,7 @@ export default function AdmissionCareTeamEditor({
         </p>
       ) : (
         <div className="ipd-table-wrap ipd-care-team__table-wrap">
-          <table className="ipd-table ipd-table--dense ipd-care-team__table">
+                          <table className="ipd-table ipd-table--dense ipd-care-team__table ipd-table--stack">
             <thead>
               <tr>
                 <th>Doctor</th>
@@ -242,9 +242,9 @@ export default function AdmissionCareTeamEditor({
             <tbody>
               {members.map((row) => (
                 <tr key={row.key}>
-                  <td>{row.doctorName}</td>
-                  <td>{row.departmentName}</td>
-                  <td>
+                  <td data-label="Doctor">{row.doctorName}</td>
+                  <td data-label="Department">{row.departmentName}</td>
+                  <td data-label="Role">
                     <span
                       className={`ipd-care-team__role ipd-care-team__role--${
                         row.role === 'Primary'
@@ -258,7 +258,7 @@ export default function AdmissionCareTeamEditor({
                     </span>
                   </td>
                   {canAdd ? (
-                    <td className="ipd-care-team__col-actions">
+                    <td className="ipd-care-team__col-actions" data-label="Actions">
                       {row.removable ? (
                         <Button
                           type="button"

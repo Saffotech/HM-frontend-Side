@@ -193,7 +193,7 @@ export default function IpdDashboardPage() {
           ) : (
             <>
               <div className="ipd-table-wrap">
-                <table className="ipd-table ipd-table--dense ipd-table--dash-recent">
+                <table className="ipd-table ipd-table--dense ipd-table--dash-recent ipd-table--stack">
                   <thead>
                     <tr>
                       <th>Admission</th>
@@ -240,7 +240,7 @@ export default function IpdDashboardPage() {
                             e.currentTarget.click();
                           }}
                         >
-                          <td>
+                          <td data-label="Admission">
                             {profilePath ? (
                               <Link to={profilePath}>
                                 {row.admission_no || `#${row.id}`}
@@ -249,7 +249,7 @@ export default function IpdDashboardPage() {
                               row.admission_no || `#${row.id}`
                             )}
                           </td>
-                          <td>
+                          <td data-label="Patient">
                             <div className="ipd-dash-recent__patient">
                               <strong>{row.patient_name || "—"}</strong>
                               {row.patient_uid ? (
@@ -259,10 +259,10 @@ export default function IpdDashboardPage() {
                               ) : null}
                             </div>
                           </td>
-                          <td>
+                          <td data-label="Ward / Bed">
                             {row.ward_name || "—"} / {row.bed_number || "—"}
                           </td>
-                          <td>
+                          <td data-label="Doctor">
                             {row.doctor_name ||
                               (row.status === "admitted" && profilePath ? (
                                 <Link to={profilePath}>Assign doctor</Link>
@@ -270,10 +270,10 @@ export default function IpdDashboardPage() {
                                 "—"
                               ))}
                           </td>
-                          <td>
+                          <td data-label="Status">
                             <IpdStatusBadge status={row.status} />
                           </td>
-                          <td>{formatIpdDateTime(row.admitted_at)}</td>
+                          <td data-label="Admitted">{formatIpdDateTime(row.admitted_at)}</td>
                         </tr>
                         );
                       })

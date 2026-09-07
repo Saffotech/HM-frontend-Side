@@ -203,7 +203,7 @@ export default function NurseMyDutyPage() {
               </div>
             ) : (
               <div className="nurse-my-duty__beds-wrap">
-                <table className="nurse-my-duty__beds-table">
+                <table className="nurse-my-duty__beds-table nurse-table--stack">
                   <thead>
                     <tr>
                       <th>Bed</th>
@@ -227,11 +227,11 @@ export default function NurseMyDutyPage() {
                               : 'nurse-my-duty__bed-row--vacant'
                           }
                         >
-                          <td className="nurse-my-duty__bed-num">
+                          <td className="nurse-my-duty__bed-num" data-label="Bed">
                             {bed.bed_number || '—'}
                           </td>
-                          <td>{bed.ward_name || '—'}</td>
-                          <td>
+                          <td data-label="Ward">{bed.ward_name || '—'}</td>
+                          <td data-label="Status">
                             <span
                               className={`nurse-my-duty__status ${
                                 occupied
@@ -242,14 +242,15 @@ export default function NurseMyDutyPage() {
                               {occupied ? 'Occupied' : 'Vacant'}
                             </span>
                           </td>
-                          <td className={occupied ? '' : 'nurse-my-duty__muted'}>
+                          <td className={occupied ? '' : 'nurse-my-duty__muted'} data-label="Patient">
                             {occupied ? bed.patient_name : '—'}
                           </td>
-                          <td>{formatDateShort(bed.assigned_from ?? bed.shift_date)}</td>
+                          <td data-label="From">{formatDateShort(bed.assigned_from ?? bed.shift_date)}</td>
                           <td
                             className={
                               until.ongoing ? 'nurse-my-duty__date-value--ongoing' : ''
                             }
+                            data-label="Till"
                           >
                             {until.label}
                           </td>

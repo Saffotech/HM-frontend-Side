@@ -764,7 +764,7 @@ export default function AdminOpdPricingSection({
             </div>
 
             <div className="aos-table-wrap aos-table-wrap--tariff">
-              <table className="aos-table aos-table--tariff">
+              <table className="aos-table aos-table--tariff admin-table--stack">
                 <thead>
                   <tr>
                     <th>Bed</th>
@@ -808,20 +808,20 @@ export default function AdminOpdPricingSection({
                           key={bed.id ?? bedNo}
                           className={hasOverride ? 'aos-table__row--override' : undefined}
                         >
-                          <td>
+                          <td data-label="Bed">
                             <span className="aos-bed-tariff__bed-id">{bedNo}</span>
                             {hasOverride ? (
                               <span className="aos-bed-tariff__override-tag">Custom</span>
                             ) : null}
                           </td>
-                          <td>
+                          <td data-label="Type">
                             <span
                               className={`aos-beds__type aos-beds__type--${bedType}`}
                             >
                               {bedType === 'double' ? 'Double' : 'Single'}
                             </span>
                           </td>
-                          <td>
+                          <td data-label="Price">
                             <span className="aos-ward-chip__field aos-ward-chip__field--table">
                               <span className="aos-ward-chip__rs" aria-hidden>
                                 {getCurrencySymbol()}
@@ -838,7 +838,7 @@ export default function AdminOpdPricingSection({
                               />
                             </span>
                           </td>
-                          <td className="aos-bed-tariff__col-actions">
+                          <td className="aos-bed-tariff__col-actions" data-label="Action">
                             <Button
                               type="button"
                               variant="ghost"

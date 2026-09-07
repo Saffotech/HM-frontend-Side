@@ -13,6 +13,7 @@ import {
   LAB_DEPT_CODE,
 } from '@/shared/utils/labDepartments';
 import '../styles/lab.css';
+import '../styles/lab-mobile.css';
 
 const NAV_LINKS = [
   {
@@ -121,6 +122,7 @@ export default function LabLayout({ children, pageTitle, compact = false }) {
         ) : null
       }
       compact={compact}
+      layoutClassName="lab-layout"
     >
       {children}
     </RoleLayout>

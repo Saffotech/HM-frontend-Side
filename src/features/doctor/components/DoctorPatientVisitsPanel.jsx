@@ -79,7 +79,7 @@ export default function DoctorPatientVisitsPanel({
       ) : (
         <div className="doc-profile-panel__body">
           <div className="table-wrap doc-profile-visits-table-wrap">
-            <table className="data-table doc-profile-visits-table">
+            <table className="data-table doc-profile-visits-table doc-table--stack">
               <thead>
                 <tr>
                   <th scope="col">Visited at</th>
@@ -93,12 +93,12 @@ export default function DoctorPatientVisitsPanel({
               <tbody>
                 {pagedVisits.map((visit) => (
                   <tr key={visit.id}>
-                    <td>{formatVisitTime(visit.visited_at)}</td>
-                    <td>{visit.doctor_name || '—'}</td>
-                    <td>{visitDepartment(visit)}</td>
-                    <td>{visit.visit_number ?? '—'}</td>
-                    <td>{visit.recorded_by_name || '—'}</td>
-                    <td className="doc-profile-visits-table__notes">{visit.notes || '—'}</td>
+                    <td data-label="Visited at">{formatVisitTime(visit.visited_at)}</td>
+                    <td data-label="Doctor">{visit.doctor_name || '—'}</td>
+                    <td data-label="Department">{visitDepartment(visit)}</td>
+                    <td data-label="Visit #">{visit.visit_number ?? '—'}</td>
+                    <td data-label="Recorded by">{visit.recorded_by_name || '—'}</td>
+                    <td className="doc-profile-visits-table__notes" data-label="Notes">{visit.notes || '—'}</td>
                   </tr>
                 ))}
               </tbody>

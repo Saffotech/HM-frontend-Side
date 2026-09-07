@@ -178,7 +178,7 @@ export default function LabReportDetailModal({ report, onClose, onEdit }) {
                 <div className="lab-report-view__params">
                   <h3 className="lab-report-view__params-title">Parameters</h3>
                   <div className="lab-report-view__params-wrap">
-                    <table className="lab-params-table lab-report-view__params-table">
+                    <table className="lab-params-table lab-report-view__params-table lab-table--stack">
                       <thead>
                         <tr>
                           <th>Parameter</th>
@@ -191,11 +191,11 @@ export default function LabReportDetailModal({ report, onClose, onEdit }) {
                       <tbody>
                         {detail.parameters.map((p) => (
                           <tr key={p.parameter_name}>
-                            <td>{p.parameter_name}</td>
-                            <td>{p.value}</td>
-                            <td>{p.unit}</td>
-                            <td>{p.normal_range}</td>
-                            <td>{p.flag}</td>
+                            <td data-label="Parameter">{p.parameter_name}</td>
+                            <td data-label="Value">{p.value}</td>
+                            <td data-label="Unit">{p.unit}</td>
+                            <td data-label="Range">{p.normal_range}</td>
+                            <td data-label="Flag">{p.flag}</td>
                           </tr>
                         ))}
                       </tbody>

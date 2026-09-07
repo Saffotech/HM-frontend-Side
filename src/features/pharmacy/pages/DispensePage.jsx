@@ -251,7 +251,7 @@ export default function DispensePage() {
               ) : (
                 <form onSubmit={handleSubmit} className="pharmacy-dispense-form">
                   <div className="pharmacy-dispense-table-wrap">
-                    <table className="pharmacy-dispense-table">
+                    <table className="pharmacy-dispense-table pharmacy-table--stack">
                       <thead>
                         <tr>
                           <th>Medicine</th>
@@ -273,24 +273,24 @@ export default function DispensePage() {
 
                           return (
                             <tr key={item.id} className={disabled ? 'is-complete' : undefined}>
-                              <td className="pharmacy-dispense-table__med">
+                              <td className="pharmacy-dispense-table__med" data-label="Medicine">
                                 <span className="pharmacy-dispense-table__med-name">
                                   {item.medicine_name}
                                 </span>
                               </td>
-                              <td className="pharmacy-dispense-table__instructions">
+                              <td className="pharmacy-dispense-table__instructions" data-label="Instructions">
                                 <PharmacyTruncatedText text={item.instructions} maxLength={40} />
                               </td>
-                              <td className="pharmacy-dispense-table__qty pharmacy-dispense-table__qty--emphasis">
+                              <td className="pharmacy-dispense-table__qty pharmacy-dispense-table__qty--emphasis" data-label="Total Required">
                                 {formatQuantityLabel(item.quantity_prescribed, item.medicine_name)}
                               </td>
-                              <td className="pharmacy-dispense-table__qty">
+                              <td className="pharmacy-dispense-table__qty" data-label="Already Dispensed">
                                 {formatQuantityLabel(item.quantity_dispensed, item.medicine_name)}
                               </td>
-                              <td className="pharmacy-dispense-table__qty pharmacy-dispense-table__qty--remaining">
+                              <td className="pharmacy-dispense-table__qty pharmacy-dispense-table__qty--remaining" data-label="Remaining">
                                 {formatQuantityLabel(item.quantity_remaining, item.medicine_name)}
                               </td>
-                              <td className="pharmacy-dispense-table__input-col">
+                              <td className="pharmacy-dispense-table__input-col" data-label="Give Now">
                                 <div className="pharmacy-dispense-give-now">
                                   <input
                                     type="number"
@@ -327,7 +327,7 @@ export default function DispensePage() {
                                   </p>
                                 )}
                               </td>
-                              <td className="pharmacy-dispense-table__input-col">
+                              <td className="pharmacy-dispense-table__input-col" data-label="Amount">
                                 <div className="pharmacy-dispense-give-now">
                                   <input
                                     type="number"
@@ -348,7 +348,7 @@ export default function DispensePage() {
                                   )}
                                 </div>
                               </td>
-                              <td className="pharmacy-dispense-table__amount-col">
+                              <td className="pharmacy-dispense-table__amount-col" data-label="Price">
                                 <span className="pharmacy-dispense-line-amount">
                                   {giveNowQty > 0 && String(amounts[item.id] ?? '').trim()
                                     ? `${formatCurrency(unitPrice, { empty: '—' })} / unit`

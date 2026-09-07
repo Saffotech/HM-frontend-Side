@@ -175,7 +175,7 @@ export default function LabCompletedReportsPage() {
           ) : (
             <>
               <div className="lab-table-wrap lab-table-wrap--archive">
-                <table className="lab-table lab-table--archive">
+                <table className="lab-table lab-table--archive lab-table--stack">
                   <thead>
                     <tr>
                       <th className="lab-archive-col lab-archive-col--patient">Patient Name</th>
@@ -195,14 +195,14 @@ export default function LabCompletedReportsPage() {
                       const location = visitLocationLabel(report);
                       return (
                       <tr key={report.reportDbId ?? report.reportId}>
-                        <td className="lab-archive-col lab-archive-col--patient lab-archive-patient">
+                        <td className="lab-archive-col lab-archive-col--patient lab-archive-patient" data-label="Patient Name">
                           <span className="lab-archive-patient__name">{report.patientName}</span>
                           <span className="lab-archive-meta lab-archive-patient__id">{report.patientId}</span>
                         </td>
-                        <td className="lab-archive-col lab-archive-col--source">
+                        <td className="lab-archive-col lab-archive-col--source" data-label="Source">
                           <LabEncounterBadge encounterType={report.encounterType} />
                         </td>
-                        <td className="lab-archive-col lab-archive-col--location lab-archive-location">
+                        <td className="lab-archive-col lab-archive-col--location lab-archive-location" data-label="Ward / Bed">
                           {location.visit === 'IPD' ? (
                             <>
                               <span className="lab-archive-location__ward">{location.ward}</span>
@@ -212,17 +212,17 @@ export default function LabCompletedReportsPage() {
                             <span className="lab-archive-location__empty">-</span>
                           )}
                         </td>
-                        <td className="lab-archive-col lab-archive-col--test">{report.testName}</td>
-                        <td className="lab-archive-col lab-archive-col--price">
+                        <td className="lab-archive-col lab-archive-col--test" data-label="Test Name">{report.testName}</td>
+                        <td className="lab-archive-col lab-archive-col--price" data-label="Price">
                           {formatOrderPrice(report.price)}
                         </td>
-                        <td className="lab-archive-col lab-archive-col--doctor">{report.doctorName}</td>
-                        <td className="lab-archive-col lab-archive-col--tech">{report.uploadedByName}</td>
-                        <td className="lab-archive-col lab-archive-col--date">{report.uploadedDate}</td>
-                        <td className="lab-archive-col lab-archive-col--status">
+                        <td className="lab-archive-col lab-archive-col--doctor" data-label="Doctor">{report.doctorName}</td>
+                        <td className="lab-archive-col lab-archive-col--tech" data-label="Lab Technician">{report.uploadedByName}</td>
+                        <td className="lab-archive-col lab-archive-col--date" data-label="Uploaded Date">{report.uploadedDate}</td>
+                        <td className="lab-archive-col lab-archive-col--status" data-label="Status">
                           <span className="lab-badge completed">Completed</span>
                         </td>
-                        <td className="lab-archive-col lab-archive-col--actions lab-archive-actions-cell">
+                        <td className="lab-archive-col lab-archive-col--actions lab-archive-actions-cell" data-label="Actions">
                           <div className="lab-archive-actions">
                             <button
                               type="button"

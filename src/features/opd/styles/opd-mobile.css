@@ -1,0 +1,422 @@
+/* OPD phone layout — laptop/desktop tables stay unchanged */
+
+@media (max-width: 767px) {
+  .layout .data-table-shell:has(.data-table--stack) .data-table-shell__scroll,
+  .layout .table-wrap:has(.data-table--stack),
+  .layout .pp-table-wrap,
+  .layout .pp-payment-detail__table-wrap,
+  .layout .items-table-wrap,
+  .layout .items-table-wrap__scroll:has(.data-table--stack) {
+    overflow: visible;
+    max-height: none !important;
+  }
+
+  .layout .data-table--stack {
+    min-width: 0 !important;
+    table-layout: auto !important;
+  }
+
+  .layout .data-table--stack thead,
+  .layout .data-table--stack colgroup {
+    display: none;
+  }
+
+  .layout .data-table--stack,
+  .layout .data-table--stack tbody,
+  .layout .data-table--stack tr {
+    display: block;
+    width: 100%;
+  }
+
+  .layout .data-table--stack tbody tr {
+    margin-bottom: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 0.75rem;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  .layout .data-table--stack tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .layout .data-table--stack td {
+    display: grid !important;
+    grid-template-columns: minmax(5.5rem, 38%) minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0.75rem;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: right;
+    white-space: normal;
+  }
+
+  .layout .data-table--stack td.col-optional,
+  .layout .data-table--stack td.billing-table__cell-actions,
+  .layout .data-table--stack td.billing-table__cell-print,
+  .layout .data-table--stack td.actions-cell,
+  .layout .data-table--stack td.col-patient,
+  .layout .data-table--stack td.col-bill-id,
+  .layout .data-table--stack td.col-date,
+  .layout .data-table--stack td.col-mode,
+  .layout .data-table--stack td.col-money,
+  .layout .data-table--stack td.col-action {
+    display: grid !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .layout .data-table--stack td.col-money,
+  .layout .data-table--stack td .money-amount {
+    white-space: nowrap;
+    max-width: none !important;
+  }
+
+  .layout .data-table--stack td::before {
+    content: attr(data-label);
+    grid-column: 1;
+    grid-row: 1;
+    text-align: left;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .layout .data-table--stack td > * {
+    grid-column: 2;
+    min-width: 0;
+    justify-self: end;
+    text-align: right;
+  }
+
+  .layout .data-table--stack td:last-child {
+    border-bottom: none;
+    padding-bottom: 0.15rem;
+  }
+
+  .layout .data-table--stack td[colspan] {
+    display: block !important;
+    text-align: left;
+    border-bottom: none;
+    padding: 0.5rem 0;
+  }
+
+  .layout .data-table--stack td[colspan]::before {
+    display: none;
+  }
+
+  .layout .data-table--stack .appt-cell__meta-mobile,
+  .layout .data-table--stack .patient-cell__phone,
+  .layout .data-table--stack .patient-cell__gender {
+    display: none !important;
+  }
+
+  .layout .data-table--stack td .field,
+  .layout .data-table--stack td .field__input,
+  .layout .data-table--stack td input {
+    width: 100%;
+    min-width: 0;
+    justify-self: stretch;
+  }
+
+  .layout .data-table--stack td[data-label='Action'],
+  .layout .data-table--stack td[data-label='Actions'],
+  .layout .data-table--stack td[data-label='Print'],
+  .layout .data-table--stack td[data-label='Remove'] {
+    align-items: center;
+  }
+
+  .layout .data-table--stack td[data-label='Action'] > *,
+  .layout .data-table--stack td[data-label='Actions'] > *,
+  .layout .data-table--stack td[data-label='Print'] > *,
+  .layout .data-table--stack td[data-label='Remove'] > * {
+    justify-self: end;
+    width: auto;
+    max-width: 100%;
+  }
+
+  .layout .data-table--stack td[data-label='Action'] .btn,
+  .layout .data-table--stack td[data-label='Actions'] .btn,
+  .layout .data-table--stack td[data-label='Print'] .btn,
+  .layout .data-table--stack td[data-label='Remove'] .btn,
+  .layout .data-table--stack td[data-label='Action'] .profile-link-btn,
+  .layout .data-table--stack td[data-label='Actions'] .profile-link-btn {
+    width: auto;
+    min-width: 5.5rem;
+    max-width: 100%;
+    white-space: nowrap;
+    justify-content: center;
+  }
+
+  .layout .patients-page__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .layout .patients-page__toolbar .patients-page__register-link {
+    margin-left: 0;
+  }
+
+  .layout .patients-page__date-filters {
+    width: 100%;
+  }
+
+  .layout .search-bar,
+  .layout .patients-page__search.search-bar--wide {
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+    height: auto;
+  }
+
+  .layout .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .layout .page-header__actions {
+    width: 100%;
+  }
+
+  .layout .page-header__actions .btn,
+  .layout .page-header__actions a,
+  .layout .page-header__actions .profile-link-btn {
+    flex: 1 1 100%;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .layout .page-toolbar.billing-list-toolbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    flex-wrap: wrap;
+  }
+
+  .layout .billing-list-toolbar__search.search-bar,
+  .layout .billing-list-toolbar__date-scope,
+  .layout .billing-list-toolbar__date-input.field,
+  .layout .billing-list-toolbar__status {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: none;
+  }
+
+  .layout .payment-history-table,
+  .layout .billing-table,
+  .layout .appointment-table,
+  .layout .patients-table,
+  .layout .dashboard-appointments-table {
+    min-width: 0 !important;
+  }
+
+  .layout .analytics-grid,
+  .layout .payment-history__cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .layout .pp-kpis,
+  .layout .opd-profile-grid,
+  .layout .detail-grid,
+  .layout .pp-medical {
+    grid-template-columns: 1fr;
+  }
+
+  .layout .pp-hero__identity {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .layout .pp-hero__actions,
+  .layout .opd-profile-page__actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .layout .pp-hero__actions .btn,
+  .layout .pp-action-link .btn,
+  .layout .opd-profile-page__actions .btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .layout .pp-vs-card__header {
+    flex-wrap: wrap;
+    row-gap: 0.35rem;
+  }
+
+  .layout .pp-vs-card__dept {
+    flex: 1 1 100%;
+  }
+
+  .layout .collect-payment__fields {
+    grid-template-columns: 1fr;
+  }
+
+  .layout .patient-info-card {
+    flex-wrap: wrap;
+  }
+
+  .layout .patient-info-card__grid {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .layout .billing-bills-modal__item {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .layout .modal__footer {
+    flex-wrap: wrap;
+  }
+
+  .layout .modal__footer .btn {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .layout .opd-quick-add-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .layout .opd-quick-add-row__select {
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
+
+  .layout .items-table-wrap {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .layout .items-table-wrap__scroll {
+    flex: 0 0 auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .layout .pricing-table-wrap {
+    overflow: visible;
+    max-height: none;
+  }
+
+  .layout .pricing-table thead {
+    display: none;
+  }
+
+  .layout .pricing-table,
+  .layout .pricing-table tbody,
+  .layout .pricing-table tr {
+    display: block;
+    width: 100%;
+  }
+
+  .layout .pricing-table td {
+    display: grid;
+    grid-template-columns: minmax(5.5rem, 42%) minmax(0, 1fr);
+    column-gap: 0.75rem;
+    width: 100%;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: right;
+  }
+
+  .layout .pricing-table tbody tr {
+    margin-bottom: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 0.75rem;
+    background: #fff;
+  }
+
+  .layout .pricing-table td::before {
+    content: attr(data-label);
+    grid-column: 1;
+    text-align: left;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .layout .pricing-table td > * {
+    grid-column: 2;
+    justify-self: end;
+    min-width: 0;
+  }
+
+  .layout .pricing-table td:last-child {
+    border-bottom: none;
+  }
+
+  .layout .pricing-table td[colspan]::before {
+    display: none;
+  }
+
+  .layout .pricing-lab-filters,
+  .layout .pricing-search {
+    flex-direction: column;
+    align-items: stretch;
+    max-width: none;
+    width: 100%;
+  }
+
+  .layout .pp-section__head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .layout .pp-section__head .btn,
+  .layout .pp-section__head a {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .layout .pp-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .layout .opd-profile-page__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .layout .opd-profile-tabs,
+  .layout .opd-notif-filters__row,
+  .layout .opd-notif-select,
+  .layout .opd-notif-mark-all {
+    width: 100%;
+  }
+
+  .layout .register-appointment__controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .layout .register-appointment .time-slot-grid,
+  .layout .book-panel__body--slots .time-slot-grid--compact {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .layout .form-actions {
+    flex-direction: column;
+  }
+
+  .layout .form-actions .btn {
+    width: 100%;
+    min-width: 0;
+  }
+}

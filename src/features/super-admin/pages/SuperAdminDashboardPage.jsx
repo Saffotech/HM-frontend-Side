@@ -78,7 +78,7 @@ function DashboardTableCell({ column, row }) {
       </span>
     );
   }
-  return row[column.key] ?? '—';
+  return <span>{row[column.key] ?? '—'}</span>;
 }
 
 export default function SuperAdminDashboardPage() {
@@ -300,7 +300,7 @@ export default function SuperAdminDashboardPage() {
                 ) : (
                   <>
                     <div className="admin-table-wrap sa-dashboard-table-wrap">
-                      <table className="admin-table">
+                      <table className="admin-table admin-table--stack">
                         <thead>
                           <tr>
                             {tableMeta.columns.map((col) => (
@@ -312,7 +312,7 @@ export default function SuperAdminDashboardPage() {
                           {displayRows.map((row) => (
                             <tr key={row.id}>
                               {tableMeta.columns.map((col) => (
-                                <td key={col.key}>
+                                <td key={col.key} data-label={col.label}>
                                   <DashboardTableCell column={col} row={row} />
                                 </td>
                               ))}

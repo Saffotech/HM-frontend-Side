@@ -1,0 +1,370 @@
+/* Admin phone layout — laptop/desktop tables stay unchanged */
+
+@media (max-width: 767px) {
+  .admin-layout .admin-stats .ui-stat-card,
+  .admin-layout .admin-stats .admin-stat-card {
+    padding: 0.85rem 0.7rem;
+    gap: 0.5rem;
+    overflow: visible;
+  }
+
+  .admin-layout .admin-stats .ui-stat-card__icon {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .admin-layout .admin-stats .ui-stat-card__value,
+  .admin-layout .admin-stats .admin-stat-card__value {
+    font-size: clamp(0.95rem, 4.6vw, 1.25rem) !important;
+    line-height: 1.2 !important;
+    white-space: nowrap;
+    overflow: visible;
+    max-width: 100%;
+  }
+
+  .admin-layout .admin-shell,
+  .admin-layout .admin-page,
+  .admin-layout .admin-card,
+  .admin-layout .admin-datatable,
+  .admin-layout .nba-list-card,
+  .admin-layout .nwf-page,
+  .admin-layout .aos-page {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .admin-layout .admin-table-wrap,
+  .admin-layout .nba-table-wrap,
+  .admin-layout .aos-table-wrap,
+  .admin-layout .aos-table-wrap--tariff,
+  .admin-layout .nwf-panel .admin-table-wrap,
+  .admin-layout .admin-table-wrap:has(.admin-table--stack),
+  .admin-layout .nba-table-wrap:has(.admin-table--stack),
+  .admin-layout .aos-table-wrap:has(.admin-table--stack) {
+    overflow: visible !important;
+    max-height: none !important;
+    min-width: 0 !important;
+    max-width: 100%;
+  }
+
+  .admin-layout .admin-table,
+  .admin-layout .nba-table,
+  .admin-layout .aos-table,
+  .admin-layout .aos-table--tariff,
+  .admin-layout .admin-table--stack {
+    min-width: 0 !important;
+    width: 100% !important;
+    table-layout: auto !important;
+    white-space: normal !important;
+  }
+
+  .admin-layout .nba-list-card .admin-datatable__toolbar.nba-toolbar {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: wrap !important;
+    align-items: stretch !important;
+    overflow: visible !important;
+  }
+
+  .admin-layout .nba-list-card .nba-toolbar .search-bar,
+  .admin-layout .nba-list-card .nba-toolbar .nba-input,
+  .admin-layout .nba-list-card .nba-toolbar .searchable-select,
+  .admin-layout .nba-list-card .nba-toolbar .ui-select,
+  .admin-layout .nba-list-card .nba-toolbar .nba-toolbar-date,
+  .admin-layout .nba-list-card .nba-toolbar__reset {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .admin-layout .admin-visits-filter-row .admin-report-filters--inline,
+  .admin-layout .admin-report-filters--inline {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: wrap !important;
+    align-items: stretch !important;
+    overflow: visible !important;
+  }
+
+  .admin-layout .admin-visits-filter-row .searchable-select.admin-visits-filter-row__dept,
+  .admin-layout .admin-visits-filter-row .admin-report-filters__date,
+  .admin-layout .admin-visits-filter-row .admin-report-filters__date.date-input,
+  .admin-layout .admin-report-filters--inline .admin-report-filters__date {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .admin-layout .aos-ward-rate-strip {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .admin-layout .aos-beds__compact-field,
+  .admin-layout .aos-beds__compact-field--grow,
+  .admin-layout .aos-beds__compact-field--sm,
+  .admin-layout .aos-beds__compact-field--xs,
+  .admin-layout .aos-beds__compact-field--type {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .admin-layout .admin-table--stack td,
+  .admin-layout .admin-table--stack td > * {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .admin-layout .admin-table--stack .admin-table__actions,
+  .admin-layout .admin-table--stack .nba-td-actions,
+  .admin-layout .admin-table--stack .nwf-td-actions {
+    white-space: normal !important;
+  }
+
+  .admin-layout .admin-table--stack thead {
+    display: none !important;
+  }
+
+  .admin-layout .admin-table--stack,
+  .admin-layout .admin-table--stack tbody,
+  .admin-layout .admin-table--stack tr {
+    display: block;
+    width: 100%;
+  }
+
+  .admin-layout .admin-table--stack tbody tr {
+    margin-bottom: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--admin-border, #e5e7eb);
+    border-radius: 0.75rem;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  .admin-layout .admin-table--stack tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .admin-layout .admin-table--stack tbody tr:hover,
+  .admin-layout .admin-table--stack tbody tr:hover td {
+    background: #fff;
+  }
+
+  .admin-layout .admin-table--stack td {
+    display: grid !important;
+    grid-template-columns: minmax(5.5rem, 38%) minmax(0, 1fr);
+    align-items: center;
+    justify-items: end;
+    column-gap: 0.75rem;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    padding: 0.4rem 0 !important;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: right !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+  }
+
+  .admin-layout .admin-table--stack td::before {
+    content: attr(data-label);
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+    text-align: left !important;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .admin-layout .admin-table--stack td > * {
+    grid-column: 2;
+    min-width: 0;
+    justify-self: end;
+    text-align: right;
+  }
+
+  .admin-layout .admin-table--stack td:last-child {
+    border-bottom: none;
+    padding-bottom: 0.15rem !important;
+  }
+
+  .admin-layout .admin-table--stack td[colspan] {
+    display: block !important;
+    text-align: center;
+    border-bottom: none;
+    padding: 0.5rem 0 !important;
+  }
+
+  .admin-layout .admin-table--stack td[colspan]::before {
+    display: none;
+  }
+
+  .admin-layout .admin-table--stack td[data-label='Action'] .btn,
+  .admin-layout .admin-table--stack td[data-label='Actions'] .btn,
+  .admin-layout .admin-table--stack td[data-label='Remove'] .btn {
+    width: auto !important;
+    min-width: 5.5rem;
+    max-width: 100%;
+    white-space: nowrap;
+    justify-content: center;
+  }
+
+  .admin-layout .admin-table--stack .admin-table__actions-inner,
+  .admin-layout .admin-table--stack .nba-table__actions,
+  .admin-layout .admin-table--stack .aos-beds__actions {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .admin-layout .admin-table--stack td[data-label='Permissions'] {
+    align-items: start;
+  }
+
+  .admin-layout .admin-table--stack td[data-label='Permissions'] > * {
+    justify-self: end;
+  }
+
+  .admin-layout .admin-table--stack .nwf-roster-nurse {
+    justify-content: flex-end;
+  }
+
+  .admin-layout .admin-table--stack td input,
+  .admin-layout .admin-table--stack td select,
+  .admin-layout .admin-table--stack td .field,
+  .admin-layout .admin-table--stack td .field__input {
+    width: 100%;
+    min-width: 0;
+    justify-self: stretch;
+    text-align: left;
+  }
+
+  .admin-layout .admin-datatable__toolbar,
+  .admin-layout .admin-datatable__toolbar--2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-layout .admin-datatable__toolbar > *,
+  .admin-layout .nba-toolbar > *,
+  .admin-layout .admin-visits-filter-row .admin-report-filters--inline > *,
+  .admin-layout .admin-page__actions > * {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    grid-column: 1 / -1 !important;
+  }
+
+  .admin-layout .admin-toolbar,
+  .admin-layout .admin-toolbar__filters,
+  .admin-layout .admin-filter-panel,
+  .admin-layout .admin-filter-panel__controls,
+  .admin-layout .admin-page__head--row,
+  .admin-layout .admin-page__actions,
+  .admin-layout .nba-toolbar,
+  .admin-layout .nwf-panel__header,
+  .admin-layout .nwf-subnav-row,
+  .admin-layout .admin-visits-filter-row .admin-report-filters--inline,
+  .admin-layout .admin-profile-page__toolbar,
+  .admin-layout .aos-form__footer {
+    flex-direction: column;
+    align-items: stretch;
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .admin-layout .nba-toolbar {
+    display: flex;
+  }
+
+  .admin-layout .admin-visits-filter-row .admin-report-filters__date,
+  .admin-layout .admin-visits-filter-row .admin-report-filters__date.date-input,
+  .admin-layout .nba-toolbar-date,
+  .admin-layout .nba-toolbar .date-input__wrap {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .admin-layout .nwf-stats,
+  .admin-layout .nwf-stats--five,
+  .admin-layout .admin-profile-grid,
+  .admin-layout .nwf-form-row--six,
+  .admin-layout .nba-form-grid--create {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-layout .admin-profile-page__actions,
+  .admin-layout .admin-profile-tabs,
+  .admin-layout .admin-profile-page__actions .btn,
+  .admin-layout .aos-form__footer .btn,
+  .admin-layout .nwf-subnav__action {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .admin-layout .aos-lab-catalog__head {
+    display: none !important;
+  }
+
+  .admin-layout .aos-lab-catalog__row,
+  .admin-layout .aos-lab-catalog__row--create {
+    display: flex !important;
+    flex-direction: column;
+    grid-template-columns: none !important;
+    gap: 0.15rem;
+    margin-bottom: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--admin-border, #e5e7eb);
+    border-radius: 0.75rem;
+    background: #fff;
+  }
+
+  .admin-layout .aos-lab-catalog__cell {
+    display: grid !important;
+    grid-template-columns: minmax(5.5rem, 38%) minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0.75rem;
+    width: 100%;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .admin-layout .aos-lab-catalog__cell::before {
+    content: attr(data-label);
+    justify-self: start;
+    text-align: left;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .admin-layout .aos-lab-catalog__cell > * {
+    justify-self: end;
+    min-width: 0;
+    max-width: 100%;
+    text-align: right;
+  }
+
+  .admin-layout .aos-lab-catalog__cell:last-child {
+    border-bottom: none;
+  }
+
+  .admin-layout .aos-lab-catalog__cell--actions {
+    justify-items: end;
+  }
+
+  .admin-layout .aos-lab-catalog__cell--actions .btn {
+    width: auto;
+    white-space: nowrap;
+  }
+}
