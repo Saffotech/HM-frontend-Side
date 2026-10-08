@@ -300,13 +300,43 @@ function invalidateAfterCareTeamChange(queryClient, admissionId) {
   }
 }
 
+function patchAdmissionDetail(queryClient, admissionId, updater) {
+  if (!admissionId) return;
+  queryClient.setQueryData(queryKeys.ipd.admission(admissionId), (current) => {
+    if (!current) return current;
+    return updater(current);
+  });
+}
+
 export function useAddIpdCareTeamDoctorMutation() {
   const token = useQueryToken();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ admissionId, payload }) =>
       addIpdCareTeamDoctor(admissionId, payload, token),
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables) => {
+      const doctorId = data?.doctor_id ?? variables?.payload?.doctor_id;
+      patchAdmissionDetail(queryClient, variables?.admissionId, (current) => {
+        const team = Array.isArray(current.care_team) ? current.care_team : [];
+        if (
+          team.some((member) => String(member?.doctor_id) === String(doctorId))
+        ) {
+          return current;
+        }
+        return {
+          ...current,
+          care_team: [
+            ...team,
+            data?.doctor_id
+              ? data
+              : {
+                  doctor_id: doctorId,
+                  department_id: variables?.payload?.department_id,
+                  role: 'associated',
+                },
+          ],
+        };
+      });
       invalidateAfterCareTeamChange(queryClient, variables?.admissionId);
     },
     onError: mutationOnError,
@@ -320,6 +350,12 @@ export function useRemoveIpdCareTeamDoctorMutation() {
     mutationFn: ({ admissionId, doctorId }) =>
       removeIpdCareTeamDoctor(admissionId, doctorId, token),
     onSuccess: (_data, variables) => {
+      patchAdmissionDetail(queryClient, variables?.admissionId, (current) => ({
+        ...current,
+        care_team: (current.care_team ?? []).filter(
+          (member) => String(member?.doctor_id) !== String(variables?.doctorId),
+        ),
+      }));
       invalidateAfterCareTeamChange(queryClient, variables?.admissionId);
     },
     onError: mutationOnError,

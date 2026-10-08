@@ -246,7 +246,7 @@ export const queryKeys = {
     all: ['ipd'],
     dashboard: ['ipd', 'dashboard'],
     patients: (filters) => ['ipd', 'patients', filters],
-    admission: (id) => ['ipd', 'admission', id],
+    admission: (id) => ['ipd', 'admission', id == null ? id : String(id)],
     beds: (filters) => ['ipd', 'beds', filters],
     wards: ['ipd', 'beds', 'wards'],
     runningBills: (filters) => ['ipd', 'billing', 'running', filters],

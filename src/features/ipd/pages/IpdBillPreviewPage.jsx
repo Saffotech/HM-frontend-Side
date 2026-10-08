@@ -155,14 +155,29 @@ export default function IpdBillPreviewPage() {
 
   const paymentBusy = generateMutation.isPending || payMutation.isPending;
 
+  const chargeTotals = useMemo(
+    () => calculateInsuranceChargeTotals(charges),
+    [charges],
+  );
+
+  const billingSubtotal =
+    chargeTotals.netBill > 0 ? chargeTotals.netBill : Number(preview?.subtotal) || 0;
+  const gstPercent = Number(preview?.gst_percent) || 0;
+  const billingGst =
+    gstPercent > 0
+      ? Math.round((billingSubtotal * gstPercent) / 100 * 100) / 100
+      : Number(preview?.gst_amount) || 0;
+  const billingGrandTotal = billingSubtotal + billingGst;
+
   const paymentView = useMemo(
     () =>
       resolveIpdBillPreviewPayment({
         bills,
         lastBillResult,
         preview,
+        grandTotal: billingGrandTotal,
       }),
-    [bills, lastBillResult, preview],
+    [bills, lastBillResult, preview, billingGrandTotal],
   );
 
   const {
@@ -202,20 +217,6 @@ export default function IpdBillPreviewPage() {
   }, [basePrintInvoice, payClaimInsurance]);
   const printLoading = Boolean(printableBill?.id) && invoiceQuery.isLoading;
 
-  const chargeTotals = useMemo(
-    () => calculateInsuranceChargeTotals(charges),
-    [charges],
-  );
-
-  const billingSubtotal =
-    chargeTotals.netBill > 0 ? chargeTotals.netBill : Number(preview?.subtotal) || 0;
-  const gstPercent = Number(preview?.gst_percent) || 0;
-  const billingGst =
-    gstPercent > 0
-      ? Math.round((billingSubtotal * gstPercent) / 100 * 100) / 100
-      : Number(preview?.gst_amount) || 0;
-  const billingGrandTotal = billingSubtotal + billingGst;
-
   const paymentStatusLabel =
     paymentStatusKey === 'paid'
       ? 'Paid'
@@ -228,7 +229,7 @@ export default function IpdBillPreviewPage() {
       : 'unpaid';
   const summaryPaid = formatCurrency(paidAmount, { empty: '—' });
   const summaryBalance = formatCurrency(balanceDue, { empty: '—' });
-  const collectAmountCap = Number(openBill?.balance_due ?? balanceDue ?? billingGrandTotal);
+  const collectAmountCap = balanceDue;
 
   const parsedPayAmount = Math.floor(Number(payAmount));
   const hasValidPayAmount =
@@ -364,17 +365,24 @@ export default function IpdBillPreviewPage() {
     };
 
     try {
+      let remaining = capped;
       if (openBill?.id) {
-        const bill = await payMutation.mutateAsync({
-          billId: openBill.id,
-          payload: {
-            amount: capped,
-            ...paymentPayload,
-          },
-        });
-        setLastBillResult(bill);
-        toast.success(`Payment recorded · ${bill.bill_number}`);
-      } else {
+        const openBalance = Math.max(0, Math.floor(Number(openBill.balance_due ?? 0)));
+        const payNow = Math.min(remaining, openBalance);
+        if (payNow > 0) {
+          const bill = await payMutation.mutateAsync({
+            billId: openBill.id,
+            payload: {
+              amount: payNow,
+              ...paymentPayload,
+            },
+          });
+          setLastBillResult(bill);
+          remaining -= payNow;
+        }
+      }
+
+      if (remaining > 0) {
         if (!preview) {
           toast.error('Bill preview is not available');
           return;
@@ -382,18 +390,13 @@ export default function IpdBillPreviewPage() {
         const bill = await generateMutation.mutateAsync({
           admission_id: Number(admissionId),
           pay_later: false,
-          amount_received: capped,
+          amount_received: remaining,
           ...paymentPayload,
         });
         setLastBillResult(bill);
-        const status = String(bill.payment_status || '').toLowerCase();
-        toast.success(
-          status === 'paid'
-            ? `Bill ${bill.bill_number} generated and paid`
-            : `Bill ${bill.bill_number} generated · payment recorded`,
-        );
       }
 
+      toast.success('Payment recorded');
       setPayAmount('');
       setPaymentRef('');
       await refreshBilling();

@@ -1998,6 +1998,41 @@
   gap: 0.75rem;
 }
 
+.ipd-assign-suggest {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0.25rem;
+  border: 1px solid #d7e0da;
+  border-radius: 8px;
+  background: #fff;
+  max-height: 9.5rem;
+  overflow: auto;
+}
+
+.ipd-assign-suggest__item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.ipd-assign-suggest__item:hover,
+.ipd-assign-suggest__item:focus-visible {
+  background: #eef6f1;
+}
+
+.ipd-assign-suggest__empty {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: #5c6b63;
+}
+
 .ipd-billing-card__head {
   gap: 0.75rem;
   justify-content: flex-start;

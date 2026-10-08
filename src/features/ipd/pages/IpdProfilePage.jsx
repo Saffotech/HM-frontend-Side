@@ -70,6 +70,17 @@ function isValidGender(value) {
   return VALID_GENDER_VALUES.includes(Number(value));
 }
 
+function isValidDateOfBirth(value) {
+  if (!value) return true;
+
+  const selectedDate = new Date(`${value}T00:00:00`);
+  const today = new Date();
+
+  today.setHours(0, 0, 0, 0);
+
+  return selectedDate <= today;
+}
+
 function genderLabel(code) {
   return GENDER_OPTIONS.find((o) => o.value === code)?.label ?? null;
 }
@@ -331,6 +342,12 @@ export default function IpdProfilePage() {
       return;
     }
 
+    if (!isValidDateOfBirth(form?.date_of_birth)) {
+      toast.error('Date of birth cannot be a future date');
+      setActiveTab('contact');
+      return;
+    }
+
     const formForSave = {
       ...form,
       phone,
@@ -584,11 +601,10 @@ export default function IpdProfilePage() {
               <div className="opd-profile-hero__tags">
                 {roleName ? <span className="opd-profile-tag">{roleName}</span> : null}
                 <span
-                  className={`opd-profile-tag ${
-                    profile.is_profile_completed
+                  className={`opd-profile-tag ${profile.is_profile_completed
                       ? 'opd-profile-tag--ok'
                       : 'opd-profile-tag--warn'
-                  }`}
+                    }`}
                 >
                   {profile.is_profile_completed ? 'Profile complete' : 'Incomplete'}
                 </span>
@@ -887,6 +903,7 @@ export default function IpdProfilePage() {
                           label="Date of birth"
                           className="profile-page-date-input"
                           value={form.date_of_birth || ''}
+                          max={new Date().toISOString().split('T')[0]}
                           onChange={(e) => setField('date_of_birth', e.target.value)}
                           placeholder="DD/MM/YYYY"
                         />

@@ -34,11 +34,14 @@ export default function DischargeWizard({ admissionId }) {
   const token = useQueryToken();
   const { canDischarge, canPayBill, canGenerateBill } = useIpdPermissionSet();
   const [stepIndex, setStepIndex] = useState(0);
-  const [payMode, setPayMode] = useState('Cash');
-  const [payAmount, setPayAmount] = useState('');
-  const [notes, setNotes] = useState('');
-  const [paymentReady, setPaymentReady] = useState(false);
-  const [paymentCollected, setPaymentCollected] = useState(false);
+
+const [payMode, setPayMode] = useState('Cash');
+const [payAmount, setPayAmount] = useState('');
+const [referenceNumber, setReferenceNumber] = useState('');
+const [transactionId, setTransactionId] = useState('');
+const [notes, setNotes] = useState('');
+const [paymentReady, setPaymentReady] = useState(false);
+const [paymentCollected, setPaymentCollected] = useState(false);
 
   const detailQuery = useIpdAdmissionDetailQuery(admissionId);
   const previewQuery = useIpdBillPreviewQuery(admissionId);
@@ -164,38 +167,38 @@ export default function DischargeWizard({ admissionId }) {
 
   const stayFields = admission
     ? [
-        { label: 'Patient', value: admission.patient_name || '—', tone: 'teal' },
-        {
-          label: 'Patient ID',
-          value: admission.patient_uid || '—',
-          tone: 'slate',
-        },
-        {
-          label: 'Ward / Bed',
-          value: `${admission.ward_name || '—'} / ${admission.bed_number || '—'}`,
-          tone: 'green',
-        },
-        { label: 'Doctor', value: admission.doctor_name || '—', tone: 'violet' },
-        {
-          label: 'Admitted',
-          value: formatIpdDateTime(admission.admitted_at),
-          tone: 'blue',
-        },
-        {
-          label: 'Length of stay',
-          value:
-            admission.length_of_stay_days != null
-              ? `${admission.length_of_stay_days} day(s)`
-              : '—',
-          tone: 'amber',
-        },
-        {
-          label: 'Diagnosis',
-          value: admission.diagnosis || '—',
-          tone: 'rose',
-          wide: true,
-        },
-      ]
+      { label: 'Patient', value: admission.patient_name || '—', tone: 'teal' },
+      {
+        label: 'Patient ID',
+        value: admission.patient_uid || '—',
+        tone: 'slate',
+      },
+      {
+        label: 'Ward / Bed',
+        value: `${admission.ward_name || '—'} / ${admission.bed_number || '—'}`,
+        tone: 'green',
+      },
+      { label: 'Doctor', value: admission.doctor_name || '—', tone: 'violet' },
+      {
+        label: 'Admitted',
+        value: formatIpdDateTime(admission.admitted_at),
+        tone: 'blue',
+      },
+      {
+        label: 'Length of stay',
+        value:
+          admission.length_of_stay_days != null
+            ? `${admission.length_of_stay_days} day(s)`
+            : '—',
+        tone: 'amber',
+      },
+      {
+        label: 'Diagnosis',
+        value: admission.diagnosis || '—',
+        tone: 'rose',
+        wide: true,
+      },
+    ]
     : [];
 
   return (
@@ -331,6 +334,57 @@ export default function DischargeWizard({ admissionId }) {
                   <label className="ipd-toolbar__label" htmlFor="ipd-dis-pay-amount">
                     Amount (exact)
                   </label>
+
+                  {(payMode === 'Card' || payMode === 'UPI') && (
+                    <>
+                      <div className="ipd-toolbar__field">
+                        <label
+                          className="ipd-toolbar__label"
+                          htmlFor="ipd-dis-reference-number"
+                        >
+                          Reference Number
+                        </label>
+
+                        <input
+                          id="ipd-dis-reference-number"
+                          className="ipd-input"
+                          type="text"
+                          value={referenceNumber}
+                          onChange={(e) => {
+                            setReferenceNumber(e.target.value);
+                            setPaymentReady(false);
+                          }}
+                          placeholder="Enter reference number"
+                        />
+                      </div>
+
+                      <div className="ipd-toolbar__field">
+                        <label
+                          className="ipd-toolbar__label"
+                          htmlFor="ipd-dis-transaction-id"
+                        >
+                          Transaction ID
+                        </label>
+
+                        <input
+                          id="ipd-dis-transaction-id"
+                          className="ipd-input"
+                          type="text"
+                          value={transactionId}
+                          onChange={(e) => {
+                            setTransactionId(e.target.value);
+                            setPaymentReady(false);
+                          }}
+                          placeholder="Enter transaction ID"
+                        />
+                      </div>
+                    </>
+                  )}
+
+
+
+
+
                   <input
                     id="ipd-dis-pay-amount"
                     className="ipd-input"

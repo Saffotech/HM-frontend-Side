@@ -93,6 +93,18 @@ export default function BedAssignModal({
     onClose?.();
   };
 
+  const showPatientSuggestions =
+    !values.patientDbId && debouncedSearch.trim().length >= 2;
+
+  const selectPatient = (patient) => {
+    setValues((prev) => ({
+      ...prev,
+      patientDbId: String(patient.dbId ?? ''),
+      patientSearch: patient.name || prev.patientSearch,
+    }));
+    setError('');
+  };
+
   const set = (key, value) => {
     setValues((prev) => {
       const next = { ...prev, [key]: value };
@@ -164,32 +176,33 @@ export default function BedAssignModal({
           <input
             id="ipd-assign-patient"
             className="ipd-input"
-            placeholder="Search patient…"
+            placeholder="Search patient by ID or Name"
             value={values.patientSearch}
             onChange={(e) => set('patientSearch', e.target.value)}
+            autoComplete="off"
           />
-          {patientOptions.length > 0 ? (
-            <select
-              className="ipd-select"
-              style={{ marginTop: '0.5rem' }}
-              value={values.patientDbId}
-              onChange={(e) => {
-                const id = e.target.value;
-                const match = patientOptions.find((p) => String(p.dbId) === id);
-                setValues((prev) => ({
-                  ...prev,
-                  patientDbId: id,
-                  patientSearch: match?.name || prev.patientSearch,
-                }));
-              }}
-            >
-              <option value="">Select from results…</option>
-              {patientOptions.map((p) => (
-                <option key={p.dbId} value={p.dbId}>
-                  {p.name} {p.id ? `(${p.id})` : ''}
-                </option>
-              ))}
-            </select>
+          {showPatientSuggestions ? (
+            patientsQuery.isLoading ? (
+              <p className="ipd-assign-suggest__empty">Searching…</p>
+            ) : patientOptions.length === 0 ? (
+              <p className="ipd-assign-suggest__empty">No patients found</p>
+            ) : (
+              <ul className="ipd-assign-suggest" role="listbox" aria-label="Patient suggestions">
+                {patientOptions.map((patient) => (
+                  <li key={patient.dbId ?? patient.id}>
+                    <button
+                      type="button"
+                      className="ipd-assign-suggest__item"
+                      role="option"
+                      onClick={() => selectPatient(patient)}
+                    >
+                      {patient.name || '—'}
+                      {patient.id ? ` (${patient.id})` : ''}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )
           ) : null}
         </div>
         <div className="ipd-toolbar__field">

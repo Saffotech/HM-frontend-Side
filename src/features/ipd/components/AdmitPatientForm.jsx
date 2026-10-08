@@ -77,6 +77,20 @@ function toIsoDateParam(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : "";
 }
 
+/** Indian mobile: 10 digits, starting with 6–9. */
+function phoneValidationMessage(phone) {
+  const digits = String(phone || "").replace(/\D/g, "");
+  if (/^[6-9]\d{9}$/.test(digits)) return "";
+  return "Enter a valid 10-digit phone number";
+}
+
+/** Aadhaar: 12 digits, and the first digit cannot be 0 or 1. */
+function aadhaarValidationMessage(aadhaar) {
+  const digits = String(aadhaar || "").replace(/\D/g, "");
+  if (/^[2-9]\d{11}$/.test(digits)) return "";
+  return "Enter a valid 12-digit Aadhaar number (XXXX-XXXX-XXXX)";
+}
+
 /** Local calendar day (YYYY-MM-DD). Date of birth cannot be after this. */
 function todayIsoLocal() {
   const now = new Date();
@@ -213,6 +227,19 @@ export default function AdmitPatientForm() {
     });
     setSubmitError("");
     setRegisterError("");
+    if (key === "phone" || key === "aadhaar") {
+      const message =
+        key === "phone"
+          ? phoneValidationMessage(value)
+          : aadhaarValidationMessage(value);
+      setErrors((prev) => {
+        if (!prev[key] && !String(value || "").trim()) return prev;
+        const next = { ...prev };
+        if (message) next[key] = message;
+        else delete next[key];
+        return next;
+      });
+    }
   };
 
   const selectPatient = (patient) => {
@@ -238,6 +265,12 @@ export default function AdmitPatientForm() {
     if (values.dob && values.dob > todayIsoLocal()) {
       demoErrors.dob = "Date of birth cannot be in the future";
     }
+    const phoneMessage = phoneValidationMessage(values.phone);
+    if (phoneMessage) demoErrors.phone = phoneMessage;
+    else delete demoErrors.phone;
+    const aadhaarMessage = aadhaarValidationMessage(values.aadhaar);
+    if (aadhaarMessage) demoErrors.aadhaar = aadhaarMessage;
+    else delete demoErrors.aadhaar;
     setErrors((prev) => ({ ...prev, ...demoErrors }));
     if (Object.keys(demoErrors).length > 0) return;
 
@@ -504,7 +537,7 @@ export default function AdmitPatientForm() {
                       className="ipd-input"
                       value={values.patientSearch}
                       onChange={(e) => set("patientSearch", e.target.value)}
-                      placeholder="Search patient by ID"
+                      placeholder="Search patient by ID or Name"
                     />
                     {show("patient") ? (
                       <span className="ipd-field-error">{errors.patient}</span>
