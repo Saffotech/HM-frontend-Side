@@ -258,7 +258,7 @@ export default function ReceptionistDashboardPage() {
                 setSearch(e.target.value);
                 setTablePage(1);
               }}
-              placeholder="Search by patient ID, name, doctor or status…"
+              placeholder="Search by patient ID, name, doctor  "
               className="rec-input"
             />
           </div>

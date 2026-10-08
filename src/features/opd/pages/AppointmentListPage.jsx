@@ -89,7 +89,7 @@ export default function AppointmentListPage() {
     limit: usesClientStatusFilter ? 200 : APPOINTMENT_LIST_PAGE_SIZE,
     list_filter: usesClientStatusFilter ? undefined : SERVER_LIST_FILTER[filterStatus],
     ...sharedFilters,
-    keepPrevious: !usesClientStatusFilter,
+    keepPrevious: usesClientStatusFilter,
   });
 
   const { data: countData } = useAppointmentsQuery({

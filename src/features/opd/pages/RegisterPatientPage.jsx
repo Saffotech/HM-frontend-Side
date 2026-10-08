@@ -170,6 +170,7 @@ export default function RegisterPatientPage() {
                 label="Date of Birth"
                 value={form.dob}
                 onChange={(e) => set('dob', e.target.value)}
+                max={todayIso()}
                 error={errors.dob}
               />
               <div className="register-form__blood-address-row form-grid--full">

@@ -64,6 +64,13 @@ function isStrictTenDigitPhone(value) {
   return TEN_DIGIT_PHONE.test(String(value ?? '').trim());
 }
 
+const CITY_STATE_REGEX = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
+
+function isValidCityState(value) {
+  return CITY_STATE_REGEX.test(String(value ?? '').trim());
+}
+
+
 function isValidGender(value) {
   return VALID_GENDER_VALUES.includes(Number(value));
 }
@@ -531,11 +538,10 @@ export default function OpdBillingProfilePage() {
               <div className="opd-profile-hero__tags">
                 {roleName ? <span className="opd-profile-tag">{roleName}</span> : null}
                 <span
-                  className={`opd-profile-tag ${
-                    profile.is_profile_completed
-                      ? 'opd-profile-tag--ok'
-                      : 'opd-profile-tag--warn'
-                  }`}
+                  className={`opd-profile-tag ${profile.is_profile_completed
+                    ? 'opd-profile-tag--ok'
+                    : 'opd-profile-tag--warn'
+                    }`}
                 >
                   {profile.is_profile_completed ? 'Profile complete' : 'Incomplete'}
                 </span>
@@ -825,6 +831,7 @@ export default function OpdBillingProfilePage() {
                           label="Date of birth"
                           className="profile-page-date-input"
                           value={form.date_of_birth || ''}
+                          max={new Date().toISOString().split('T')[0]}
                           onChange={(e) => setField('date_of_birth', e.target.value)}
                           placeholder="DD/MM/YYYY"
                         />
@@ -835,7 +842,12 @@ export default function OpdBillingProfilePage() {
                           className="opd-profile-input"
                           maxLength={100}
                           value={form.city}
-                          onChange={(e) => setTextField('city', e.target.value)}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (/^[A-Za-z ]*$/.test(value)) {
+                              setTextField('city', value);
+                            }
+                          }}
                         />
                       </label>
                       <label className="opd-profile-field">
@@ -844,7 +856,13 @@ export default function OpdBillingProfilePage() {
                           className="opd-profile-input"
                           maxLength={100}
                           value={form.state}
-                          onChange={(e) => setTextField('state', e.target.value)}
+                          onChange={(e) => {
+                            const value = e.target.value;
+
+                            if (/^[A-Za-z ]*$/.test(value)) {
+                              setTextField('state', value);
+                            }
+                          }}
                         />
                       </label>
                       <label className="opd-profile-field opd-profile-field--span">

@@ -77,6 +77,15 @@ function toIsoDateParam(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : "";
 }
 
+/** Local calendar day (YYYY-MM-DD). Date of birth cannot be after this. */
+function todayIsoLocal() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 function validateAdmission(values) {
   const errors = {};
   if (!values.patientDbId) {
@@ -226,6 +235,9 @@ export default function AdmitPatientForm() {
       dob: values.dob,
       aadhaar: values.aadhaar,
     });
+    if (values.dob && values.dob > todayIsoLocal()) {
+      demoErrors.dob = "Date of birth cannot be in the future";
+    }
     setErrors((prev) => ({ ...prev, ...demoErrors }));
     if (Object.keys(demoErrors).length > 0) return;
 
@@ -620,6 +632,7 @@ export default function AdmitPatientForm() {
                     id="ipd-reg-dob"
                     className="ipd-date-input"
                     value={toIsoDateParam(values.dob)}
+                    max={todayIsoLocal()}
                     onChange={(e) => set("dob", toIsoDateParam(e.target.value))}
                     placeholder="DD/MM/YYYY"
                     aria-label="Date of birth"
