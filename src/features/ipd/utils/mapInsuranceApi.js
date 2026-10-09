@@ -37,28 +37,28 @@ export function mapInsurancePatientRow(row = {}) {
 }
 
 function resolveInsuranceBillPendingDue(row = {}) {
-  const explicit = pick(
-    row,
-    'pending_due',
-    'pendingDue',
-    'patient_outstanding',
-    'patientOutstanding',
-    'outstanding',
-  );
-  if (explicit != null && explicit !== '') {
-    const n = Number(explicit);
-    if (Number.isFinite(n)) return Math.max(0, n);
-  }
-
   const totalBill = Number(pick(row, 'net_bill', 'netBill', 'total_bill', 'totalBill') ?? 0);
   const approved = Number(pick(row, 'approved', 'approved_amount') ?? 0);
   const estimateRaw = pick(row, 'estimate_amount', 'estimateAmount');
   const estimate =
     estimateRaw != null && estimateRaw !== '' ? Number(estimateRaw) : null;
+  const claimedRaw = pick(row, 'claimed', 'claimed_amount', 'claimedAmount');
+  const claimed =
+    claimedRaw != null && claimedRaw !== '' ? Number(claimedRaw) : 0;
   const patientPaid = Number(pick(row, 'patient_paid', 'patientPaid') ?? 0);
+  const insuranceCover =
+    estimate != null && Number.isFinite(estimate) && estimate > 0
+      ? estimate
+      : Number.isFinite(claimed) && claimed > 0
+        ? claimed
+        : 0;
 
-  if (estimate != null && Number.isFinite(estimate) && estimate > 0) {
-    return Math.max(0, totalBill - estimate - patientPaid);
+  // Same amount shown as Paid so far: the patient share (hospital bill − insurance).
+  // Use the stored paid amount when the list row includes it.
+  if (patientPaid > 0) return patientPaid;
+
+  if (insuranceCover > 0) {
+    return Math.max(0, totalBill - insuranceCover);
   }
 
   const patientResponsibility = pick(row, 'patient_responsibility', 'patientResponsibility');
@@ -67,7 +67,7 @@ function resolveInsuranceBillPendingDue(row = {}) {
       ? Number(patientResponsibility)
       : Math.max(0, totalBill - approved);
 
-  return Math.max(0, responsibility - patientPaid);
+  return Math.max(0, responsibility);
 }
 
 export function mapInsuranceBillRow(row = {}) {

@@ -22,6 +22,24 @@ function money(n) {
   return formatCurrency(n, { empty: '—' });
 }
 
+/** Insurance figure that reduces the hospital bill: estimate, otherwise claim amount. */
+function insuranceCoverAmount(estimateInput, claimedInput) {
+  const estimate = Number(estimateInput);
+  if (Number.isFinite(estimate) && estimate > 0) return estimate;
+  const claimed = Number(claimedInput);
+  return Number.isFinite(claimed) && claimed > 0 ? claimed : 0;
+}
+
+/** What the patient still owes after insurance and payments already saved. */
+function patientOwes(hospitalBill, insuranceCover, alreadyPaid) {
+  return Math.max(
+    0,
+    (Number(hospitalBill) || 0) -
+      (Number(insuranceCover) || 0) -
+      (Number(alreadyPaid) || 0),
+  );
+}
+
 function IpdInsuranceClaimBillingCard({
   claim,
   savedClaim,
@@ -56,7 +74,6 @@ function IpdInsuranceClaimBillingCard({
         ? String(claim.estimateAmount)
         : '',
     );
-    setPatientPayInput('');
     setClaimEditing(false);
   }, [claim?.id]);
 
@@ -66,6 +83,11 @@ function IpdInsuranceClaimBillingCard({
       ? Number(estimateInput)
       : 0;
     const addPay = String(patientPayInput).trim() ? Number(patientPayInput) : 0;
+    const maxPatientPay = patientOwes(
+      actualBill,
+      insuranceCoverAmount(estimateAmount, claimed),
+      activeSavedClaim?.patientPaid,
+    );
 
     if (Number.isNaN(claimed) || claimed < 0) {
       toast.error('Enter a valid claim amount');
@@ -77,6 +99,10 @@ function IpdInsuranceClaimBillingCard({
     }
     if (Number.isNaN(addPay) || addPay < 0) {
       toast.error('Enter a valid patient pay amount');
+      return;
+    }
+    if (addPay > maxPatientPay) {
+      toast.error(`Patient pay cannot be more than ${money(maxPatientPay)}`);
       return;
     }
 
@@ -128,14 +154,11 @@ function IpdInsuranceClaimBillingCard({
     );
   };
 
-  const estimateAmount = Number(estimateInput) || 0;
-  const insuranceCovered = estimateAmount;
-  const outstandingAmount = Math.max(0, actualBill - insuranceCovered);
-  const patientPayable = Math.max(0, actualBill - estimateAmount);
-  const alreadyPaid = Number(activeSavedClaim.patientPaid) || 0;
-  const addPay = Number(patientPayInput) || 0;
-  const patientPay = alreadyPaid + addPay;
-  const patientPayOutstanding = Math.max(0, patientPayable - patientPay);
+  const insuranceCovered = insuranceCoverAmount(estimateInput, claimedInput);
+  const alreadyPaid = Number(activeSavedClaim?.patientPaid) || 0;
+  const outstandingAmount = patientOwes(actualBill, insuranceCovered, alreadyPaid);
+  const addPay = claimEditing ? Number(patientPayInput) || 0 : 0;
+  const patientPayOutstanding = Math.max(0, outstandingAmount - addPay);
   const isSaving = saveClaimMutation.isPending;
 
   return (
@@ -157,7 +180,15 @@ function IpdInsuranceClaimBillingCard({
             variant="secondary"
             size="sm"
             onClick={() => {
-              setPatientPayInput('');
+              setPatientPayInput((current) => {
+                if (String(current).trim() !== '') return current;
+                const maxPatientPay = patientOwes(
+                  actualBill,
+                  insuranceCoverAmount(estimateInput, claimedInput),
+                  activeSavedClaim?.patientPaid,
+                );
+                return String(maxPatientPay);
+              });
               setClaimEditing(true);
             }}
           >
@@ -238,10 +269,24 @@ function IpdInsuranceClaimBillingCard({
                   id="ipd-bill-patient-pay"
                   className="ipd-input"
                   value={patientPayInput}
-                  onChange={(e) =>
-                    setPatientPayInput(e.target.value.replace(/[^\d.]/g, ''))
-                  }
-                  placeholder="0"
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/[^\d.]/g, '');
+                    if (raw === '') {
+                      setPatientPayInput('');
+                      return;
+                    }
+                    const maxPatientPay = patientOwes(
+                      actualBill,
+                      insuranceCoverAmount(estimateInput, claimedInput),
+                      activeSavedClaim?.patientPaid,
+                    );
+                    const next = Number(raw);
+                    setPatientPayInput(
+                      !Number.isNaN(next) && next > maxPatientPay
+                        ? String(maxPatientPay)
+                        : raw,
+                    );
+                  }}
                   inputMode="decimal"
                 />
               </dd>

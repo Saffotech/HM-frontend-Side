@@ -10,7 +10,7 @@ import { useDoctorIpdAdmissionsQuery } from '@/features/doctor/hooks/useDoctorIp
 
 import { visitRowToPatientSummary, appointmentToVisitRow } from '@/shared/api/mappers/doctorPatientMapper';
 
-import { Input, EmptyState, TablePagination } from '@/shared/components/common';
+import { Input, EmptyState, TablePagination, DateInput } from '@/shared/components/common';
 
 import PatientHistoryProfile from './PatientHistoryProfile';
 
@@ -218,6 +218,14 @@ function formatVisitDateCompact(row) {
 function PatientDateFilters({ filters, onChange, onReset, disabled }) {
   return (
     <div className="doc-patient-filters doc-patient-filters--pill" role="group" aria-label="Visit date filters">
+      <DateInput
+        className="doc-patient-filters__calendar"
+        ariaLabel="Visit date"
+        placeholder="DD/MM/YYYY"
+        value={filters.visitDate || ''}
+        disabled={disabled}
+        onChange={(e) => onChange({ ...filters, visitDate: e.target.value })}
+      />
       <label className="doc-patient-filters__field">
         <span>Day</span>
         <select

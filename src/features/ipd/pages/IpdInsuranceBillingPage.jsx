@@ -11,8 +11,6 @@ import IpdInsuranceBillPrintSheet from '@/features/ipd/components/IpdInsuranceBi
 import IpdInsuranceClaimBillingCard from '@/features/ipd/components/IpdInsuranceClaimBillingCard';
 import IpdHospitalChargesCard, {
   calculateInsuranceChargeTotals,
-  normalizeInsuranceChargeHeads,
-  sortInsuranceChargeHeads,
 } from '@/features/ipd/components/IpdHospitalChargesCard';
 import IpdDailyChargesCard from '@/features/ipd/components/IpdDailyChargesCard';
 import useIpdBackNavigation from '@/features/ipd/hooks/useIpdBackNavigation';
@@ -140,11 +138,16 @@ export default function IpdInsuranceBillingPage() {
     setDailyCharges(initDailyCharges(claim));
   }, [claim?.id]);
 
-  // When live billing bundle arrives (auto bed/visit/pharmacy), refresh UI totals.
+  // Fill hospital charges from the server once. Later saves must not replace
+  // the bill already on screen.
   useEffect(() => {
     const heads = bundleQuery.data?.finalBilling?.chargeHeads;
     if (Array.isArray(heads) && heads.length) {
-      setCharges((prev) => (chargeHeadsMatch(prev, heads) ? prev : heads));
+      setCharges((prev) => {
+        const currentGross = calculateInsuranceChargeTotals(prev).displayGross;
+        if (currentGross > 0) return prev;
+        return chargeHeadsMatch(prev, heads) ? prev : heads;
+      });
     }
     const daily = bundleQuery.data?.dailyCharges;
     if (Array.isArray(daily)) {
@@ -215,11 +218,6 @@ export default function IpdInsuranceBillingPage() {
             return;
           }
           setSavedClaim(bundle.claim);
-          setCharges(
-            sortInsuranceChargeHeads(
-              normalizeInsuranceChargeHeads(bundle.claim.charges),
-            ),
-          );
           toast.success('Hospital charges saved');
         },
         onError: () => toast.error('Unable to save charges'),
@@ -255,12 +253,7 @@ export default function IpdInsuranceBillingPage() {
           }
           setSavedClaim(bundle.claim);
           setDailyCharges(initDailyCharges(bundle.claim));
-          setCharges(
-            sortInsuranceChargeHeads(
-              normalizeInsuranceChargeHeads(bundle.claim.charges),
-            ),
-          );
-          toast.success('Daily charges saved · hospital totals updated');
+          toast.success('Daily charges saved');
         },
         onError: () => toast.error('Unable to save daily charges'),
       },
@@ -355,7 +348,7 @@ export default function IpdInsuranceBillingPage() {
             onChargesChange={handleChargesChange}
             onSave={handleSaveCharges}
             saving={saveFinalBillingMutation.isPending}
-            hint="Totals by charge head — save daily charges to auto-update amounts."
+            hint="Totals by charge head. Saving keeps this bill as entered."
           />
 
           <div className="ipd-ins-billing__side">

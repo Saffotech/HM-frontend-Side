@@ -59,6 +59,7 @@ export const DEFAULT_DATE_FILTERS = {
   month: 'all',
   year: 'all',
   customYear: String(CURRENT_YEAR),
+  visitDate: '',
 };
 
 function resolveFilterYear(dateFilters, now = new Date()) {
@@ -103,7 +104,9 @@ export function buildDoctorPatientsQueryParams({
     params.year = year;
   }
 
-  if (dateFilters.day === 'today') {
+  if (dateFilters.visitDate) {
+    params.filter_date = dateFilters.visitDate;
+  } else if (dateFilters.day === 'today') {
     params.filter_date = toIsoDateLocal(now);
   }
 
@@ -130,10 +133,23 @@ export function matchesPatientDateFilters(patient, filters) {
       ?? patient.registeredDate
   );
   const hasActiveFilter =
-    (filters.day && filters.day !== 'all')
+    Boolean(filters.visitDate)
+    || (filters.day && filters.day !== 'all')
     || (filters.month && filters.month !== 'all')
     || (filters.year && filters.year !== 'all');
   if (!d) return !hasActiveFilter;
+
+  if (filters.visitDate) {
+    const selected = parseVisitDate(filters.visitDate);
+    if (
+      !selected
+      || d.getFullYear() !== selected.getFullYear()
+      || d.getMonth() !== selected.getMonth()
+      || d.getDate() !== selected.getDate()
+    ) {
+      return false;
+    }
+  }
 
   if (filters.day && filters.day !== 'all') {
     if (filters.day === 'today') {

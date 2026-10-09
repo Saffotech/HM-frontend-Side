@@ -212,6 +212,7 @@ export function useSaveIpdInsuranceClaimMutation() {
           queryKey: ['ipd', 'insurance', 'claim', variables.claimId],
         });
       }
+      invalidateIpdInsuranceBills(queryClient);
     },
     onError: mutationOnError,
   });
