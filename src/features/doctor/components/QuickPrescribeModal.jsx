@@ -15,7 +15,7 @@ export default function QuickPrescribeModal({ patient, appointment, open, onClos
   const [notes, setNotes] = useState('');
   const [meds, setMeds] = useState([emptyMedicineRow()]);
   const [fieldErrors, setFieldErrors] = useState({});
-
+z
   useEffect(() => {
     if (!open) return;
     setDiagnosis('');

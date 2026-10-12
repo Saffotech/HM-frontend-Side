@@ -22,6 +22,8 @@ function money(n) {
   return formatCurrency(n, { empty: '—' });
 }
 
+const PATIENT_PAY_MODES = ['Cash', 'Card', 'UPI'];
+
 /** Insurance figure that reduces the hospital bill: estimate, otherwise claim amount. */
 function insuranceCoverAmount(estimateInput, claimedInput) {
   const estimate = Number(estimateInput);
@@ -62,6 +64,8 @@ function IpdInsuranceClaimBillingCard({
         : '',
   );
   const [patientPayInput, setPatientPayInput] = useState('');
+  const [patientPayMode, setPatientPayMode] = useState('Cash');
+  const [patientPayReference, setPatientPayReference] = useState('');
   const [claimEditing, setClaimEditing] = useState(false);
 
   useEffect(() => {
@@ -105,14 +109,27 @@ function IpdInsuranceClaimBillingCard({
       toast.error(`Patient pay cannot be more than ${money(maxPatientPay)}`);
       return;
     }
+    const payMode = PATIENT_PAY_MODES.includes(patientPayMode) ? patientPayMode : 'Cash';
+    const payReference = patientPayReference.trim();
+    if (addPay > 0 && (payMode === 'Card' || payMode === 'UPI') && !payReference) {
+      toast.error(
+        payMode === 'UPI'
+          ? 'Enter the UPI reference for this online payment'
+          : 'Enter the card reference for this payment',
+      );
+      return;
+    }
 
+    const paidOn = new Date().toISOString().slice(0, 10);
     const patientPayment =
       addPay > 0
         ? {
             amount: addPay,
-            paymentDate: new Date().toISOString().slice(0, 10),
-            paymentMode: 'Cash',
-            reference: '',
+            paidAt: paidOn,
+            paymentDate: paidOn,
+            mode: payMode,
+            paymentMode: payMode,
+            reference: payReference,
           }
         : undefined;
 
@@ -135,6 +152,8 @@ function IpdInsuranceClaimBillingCard({
           }
           onClaimSaved?.(bundle.claim);
           setPatientPayInput('');
+          setPatientPayMode('Cash');
+          setPatientPayReference('');
           setClaimEditing(false);
           const totalPaid = Number(bundle.claim.patientPaid) || 0;
           toast.success(
@@ -288,6 +307,45 @@ function IpdInsuranceClaimBillingCard({
                     );
                   }}
                   inputMode="decimal"
+                />
+              </dd>
+            </div>
+          ) : null}
+          {claimEditing ? (
+            <div className="ipd-claim-kv">
+              <dt>
+                <label htmlFor="ipd-bill-patient-pay-mode">Pay by</label>
+              </dt>
+              <dd>
+                <select
+                  id="ipd-bill-patient-pay-mode"
+                  className="ipd-input"
+                  value={patientPayMode}
+                  onChange={(e) => setPatientPayMode(e.target.value)}
+                >
+                  {PATIENT_PAY_MODES.map((mode) => (
+                    <option key={mode} value={mode}>
+                      {mode === 'UPI' ? 'UPI (online)' : mode === 'Card' ? 'Card' : 'Cash'}
+                    </option>
+                  ))}
+                </select>
+              </dd>
+            </div>
+          ) : null}
+          {claimEditing && (patientPayMode === 'Card' || patientPayMode === 'UPI') ? (
+            <div className="ipd-claim-kv">
+              <dt>
+                <label htmlFor="ipd-bill-patient-pay-ref">
+                  {patientPayMode === 'UPI' ? 'UPI reference' : 'Card reference'}
+                </label>
+              </dt>
+              <dd>
+                <input
+                  id="ipd-bill-patient-pay-ref"
+                  className="ipd-input"
+                  value={patientPayReference}
+                  onChange={(e) => setPatientPayReference(e.target.value)}
+                  placeholder={patientPayMode === 'UPI' ? 'UPI transaction id' : 'Card transaction id'}
                 />
               </dd>
             </div>

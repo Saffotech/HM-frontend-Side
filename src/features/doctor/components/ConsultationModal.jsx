@@ -273,6 +273,38 @@ async function createPrescriptionIfNeeded({
   }
 }
 
+
+function todayIsoLocal() {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
+function findDuplicateMedicineIndexes(meds) {
+  const seen = new Map();
+  const duplicates = new Set();
+
+  meds.forEach((medicine, index) => {
+    const name = String(medicine.name ?? '')
+      .trim()
+      .replace(/\s+/g, ' ')
+      .toLowerCase();
+
+    if (!name) return;
+
+    if (seen.has(name)) {
+      duplicates.add(index);
+      duplicates.add(seen.get(name));
+    } else {
+      seen.set(name, index);
+    }
+  });
+
+  return duplicates;
+}
+
+
 export default function ConsultationModal({
   appointment,
   open,
@@ -294,6 +326,7 @@ export default function ConsultationModal({
   const skipDraftPersistRef = useRef(false);
   const draftTimerRef = useRef(null);
   const saveLockRef = useRef(false);
+  const medicineCardRefs = useRef({});
 
   const isIpdConsult = isIpdEncounter(appointment);
   const admissionId = appointment?.admissionId ?? appointment?.admission_id ?? null;
@@ -527,7 +560,7 @@ export default function ConsultationModal({
         } catch (err) {
           toast.error(
             err?.message
-              || 'Consultation saved, but a prescription or lab order failed. Check Labs / Prescriptions.',
+            || 'Consultation saved, but a prescription or lab order failed. Check Labs / Prescriptions.',
           );
         }
 
@@ -600,10 +633,26 @@ export default function ConsultationModal({
         errs[`labRepeat_${i}`] = 'Check Repeat test — this test was already ordered today';
       }
     });
+
     meds.forEach((m, i) => {
       validateConsultationMedicineRow(m, i, errs);
     });
+
+    const duplicateIndexes = [...findDuplicateMedicineIndexes(meds)];
+
     setFieldErrors(errs);
+    if (duplicateIndexes.length) {
+      if (tab !== 'rx') setTab('rx');
+      toast.error('This medicine is already added. Please select a different medicine.');
+      const target = Math.max(...duplicateIndexes);
+      window.setTimeout(() => {
+        medicineCardRefs.current[target]?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+      }, 60);
+      return;
+    }
     if (Object.keys(errs).length) {
       if (errs.diagnosis) {
         toast.error('Diagnosis is required');
@@ -614,6 +663,11 @@ export default function ConsultationModal({
         if (hasMedErr && tab !== 'rx') setTab('rx');
         if (hasLabRepeatErr && tab !== 'lab') setTab('lab');
       }
+      return;
+    }
+    if (followUp && followUp < todayIsoLocal()) {
+      toast.error('Follow-up date cannot be in the past');
+      if (tab !== 'lab') setTab('lab');
       return;
     }
 
@@ -709,8 +763,13 @@ export default function ConsultationModal({
       {tab === 'rx' && (
         <div className="doc-consult-panel doc-consult-panel--rx">
           {meds.map((m, i) => (
-            <PrescriptionMedicineCard
+            <div
               key={i}
+              ref={(node) => {
+                medicineCardRefs.current[i] = node;
+              }}
+            >
+            <PrescriptionMedicineCard
               medicine={m}
               index={i}
               fieldErrors={fieldErrors}
@@ -723,11 +782,16 @@ export default function ConsultationModal({
                 'durationUnit',
               ]}
               canRemove={meds.length > 1}
-              onAdd={
-                i === 0
-                  ? () => setMeds([...meds, emptyMedicineRow()])
-                  : null
-              }
+              onAdd={() => {
+                const nextIndex = meds.length;
+                setMeds([...meds, emptyMedicineRow()]);
+                window.setTimeout(() => {
+                  medicineCardRefs.current[nextIndex]?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                  });
+                }, 60);
+              }}
               onRemove={() => {
                 setMeds(meds.filter((_, j) => j !== i));
                 setFieldErrors((prev) => {
@@ -765,6 +829,7 @@ export default function ConsultationModal({
                 });
               }}
             />
+            </div>
           ))}
         </div>
       )}
@@ -803,12 +868,12 @@ export default function ConsultationModal({
                         rows.map((item, j) =>
                           j === i
                             ? {
-                                ...item,
-                                deptCode: code,
-                                testName: '',
-                                labTestId: null,
-                                otherTest: false,
-                              }
+                              ...item,
+                              deptCode: code,
+                              testName: '',
+                              labTestId: null,
+                              otherTest: false,
+                            }
                             : item,
                         ),
                       );
@@ -825,13 +890,13 @@ export default function ConsultationModal({
                     options={
                       labRoutingDepts.length
                         ? labRoutingDepts.map((d) => ({
-                            value: departmentCode(d) || d.code,
-                            label: d.name || d.label || labDepartmentLabel(d),
-                          }))
+                          value: departmentCode(d) || d.code,
+                          label: d.name || d.label || labDepartmentLabel(d),
+                        }))
                         : LAB_DEPARTMENTS.map((d) => ({
-                            value: d.code,
-                            label: d.label,
-                          }))
+                          value: d.code,
+                          label: d.label,
+                        }))
                     }
                   />
                   <LabTestNameField
@@ -866,9 +931,8 @@ export default function ConsultationModal({
                   />
                 </div>
                 <label
-                  className={`doc-lab-order__repeat${
-                    repeatRequired ? ' doc-lab-order__repeat--required' : ''
-                  }`}
+                  className={`doc-lab-order__repeat${repeatRequired ? ' doc-lab-order__repeat--required' : ''
+                    }`}
                 >
                   <input
                     type="checkbox"
@@ -929,7 +993,20 @@ export default function ConsultationModal({
             + Add test
           </Button>
           <div className="doc-consult-lab__followup">
-            <Input label="Follow-up date" type="date" value={followUp} onChange={(e) => setFollowUp(e.target.value)} />
+            <Input
+              label="Follow-up date"
+              type="date"
+              min={todayIsoLocal()}
+              value={followUp}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value && value < todayIsoLocal()) {
+                  toast.error('Follow-up date cannot be in the past');
+                  return;
+                }
+                setFollowUp(value);
+              }}
+            />
           </div>
         </div>
       )}

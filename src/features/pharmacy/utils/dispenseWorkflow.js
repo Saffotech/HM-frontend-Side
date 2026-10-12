@@ -76,14 +76,16 @@ export function validateItemDispenseInputs(
   const formError =
     totalNow === 0 ? 'Enter a dispense quantity for at least one medicine.' : '';
 
-  const mergedRowErrors = { ...rowErrors, ...amountErrors };
-
   return {
-    rowErrors: mergedRowErrors,
+    rowErrors,
+    amountErrors,
     formError,
     totalNow,
     totalAmount: Math.round(totalAmount * 100) / 100,
-    valid: !formError && !Object.keys(mergedRowErrors).length,
+    valid:
+      !formError
+      && !Object.keys(rowErrors).length
+      && !Object.keys(amountErrors).length,
   };
 }
 

@@ -142,7 +142,10 @@ export default function IpdBillPreviewPage() {
     const heads = sortInsuranceChargeHeads(
       normalizeInsuranceChargeHeads(bundle.finalBilling?.chargeHeads ?? []),
     );
-    setCharges((prev) => (chargeHeadsMatch(prev, heads) ? prev : heads));
+    setCharges((prev) => {
+      if (calculateInsuranceChargeTotals(prev).displayGross > 0) return prev;
+      return chargeHeadsMatch(prev, heads) ? prev : heads;
+    });
 
     const daily = initDailyCharges({ dailyCharges: bundle.dailyCharges });
     setDailyCharges((prev) => (dailyChargesMatch(prev, daily) ? prev : daily));
@@ -284,11 +287,12 @@ export default function IpdBillPreviewPage() {
     window.print();
   }, [printLoading, printInvoice, printSheetMounted]);
 
-  const handleSaveCharges = () => {
+  const handleSaveCharges = (nextCharges) => {
+    const toSave = Array.isArray(nextCharges) ? nextCharges : charges;
     saveFinalBillingMutation.mutate(
       {
         admissionId,
-        charges,
+        charges: toSave,
         previewItems,
         ...billingContext,
       },
@@ -298,11 +302,6 @@ export default function IpdBillPreviewPage() {
             toast.error('Unable to save charges');
             return;
           }
-          setCharges(
-            sortInsuranceChargeHeads(
-              normalizeInsuranceChargeHeads(bundle.finalBilling.chargeHeads),
-            ),
-          );
           toast.success('Hospital charges saved');
         },
         onError: () => toast.error('Unable to save charges'),

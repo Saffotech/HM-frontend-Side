@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ClipboardList } from 'lucide-react';
 import PharmacyLayout from '@/features/pharmacy/components/PharmacyLayout';
 import PharmacyStatusBadge from '@/features/pharmacy/components/PharmacyStatusBadge';
-import AllergyBanner from '@/features/pharmacy/components/AllergyBanner';
 import PharmacyDetailListModal from '@/features/pharmacy/components/PharmacyDetailListModal';
 import { usePharmacyPermissionSet } from '@/features/pharmacy/hooks/usePharmacyPermission';
 import { Button, DataTableShell, EmptyState, QueryFeedback } from '@/shared/components/common';
@@ -139,8 +138,6 @@ export default function PrescriptionDetailPage() {
               )}
             </div>
 
-            <AllergyBanner allergies={rx.patient?.allergies} />
-
             <div className="pharmacy-detail-cards">
               <div className="card">
                 <div className="card__header">
@@ -151,11 +148,6 @@ export default function PrescriptionDetailPage() {
                     items={[
                       { label: 'Name', value: rx.patient?.name },
                       { label: 'Phone', value: rx.patient_phone || rx.patient?.phone || '—' },
-                      {
-                        label: 'Allergies',
-                        value: rx.patient?.allergies || 'None noted',
-                        fullWidth: true,
-                      },
                     ]}
                   />
                 </div>

@@ -202,12 +202,13 @@ export default function IpdInsuranceBillingPage() {
     setSavedClaim(updatedClaim);
   }, []);
 
-  const handleSaveCharges = useCallback(() => {
+  const handleSaveCharges = useCallback((nextCharges) => {
     if (!claim) return;
+    const toSave = Array.isArray(nextCharges) ? nextCharges : charges;
     saveFinalBillingMutation.mutate(
       {
         claimId: claim.id,
-        charges,
+        charges: toSave,
         patientId,
         insuranceAdmit,
       },
@@ -348,7 +349,7 @@ export default function IpdInsuranceBillingPage() {
             onChargesChange={handleChargesChange}
             onSave={handleSaveCharges}
             saving={saveFinalBillingMutation.isPending}
-            hint="Totals by charge head. Saving keeps this bill as entered."
+            hint="Totals by charge head. Adding a charge saves it."
           />
 
           <div className="ipd-ins-billing__side">
