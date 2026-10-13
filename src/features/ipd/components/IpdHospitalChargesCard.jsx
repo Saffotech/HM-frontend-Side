@@ -27,6 +27,7 @@ function IpdHospitalChargesCard({
   const [newHeadLabel, setNewHeadLabel] = useState('');
   const [newHeadAmount, setNewHeadAmount] = useState('');
   const editStartRef = useRef('');
+  const chargeScrollRef = useRef(null);
 
   const hospitalChargeBuckets = groupHospitalChargeBuckets(charges);
   const totals = calculateInsuranceChargeTotals(charges);
@@ -81,6 +82,10 @@ function IpdHospitalChargesCard({
     );
     setNewHeadLabel('');
     setNewHeadAmount('');
+    window.setTimeout(() => {
+      const list = chargeScrollRef.current;
+      if (list) list.scrollTop = list.scrollHeight;
+    }, 0);
   };
 
   return (
@@ -93,7 +98,13 @@ function IpdHospitalChargesCard({
         {hint ? <p className="ipd-ins-charge-card__hint">{hint}</p> : null}
 
         <div className="ipd-ins-charge-bucket">
+          <div className="ipd-ins-charge-scroll" ref={chargeScrollRef}>
           <table className="ipd-ins-charge-table">
+            <colgroup>
+              <col />
+              <col className="ipd-ins-charge-table__col-amount" />
+              <col className="ipd-ins-charge-table__col-action" />
+            </colgroup>
             <thead>
               <tr>
                 <th>Charge head</th>
@@ -170,7 +181,15 @@ function IpdHospitalChargesCard({
                 </Fragment>
               ))}
             </tbody>
-            <tfoot>
+          </table>
+          </div>
+          <table className="ipd-ins-charge-table ipd-ins-charge-table--footer">
+            <colgroup>
+              <col />
+              <col className="ipd-ins-charge-table__col-amount" />
+              <col className="ipd-ins-charge-table__col-action" />
+            </colgroup>
+            <tbody>
               <tr className="ipd-ins-charge-table__add-row">
                 <td colSpan={3}>
                   <div className="ipd-ins-charge-table__add">
@@ -210,7 +229,7 @@ function IpdHospitalChargesCard({
                 </td>
                 <td />
               </tr>
-            </tfoot>
+            </tbody>
           </table>
         </div>
       </div>

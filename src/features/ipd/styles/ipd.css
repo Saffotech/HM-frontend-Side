@@ -3298,6 +3298,29 @@
   overflow: hidden;
 }
 
+.ipd-ins-charge-scroll {
+  max-height: 16.5rem;
+  overflow-y: auto;
+}
+
+.ipd-ins-charge-scroll .ipd-ins-charge-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.ipd-ins-charge-table__col-amount {
+  width: 8.5rem;
+}
+
+.ipd-ins-charge-table__col-action {
+  width: 4.25rem;
+}
+
+.ipd-ins-charge-table--footer {
+  border-top: 1px solid var(--color-border, #e5e7eb);
+}
+
 .ipd-ins-charge-table {
   width: 100%;
   border-collapse: collapse;

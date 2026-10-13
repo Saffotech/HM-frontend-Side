@@ -4,11 +4,8 @@
 
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { Button, EmptyState, QueryFeedback } from '@/shared/components/common';
-import { ROUTES, TAX_RATE } from '@/shared/constants';
-import { useQueryToken } from '@/shared/hooks/useQueryToken';
-import { getIpdPricing } from '@/features/ipd/api/pricing';
+import { ROUTES } from '@/shared/constants';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import IpdPageHeader from '@/features/ipd/components/IpdPageHeader';
 import { useIpdPermissionSet } from '@/features/ipd/hooks/useIpdPermission';
@@ -51,23 +48,6 @@ export default function IpdBillingPage() {
     parseIpdPaymentType(searchParams.get('paymentType')),
   );
   const debouncedSearch = useDebouncedValue(search, 300);
-  const token = useQueryToken();
-  const gstPercentQuery = useQuery({
-    queryKey: ['ipd', 'pricing', 'gst-percent'],
-    queryFn: async () => {
-      try {
-        const data = await getIpdPricing(token);
-        const rate = Number(data?.pricing?.gst_percent);
-        if (Number.isFinite(rate) && rate > 0 && rate <= 100) return rate;
-      } catch {
-        // Billing can still show dues at the same 5% the insurance panel uses.
-      }
-      return TAX_RATE * 100;
-    },
-    staleTime: 60_000,
-    retry: false,
-  });
-  const gstPercent = gstPercentQuery.data ?? TAX_RATE * 100;
   const { data, isLoading, isError, error, refetch } = useIpdRunningBillsQuery();
   const insuranceBillsQuery = useIpdInsuranceBillsQuery(
     {},
@@ -100,9 +80,7 @@ export default function IpdBillingPage() {
   };
 
   const insuranceRows = useMemo(() => {
-    const mapped = (insuranceBillsQuery.data?.items ?? []).map((row) =>
-      mapInsuranceBillRow(row, gstPercent),
-    );
+    const mapped = (insuranceBillsQuery.data?.items ?? []).map(mapInsuranceBillRow);
     const q = debouncedSearch.trim().toLowerCase();
     if (!q) return mapped;
 
@@ -124,7 +102,7 @@ export default function IpdBillingPage() {
         .toLowerCase();
       return hay.includes(q);
     });
-  }, [debouncedSearch, gstPercent, insuranceBillsQuery.data?.items]);
+  }, [debouncedSearch, insuranceBillsQuery.data?.items]);
 
   const rows = useMemo(() => {
     const mapped = (data?.items ?? []).map((item) => {

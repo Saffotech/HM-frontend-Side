@@ -27,6 +27,30 @@ import { formatIpdDateTime } from '@/features/ipd/utils/ipdFormat';
 import { resolveIpdBillPreviewPayment, findOpenUnpaidBill } from '@/features/ipd/utils/resolveIpdBillPreviewPayment';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
+import { useIpdAdmissionInsuranceQuery } from '@/features/ipd/hooks/useIpdBillingQuery';
+
+function roundMoney(value) {
+  return Math.round((Number(value) || 0) * 100) / 100;
+}
+
+/** Same patient balance as insurance billing: final bill − cover − already paid. */
+function insurancePatientSettlement(claim, grandTotal) {
+  if (!claim) return null;
+  const estimate = Number(claim.estimate_amount ?? claim.estimateAmount);
+  const claimed = Number(claim.claimed_amount ?? claim.claimedAmount ?? claim.claimed);
+  const cover =
+    Number.isFinite(estimate) && estimate > 0
+      ? estimate
+      : Number.isFinite(claimed) && claimed > 0
+        ? claimed
+        : 0;
+  const paid = roundMoney(claim.patient_paid ?? claim.patientPaid);
+  const total = roundMoney(grandTotal);
+  return {
+    paid,
+    balance: Math.max(0, roundMoney(total - cover - paid)),
+  };
+}
 
 export default function DischargeWizard({ admissionId }) {
   const navigate = useNavigate();
@@ -45,6 +69,7 @@ const [paymentCollected, setPaymentCollected] = useState(false);
 
   const detailQuery = useIpdAdmissionDetailQuery(admissionId);
   const previewQuery = useIpdBillPreviewQuery(admissionId);
+  const admissionInsuranceQuery = useIpdAdmissionInsuranceQuery(admissionId);
   const generateMutation = useGenerateIpdBillMutation();
   const payMutation = usePayIpdBillMutation();
   const dischargeMutation = useCompleteIpdDischargeMutation();
@@ -61,8 +86,18 @@ const [paymentCollected, setPaymentCollected] = useState(false);
     [bills, preview],
   );
   const openBill = paymentView.openBill;
-  const exactAmount = Number(paymentView.balance ?? 0);
-  const canCollectPayment = paymentView.canCollectPayment;
+  const insuranceSettlement = insurancePatientSettlement(
+    admissionInsuranceQuery.data,
+    preview?.grand_total,
+  );
+  const summaryPaid = insuranceSettlement ? insuranceSettlement.paid : paymentView.paid;
+  const summaryBalance = insuranceSettlement
+    ? insuranceSettlement.balance
+    : paymentView.balance;
+  const exactAmount = Number(summaryBalance ?? 0);
+  const canCollectPayment = insuranceSettlement
+    ? summaryBalance > 0.01
+    : paymentView.canCollectPayment;
   const savingDischarge =
     dischargeMutation.isPending ||
     payMutation.isPending ||
@@ -119,7 +154,12 @@ const [paymentCollected, setPaymentCollected] = useState(false);
         bills: freshBills,
         preview,
       });
-      const amount = Number(freshPaymentView.balance ?? exactAmount ?? payAmount ?? 0);
+      const amount = Number(
+        (insuranceSettlement ? insuranceSettlement.balance : freshPaymentView.balance)
+          ?? exactAmount
+          ?? payAmount
+          ?? 0,
+      );
       const needsPayment = amount > 0.01 && freshPaymentView.canCollectPayment;
 
       if (needsPayment) {
@@ -129,11 +169,12 @@ const [paymentCollected, setPaymentCollected] = useState(false);
         }
         const bill = await ensureBill(freshBills);
         const due = Number(bill.balance_due ?? amount);
-        if (due > 0.01) {
+        const collect = insuranceSettlement ? Math.min(due, amount) : due;
+        if (collect > 0.01) {
           await payMutation.mutateAsync({
             billId: bill.id,
             payload: {
-              amount: due,
+              amount: collect,
               payment_mode: payMode.toLowerCase(),
             },
           });
@@ -143,7 +184,10 @@ const [paymentCollected, setPaymentCollected] = useState(false);
 
       const result = await dischargeMutation.mutateAsync({
         admissionId,
-        payload: { force: false, notes: notes.trim() || null },
+        payload: {
+          force: Boolean(insuranceSettlement),
+          notes: notes.trim() || null,
+        },
       });
       toast.success(result?.message || 'Patient discharged');
       navigate(ROUTES.IPD_PATIENTS);
@@ -291,8 +335,8 @@ const [paymentCollected, setPaymentCollected] = useState(false);
                 tax={formatCurrency(preview?.gst_amount, { empty: '—' })}
                 taxPercent={preview?.gst_percent}
                 total={formatCurrency(preview?.grand_total, { empty: '—' })}
-                paid={formatCurrency(paymentView.paid, { empty: '—' })}
-                balance={formatCurrency(paymentView.balance, { empty: '—' })}
+                paid={formatCurrency(summaryPaid, { empty: '—' })}
+                balance={formatCurrency(summaryBalance, { empty: '—' })}
               />
             </div>
           ) : null}

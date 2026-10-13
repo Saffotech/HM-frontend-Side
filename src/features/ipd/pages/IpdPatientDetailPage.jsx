@@ -2,7 +2,7 @@
  * IPD Patient Detail — admission overview (`/ipd/admissions/{id}`).
  */
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button, EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
@@ -10,13 +10,9 @@ import IpdPageHeader from '@/features/ipd/components/IpdPageHeader';
 import IpdStatusBadge from '@/features/ipd/components/IpdStatusBadge';
 import BillSummary from '@/features/ipd/components/BillSummary';
 import AdmissionCareTeamEditor from '@/features/ipd/components/AdmissionCareTeamEditor';
-import EditInsuranceModal from '@/features/ipd/components/EditInsuranceModal';
 import useIpdBackNavigation from '@/features/ipd/hooks/useIpdBackNavigation';
 import { useIpdAdmissionDetailQuery } from '@/features/ipd/hooks/useIpdQuery';
-import {
-  useIpdAdmissionInsuranceQuery,
-  useUpdateIpdAdmissionInsuranceMutation,
-} from '@/features/ipd/hooks/useIpdBillingQuery';
+import { useIpdAdmissionInsuranceQuery } from '@/features/ipd/hooks/useIpdBillingQuery';
 import { useIpdPermissionSet } from '@/features/ipd/hooks/useIpdPermission';
 import { formatIpdDateTime } from '@/features/ipd/utils/ipdFormat';
 import { resolveIpdBillPreviewPayment } from '@/features/ipd/utils/resolveIpdBillPreviewPayment';
@@ -41,13 +37,8 @@ export default function IpdPatientDetailPage() {
   const { data, isLoading, isError, error, refetch } =
     useIpdAdmissionDetailQuery(admissionId);
   const admissionInsuranceQuery = useIpdAdmissionInsuranceQuery(admissionId);
-  const updateAdmissionInsuranceMutation = useUpdateIpdAdmissionInsuranceMutation();
-
-  const [editInsuranceOpen, setEditInsuranceOpen] = useState(false);
-  const [insuranceDraft, setInsuranceDraft] = useState(null);
 
   const payClaimInsurance =
-    insuranceDraft ??
     admissionInsuranceQuery.data ??
     location.state?.payAndClaimInsurance ??
     null;
@@ -206,19 +197,11 @@ export default function IpdPatientDetailPage() {
           {payClaimInsurance ? (
             <div className="ipd-card">
               <div className="ipd-card__head">
-                <h2 className="ipd-card__title">Insurance (Copay)</h2>
+                <h2 className="ipd-card__title">Insurance</h2>
                 <div className="ipd-form-actions">
                   <span className="ipd-ins-chip ipd-ins-chip--coverage">
                     {payClaimInsurance.coverage}
                   </span>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setEditInsuranceOpen(true)}
-                  >
-                    Edit Insurance
-                  </Button>
                 </div>
               </div>
               <div className="ipd-card__body">
@@ -353,23 +336,6 @@ export default function IpdPatientDetailPage() {
         </div>
       )}
 
-      {payClaimInsurance ? (
-        <EditInsuranceModal
-          open={editInsuranceOpen}
-          onClose={() => setEditInsuranceOpen(false)}
-          initial={payClaimInsurance}
-          onSave={(next) => {
-            setInsuranceDraft((prev) => ({
-              ...(prev ?? payClaimInsurance),
-              ...next,
-            }));
-            updateAdmissionInsuranceMutation.mutate({
-              admissionId,
-              payload: next,
-            });
-          }}
-        />
-      ) : null}
     </div>
   );
 }
