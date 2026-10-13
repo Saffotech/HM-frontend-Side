@@ -33,22 +33,12 @@ function roundMoney(value) {
   return Math.round((Number(value) || 0) * 100) / 100;
 }
 
-/** Same patient balance as insurance billing: final bill − cover − already paid. */
-function insurancePatientSettlement(claim, grandTotal) {
-  if (!claim) return null;
-  const estimate = Number(claim.estimate_amount ?? claim.estimateAmount);
-  const claimed = Number(claim.claimed_amount ?? claim.claimedAmount ?? claim.claimed);
-  const cover =
-    Number.isFinite(estimate) && estimate > 0
-      ? estimate
-      : Number.isFinite(claimed) && claimed > 0
-        ? claimed
-        : 0;
-  const paid = roundMoney(claim.patient_paid ?? claim.patientPaid);
-  const total = roundMoney(grandTotal);
+/** Patient balance from the backend split (approved → estimate → claimed). */
+function insurancePatientSettlement(claim) {
+  if (!claim || claim.patient_balance == null) return null;
   return {
-    paid,
-    balance: Math.max(0, roundMoney(total - cover - paid)),
+    paid: roundMoney(claim.patient_paid_total ?? claim.patient_paid),
+    balance: roundMoney(claim.patient_balance),
   };
 }
 
@@ -62,7 +52,6 @@ export default function DischargeWizard({ admissionId }) {
 const [payMode, setPayMode] = useState('Cash');
 const [payAmount, setPayAmount] = useState('');
 const [referenceNumber, setReferenceNumber] = useState('');
-const [transactionId, setTransactionId] = useState('');
 const [notes, setNotes] = useState('');
 const [paymentReady, setPaymentReady] = useState(false);
 const [paymentCollected, setPaymentCollected] = useState(false);
@@ -86,10 +75,7 @@ const [paymentCollected, setPaymentCollected] = useState(false);
     [bills, preview],
   );
   const openBill = paymentView.openBill;
-  const insuranceSettlement = insurancePatientSettlement(
-    admissionInsuranceQuery.data,
-    preview?.grand_total,
-  );
+  const insuranceSettlement = insurancePatientSettlement(admissionInsuranceQuery.data);
   const summaryPaid = insuranceSettlement ? insuranceSettlement.paid : paymentView.paid;
   const summaryBalance = insuranceSettlement
     ? insuranceSettlement.balance
@@ -139,6 +125,18 @@ const [paymentCollected, setPaymentCollected] = useState(false);
       toast.error('Invalid payment amount');
       return;
     }
+    if (
+      amount > 0.01
+      && (payMode === 'Card' || payMode === 'UPI')
+      && !referenceNumber.trim()
+    ) {
+      toast.error(
+        payMode === 'UPI'
+          ? 'Enter the UPI reference (UTR) for this payment'
+          : 'Enter the card reference (RRN or approval code) for this payment',
+      );
+      return;
+    }
     setPaymentReady(true);
     goNext();
   };
@@ -176,6 +174,9 @@ const [paymentCollected, setPaymentCollected] = useState(false);
             payload: {
               amount: collect,
               payment_mode: payMode.toLowerCase(),
+              ...(referenceNumber.trim()
+                ? { transaction_reference: referenceNumber.trim() }
+                : {}),
             },
           });
           setPaymentCollected(true);
@@ -399,27 +400,6 @@ const [paymentCollected, setPaymentCollected] = useState(false);
                             setPaymentReady(false);
                           }}
                           placeholder="Enter reference number"
-                        />
-                      </div>
-
-                      <div className="ipd-toolbar__field">
-                        <label
-                          className="ipd-toolbar__label"
-                          htmlFor="ipd-dis-transaction-id"
-                        >
-                          Transaction ID
-                        </label>
-
-                        <input
-                          id="ipd-dis-transaction-id"
-                          className="ipd-input"
-                          type="text"
-                          value={transactionId}
-                          onChange={(e) => {
-                            setTransactionId(e.target.value);
-                            setPaymentReady(false);
-                          }}
-                          placeholder="Enter transaction ID"
                         />
                       </div>
                     </>

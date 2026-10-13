@@ -41,6 +41,8 @@ function roundMoney(amount) {
 }
 
 function resolveInsuranceBillPendingDue(row = {}) {
+  const backendBalance = pick(row, 'patient_balance', 'patientBalance');
+  if (backendBalance != null) return roundMoney(backendBalance);
   const totalBill = Number(pick(row, 'net_bill', 'netBill', 'total_bill', 'totalBill') ?? 0);
   const approved = Number(pick(row, 'approved', 'approved_amount') ?? 0);
   const estimateRaw = pick(row, 'estimate_amount', 'estimateAmount');

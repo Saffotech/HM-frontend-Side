@@ -126,7 +126,6 @@ export default function IpdInsuranceBillingPage() {
   const claim = bundleQuery.data?.claim;
 
   const [charges, setCharges] = useState(() => initCharges(claim));
-  const [useInsurance, setUseInsurance] = useState(true);
   const [savedClaim, setSavedClaim] = useState(claim);
   const [dailyCharges, setDailyCharges] = useState(() => initDailyCharges(claim));
   const [printSheetMounted, setPrintSheetMounted] = useState(false);
@@ -176,9 +175,9 @@ export default function IpdInsuranceBillingPage() {
       patient,
       charges,
       grossBill: totals.displayGross,
-      useInsurance,
+      useInsurance: true,
     });
-  }, [claim, savedClaim, patient, charges, totals.displayGross, useInsurance]);
+  }, [claim, savedClaim, patient, charges, totals.displayGross]);
 
   const onPrint = useCallback(() => {
     if (!printModel) return;
@@ -362,24 +361,6 @@ export default function IpdInsuranceBillingPage() {
               onClaimSaved={handleClaimSaved}
             />
 
-            <div className="ipd-card ipd-ins-toggle-card">
-              <div>
-                <strong>Use this insurance for this admission</strong>
-                <p className="ipd-page__subtitle">
-                  Active policy detected for {claim.patientName}
-                </p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                className={`ipd-ins-switch${
-                  useInsurance ? ' ipd-ins-switch--on' : ''
-                }`}
-                aria-checked={useInsurance}
-                aria-label="Use this insurance for this admission"
-                onClick={() => setUseInsurance((v) => !v)}
-              />
-            </div>
           </div>
         </div>
 
@@ -391,7 +372,7 @@ export default function IpdInsuranceBillingPage() {
           subtitle={`${claim.ipdId} · each row is one item (medicine, treatment, room, etc.)`}
         />
 
-        {useInsurance ? <IpdInsuranceLinkedCard claim={claim} /> : null}
+        <IpdInsuranceLinkedCard claim={claim} />
 
         <button
           type="button"

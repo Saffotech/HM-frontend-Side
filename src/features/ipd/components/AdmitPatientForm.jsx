@@ -566,7 +566,7 @@ export default function AdmitPatientForm() {
                           <table className="ipd-table ipd-table--stack">
                             <thead>
                               <tr>
-                                <th>UHID</th>
+                                <th>Patient ID</th>
                                 <th>Name</th>
                                 <th>Phone</th>
                                 <th />
@@ -575,7 +575,7 @@ export default function AdmitPatientForm() {
                             <tbody>
                               {patientOptions.map((patient) => (
                                 <tr key={patient.dbId ?? patient.id}>
-                                  <td data-label="UHID">{patient.id || "—"}</td>
+                                  <td data-label="Patient ID">{patient.id || "—"}</td>
                                   <td data-label="Name">{patient.name || "—"}</td>
                                   <td data-label="Phone">{patient.phone || "—"}</td>
                                   <td data-label="Action">

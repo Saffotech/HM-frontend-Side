@@ -5,7 +5,6 @@
 
 import { memo, useEffect, useState } from 'react';
 import { Button } from '@/shared/components/common';
-import { TAX_RATE } from '@/shared/constants';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
 import { resolveAdmissionIdFromBillingContext } from '@/features/ipd/billing/ipdBillingMapper';
 import { useSaveIpdInsuranceClaimMutation } from '@/features/ipd/hooks/useIpdBillingQuery';
@@ -27,8 +26,10 @@ function money(n) {
 
 const PATIENT_PAY_MODES = ['Cash', 'Card', 'UPI'];
 
-/** Insurance figure that reduces the hospital bill: estimate, otherwise claim amount. */
-function insuranceCoverAmount(estimateInput, claimedInput) {
+/** Insurance cover: approved, otherwise estimate, otherwise claim amount. */
+function insuranceCoverAmount(approved, estimateInput, claimedInput) {
+  const appr = Number(approved);
+  if (Number.isFinite(appr) && appr > 0) return appr;
   const estimate = Number(estimateInput);
   if (Number.isFinite(estimate) && estimate > 0) return estimate;
   const claimed = Number(claimedInput);
@@ -57,11 +58,11 @@ function billWithGst(hospitalBill, gstPercent) {
   return (Number(hospitalBill) || 0) + gstAmountOnBill(hospitalBill, gstPercent);
 }
 
-/** Hospital pricing rate, or 5% when that rate is not set. */
+/** Hospital GST rate. Zero is a valid rate. */
 function automaticGstPercent(previewPercent) {
   const n = Number(previewPercent);
-  if (Number.isFinite(n) && n > 0 && n <= 100) return n;
-  return TAX_RATE * 100;
+  if (Number.isFinite(n) && n >= 0 && n <= 100) return n;
+  return 0;
 }
 
 function gstPercentLabel(gstPercent) {
@@ -123,7 +124,7 @@ function IpdInsuranceClaimBillingCard({
     const addPay = String(patientPayInput).trim() ? Number(patientPayInput) : 0;
     const maxPatientPay = patientOwes(
       billWithGst(actualBill, gstPercent),
-      insuranceCoverAmount(estimateAmount, claimed),
+      insuranceCoverAmount(activeSavedClaim?.approved, estimateAmount, claimed),
       activeSavedClaim?.patientPaid,
     );
 
@@ -207,11 +208,17 @@ function IpdInsuranceClaimBillingCard({
     );
   };
 
-  const insuranceCovered = insuranceCoverAmount(estimateInput, claimedInput);
+  const useBackend = !claimEditing && activeSavedClaim?.patient_balance != null;
+  const insuranceCovered = useBackend
+    ? Number(activeSavedClaim.insurance_share) || 0
+    : insuranceCoverAmount(activeSavedClaim?.approved, estimateInput, claimedInput);
   const gstAmount = gstAmountOnBill(actualBill, gstPercent);
   const finalAmount = (Number(actualBill) || 0) + gstAmount;
+  const insuranceRemaining = Math.max(0, insuranceCovered - finalAmount);
   const alreadyPaid = Number(activeSavedClaim?.patientPaid) || 0;
-  const outstandingAmount = patientOwes(finalAmount, insuranceCovered, alreadyPaid);
+  const outstandingAmount = useBackend
+    ? Number(activeSavedClaim.patient_balance) || 0
+    : patientOwes(finalAmount, insuranceCovered, alreadyPaid);
   const addPay = claimEditing ? Number(patientPayInput) || 0 : 0;
   const patientPayOutstanding = Math.max(0, outstandingAmount - addPay);
   const isSaving = saveClaimMutation.isPending;
@@ -239,7 +246,7 @@ function IpdInsuranceClaimBillingCard({
                 if (String(current).trim() !== '') return current;
                 const maxPatientPay = patientOwes(
                   billWithGst(actualBill, gstPercent),
-                  insuranceCoverAmount(estimateInput, claimedInput),
+                  insuranceCoverAmount(activeSavedClaim?.approved, estimateInput, claimedInput),
                   activeSavedClaim?.patientPaid,
                 );
                 return String(maxPatientPay);
@@ -299,6 +306,14 @@ function IpdInsuranceClaimBillingCard({
             }
           />
           <Fact
+            label="Insurance Remaining"
+            value={
+              <span className={insuranceRemaining > 0 ? 'ipd-claim-amt--ok' : undefined}>
+                {money(insuranceRemaining)}
+              </span>
+            }
+          />
+          <Fact
             label="Outstanding Amount"
             value={
               <span className="ipd-claim-amt--due">{money(outstandingAmount)}</span>
@@ -334,7 +349,7 @@ function IpdInsuranceClaimBillingCard({
                     }
                     const maxPatientPay = patientOwes(
                       billWithGst(actualBill, gstPercent),
-                      insuranceCoverAmount(estimateInput, claimedInput),
+                      insuranceCoverAmount(activeSavedClaim?.approved, estimateInput, claimedInput),
                       activeSavedClaim?.patientPaid,
                     );
                     const next = Number(raw);

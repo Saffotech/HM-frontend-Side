@@ -35,6 +35,9 @@ const MODE_CLASS = {
   insurance: 'mode-insurance',
 };
 
+const COVERAGE_BASIS_LABEL = { estimated: 'Estimated', final: 'Final' };
+const COVERAGE_STATUS_LABEL = { pending: 'Pending', partly_paid: 'Partly paid', paid: 'Paid' };
+
 function titleCaseMode(mode) {
   const key = String(mode || '').toLowerCase();
   if (key === 'upi') return 'UPI';
@@ -106,7 +109,7 @@ export default function IpdPaymentHistoryPage() {
       value: <MoneyAmount amount={summary?.insurance ?? 0} exact />,
       icon: IndianRupee,
       color: 'blue',
-      sub: 'Included in total',
+      sub: 'Covered by insurance · not in total',
     },
   ];
 
@@ -131,7 +134,8 @@ export default function IpdPaymentHistoryPage() {
 
       {activeFilter !== 'all' && (
         <p className="filter-hint">
-          Showing <strong>{activeFilter}</strong> payments only.
+          Showing <strong>{activeFilter === 'Insurance' ? 'insurance coverage' : activeFilter}</strong>
+          {activeFilter === 'Insurance' ? '' : ' payments only'}.
           <button
             type="button"
             className="filter-hint__clear"
@@ -220,6 +224,16 @@ export default function IpdPaymentHistoryPage() {
                             {Number(row.bill_balance) > 0 ? (
                               <div className="ipd-page__subtitle">
                                 Bill due: {formatCurrency(row.bill_balance, { empty: '—' })}
+                              </div>
+                            ) : null}
+                            {row.entry_type === 'insurance_coverage' ? (
+                              <div className="ipd-page__subtitle">
+                                {COVERAGE_BASIS_LABEL[row.coverage_basis] ?? '—'}
+                                {' · '}
+                                {COVERAGE_STATUS_LABEL[row.coverage_status] ?? '—'}
+                                {Number(row.insurer_pending) > 0
+                                  ? ` · Due from insurer ${formatCurrency(row.insurer_pending)}`
+                                  : ''}
                               </div>
                             ) : null}
                           </td>
