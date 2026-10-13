@@ -5,8 +5,11 @@
 
 import { memo, useEffect, useState } from 'react';
 import { Button } from '@/shared/components/common';
+import { TAX_RATE } from '@/shared/constants';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
+import { resolveAdmissionIdFromBillingContext } from '@/features/ipd/billing/ipdBillingMapper';
 import { useSaveIpdInsuranceClaimMutation } from '@/features/ipd/hooks/useIpdBillingQuery';
+import { useIpdBillPreviewQuery } from '@/features/ipd/hooks/useIpdQuery';
 import { toast } from '@/shared/utils/toast';
 
 function Fact({ label, value }) {
@@ -42,6 +45,31 @@ function patientOwes(hospitalBill, insuranceCover, alreadyPaid) {
   );
 }
 
+/** GST on the hospital bill. Percent 0 means no tax. */
+function gstAmountOnBill(hospitalBill, gstPercent) {
+  const bill = Number(hospitalBill) || 0;
+  const pct = Number(gstPercent) || 0;
+  if (bill <= 0 || pct <= 0) return 0;
+  return Math.round(((bill * pct) / 100) * 100) / 100;
+}
+
+function billWithGst(hospitalBill, gstPercent) {
+  return (Number(hospitalBill) || 0) + gstAmountOnBill(hospitalBill, gstPercent);
+}
+
+/** Hospital pricing rate, or 5% when that rate is not set. */
+function automaticGstPercent(previewPercent) {
+  const n = Number(previewPercent);
+  if (Number.isFinite(n) && n > 0 && n <= 100) return n;
+  return TAX_RATE * 100;
+}
+
+function gstPercentLabel(gstPercent) {
+  const n = Number(gstPercent) || 0;
+  const shown = Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
+  return `GST (${shown}%)`;
+}
+
 function IpdInsuranceClaimBillingCard({
   claim,
   savedClaim,
@@ -67,6 +95,12 @@ function IpdInsuranceClaimBillingCard({
   const [patientPayMode, setPatientPayMode] = useState('Cash');
   const [patientPayReference, setPatientPayReference] = useState('');
   const [claimEditing, setClaimEditing] = useState(false);
+  const admissionId = resolveAdmissionIdFromBillingContext({
+    claim,
+    insuranceAdmit,
+  });
+  const previewQuery = useIpdBillPreviewQuery(admissionId);
+  const gstPercent = automaticGstPercent(previewQuery.data?.gst_percent);
 
   useEffect(() => {
     if (!claim) return;
@@ -88,7 +122,7 @@ function IpdInsuranceClaimBillingCard({
       : 0;
     const addPay = String(patientPayInput).trim() ? Number(patientPayInput) : 0;
     const maxPatientPay = patientOwes(
-      actualBill,
+      billWithGst(actualBill, gstPercent),
       insuranceCoverAmount(estimateAmount, claimed),
       activeSavedClaim?.patientPaid,
     );
@@ -174,8 +208,10 @@ function IpdInsuranceClaimBillingCard({
   };
 
   const insuranceCovered = insuranceCoverAmount(estimateInput, claimedInput);
+  const gstAmount = gstAmountOnBill(actualBill, gstPercent);
+  const finalAmount = (Number(actualBill) || 0) + gstAmount;
   const alreadyPaid = Number(activeSavedClaim?.patientPaid) || 0;
-  const outstandingAmount = patientOwes(actualBill, insuranceCovered, alreadyPaid);
+  const outstandingAmount = patientOwes(finalAmount, insuranceCovered, alreadyPaid);
   const addPay = claimEditing ? Number(patientPayInput) || 0 : 0;
   const patientPayOutstanding = Math.max(0, outstandingAmount - addPay);
   const isSaving = saveClaimMutation.isPending;
@@ -202,7 +238,7 @@ function IpdInsuranceClaimBillingCard({
               setPatientPayInput((current) => {
                 if (String(current).trim() !== '') return current;
                 const maxPatientPay = patientOwes(
-                  actualBill,
+                  billWithGst(actualBill, gstPercent),
                   insuranceCoverAmount(estimateInput, claimedInput),
                   activeSavedClaim?.patientPaid,
                 );
@@ -254,6 +290,8 @@ function IpdInsuranceClaimBillingCard({
             </dd>
           </div>
           <Fact label="Hospital Bill" value={money(actualBill)} />
+          <Fact label={gstPercentLabel(gstPercent)} value={money(gstAmount)} />
+          <Fact label="Final amount" value={money(finalAmount)} />
           <Fact
             label="Insurance Covered"
             value={
@@ -295,7 +333,7 @@ function IpdInsuranceClaimBillingCard({
                       return;
                     }
                     const maxPatientPay = patientOwes(
-                      actualBill,
+                      billWithGst(actualBill, gstPercent),
                       insuranceCoverAmount(estimateInput, claimedInput),
                       activeSavedClaim?.patientPaid,
                     );

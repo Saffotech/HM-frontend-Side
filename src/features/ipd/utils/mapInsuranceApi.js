@@ -3,6 +3,8 @@
  * Field names accept snake_case or camelCase until the backend contract is frozen.
  */
 
+import { TAX_RATE } from '@/shared/constants';
+
 function pick(row, ...keys) {
   for (const key of keys) {
     if (row?.[key] != null && row[key] !== '') return row[key];
@@ -36,7 +38,11 @@ export function mapInsurancePatientRow(row = {}) {
   };
 }
 
-function resolveInsuranceBillPendingDue(row = {}) {
+function roundMoney(amount) {
+  return Math.round((Number(amount) || 0) * 100) / 100;
+}
+
+function resolveInsuranceBillPendingDue(row = {}, gstPercent) {
   const totalBill = Number(pick(row, 'net_bill', 'netBill', 'total_bill', 'totalBill') ?? 0);
   const approved = Number(pick(row, 'approved', 'approved_amount') ?? 0);
   const estimateRaw = pick(row, 'estimate_amount', 'estimateAmount');
@@ -52,13 +58,14 @@ function resolveInsuranceBillPendingDue(row = {}) {
       : Number.isFinite(claimed) && claimed > 0
         ? claimed
         : 0;
+  const rate = Number(gstPercent);
+  const pct = Number.isFinite(rate) && rate > 0 && rate <= 100 ? rate : TAX_RATE * 100;
+  const gst = roundMoney((totalBill * pct) / 100);
+  const finalBill = totalBill + gst;
 
-  // Same amount shown as Paid so far: the patient share (hospital bill − insurance).
-  // Use the stored paid amount when the list row includes it.
-  if (patientPaid > 0) return patientPaid;
-
+  // Remaining dues: final bill (hospital + GST) minus insurance, minus what the patient already paid.
   if (insuranceCover > 0) {
-    return Math.max(0, totalBill - insuranceCover);
+    return Math.max(0, roundMoney(finalBill - insuranceCover - patientPaid));
   }
 
   const patientResponsibility = pick(row, 'patient_responsibility', 'patientResponsibility');
@@ -67,10 +74,10 @@ function resolveInsuranceBillPendingDue(row = {}) {
       ? Number(patientResponsibility)
       : Math.max(0, totalBill - approved);
 
-  return Math.max(0, responsibility);
+  return Math.max(0, roundMoney(responsibility + gst - patientPaid));
 }
 
-export function mapInsuranceBillRow(row = {}) {
+export function mapInsuranceBillRow(row = {}, gstPercent) {
   const totalBill = Number(pick(row, 'net_bill', 'netBill', 'total_bill', 'totalBill') ?? 0);
   const claimedRaw = pick(row, 'claimed', 'claimed_amount', 'claimedAmount');
   const claimedAmount =
@@ -99,7 +106,7 @@ export function mapInsuranceBillRow(row = {}) {
       estimateAmount != null && Number.isFinite(estimateAmount)
         ? estimateAmount
         : null,
-    pendingDue: resolveInsuranceBillPendingDue(row),
+    pendingDue: resolveInsuranceBillPendingDue(row, gstPercent),
     claimLabel: pick(row, 'claim_label', 'claimLabel', 'status_label') ?? '—',
   };
 }
