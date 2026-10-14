@@ -257,7 +257,7 @@ export default function AdminLabCatalogSection({ locked = false }) {
 
           {!locked ? (
             <div className="aos-lab-catalog__row aos-lab-catalog__row--create" role="row">
-              <div className="aos-lab-catalog__cell" role="cell">
+              <div className="aos-lab-catalog__cell" role="cell" data-label="Test name">
                 <Input
                   value={draft.testName}
                   placeholder="e.g. CBC"
@@ -267,7 +267,7 @@ export default function AdminLabCatalogSection({ locked = false }) {
                   }
                 />
               </div>
-              <div className="aos-lab-catalog__cell" role="cell">
+              <div className="aos-lab-catalog__cell" role="cell" data-label="Department">
                 <Select
                   value={draft.departmentId}
                   disabled={busy || deptOpts.length === 0}
@@ -278,7 +278,7 @@ export default function AdminLabCatalogSection({ locked = false }) {
                   }
                 />
               </div>
-              <div className="aos-lab-catalog__cell aos-lab-catalog__cell--price" role="cell">
+              <div className="aos-lab-catalog__cell aos-lab-catalog__cell--price" role="cell" data-label="Price">
                 <div className="aos-lab-catalog__price">
                   <span aria-hidden>{getCurrencySymbol()}</span>
                   <Input
@@ -294,10 +294,10 @@ export default function AdminLabCatalogSection({ locked = false }) {
                   />
                 </div>
               </div>
-              <div className="aos-lab-catalog__cell aos-lab-catalog__cell--muted" role="cell">
-                New
+              <div className="aos-lab-catalog__cell aos-lab-catalog__cell--muted" role="cell" data-label="Status">
+                <span>New</span>
               </div>
-              <div className="aos-lab-catalog__cell aos-lab-catalog__cell--actions" role="cell">
+              <div className="aos-lab-catalog__cell aos-lab-catalog__cell--actions" role="cell" data-label="Actions">
                 <Button type="button" size="sm" disabled={busy} onClick={handleCreate}>
                   <Plus size={14} /> Add
                 </Button>
@@ -323,7 +323,7 @@ export default function AdminLabCatalogSection({ locked = false }) {
                 >
                   {isEditing ? (
                     <>
-                      <div className="aos-lab-catalog__cell" role="cell">
+                      <div className="aos-lab-catalog__cell" role="cell" data-label="Test name">
                         <Input
                           value={editForm.testName}
                           disabled={busy}
@@ -332,7 +332,7 @@ export default function AdminLabCatalogSection({ locked = false }) {
                           }
                         />
                       </div>
-                      <div className="aos-lab-catalog__cell" role="cell">
+                      <div className="aos-lab-catalog__cell" role="cell" data-label="Department">
                         <Select
                           value={editForm.departmentId}
                           disabled={busy}
@@ -342,7 +342,7 @@ export default function AdminLabCatalogSection({ locked = false }) {
                           }
                         />
                       </div>
-                      <div className="aos-lab-catalog__cell aos-lab-catalog__cell--price" role="cell">
+                      <div className="aos-lab-catalog__cell aos-lab-catalog__cell--price" role="cell" data-label="Price">
                         <div className="aos-lab-catalog__price">
                           <span aria-hidden>{getCurrencySymbol()}</span>
                           <Input
@@ -357,12 +357,12 @@ export default function AdminLabCatalogSection({ locked = false }) {
                           />
                         </div>
                       </div>
-                      <div className="aos-lab-catalog__cell" role="cell">
+                      <div className="aos-lab-catalog__cell" role="cell" data-label="Status">
                         <span className="aos-lab-catalog__badge aos-lab-catalog__badge--edit">
                           Editing
                         </span>
                       </div>
-                      <div className="aos-lab-catalog__cell aos-lab-catalog__cell--actions" role="cell">
+                      <div className="aos-lab-catalog__cell aos-lab-catalog__cell--actions" role="cell" data-label="Actions">
                         <Button
                           type="button"
                           size="sm"
@@ -384,20 +384,20 @@ export default function AdminLabCatalogSection({ locked = false }) {
                     </>
                   ) : (
                     <>
-                      <div className="aos-lab-catalog__cell" role="cell">
+                      <div className="aos-lab-catalog__cell" role="cell" data-label="Test name">
                         <strong className="aos-lab-catalog__name">{row.testName}</strong>
                       </div>
-                      <div className="aos-lab-catalog__cell" role="cell">
+                      <div className="aos-lab-catalog__cell" role="cell" data-label="Department">
                         <span className="aos-lab-catalog__dept">
                           {deptLabel(depts, row.departmentId)}
                         </span>
                       </div>
-                      <div className="aos-lab-catalog__cell aos-lab-catalog__cell--price" role="cell">
+                      <div className="aos-lab-catalog__cell aos-lab-catalog__cell--price" role="cell" data-label="Price">
                         <span className="aos-lab-catalog__amount">
                           {formatCurrency(row.price, { empty: '—' })}
                         </span>
                       </div>
-                      <div className="aos-lab-catalog__cell" role="cell">
+                      <div className="aos-lab-catalog__cell" role="cell" data-label="Status">
                         <label className="aos-lab-catalog__toggle">
                           <input
                             type="checkbox"
@@ -409,7 +409,7 @@ export default function AdminLabCatalogSection({ locked = false }) {
                           <span>{row.active ? 'On' : 'Off'}</span>
                         </label>
                       </div>
-                      <div className="aos-lab-catalog__cell aos-lab-catalog__cell--actions" role="cell">
+                      <div className="aos-lab-catalog__cell aos-lab-catalog__cell--actions" role="cell" data-label="Actions">
                         {!locked ? (
                           <Button
                             type="button"

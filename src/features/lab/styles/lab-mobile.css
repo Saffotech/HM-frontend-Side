@@ -1,0 +1,227 @@
+/* Lab phone layout — laptop/desktop tables stay unchanged */
+
+@media (max-width: 767px) {
+  .lab-layout .lab-table-wrap:has(.lab-table--stack),
+  .lab-layout .lab-table-wrap--archive:has(.lab-table--stack),
+  .lab-layout .lab-params-table-wrap:has(.lab-table--stack),
+  .lab-layout .lab-report-view__params-wrap:has(.lab-table--stack) {
+    overflow: visible;
+    max-height: none !important;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .lab-layout .lab-table--stack {
+    min-width: 0 !important;
+    width: 100% !important;
+    table-layout: auto !important;
+    white-space: normal !important;
+  }
+
+  .lab-layout .lab-table--stack thead,
+  .lab-layout .lab-table--stack colgroup {
+    display: none !important;
+  }
+
+  .lab-layout .lab-table--stack,
+  .lab-layout .lab-table--stack tbody,
+  .lab-layout .lab-table--stack tr {
+    display: block;
+    width: 100%;
+  }
+
+  .lab-layout .lab-table--stack tbody tr {
+    margin-bottom: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 0.75rem;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  .lab-layout .lab-table--stack tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .lab-layout .lab-table--stack tbody tr:hover,
+  .lab-layout .lab-table--stack tbody tr:hover td {
+    background: #fff;
+  }
+
+  .lab-layout .lab-table--stack td {
+    display: grid !important;
+    grid-template-columns: minmax(5.5rem, 38%) minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0.75rem;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    padding: 0.4rem 0 !important;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: right;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+  }
+
+  .lab-layout .lab-table--stack td::before {
+    content: attr(data-label);
+    grid-column: 1;
+    grid-row: 1;
+    text-align: left;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .lab-layout .lab-table--stack td > * {
+    grid-column: 2;
+    min-width: 0;
+    justify-self: end;
+    text-align: right;
+  }
+
+  .lab-layout .lab-table--stack td:last-child {
+    border-bottom: none;
+    padding-bottom: 0.15rem !important;
+  }
+
+  .lab-layout .lab-table--stack td[colspan] {
+    display: block !important;
+    text-align: left;
+    border-bottom: none;
+    padding: 0.5rem 0 !important;
+  }
+
+  .lab-layout .lab-table--stack td[colspan]::before {
+    display: none;
+  }
+
+  .lab-layout .lab-table--stack td[data-label='Action'] > *,
+  .lab-layout .lab-table--stack td[data-label='Actions'] > *,
+  .lab-layout .lab-table--stack td[data-label='Remove'] > * {
+    justify-self: end;
+    width: auto;
+    max-width: 100%;
+  }
+
+  .lab-layout .lab-table--stack td[data-label='Action'] .lab-btn,
+  .lab-layout .lab-table--stack td[data-label='Actions'] .lab-btn,
+  .lab-layout .lab-table--stack td[data-label='Action'] .btn,
+  .lab-layout .lab-table--stack td[data-label='Actions'] .btn {
+    width: auto !important;
+    min-width: 5.5rem;
+    max-width: 100%;
+    white-space: nowrap;
+    justify-content: center;
+  }
+
+  .lab-layout .lab-table--stack td[data-label='Remove'] .lab-btn {
+    width: auto !important;
+    min-width: 0;
+    white-space: nowrap;
+  }
+
+  .lab-layout .lab-table--stack td input,
+  .lab-layout .lab-table--stack td select {
+    width: 100%;
+    min-width: 0;
+    justify-self: stretch;
+    text-align: left;
+  }
+
+  .lab-layout .lab-table--stack .lab-archive-patient,
+  .lab-layout .lab-table--stack .lab-archive-location {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.1rem;
+  }
+
+  .lab-layout .lab-table--stack .lab-archive-actions {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .lab-layout .lab-filters,
+  .lab-layout .lab-params-header,
+  .lab-layout .lab-form-actions,
+  .lab-layout .lab-profile-page__toolbar,
+  .lab-layout .lab-dash-remaining-panel__head,
+  .lab-layout .lab-dash-remaining-panel__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .lab-layout .lab-dash-bento {
+    grid-template-columns: 1fr !important;
+  }
+
+  .lab-layout .lab-dash-panel {
+    height: auto;
+  }
+
+  .lab-layout .lab-dash-remaining-panel__title-wrap,
+  .lab-layout .lab-dash-remaining-panel__actions {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+  }
+
+  .lab-layout .lab-dash-source-filter {
+    display: flex !important;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+  }
+
+  .lab-layout .lab-dash-ghost-btn {
+    justify-content: center;
+  }
+
+  .lab-layout .lab-dash-remaining-empty {
+    margin: 0.75rem;
+    padding: 1.35rem 1rem;
+  }
+
+  .lab-layout .lab-filter-group,
+  .lab-layout .lab-filter-reset,
+  .lab-layout .lab-filter-group select,
+  .lab-layout .lab-filter-group input,
+  .lab-layout .lab-filter-group .search-input,
+  .lab-layout .lab-filter-group .date-input,
+  .lab-layout .lab-filter-group .date-input__wrap,
+  .lab-layout .lab-dash-source-filter,
+  .lab-layout .lab-dash-source-filter__select,
+  .lab-layout .lab-dash-ghost-btn,
+  .lab-layout .lab-notif-search {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+  }
+
+  .lab-layout .lab-status-tabs {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .lab-layout .lab-info-grid,
+  .lab-layout .lab-profile-grid,
+  .lab-layout .lab-form-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  .lab-layout .lab-form-actions .lab-btn,
+  .lab-layout .lab-params-header .lab-btn,
+  .lab-layout .lab-profile-page__actions,
+  .lab-layout .lab-profile-page__actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

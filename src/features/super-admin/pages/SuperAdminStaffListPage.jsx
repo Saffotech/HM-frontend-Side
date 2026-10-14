@@ -161,7 +161,7 @@ export default function SuperAdminStaffListPage() {
             ) : (
               <>
                 <div className="admin-table-wrap">
-                  <table className="admin-table">
+                  <table className="admin-table admin-table--stack">
                     <thead>
                       <tr>
                         <th>Name</th>
@@ -174,13 +174,13 @@ export default function SuperAdminStaffListPage() {
                     <tbody>
                       {staff.map((u) => (
                         <tr key={u.id}>
-                          <td>{staffName(u)}</td>
-                          <td>{u.email}</td>
-                          <td><AdminRoleBadge roleName={u.role || u.role_name} /></td>
-                          <td>
+                          <td data-label="Name"><span>{staffName(u)}</span></td>
+                          <td data-label="Email"><span>{u.email}</span></td>
+                          <td data-label="Role"><AdminRoleBadge roleName={u.role || u.role_name} /></td>
+                          <td data-label="Status">
                             <AdminStaffStatusBadge isActive={u.is_active !== false} />
                           </td>
-                          <td className="admin-table__actions">
+                          <td className="admin-table__actions" data-label="Actions">
                             <div className="admin-table__actions-inner sa-staff-list__actions">
                               <button
                                 type="button"

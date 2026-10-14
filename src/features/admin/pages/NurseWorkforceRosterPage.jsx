@@ -503,7 +503,7 @@ export default function NurseWorkforceRosterPage() {
                     </div>
                   ) : (
                     <div className="admin-table-wrap nwf-roster-table-wrap">
-                      <table className="admin-table nwf-roster-table">
+                      <table className="admin-table nwf-roster-table admin-table--stack">
                         <thead>
                           <tr>
                             <th>Nurse</th>
@@ -518,7 +518,7 @@ export default function NurseWorkforceRosterPage() {
                         <tbody>
                           {spans.map((span) => (
                             <tr key={span.key}>
-                              <td>
+                              <td data-label="Nurse">
                                 <div className="nwf-roster-nurse">
                                   <span className="nwf-roster-avatar" aria-hidden>
                                     {(span.nurseName || '?').charAt(0).toUpperCase()}
@@ -526,7 +526,7 @@ export default function NurseWorkforceRosterPage() {
                                   <span>{span.nurseName}</span>
                                 </div>
                               </td>
-                              <td>
+                              <td data-label="Shift">
                                 <span
                                   className="nwf-shift-pill"
                                   style={{
@@ -539,13 +539,13 @@ export default function NurseWorkforceRosterPage() {
                                     : ''}
                                 </span>
                               </td>
-                              <td>{formatDateLabel(span.from)}</td>
-                              <td>{formatDateLabel(span.to)}</td>
-                              <td>{span.count}</td>
-                              <td>
+                              <td data-label="From"><span>{formatDateLabel(span.from)}</span></td>
+                              <td data-label="To"><span>{formatDateLabel(span.to)}</span></td>
+                              <td data-label="Days"><span>{span.count}</span></td>
+                              <td data-label="Status">
                                 <span className="nwf-badge nwf-badge--balanced">{span.status}</span>
                               </td>
-                              <td className="nwf-td-actions">
+                              <td className="nwf-td-actions" data-label="Action">
                                 <Button
                                   variant="ghost"
                                   size="sm"

@@ -1,5 +1,5 @@
 /**
- * Hospital Admin self-service profile API client (GET/PUT /opd/profile + image).
+ * Hospital Admin self-service profile API client (GET/PUT /admin/profile + image).
  */
 
 import { apiClient } from '@/shared/api/client';

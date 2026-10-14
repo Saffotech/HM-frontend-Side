@@ -30,7 +30,7 @@ import {
 } from '@/features/nurse/hooks/useNurseProfileQuery';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
 import { ROUTES } from '@/shared/constants';
-import { Button, ConfirmDialog, EmptyState, ProfilePhoneField, ProfilePhotoCropDialog } from '@/shared/components/common';
+import { Button, ConfirmDialog, DateInput, EmptyState, ProfilePhoneField, ProfilePhotoCropDialog } from '@/shared/components/common';
 import PageSpinner from '@/shared/components/PageSpinner';
 import { toast } from '@/shared/utils/toast';
 import { formatPhoneInput } from '@/shared/utils/validators';
@@ -71,12 +71,6 @@ function isValidGender(value) {
 
 function genderLabel(code) {
   return GENDER_OPTIONS.find((o) => o.value === code)?.label ?? null;
-}
-
-function fmtShift(shift) {
-  if (!shift) return null;
-  // Nurse Phase 2 by Atharva — show shift name only (no start/end times)
-  return shift.name || null;
 }
 
 /** Nurse Phase 2 by Atharva — relative “updated ago” for hero status */
@@ -727,23 +721,19 @@ export default function NurseProfilePage() {
                   <Shield size={16} aria-hidden /> Account
                 </h3>
                 <p className="nurse-profile-hint">
-                  License number, employee ID, and shift are managed by admin.
+                  Employee ID is managed by admin.
                   Daily patient responsibility comes from bed allocation, not department.
                 </p>
                 <div className="nurse-profile-grid">
                   <ReadField label="First name" value={profile.first_name} />
                   <ReadField label="Last name" value={profile.last_name} />
                   <ReadField label="Email" value={profile.email} />
-                  <ReadField label="License number" value={profile.registration_number} />
                   <ReadField label="Employee ID" value={profile.employee_id} />
                   <ReadField label="Joining date" value={profile.joining_date} />
                   {departmentName ? (
                     <ReadField label="Department" value={departmentName} />
                   ) : null}
                   <ReadField label="Role" value={roleName} />
-                  <ReadField label="Shift" value={fmtShift(profile.shift)} />
-                  <ReadField label="Shift start" value={profile.shift?.start_time} />
-                  <ReadField label="Shift end" value={profile.shift?.end_time} />
                 </div>
               </section>
             )}
@@ -931,15 +921,15 @@ export default function NurseProfilePage() {
                           ))}
                         </select>
                       </label>
-                      <label className="nurse-profile-field">
-                        <span className="nurse-profile-field__label">Date of birth</span>
-                        <input
-                          className="nurse-profile-input"
-                          type="date"
+                      <div className="nurse-profile-field">
+                        <DateInput
+                          label="Date of birth"
+                          className="profile-page-date-input"
                           value={form.date_of_birth || ''}
                           onChange={(e) => setField('date_of_birth', e.target.value)}
+                          placeholder="DD/MM/YYYY"
                         />
-                      </label>
+                      </div>
                       <label className="nurse-profile-field">
                         <span className="nurse-profile-field__label">City</span>
                         <input

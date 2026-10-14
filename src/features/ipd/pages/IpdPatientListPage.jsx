@@ -4,9 +4,11 @@
  */
 
 import { useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button, DateInput, EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
+import { queryKeys } from '@/shared/api/queryKeys';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import IpdPageHeader from '@/features/ipd/components/IpdPageHeader';
 import IpdStatusBadge from '@/features/ipd/components/IpdStatusBadge';
@@ -33,6 +35,7 @@ import {
   paymentTypeQueryValue,
 } from '@/features/ipd/utils/ipdPaymentTypes';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
+import { toast } from '@/shared/utils/toast';
 
 const WARD_CHIP = {
   General: 'ipd-pl-chip--green',
@@ -67,6 +70,12 @@ function wardChipClass(ward) {
   return WARD_CHIP[ward] || 'ipd-pl-chip--slate';
 }
 
+function isInteractiveTableTarget(target) {
+  return Boolean(
+    target?.closest?.('a, button, input, select, textarea, label'),
+  );
+}
+
 function parseStayFilter(raw) {
   if (raw === STAY_FILTER.COMPLETED || raw === 'discharged' || raw === 'completed') {
     return STAY_FILTER.COMPLETED;
@@ -81,8 +90,34 @@ function parsePaymentType(raw) {
   return parseIpdPaymentType(raw);
 }
 
+/** One row per patient — prefer rows linked to an active admission. */
+function dedupeCashlessInsurancePatients(rows, stay) {
+  const byPatient = new Map();
+
+  for (const row of rows) {
+    const patientKey = String(row.uhid || row.id || '')
+      .trim()
+      .toLowerCase();
+    if (!patientKey || patientKey === '—') continue;
+
+    if (stay === STAY_FILTER.ADMITTED && !row.admissionId) continue;
+
+    const prev = byPatient.get(patientKey);
+    if (!prev) {
+      byPatient.set(patientKey, row);
+      continue;
+    }
+    if (!prev.admissionId && row.admissionId) {
+      byPatient.set(patientKey, row);
+    }
+  }
+
+  return [...byPatient.values()];
+}
+
 export default function IpdPatientListPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const {
     canViewPatient,
     canTransferBed,
@@ -109,36 +144,58 @@ export default function IpdPatientListPage() {
   const statusParam = stay === STAY_FILTER.ALL ? undefined : stay;
   const admissionDateParam = toIsoAdmissionDateParam(admissionDate);
 
-  const { data, isLoading, isError, error, refetch, isFetching } = useIpdPatientsQuery({
-    search: debouncedSearch,
-    status: statusParam,
-    ward,
-    admissionDate: admissionDateParam,
-    page,
-  });
-  const insurancePatientsQuery = useIpdInsurancePatientsQuery(
-    {
+  const patientsQueryParams = useMemo(
+    () => ({
       search: debouncedSearch,
       status: statusParam,
       ward,
       admissionDate: admissionDateParam,
       page,
-    },
-    { enabled: isInsuranceCashlessPaymentType(paymentType) },
+    }),
+    [debouncedSearch, statusParam, ward, admissionDateParam, page],
   );
 
   const showInsuranceCashless = isInsuranceCashlessPaymentType(paymentType);
   const paymentTypeGroup = getPaymentTypeGroup(paymentType);
+  const cachedPatientsPage = queryClient.getQueryData(
+    queryKeys.ipd.patients(patientsQueryParams),
+  );
+
+  const insurancePatientsQuery = useIpdInsurancePatientsQuery(
+    patientsQueryParams,
+    { enabled: showInsuranceCashless },
+  );
+
+  const insuranceHasRows =
+    (insurancePatientsQuery.data?.items?.length ?? 0) > 0;
+
+  const patientsQueryEnabled =
+    !showInsuranceCashless ||
+    !cachedPatientsPage ||
+    (insurancePatientsQuery.isFetched && !insuranceHasRows);
+
+  const { data, isLoading, isError, error, refetch } =
+    useIpdPatientsQuery(patientsQueryParams, {
+      enabled: patientsQueryEnabled,
+    });
+
+  const admissionListItems =
+    data?.items ?? cachedPatientsPage?.items ?? [];
+
   const cashlessPatients = useMemo(() => {
     const fromApi = (insurancePatientsQuery.data?.items ?? []).map(
       mapInsurancePatientRow,
     );
-    const fromAdmissions = (data?.items ?? [])
+
+    if (fromApi.length > 0) {
+      return dedupeCashlessInsurancePatients(fromApi, stay);
+    }
+
+    const fromAdmissions = admissionListItems
       .filter((row) => matchesPaymentType(row, IPD_PAYMENT_TYPE.INSURANCE_CASHLESS))
       .map((row) =>
         mapInsurancePatientRow({
           ...row,
-          // Admission list `id` is admission id — pass patient fields explicitly.
           patient_id: row.patient_id ?? row.patientId ?? undefined,
           patient_uid: row.patient_uid ?? row.uhid ?? row.patientUid ?? undefined,
           uhid: row.uhid ?? row.patient_uid ?? row.patientUid,
@@ -149,47 +206,25 @@ export default function IpdPatientListPage() {
         }),
       );
 
-    // Prefer insurance API rows; keep admissions only as gap-fill.
-    const merged = fromApi.length > 0 ? fromApi : fromAdmissions;
-    const byPatient = new Map();
+    return dedupeCashlessInsurancePatients(fromAdmissions, stay);
+  }, [insurancePatientsQuery.data?.items, admissionListItems, stay]);
 
-    for (const row of merged) {
-      const patientKey = String(row.uhid || row.id || '')
-        .trim()
-        .toLowerCase();
-      if (!patientKey || patientKey === '—') continue;
-
-      // Admitted filter: hide rows with no linked admission (cannot transfer / not in ward).
-      if (stay === STAY_FILTER.ADMITTED && !row.admissionId) continue;
-
-      const prev = byPatient.get(patientKey);
-      if (!prev) {
-        byPatient.set(patientKey, row);
-        continue;
-      }
-      // One row per patient — keep the one with an active admission link.
-      if (!prev.admissionId && row.admissionId) {
-        byPatient.set(patientKey, row);
-      }
-    }
-
-    return [...byPatient.values()];
-  }, [insurancePatientsQuery.data?.items, data?.items, stay]);
-
-  const rows = useMemo(() => {
-    const items = data?.items ?? [];
-    return items.filter((row) => matchesPaymentType(row, paymentType));
-  }, [data?.items, paymentType]);
+  const rows = useMemo(
+    () =>
+      admissionListItems.filter((row) =>
+        matchesPaymentType(row, paymentType),
+      ),
+    [admissionListItems, paymentType],
+  );
 
   const total = showInsuranceCashless
     ? cashlessPatients.length
     : rows.length;
   const paymentTypeSummary = useMemo(() => {
-    const items = data?.items ?? [];
-    const selfCount = items.filter((row) =>
+    const selfCount = admissionListItems.filter((row) =>
       matchesPaymentType(row, IPD_PAYMENT_TYPE.SELF),
     ).length;
-    const copayCount = items.filter((row) =>
+    const copayCount = admissionListItems.filter((row) =>
       matchesPaymentType(row, IPD_PAYMENT_TYPE.INSURANCE_COPAY),
     ).length;
 
@@ -198,19 +233,24 @@ export default function IpdPatientListPage() {
       cashless: cashlessPatients.length,
       copay: copayCount,
     };
-  }, [data?.items, cashlessPatients]);
-  const limit = data?.limit ?? 20;
+  }, [admissionListItems, cashlessPatients]);
+
+  const limit = data?.limit ?? cachedPatientsPage?.limit ?? 20;
+  const insuranceListLoading =
+    showInsuranceCashless &&
+    insurancePatientsQuery.isLoading &&
+    !insurancePatientsQuery.data;
+  const headerSummaryLoading = showInsuranceCashless
+    ? insuranceListLoading || (patientsQueryEnabled && isLoading)
+    : isLoading;
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const showDischargeDate =
     stay === STAY_FILTER.COMPLETED || stay === STAY_FILTER.ALL;
   const showStatusColumn = stay !== STAY_FILTER.COMPLETED;
   const colSpan =
-    7 + (showStatusColumn ? 1 : 0) + (showDischargeDate ? 1 : 0);
+    6 + (showStatusColumn ? 1 : 0) + (showDischargeDate ? 1 : 0);
 
   const { wardOptions } = useIpdWardOptions();
-
-  const pathFor = (template, admissionId) =>
-    template.replace(':admissionId', String(admissionId));
 
   const onFilterChange = (setter, paramKey) => (e) => {
     const { value } = e.target;
@@ -258,6 +298,7 @@ export default function IpdPatientListPage() {
       group === IPD_PAYMENT_TYPE_GROUP.INSURANCE
         ? IPD_PAYMENT_TYPE.INSURANCE_CASHLESS
         : IPD_PAYMENT_TYPE.SELF;
+
     updatePaymentType(nextType);
   };
 
@@ -288,7 +329,7 @@ export default function IpdPatientListPage() {
       <div className="ipd-card">
         <div className="ipd-card__head ipd-pl-card__head">
           <h2 className="ipd-card__title">Patients</h2>
-          {!isLoading ? (
+          {!headerSummaryLoading ? (
             <div className="ipd-pl-summary">
               <span className="ipd-pl-chip ipd-pl-chip--slate">
                 Self: {paymentTypeSummary.self}
@@ -318,11 +359,10 @@ export default function IpdPatientListPage() {
               />
             </div>
             <div
-              className={`ipd-toolbar__field ipd-pay-type-field ${
-                paymentTypeGroup === IPD_PAYMENT_TYPE_GROUP.INSURANCE
-                  ? 'ipd-pay-type-field--insurance'
-                  : ''
-              }`}
+              className={`ipd-toolbar__field ipd-pay-type-field ${paymentTypeGroup === IPD_PAYMENT_TYPE_GROUP.INSURANCE
+                ? 'ipd-pay-type-field--insurance'
+                : ''
+                }`}
             >
               <label className="ipd-toolbar__label" htmlFor="ipd-pl-pay-type">
                 Payment type
@@ -377,7 +417,7 @@ export default function IpdPatientListPage() {
             </div>
             <div className="ipd-toolbar__field ipd-toolbar__field--sm">
               <label className="ipd-toolbar__label" htmlFor="ipd-pl-stay">
-                Stay
+                Status
               </label>
               <select
                 id="ipd-pl-stay"
@@ -406,63 +446,56 @@ export default function IpdPatientListPage() {
           </div>
 
           {showInsuranceCashless ? (
-            <>
-              <div className="ipd-table-wrap ipd-ins-table-wrap">
-                <table className="ipd-table ipd-table--insurance">
-                  <thead>
-                    <tr>
-                      {INSURANCE_TABLE_COLUMNS.map((col) => (
-                        <th
-                          key={col}
-                          className={
-                            col === 'Action' ? 'ipd-table__col-actions' : undefined
-                          }
-                        >
-                          {col}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cashlessPatients.length === 0 ? (
+            insurancePatientsQuery.isError ? (
+              <QueryFeedback
+                isError
+                error={insurancePatientsQuery.error}
+                onRetry={insurancePatientsQuery.refetch}
+              />
+            ) : insuranceListLoading ? (
+              <div className="ipd-pl-skeletons">
+                <div className="ipd-skeleton" />
+                <div className="ipd-skeleton" />
+              </div>
+            ) : (
+              <>
+                <div className="ipd-table-wrap ipd-ins-table-wrap">
+                  <table className="ipd-table ipd-table--insurance ipd-table--stack">
+                    <thead>
                       <tr>
-                        <td colSpan={INSURANCE_TABLE_COLUMNS.length}>
-                          <EmptyState
-                            title="No insurance patients"
-                            description="Cashless insurance patients will appear here when connected."
-                          />
-                        </td>
+                        {INSURANCE_TABLE_COLUMNS.map((col) => (
+                          <th
+                            key={col}
+                            className={
+                              col === 'Action' ? 'ipd-table__col-actions' : undefined
+                            }
+                          >
+                            {col}
+                          </th>
+                        ))}
                       </tr>
-                    ) : (
-                      cashlessPatients.map((row) => {
-                        const admissionId = row.admissionId ?? null;
-                        const canTransfer = canTransferBed && Boolean(admissionId);
-                        return (
-                        <tr key={`${row.uhid}-${row.admissionId ?? row.claimId ?? row.id}`}>
-                          <td>
-                            <strong>{row.patientName}</strong>
-                            <div className="ipd-ins-meta">{row.ageGender}</div>
+                    </thead>
+                    <tbody>
+                      {cashlessPatients.length === 0 ? (
+                        <tr>
+                          <td colSpan={INSURANCE_TABLE_COLUMNS.length}>
+                            <EmptyState
+                              title="No insurance patients"
+                              description="Cashless insurance patients will appear here when connected."
+                            />
                           </td>
-                          <td>{row.uhid}</td>
-                          <td>
-                            <span className="ipd-ins-chip ipd-ins-chip--coverage">
-                              {row.coverage}
-                            </span>
-                          </td>
-                          <td>{row.insurer}</td>
-                          <td>{row.policyNo}</td>
-                          <td>
-                            <span className="ipd-ins-chip ipd-ins-chip--active">
-                              {row.policyStatus}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="ipd-table__actions">
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                size="sm"
-                              onClick={() => {
+                        </tr>
+                      ) : (
+                        cashlessPatients.map((row) => {
+                          const admissionId = row.admissionId ?? null;
+                          const canTransfer = canTransferBed && Boolean(admissionId);
+                          return (
+                            <tr
+                              key={`${row.uhid}-${row.admissionId ?? row.claimId ?? row.id}`}
+                              className="ipd-table__row--clickable"
+                              tabIndex={0}
+                              onClick={(e) => {
+                                if (isInteractiveTableTarget(e.target)) return;
                                 const path = resolveIpdPatientOpenPath({
                                   ...row,
                                   payment_type: IPD_PAYMENT_TYPE.INSURANCE_CASHLESS,
@@ -470,75 +503,113 @@ export default function IpdPatientListPage() {
                                 });
                                 if (path) navigate(path);
                               }}
-                              >
-                                Open
-                              </Button>
-                              <IpdPermissionButton
-                                allowed={canTransfer}
-                                deniedMessage={
-                                  canTransferBed
-                                    ? 'No active admission found for this patient'
-                                    : 'You do not have permission to transfer beds'
-                                }
-                                type="button"
-                                className="btn btn--sm ipd-action-btn ipd-action-btn--transfer"
-                                onClick={() =>
-                                  setTransferAdmissionId(String(admissionId))
-                                }
-                              >
-                                Transfer
-                              </IpdPermissionButton>
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                size="sm"
-                                className="ipd-action-btn ipd-action-btn--billing"
-                                onClick={() => {
-                                  const path = resolveIpdBillingPath({
-                                    ...row,
-                                    payment_type: IPD_PAYMENT_TYPE.INSURANCE_CASHLESS,
-                                    paymentType: IPD_PAYMENT_TYPE.INSURANCE_CASHLESS,
-                                  });
-                                  if (path) navigate(path);
-                                }}
-                              >
-                                Billing
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-              <div className="ipd-beds-pager">
-                <span className="ipd-page__subtitle">
-                  Showing 1–{cashlessPatients.length} of{' '}
-                  {cashlessPatients.length}
-                </span>
-                <div className="ipd-beds-pager__controls">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    disabled
-                  >
-                    Previous
-                  </Button>
-                  <span className="ipd-page__subtitle">Page 1 / 1</span>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    disabled
-                  >
-                    Next
-                  </Button>
+                              onKeyDown={(e) => {
+                                if (e.key !== 'Enter') return;
+                                if (isInteractiveTableTarget(e.target)) return;
+                                e.currentTarget.click();
+                              }}
+                            >
+                              <td data-label="Patient">
+                                <strong>{row.patientName}</strong>
+                                <div className="ipd-ins-meta">{row.ageGender}</div>
+                              </td>
+                              <td data-label="Patient ID">{row.uhid}</td>
+                              <td data-label="Coverage">
+                                <span className="ipd-ins-chip ipd-ins-chip--coverage">
+                                  {row.coverage}
+                                </span>
+                              </td>
+                              <td data-label="Insurance Company">{row.insurer}</td>
+                              <td data-label="Policy No">{row.policyNo}</td>
+                              <td data-label="Policy Status">
+                                <span className="ipd-ins-chip ipd-ins-chip--active">
+                                  {row.policyStatus}
+                                </span>
+                              </td>
+                              <td data-label="Action">
+                                <div className="ipd-table__actions">
+                                  <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => {
+                                      const path = resolveIpdPatientOpenPath({
+                                        ...row,
+                                        payment_type: IPD_PAYMENT_TYPE.INSURANCE_CASHLESS,
+                                        paymentType: IPD_PAYMENT_TYPE.INSURANCE_CASHLESS,
+                                      });
+                                      if (path) navigate(path);
+                                    }}
+                                  >
+                                    Open
+                                  </Button>
+                                  <IpdPermissionButton
+                                    allowed={canTransfer}
+                                    deniedMessage={
+                                      canTransferBed
+                                        ? 'No active admission found for this patient'
+                                        : 'You do not have permission to transfer beds'
+                                    }
+                                    type="button"
+                                    className="btn btn--sm ipd-action-btn ipd-action-btn--transfer"
+                                    onClick={() =>
+                                      setTransferAdmissionId(String(admissionId))
+                                    }
+                                  >
+                                    Transfer
+                                  </IpdPermissionButton>
+                                  <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    className="ipd-action-btn ipd-action-btn--billing"
+                                    onClick={() => {
+                                      const path = resolveIpdBillingPath({
+                                        ...row,
+                                        payment_type: IPD_PAYMENT_TYPE.INSURANCE_CASHLESS,
+                                        paymentType: IPD_PAYMENT_TYPE.INSURANCE_CASHLESS,
+                                      });
+                                      if (path) navigate(path);
+                                    }}
+                                  >
+                                    Billing
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-              </div>
-            </>
+                <div className="ipd-beds-pager">
+                  <span className="ipd-page__subtitle">
+                    Showing 1–{cashlessPatients.length} of{' '}
+                    {cashlessPatients.length}
+                  </span>
+                  <div className="ipd-beds-pager__controls">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled
+                    >
+                      Previous
+                    </Button>
+                    <span className="ipd-page__subtitle">Page 1 / 1</span>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )
           ) : isError ? (
             <QueryFeedback isError error={error} onRetry={refetch} />
           ) : isLoading ? (
@@ -549,7 +620,7 @@ export default function IpdPatientListPage() {
           ) : (
             <>
               <div className="ipd-table-wrap">
-                <table className="ipd-table ipd-table--patients">
+                <table className="ipd-table ipd-table--patients ipd-table--stack">
                   <thead>
                     <tr>
                       <th>Patient</th>
@@ -557,7 +628,6 @@ export default function IpdPatientListPage() {
                       {showStatusColumn ? <th>Status</th> : null}
                       <th>Ward</th>
                       <th>Bed</th>
-                      <th>Doctor</th>
                       <th>Admission date</th>
                       {showDischargeDate ? <th>Discharge date</th> : null}
                       <th className="ipd-table__col-actions">Actions</th>
@@ -577,25 +647,41 @@ export default function IpdPatientListPage() {
                         return (
                           <tr
                             key={row.id}
-                            className={
+                            className={[
+                              'ipd-table__row--clickable',
                               admitted
                                 ? 'ipd-pl-row--admitted'
-                                : 'ipd-pl-row--discharged'
-                            }
+                                : 'ipd-pl-row--discharged',
+                            ].join(' ')}
+                            tabIndex={canViewPatient ? 0 : undefined}
+                            onClick={(e) => {
+                              if (isInteractiveTableTarget(e.target)) return;
+                              if (!canViewPatient) {
+                                toast.error('You do not have permission');
+                                return;
+                              }
+                              const path = resolveIpdPatientOpenPath(row);
+                              if (path) navigate(path);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key !== 'Enter') return;
+                              if (isInteractiveTableTarget(e.target)) return;
+                              e.currentTarget.click();
+                            }}
                           >
-                            <td>
+                            <td data-label="Patient">
                               <strong>{row.patient_name || '—'}</strong>
                               <div className="ipd-pl-patient__id">
                                 {row.patient_uid || '—'}
                               </div>
                             </td>
-                            <td>{row.admission_no || '—'}</td>
+                            <td data-label="Admission NO">{row.admission_no || '—'}</td>
                             {showStatusColumn ? (
-                              <td>
+                              <td data-label="Status">
                                 <IpdStatusBadge status={row.status} />
                               </td>
                             ) : null}
-                            <td>
+                            <td data-label="Ward">
                               {row.ward_name ? (
                                 <span
                                   className={`ipd-pl-chip ${wardChipClass(row.ward_name)}`}
@@ -606,7 +692,7 @@ export default function IpdPatientListPage() {
                                 '—'
                               )}
                             </td>
-                            <td>
+                            <td data-label="Bed">
                               {row.bed_number ? (
                                 <span className="ipd-pl-chip ipd-pl-chip--bed">
                                   {row.bed_number}
@@ -615,30 +701,17 @@ export default function IpdPatientListPage() {
                                 '—'
                               )}
                             </td>
-                            <td>
-                              {row.doctor_name ||
-                                (admitted ? (
-                                  <Link
-                                    to={pathFor(ROUTES.IPD_PATIENT_DETAIL, row.id)}
-                                    className="ipd-pl-assign-link"
-                                  >
-                                    Assign doctor
-                                  </Link>
-                                ) : (
-                                  '—'
-                                ))}
-                            </td>
-                            <td className="ipd-pl-date">
+                            <td className="ipd-pl-date" data-label="Admission date">
                               {formatIpdDateTime(row.admitted_at)}
                             </td>
                             {showDischargeDate ? (
-                              <td className="ipd-pl-date">
+                              <td className="ipd-pl-date" data-label="Discharge date">
                                 {row.discharged_at
                                   ? formatIpdDateTime(row.discharged_at)
                                   : '—'}
                               </td>
                             ) : null}
-                            <td className="ipd-table__col-actions">
+                            <td className="ipd-table__col-actions" data-label="Actions">
                               <div className="ipd-table__actions">
                                 <IpdPermissionButton
                                   allowed={canViewPatient}

@@ -34,11 +34,29 @@ async function enrichPatientAadhaar(patient, token) {
   return patient;
 }
 
+function unwrapPatientPage(raw) {
+  if (Array.isArray(raw)) {
+    return { list: raw, total: raw.length, page: 1, limit: raw.length || 1 };
+  }
+  const nested =
+    raw?.data && !Array.isArray(raw.data) && (Array.isArray(raw.data.patients) || raw.data.total != null)
+      ? raw.data
+      : raw;
+  const list = Array.isArray(nested?.patients)
+    ? nested.patients
+    : Array.isArray(nested?.data)
+      ? nested.data
+      : asList(raw);
+  const total = nested?.total ?? raw?.total ?? list.length;
+  const page = nested?.page ?? raw?.page ?? 1;
+  const requestedLimit = nested?.limit ?? raw?.limit;
+  const limit = requestedLimit || list.length || 1;
+  return { list, total, page, limit };
+}
+
 function mapPatientPage(raw) {
-  const patients = asList(raw).map(apiToUiPatient).filter(Boolean);
-  const total = raw?.total ?? patients.length;
-  const page = raw?.page ?? 1;
-  const limit = raw?.limit ?? patients.length;
+  const { list, total, page, limit } = unwrapPatientPage(raw);
+  const patients = list.map(apiToUiPatient).filter(Boolean);
   return {
     patients,
     total,
@@ -49,13 +67,13 @@ function mapPatientPage(raw) {
 }
 
 async function fetchPatientsPage(token, params) {
-  const raw = await getPatients(token, params);
+  const mapped = mapPatientPage(await getPatients(token, params));
   return {
-    items: mapPatientPage(raw).patients,
-    total: raw.total,
-    page: raw.page,
-    limit: raw.limit,
-    totalPages: totalPagesFrom(raw.total, raw.limit),
+    items: mapped.patients,
+    total: mapped.total,
+    page: mapped.page,
+    limit: mapped.limit,
+    totalPages: mapped.totalPages,
   };
 }
 

@@ -6,6 +6,7 @@ import RoleLayout from '@/shared/components/layout/RoleLayout';
 import PharmacyNotificationsBell from '@/features/pharmacy/components/PharmacyNotificationsBell';
 import { usePharmacyPermissionSet } from '@/features/pharmacy/hooks/usePharmacyPermission';
 import '../styles/pharmacy.css';
+import '../styles/pharmacy-mobile.css';
 
 const NAV_LINKS = [
   {
@@ -67,6 +68,7 @@ export default function PharmacyLayout({ children, compact = false }) {
       defaultTitle="Pharmacy"
       pageTitleOverride={undefined}
       compact={compact}
+      layoutClassName="pharmacy-layout"
       isNavLinkActive={isNavLinkActive}
       showBell={canViewNotifications}
       profileHref={ROUTES.PHARMACY_PROFILE}

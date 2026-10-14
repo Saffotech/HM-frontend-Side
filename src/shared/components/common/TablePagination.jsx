@@ -27,6 +27,7 @@ export default function TablePagination({
   pageSize,
   onPageChange,
   itemLabel = 'items',
+  alwaysVisible = false,
 }) {
   const inputId = useId();
   const [goToValue, setGoToValue] = useState(String(page));
@@ -44,7 +45,8 @@ export default function TablePagination({
     [page, totalPages, onPageChange],
   );
 
-  if (totalPages <= 1) return null;
+  if (totalItems <= 0) return null;
+  if (totalPages <= 1 && !alwaysVisible) return null;
 
   const start = (page - 1) * pageSize + 1;
   const end = Math.min(page * pageSize, totalItems);

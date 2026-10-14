@@ -201,7 +201,7 @@ export default function SuperAdminDepartmentDetailPage() {
                     </div>
                   ) : (
                     <div className="admin-table-wrap">
-                      <table className="admin-table sa-dept-detail__doctors-table">
+                      <table className="admin-table sa-dept-detail__doctors-table admin-table--stack">
                         <thead>
                           <tr>
                             <th>Name</th>
@@ -211,10 +211,10 @@ export default function SuperAdminDepartmentDetailPage() {
                         <tbody>
                           {assignedStaff.map((member) => (
                             <tr key={member.id}>
-                              <td className="admin-table__primary">
-                                {staffDisplayName(member)}
+                              <td className="admin-table__primary" data-label="Name">
+                                <span>{staffDisplayName(member)}</span>
                               </td>
-                              <td>
+                              <td data-label="Email">
                                 <a
                                   href={`mailto:${member.email}`}
                                   className="sa-dept-detail__doctor-email"

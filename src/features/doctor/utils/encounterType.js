@@ -17,13 +17,17 @@ export function isIpdEncounter(row) {
   if (!row) return false;
   const enc = String(row.encounterType ?? row.encounter_type ?? '').toUpperCase();
   if (enc === 'IPD') return true;
-  const source = String(row.registrationSource ?? row.registration_source ?? '').toUpperCase();
-  if (source === 'IPD') return true;
+  // Current encounter type overrides patient registration_source (IPD-registered patients may have OPD appointments).
+  if (enc === 'OPD') return false;
+
   const apptType = String(row.type ?? row.appointment_type ?? row.appointmentType ?? '').toLowerCase();
   if (apptType === 'ipd') return true;
   if (row.admissionId != null || row.admission_id != null) return true;
   const rawId = row.id ?? row.dbId;
   if (typeof rawId === 'string' && /^IPD-/i.test(rawId.trim())) return true;
+
+  const source = String(row.registrationSource ?? row.registration_source ?? '').toUpperCase();
+  if (source === 'IPD') return true;
   return false;
 }
 

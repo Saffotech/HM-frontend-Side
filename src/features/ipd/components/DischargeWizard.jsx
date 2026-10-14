@@ -4,9 +4,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button, EmptyState, QueryFeedback } from '@/shared/components/common';
 import { IPD_COLLECT_PAYMENT_MODES, ROUTES } from '@/shared/constants';
+import { queryKeys } from '@/shared/api/queryKeys';
 import { toast } from '@/shared/utils/toast';
+import { getIpdPatientDetail } from '@/features/ipd/api/patients';
 import { IPD_DISCHARGE_STEPS } from '@/features/ipd/utils/constants';
 import { cn } from '@/features/ipd/utils/cn';
 import ChargeTable from '@/features/ipd/components/ChargeTable';
@@ -21,20 +24,41 @@ import {
   usePayIpdBillMutation,
 } from '@/features/ipd/hooks/useIpdQuery';
 import { formatIpdDateTime } from '@/features/ipd/utils/ipdFormat';
-import { resolveIpdBillPreviewPayment } from '@/features/ipd/utils/resolveIpdBillPreviewPayment';
+import { resolveIpdBillPreviewPayment, findOpenUnpaidBill } from '@/features/ipd/utils/resolveIpdBillPreviewPayment';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
+import { useQueryToken } from '@/shared/hooks/useQueryToken';
+import { useIpdAdmissionInsuranceQuery } from '@/features/ipd/hooks/useIpdBillingQuery';
+
+function roundMoney(value) {
+  return Math.round((Number(value) || 0) * 100) / 100;
+}
+
+/** Patient balance from the backend split (approved → estimate → claimed). */
+function insurancePatientSettlement(claim) {
+  if (!claim || claim.patient_balance == null) return null;
+  return {
+    paid: roundMoney(claim.patient_paid_total ?? claim.patient_paid),
+    balance: roundMoney(claim.patient_balance),
+  };
+}
 
 export default function DischargeWizard({ admissionId }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const token = useQueryToken();
   const { canDischarge, canPayBill, canGenerateBill } = useIpdPermissionSet();
   const [stepIndex, setStepIndex] = useState(0);
-  const [payMode, setPayMode] = useState('Cash');
-  const [payAmount, setPayAmount] = useState('');
-  const [notes, setNotes] = useState('');
-  const [paymentReady, setPaymentReady] = useState(false);
+
+const [payMode, setPayMode] = useState('Cash');
+const [payAmount, setPayAmount] = useState('');
+const [referenceNumber, setReferenceNumber] = useState('');
+const [notes, setNotes] = useState('');
+const [paymentReady, setPaymentReady] = useState(false);
+const [paymentCollected, setPaymentCollected] = useState(false);
 
   const detailQuery = useIpdAdmissionDetailQuery(admissionId);
   const previewQuery = useIpdBillPreviewQuery(admissionId);
+  const admissionInsuranceQuery = useIpdAdmissionInsuranceQuery(admissionId);
   const generateMutation = useGenerateIpdBillMutation();
   const payMutation = usePayIpdBillMutation();
   const dischargeMutation = useCompleteIpdDischargeMutation();
@@ -51,8 +75,15 @@ export default function DischargeWizard({ admissionId }) {
     [bills, preview],
   );
   const openBill = paymentView.openBill;
-  const exactAmount = Number(paymentView.balance ?? 0);
-  const canCollectPayment = paymentView.canCollectPayment;
+  const insuranceSettlement = insurancePatientSettlement(admissionInsuranceQuery.data);
+  const summaryPaid = insuranceSettlement ? insuranceSettlement.paid : paymentView.paid;
+  const summaryBalance = insuranceSettlement
+    ? insuranceSettlement.balance
+    : paymentView.balance;
+  const exactAmount = Number(summaryBalance ?? 0);
+  const canCollectPayment = insuranceSettlement
+    ? summaryBalance > 0.01
+    : paymentView.canCollectPayment;
   const savingDischarge =
     dischargeMutation.isPending ||
     payMutation.isPending ||
@@ -67,8 +98,10 @@ export default function DischargeWizard({ admissionId }) {
   const goNext = () => setStepIndex((i) => Math.min(i + 1, IPD_DISCHARGE_STEPS.length - 1));
   const goBack = () => setStepIndex((i) => Math.max(i - 1, 0));
 
-  const ensureBill = async () => {
-    if (openBill) return openBill;
+  const ensureBill = async (billList = bills) => {
+    const existing = findOpenUnpaidBill(billList) ?? openBill;
+    if (existing) return existing;
+
     if (!canGenerateBill) {
       throw new Error('No open bill and you cannot generate one');
     }
@@ -92,34 +125,70 @@ export default function DischargeWizard({ admissionId }) {
       toast.error('Invalid payment amount');
       return;
     }
+    if (
+      amount > 0.01
+      && (payMode === 'Card' || payMode === 'UPI')
+      && !referenceNumber.trim()
+    ) {
+      toast.error(
+        payMode === 'UPI'
+          ? 'Enter the UPI reference (UTR) for this payment'
+          : 'Enter the card reference (RRN or approval code) for this payment',
+      );
+      return;
+    }
     setPaymentReady(true);
     goNext();
   };
 
   const onConfirmDischarge = async () => {
     try {
-      const amount = Number(exactAmount ?? payAmount ?? 0);
-      if (amount > 0.01 && canCollectPayment) {
+      const freshDetail = await queryClient.fetchQuery({
+        queryKey: queryKeys.ipd.admission(admissionId),
+        queryFn: () => getIpdPatientDetail(admissionId, token),
+      });
+      const freshBills = freshDetail?.bills ?? bills;
+      const freshPaymentView = resolveIpdBillPreviewPayment({
+        bills: freshBills,
+        preview,
+      });
+      const amount = Number(
+        (insuranceSettlement ? insuranceSettlement.balance : freshPaymentView.balance)
+          ?? exactAmount
+          ?? payAmount
+          ?? 0,
+      );
+      const needsPayment = amount > 0.01 && freshPaymentView.canCollectPayment;
+
+      if (needsPayment) {
         if (!paymentReady) {
           toast.error('Complete the payment step before confirming discharge');
           return;
         }
-        const bill = await ensureBill();
+        const bill = await ensureBill(freshBills);
         const due = Number(bill.balance_due ?? amount);
-        if (due > 0.01) {
+        const collect = insuranceSettlement ? Math.min(due, amount) : due;
+        if (collect > 0.01) {
           await payMutation.mutateAsync({
             billId: bill.id,
             payload: {
-              amount: due,
+              amount: collect,
               payment_mode: payMode.toLowerCase(),
+              ...(referenceNumber.trim()
+                ? { transaction_reference: referenceNumber.trim() }
+                : {}),
             },
           });
+          setPaymentCollected(true);
         }
       }
 
       const result = await dischargeMutation.mutateAsync({
         admissionId,
-        payload: { force: false, notes: notes.trim() || null },
+        payload: {
+          force: Boolean(insuranceSettlement),
+          notes: notes.trim() || null,
+        },
       });
       toast.success(result?.message || 'Patient discharged');
       navigate(ROUTES.IPD_PATIENTS);
@@ -143,45 +212,49 @@ export default function DischargeWizard({ admissionId }) {
 
   const stayFields = admission
     ? [
-        { label: 'Patient', value: admission.patient_name || '—', tone: 'teal' },
-        {
-          label: 'Patient ID',
-          value: admission.patient_uid || '—',
-          tone: 'slate',
-        },
-        {
-          label: 'Ward / Bed',
-          value: `${admission.ward_name || '—'} / ${admission.bed_number || '—'}`,
-          tone: 'green',
-        },
-        { label: 'Doctor', value: admission.doctor_name || '—', tone: 'violet' },
-        {
-          label: 'Admitted',
-          value: formatIpdDateTime(admission.admitted_at),
-          tone: 'blue',
-        },
-        {
-          label: 'Length of stay',
-          value:
-            admission.length_of_stay_days != null
-              ? `${admission.length_of_stay_days} day(s)`
-              : '—',
-          tone: 'amber',
-        },
-        {
-          label: 'Diagnosis',
-          value: admission.diagnosis || '—',
-          tone: 'rose',
-          wide: true,
-        },
-      ]
+      { label: 'Patient', value: admission.patient_name || '—', tone: 'teal' },
+      {
+        label: 'Patient ID',
+        value: admission.patient_uid || '—',
+        tone: 'slate',
+      },
+      {
+        label: 'Ward / Bed',
+        value: `${admission.ward_name || '—'} / ${admission.bed_number || '—'}`,
+        tone: 'green',
+      },
+      { label: 'Doctor', value: admission.doctor_name || '—', tone: 'violet' },
+      {
+        label: 'Admitted',
+        value: formatIpdDateTime(admission.admitted_at),
+        tone: 'blue',
+      },
+      {
+        label: 'Length of stay',
+        value:
+          admission.length_of_stay_days != null
+            ? `${admission.length_of_stay_days} day(s)`
+            : '—',
+        tone: 'amber',
+      },
+      {
+        label: 'Diagnosis',
+        value: admission.diagnosis || '—',
+        tone: 'rose',
+        wide: true,
+      },
+    ]
     : [];
 
   return (
     <div className="ipd-discharge-wizard">
       <nav className="ipd-dw-steps" aria-label="Discharge steps">
         {IPD_DISCHARGE_STEPS.map((s, index) => {
-          const done = index < stepIndex;
+          const visited = index < stepIndex;
+          const paymentSettled = exactAmount <= 0.01 || paymentCollected;
+          const done =
+            visited &&
+            (s.id !== 'payment' || paymentSettled);
           const active = index === stepIndex;
           return (
             <div
@@ -190,6 +263,7 @@ export default function DischargeWizard({ admissionId }) {
                 'ipd-dw-step',
                 active && 'ipd-dw-step--active',
                 done && 'ipd-dw-step--done',
+                visited && s.id === 'payment' && !paymentSettled && 'ipd-dw-step--pending-pay',
               )}
             >
               {index > 0 ? <span className="ipd-dw-step__rail" aria-hidden /> : null}
@@ -262,8 +336,8 @@ export default function DischargeWizard({ admissionId }) {
                 tax={formatCurrency(preview?.gst_amount, { empty: '—' })}
                 taxPercent={preview?.gst_percent}
                 total={formatCurrency(preview?.grand_total, { empty: '—' })}
-                paid={formatCurrency(paymentView.paid, { empty: '—' })}
-                balance={formatCurrency(paymentView.balance, { empty: '—' })}
+                paid={formatCurrency(summaryPaid, { empty: '—' })}
+                balance={formatCurrency(summaryBalance, { empty: '—' })}
               />
             </div>
           ) : null}
@@ -305,6 +379,36 @@ export default function DischargeWizard({ admissionId }) {
                   <label className="ipd-toolbar__label" htmlFor="ipd-dis-pay-amount">
                     Amount (exact)
                   </label>
+
+                  {(payMode === 'Card' || payMode === 'UPI') && (
+                    <>
+                      <div className="ipd-toolbar__field">
+                        <label
+                          className="ipd-toolbar__label"
+                          htmlFor="ipd-dis-reference-number"
+                        >
+                          Reference Number
+                        </label>
+
+                        <input
+                          id="ipd-dis-reference-number"
+                          className="ipd-input"
+                          type="text"
+                          value={referenceNumber}
+                          onChange={(e) => {
+                            setReferenceNumber(e.target.value);
+                            setPaymentReady(false);
+                          }}
+                          placeholder="Enter reference number"
+                        />
+                      </div>
+                    </>
+                  )}
+
+
+
+
+
                   <input
                     id="ipd-dis-pay-amount"
                     className="ipd-input"

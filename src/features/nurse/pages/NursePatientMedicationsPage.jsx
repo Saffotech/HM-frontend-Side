@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Pill, Eye, Clock, UserRound, ClipboardList, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Pill, Eye, Clock, UserRound, ClipboardList, AlertCircle, History } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseDataTable from '@/features/nurse/components/NurseDataTable';
 import NursePagination from '@/features/nurse/components/NursePagination';
@@ -11,10 +11,13 @@ import {
   useNursePatientMedicationsQuery,
   useAdministerMedicationMutation,
   useUpdateAdministrationMutation,
+  useNurseActiveDoctorsQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
 import { ROUTES } from '@/shared/constants';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
+import NursePrescribedDoctorCell from '@/features/nurse/components/NursePrescribedDoctorCell';
 import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
+import NurseMedicineCell from '@/features/nurse/components/NurseMedicineCell';
 import { toast } from '@/shared/utils/toast';
 import './NursePatientMedicationsPage.css';
 
@@ -187,6 +190,18 @@ export default function NursePatientMedicationsPage() {
   }, [navigate, patientId, location.state]);
   const { data: patientData, isLoading, isError, error, refetch } =
     useNursePatientMedicationsQuery(patientId);
+  const { data: doctorsData } = useNurseActiveDoctorsQuery(
+    { page: 1, page_size: 200 },
+    { enabled: Boolean(patientId) },
+  );
+  const doctorDepartmentMap = useMemo(() => {
+    const map = new Map();
+    for (const doc of doctorsData?.doctors ?? []) {
+      const dept = String(doc.specialization ?? doc.department ?? doc.department_name ?? '').trim();
+      if (dept) map.set(Number(doc.id), dept);
+    }
+    return map;
+  }, [doctorsData?.doctors]);
   const adminMut = useAdministerMedicationMutation(patientId);
   const updateAdminMut = useUpdateAdministrationMutation(patientId);
   const [page, setPage] = useState(1);
@@ -311,15 +326,20 @@ export default function NursePatientMedicationsPage() {
   const columns = useMemo(() => [
     {
       header: 'Medicine',
+      render: (p) => <NurseMedicineCell prescription={p} showPrescriber={false} />,
+    },
+    {
+      header: 'Prescribed doctor',
       render: (p) => (
-        <span className="nurse-patient-meds__medicine-name">{p.medicine_name}</span>
+        <NursePrescribedDoctorCell
+          prescription={p}
+          doctorDepartmentMap={doctorDepartmentMap}
+        />
       ),
     },
     { header: 'Strength', render: (p) => p.strength || p.dosage || '—' },
-    { header: 'Form', render: (p) => p.form || '—' },
     { header: 'Duration', render: (p) => p.duration || '—' },
     { header: 'Frequency', render: (p) => p.frequency || '—' },
-    { header: 'Route', render: (p) => p.route || '—' },
     { header: 'Timing', render: (p) => p.timing || '—' },
     {
       header: 'Instruction',
@@ -360,20 +380,11 @@ export default function NursePatientMedicationsPage() {
             >
               {hasRecord ? 'Record dose' : 'Administer'}
             </NursePermissionButton>
-            {hasRecord ? (
-              <NursePermissionButton
-                allowed={canViewMedication}
-                className="nurse-btn nurse-btn--sm nurse-btn--secondary nurse-patient-meds__action-btn"
-                onClick={() => openHistory(p)}
-              >
-                History
-              </NursePermissionButton>
-            ) : null}
           </div>
         );
       },
     },
-  ], [openAdmin, openLastAdmin, openHistory, canCreateMedication, canViewMedication]);
+  ], [openAdmin, openLastAdmin, canCreateMedication, doctorDepartmentMap]);
 
   return (
     <NurseLayout>
@@ -487,9 +498,22 @@ export default function NursePatientMedicationsPage() {
             title="Last Administration"
             panelClassName="nurse-patient-meds__last-admin-modal"
             footer={
-              <Button variant="outline" onClick={() => setViewingLastAdmin(null)}>
-                Close
-              </Button>
+              <div className="nurse-patient-meds__last-admin-modal-footer">
+                <NursePermissionButton
+                  allowed={canViewMedication}
+                  className="nurse-btn nurse-btn--secondary nurse-patient-meds__last-admin-history-btn"
+                  onClick={() => {
+                    if (viewingLastAdmin) openHistory(viewingLastAdmin);
+                    setViewingLastAdmin(null);
+                  }}
+                >
+                  <History size={14} aria-hidden />
+                  History
+                </NursePermissionButton>
+                <Button variant="outline" onClick={() => setViewingLastAdmin(null)}>
+                  Close
+                </Button>
+              </div>
             }
           >
             {viewingLastAdmin ? (

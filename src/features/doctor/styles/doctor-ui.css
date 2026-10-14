@@ -1455,6 +1455,35 @@
   margin: 0;
 }
 
+.doc-patient-filters--pill .doc-patient-filters__calendar{
+  margin: 0;
+}
+
+.doc-patient-filters--pill .doc-patient-filters__calendar .date-input__wrap{
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  min-height: 0;
+}
+
+.doc-patient-filters--pill .doc-patient-filters__calendar .date-input__text{
+  width: 6.6rem;
+  min-width: 6.6rem;
+  height: auto;
+  padding: 0.35rem 0.35rem;
+  border: none;
+  border-radius: 0;
+  border-right: 1px solid var(--color-border-light);
+  background: transparent;
+  font-size: 0.8125rem;
+}
+
+.doc-patient-filters--pill .doc-patient-filters__calendar .date-input__calendar-btn{
+  width: 1.9rem;
+  height: 1.9rem;
+  border-right: 1px solid var(--color-border-light);
+}
+
 .doc-patient-filters--pill .doc-patient-filters__field{
   margin: 0;
 }
@@ -2925,6 +2954,15 @@
   max-width: 18rem;
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+.doc-profile-visits-table__pagination{
+  padding: 0.75rem 0.85rem 0.85rem;
+  border-top: 1px solid var(--color-border, #e2e8f0);
+}
+
+.doc-profile-panel--visits .doc-profile-panel__body{
+  padding: 0;
 }
 
 /* Doctor read-only vitals / nursing notes panels */

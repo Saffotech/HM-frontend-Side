@@ -93,11 +93,13 @@
 }
 
 .pharmacy-detail-page .pharmacy-detail-col--qty {
-  width: 14%;
+  width: 16%;
+  min-width: 10rem;
 }
 
 .pharmacy-detail-page .pharmacy-detail-col--money {
-  width: 7rem;
+  width: 8.5rem;
+  min-width: 8.5rem;
 }
 
 .pharmacy-detail-instructions {
@@ -110,7 +112,7 @@
 
 .pharmacy-detail-qty,
 .pharmacy-detail-qty-head {
-  text-align: center;
+  text-align: left;
   white-space: nowrap;
 }
 
@@ -118,6 +120,17 @@
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   font-size: 0.9rem;
+}
+
+/* Extra gap between Quantity dispensed and Price (overrides table cell padding above). */
+.pharmacy-detail-page .pharmacy-detail-table thead th.pharmacy-detail-qty-head,
+.pharmacy-detail-page .pharmacy-detail-table tbody td.pharmacy-detail-qty {
+  padding-right: 2.5rem;
+}
+
+.pharmacy-detail-page .pharmacy-detail-table thead th.pharmacy-detail-qty-head + th.pharmacy-detail-money,
+.pharmacy-detail-page .pharmacy-detail-table tbody td.pharmacy-detail-qty + td.pharmacy-detail-money {
+  padding-left: 1.5rem;
 }
 
 .pharmacy-detail-table-header {
@@ -136,14 +149,8 @@
 }
 
 .pharmacy-detail-money {
-  text-align: right !important;
+  text-align: left;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
-  padding-left: 0.5rem;
-  padding-right: 0.75rem;
-}
-
-.pharmacy-detail-page .pharmacy-detail-table thead th.pharmacy-detail-money {
-  text-align: right !important;
 }

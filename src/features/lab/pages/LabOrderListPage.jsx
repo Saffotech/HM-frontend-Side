@@ -297,7 +297,7 @@ export default function LabOrderListPage() {
           ) : (
             <>
               <div className="lab-table-wrap">
-                <table className="lab-table">
+                <table className="lab-table lab-table--stack">
                   <thead>
                     <tr>
                       <th>Patient Name</th>
@@ -318,26 +318,26 @@ export default function LabOrderListPage() {
                       const location = visitLocationLabel(o);
                       return (
                       <tr key={o.id}>
-                        <td className="lab-archive-patient">
+                        <td className="lab-archive-patient" data-label="Patient Name">
                           <span className="lab-archive-patient__name">{o.patientName}</span>
                           <span className="lab-archive-meta lab-archive-patient__id">{o.patientId}</span>
                         </td>
-                        <td>
+                        <td data-label="Source">
                           <LabEncounterBadge encounterType={o.encounterType} />
                         </td>
-                        <td className="lab-location-cell">{location.ward}</td>
-                        <td className="lab-location-cell">{location.bed}</td>
-                        <td>{o.doctorName}</td>
-                        <td>{o.testName}</td>
-                        <td>{formatCurrency(o.price, { empty: '—' })}</td>
-                        <td>
+                        <td className="lab-location-cell" data-label="Ward">{location.ward}</td>
+                        <td className="lab-location-cell" data-label="Bed">{location.bed}</td>
+                        <td data-label="Doctor">{o.doctorName}</td>
+                        <td data-label="Test">{o.testName}</td>
+                        <td data-label="Price">{formatCurrency(o.price, { empty: '—' })}</td>
+                        <td data-label="Priority">
                           <span className={`lab-badge ${o.priority}`}>
                             {o.priority === 'urgent' || o.priority === 'stat' ? '⚠ ' : ''}
                             {o.priorityLabel ?? o.priority}
                           </span>
                         </td>
-                        <td style={{ color: '#6b7f99', whiteSpace: 'nowrap' }}>{o.requestedAt}</td>
-                        <td>
+                        <td data-label="Requested" style={{ color: '#6b7f99', whiteSpace: 'nowrap' }}>{o.requestedAt}</td>
+                        <td data-label="Status">
                           <span
                             className={`lab-badge ${statusBadgeClass(o.status)}`}
                             title={LAB_STATUS_META[o.status]?.description}
@@ -345,7 +345,7 @@ export default function LabOrderListPage() {
                             {statusLabel(o.status)}
                           </span>
                         </td>
-                        <td>
+                        <td data-label="Action">
                           <button
                             type="button"
                             className={`lab-btn lab-btn-sm ${

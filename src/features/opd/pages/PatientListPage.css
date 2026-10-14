@@ -78,22 +78,25 @@
 .patient-cell {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   min-width: 0;
 }
 
 .patient-cell__meta {
   min-width: 0;
+  line-height: 1.25;
 }
 
 .patient-cell__meta strong {
   display: block;
   word-break: break-word;
+  font-size: 0.875rem;
+  line-height: 1.25;
 }
 
 .patient-cell .id-badge {
   display: block;
-  margin-top: 0.25rem;
+  margin-top: 0.1rem;
 }
 
 .patient-cell__phone,
@@ -107,7 +110,7 @@
 .blood-badge {
   background: #fef2f2;
   color: #b91c1c;
-  padding: 0.2rem 0.5rem;
+  padding: 0.12rem 0.4rem;
   border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -129,6 +132,14 @@
 .patients-page .patients-table td {
   text-align: left;
   vertical-align: middle;
+  padding: 0.38rem 0.65rem;
+  line-height: 1.3;
+}
+
+.patients-page .patients-table .text-muted {
+  font-size: 0.75rem;
+  line-height: 1.25;
+  margin-top: 0.05rem;
 }
 
 .patients-page .patients-table th {
@@ -151,6 +162,14 @@
 
 .patients-page .data-table-shell {
   max-width: 100%;
+}
+
+.patients-page__table-shell .data-table-shell__scroll {
+  max-height: none;
+}
+
+.patients-page__table-shell .table-pagination {
+  padding: 0.65rem 1rem;
 }
 
 @media (max-width: 768px) {

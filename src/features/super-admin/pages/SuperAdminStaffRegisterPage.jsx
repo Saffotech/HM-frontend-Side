@@ -49,6 +49,8 @@ function RegisterField({ id, label, required, children, className = '' }) {
   );
 }
 
+
+
 export default function SuperAdminStaffRegisterPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState(EMPTY_FORM);

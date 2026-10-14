@@ -64,6 +64,31 @@
   font-weight: 650;
 }
 
+.nurse-patient-overview__meta-link {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgba(37, 99, 235, 0.35);
+  text-underline-offset: 2px;
+}
+
+.nurse-patient-overview__meta-link:hover strong,
+.nurse-patient-overview__meta-link:focus-visible strong {
+  color: #2563eb;
+}
+
+.nurse-patient-overview__meta-link:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.35);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 /* Content shell + tabs */
 .nurse-patient-overview__shell {
   overflow: visible;
@@ -366,7 +391,11 @@
 }
 
 .nurse-patient-overview__med-table th:nth-child(1),
-.nurse-patient-overview__med-table td:nth-child(1) { min-width: 9rem; }
+.nurse-patient-overview__med-table td:nth-child(1) {
+  min-width: 11rem;
+  white-space: normal;
+  vertical-align: top;
+}
 .nurse-patient-overview__med-table th:nth-child(2),
 .nurse-patient-overview__med-table td:nth-child(2),
 .nurse-patient-overview__med-table th:nth-child(3),
@@ -412,7 +441,6 @@
 }
 
 .nurse-patient-overview__med-name {
-  font-weight: 700;
   color: var(--ov-ink);
   letter-spacing: -0.01em;
   line-height: 1.35;

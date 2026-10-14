@@ -3,6 +3,7 @@ import { hasBackendPermission } from '@/hooks/permissions';
 
 export const RECEPTIONIST_PERMISSIONS = {
   queuesView: 'receptionist:view_queues',
+  pricingView: 'receptionist:pricing',
   profileView: 'receptionist_profile:view',
   profileUpdate: 'receptionist_profile:update',
   profileUploadImage: 'receptionist_profile:upload_image',
@@ -15,6 +16,7 @@ export function useReceptionistPermissionSet() {
   const { user } = useAuth();
   return {
     canViewQueues: hasBackendPermission(user, RECEPTIONIST_PERMISSIONS.queuesView),
+    canViewPricing: hasBackendPermission(user, RECEPTIONIST_PERMISSIONS.pricingView),
     canViewProfile: hasBackendPermission(user, RECEPTIONIST_PERMISSIONS.profileView),
     canUpdateProfile: hasBackendPermission(user, RECEPTIONIST_PERMISSIONS.profileUpdate),
     canUploadProfileImage: hasBackendPermission(

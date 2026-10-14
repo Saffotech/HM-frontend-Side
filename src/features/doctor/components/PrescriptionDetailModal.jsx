@@ -196,7 +196,7 @@ function PrescriptionDetailView({ detail, appointmentClinical, ipdPrescription =
         </div>
         {detail.medicines?.length ? (
           <div className="table-wrap doc-rx-detail__table-wrap">
-            <table className="data-table doc-rx-detail__table">
+            <table className="data-table doc-rx-detail__table doc-table--stack">
               <thead>
                 <tr>
                   <th scope="col">Medicine</th>
@@ -213,15 +213,15 @@ function PrescriptionDetailView({ detail, appointmentClinical, ipdPrescription =
               <tbody>
                 {detail.medicines.map((m, i) => (
                   <tr key={i}>
-                    <td className="doc-rx-detail__med-name">{dash(m.name)}</td>
-                    <td>{dash(m.dosage)}</td>
-                    <td>{dash(m.form)}</td>
-                    <td>{dash(m.route)}</td>
-                    <td>{dash(m.frequency)}</td>
-                    <td>{dash(m.timing)}</td>
-                    <td>{dash(m.duration)}</td>
-                    <td>{m.quantity != null && m.quantity !== '' ? String(m.quantity) : '—'}</td>
-                    <td>{dash(m.instructions)}</td>
+                    <td className="doc-rx-detail__med-name" data-label="Medicine">{dash(m.name)}</td>
+                    <td data-label="Strength">{dash(m.dosage)}</td>
+                    <td data-label="Form">{dash(m.form)}</td>
+                    <td data-label="Route">{dash(m.route)}</td>
+                    <td data-label="Frequency">{dash(m.frequency)}</td>
+                    <td data-label="Timing">{dash(m.timing)}</td>
+                    <td data-label="Duration">{dash(m.duration)}</td>
+                    <td data-label="Qty">{m.quantity != null && m.quantity !== '' ? String(m.quantity) : '—'}</td>
+                    <td data-label="Instructions">{dash(m.instructions)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -314,7 +314,7 @@ function PrescriptionEditForm({
               <span className="doc-rx-detail__meds-count">{lockedMedCount}</span>
             </div>
             <div className="table-wrap doc-rx-detail__table-wrap">
-              <table className="data-table doc-rx-detail__table">
+              <table className="data-table doc-rx-detail__table doc-table--stack">
                 <thead>
                   <tr>
                     <th scope="col">Medicine</th>
@@ -327,11 +327,11 @@ function PrescriptionEditForm({
                 <tbody>
                   {meds.slice(0, lockedMedCount).map((m, i) => (
                     <tr key={`locked-${i}`}>
-                      <td className="doc-rx-detail__med-name">{dash(m.name)}</td>
-                      <td>{dash(m.dosage)}</td>
-                      <td>{dash(m.route)}</td>
-                      <td>{dash(m.frequency)}</td>
-                      <td>
+                      <td className="doc-rx-detail__med-name" data-label="Medicine">{dash(m.name)}</td>
+                      <td data-label="Strength">{dash(m.dosage)}</td>
+                      <td data-label="Route">{dash(m.route)}</td>
+                      <td data-label="Frequency">{dash(m.frequency)}</td>
+                      <td data-label="Duration">
                         {m.durationValue
                           ? `${m.durationValue} ${m.durationUnit || 'Days'}`
                           : dash(m.duration)}

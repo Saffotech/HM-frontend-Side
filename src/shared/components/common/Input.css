@@ -50,6 +50,17 @@
   border-color: var(--color-danger);
 }
 
+.field__input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.field__input[type='number']::-webkit-outer-spin-button,
+.field__input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .field__helper {
   font-size: var(--text-small);
   font-weight: var(--text-helper-weight);

@@ -506,7 +506,7 @@ export default function LabUploadReportPage() {
                 <p className="lab-params-error">{errors.parametersGeneral}</p>
               ) : null}
               <div className="lab-params-table-wrap">
-                <table className="lab-params-table">
+                <table className="lab-params-table lab-table--stack">
                   <thead>
                     <tr>
                       <th>Parameter Name</th>
@@ -522,7 +522,7 @@ export default function LabUploadReportPage() {
                       const rowErrs = errors.parameters?.[param.id] ?? {};
                       return (
                         <tr key={param.id}>
-                          <td>
+                          <td data-label="Parameter Name">
                             <input
                               type="text"
                               value={param.parameter_name}
@@ -531,7 +531,7 @@ export default function LabUploadReportPage() {
                               aria-invalid={Boolean(rowErrs.parameter_name)}
                             />
                           </td>
-                          <td>
+                          <td data-label="Value">
                             <input
                               type="text"
                               inputMode="decimal"
@@ -543,7 +543,7 @@ export default function LabUploadReportPage() {
                             />
                             {rowErrs.value ? <small className="lab-param-field-error">{rowErrs.value}</small> : null}
                           </td>
-                          <td>
+                          <td data-label="Unit">
                             <input
                               type="text"
                               value={param.unit}
@@ -554,7 +554,7 @@ export default function LabUploadReportPage() {
                             />
                             {rowErrs.unit ? <small className="lab-param-field-error">{rowErrs.unit}</small> : null}
                           </td>
-                          <td>
+                          <td data-label="Normal Range">
                             <input
                               type="text"
                               value={param.normal_range}
@@ -567,7 +567,7 @@ export default function LabUploadReportPage() {
                               <small className="lab-param-field-error">{rowErrs.normal_range}</small>
                             ) : null}
                           </td>
-                          <td>
+                          <td data-label="Flag">
                             <select
                               value={param.flag}
                               onChange={(e) => updateParam(param.id, 'flag', e.target.value)}
@@ -580,7 +580,7 @@ export default function LabUploadReportPage() {
                             </select>
                             {rowErrs.flag ? <small className="lab-param-field-error">{rowErrs.flag}</small> : null}
                           </td>
-                          <td>
+                          <td data-label="Remove">
                             <button
                               type="button"
                               className="lab-btn lab-btn-danger lab-btn-sm"

@@ -287,7 +287,7 @@ export default function PatientHistoryProfile({
           <p className="text-muted doc-profile-empty">No prescriptions for this patient.</p>
         ) : (
           <div className="table-wrap doc-profile-rx-table-wrap">
-            <table className="data-table doc-profile-rx-table">
+            <table className="data-table doc-profile-rx-table doc-table--stack">
               <thead>
                 <tr>
                   <th scope="col">Date</th>
@@ -301,11 +301,11 @@ export default function PatientHistoryProfile({
               <tbody>
                 {prescriptionsWithMedicines.map((rx) => (
                   <tr key={rx.id}>
-                    <td className="doc-profile-rx-table__date">
+                    <td className="doc-profile-rx-table__date" data-label="Date">
                       {formatPrescriptionDate(rx.date)}
                     </td>
-                    <td className="doc-profile-rx-table__diagnosis">{rx.diagnosis || '—'}</td>
-                    <td className="doc-profile-rx-table__meds">
+                    <td className="doc-profile-rx-table__diagnosis" data-label="Diagnosis">{rx.diagnosis || '—'}</td>
+                    <td className="doc-profile-rx-table__meds" data-label="Medicines">
                       <div className="doc-profile-rx-med-chips">
                         {rx.medicines.map((med, index) =>
                           med.name ? (
@@ -316,7 +316,7 @@ export default function PatientHistoryProfile({
                         )}
                       </div>
                     </td>
-                    <td className="doc-profile-rx-table__actions">
+                    <td className="doc-profile-rx-table__actions" data-label="Actions">
                       <div className="doc-profile-rx-table__action-group">
                         <Button
                           type="button"

@@ -186,13 +186,17 @@ export default function PrescriptionMedicineCard({
       </div>
 
       <div className="doc-med-row__pair">
-        <Input
-          className="doc-med-row__cell"
-          label={starMedicineName ? 'Medicine *' : 'Medicine'}
-          placeholder="Medicine name"
-          value={medicine.name ?? ''}
-          onChange={(e) => patch({ name: e.target.value })}
-        />
+        <div className="doc-med-row__cell">
+          <Input
+            className="doc-med-row__cell"
+            label={starMedicineName ? 'Medicine *' : 'Medicine'}
+            placeholder="Medicine name"
+            value={medicine.name ?? ''}
+            onChange={(e) => patch({ name: e.target.value })}
+            error={fieldErrors[`medName_${index}`]}
+          />
+        </div>
+
         <Input
           className="doc-med-row__cell"
           label={markRequired('dosage') ? 'Strength *' : 'Strength'}
@@ -369,9 +373,8 @@ export default function PrescriptionMedicineCard({
           </Label>
           <select
             id={`med-duration-unit-${index}`}
-            className={`doc-med-row__duration-unit${
-              fieldErrors[`medDurationUnit_${index}`] ? ' doc-med-row__duration-unit--error' : ''
-            }`}
+            className={`doc-med-row__duration-unit${fieldErrors[`medDurationUnit_${index}`] ? ' doc-med-row__duration-unit--error' : ''
+              }`}
             value={medicine.durationUnit ?? 'Days'}
             onChange={(e) => patch({ durationUnit: e.target.value })}
             aria-label="Duration unit"

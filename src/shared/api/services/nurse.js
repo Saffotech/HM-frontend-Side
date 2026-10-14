@@ -311,6 +311,7 @@ async function collectMedicationItemsFromDoctorPrescriptions(patientId, token) {
         if (itemId == null) continue;
         items.push({
           prescription_item_id: itemId,
+          prescription_id: rx.id ?? rx.prescription_id ?? null,
           medicine_name: item.medicine_name ?? item.name ?? '',
           dosage: item.dosage ?? '',
           frequency: item.frequency ?? '',
@@ -320,8 +321,16 @@ async function collectMedicationItemsFromDoctorPrescriptions(patientId, token) {
           form: item.form ?? null,
           timing: item.timing ?? null,
           quantity: item.quantity ?? null,
+          appointment_id: rx.appointment_id ?? rx.appointmentId ?? null,
+          admission_id: rx.admission_id ?? rx.admissionId ?? null,
           doctor_id: rx.doctor_id ?? rx.doctorId ?? null,
           doctor_name: rx.doctor_name ?? rx.doctorName ?? null,
+          source:
+            rx.admission_id != null || rx.admissionId != null
+              ? 'IPD'
+              : rx.appointment_id != null || rx.appointmentId != null
+                ? 'OPD'
+                : undefined,
         });
       }
     }
@@ -390,7 +399,7 @@ export async function getPatientMedications(patientId, token) {
     historyPatientKey,
     token,
   );
-  const mergedItems = mergeMedicationItemsById(doctorItems, nurseItems);
+  const mergedItems = mergeMedicationItemsById(nurseItems, doctorItems);
 
   // Expected count from registry (sum across prescriptions) for empty-state messaging.
   let expectedMedicineCount = mergedItems.length;

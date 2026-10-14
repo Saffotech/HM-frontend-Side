@@ -12,10 +12,9 @@ import {
   useBulkCreateBedAllocationsMutation,
 } from '@/shared/hooks/queries/useAdminQuery';
 import { useBedsQuery } from '@/shared/hooks/queries/useBedsQuery';
-import { Button, Select } from '@/shared/components/common';
+import { Button, DateInput, Select } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import {
-  SHIFT_OPTIONS,
   todayIsoDate,
 } from '@/shared/api/mappers/adminBedAllocationMapper';
 import { toast } from '@/shared/utils/toast';
@@ -28,7 +27,6 @@ export default function NurseBedAllocationCreatePage() {
 
   const [shiftDate, setShiftDate] = useState(todayIsoDate());
   const [assignedUntil, setAssignedUntil] = useState(todayIsoDate());
-  const [shiftName, setShiftName] = useState('Morning');
   const [nurseId, setNurseId] = useState('');
   const [bedIds, setBedIds] = useState([]);
   const [bedSearch, setBedSearch] = useState('');
@@ -83,10 +81,6 @@ export default function NurseBedAllocationCreatePage() {
       toast.error('Assigned till must be on or after assigned from');
       return;
     }
-    if (!shiftName) {
-      toast.error('Select a shift');
-      return;
-    }
     if (!nurseId) {
       toast.error('Select a nurse');
       return;
@@ -102,7 +96,6 @@ export default function NurseBedAllocationCreatePage() {
         bedIds,
         shiftDate,
         assignedUntil,
-        shiftName,
       },
       {
         onSuccess: (res) => {
@@ -148,11 +141,10 @@ export default function NurseBedAllocationCreatePage() {
 
         <form className="admin-card nba-form-card nba-form-card--compact" onSubmit={handleSubmit}>
           <div className="nba-form-grid nba-form-grid--create">
-            <label className="nba-field">
-              <span>Assigned from *</span>
-              <input
-                type="date"
-                className="nba-input"
+            <div className="nba-field">
+              <DateInput
+                label="Assigned from"
+                required
                 value={shiftDate}
                 onChange={(e) => {
                   const next = e.target.value;
@@ -161,28 +153,17 @@ export default function NurseBedAllocationCreatePage() {
                     setAssignedUntil(next);
                   }
                 }}
-                required
               />
-            </label>
-            <label className="nba-field">
-              <span>Assigned till *</span>
-              <input
-                type="date"
-                className="nba-input"
+            </div>
+            <div className="nba-field">
+              <DateInput
+                label="Assigned till"
+                required
                 value={assignedUntil}
                 min={shiftDate || undefined}
                 onChange={(e) => setAssignedUntil(e.target.value)}
-                required
               />
-            </label>
-            <label className="nba-field">
-              <span>Shift *</span>
-              <Select
-                value={shiftName}
-                onChange={setShiftName}
-                options={SHIFT_OPTIONS}
-              />
-            </label>
+            </div>
             <label className="nba-field">
               <span>Nurse *</span>
               <Select

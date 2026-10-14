@@ -1,0 +1,206 @@
+/* Receptionist phone layout — laptop/desktop tables stay unchanged */
+
+@media (max-width: 767px) {
+  .receptionist-layout .rec-table-wrap:has(.rec-table--stack),
+  .receptionist-layout .pricing-table-wrap {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  .receptionist-layout .rec-table--stack,
+  .receptionist-layout .pricing-table {
+    min-width: 0 !important;
+    width: 100% !important;
+    table-layout: auto !important;
+    white-space: normal !important;
+  }
+
+  .receptionist-layout .rec-table--stack thead,
+  .receptionist-layout .pricing-table thead {
+    display: none !important;
+  }
+
+  .receptionist-layout .rec-table--stack,
+  .receptionist-layout .rec-table--stack tbody,
+  .receptionist-layout .rec-table--stack tr,
+  .receptionist-layout .pricing-table,
+  .receptionist-layout .pricing-table tbody,
+  .receptionist-layout .pricing-table tr {
+    display: block;
+    width: 100%;
+  }
+
+  .receptionist-layout .rec-table--stack tbody tr,
+  .receptionist-layout .pricing-table tbody tr {
+    margin-bottom: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--rec-border, #e5e7eb);
+    border-radius: 0.75rem;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  .receptionist-layout .rec-table--stack tbody tr:last-child,
+  .receptionist-layout .pricing-table tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .receptionist-layout .rec-table--stack tbody tr:hover,
+  .receptionist-layout .rec-table--stack tbody tr:hover td,
+  .receptionist-layout .pricing-table tbody tr:hover,
+  .receptionist-layout .pricing-table tbody tr:hover td {
+    background: #fff;
+  }
+
+  .receptionist-layout .rec-table--stack td,
+  .receptionist-layout .pricing-table td {
+    display: grid !important;
+    grid-template-columns: minmax(5.5rem, 38%) minmax(0, 1fr);
+    align-items: center;
+    justify-items: end;
+    column-gap: 0.75rem;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    padding: 0.4rem 0 !important;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: right !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+  }
+
+  .receptionist-layout .rec-table--stack td::before,
+  .receptionist-layout .pricing-table td::before {
+    content: attr(data-label);
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+    text-align: left !important;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .receptionist-layout .rec-table--stack td > *,
+  .receptionist-layout .pricing-table td > * {
+    grid-column: 2;
+    min-width: 0;
+    justify-self: end;
+    text-align: right;
+  }
+
+  .receptionist-layout .rec-table--stack td:last-child,
+  .receptionist-layout .pricing-table td:last-child {
+    border-bottom: none;
+    padding-bottom: 0.15rem !important;
+  }
+
+  .receptionist-layout .rec-table--stack td[colspan],
+  .receptionist-layout .pricing-table td[colspan] {
+    display: block !important;
+    text-align: center;
+    border-bottom: none;
+    padding: 0.5rem 0 !important;
+  }
+
+  .receptionist-layout .rec-table--stack td[colspan]::before,
+  .receptionist-layout .pricing-table td[colspan]::before {
+    display: none;
+  }
+
+  .receptionist-layout .rec-table--stack td[data-label='#'],
+  .receptionist-layout .rec-table--stack td[data-label='Time'],
+  .receptionist-layout .rec-table--stack td[data-label='Date'],
+  .receptionist-layout .rec-table--stack td[data-label='Appointment Time'],
+  .receptionist-layout .rec-table--stack td[data-label='Consultation / Cancel Time'] {
+    white-space: nowrap !important;
+  }
+
+  .receptionist-layout .rec-table--stack .rec-doctor-list__name-cell {
+    justify-content: flex-end;
+  }
+
+  .receptionist-layout .rec-table--stack td[data-label='View Queue'] .rec-view-queue-btn {
+    width: auto !important;
+    min-width: 5.5rem;
+    max-width: 100%;
+    white-space: nowrap;
+  }
+
+  .receptionist-layout .rec-filters__row,
+  .receptionist-layout .rec-filter-group,
+  .receptionist-layout .rec-queue-history__filter-row,
+  .receptionist-layout .rec-queue-history__date-range,
+  .receptionist-layout .rec-doctor-list__header,
+  .receptionist-layout .rec-doctor-list__filters,
+  .receptionist-layout .rec-doctor-detail__filter-row,
+  .receptionist-layout .rec-doctor-detail__schedule-header,
+  .receptionist-layout .receptionist-profile-page__toolbar,
+  .receptionist-layout .receptionist-notif-filters__row,
+  .receptionist-layout .pricing-lab-filters,
+  .receptionist-layout .pricing-search {
+    flex-direction: column;
+    align-items: stretch;
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .receptionist-layout .rec-search,
+  .receptionist-layout .rec-filter-group,
+  .receptionist-layout .rec-filter-group__field,
+  .receptionist-layout .rec-select,
+  .receptionist-layout .rec-input,
+  .receptionist-layout .rec-queue-history__search,
+  .receptionist-layout .rec-queue-history__date,
+  .receptionist-layout .rec-queue-history__select,
+  .receptionist-layout .rec-doctor-detail__search,
+  .receptionist-layout .rec-doctor-detail__date,
+  .receptionist-layout .rec-doctor-detail__filter-select,
+  .receptionist-layout .rec-doctor-detail__slot-toggle,
+  .receptionist-layout .receptionist-profile-page__actions,
+  .receptionist-layout .receptionist-profile-tabs,
+  .receptionist-layout .receptionist-notif-search,
+  .receptionist-layout .receptionist-notif-select,
+  .receptionist-layout .receptionist-notif-mark-all {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+  }
+
+  .receptionist-layout .rec-queue-history__date .date-input__wrap {
+    width: 100%;
+  }
+
+  .receptionist-layout .rec-queue-history__date-sep {
+    text-align: center;
+  }
+
+  .receptionist-layout .rec-doctor-detail__schedule-trigger {
+    width: 100%;
+  }
+
+  .receptionist-layout .rec-toggle-group {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .receptionist-layout .rec-toggle-group__btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .receptionist-layout .receptionist-profile-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .receptionist-layout .receptionist-profile-page__actions .btn,
+  .receptionist-layout .rec-doctor-detail__back {
+    width: 100%;
+    justify-content: center;
+  }
+}

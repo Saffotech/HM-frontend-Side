@@ -266,7 +266,7 @@ export default function BillingListPage() {
             onPageChange: goToPage,
           }}
         >
-          <table className="data-table billing-table">
+          <table className="data-table billing-table data-table--stack">
             <colgroup>
               <col className="billing-table__col-patient" />
               <col className="billing-table__col-bills" />
@@ -300,13 +300,13 @@ export default function BillingListPage() {
                       }
                     }}
                   >
-                    <td className="billing-table__cell-patient">
+                    <td className="billing-table__cell-patient" data-label="Patient">
                       <div className="billing-table__patient">
                         <strong>{group.patientName}</strong>
                         {group.patientId && <span className="text-muted">{group.patientId}</span>}
                       </div>
                     </td>
-                    <td className="billing-table__cell-bills" onClick={(e) => group.billCount > 1 && e.stopPropagation()}>
+                    <td className="billing-table__cell-bills" data-label="Bills" onClick={(e) => group.billCount > 1 && e.stopPropagation()}>
                       {group.billCount === 1 ? (
                         <button
                           type="button"
@@ -334,7 +334,7 @@ export default function BillingListPage() {
                         </button>
                       )}
                     </td>
-                    <td className="col-money billing-table__cell-money">
+                    <td className="col-money billing-table__cell-money" data-label="Total">
                       <div className="billing-table__money-stack">
                         <MoneyAmount amount={group.total} strong />
                         {group.billCount > 1 && (
@@ -342,13 +342,13 @@ export default function BillingListPage() {
                         )}
                       </div>
                     </td>
-                    <td className={`col-optional col-money billing-table__cell-money ${group.balance > 0 ? 'text-red' : 'text-green'}`}>
+                    <td className={`col-optional col-money billing-table__cell-money ${group.balance > 0 ? 'text-red' : 'text-green'}`} data-label="Balance">
                       <MoneyAmount amount={group.balance} strong />
                     </td>
-                    <td className="billing-table__cell-status">
+                    <td className="billing-table__cell-status" data-label="Status">
                       <StatusBadge status={group.status} />
                     </td>
-                    <td className="billing-table__cell-actions">
+                    <td className="billing-table__cell-actions" data-label="Actions">
                       {unpaidBill ? (
                         <Button
                           size="sm"
@@ -365,7 +365,7 @@ export default function BillingListPage() {
                         <span className="billing-list__paid-label">Paid</span>
                       )}
                     </td>
-                    <td className="billing-table__cell-print">
+                    <td className="billing-table__cell-print" data-label="Print">
                       <Button
                         size="sm"
                         variant="outline"

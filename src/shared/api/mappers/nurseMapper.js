@@ -562,6 +562,40 @@ export function buildFirstAdministrationByPrescriptionItemId(historyRows = []) {
   return byItem;
 }
 
+/** OPD / IPD label for a MAR medicine row (defaults to IPD when source is missing). */
+export function resolveMedicationSource(item) {
+  const source = String(item?.source ?? '').toUpperCase();
+  if (source === 'OPD') return 'OPD';
+  if (source === 'IPD') return 'IPD';
+  if (item?.admission_id != null || item?.admissionId != null) return 'IPD';
+  if (item?.appointment_id != null || item?.appointmentId != null) return 'OPD';
+  return 'IPD';
+}
+
+/** Prescribing doctor for this medicine — not the ward attending on the page header. */
+export function prescribedByName(item) {
+  return (
+    item?.doctor_name
+    || item?.prescribed_by_name
+    || item?.prescribed_by
+    || ''
+  );
+}
+
+/** Prescribing doctor's department — item-level only (not ward attending department). */
+export function prescribedByDepartment(item) {
+  return String(item?.department_name ?? item?.department ?? '').trim();
+}
+
+/** Resolve department from the medicine row or a doctor-id lookup map. */
+export function resolvePrescribedDoctorDepartment(item, doctorDepartmentMap) {
+  const fromItem = prescribedByDepartment(item);
+  if (fromItem) return fromItem;
+  const doctorId = Number(item?.doctor_id ?? item?.doctorId);
+  if (!Number.isSafeInteger(doctorId) || doctorId < 1 || !doctorDepartmentMap) return '';
+  return String(doctorDepartmentMap.get(doctorId) ?? '').trim();
+}
+
 export function mapMedicationToPrescription(
   item,
   latestHistoryRow = null,
@@ -579,18 +613,12 @@ export function mapMedicationToPrescription(
       ? String(item.status).toLowerCase()
       : null;
   const status = administration?.status ?? statusFromItem ?? null;
-  const doctorName =
-    item.doctor_name
-    || item.prescribed_by_name
-    || item.prescribed_by
-    || patientMeta.doctor_name
-    || '';
-  const doctorId = item.doctor_id ?? patientMeta.doctor_id ?? null;
+  const doctorName = prescribedByName(item);
+  const doctorId = item.doctor_id ?? item.doctorId ?? null;
+  const source = resolveMedicationSource(item);
   const departmentName =
     item.department_name
     || item.department
-    || patientMeta.department_name
-    || patientMeta.department
     || '';
 
   const firstGivenAt =
@@ -617,6 +645,10 @@ export function mapMedicationToPrescription(
     duration: item.duration,
     quantity: item.quantity ?? null,
     instructions: item.instructions ?? null,
+    source,
+    prescription_id: item.prescription_id ?? item.prescriptionId ?? null,
+    appointment_id: item.appointment_id ?? item.appointmentId ?? null,
+    admission_id: item.admission_id ?? item.admissionId ?? null,
     doctor_id: doctorId,
     doctor_name: doctorName,
     department_name: departmentName,
@@ -938,10 +970,18 @@ export function mapDoctorVisitListResponse(raw) {
 /** Map a single active-doctor option row. */
 export function mapDoctorOption(row) {
   if (!row) return null;
+  const departmentName =
+    row.department_name
+    ?? row.department
+    ?? row.specialization
+    ?? null;
   return {
     id: Number(row.id),
     name: row.name ?? '',
-    specialization: row.specialization ?? null,
+    specialization: row.specialization ?? departmentName,
+    department: departmentName,
+    department_name: departmentName,
+    department_id: row.department_id ?? null,
   };
 }
 

@@ -1,0 +1,319 @@
+/* Super Admin phone layout — laptop/desktop tables stay unchanged */
+
+@media (max-width: 767px) {
+  .layout--super-admin .sa-shell,
+  .layout--super-admin .admin-page,
+  .layout--super-admin .admin-card,
+  .layout--super-admin .admin-datatable,
+  .layout--super-admin .aos-page {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .layout--super-admin .admin-table-wrap,
+  .layout--super-admin .sa-dashboard-table-wrap,
+  .layout--super-admin .sa-reports-table-wrap,
+  .layout--super-admin .aos-table-wrap,
+  .layout--super-admin .aos-table-wrap--tariff {
+    overflow: visible !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    min-width: 0 !important;
+    max-width: 100%;
+  }
+
+  .layout--super-admin .admin-table,
+  .layout--super-admin .sa-reports-table,
+  .layout--super-admin .aos-table,
+  .layout--super-admin .aos-table--tariff,
+  .layout--super-admin .admin-table--stack {
+    min-width: 0 !important;
+    width: 100% !important;
+    table-layout: auto !important;
+    white-space: normal !important;
+  }
+
+  .layout--super-admin .admin-table--stack thead,
+  .layout--super-admin .admin-table--stack colgroup {
+    display: none !important;
+  }
+
+  .layout--super-admin .admin-table--stack,
+  .layout--super-admin .admin-table--stack tbody,
+  .layout--super-admin .admin-table--stack tr {
+    display: block;
+    width: 100%;
+  }
+
+  .layout--super-admin .admin-table--stack tbody tr {
+    margin-bottom: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  .layout--super-admin .admin-table--stack tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .layout--super-admin .admin-table--stack tbody tr:hover,
+  .layout--super-admin .admin-table--stack tbody tr:hover td {
+    background: #fff;
+  }
+
+  .layout--super-admin .admin-table--stack td {
+    display: grid !important;
+    grid-template-columns: minmax(5.5rem, 38%) minmax(0, 1fr);
+    align-items: center;
+    justify-items: end;
+    column-gap: 0.75rem;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    padding: 0.4rem 0 !important;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: right !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .layout--super-admin .admin-table--stack td::before {
+    content: attr(data-label);
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+    text-align: left !important;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .layout--super-admin .admin-table--stack td > * {
+    grid-column: 2;
+    min-width: 0;
+    justify-self: end;
+    text-align: right;
+  }
+
+  .layout--super-admin .admin-table--stack td:last-child {
+    border-bottom: none;
+    padding-bottom: 0.15rem !important;
+  }
+
+  .layout--super-admin .admin-table--stack td[colspan] {
+    display: block !important;
+    text-align: center;
+    border-bottom: none;
+  }
+
+  .layout--super-admin .admin-table--stack td[colspan]::before {
+    display: none;
+  }
+
+  .layout--super-admin .admin-table--stack .admin-table__actions,
+  .layout--super-admin .admin-table--stack .aos-beds__actions,
+  .layout--super-admin .admin-table--stack .aos-table__actions {
+    white-space: normal !important;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .layout--super-admin .admin-table--stack td[data-label='Actions'] {
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+  }
+
+  .layout--super-admin .admin-table--stack td[data-label='Actions']::before {
+    margin-bottom: 0.3rem;
+  }
+
+  .layout--super-admin .admin-table--stack td[data-label='Actions'] > * {
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  .layout--super-admin .admin-table--stack .sa-staff-list__actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: stretch;
+    flex-wrap: nowrap;
+    width: 100%;
+    gap: 0.4rem;
+  }
+
+  .layout--super-admin .admin-table--stack .sa-staff-list__action,
+  .layout--super-admin .admin-table--stack td[data-label='Actions'] .btn,
+  .layout--super-admin .admin-table--stack td[data-label='Action'] .btn {
+    width: 100% !important;
+    justify-content: center;
+    white-space: nowrap;
+  }
+
+  .layout--super-admin .admin-table--stack td input,
+  .layout--super-admin .admin-table--stack td select,
+  .layout--super-admin .admin-table--stack td .field,
+  .layout--super-admin .admin-table--stack td .field__input {
+    width: 100%;
+    min-width: 0;
+    justify-self: stretch;
+    text-align: left;
+  }
+
+  .layout--super-admin .admin-filters,
+  .layout--super-admin .sa-audit-filters,
+  .layout--super-admin .sa-reports-toolbar__row,
+  .layout--super-admin .admin-page__head--row,
+  .layout--super-admin .aos-form__footer,
+  .layout--super-admin .aos-ward-rate-strip {
+    flex-direction: column;
+    align-items: stretch;
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .layout--super-admin .admin-filters .search-bar,
+  .layout--super-admin .admin-filters .searchable-select,
+  .layout--super-admin .sa-audit-filters__field,
+  .layout--super-admin .sa-reports-toolbar__date,
+  .layout--super-admin .sa-reports-toolbar__source,
+  .layout--super-admin .sa-reports-toolbar__select,
+  .layout--super-admin .sa-reports-toolbar__reset,
+  .layout--super-admin .aos-beds__compact-field,
+  .layout--super-admin .aos-beds__compact-field--grow,
+  .layout--super-admin .aos-beds__compact-field--sm,
+  .layout--super-admin .aos-beds__compact-field--xs,
+  .layout--super-admin .aos-beds__compact-field--type,
+  .layout--super-admin .aos-form__footer .btn {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .layout--super-admin .sa-dashboard-stats .ui-stat-card,
+  .layout--super-admin .admin-stats .ui-stat-card {
+    padding: 0.85rem 0.7rem;
+    gap: 0.5rem;
+    overflow: visible;
+    min-width: 0;
+  }
+
+  .layout--super-admin .sa-dashboard-stats .ui-stat-card__value,
+  .layout--super-admin .admin-stats .ui-stat-card__value,
+  .layout--super-admin .admin-stat-card__value,
+  .layout--super-admin .sa-reports-kpi-card__value {
+    font-size: clamp(0.95rem, 4.6vw, 1.25rem) !important;
+    line-height: 1.2 !important;
+    white-space: nowrap;
+    overflow: visible;
+    max-width: 100%;
+  }
+
+  .layout--super-admin .aos-lab-catalog__head {
+    display: none !important;
+  }
+
+  .layout--super-admin .aos-lab-catalog__row,
+  .layout--super-admin .aos-lab-catalog__row--create {
+    display: flex !important;
+    flex-direction: column;
+    grid-template-columns: none !important;
+    gap: 0.15rem;
+    margin-bottom: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    background: #fff;
+  }
+
+  .layout--super-admin .aos-lab-catalog__cell {
+    display: grid !important;
+    grid-template-columns: minmax(5.5rem, 38%) minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0.75rem;
+    width: 100%;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .layout--super-admin .aos-lab-catalog__cell::before {
+    content: attr(data-label);
+    justify-self: start;
+    text-align: left;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .layout--super-admin .aos-lab-catalog__cell > * {
+    justify-self: end;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .layout--super-admin .aos-lab-catalog__cell:last-child {
+    border-bottom: none;
+  }
+
+  .layout--super-admin .aos-lab-catalog__cell--actions {
+    justify-items: end;
+  }
+
+  .layout--super-admin .aos-lab-catalog__cell--actions .btn {
+    width: auto;
+    white-space: nowrap;
+  }
+
+  .layout--super-admin .ui-page-header,
+  .layout--super-admin .sa-profile-page__header,
+  .layout--super-admin .sa-profile-hero,
+  .layout--super-admin .sa-profile-hero__top,
+  .layout--super-admin .sa-perm-section__head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .layout--super-admin .ui-page-header__actions,
+  .layout--super-admin .ui-page-header__actions .btn,
+  .layout--super-admin .sa-roles-create-btn,
+  .layout--super-admin .sa-perm-section__toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .layout--super-admin .admin-filters {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .layout--super-admin .admin-filters > * {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .layout--super-admin .sa-reports-kpi-grid,
+  .layout--super-admin .sa-role-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .layout--super-admin .sa-profile-hero__meta,
+  .layout--super-admin .sa-profile-progress {
+    min-width: 0 !important;
+    max-width: none !important;
+    width: 100%;
+  }
+}

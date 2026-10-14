@@ -111,6 +111,8 @@ export async function getReportsOverview(params = {}) {
   const query = buildQuery({
     from_date: params.from_date,
     to_date: params.to_date,
+    source: params.source,
+    department_id: params.department_id,
   });
   return apiClient(`/admin/reports/overview${query}`);
 }
@@ -120,6 +122,7 @@ export async function getReportsVisits(params = {}) {
   const query = buildQuery({
     from_date: params.from_date,
     to_date: params.to_date,
+    source: params.source,
     department_id: params.department_id,
     page: params.page,
     limit: params.limit,

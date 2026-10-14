@@ -27,6 +27,7 @@ export function apiToUiLabCatalogTest(api) {
     id: Number(id),
     testName,
     departmentId: api.department_id ?? api.departmentId ?? null,
+    departmentName: api.department_name ?? api.departmentName ?? null,
     price,
     active: api.active !== false,
     label: priceDisplay !== '—' ? `${testName} (${priceDisplay})` : testName,

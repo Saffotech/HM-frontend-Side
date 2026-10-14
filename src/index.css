@@ -4,6 +4,7 @@
 @import './shared/styles/typography.css';
 @import './shared/styles/base.css';
 @import './shared/styles/date-input.css';
+@import './shared/styles/profile-date-input.css';
 @import './shared/styles/ui-patterns.css';
 @import './shared/styles/animations.css';
 @import './shared/styles/money.css';

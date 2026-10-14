@@ -3,7 +3,7 @@
  * Registration creates UHID demographics via POST /ipd/patients/register — no OPD visit/bill.
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, DateInput } from "@/shared/components/common";
 import { BLOOD_GROUPS, GENDERS, ROUTES } from "@/shared/constants";
@@ -26,7 +26,6 @@ import {
   useRegisterIpdPatientMutation,
 } from "@/features/ipd/hooks/useIpdQuery";
 import { useIpdWardOptions } from "@/features/ipd/hooks/useIpdWardOptions";
-import { useIpdBedRateLookup } from "@/features/ipd/hooks/useIpdBedRateLookup";
 import { toIsoAdmissionDate } from '@/features/ipd/utils/ipdFormat';
 import {
   buildInsuranceAdmitContext,
@@ -34,7 +33,10 @@ import {
   insuranceAdmitRouteId,
 } from "@/features/ipd/utils/insuranceAdmitPayload";
 import { validateRegisterPatient } from "@/features/opd/utils/registerPatientUtils";
-import { formatCurrency } from '@/shared/utils/formatCurrency';
+import {
+  BED_TYPE_OPTIONS,
+  filterBedsByType,
+} from "@/shared/utils/bedTypeOverlay";
 
 const INITIAL = {
   patientMode: "existing", // existing | register
@@ -52,6 +54,7 @@ const INITIAL = {
   aadhaar: "",
   // admission
   ward: "",
+  bedType: "single",
   bedId: "",
   admissionDate: new Date().toISOString().slice(0, 10),
   departmentId: "",
@@ -72,6 +75,29 @@ const INITIAL = {
 function toIsoDateParam(value) {
   const s = String(value || "").trim();
   return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : "";
+}
+
+/** Indian mobile: 10 digits, starting with 6–9. */
+function phoneValidationMessage(phone) {
+  const digits = String(phone || "").replace(/\D/g, "");
+  if (/^[6-9]\d{9}$/.test(digits)) return "";
+  return "Enter a valid 10-digit phone number";
+}
+
+/** Aadhaar: 12 digits, and the first digit cannot be 0 or 1. */
+function aadhaarValidationMessage(aadhaar) {
+  const digits = String(aadhaar || "").replace(/\D/g, "");
+  if (/^[2-9]\d{11}$/.test(digits)) return "";
+  return "Enter a valid 12-digit Aadhaar number (XXXX-XXXX-XXXX)";
+}
+
+/** Local calendar day (YYYY-MM-DD). Date of birth cannot be after this. */
+function todayIsoLocal() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 function validateAdmission(values) {
@@ -146,12 +172,15 @@ export default function AdmitPatientForm() {
   const bedsQuery = useIpdBedsQuery({
     ward: values.ward || undefined,
     status: "available",
+    bed_type: values.bedType || undefined,
   });
-  const availableBeds = (bedsQuery.data?.beds ?? []).filter(
-    (bed) => bed.status === "available",
-  );
+  const availableBeds = useMemo(() => {
+    const beds = (bedsQuery.data?.beds ?? []).filter(
+      (bed) => bed.status === "available",
+    );
+    return filterBedsByType(beds, values.bedType);
+  }, [bedsQuery.data, values.bedType]);
   const { wardOptions, isLoading: wardsLoading } = useIpdWardOptions();
-  const { getRate, ratesAvailable } = useIpdBedRateLookup();
 
   const departmentsQuery = useIpdDepartmentsQuery();
   const doctorsQuery = useIpdDoctorsByDepartmentQuery(
@@ -164,7 +193,7 @@ export default function AdmitPatientForm() {
   const set = (key, value) => {
     setValues((prev) => {
       const next = { ...prev, [key]: value };
-      if (key === "ward") next.bedId = "";
+      if (key === "ward" || key === "bedType") next.bedId = "";
       if (key === "departmentId") next.doctorId = "";
       if (key === "patientSearch") {
         next.patientDbId = "";
@@ -198,6 +227,19 @@ export default function AdmitPatientForm() {
     });
     setSubmitError("");
     setRegisterError("");
+    if (key === "phone" || key === "aadhaar") {
+      const message =
+        key === "phone"
+          ? phoneValidationMessage(value)
+          : aadhaarValidationMessage(value);
+      setErrors((prev) => {
+        if (!prev[key] && !String(value || "").trim()) return prev;
+        const next = { ...prev };
+        if (message) next[key] = message;
+        else delete next[key];
+        return next;
+      });
+    }
   };
 
   const selectPatient = (patient) => {
@@ -220,6 +262,15 @@ export default function AdmitPatientForm() {
       dob: values.dob,
       aadhaar: values.aadhaar,
     });
+    if (values.dob && values.dob > todayIsoLocal()) {
+      demoErrors.dob = "Date of birth cannot be in the future";
+    }
+    const phoneMessage = phoneValidationMessage(values.phone);
+    if (phoneMessage) demoErrors.phone = phoneMessage;
+    else delete demoErrors.phone;
+    const aadhaarMessage = aadhaarValidationMessage(values.aadhaar);
+    if (aadhaarMessage) demoErrors.aadhaar = aadhaarMessage;
+    else delete demoErrors.aadhaar;
     setErrors((prev) => ({ ...prev, ...demoErrors }));
     if (Object.keys(demoErrors).length > 0) return;
 
@@ -344,6 +395,12 @@ export default function AdmitPatientForm() {
   const summaryRows = [
     { label: "Patient", value: values.selectedLabel },
     { label: "Ward", value: values.ward },
+    {
+      label: "Bed type",
+      value:
+        BED_TYPE_OPTIONS.find((o) => o.value === values.bedType)?.label ??
+        values.bedType,
+    },
     { label: "Bed", value: selectedBed?.bed_number },
     { label: "Admission date", value: values.admissionDate },
     { label: "Department", value: selectedDepartment?.name },
@@ -480,7 +537,7 @@ export default function AdmitPatientForm() {
                       className="ipd-input"
                       value={values.patientSearch}
                       onChange={(e) => set("patientSearch", e.target.value)}
-                      placeholder="Search patient by ID"
+                      placeholder="Search patient by ID or Name"
                     />
                     {show("patient") ? (
                       <span className="ipd-field-error">{errors.patient}</span>
@@ -506,10 +563,10 @@ export default function AdmitPatientForm() {
                             ) : null}
                           </p>
                         ) : (
-                          <table className="ipd-table">
+                          <table className="ipd-table ipd-table--stack">
                             <thead>
                               <tr>
-                                <th>UHID</th>
+                                <th>Patient ID</th>
                                 <th>Name</th>
                                 <th>Phone</th>
                                 <th />
@@ -518,10 +575,10 @@ export default function AdmitPatientForm() {
                             <tbody>
                               {patientOptions.map((patient) => (
                                 <tr key={patient.dbId ?? patient.id}>
-                                  <td>{patient.id || "—"}</td>
-                                  <td>{patient.name || "—"}</td>
-                                  <td>{patient.phone || "—"}</td>
-                                  <td>
+                                  <td data-label="Patient ID">{patient.id || "—"}</td>
+                                  <td data-label="Name">{patient.name || "—"}</td>
+                                  <td data-label="Phone">{patient.phone || "—"}</td>
+                                  <td data-label="Action">
                                     <Button
                                       type="button"
                                       size="sm"
@@ -608,6 +665,7 @@ export default function AdmitPatientForm() {
                     id="ipd-reg-dob"
                     className="ipd-date-input"
                     value={toIsoDateParam(values.dob)}
+                    max={todayIsoLocal()}
                     onChange={(e) => set("dob", toIsoDateParam(e.target.value))}
                     placeholder="DD/MM/YYYY"
                     aria-label="Date of birth"
@@ -735,20 +793,31 @@ export default function AdmitPatientForm() {
                       ? "No wards in inventory"
                       : "Select ward…"}
                 </option>
-                {wardOptions.map((w) => {
-                  const rate = ratesAvailable ? getRate(w) : null;
-                  return (
-                    <option key={w} value={w}>
-                      {rate != null
-                        ? `${w} · ${formatCurrency(rate, { empty: '—' })}/day`
-                        : w}
-                    </option>
-                  );
-                })}
+                {wardOptions.map((w) => (
+                  <option key={w} value={w}>{w}</option>
+                ))}
               </select>
               {show("ward") ? (
                 <span className="ipd-field-error">{errors.ward}</span>
               ) : null}
+            </div>
+            <div className="ipd-toolbar__field">
+              <label className="ipd-toolbar__label" htmlFor="ipd-admit-bed-type">
+                Bed type
+              </label>
+              <select
+                id="ipd-admit-bed-type"
+                className="ipd-select"
+                value={values.bedType}
+                onChange={(e) => set("bedType", e.target.value)}
+                disabled={!values.ward}
+              >
+                {BED_TYPE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="ipd-toolbar__field">
               <label className="ipd-toolbar__label" htmlFor="ipd-admit-bed">
@@ -767,19 +836,14 @@ export default function AdmitPatientForm() {
                     : bedsQuery.isLoading
                       ? "Loading beds…"
                       : availableBeds.length === 0
-                        ? "No available beds"
+                        ? `No available ${values.bedType} beds`
                         : "Select bed…"}
                 </option>
-                {availableBeds.map((bed) => {
-                  const rate = ratesAvailable ? getRate(bed) : null;
-                  return (
-                    <option key={bed.id} value={bed.id}>
-                      {rate != null
-                        ? `${bed.bed_number} · ${formatCurrency(rate, { empty: '—' })}/day`
-                        : bed.bed_number}
-                    </option>
-                  );
-                })}
+                {availableBeds.map((bed) => (
+                  <option key={bed.id} value={bed.id}>
+                    {bed.bed_number}
+                  </option>
+                ))}
               </select>
               {show("bed") ? (
                 <span className="ipd-field-error">{errors.bed}</span>

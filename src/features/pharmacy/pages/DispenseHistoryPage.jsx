@@ -198,7 +198,7 @@ export default function DispenseHistoryPage() {
                     }
               }
             >
-              <table className="data-table pharmacy-history-table">
+              <table className="data-table pharmacy-history-table pharmacy-table--stack">
                 <thead>
                   <tr>
                     <th>Patient ID</th>
@@ -230,30 +230,30 @@ export default function DispenseHistoryPage() {
                   ) : (
                     rows.map((row) => (
                       <tr key={row.id} className="pharmacy-history-table__row">
-                        <td>
+                        <td data-label="Patient ID">
                           <span className="pharmacy-history-table__id">
                             {formatPharmacyPatientIdDisplay(row)}
                           </span>
                         </td>
-                        <td className="pharmacy-history-table__patient-cell">
+                        <td className="pharmacy-history-table__patient-cell" data-label="Patient">
                           <span className="pharmacy-history-table__patient">
                             {row.patient_name || '—'}
                           </span>
                         </td>
-                        <td className="pharmacy-history-table__meds">
+                        <td className="pharmacy-history-table__meds" data-label="Medicines">
                           <PharmacyTruncatedText
                             text={row.medicines_summary}
                             maxLength={MEDICINES_TEXT_MAX}
                           />
                         </td>
-                        <td className="pharmacy-history-table__qty">
-                          {row.quantity_dispensed ?? '—'}
+                        <td className="pharmacy-history-table__qty" data-label="Qty">
+                          <span>{row.quantity_dispensed ?? '—'}</span>
                         </td>
-                        <td className="pharmacy-history-table__status">
+                        <td className="pharmacy-history-table__status" data-label="Status">
                           <PharmacyStatusBadge status={row.status} />
                         </td>
-                        <td className="pharmacy-history-table__date">
-                          {fmtDt(row.dispensed_at)}
+                        <td className="pharmacy-history-table__date" data-label="Date">
+                          <span>{fmtDt(row.dispensed_at)}</span>
                         </td>
                       </tr>
                     ))

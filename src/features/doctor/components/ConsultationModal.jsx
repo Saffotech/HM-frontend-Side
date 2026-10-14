@@ -23,7 +23,11 @@ import {
   invalidateDoctorIpdAdmissions,
   optimisticallyCompleteAppointment,
 } from '@/features/doctor/utils/doctorDashboardCache';
-import { isLabRepeatRequired } from '@/features/doctor/utils/labRepeatRequired';
+import {
+  isLabRepeatRequired,
+  isLabDuplicateOrderError,
+  resolveLabIsRepeat,
+} from '@/features/doctor/utils/labRepeatRequired';
 import { stripInternalAppointmentMarkers } from '@/features/opd/utils/appointmentPaymentUtils';
 import { Modal, Button, Input, Textarea, Select } from '@/shared/components/common';
 import { doctorLabsApi, doctorPrescriptionsApi } from '@/shared/api/services';
@@ -116,49 +120,78 @@ function symptomsPrefillFromAppointment(detail) {
   return text;
 }
 
-function filledLabOrderRows(labOrders) {
-  return labOrders.filter(
-    (row) =>
-      row.deptCode
-      && (row.labTestId != null || String(row.testName ?? '').trim()),
-  );
+function filledLabOrderEntries(labOrders) {
+  return labOrders
+    .map((row, index) => ({ row, index }))
+    .filter(
+      ({ row }) =>
+        row.deptCode
+        && (row.labTestId != null || String(row.testName ?? '').trim()),
+    );
 }
 
-/** Create all lab orders in parallel; ignore duplicate-order conflicts. */
-async function createLabOrdersParallel({
-  rows,
+async function createSingleLabOrder({
+  row,
+  index,
   labRoutingDepts,
   token,
   basePayload,
+  repeatContext,
 }) {
-  if (!rows.length) return;
+  const departmentId = resolveLabDepartmentId(labRoutingDepts, row.deptCode);
+  const payload = {
+    ...basePayload,
+    labTestId: row.labTestId ?? undefined,
+    testName: String(row.testName).trim(),
+    category: inferLabCategory(row.testName, row.deptCode),
+    departmentId: departmentId ?? undefined,
+    priority: row.priority || 'Normal',
+    clinicalNotes: row.clinicalNotes,
+  };
+  const isRepeat = resolveLabIsRepeat(row, index, repeatContext);
+
+  try {
+    return await doctorLabsApi.addLabTest({ ...payload, isRepeat }, token);
+  } catch (err) {
+    if (
+      !isRepeat
+      && isLabDuplicateOrderError(err)
+      && !isLabRepeatRequired(row, index, repeatContext)
+    ) {
+      return doctorLabsApi.addLabTest({ ...payload, isRepeat: true }, token);
+    }
+    throw err;
+  }
+}
+
+/** Create all lab orders in parallel; auto-repeat when a duplicate is detected. */
+async function createLabOrdersParallel({
+  labOrders,
+  labRoutingDepts,
+  token,
+  basePayload,
+  repeatContext,
+}) {
+  const entries = filledLabOrderEntries(labOrders);
+  if (!entries.length) return;
 
   const results = await Promise.allSettled(
-    rows.map((row) => {
-      const departmentId = resolveLabDepartmentId(labRoutingDepts, row.deptCode);
-      return doctorLabsApi.addLabTest(
-        {
-          ...basePayload,
-          labTestId: row.labTestId ?? undefined,
-          testName: String(row.testName).trim(),
-          category: inferLabCategory(row.testName, row.deptCode),
-          departmentId: departmentId ?? undefined,
-          priority: row.priority || 'Normal',
-          clinicalNotes: row.clinicalNotes,
-          isRepeat: Boolean(row.isRepeat),
-        },
+    entries.map(({ row, index }) =>
+      createSingleLabOrder({
+        row,
+        index,
+        labRoutingDepts,
         token,
-      );
-    }),
+        basePayload,
+        repeatContext,
+      }),
+    ),
   );
 
   const failures = [];
   for (const result of results) {
     if (result.status !== 'rejected') continue;
-    const msg = String(result.reason?.message ?? '');
-    if (!/already been ordered/i.test(msg)) {
-      failures.push(msg || 'Could not create lab order');
-    }
+    failures.push(String(result.reason?.message ?? 'Could not create lab order'));
   }
   if (failures.length) {
     throw new Error(failures[0]);
@@ -240,6 +273,38 @@ async function createPrescriptionIfNeeded({
   }
 }
 
+
+function todayIsoLocal() {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
+function findDuplicateMedicineIndexes(meds) {
+  const seen = new Map();
+  const duplicates = new Set();
+
+  meds.forEach((medicine, index) => {
+    const name = String(medicine.name ?? '')
+      .trim()
+      .replace(/\s+/g, ' ')
+      .toLowerCase();
+
+    if (!name) return;
+
+    if (seen.has(name)) {
+      duplicates.add(index);
+      duplicates.add(seen.get(name));
+    } else {
+      seen.set(name, index);
+    }
+  });
+
+  return duplicates;
+}
+
+
 export default function ConsultationModal({
   appointment,
   open,
@@ -261,6 +326,7 @@ export default function ConsultationModal({
   const skipDraftPersistRef = useRef(false);
   const draftTimerRef = useRef(null);
   const saveLockRef = useRef(false);
+  const medicineCardRefs = useRef({});
 
   const isIpdConsult = isIpdEncounter(appointment);
   const admissionId = appointment?.admissionId ?? appointment?.admission_id ?? null;
@@ -406,7 +472,15 @@ export default function ConsultationModal({
       isIpd,
     }) => {
       const validMeds = meds.filter((m) => m.name.trim());
-      const labsToCreate = filledLabOrderRows(labOrders);
+      const labsToCreate = filledLabOrderEntries(labOrders);
+      const labRepeatContext = {
+        existingOrders: existingLabTests,
+        labOrders,
+        visit: {
+          appointmentDbId: nextAppointmentDbId,
+          admissionId: nextAdmissionId,
+        },
+      };
       const linkPayload =
         nextAdmissionId != null
           ? { admissionId: nextAdmissionId }
@@ -468,7 +542,7 @@ export default function ConsultationModal({
           if (labsToCreate.length > 0) {
             tasks.push(
               createLabOrdersParallel({
-                rows: labsToCreate,
+                labOrders,
                 labRoutingDepts,
                 token,
                 basePayload: {
@@ -476,6 +550,7 @@ export default function ConsultationModal({
                   patientUid,
                   patientName,
                 },
+                repeatContext: labRepeatContext,
               }),
             );
           }
@@ -485,7 +560,7 @@ export default function ConsultationModal({
         } catch (err) {
           toast.error(
             err?.message
-              || 'Consultation saved, but a prescription or lab order failed. Check Labs / Prescriptions.',
+            || 'Consultation saved, but a prescription or lab order failed. Check Labs / Prescriptions.',
           );
         }
 
@@ -528,6 +603,7 @@ export default function ConsultationModal({
       notes,
       labRoutingDepts,
       queryClient,
+      existingLabTests,
     ],
   );
 
@@ -557,18 +633,41 @@ export default function ConsultationModal({
         errs[`labRepeat_${i}`] = 'Check Repeat test — this test was already ordered today';
       }
     });
+
     meds.forEach((m, i) => {
       validateConsultationMedicineRow(m, i, errs);
     });
+
+    const duplicateIndexes = [...findDuplicateMedicineIndexes(meds)];
+
     setFieldErrors(errs);
+    if (duplicateIndexes.length) {
+      if (tab !== 'rx') setTab('rx');
+      toast.error('This medicine is already added. Please select a different medicine.');
+      const target = Math.max(...duplicateIndexes);
+      window.setTimeout(() => {
+        medicineCardRefs.current[target]?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+      }, 60);
+      return;
+    }
     if (Object.keys(errs).length) {
       if (errs.diagnosis) {
         toast.error('Diagnosis is required');
         if (tab !== 'clinical') setTab('clinical');
       } else {
         const hasMedErr = Object.keys(errs).some((key) => key.startsWith('med'));
+        const hasLabRepeatErr = Object.keys(errs).some((key) => key.startsWith('labRepeat_'));
         if (hasMedErr && tab !== 'rx') setTab('rx');
+        if (hasLabRepeatErr && tab !== 'lab') setTab('lab');
       }
+      return;
+    }
+    if (followUp && followUp < todayIsoLocal()) {
+      toast.error('Follow-up date cannot be in the past');
+      if (tab !== 'lab') setTab('lab');
       return;
     }
 
@@ -664,8 +763,13 @@ export default function ConsultationModal({
       {tab === 'rx' && (
         <div className="doc-consult-panel doc-consult-panel--rx">
           {meds.map((m, i) => (
-            <PrescriptionMedicineCard
+            <div
               key={i}
+              ref={(node) => {
+                medicineCardRefs.current[i] = node;
+              }}
+            >
+            <PrescriptionMedicineCard
               medicine={m}
               index={i}
               fieldErrors={fieldErrors}
@@ -678,11 +782,16 @@ export default function ConsultationModal({
                 'durationUnit',
               ]}
               canRemove={meds.length > 1}
-              onAdd={
-                i === 0
-                  ? () => setMeds([...meds, emptyMedicineRow()])
-                  : null
-              }
+              onAdd={() => {
+                const nextIndex = meds.length;
+                setMeds([...meds, emptyMedicineRow()]);
+                window.setTimeout(() => {
+                  medicineCardRefs.current[nextIndex]?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                  });
+                }, 60);
+              }}
               onRemove={() => {
                 setMeds(meds.filter((_, j) => j !== i));
                 setFieldErrors((prev) => {
@@ -720,6 +829,7 @@ export default function ConsultationModal({
                 });
               }}
             />
+            </div>
           ))}
         </div>
       )}
@@ -758,12 +868,12 @@ export default function ConsultationModal({
                         rows.map((item, j) =>
                           j === i
                             ? {
-                                ...item,
-                                deptCode: code,
-                                testName: '',
-                                labTestId: null,
-                                otherTest: false,
-                              }
+                              ...item,
+                              deptCode: code,
+                              testName: '',
+                              labTestId: null,
+                              otherTest: false,
+                            }
                             : item,
                         ),
                       );
@@ -780,13 +890,13 @@ export default function ConsultationModal({
                     options={
                       labRoutingDepts.length
                         ? labRoutingDepts.map((d) => ({
-                            value: departmentCode(d) || d.code,
-                            label: d.name || d.label || labDepartmentLabel(d),
-                          }))
+                          value: departmentCode(d) || d.code,
+                          label: d.name || d.label || labDepartmentLabel(d),
+                        }))
                         : LAB_DEPARTMENTS.map((d) => ({
-                            value: d.code,
-                            label: d.label,
-                          }))
+                          value: d.code,
+                          label: d.label,
+                        }))
                     }
                   />
                   <LabTestNameField
@@ -821,9 +931,8 @@ export default function ConsultationModal({
                   />
                 </div>
                 <label
-                  className={`doc-lab-order__repeat${
-                    repeatRequired ? ' doc-lab-order__repeat--required' : ''
-                  }`}
+                  className={`doc-lab-order__repeat${repeatRequired ? ' doc-lab-order__repeat--required' : ''
+                    }`}
                 >
                   <input
                     type="checkbox"
@@ -852,7 +961,7 @@ export default function ConsultationModal({
                   <span className="doc-lab-order__repeat-hint">
                     {repeatRequired
                       ? 'Required — this test was already ordered today for this visit'
-                      : 'Allow ordering again if this test is already in progress'}
+                      : 'Check to order again if this test is already in progress from an earlier day'}
                   </span>
                 </label>
                 {fieldErrors[`labRepeat_${i}`] ? (
@@ -884,7 +993,20 @@ export default function ConsultationModal({
             + Add test
           </Button>
           <div className="doc-consult-lab__followup">
-            <Input label="Follow-up date" type="date" value={followUp} onChange={(e) => setFollowUp(e.target.value)} />
+            <Input
+              label="Follow-up date"
+              type="date"
+              min={todayIsoLocal()}
+              value={followUp}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value && value < todayIsoLocal()) {
+                  toast.error('Follow-up date cannot be in the past');
+                  return;
+                }
+                setFollowUp(value);
+              }}
+            />
           </div>
         </div>
       )}

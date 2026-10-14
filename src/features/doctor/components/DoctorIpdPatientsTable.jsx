@@ -34,7 +34,7 @@ function IpdTableSkeleton({ showActions, showWardBedColumn }) {
   return (
     <div className="table-wrap" aria-busy="true" aria-label="Loading IPD patients">
       <table
-        className={`data-table doc-dashboard-table doc-dashboard-table--loading${
+        className={`data-table doc-dashboard-table doc-table--stack doc-dashboard-table--loading${
           showActions ? ' doc-dashboard-table--with-actions' : ''
         }`}
       >
@@ -57,15 +57,15 @@ function IpdTableSkeleton({ showActions, showWardBedColumn }) {
         <tbody>
           {Array.from({ length: 4 }).map((_, index) => (
             <tr key={index} className="doc-dashboard-table__row doc-dashboard-table__row--skeleton">
-              <td><Skeleton height={14} width="70%" /></td>
-              <td><Skeleton height={14} width="85%" /></td>
-              {showWardBedColumn ? <td><Skeleton height={14} width={88} /></td> : null}
-              <td><Skeleton height={14} width={72} /></td>
-              <td><Skeleton height={22} width={72} /></td>
-              <td><Skeleton height={14} width={96} /></td>
-              <td className="doc-dashboard-table__visit-count"><Skeleton height={14} width={40} /></td>
+              <td data-label="Patient ID"><Skeleton height={14} width="70%" /></td>
+              <td data-label="Patient Name"><Skeleton height={14} width="85%" /></td>
+              {showWardBedColumn ? <td data-label="Ward / Bed No"><Skeleton height={14} width={88} /></td> : null}
+              <td data-label="Date"><Skeleton height={14} width={72} /></td>
+              <td data-label="Status"><Skeleton height={22} width={72} /></td>
+              <td data-label="Nurse Allocated"><Skeleton height={14} width={96} /></td>
+              <td className="doc-dashboard-table__visit-count" data-label="Visits"><Skeleton height={14} width={40} /></td>
               {showActions ? (
-                <td><Skeleton height={30} width={72} /></td>
+                <td data-label="Actions"><Skeleton height={30} width={72} /></td>
               ) : null}
             </tr>
           ))}
@@ -118,7 +118,7 @@ function DoctorIpdPatientsTable({
         <>
           <div className="table-wrap">
             <table
-              className={`data-table doc-dashboard-table${
+              className={`data-table doc-dashboard-table doc-table--stack${
                 showActions ? ' doc-dashboard-table--with-actions' : ''
               }`}
             >
@@ -163,10 +163,10 @@ function DoctorIpdPatientsTable({
                           }
                         }}
                       >
-                        <td className="doc-dashboard-table__patient-id">
+                        <td className="doc-dashboard-table__patient-id" data-label="Patient ID">
                           {row.patientUid ?? row.patientId ?? '—'}
                         </td>
-                        <td className="doc-dashboard-table__patient-name-cell">
+                        <td className="doc-dashboard-table__patient-name-cell" data-label="Patient Name">
                           <strong>{row.patientName}</strong>
                           {!showWardBedColumn && (row.wardName || row.bedNumber) ? (
                             <span className="doc-dashboard-table__ipd-meta">
@@ -177,11 +177,11 @@ function DoctorIpdPatientsTable({
                           ) : null}
                         </td>
                         {showWardBedColumn ? (
-                          <td className="doc-dashboard-table__ward-bed">
+                          <td className="doc-dashboard-table__ward-bed" data-label="Ward / Bed No">
                             {formatWardBed(row)}
                           </td>
                         ) : null}
-                        <td className="doc-dashboard-table__time">
+                        <td className="doc-dashboard-table__time" data-label="Date">
                           <time dateTime={row.admittedAt ?? row.scheduledAt}>
                             {formatIpdDate(row)}
                             {row.time ? (
@@ -191,13 +191,13 @@ function DoctorIpdPatientsTable({
                             ) : null}
                           </time>
                         </td>
-                        <td className="doc-dashboard-table__appt-status">
+                        <td className="doc-dashboard-table__appt-status" data-label="Status">
                           <StatusPill status={row.status} />
                         </td>
-                        <td className="doc-dashboard-table__nurse">
+                        <td className="doc-dashboard-table__nurse" data-label="Nurse Allocated">
                           {formatNurseAllocated(row)}
                         </td>
-                        <td className="doc-dashboard-table__visit-count">
+                        <td className="doc-dashboard-table__visit-count" data-label="Visits">
                           {visitCounts.get(row.admissionId) ??
                             visitCounts.get(row.patientDbId) ??
                             visitCounts.get(row.patientUid) ??
@@ -206,6 +206,7 @@ function DoctorIpdPatientsTable({
                         {showActions ? (
                           <td
                             className="doc-dashboard-table__actions"
+                            data-label="Actions"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <AppointmentRowActions

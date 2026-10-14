@@ -36,6 +36,11 @@ import {
   staffDepartmentSelectOptions,
   staffDepartmentSelectValue,
 } from '@/shared/utils/labDepartments';
+import {
+  buildStaffDoctorPatch,
+  isDoctorStaffRole,
+  staffDoctorFieldsFromUser,
+} from '@/features/admin/utils/staffDoctorFields';
 import './StaffDetailPage.css';
 
 function titleCaseName(value) {
@@ -110,6 +115,7 @@ function userToForm(user) {
     department_id: user.department_id ? String(user.department_id) : '',
     employee_id: user.employee_id || '',
     joining_date: user.joining_date ? String(user.joining_date).slice(0, 10) : '',
+    ...staffDoctorFieldsFromUser(user),
   };
 }
 
@@ -206,6 +212,7 @@ export default function StaffDetailPage() {
         department_id: departmentId,
         employee_id: (form.employee_id || '').trim() || null,
         joining_date: form.joining_date || null,
+        ...buildStaffDoctorPatch(form, selectedRoleName),
       };
       await updateMutation.mutateAsync({ id: userId, data: payload });
       toast.success('Staff profile updated');
@@ -472,11 +479,39 @@ export default function StaffDetailPage() {
                         </div>
                       </div>
                     </div>
+                    {isDoctorStaffRole(selectedRoleName) ? (
+                      <div className="sa-staff-detail__form-section">
+                        <h3>Doctor credentials</h3>
+                        <div className="sa-staff-detail__fields sa-staff-detail__fields--2">
+                          <div>
+                            <Label htmlFor="admin_staff_specialization">Specialization</Label>
+                            <Input
+                              id="admin_staff_specialization"
+                              value={form.specialization || ''}
+                              onChange={(e) =>
+                                setForm((f) => ({ ...f, specialization: e.target.value }))
+                              }
+                              placeholder="e.g. Cardiology"
+                              maxLength={120}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="admin_staff_med_license">Medical license</Label>
+                            <Input
+                              id="admin_staff_med_license"
+                              value={form.medical_license_number || ''}
+                              onChange={(e) =>
+                                setForm((f) => ({ ...f, medical_license_number: e.target.value }))
+                              }
+                              placeholder="e.g. MH-MED-12345"
+                              maxLength={100}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
                     <div className="sa-staff-detail__form-section">
                       <h3>Employment</h3>
-                      <p className="sa-staff-detail__form-hint">
-                        Visible as read-only on the staff member&apos;s Account tab.
-                      </p>
                       <div className="sa-staff-detail__fields sa-staff-detail__fields--2">
                         <div>
                           <Label htmlFor="admin_staff_emp">Employee ID</Label>
@@ -557,6 +592,15 @@ export default function StaffDetailPage() {
                         label="Joining date"
                         value={formatDate(user.joining_date)}
                       />
+                      {isDoctorStaffRole(user.role_name || user.role) ? (
+                        <>
+                          <DetailField label="Specialization" value={user.specialization} />
+                          <DetailField
+                            label="Medical license"
+                            value={user.medical_license_number ?? user.medical_license}
+                          />
+                        </>
+                      ) : null}
                     </dl>
                   </section>
                 </div>

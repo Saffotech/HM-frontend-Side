@@ -298,7 +298,7 @@ export default function NurseDashboardPage() {
                 className="nurse-input nurse-dashboard-page__search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Name, UHID, bed, or ward…"
+                placeholder="Name, Patient ID, bed, or ward…"
                 aria-label="Search admitted patients"
                 autoComplete="off"
                 spellCheck={false}

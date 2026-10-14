@@ -12,7 +12,7 @@ export async function getAppointmentsByDate(date, token) {
 
 export async function getAppointmentsHistory(token) {
   return apiClient('/appointments/history', { token });
-}
+} 
 
 /** GET /appointments/{id} — fresh detail from API (not list row data). */
 export async function getAppointmentById(appointmentId, token) {

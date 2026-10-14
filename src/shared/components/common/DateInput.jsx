@@ -379,6 +379,7 @@ export default function DateInput({
   const popoverRef = useRef(null);
   const inputRef = useRef(null);
   const isTypingRef = useRef(false);
+  const skipBlurCommitRef = useRef(false);
 
   const days = useMemo(
     () => buildCalendarDays(viewYear, viewMonth),
@@ -440,10 +441,6 @@ export default function DateInput({
       setPopoverStyle(null);
       return undefined;
     }
-    if (selected) {
-      setViewYear(selected.getFullYear());
-      setViewMonth(selected.getMonth());
-    }
     updatePopoverPosition();
     window.addEventListener('resize', updatePopoverPosition);
     window.addEventListener('scroll', updatePopoverPosition, true);
@@ -451,7 +448,15 @@ export default function DateInput({
       window.removeEventListener('resize', updatePopoverPosition);
       window.removeEventListener('scroll', updatePopoverPosition, true);
     };
-  }, [open, selected, updatePopoverPosition]);
+  }, [open, updatePopoverPosition]);
+
+  useEffect(() => {
+    if (!open) return;
+    const date = parseYmd(dateValue);
+    if (!date) return;
+    setViewYear(date.getFullYear());
+    setViewMonth(date.getMonth());
+  }, [open]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -484,15 +489,15 @@ export default function DateInput({
     (date) => {
       if (isBeforeDay(date, min) || isAfterDay(date, max)) return;
       const ymd = toYmd(date);
+      skipBlurCommitRef.current = true;
+      isTypingRef.current = false;
       if (withTime) {
         const hm = `${pad2(pickerHour)}:${pad2(pickerMinute)}`;
         emitDatetime(ymd, hm);
-        isTypingRef.current = false;
         return;
       }
       emitChange(ymd);
       setTextValue(formatDisplay(ymd));
-      isTypingRef.current = false;
       setOpen(false);
     },
     [emitChange, emitDatetime, min, max, pickerHour, pickerMinute, withTime],
@@ -579,6 +584,10 @@ export default function DateInput({
 
   const handleTextBlur = () => {
     window.setTimeout(() => {
+      if (skipBlurCommitRef.current) {
+        skipBlurCommitRef.current = false;
+        return;
+      }
       const active = document.activeElement;
       if (wrapRef.current?.contains(active) || popoverRef.current?.contains(active)) {
         return;
@@ -628,6 +637,8 @@ export default function DateInput({
   const handleToday = () => {
     const ymd = toYmd(today);
     if (!isBeforeDay(today, min) && !isAfterDay(today, max)) {
+      skipBlurCommitRef.current = true;
+      isTypingRef.current = false;
       if (withTime) {
         const hm = currentTimeHm();
         const [h, m] = hm.split(':').map(Number);
@@ -638,15 +649,15 @@ export default function DateInput({
         emitChange(ymd);
         setTextValue(formatDisplay(ymd));
       }
-      isTypingRef.current = false;
       setOpen(false);
     }
   };
 
   const handleClear = () => {
+    skipBlurCommitRef.current = true;
+    isTypingRef.current = false;
     emitChange('');
     setTextValue('');
-    isTypingRef.current = false;
     setOpen(false);
   };
 
@@ -705,7 +716,13 @@ export default function DateInput({
           style={popoverStyle}
         >
           <div className="date-picker__head">
-            <button type="button" className="date-picker__nav" onClick={goPrevMonth} aria-label="Previous month">
+            <button
+              type="button"
+              className="date-picker__nav"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={goPrevMonth}
+              aria-label="Previous month"
+            >
               <ChevronLeft size={15} />
             </button>
             <div className="date-picker__selects">
@@ -728,7 +745,13 @@ export default function DateInput({
                 onChange={setViewYear}
               />
             </div>
-            <button type="button" className="date-picker__nav" onClick={goNextMonth} aria-label="Next month">
+            <button
+              type="button"
+              className="date-picker__nav"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={goNextMonth}
+              aria-label="Next month"
+            >
               <ChevronRight size={15} />
             </button>
           </div>
@@ -758,6 +781,7 @@ export default function DateInput({
                     isToday ? 'date-picker__day--today' : '',
                   ].filter(Boolean).join(' ')}
                   disabled={isDisabled}
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => pickDate(date)}
                 >
                   {date.getDate()}
@@ -808,19 +832,30 @@ export default function DateInput({
           )}
 
           <div className="date-picker__footer">
-            <button type="button" className="date-picker__action" onClick={handleClear}>
+            <button
+              type="button"
+              className="date-picker__action"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={handleClear}
+            >
               Clear
             </button>
             {withTime ? (
               <button
                 type="button"
                 className="date-picker__action date-picker__action--primary"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => setOpen(false)}
               >
                 Done
               </button>
             ) : (
-              <button type="button" className="date-picker__action date-picker__action--primary" onClick={handleToday}>
+              <button
+                type="button"
+                className="date-picker__action date-picker__action--primary"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={handleToday}
+              >
                 Today
               </button>
             )}

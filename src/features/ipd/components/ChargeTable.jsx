@@ -30,7 +30,7 @@ export default function ChargeTable({
 
   return (
     <div className="ipd-table-wrap">
-      <table className={`ipd-table${compact ? ' ipd-table--dense' : ''} ipd-table--charges`}>
+      <table className={`ipd-table${compact ? ' ipd-table--dense' : ''} ipd-table--charges ipd-table--stack`}>
         <thead>
           <tr>
             <th>Description</th>
@@ -42,12 +42,12 @@ export default function ChargeTable({
         <tbody>
           {rows.map((row) => (
             <tr key={row.id || `${row.description}-${row.amount}`}>
-              <td>{row.description || '—'}</td>
-              <td className="ipd-num">{row.qty ?? '—'}</td>
-              <td className="ipd-num">
+              <td data-label="Description">{row.description || '—'}</td>
+              <td className="ipd-num" data-label="Qty">{row.qty ?? '—'}</td>
+              <td className="ipd-num" data-label="Unit">
                 {formatCurrency(row.unit_price, { empty: '—' })}
               </td>
-              <td className="ipd-num ipd-num--strong">
+              <td className="ipd-num ipd-num--strong" data-label="Amount">
                 {formatCurrency(row.amount, { empty: '—' })}
               </td>
             </tr>

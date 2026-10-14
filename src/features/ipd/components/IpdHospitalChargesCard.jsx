@@ -2,7 +2,7 @@
  * Hospital charge heads — shared by insurance cashless and self / pay-and-claim billing.
  */
 
-import { Fragment, memo, useState } from 'react';
+import { Fragment, memo, useRef, useState } from 'react';
 import { Button } from '@/shared/components/common';
 import {
   calculateInsuranceChargeTotals,
@@ -26,9 +26,16 @@ function IpdHospitalChargesCard({
   const [focusHead, setFocusHead] = useState('room');
   const [newHeadLabel, setNewHeadLabel] = useState('');
   const [newHeadAmount, setNewHeadAmount] = useState('');
+  const editStartRef = useRef('');
+  const chargeScrollRef = useRef(null);
 
   const hospitalChargeBuckets = groupHospitalChargeBuckets(charges);
   const totals = calculateInsuranceChargeTotals(charges);
+
+  const persistCharges = (next) => {
+    onChargesChange(next);
+    onSave?.(next);
+  };
 
   const setAmount = (id, value) => {
     onChargesChange(
@@ -42,8 +49,22 @@ function IpdHospitalChargesCard({
     );
   };
 
+  const commitAmount = (id, value) => {
+    if (String(value) === editStartRef.current) return;
+    persistCharges(
+      charges.map((row) => (row.id === id ? { ...row, amount: value } : row)),
+    );
+  };
+
+  const commitLabel = (id, value) => {
+    if (String(value) === editStartRef.current) return;
+    persistCharges(
+      charges.map((row) => (row.id === id ? { ...row, label: value } : row)),
+    );
+  };
+
   const removeCharge = (id) => {
-    onChargesChange(charges.filter((row) => row.id !== id));
+    persistCharges(charges.filter((row) => row.id !== id));
   };
 
   const addChargeHead = () => {
@@ -53,7 +74,7 @@ function IpdHospitalChargesCard({
       return;
     }
     const amount = Number(newHeadAmount) || 0;
-    onChargesChange(
+    persistCharges(
       sortInsuranceChargeHeads([
         ...charges,
         createCustomChargeHead(label, amount),
@@ -61,22 +82,29 @@ function IpdHospitalChargesCard({
     );
     setNewHeadLabel('');
     setNewHeadAmount('');
-    toast.success('Charge head added — save to keep changes');
+    window.setTimeout(() => {
+      const list = chargeScrollRef.current;
+      if (list) list.scrollTop = list.scrollHeight;
+    }, 0);
   };
 
   return (
     <div className="ipd-card">
       <div className="ipd-card__head">
         <h2 className="ipd-card__title">Hospital Charges</h2>
-        <Button type="button" size="sm" onClick={onSave} disabled={saving}>
-          {saving ? 'Saving…' : 'Save Charges'}
-        </Button>
+        {saving ? <span className="ipd-page__subtitle">Saving…</span> : null}
       </div>
       <div className="ipd-card__body ipd-ins-charge-card">
         {hint ? <p className="ipd-ins-charge-card__hint">{hint}</p> : null}
 
         <div className="ipd-ins-charge-bucket">
+          <div className="ipd-ins-charge-scroll" ref={chargeScrollRef}>
           <table className="ipd-ins-charge-table">
+            <colgroup>
+              <col />
+              <col className="ipd-ins-charge-table__col-amount" />
+              <col className="ipd-ins-charge-table__col-action" />
+            </colgroup>
             <thead>
               <tr>
                 <th>Charge head</th>
@@ -99,36 +127,49 @@ function IpdHospitalChargesCard({
                         focusHead === row.id ? ' ipd-ins-charge-table__row--focus' : ''
                       }${isDiscountCharge(row) ? ' ipd-ins-charge-table__row--discount' : ''}`}
                     >
-                      <td>
+                      <td data-label="Charge head">
                         {isDefaultChargeHead(row) ? (
                           <span className="ipd-ins-charge-table__label">{row.label}</span>
                         ) : (
                           <input
                             className="ipd-input ipd-ins-charge-table__name-input"
                             value={row.label}
-                            onFocus={() => setFocusHead(row.id)}
+                            disabled={saving}
+                            onFocus={() => {
+                              setFocusHead(row.id);
+                              editStartRef.current = String(row.label ?? '');
+                            }}
                             onChange={(e) => setLabel(row.id, e.target.value)}
+                            onBlur={(e) => commitLabel(row.id, e.target.value)}
                             aria-label="Charge head name"
                           />
                         )}
                       </td>
-                      <td className="ipd-num">
+                      <td className="ipd-num" data-label="Amount">
                         <input
                           className="ipd-input ipd-ins-charge-input ipd-ins-charge-table__amount-input"
                           value={row.amount}
-                          onFocus={() => setFocusHead(row.id)}
+                          disabled={saving}
+                          onFocus={() => {
+                            setFocusHead(row.id);
+                            editStartRef.current = String(row.amount ?? '');
+                          }}
                           onChange={(e) =>
                             setAmount(row.id, e.target.value.replace(/[^\d.]/g, ''))
+                          }
+                          onBlur={(e) =>
+                            commitAmount(row.id, e.target.value.replace(/[^\d.]/g, ''))
                           }
                           inputMode="decimal"
                           aria-label={`Amount for ${row.label}`}
                         />
                       </td>
-                      <td className="ipd-ins-charge-table__action">
+                      <td className="ipd-ins-charge-table__action" data-label="Actions">
                         {!isDefaultChargeHead(row) ? (
                           <button
                             type="button"
                             className="ipd-text-link ipd-ins-charge-remove"
+                            disabled={saving}
                             onClick={() => removeCharge(row.id)}
                           >
                             Remove
@@ -140,7 +181,15 @@ function IpdHospitalChargesCard({
                 </Fragment>
               ))}
             </tbody>
-            <tfoot>
+          </table>
+          </div>
+          <table className="ipd-ins-charge-table ipd-ins-charge-table--footer">
+            <colgroup>
+              <col />
+              <col className="ipd-ins-charge-table__col-amount" />
+              <col className="ipd-ins-charge-table__col-action" />
+            </colgroup>
+            <tbody>
               <tr className="ipd-ins-charge-table__add-row">
                 <td colSpan={3}>
                   <div className="ipd-ins-charge-table__add">
@@ -166,6 +215,7 @@ function IpdHospitalChargesCard({
                       variant="secondary"
                       size="sm"
                       onClick={addChargeHead}
+                      disabled={saving}
                     >
                       + Add
                     </Button>
@@ -179,7 +229,7 @@ function IpdHospitalChargesCard({
                 </td>
                 <td />
               </tr>
-            </tfoot>
+            </tbody>
           </table>
         </div>
       </div>

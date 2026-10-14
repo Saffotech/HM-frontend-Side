@@ -152,7 +152,7 @@ export default function VisitsReportPage() {
                   ) : (
                     <>
                       <div className="admin-table-wrap">
-                        <table className="admin-table">
+                        <table className="admin-table admin-table--stack">
                           <thead>
                             <tr>
                               <th>Bill #</th>
@@ -169,23 +169,25 @@ export default function VisitsReportPage() {
                           <tbody>
                             {visits.map((visit) => (
                               <tr key={visit.visit_id}>
-                                <td>{visit.bill_number}</td>
-                                <td>{visit.token_number}</td>
-                                <td>#{visit.patient_id}</td>
-                                <td>{visit.department_name}</td>
-                                <td>{formatReportDate(visit.visit_date)}</td>
-                                <td className="admin-table__num">
-                                  {formatCurrency(visit.grand_total)}
+                                <td data-label="Bill #"><span>{visit.bill_number}</span></td>
+                                <td data-label="Token"><span>{visit.token_number}</span></td>
+                                <td data-label="Patient"><span>#{visit.patient_id}</span></td>
+                                <td data-label="Department"><span>{visit.department_name}</span></td>
+                                <td data-label="Visit date"><span>{formatReportDate(visit.visit_date)}</span></td>
+                                <td className="admin-table__num" data-label="Total">
+                                  <span>{formatCurrency(visit.grand_total)}</span>
                                 </td>
-                                <td className="admin-table__num">
+                                <td className="admin-table__num" data-label="Paid">
+                                  <span>
                                   {visit.paid_amount != null
                                     ? formatCurrency(visit.paid_amount)
                                     : '—'}
+                                  </span>
                                 </td>
-                                <td>
+                                <td data-label="Payment">
                                   <AdminStatusPill label={visit.payment_status} />
                                 </td>
-                                <td>
+                                <td data-label="Status">
                                   <AdminStatusPill label={visit.status} />
                                 </td>
                               </tr>

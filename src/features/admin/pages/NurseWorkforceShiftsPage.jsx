@@ -86,7 +86,7 @@ export default function NurseWorkforceShiftsPage() {
 
         <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
           <div className="admin-table-wrap nwf-panel">
-            <table className="admin-table">
+            <table className="admin-table admin-table--stack">
               <thead>
                 <tr>
                   <th>Name</th>
@@ -96,25 +96,25 @@ export default function NurseWorkforceShiftsPage() {
                   <th>Grace</th>
                   <th>Color</th>
                   <th>Template</th>
-                  <th />
+                  <th className="admin-table__actions">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {(data?.items ?? []).map((s) => (
                   <tr key={s.id}>
-                    <td>{s.name}</td>
-                    <td>{s.code || '—'}</td>
-                    <td>{String(s.start_time).slice(0, 5)}</td>
-                    <td>{String(s.end_time).slice(0, 5)}</td>
-                    <td>{s.grace_minutes}</td>
-                    <td>
+                    <td data-label="Name"><span>{s.name}</span></td>
+                    <td data-label="Code"><span>{s.code || '—'}</span></td>
+                    <td data-label="Start"><span>{String(s.start_time).slice(0, 5)}</span></td>
+                    <td data-label="End"><span>{String(s.end_time).slice(0, 5)}</span></td>
+                    <td data-label="Grace"><span>{s.grace_minutes}</span></td>
+                    <td data-label="Color">
                       <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 4, background: s.color }} />
                     </td>
-                    <td>{s.is_template ? 'Yes' : 'No'}</td>
-                    <td>
+                    <td data-label="Template"><span>{s.is_template ? 'Yes' : 'No'}</span></td>
+                    <td className="admin-table__actions" data-label="Action">
                       {canDelete && (
                         <Button
-                          variant="ghost"
+                          variant="danger"
                           size="sm"
                           onClick={() =>
                             deleteMut.mutate(s.id, {

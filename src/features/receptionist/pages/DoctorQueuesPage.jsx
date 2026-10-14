@@ -370,7 +370,7 @@ export default function DoctorQueuesPage() {
 
           <div className="rec-table-wrap rec-doctor-detail__table">
             <p className="rec-section-label rec-section-label--padded">Today&apos;s Queue</p>
-            <table className="rec-table">
+            <table className="rec-table rec-table--stack">
               <thead>
                 <tr>
                   <th className="rec-text-center" style={{ width: '2.5rem' }}>
@@ -399,16 +399,24 @@ export default function DoctorQueuesPage() {
                 ) : (
                   patients.map((p, idx) => (
                     <tr key={p.id}>
-                      <td className="rec-text-center rec-text-muted rec-tabular">
-                        {(queuePage - 1) * PAGE_SIZE_LIST + idx + 1}
+                      <td className="rec-text-center rec-text-muted rec-tabular" data-label="#">
+                        <span>{(queuePage - 1) * PAGE_SIZE_LIST + idx + 1}</span>
                       </td>
-                      <td className="rec-font-semibold">{p.patient_uid}</td>
-                      <td className="rec-font-medium">{p.name}</td>
-                      <td className="rec-text-muted">{p.department ?? '—'}</td>
-                      <td>
+                      <td className="rec-font-semibold" data-label="Patient ID">
+                        <span>{p.patient_uid}</span>
+                      </td>
+                      <td className="rec-font-medium" data-label="Patient Name">
+                        <span>{p.name}</span>
+                      </td>
+                      <td className="rec-text-muted" data-label="Department">
+                        <span>{p.department ?? '—'}</span>
+                      </td>
+                      <td data-label="Status">
                         <StatusBadge status={p.display_status ?? p.status} />
                       </td>
-                      <td className="rec-font-medium rec-tabular">{p.scheduled_at}</td>
+                      <td className="rec-font-medium rec-tabular" data-label="Appointment Time">
+                        <span>{p.scheduled_at}</span>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -496,7 +504,7 @@ export default function DoctorQueuesPage() {
         </div>
 
         <div className="rec-table-wrap rec-doctor-list__table">
-          <table className="rec-table">
+          <table className="rec-table rec-table--stack">
             <thead>
               <tr>
                 <th style={{ width: '2.5rem' }}>#</th>
@@ -532,8 +540,10 @@ export default function DoctorQueuesPage() {
 
                   return (
                     <tr key={doc.id} className="rec-doctor-list__row">
-                      <td className="rec-text-muted rec-tabular">{idx + 1}</td>
-                      <td>
+                      <td className="rec-text-muted rec-tabular" data-label="#">
+                        <span>{idx + 1}</span>
+                      </td>
+                      <td data-label="Doctor Name">
                         <div className="rec-doctor-list__name-cell">
                           <span
                             className={cn(
@@ -547,11 +557,13 @@ export default function DoctorQueuesPage() {
                           <span className="rec-font-medium">{doc.name}</span>
                         </div>
                       </td>
-                      <td>
+                      <td data-label="Department">
                         <span className="rec-dept-pill">{doc.department ?? '—'}</span>
                       </td>
-                      <td className="rec-doctor-list__room">{doc.room_no ?? '—'}</td>
-                      <td className="rec-doctor-list__actions">
+                      <td className="rec-doctor-list__room" data-label="Room No.">
+                        <span>{doc.room_no ?? '—'}</span>
+                      </td>
+                      <td className="rec-doctor-list__actions" data-label="View Queue">
                         <button
                           type="button"
                           className="rec-view-queue-btn"

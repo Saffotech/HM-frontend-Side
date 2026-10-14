@@ -257,25 +257,29 @@
   border-bottom: none;
 }
 
-/* Medicine | Strength | Form | Duration | Frequency | Route | Timing | Instruction | Last Admin | Action */
+/* Medicine | Prescribed doctor | Strength | Duration | Frequency | Timing | Instruction | Last Admin | Action */
 .nurse-patient-meds-page__table .nurse-table th:nth-child(1),
 .nurse-patient-meds-page__table .nurse-table td:nth-child(1) {
   padding-left: 1.15rem;
   min-width: 8.5rem;
 }
 
-.nurse-patient-meds-page__table .nurse-table th:nth-child(10),
-.nurse-patient-meds-page__table .nurse-table td:nth-child(10) {
+.nurse-patient-meds-page__table .nurse-table th:nth-child(2),
+.nurse-patient-meds-page__table .nurse-table td:nth-child(2) {
+  min-width: 7.5rem;
+  white-space: normal;
+}
+
+.nurse-patient-meds-page__table .nurse-table th:nth-child(9),
+.nurse-patient-meds-page__table .nurse-table td:nth-child(9) {
   padding-right: 1.15rem;
   min-width: 12.5rem;
 }
 
-.nurse-patient-meds-page__table .nurse-table td:nth-child(2),
 .nurse-patient-meds-page__table .nurse-table td:nth-child(3),
 .nurse-patient-meds-page__table .nurse-table td:nth-child(4),
 .nurse-patient-meds-page__table .nurse-table td:nth-child(5),
-.nurse-patient-meds-page__table .nurse-table td:nth-child(6),
-.nurse-patient-meds-page__table .nurse-table td:nth-child(7) {
+.nurse-patient-meds-page__table .nurse-table td:nth-child(6) {
   color: #475569;
   font-variant-numeric: tabular-nums;
 }
@@ -343,6 +347,21 @@
   font-size: 1rem;
   font-weight: 700;
   color: #0f172a;
+}
+
+.nurse-patient-meds__last-admin-modal-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.nurse-patient-meds__last-admin-history-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .nurse-patient-meds__last-admin-modal-body {

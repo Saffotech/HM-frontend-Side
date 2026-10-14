@@ -76,6 +76,13 @@ export default function BookAppointmentPage() {
     [scheduledAppointmentsData],
   );
 
+  const scheduledAppointments = useMemo(
+    () => asAppointmentList(scheduledAppointmentsData),
+    [scheduledAppointmentsData],
+  );
+
+ 
+
   const bookablePatients = useMemo(
     () => filterPatientsAvailableForBooking(patients, bookedPatientKeys),
     [patients, bookedPatientKeys],
@@ -127,6 +134,51 @@ export default function BookAppointmentPage() {
   const { data: patientDetail } = usePatientQuery(patientId);
   const selectedPatient =
     patients.find((p) => p.id === patientId) ?? patientDetail ?? null;
+
+    const hasAppointmentOnSelectedDate = useMemo(() => {
+  if (!patientId || !dateStr || !selectedPatient) return false;
+
+  const selectedPatientKey = String(
+    selectedPatient.dbId || selectedPatient.id || patientId
+  );
+
+  return scheduledAppointments.some((appointment) => {
+    const appointmentPatientKey = String(
+      appointment.patientDbId ||
+      appointment.patientId ||
+      appointment.patientUid ||
+      ''
+    );
+
+    if (appointmentPatientKey !== selectedPatientKey) {
+      return false;
+    }
+
+    if (!appointment.date) {
+      return false;
+    }
+
+    const appointmentDate = new Date(appointment.date);
+
+    if (Number.isNaN(appointmentDate.getTime())) {
+      return false;
+    }
+
+    const appointmentDateStr =
+      `${appointmentDate.getFullYear()}-${String(
+        appointmentDate.getMonth() + 1
+      ).padStart(2, '0')}-${String(
+        appointmentDate.getDate()
+      ).padStart(2, '0')}`;
+
+    return appointmentDateStr === dateStr;
+  });
+}, [
+  patientId,
+  dateStr,
+  selectedPatient,
+  scheduledAppointments,
+]);
 
   const { data: patientProfile } = usePatientProfileQuery(selectedPatient?.dbId);
   const profileVisits = patientProfile?.visits ?? [];
@@ -180,16 +232,6 @@ export default function BookAppointmentPage() {
     return opts;
   }, [bookablePatients, patientId, selectedPatient]);
 
-  useEffect(() => {
-    if (!patientId) return;
-    const current =
-      patients.find((p) => p.id === patientId) ??
-      (patientDetail?.id === patientId ? patientDetail : null);
-    if (current && patientHasActiveBookedAppointment(current, bookedPatientKeys)) {
-      handlePatientSelectChange('');
-      toast.info('This patient already has an active appointment. Reschedule from Appointments.');
-    }
-  }, [patientId, patients, patientDetail, bookedPatientKeys, handlePatientSelectChange]);
 
   const patientHistory = useMemo(() => {
     if (!patientId || !profileVisits.length) return null;
@@ -215,7 +257,7 @@ export default function BookAppointmentPage() {
     }
 
     if (patientHasActiveBookedAppointment(selectedPatient, bookedPatientKeys)) {
-      toast.error('This patient already has an active appointment. Reschedule from Appointments.');
+      toast.error('Appointment already exists for this patient on the selected date.');
       return;
     }
 
@@ -318,12 +360,12 @@ export default function BookAppointmentPage() {
 
   const patientInitials = selectedPatient?.name
     ? selectedPatient.name
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((part) => part[0])
-        .join('')
-        .toUpperCase()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase()
     : '';
 
   const pageLoading =

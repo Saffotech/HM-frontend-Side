@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ClipboardList } from 'lucide-react';
 import PharmacyLayout from '@/features/pharmacy/components/PharmacyLayout';
 import PharmacyStatusBadge from '@/features/pharmacy/components/PharmacyStatusBadge';
-import AllergyBanner from '@/features/pharmacy/components/AllergyBanner';
 import PharmacyDetailListModal from '@/features/pharmacy/components/PharmacyDetailListModal';
 import { usePharmacyPermissionSet } from '@/features/pharmacy/hooks/usePharmacyPermission';
 import { Button, DataTableShell, EmptyState, QueryFeedback } from '@/shared/components/common';
@@ -139,8 +138,6 @@ export default function PrescriptionDetailPage() {
               )}
             </div>
 
-            <AllergyBanner allergies={rx.patient?.allergies} />
-
             <div className="pharmacy-detail-cards">
               <div className="card">
                 <div className="card__header">
@@ -151,11 +148,6 @@ export default function PrescriptionDetailPage() {
                     items={[
                       { label: 'Name', value: rx.patient?.name },
                       { label: 'Phone', value: rx.patient_phone || rx.patient?.phone || '—' },
-                      {
-                        label: 'Allergies',
-                        value: rx.patient?.allergies || 'None noted',
-                        fullWidth: true,
-                      },
                     ]}
                   />
                 </div>
@@ -203,12 +195,12 @@ export default function PrescriptionDetailPage() {
                 <h3>Prescribed medicines</h3>
                 {totalDispensedAmount > 0 && (
                   <span className="pharmacy-detail-total-amount">
-                    Total dispensed: {formatCurrency(totalDispensedAmount, { empty: '—' })}
+                    Total amount: {formatCurrency(totalDispensedAmount, { empty: '—' })}
                   </span>
                 )}
               </div>
               <DataTableShell>
-                <table className="data-table pharmacy-detail-table">
+                <table className="data-table pharmacy-detail-table pharmacy-table--stack">
                   <colgroup>
                     <col className="pharmacy-detail-col pharmacy-detail-col--med" />
                     <col className="pharmacy-detail-col pharmacy-detail-col--strength" />
@@ -223,8 +215,8 @@ export default function PrescriptionDetailPage() {
                       <th>Strength</th>
                       <th>Instructions</th>
                       <th className="pharmacy-detail-qty-head">Total quantity</th>
-                      <th className="pharmacy-detail-money">Price</th>
-                      <th className="pharmacy-detail-money">Amount</th>
+                      <th className="pharmacy-detail-money">Price per unit</th>
+                      <th className="pharmacy-detail-money">Total amount</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -232,24 +224,24 @@ export default function PrescriptionDetailPage() {
                       const pricing = getPrescriptionItemPricingSummary(id, item.id);
                       return (
                       <tr key={item.id}>
-                        <td>{item.medicine_name}</td>
-                        <td>{item.dosage || '—'}</td>
-                        <td className="pharmacy-detail-instructions">
+                        <td data-label="Medicine">{item.medicine_name}</td>
+                        <td data-label="Strength">{item.dosage || '—'}</td>
+                        <td className="pharmacy-detail-instructions" data-label="Instructions">
                           <PharmacyTruncatedText
                             text={item.instructions}
                             maxLength={40}
                           />
                         </td>
-                        <td className="pharmacy-detail-qty">
+                        <td className="pharmacy-detail-qty" data-label="Total quantity">
                           {formatQuantityLabel(
                             item.quantity_prescribed,
                             item.medicine_name,
                           )}
                         </td>
-                        <td className="pharmacy-detail-money">
+                        <td className="pharmacy-detail-money" data-label="Price per unit">
                           {formatCurrency(pricing?.unitPrice, { empty: '—' })}
                         </td>
-                        <td className="pharmacy-detail-money">
+                        <td className="pharmacy-detail-money" data-label="Total amount">
                           {formatCurrency(pricing?.totalAmount, { empty: '—' })}
                         </td>
                       </tr>
@@ -266,7 +258,7 @@ export default function PrescriptionDetailPage() {
                   <h3>Previous dispensings</h3>
                 </div>
                 <DataTableShell>
-                  <table className="data-table pharmacy-detail-table">
+                  <table className="data-table pharmacy-detail-table pharmacy-table--stack">
                     <colgroup>
                       <col className="pharmacy-detail-col pharmacy-detail-col--date" />
                       <col className="pharmacy-detail-col pharmacy-detail-col--med" />
@@ -279,8 +271,8 @@ export default function PrescriptionDetailPage() {
                         <th>Date</th>
                         <th>Medicine</th>
                         <th className="pharmacy-detail-qty-head">Quantity dispensed</th>
-                        <th className="pharmacy-detail-money">Price</th>
-                        <th className="pharmacy-detail-money">Amount</th>
+                        <th className="pharmacy-detail-money">Price per unit</th>
+                        <th className="pharmacy-detail-money">Total amount</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -288,13 +280,13 @@ export default function PrescriptionDetailPage() {
                         const pricing = matchDispenseHistoryPricing(id, row);
                         return (
                         <tr key={row.id}>
-                          <td>{fmtDt(row.dispensed_at)}</td>
-                          <td>{row.medicine_name || '—'}</td>
-                          <td>{row.quantity_dispensed ?? '—'}</td>
-                          <td className="pharmacy-detail-money">
+                          <td data-label="Date">{fmtDt(row.dispensed_at)}</td>
+                          <td data-label="Medicine">{row.medicine_name || '—'}</td>
+                          <td className="pharmacy-detail-qty" data-label="Quantity dispensed">{row.quantity_dispensed ?? '—'}</td>
+                          <td className="pharmacy-detail-money" data-label="Price per unit">
                             {formatCurrency(pricing?.unitPrice, { empty: '—' })}
                           </td>
-                          <td className="pharmacy-detail-money">
+                          <td className="pharmacy-detail-money" data-label="Total amount">
                             {formatCurrency(pricing?.amount, { empty: '—' })}
                           </td>
                         </tr>

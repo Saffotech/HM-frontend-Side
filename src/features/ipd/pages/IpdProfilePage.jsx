@@ -29,9 +29,17 @@ import {
 } from '@/features/ipd/hooks/useIpdQuery';
 import { useIpdPermissionSet } from '@/features/ipd/hooks/useIpdPermission';
 import { ROUTES } from '@/shared/constants';
-import { Button, ConfirmDialog, EmptyState, ProfilePhotoCropDialog } from '@/shared/components/common';
+import {
+  Button,
+  ConfirmDialog,
+  DateInput,
+  EmptyState,
+  ProfilePhoneField,
+  ProfilePhotoCropDialog,
+} from '@/shared/components/common';
 import PageSpinner from '@/shared/components/PageSpinner';
 import { toast } from '@/shared/utils/toast';
+import { formatPhoneDisplay } from '@/shared/utils/phoneCountryCode';
 import { formatPhoneInput } from '@/shared/utils/validators';
 import {
   capitalizeFirst,
@@ -62,19 +70,19 @@ function isValidGender(value) {
   return VALID_GENDER_VALUES.includes(Number(value));
 }
 
-function genderLabel(code) {
-  return GENDER_OPTIONS.find((o) => o.value === code)?.label ?? null;
+function isValidDateOfBirth(value) {
+  if (!value) return true;
+
+  const selectedDate = new Date(`${value}T00:00:00`);
+  const today = new Date();
+
+  today.setHours(0, 0, 0, 0);
+
+  return selectedDate <= today;
 }
 
-function fmtShift(shift) {
-  if (!shift) return null;
-  const name = shift.name || null;
-  const start = shift.start_time || null;
-  const end = shift.end_time || null;
-  if (start && end) {
-    return name ? `${name} · ${start} – ${end}` : `${start} – ${end}`;
-  }
-  return name;
+function genderLabel(code) {
+  return GENDER_OPTIONS.find((o) => o.value === code)?.label ?? null;
 }
 
 function formatUpdatedAgo(iso) {
@@ -334,6 +342,12 @@ export default function IpdProfilePage() {
       return;
     }
 
+    if (!isValidDateOfBirth(form?.date_of_birth)) {
+      toast.error('Date of birth cannot be a future date');
+      setActiveTab('contact');
+      return;
+    }
+
     const formForSave = {
       ...form,
       phone,
@@ -587,11 +601,10 @@ export default function IpdProfilePage() {
               <div className="opd-profile-hero__tags">
                 {roleName ? <span className="opd-profile-tag">{roleName}</span> : null}
                 <span
-                  className={`opd-profile-tag ${
-                    profile.is_profile_completed
+                  className={`opd-profile-tag ${profile.is_profile_completed
                       ? 'opd-profile-tag--ok'
                       : 'opd-profile-tag--warn'
-                  }`}
+                    }`}
                 >
                   {profile.is_profile_completed ? 'Profile complete' : 'Incomplete'}
                 </span>
@@ -695,7 +708,7 @@ export default function IpdProfilePage() {
                   <Shield size={16} aria-hidden /> Account
                 </h3>
                 <p className="opd-profile-hint">
-                  Employee ID and shift are managed by admin.
+                  Employee ID is managed by admin.
                 </p>
                 <div className="opd-profile-grid">
                   <ReadField label="First name" value={profile.first_name} />
@@ -704,8 +717,6 @@ export default function IpdProfilePage() {
                   <ReadField label="Employee ID" value={profile.employee_id} />
                   <ReadField label="Joining date" value={profile.joining_date} />
                   <ReadField label="Role" value={roleName} />
-                  <ReadField label="Department" value={profile.department?.name} />
-                  <ReadField label="Shift" value={fmtShift(profile.shift)} />
                 </div>
               </section>
             )}
@@ -828,25 +839,13 @@ export default function IpdProfilePage() {
                   {editing && form ? (
                     <>
                       <label className="opd-profile-field">
-                        <span className="opd-profile-field__label">Phone code</span>
-                        <input
-                          className="opd-profile-input"
-                          maxLength={8}
-                          value={form.phone_code}
-                          onChange={(e) => setField('phone_code', e.target.value)}
-                        />
-                      </label>
-                      <label className="opd-profile-field">
                         <span className="opd-profile-field__label">Phone</span>
-                        <input
-                          className="opd-profile-input"
-                          type="tel"
-                          inputMode="numeric"
-                          autoComplete="tel"
-                          maxLength={10}
-                          placeholder="10-digit number"
-                          value={form.phone}
-                          onChange={(e) => setField('phone', formatPhoneInput(e.target.value))}
+                        <ProfilePhoneField
+                          inputClassName="opd-profile-input"
+                          phoneCode={form.phone_code}
+                          phone={form.phone}
+                          onPhoneCodeChange={(value) => setField('phone_code', value)}
+                          onPhoneChange={(value) => setField('phone', value)}
                         />
                       </label>
                       <label className="opd-profile-field">
@@ -899,15 +898,16 @@ export default function IpdProfilePage() {
                           ))}
                         </select>
                       </label>
-                      <label className="opd-profile-field">
-                        <span className="opd-profile-field__label">Date of birth</span>
-                        <input
-                          className="opd-profile-input"
-                          type="date"
+                      <div className="opd-profile-field">
+                        <DateInput
+                          label="Date of birth"
+                          className="profile-page-date-input"
                           value={form.date_of_birth || ''}
+                          max={new Date().toISOString().split('T')[0]}
                           onChange={(e) => setField('date_of_birth', e.target.value)}
+                          placeholder="DD/MM/YYYY"
                         />
-                      </label>
+                      </div>
                       <label className="opd-profile-field">
                         <span className="opd-profile-field__label">City</span>
                         <input
@@ -938,8 +938,10 @@ export default function IpdProfilePage() {
                     </>
                   ) : (
                     <>
-                      <ReadField label="Phone code" value={profile.phone_code} />
-                      <ReadField label="Phone" value={profile.phone} />
+                      <ReadField
+                        label="Phone"
+                        value={formatPhoneDisplay(profile.phone_code, profile.phone)}
+                      />
                       <ReadField
                         label="Emergency contact name"
                         value={profile.emergency_contact?.name}

@@ -4,7 +4,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { PackageCheck } from 'lucide-react';
 import PharmacyLayout from '@/features/pharmacy/components/PharmacyLayout';
 import PharmacyStatusBadge from '@/features/pharmacy/components/PharmacyStatusBadge';
-import AllergyBanner from '@/features/pharmacy/components/AllergyBanner';
 import { usePharmacyPermissionSet } from '@/features/pharmacy/hooks/usePharmacyPermission';
 import { Button, EmptyState, QueryFeedback, Textarea } from '@/shared/components/common';
 import {
@@ -72,6 +71,7 @@ export default function DispensePage() {
   const [remarks, setRemarks] = useState('');
   const [formError, setFormError] = useState('');
   const [rowErrors, setRowErrors] = useState({});
+  const [amountErrors, setAmountErrors] = useState({});
 
   const summary = useMemo(
     () => buildDispenseSummary(enrichedItems, quantities, amounts),
@@ -80,7 +80,7 @@ export default function DispensePage() {
 
   const handleAmountChange = (itemId, value) => {
     setAmounts((prev) => ({ ...prev, [itemId]: value }));
-    setRowErrors((prev) => {
+    setAmountErrors((prev) => {
       if (!prev[itemId]) return prev;
       const next = { ...prev };
       delete next[itemId];
@@ -119,6 +119,7 @@ export default function DispensePage() {
     }
     const validation = validateItemDispenseInputs(enrichedItems, quantities, amounts);
     setRowErrors(validation.rowErrors);
+    setAmountErrors(validation.amountErrors);
     setFormError(validation.formError);
     if (!validation.valid) return;
 
@@ -220,8 +221,6 @@ export default function DispensePage() {
                   <PharmacyStatusBadge status={rx.status} />
                 </header>
 
-            <AllergyBanner allergies={rx.patient?.allergies} className="pharmacy-dispense-allergy" />
-
             <div className="card pharmacy-dispense-card">
               <div className="pharmacy-dispense-patient-strip">
                 <div className="pharmacy-dispense-patient-strip__main">
@@ -232,10 +231,6 @@ export default function DispensePage() {
                   <span>
                     <span className="pharmacy-dispense-patient-strip__label">Phone</span>
                     {rx.patient_phone || rx.patient?.phone || '—'}
-                  </span>
-                  <span>
-                    <span className="pharmacy-dispense-patient-strip__label">Allergies</span>
-                    {rx.patient?.allergies || 'None'}
                   </span>
                   <span>
                     <span className="pharmacy-dispense-patient-strip__label">Medicines</span>
@@ -251,7 +246,7 @@ export default function DispensePage() {
               ) : (
                 <form onSubmit={handleSubmit} className="pharmacy-dispense-form">
                   <div className="pharmacy-dispense-table-wrap">
-                    <table className="pharmacy-dispense-table">
+                    <table className="pharmacy-dispense-table pharmacy-table--stack">
                       <thead>
                         <tr>
                           <th>Medicine</th>
@@ -273,24 +268,24 @@ export default function DispensePage() {
 
                           return (
                             <tr key={item.id} className={disabled ? 'is-complete' : undefined}>
-                              <td className="pharmacy-dispense-table__med">
+                              <td className="pharmacy-dispense-table__med" data-label="Medicine">
                                 <span className="pharmacy-dispense-table__med-name">
                                   {item.medicine_name}
                                 </span>
                               </td>
-                              <td className="pharmacy-dispense-table__instructions">
+                              <td className="pharmacy-dispense-table__instructions" data-label="Instructions">
                                 <PharmacyTruncatedText text={item.instructions} maxLength={40} />
                               </td>
-                              <td className="pharmacy-dispense-table__qty pharmacy-dispense-table__qty--emphasis">
+                              <td className="pharmacy-dispense-table__qty pharmacy-dispense-table__qty--emphasis" data-label="Total Required">
                                 {formatQuantityLabel(item.quantity_prescribed, item.medicine_name)}
                               </td>
-                              <td className="pharmacy-dispense-table__qty">
+                              <td className="pharmacy-dispense-table__qty" data-label="Already Dispensed">
                                 {formatQuantityLabel(item.quantity_dispensed, item.medicine_name)}
                               </td>
-                              <td className="pharmacy-dispense-table__qty pharmacy-dispense-table__qty--remaining">
+                              <td className="pharmacy-dispense-table__qty pharmacy-dispense-table__qty--remaining" data-label="Remaining">
                                 {formatQuantityLabel(item.quantity_remaining, item.medicine_name)}
                               </td>
-                              <td className="pharmacy-dispense-table__input-col">
+                              <td className="pharmacy-dispense-table__input-col" data-label="Give Now">
                                 <div className="pharmacy-dispense-give-now">
                                   <input
                                     type="number"
@@ -327,7 +322,7 @@ export default function DispensePage() {
                                   </p>
                                 )}
                               </td>
-                              <td className="pharmacy-dispense-table__input-col">
+                              <td className="pharmacy-dispense-table__input-col" data-label="Amount">
                                 <div className="pharmacy-dispense-give-now">
                                   <input
                                     type="number"
@@ -335,20 +330,33 @@ export default function DispensePage() {
                                     step={0.01}
                                     inputMode="decimal"
                                     className={`pharmacy-dispense-qty-input pharmacy-dispense-price-input${
-                                      rowErrors[item.id] ? ' pharmacy-dispense-qty-input--error' : ''
+                                      amountErrors[item.id] ? ' pharmacy-dispense-qty-input--error' : ''
                                     }`}
                                     aria-label={`Amount for ${item.medicine_name}`}
                                     placeholder="0"
                                     disabled={disabled}
                                     value={amounts[item.id] ?? ''}
                                     onChange={(e) => handleAmountChange(item.id, e.target.value)}
+                                    aria-invalid={Boolean(amountErrors[item.id])}
+                                    aria-describedby={
+                                      amountErrors[item.id] ? `dispense-amount-err-${item.id}` : undefined
+                                    }
                                   />
                                   {!disabled && (
                                     <span className="pharmacy-dispense-give-now__unit">total</span>
                                   )}
                                 </div>
+                                {amountErrors[item.id] && (
+                                  <p
+                                    id={`dispense-amount-err-${item.id}`}
+                                    className="pharmacy-dispense-row-error"
+                                    role="alert"
+                                  >
+                                    {amountErrors[item.id]}
+                                  </p>
+                                )}
                               </td>
-                              <td className="pharmacy-dispense-table__amount-col">
+                              <td className="pharmacy-dispense-table__amount-col" data-label="Price">
                                 <span className="pharmacy-dispense-line-amount">
                                   {giveNowQty > 0 && String(amounts[item.id] ?? '').trim()
                                     ? `${formatCurrency(unitPrice, { empty: '—' })} / unit`

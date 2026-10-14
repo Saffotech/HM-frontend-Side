@@ -45,7 +45,7 @@ export default function PatientProfilePaymentModal({
           ) : paymentInvoice?.items?.length ? (
             <>
               <div className="pp-payment-detail__table-wrap">
-                <table className="pp-payment-detail__table">
+                <table className="pp-payment-detail__table data-table data-table--stack">
                   <thead>
                     <tr>
                       <th>#</th>
@@ -58,13 +58,13 @@ export default function PatientProfilePaymentModal({
                   <tbody>
                     {paymentInvoice.items.map((item, i) => (
                       <tr key={`${item.name}-${i}`}>
-                        <td>{i + 1}</td>
-                        <td>{item.name}</td>
-                        <td className="text-center">{item.qty}</td>
-                        <td className="col-money">
+                        <td data-label="#">{i + 1}</td>
+                        <td data-label="Description">{item.name}</td>
+                        <td className="text-center" data-label="Qty">{item.qty}</td>
+                        <td className="col-money" data-label="Unit Price">
                           <MoneyAmount amount={item.unitPrice} />
                         </td>
-                        <td className="col-money">
+                        <td className="col-money" data-label="Amount">
                           <MoneyAmount
                             amount={item.amount ?? item.qty * item.unitPrice}
                             strong

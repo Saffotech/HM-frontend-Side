@@ -138,6 +138,8 @@ function DashboardSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD, onViewAll
   const [ipdSearch, setIpdSearch] = useState('');
   const [ipdFromDate, setIpdFromDate] = useState('');
   const [ipdToDate, setIpdToDate] = useState('');
+  
+const [dateRangeError, setDateRangeError] = useState('');
   const [ipdPage, setIpdPage] = useState(1);
   const [opdPage, setOpdPage] = useState(1);
   const [patientIdSearch, setPatientIdSearch] = useState('');
@@ -584,7 +586,26 @@ function DashboardSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD, onViewAll
   const clearIpdDateFilters = useCallback(() => {
     setIpdFromDate('');
     setIpdToDate('');
+    setDateRangeError('');
   }, []);
+
+  const handleIpdFromDate = (value) => {
+    if (value && ipdToDate && value > ipdToDate) {
+      setDateRangeError('From date cannot be after To date');
+      return;
+    }
+    setDateRangeError('');
+    setIpdFromDate(value);
+  };
+
+  const handleIpdToDate = (value) => {
+    if (value && ipdFromDate && value < ipdFromDate) {
+      setDateRangeError('To date cannot be before From date');
+      return;
+    }
+    setDateRangeError('');
+    setIpdToDate(value);
+  };
 
   const ipdDateFilters = (
     <div className="doc-dashboard-ipd-dates">
@@ -593,8 +614,10 @@ function DashboardSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD, onViewAll
         <input
           type="date"
           value={ipdFromDate}
-          onChange={(e) => setIpdFromDate(e.target.value)}
+          max={ipdToDate || undefined}
+          onChange={(e) => handleIpdFromDate(e.target.value)}
           aria-label="Admit date from"
+          aria-invalid={Boolean(dateRangeError)}
         />
       </label>
       <label className="doc-dashboard-ipd-dates__field">
@@ -602,8 +625,10 @@ function DashboardSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD, onViewAll
         <input
           type="date"
           value={ipdToDate}
-          onChange={(e) => setIpdToDate(e.target.value)}
+          min={ipdFromDate || undefined}
+          onChange={(e) => handleIpdToDate(e.target.value)}
           aria-label="Admit date to"
+          aria-invalid={Boolean(dateRangeError)}
         />
       </label>
       {hasIpdDateFilter ? (
@@ -616,6 +641,11 @@ function DashboardSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD, onViewAll
           <X size={14} aria-hidden />
           Clear
         </button>
+      ) : null}
+      {dateRangeError ? (
+        <p className="doc-dashboard-ipd-dates__error" role="alert">
+          {dateRangeError}
+        </p>
       ) : null}
     </div>
   );

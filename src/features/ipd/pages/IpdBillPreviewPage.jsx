@@ -2,7 +2,7 @@
  * Bill preview for an admission — daily charges, hospital totals, generate + pay.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Printer } from 'lucide-react';
 import { Button, QueryFeedback } from '@/shared/components/common';
@@ -37,42 +37,92 @@ import {
   useSaveIpdSelfPayFinalBillingMutation,
   useIpdAdmissionInsuranceQuery,
 } from '@/features/ipd/hooks/useIpdBillingQuery';
-import { initChargeHeadsFromClaim, buildSelfPayBillingBundle } from '@/features/ipd/billing/ipdBillingMapper';
+import { initChargeHeadsFromClaim } from '@/features/ipd/billing/ipdBillingMapper';
 import { initDailyCharges } from '@/features/ipd/utils/insuranceDailyCharges';
 import { buildIpdProvisionalInvoice } from '@/features/ipd/utils/ipdBillPrintModel';
 import { resolveIpdBillPreviewPayment } from '@/features/ipd/utils/resolveIpdBillPreviewPayment';
+import { IPD_PAYMENT_TYPE_INSURANCE_PAY_AND_CLAIM } from '@/features/ipd/utils/ipdPaymentTypes';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
 
 import '@/features/opd/billing/pages/ViewBillPage.css';
+
+function chargeHeadsMatch(prev, next) {
+  if (prev === next) return true;
+  if (!Array.isArray(prev) || !Array.isArray(next) || prev.length !== next.length) {
+    return false;
+  }
+  return prev.every((row, i) => {
+    const n = next[i];
+    return (
+      row.id === n.id &&
+      String(row.amount) === String(n.amount) &&
+      row.label === n.label
+    );
+  });
+}
+
+function dailyChargesMatch(prev, next) {
+  if (prev === next) return true;
+  if (!Array.isArray(prev) || !Array.isArray(next) || prev.length !== next.length) {
+    return false;
+  }
+  return prev.every((row, i) => {
+    const n = next[i];
+    return (
+      row.id === n.id &&
+      String(row.amount) === String(n.amount) &&
+      String(row.quantity) === String(n.quantity) &&
+      row.item_name === n.item_name &&
+      row.head === n.head &&
+      row.charge_date === n.charge_date
+    );
+  });
+}
 
 export default function IpdBillPreviewPage() {
   const { admissionId } = useParams();
   const goBack = useIpdBackNavigation(ROUTES.IPD_BILLING);
   const { canGenerateBill, canPayBill } = useIpdPermissionSet();
 
-  const previewQuery = useIpdBillPreviewQuery(admissionId);
   const detailQuery = useIpdAdmissionDetailQuery(admissionId);
+  const billingQuery = useIpdSelfPayBillingBundleQuery({
+    admissionId,
+    enabled: Boolean(admissionId),
+  });
   const generateMutation = useGenerateIpdBillMutation();
   const payMutation = usePayIpdBillMutation();
 
-  const patientId =
-    detailQuery.data?.patient_id ?? detailQuery.data?.patient?.id ?? null;
+  const previewFromBundle = billingQuery.data?.preview ?? null;
+  const previewFallbackQuery = useIpdBillPreviewQuery(admissionId, {
+    enabled:
+      Boolean(admissionId) &&
+      billingQuery.isFetched &&
+      !previewFromBundle,
+  });
+  const preview = previewFromBundle ?? previewFallbackQuery.data ?? null;
 
-  const preview = previewQuery.data;
+  const patientId =
+    billingQuery.data?.patientId ??
+    detailQuery.data?.patient_id ??
+    detailQuery.data?.patient?.id ??
+    null;
 
   const admission = detailQuery.data?.admission;
   const doctorVisits = detailQuery.data?.doctor_visits ?? [];
   const admittedAt = admission?.admitted_at ?? null;
 
-  const billingQuery = useIpdSelfPayBillingBundleQuery({
-    admissionId,
-    patientId,
-    preview,
-    admittedAt,
-    doctorVisits,
-    enabled: Boolean(admissionId),
+  const paymentType =
+    admission?.payment_type ??
+    detailQuery.data?.payment_type ??
+    billingQuery.data?.paymentType ??
+    null;
+  const isPayAndClaim =
+    paymentType === IPD_PAYMENT_TYPE_INSURANCE_PAY_AND_CLAIM ||
+    paymentType === 'insurance_pay_and_claim';
+
+  const admissionInsuranceQuery = useIpdAdmissionInsuranceQuery(admissionId, {
+    enabled: Boolean(admissionId) && isPayAndClaim,
   });
-  const admissionInsuranceQuery = useIpdAdmissionInsuranceQuery(admissionId);
   const saveFinalBillingMutation = useSaveIpdSelfPayFinalBillingMutation();
   const saveDailyBillingMutation = useSaveIpdSelfPayDailyBillingMutation();
 
@@ -80,60 +130,67 @@ export default function IpdBillPreviewPage() {
 
   const [charges, setCharges] = useState(() => initChargeHeadsFromClaim(null));
   const [dailyCharges, setDailyCharges] = useState([]);
+  const [printSheetMounted, setPrintSheetMounted] = useState(false);
 
-  // Sync from billing bundle or live preview (do not wipe while user edits).
+  // Sync from billing bundle (do not wipe while user edits).
   useEffect(() => {
     if (!admissionId) return;
 
-    const bundle =
-      billingQuery.data ??
-      (preview
-        ? buildSelfPayBillingBundle(
-            preview,
-            {
-              admissionId: String(admissionId),
-              patientId,
-              admittedAt,
-              doctorVisits,
-            },
-            null,
-          )
-        : null);
-
+    const bundle = billingQuery.data;
     if (!bundle) return;
 
-    setCharges(
-      sortInsuranceChargeHeads(
-        normalizeInsuranceChargeHeads(
-          bundle.finalBilling?.chargeHeads ?? [],
-        ),
-      ),
+    const heads = sortInsuranceChargeHeads(
+      normalizeInsuranceChargeHeads(bundle.finalBilling?.chargeHeads ?? []),
     );
-    setDailyCharges(initDailyCharges({ dailyCharges: bundle.dailyCharges }));
-  }, [
-    admissionId,
-    patientId,
-    admittedAt,
-    preview?.admission_id,
-    preview?.length_of_stay_days,
-    billingQuery.dataUpdatedAt,
-  ]);
+    setCharges((prev) => {
+      if (calculateInsuranceChargeTotals(prev).displayGross > 0) return prev;
+      return chargeHeadsMatch(prev, heads) ? prev : heads;
+    });
+
+    const daily = initDailyCharges({ dailyCharges: bundle.dailyCharges });
+    setDailyCharges((prev) => (dailyChargesMatch(prev, daily) ? prev : daily));
+  }, [admissionId, billingQuery.dataUpdatedAt]);
 
   const [payMode, setPayMode] = useState('Cash');
   const [payAmount, setPayAmount] = useState('');
   const [paymentRef, setPaymentRef] = useState('');
   const [lastBillResult, setLastBillResult] = useState(null);
 
+
   const paymentBusy = generateMutation.isPending || payMutation.isPending;
 
+  const chargeTotals = useMemo(
+    () => calculateInsuranceChargeTotals(charges),
+    [charges],
+  );
+
+  const billingSubtotal =
+    chargeTotals.netBill > 0 ? chargeTotals.netBill : Number(preview?.subtotal) || 0;
+  const gstPercent = Number(preview?.gst_percent) || 0;
+  const billingGst =
+    gstPercent > 0
+      ? Math.round((billingSubtotal * gstPercent) / 100 * 100) / 100
+      : Number(preview?.gst_amount) || 0;
+  const billingGrandTotal = billingSubtotal + billingGst;
+
+  const insuranceAmount = Number(
+    admissionInsuranceQuery.data?.claim_amount
+  ) || 0;
+
+  // Amount the patient needs to pay after insurance
+  const patientPayableAmount = Math.max(
+    0,
+    billingGrandTotal - insuranceAmount
+  );
+
   const paymentView = useMemo(
-    () =>
-      resolveIpdBillPreviewPayment({
-        bills,
-        lastBillResult,
-        preview,
-      }),
-    [bills, lastBillResult, preview],
+    () => resolveIpdBillPreviewPayment({
+      bills,
+      lastBillResult,
+      preview,
+      grandTotal: billingGrandTotal
+    }),
+    [bills, lastBillResult, preview, billingGrandTotal]
   );
 
   const {
@@ -173,20 +230,6 @@ export default function IpdBillPreviewPage() {
   }, [basePrintInvoice, payClaimInsurance]);
   const printLoading = Boolean(printableBill?.id) && invoiceQuery.isLoading;
 
-  const chargeTotals = useMemo(
-    () => calculateInsuranceChargeTotals(charges),
-    [charges],
-  );
-
-  const billingSubtotal =
-    chargeTotals.netBill > 0 ? chargeTotals.netBill : Number(preview?.subtotal) || 0;
-  const gstPercent = Number(preview?.gst_percent) || 0;
-  const billingGst =
-    gstPercent > 0
-      ? Math.round((billingSubtotal * gstPercent) / 100 * 100) / 100
-      : Number(preview?.gst_amount) || 0;
-  const billingGrandTotal = billingSubtotal + billingGst;
-
   const paymentStatusLabel =
     paymentStatusKey === 'paid'
       ? 'Paid'
@@ -199,7 +242,7 @@ export default function IpdBillPreviewPage() {
       : 'unpaid';
   const summaryPaid = formatCurrency(paidAmount, { empty: '—' });
   const summaryBalance = formatCurrency(balanceDue, { empty: '—' });
-  const collectAmountCap = Number(openBill?.balance_due ?? balanceDue ?? billingGrandTotal);
+  const collectAmountCap = balanceDue;
 
   const parsedPayAmount = Math.floor(Number(payAmount));
   const hasValidPayAmount =
@@ -209,7 +252,7 @@ export default function IpdBillPreviewPage() {
   const collectDisabled =
     paymentBusy
     || !hasValidPayAmount
-    || !previewQuery.isSuccess
+    || !preview
     || !canCollectPayment
     || isFullyPaid;
   const canCollect = openBill ? canPayBill : canPayBill && canGenerateBill;
@@ -220,14 +263,14 @@ export default function IpdBillPreviewPage() {
   const billingContext = { admittedAt, doctorVisits };
 
   const refreshBilling = async () => {
-    await Promise.all([
-      previewQuery.refetch(),
-      detailQuery.refetch(),
-      billingQuery.refetch(),
-    ]);
+    const tasks = [detailQuery.refetch(), billingQuery.refetch()];
+    if (isPayAndClaim) {
+      tasks.push(admissionInsuranceQuery.refetch());
+    }
+    await Promise.all(tasks);
   };
 
-  const onPrint = () => {
+  const onPrint = useCallback(() => {
     if (printLoading) {
       toast.error('Loading invoice…');
       return;
@@ -236,14 +279,20 @@ export default function IpdBillPreviewPage() {
       toast.error('Nothing to print yet');
       return;
     }
+    if (!printSheetMounted) {
+      setPrintSheetMounted(true);
+      window.setTimeout(() => window.print(), 100);
+      return;
+    }
     window.print();
-  };
+  }, [printLoading, printInvoice, printSheetMounted]);
 
-  const handleSaveCharges = () => {
+  const handleSaveCharges = (nextCharges) => {
+    const toSave = Array.isArray(nextCharges) ? nextCharges : charges;
     saveFinalBillingMutation.mutate(
       {
         admissionId,
-        charges,
+        charges: toSave,
         previewItems,
         ...billingContext,
       },
@@ -253,11 +302,6 @@ export default function IpdBillPreviewPage() {
             toast.error('Unable to save charges');
             return;
           }
-          setCharges(
-            sortInsuranceChargeHeads(
-              normalizeInsuranceChargeHeads(bundle.finalBilling.chargeHeads),
-            ),
-          );
           toast.success('Hospital charges saved');
         },
         onError: () => toast.error('Unable to save charges'),
@@ -297,28 +341,34 @@ export default function IpdBillPreviewPage() {
     );
   };
 
+
   const onCollectPayment = async () => {
-    if (!canCollectPayment || collectAmountCap <= 0.01) {
-      toast.error('No due balance to collect');
-      return;
-    }
-
     const amount = Math.floor(Number(payAmount));
-    if (!(amount > 0) || !Number.isFinite(amount)) {
-      toast.error('Enter a valid whole-number payment amount');
+
+
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error('Enter a valid payment amount');
       return;
     }
 
-    const capped = Math.min(amount, Math.max(0, Math.floor(collectAmountCap)));
-    if (!(capped > 0)) {
-      toast.error('No due balance to collect');
+    if (amount > Math.floor(balanceDue)) {
+      toast.error('Payment cannot exceed the outstanding amount');
+      return;
+    }
+
+
+
+    if (amount > Math.floor(balanceDue)) {
+      toast.error('Payment cannot exceed the outstanding balance');
       return;
     }
 
     const refError = validatePaymentTransactionRef(payMode, paymentRef, {
-      paidAmount: capped,
+      paidAmount: amount,
       payLater: false,
     });
+
     if (refError) {
       toast.error(refError);
       return;
@@ -326,42 +376,43 @@ export default function IpdBillPreviewPage() {
 
     const paymentPayload = {
       payment_mode: payMode.toLowerCase(),
-      ...(paymentRef.trim() ? { transaction_reference: paymentRef.trim() } : {}),
+      ...(paymentRef.trim()
+        ? { transaction_reference: paymentRef.trim() }
+        : {}),
     };
 
     try {
+      let bill;
+
       if (openBill?.id) {
-        const bill = await payMutation.mutateAsync({
+        // Record payment against the existing bill.
+        // Do not create another bill for the remaining amount.
+        bill = await payMutation.mutateAsync({
           billId: openBill.id,
           payload: {
-            amount: capped,
+            amount,
             ...paymentPayload,
           },
         });
-        setLastBillResult(bill);
-        toast.success(`Payment recorded · ${bill.bill_number}`);
       } else {
-        if (!preview) {
-          toast.error('Bill preview is not available');
-          return;
-        }
-        const bill = await generateMutation.mutateAsync({
+        // Generate a bill only when no existing bill is available.
+        bill = await generateMutation.mutateAsync({
           admission_id: Number(admissionId),
           pay_later: false,
-          amount_received: capped,
+          amount_received: amount,
           ...paymentPayload,
         });
-        setLastBillResult(bill);
-        const status = String(bill.payment_status || '').toLowerCase();
-        toast.success(
-          status === 'paid'
-            ? `Bill ${bill.bill_number} generated and paid`
-            : `Bill ${bill.bill_number} generated · payment recorded`,
-        );
       }
+
+      // Immediately display the bill returned by the backend.
+      setLastBillResult(bill);
 
       setPayAmount('');
       setPaymentRef('');
+
+      toast.success('Payment recorded successfully');
+
+      // Refresh data in the background; this is not a browser reload.
       await refreshBilling();
     } catch (err) {
       toast.error(err?.message || 'Payment failed');
@@ -370,205 +421,210 @@ export default function IpdBillPreviewPage() {
 
   const pageTitle = payClaimInsurance ? 'IPD Billing — Pay & Claim' : 'IPD Billing';
 
+  const previewLoadError =
+    billingQuery.isError
+      ? billingQuery.error
+      : !previewFromBundle && previewFallbackQuery.isError
+        ? previewFallbackQuery.error
+        : null;
+
+  const previewLoading =
+    !preview &&
+    (billingQuery.isLoading ||
+      (previewFallbackQuery.isFetching && !previewFallbackQuery.data));
+
   return (
     <div className="ipd-page ipd-ins-billing">
       <div className="no-print">
-      <IpdPageHeader
-        title={pageTitle}
-        subtitle={
-          preview
-            ? `${admissionLabel} · ${preview.patient_name || ''} · ${preview.ward_name}/${preview.bed_number} · ${preview.length_of_stay_days ?? 0} day(s)`
-            : admissionId
-              ? `Admission #${admissionId}`
-              : 'Daily charges and hospital totals'
-        }
-        actions={(
-          <div className="no-print" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <Button type="button" variant="secondary" onClick={goBack}>
-              Back
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onPrint}
-              disabled={printLoading || !printInvoice}
-            >
-              <Printer size={16} aria-hidden /> Print
-            </Button>
-          </div>
-        )}
-      />
-
-      {previewQuery.isError ? (
-        <div className="ipd-card">
-          <div className="ipd-card__body">
-            <QueryFeedback
-              isError
-              error={previewQuery.error}
-              onRetry={previewQuery.refetch}
-            />
-          </div>
-        </div>
-      ) : null}
-
-      {billingQuery.isError ? (
-        <div className="ipd-card">
-          <div className="ipd-card__body">
-            <QueryFeedback
-              isError
-              error={billingQuery.error}
-              onRetry={billingQuery.refetch}
-            />
-          </div>
-        </div>
-      ) : null}
-
-      {billingQuery.isLoading && !preview ? (
-        <div className="ipd-card">
-          <div className="ipd-card__body">
-            <QueryFeedback isLoading />
-          </div>
-        </div>
-      ) : null}
-
-      <div className="ipd-ins-billing__top">
-        <IpdHospitalChargesCard
-          charges={charges}
-          onChargesChange={setCharges}
-          onSave={handleSaveCharges}
-          saving={saveFinalBillingMutation.isPending}
+        <IpdPageHeader
+          title={pageTitle}
+          subtitle={
+            preview
+              ? `${admissionLabel} · ${preview.patient_name || ''} · ${preview.ward_name}/${preview.bed_number} · ${preview.length_of_stay_days ?? 0} day(s)`
+              : admissionId
+                ? `Admission #${admissionId}`
+                : 'Daily charges and hospital totals'
+          }
+          actions={(
+            <div className="no-print" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <Button type="button" variant="secondary" onClick={goBack}>
+                Back
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onPrint}
+                disabled={printLoading || !printInvoice}
+              >
+                <Printer size={16} aria-hidden /> Print
+              </Button>
+            </div>
+          )}
         />
 
-        <div className="ipd-ins-billing__side">
-          <div
-            className={`ipd-card ipd-pay-panel ipd-pay-panel--${paymentPanelTone}`}
-          >
-            <div className="ipd-card__head ipd-pay-panel__head">
-              <h2 className="ipd-card__title">Payment</h2>
-              <IpdStatusBadge status={paymentStatusKey} label={paymentStatusLabel} />
+        {previewLoadError ? (
+          <div className="ipd-card">
+            <div className="ipd-card__body">
+              <QueryFeedback
+                isError
+                error={previewLoadError}
+                onRetry={() => {
+                  billingQuery.refetch();
+                  if (!previewFromBundle) {
+                    previewFallbackQuery.refetch();
+                  }
+                }}
+              />
             </div>
-            <div className="ipd-card__body ipd-pay-panel__body">
-              <div className="ipd-pay-panel__due">
-                <span className="ipd-pay-panel__due-label">Amount due</span>
-                <strong className="ipd-pay-panel__due-value">
-                  {summaryBalance}
-                </strong>
+          </div>
+        ) : null}
+
+        {previewLoading ? (
+          <div className="ipd-card">
+            <div className="ipd-card__body">
+              <QueryFeedback isLoading />
+            </div>
+          </div>
+        ) : null}
+
+        <div className="ipd-ins-billing__top">
+          <IpdHospitalChargesCard
+            charges={charges}
+            onChargesChange={setCharges}
+            onSave={handleSaveCharges}
+            saving={saveFinalBillingMutation.isPending}
+          />
+
+          <div className="ipd-ins-billing__side">
+            <div
+              className={`ipd-card ipd-pay-panel ipd-pay-panel--${paymentPanelTone}`}
+            >
+              <div className="ipd-card__head ipd-pay-panel__head">
+                <h2 className="ipd-card__title">Payment</h2>
+                <IpdStatusBadge status={paymentStatusKey} label={paymentStatusLabel} />
               </div>
+              <div className="ipd-card__body ipd-pay-panel__body">
+                <div className="ipd-pay-panel__due">
+                  <span className="ipd-pay-panel__due-label">Amount due</span>
+                  <strong className="ipd-pay-panel__due-value">
+                    {summaryBalance}
+                  </strong>
+                </div>
 
-              <dl className="ipd-pay-panel__rows">
-                <div className="ipd-pay-panel__row">
-                  <dt>Subtotal</dt>
-                  <dd>{formatCurrency(billingSubtotal, { empty: '—' })}</dd>
-                </div>
-                <div className="ipd-pay-panel__row">
-                  <dt>
-                    {gstPercent > 0 ? `Tax (${gstPercent}%)` : 'Tax'}
-                  </dt>
-                  <dd>{formatCurrency(billingGst, { empty: '—' })}</dd>
-                </div>
-                <div className="ipd-pay-panel__row ipd-pay-panel__row--total">
-                  <dt>Total</dt>
-                  <dd>{formatCurrency(billingGrandTotal, { empty: '—' })}</dd>
-                </div>
-                <div className="ipd-pay-panel__row ipd-pay-panel__row--paid">
-                  <dt>Paid</dt>
-                  <dd>{summaryPaid}</dd>
-                </div>
-              </dl>
+                <dl className="ipd-pay-panel__rows">
+                  <div className="ipd-pay-panel__row">
+                    <dt>Subtotal</dt>
+                    <dd>{formatCurrency(billingSubtotal, { empty: '—' })}</dd>
+                  </div>
+                  <div className="ipd-pay-panel__row">
+                    <dt>
+                      {gstPercent > 0 ? `Tax (${gstPercent}%)` : 'Tax'}
+                    </dt>
+                    <dd>{formatCurrency(billingGst, { empty: '—' })}</dd>
+                  </div>
+                  <div className="ipd-pay-panel__row ipd-pay-panel__row--total">
+                    <dt>Total</dt>
+                    <dd>{formatCurrency(billingGrandTotal, { empty: '—' })}</dd>
+                  </div>
+                  <div className="ipd-pay-panel__row ipd-pay-panel__row--paid">
+                    <dt>Paid</dt>
+                    <dd>{summaryPaid}</dd>
+                  </div>
+                </dl>
 
-              <div className="no-print">
-                {canCollectPayment ? (
-                  <div className="ipd-pay-panel__collect">
-                    <div className="ipd-pay-panel__fields">
-                      <div className="ipd-toolbar__field">
-                        <label className="ipd-toolbar__label" htmlFor="ipd-bill-mode">
-                          Payment mode
-                        </label>
-                        <select
-                          id="ipd-bill-mode"
-                          className="ipd-select"
-                          value={payMode}
-                          onChange={(e) => {
-                            setPayMode(e.target.value);
-                            if (!requiresTransactionReference(e.target.value)) {
-                              setPaymentRef('');
-                            }
-                          }}
-                          disabled={paymentBusy}
-                        >
-                          {IPD_COLLECT_PAYMENT_MODES.map((mode) => (
-                            <option key={mode} value={mode}>
-                              {mode}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="ipd-toolbar__field">
-                        <label className="ipd-toolbar__label" htmlFor="ipd-bill-amount">
-                          Amount
-                        </label>
-                        <input
-                          id="ipd-bill-amount"
-                          className="ipd-input ipd-pay-panel__amount"
-                          type="text"
-                          inputMode="numeric"
-                          autoComplete="off"
-                          value={payAmount}
-                          onChange={(e) =>
-                            setPayAmount(e.target.value.replace(/\D/g, ''))
-                          }
-                          disabled={paymentBusy}
-                          placeholder={String(
-                            Math.max(0, Math.round(collectAmountCap)) || '',
-                          )}
-                          aria-label="Payment amount"
-                        />
-                      </div>
-                      {requiresTransactionReference(payMode) ? (
-                        <div className="ipd-toolbar__field ipd-pay-panel__field--full">
-                          <label className="ipd-toolbar__label" htmlFor="ipd-bill-ref">
-                            Transaction / reference no.
+                <div className="no-print">
+                  {canCollectPayment ? (
+                    <div className="ipd-pay-panel__collect">
+                      <div className="ipd-pay-panel__fields">
+                        <div className="ipd-toolbar__field">
+                          <label className="ipd-toolbar__label" htmlFor="ipd-bill-mode">
+                            Payment mode
+                          </label>
+                          <select
+                            id="ipd-bill-mode"
+                            className="ipd-select"
+                            value={payMode}
+                            onChange={(e) => {
+                              setPayMode(e.target.value);
+                              if (!requiresTransactionReference(e.target.value)) {
+                                setPaymentRef('');
+                              }
+                            }}
+                            disabled={paymentBusy}
+                          >
+                            {IPD_COLLECT_PAYMENT_MODES.map((mode) => (
+                              <option key={mode} value={mode}>
+                                {mode}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="ipd-toolbar__field">
+                          <label className="ipd-toolbar__label" htmlFor="ipd-bill-amount">
+                            Amount
                           </label>
                           <input
-                            id="ipd-bill-ref"
-                            className="ipd-input"
+                            id="ipd-bill-amount"
+                            className="ipd-input ipd-pay-panel__amount"
                             type="text"
-                            value={paymentRef}
-                            onChange={(e) => setPaymentRef(e.target.value)}
+                            inputMode="numeric"
+                            autoComplete="off"
+                            value={payAmount}
+                            onChange={(e) =>
+                              setPayAmount(e.target.value.replace(/\D/g, ''))
+                            }
                             disabled={paymentBusy}
-                            placeholder="e.g. UPI ref or card auth code"
+                            placeholder={String(
+                              Math.max(0, Math.round(collectAmountCap)) || '',
+                            )}
+                            aria-label="Payment amount"
                           />
                         </div>
-                      ) : null}
-                    </div>
+                        {requiresTransactionReference(payMode) ? (
+                          <div className="ipd-toolbar__field ipd-pay-panel__field--full">
+                            <label className="ipd-toolbar__label" htmlFor="ipd-bill-ref">
+                              Transaction / reference no.
+                            </label>
+                            <input
+                              id="ipd-bill-ref"
+                              className="ipd-input"
+                              type="text"
+                              value={paymentRef}
+                              onChange={(e) => setPaymentRef(e.target.value)}
+                              disabled={paymentBusy}
+                              placeholder="e.g. UPI ref or card auth code"
+                            />
+                          </div>
+                        ) : null}
+                      </div>
 
-                    <IpdPermissionButton
-                      allowed={canCollect}
-                      type="button"
-                      className="btn btn--primary ipd-pay-panel__cta"
-                      disabled={collectDisabled}
-                      onClick={onCollectPayment}
-                    >
-                      {paymentBusy ? 'Processing…' : 'Collect payment'}
-                    </IpdPermissionButton>
-                  </div>
-                ) : null}
+                      <IpdPermissionButton
+                        allowed={canCollect}
+                        type="button"
+                        className="btn btn--primary ipd-pay-panel__cta"
+                        disabled={collectDisabled}
+                        onClick={onCollectPayment}
+                      >
+                        {paymentBusy ? 'Processing…' : 'Collect payment'}
+                      </IpdPermissionButton>
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        <IpdDailyChargesCard
+          dailyCharges={dailyCharges}
+          onDailyChargesChange={setDailyCharges}
+          onSave={handleSaveDailyCharges}
+          saving={saveDailyBillingMutation.isPending}
+          subtitle={`${admissionLabel} · each row is one item (medicine, treatment, room, etc.)`}
+        />
       </div>
 
-      <IpdDailyChargesCard
-        dailyCharges={dailyCharges}
-        onDailyChargesChange={setDailyCharges}
-        onSave={handleSaveDailyCharges}
-        saving={saveDailyBillingMutation.isPending}
-        subtitle={`${admissionLabel} · each row is one item (medicine, treatment, room, etc.)`}
-      />
-      </div>
-
-      {printInvoice ? (
+      {printSheetMounted && printInvoice ? (
         <IpdBillPrintSheet invoice={printInvoice} className="bill-print-zone--offscreen" />
       ) : null}
     </div>

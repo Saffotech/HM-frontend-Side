@@ -35,33 +35,40 @@ import {
   selectBillingTransactionsFromBundle,
 } from '@/features/ipd/billing/ipdBillingMapper';
 
-function invalidateIpdBillingQueries(
+/** Narrow invalidation after insurance hospital/daily charge save — bundle already in cache. */
+function invalidateInsuranceChargeSaveQueries(
   queryClient,
-  { admissionId, patientId, claimId, skipInsuranceBundle = false } = {},
+  { admissionId, claimId } = {},
 ) {
-  queryClient.invalidateQueries({ queryKey: ['ipd', 'billing'] });
+  queryClient.invalidateQueries({ queryKey: ['ipd', 'billing', 'running'] });
   if (admissionId) {
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.ipd.dailyBilling(admissionId),
-    });
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.ipd.finalBilling(admissionId),
-    });
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.ipd.billingAdmission(admissionId),
-    });
     queryClient.invalidateQueries({
       queryKey: queryKeys.ipd.billPreview(admissionId),
     });
+  }
+  if (claimId) {
     queryClient.invalidateQueries({
-      queryKey: queryKeys.ipd.admission(admissionId),
+      queryKey: ['ipd', 'insurance', 'claim', claimId],
     });
   }
-  if (patientId && !skipInsuranceBundle) {
+}
+
+/** Narrow invalidation after self-pay hospital/daily charge save — bundle already in cache. */
+function invalidateSelfPayChargeSaveQueries(queryClient, { admissionId } = {}) {
+  queryClient.invalidateQueries({ queryKey: ['ipd', 'billing', 'running'] });
+  if (admissionId) {
     queryClient.invalidateQueries({
-      queryKey: queryKeys.ipd.insuranceBillingBundle(patientId),
+      queryKey: queryKeys.ipd.billPreview(admissionId),
     });
   }
+}
+
+function invalidateIpdInsuranceBills(queryClient) {
+  queryClient.invalidateQueries({ queryKey: ['ipd', 'insurance', 'bills'] });
+}
+
+function invalidateIpdInsurancePatientLists(queryClient) {
+  queryClient.invalidateQueries({ queryKey: ['ipd', 'insurance', 'patients'] });
 }
 
 export function useIpdInsuranceBillingBundleQuery({
@@ -126,11 +133,15 @@ export function useSaveIpdFinalBillingMutation() {
   const token = useQueryToken();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ claimId, charges, patientId, insuranceAdmit }) =>
-      saveIpdInsuranceFinalCharges(
-        { claimId, charges, patientId, insuranceAdmit },
+    mutationFn: (variables) => {
+      const existingBundle = queryClient.getQueryData(
+        queryKeys.ipd.insuranceBillingBundle(variables.patientId),
+      );
+      return saveIpdInsuranceFinalCharges(
+        { ...variables, existingBundle },
         token,
-      ),
+      );
+    },
     onSuccess: (bundle, variables) => {
       if (bundle) {
         queryClient.setQueryData(
@@ -138,9 +149,8 @@ export function useSaveIpdFinalBillingMutation() {
           bundle,
         );
       }
-      invalidateIpdBillingQueries(queryClient, {
+      invalidateInsuranceChargeSaveQueries(queryClient, {
         admissionId: bundle?.admissionId,
-        patientId: variables.patientId,
         claimId: variables.claimId,
       });
     },
@@ -152,11 +162,15 @@ export function useSaveIpdDailyBillingMutation() {
   const token = useQueryToken();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ claimId, dailyCharges, patientId, insuranceAdmit }) =>
-      saveIpdInsuranceDailyCharges(
-        { claimId, dailyCharges, patientId, insuranceAdmit },
+    mutationFn: (variables) => {
+      const existingBundle = queryClient.getQueryData(
+        queryKeys.ipd.insuranceBillingBundle(variables.patientId),
+      );
+      return saveIpdInsuranceDailyCharges(
+        { ...variables, existingBundle },
         token,
-      ),
+      );
+    },
     onSuccess: (bundle, variables) => {
       if (bundle) {
         queryClient.setQueryData(
@@ -164,9 +178,8 @@ export function useSaveIpdDailyBillingMutation() {
           bundle,
         );
       }
-      invalidateIpdBillingQueries(queryClient, {
+      invalidateInsuranceChargeSaveQueries(queryClient, {
         admissionId: bundle?.admissionId,
-        patientId: variables.patientId,
         claimId: variables.claimId,
       });
     },
@@ -199,6 +212,7 @@ export function useSaveIpdInsuranceClaimMutation() {
           queryKey: ['ipd', 'insurance', 'claim', variables.claimId],
         });
       }
+      invalidateIpdInsuranceBills(queryClient);
     },
     onError: mutationOnError,
   });
@@ -241,7 +255,7 @@ export function useSaveIpdSelfPayFinalBillingMutation() {
           bundle,
         );
       }
-      invalidateIpdBillingQueries(queryClient, {
+      invalidateSelfPayChargeSaveQueries(queryClient, {
         admissionId: variables.admissionId,
       });
     },
@@ -265,7 +279,7 @@ export function useSaveIpdSelfPayDailyBillingMutation() {
           bundle,
         );
       }
-      invalidateIpdBillingQueries(queryClient, {
+      invalidateSelfPayChargeSaveQueries(queryClient, {
         admissionId: variables.admissionId,
       });
     },
@@ -374,12 +388,13 @@ export function useUpdateIpdInsuranceClaimMutation() {
     mutationFn: ({ claimId, payload }) =>
       updateIpdInsuranceClaim(claimId, payload, token),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ipd', 'insurance'] });
       if (variables.claimId) {
         queryClient.invalidateQueries({
           queryKey: insuranceQueryKeys.claim(variables.claimId),
         });
       }
+      invalidateIpdInsuranceBills(queryClient);
+      invalidateIpdInsurancePatientLists(queryClient);
     },
     onError: mutationOnError,
   });
@@ -391,8 +406,13 @@ export function useUpdateIpdInsurancePatientMutation() {
   return useMutation({
     mutationFn: ({ patientId, payload }) =>
       updateIpdInsurancePatient(patientId, payload, token),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ipd', 'insurance'] });
+    onSuccess: (_data, variables) => {
+      if (variables.patientId) {
+        queryClient.invalidateQueries({
+          queryKey: insuranceQueryKeys.patient(variables.patientId),
+        });
+      }
+      invalidateIpdInsurancePatientLists(queryClient);
     },
     onError: mutationOnError,
   });

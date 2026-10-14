@@ -13,3 +13,4 @@ export * from './ipdBilling';
 export * from './insurance';
 export * from './discharge';
 export * from './profile';
+export * from './pricing';

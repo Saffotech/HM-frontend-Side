@@ -23,6 +23,7 @@ const NurseWorkforceDashboardPage = lazy(() => import('@/features/admin/pages/Nu
 const NurseWorkforceShiftsPage = lazy(() => import('@/features/admin/pages/NurseWorkforceShiftsPage'));
 const NurseWorkforceRosterPage = lazy(() => import('@/features/admin/pages/NurseWorkforceRosterPage'));
 const AdminSettingsPage = lazy(() => import('@/features/admin/pages/AdminSettingsPage'));
+const AdminProfilePage = lazy(() => import('@/features/admin/pages/AdminProfilePage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 export const adminRoutes = [
@@ -217,6 +218,14 @@ export const adminRoutes = [
             element: (
               <LazyRoute>
                 <AdminSettingsPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.ADMIN_PROFILE,
+            element: (
+              <LazyRoute>
+                <AdminProfilePage />
               </LazyRoute>
             ),
           },

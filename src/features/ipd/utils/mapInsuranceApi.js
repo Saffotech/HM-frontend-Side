@@ -36,7 +36,52 @@ export function mapInsurancePatientRow(row = {}) {
   };
 }
 
+function roundMoney(amount) {
+  return Math.round((Number(amount) || 0) * 100) / 100;
+}
+
+function resolveInsuranceBillPendingDue(row = {}) {
+  const backendBalance = pick(row, 'patient_balance', 'patientBalance');
+  if (backendBalance != null) return roundMoney(backendBalance);
+  const totalBill = Number(pick(row, 'net_bill', 'netBill', 'total_bill', 'totalBill') ?? 0);
+  const approved = Number(pick(row, 'approved', 'approved_amount') ?? 0);
+  const estimateRaw = pick(row, 'estimate_amount', 'estimateAmount');
+  const estimate =
+    estimateRaw != null && estimateRaw !== '' ? Number(estimateRaw) : null;
+  const claimedRaw = pick(row, 'claimed', 'claimed_amount', 'claimedAmount');
+  const claimed =
+    claimedRaw != null && claimedRaw !== '' ? Number(claimedRaw) : 0;
+  const patientPaid = Number(pick(row, 'patient_paid', 'patientPaid') ?? 0);
+  const insuranceCover =
+    estimate != null && Number.isFinite(estimate) && estimate > 0
+      ? estimate
+      : Number.isFinite(claimed) && claimed > 0
+        ? claimed
+        : 0;
+
+  // The list total already includes GST. Do not add tax again.
+  if (insuranceCover > 0) {
+    return Math.max(0, roundMoney(totalBill - insuranceCover - patientPaid));
+  }
+
+  const patientResponsibility = pick(row, 'patient_responsibility', 'patientResponsibility');
+  const responsibility =
+    patientResponsibility != null && patientResponsibility !== ''
+      ? Number(patientResponsibility)
+      : Math.max(0, totalBill - approved);
+
+  return Math.max(0, roundMoney(responsibility - patientPaid));
+}
+
 export function mapInsuranceBillRow(row = {}) {
+  const totalBill = Number(pick(row, 'net_bill', 'netBill', 'total_bill', 'totalBill') ?? 0);
+  const claimedRaw = pick(row, 'claimed', 'claimed_amount', 'claimedAmount');
+  const claimedAmount =
+    claimedRaw != null && claimedRaw !== '' ? Number(claimedRaw) : null;
+  const estimateRaw = pick(row, 'estimate_amount', 'estimateAmount');
+  const estimateAmount =
+    estimateRaw != null && estimateRaw !== '' ? Number(estimateRaw) : null;
+
   return {
     id: pick(row, 'id', 'claim_id', 'claimId'),
     patientId: pick(row, 'patient_id', 'patientId'),
@@ -48,8 +93,16 @@ export function mapInsuranceBillRow(row = {}) {
     doctor: pick(row, 'doctor', 'doctor_name') ?? '—',
     wardRoom: pick(row, 'ward_room', 'wardRoom') ?? '—',
     coverage: pick(row, 'coverage') ?? 'Cashless Insurance',
-    netBill: Number(pick(row, 'net_bill', 'netBill') ?? 0),
+    totalBill,
+    netBill: totalBill,
+    claimedAmount:
+      claimedAmount != null && Number.isFinite(claimedAmount) ? claimedAmount : null,
     approved: Number(pick(row, 'approved', 'approved_amount') ?? 0),
+    estimateAmount:
+      estimateAmount != null && Number.isFinite(estimateAmount)
+        ? estimateAmount
+        : null,
+    pendingDue: resolveInsuranceBillPendingDue(row),
     claimLabel: pick(row, 'claim_label', 'claimLabel', 'status_label') ?? '—',
   };
 }

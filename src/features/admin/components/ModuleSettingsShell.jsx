@@ -18,7 +18,7 @@ import '@/features/admin/styles/nurseWorkforce.css';
 export default function ModuleSettingsShell({
   routes,
   navLinks,
-  defaultModule = 'OPD',
+  defaultModule = 'OPD/IPD',
   manageAdminEditLocks = false,
 }) {
   const { pathname } = useLocation();
@@ -29,7 +29,7 @@ export default function ModuleSettingsShell({
     { prefix: routes.lab, label: 'LAB' },
     { prefix: routes.nurse, label: 'NURSE' },
     { prefix: routes.pharmacy, label: 'Pharmacy' },
-    { prefix: routes.opd, label: 'OPD' },
+    { prefix: routes.opd, label: 'OPD/IPD' },
   ];
 
   const moduleLabel =

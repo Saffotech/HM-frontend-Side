@@ -45,6 +45,7 @@ export default function PatientListPage() {
     search: debouncedSearch || undefined,
     page: useClientDateFilter ? undefined : serverPage,
     limit: pageSize,
+    keepPreviousData: !useClientDateFilter,
   });
 
   const patients = asPatientList(data);
@@ -62,16 +63,18 @@ export default function PatientListPage() {
 
   const { sorted, sortKey, sortDir, toggleSort } = useTableSort(filtered, 'name', 'asc');
   const clientPagination = usePagination(sorted, pageSize);
+  const payloadOverflowsPage = sorted.length > pageSize;
+  const paginateLocally = useClientDateFilter || payloadOverflowsPage;
 
-  const paginatedItems = useClientDateFilter
-    ? clientPagination.paginatedItems
-    : sorted;
-  const page = useClientDateFilter ? clientPagination.page : pageMeta.page;
-  const totalPages = useClientDateFilter ? clientPagination.totalPages : pageMeta.totalPages;
-  const totalItems = useClientDateFilter ? clientPagination.totalItems : pageMeta.total;
-  const goToPage = useClientDateFilter
-    ? clientPagination.goToPage
-    : (p) => setServerPage(p);
+  const paginatedItems = paginateLocally ? clientPagination.paginatedItems : sorted;
+  const page = paginateLocally ? clientPagination.page : pageMeta.page || 1;
+  const totalItems = paginateLocally
+    ? clientPagination.totalItems
+    : Number(pageMeta.total) > 0
+      ? pageMeta.total
+      : sorted.length;
+  const totalPages = Math.max(1, Math.ceil((totalItems || 0) / pageSize));
+  const goToPage = paginateLocally ? clientPagination.goToPage : (p) => setServerPage(p);
 
   useEffect(() => {
     if (useClientDateFilter) clientPagination.resetPage();
@@ -126,16 +129,18 @@ export default function PatientListPage() {
         </div>
 
         <DataTableShell
-          maxHeight="480px"
+          className="patients-page__table-shell"
           pagination={{
             page,
             totalPages,
             totalItems,
             pageSize,
             onPageChange: goToPage,
+            itemLabel: 'patients',
+            alwaysVisible: true,
           }}
         >
-          <table className="data-table patients-table">
+          <table className="data-table patients-table data-table--stack">
             <thead>
               <tr>
                 <SortTh label="Patient" field="name" />
@@ -153,9 +158,9 @@ export default function PatientListPage() {
                   onClick={() => navigate(`/patients/${p.id}/profile`)}
                   style={{ cursor: 'pointer' }}
                 >
-                  <td>
+                  <td data-label="Patient">
                     <div className="patient-cell">
-                      <Avatar name={p.name} />
+                      <Avatar name={p.name} size={32} />
                       <div className="patient-cell__meta">
                         <strong>{p.name}</strong>
                         <span className="id-badge">{p.id}</span>
@@ -164,15 +169,17 @@ export default function PatientListPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="col-optional">
-                    {p.phone}
-                    <div className="text-muted">{p.gender}</div>
+                  <td className="col-optional" data-label="Contact">
+                    <div>
+                      {p.phone}
+                      <div className="text-muted">{p.gender}</div>
+                    </div>
                   </td>
-                  <td className="col-optional">
+                  <td className="col-optional" data-label="Blood">
                     <span className="blood-badge">{p.bloodGroup}</span>
                   </td>
-                  <td className="col-optional">{p.registeredDate}</td>
-                  <td className="actions-cell patients-table__actions">
+                  <td className="col-optional" data-label="Registered">{p.registeredDate}</td>
+                  <td className="actions-cell patients-table__actions" data-label="Actions">
                     <AdminGatedDeleteButton
                       disabledByAdmin={!allowPatientDelete}
                       onClick={(e) => {

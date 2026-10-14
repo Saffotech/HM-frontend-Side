@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Pencil, Plus, RotateCcw, UserX } from 'lucide-react';
+import { Eye, Plus, RotateCcw, UserX } from 'lucide-react';
 import AdminLayout from '@/features/admin/components/AdminLayout';
 import AdminEmptyState from '@/features/admin/components/AdminEmptyState';
 import AdminAllocationStatusBadge from '@/features/admin/components/AdminAllocationStatusBadge';
@@ -15,6 +15,7 @@ import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import {
   Button,
   ConfirmDialog,
+  DateInput,
   Modal,
   QueryFeedback,
   SearchBar,
@@ -23,11 +24,8 @@ import {
 } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import {
-  SHIFT_OPTIONS,
   formatAllocationDate,
-  formatAllocationDateTime,
   formatAssignedUntil,
-  formatShiftWithTime,
   groupAllocationListItems,
 } from '@/shared/api/mappers/adminBedAllocationMapper';
 import { toast } from '@/shared/utils/toast';
@@ -42,7 +40,6 @@ export default function NurseBedAllocationListPage() {
 
   const [search, setSearch] = useState('');
   const [shiftDate, setShiftDate] = useState('');
-  const [shiftName, setShiftName] = useState('');
   const [nurseId, setNurseId] = useState('');
   const [statusFilter, setStatusFilter] = useState('true');
   const [page, setPage] = useState(1);
@@ -70,13 +67,12 @@ export default function NurseBedAllocationListPage() {
     () => ({
       search: debouncedSearch || undefined,
       shift_date: shiftDate || undefined,
-      shift_name: shiftName || undefined,
       nurse_id: nurseId ? Number(nurseId) : undefined,
       is_active: statusFilter === 'all' ? undefined : statusFilter === 'true',
       page,
       page_size: PAGE_SIZE,
     }),
-    [debouncedSearch, shiftDate, shiftName, nurseId, statusFilter, page],
+    [debouncedSearch, shiftDate, nurseId, statusFilter, page],
   );
 
   const { data, isLoading, isError, error, refetch } = useAdminBedAllocationsQuery(
@@ -95,7 +91,6 @@ export default function NurseBedAllocationListPage() {
   const hasFilters = Boolean(
     search.trim() ||
       shiftDate ||
-      shiftName ||
       nurseId ||
       statusFilter !== 'true',
   );
@@ -103,7 +98,6 @@ export default function NurseBedAllocationListPage() {
   const resetFilters = () => {
     setSearch('');
     setShiftDate('');
-    setShiftName('');
     setNurseId('');
     setStatusFilter('true');
     setPage(1);
@@ -169,23 +163,14 @@ export default function NurseBedAllocationListPage() {
               }}
               placeholder="Search nurse, bed, ward, allocation ID…"
             />
-            <input
-              type="date"
-              className="nba-input"
+            <DateInput
+              aria-label="Filter by date"
               value={shiftDate}
               onChange={(e) => {
                 setShiftDate(e.target.value);
                 setPage(1);
               }}
-              aria-label="Filter by date"
-            />
-            <Select
-              value={shiftName}
-              onChange={(v) => {
-                setShiftName(v);
-                setPage(1);
-              }}
-              options={[{ value: '', label: 'All shifts' }, ...SHIFT_OPTIONS]}
+              className="nba-toolbar-date"
             />
             <Select
               value={nurseId}
@@ -251,15 +236,13 @@ export default function NurseBedAllocationListPage() {
                   {hasFilters ? ' (filtered)' : ''}
                 </div>
                 <div className="nba-table-wrap">
-                  <table className="nba-table">
+                  <table className="nba-table admin-table--stack">
                     <thead>
                       <tr>
                         <th>Nurse</th>
-                        <th>Shift</th>
                         <th>Assigned From</th>
                         <th>Assigned Until</th>
                         <th>Allocated Beds</th>
-                        <th>Total Beds</th>
                         <th>Status</th>
                         <th>Assigned By</th>
                         <th>Created</th>
@@ -269,13 +252,10 @@ export default function NurseBedAllocationListPage() {
                     <tbody>
                       {items.map((row) => (
                         <tr key={`${row.nurseId}-${row.isActive ? 'a' : 'i'}-${row.id}`}>
-                          <td>{row.nurseName}</td>
-                          <td>
-                            {formatShiftWithTime(row.shiftName, row.shiftStart, row.shiftEnd)}
-                          </td>
-                          <td>{formatAllocationDate(row.shiftDate)}</td>
-                          <td>{formatAssignedUntil(row.assignedUntil, row.isActive)}</td>
-                          <td>
+                          <td data-label="Nurse"><span>{row.nurseName}</span></td>
+                          <td data-label="Assigned From"><span>{formatAllocationDate(row.shiftDate)}</span></td>
+                          <td data-label="Assigned Until"><span>{formatAssignedUntil(row.assignedUntil, row.isActive)}</span></td>
+                          <td data-label="Allocated Beds">
                             <Button
                               type="button"
                               size="sm"
@@ -300,13 +280,12 @@ export default function NurseBedAllocationListPage() {
                               View beds
                             </Button>
                           </td>
-                          <td>{row.totalBeds}</td>
-                          <td>
+                          <td data-label="Status">
                             <AdminAllocationStatusBadge isActive={row.isActive} />
                           </td>
-                          <td>{row.assignedByName}</td>
-                          <td>{formatAllocationDateTime(row.createdAt)}</td>
-                          <td className="nba-td-actions">
+                          <td data-label="Assigned By"><span>{row.assignedByName}</span></td>
+                          <td data-label="Created"><span>{formatAllocationDate(row.createdAt)}</span></td>
+                          <td className="nba-td-actions" data-label="Actions">
                             <div className="nba-table__actions">
                               <Button
                                 type="button"
@@ -324,24 +303,6 @@ export default function NurseBedAllocationListPage() {
                                 <Eye size={14} aria-hidden />
                                 View
                               </Button>
-                              {canUpdate && (
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="warning"
-                                  onClick={() =>
-                                    navigate(
-                                      ROUTES.ADMIN_BED_ALLOCATION_EDIT.replace(
-                                        ':id',
-                                        String(row.id),
-                                      ),
-                                    )
-                                  }
-                                >
-                                  <Pencil size={14} aria-hidden />
-                                  Edit
-                                </Button>
-                              )}
                               {canUpdate && row.isActive && (
                                 <Button
                                   type="button"
@@ -399,7 +360,7 @@ export default function NurseBedAllocationListPage() {
               {bedsPreview.beds.length} bed{bedsPreview.beds.length === 1 ? '' : 's'}
             </p>
             <div className="nba-table-wrap">
-              <table className="nba-table nba-table--compact">
+              <table className="nba-table nba-table--compact admin-table--stack">
                 <thead>
                   <tr>
                     <th>Ward</th>
@@ -409,8 +370,8 @@ export default function NurseBedAllocationListPage() {
                 <tbody>
                   {bedsPreview.beds.map((bed) => (
                     <tr key={bed.id ?? `${bed.wardName}-${bed.bedNumber}`}>
-                      <td>{bed.wardName || '—'}</td>
-                      <td>{bed.bedNumber || '—'}</td>
+                      <td data-label="Ward"><span>{bed.wardName || '—'}</span></td>
+                      <td data-label="Bed"><span>{bed.bedNumber || '—'}</span></td>
                     </tr>
                   ))}
                 </tbody>

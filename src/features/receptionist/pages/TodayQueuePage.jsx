@@ -139,7 +139,7 @@ export default function TodayQueuePage() {
         </div>
 
         <div className="rec-table-wrap">
-          <table className="rec-table">
+          <table className="rec-table rec-table--stack">
             <thead>
               <tr>
                 <th className="rec-text-center" style={{ width: '4rem' }}>
@@ -174,19 +174,33 @@ export default function TodayQueuePage() {
               ) : (
                 patients.map((patient, index) => (
                   <tr key={patient.id}>
-                    <td className="rec-text-center rec-text-muted">
-                      {(currentPage - 1) * PAGE_SIZE_LIST + index + 1}
+                    <td className="rec-text-center rec-text-muted" data-label="#">
+                      <span>{(currentPage - 1) * PAGE_SIZE_LIST + index + 1}</span>
                     </td>
-                    <td className="rec-font-semibold">{patient.patient_uid}</td>
-                    <td className="rec-font-medium">{patient.name}</td>
-                    <td className="rec-text-muted">{patient.phone}</td>
-                    <td>{getDoctorName(patient)}</td>
-                    <td className="rec-text-muted">{patient.department ?? '—'}</td>
-                    <td>
+                    <td className="rec-font-semibold" data-label="Patient ID">
+                      <span>{patient.patient_uid}</span>
+                    </td>
+                    <td className="rec-font-medium" data-label="Patient Name">
+                      <span>{patient.name}</span>
+                    </td>
+                    <td className="rec-text-muted" data-label="Phone Number">
+                      <span>{patient.phone}</span>
+                    </td>
+                    <td data-label="Doctor">
+                      <span>{getDoctorName(patient)}</span>
+                    </td>
+                    <td className="rec-text-muted" data-label="Department">
+                      <span>{patient.department ?? '—'}</span>
+                    </td>
+                    <td data-label="Status">
                       <StatusBadge status={patient.display_status} />
                     </td>
-                    <td className="rec-tabular">{patient.scheduled_at}</td>
-                    <td className="rec-text-muted">{getRoomNo(patient)}</td>
+                    <td className="rec-tabular" data-label="Time">
+                      <span>{patient.scheduled_at}</span>
+                    </td>
+                    <td className="rec-text-muted" data-label="Room Number">
+                      <span>{getRoomNo(patient)}</span>
+                    </td>
                   </tr>
                 ))
               )}

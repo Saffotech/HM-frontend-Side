@@ -280,50 +280,7 @@ export default function OpdBillPage() {
   }, [grandTotal, payLater]);
 
   // Keep Consultation line in sync with Admin pricing (doctor → dept → hospital).
-  useEffect(() => {
-    if (!deptId && !doctorId) return;
-    const fee = resolveConsultFee(pricing, {
-      doctorId,
-      departmentId: deptId,
-    });
-    setItems((prev) => {
-      const consultIdx = prev.findIndex((row) => isConsultationLine(row.name));
-      if (consultIdx >= 0) {
-        const current = prev[consultIdx];
-        if (Number(current.unitPrice) === Number(fee) && current.name === 'Consultation') {
-          return prev;
-        }
-        const next = [...prev];
-        next[consultIdx] = {
-          ...current,
-          name: 'Consultation',
-          unitPrice: fee,
-          fromCatalog: true,
-        };
-        return next;
-      }
-      const emptyIdx = prev.findIndex((row) => !row.name && Number(row.unitPrice) === 0);
-      if (emptyIdx >= 0) {
-        const next = [...prev];
-        next[emptyIdx] = {
-          ...next[emptyIdx],
-          name: 'Consultation',
-          unitPrice: fee,
-          fromCatalog: true,
-        };
-        return next;
-      }
-      return [
-        ...prev,
-        {
-          ...createEmptyBillLineRow(),
-          name: 'Consultation',
-          unitPrice: fee,
-          fromCatalog: true,
-        },
-      ];
-    });
-  }, [deptId, doctorId, pricing]);
+
 
   const handlePatientChange = useCallback((id) => {
     setPatientId(id);
@@ -389,9 +346,30 @@ export default function OpdBillPage() {
 
   const handleQuickAddSelect = (value) => {
     if (!value) return;
-    const catalog = pricingBillItems?.length ? pricingBillItems : QUICK_BILL_ITEMS;
+
+    const catalog = pricingBillItems?.length
+      ? pricingBillItems
+      : QUICK_BILL_ITEMS;
+
     const item = catalog.find((qi) => qi.name === value);
-    if (item) addQuickItem(item.name, item.price);
+
+    if (!item) {
+      setQuickAddSelection('');
+      return;
+    }
+
+    let price = item.price;
+
+    // Consultation fee is added ONLY when user selects Consultation
+    if (isConsultationLine(item.name)) {
+      price = resolveConsultFee(pricing, {
+        doctorId,
+        departmentId: deptId,
+      });
+    }
+
+    addQuickItem(item.name, price);
+
     setQuickAddSelection('');
   };
 
@@ -563,114 +541,114 @@ export default function OpdBillPage() {
 
   return (
     <QueryFeedback isLoading={isLoading} isError={isError} error={error}>
-    <div className="opd-bill page-container">
-      <div className="opd-bill__toolbar">
-        <Button variant="outline" size="sm" type="button" onClick={() => navigate(ROUTES.BILLING)}>
-          <ArrowLeft size={16} /> Back
-        </Button>
+      <div className="opd-bill page-container">
+        <div className="opd-bill__toolbar">
+          <Button variant="outline" size="sm" type="button" onClick={() => navigate(ROUTES.BILLING)}>
+            <ArrowLeft size={16} /> Back
+          </Button>
+        </div>
+        <div className="card card__body opd-bill__card">
+          <form onSubmit={handleSubmit} className="opd-form">
+            <OpdBillPatientSection
+              patientOptions={patientOptions}
+              patientId={patientId}
+              onPatientChange={handlePatientChange}
+              onPatientSearchChange={handlePatientSearchChange}
+              patientSearchSynced={patientSearchSynced}
+              fieldErrors={fieldErrors}
+              selectedPatient={displayPatient}
+              service={service}
+              billAppointment={billAppointment}
+              patientApptsFetched={patientApptsFetched}
+              serviceReady={serviceReady}
+              departments={departments}
+              doctors={doctors}
+              deptId={deptId}
+              doctorId={doctorId}
+              onDeptChange={handleDeptChange}
+              onDoctorChange={handleDoctorChange}
+              billingContext={billingContext}
+              duplicateBills={duplicateBills}
+              existingBillAcknowledged={existingBillAcknowledged}
+              onAcknowledgeExistingBill={() => setExistingBillAcknowledged(true)}
+              onOpenBill={handleOpenBill}
+              onOpenOutstanding={handleOpenOutstanding}
+            />
+
+            {billStep === 'items' ? (
+              <>
+                <OpdBillItemsTable
+                  items={items}
+                  itemsScrollRef={itemsScrollRef}
+                  quickAddSelection={quickAddSelection}
+                  onQuickAddSelect={handleQuickAddSelect}
+                  onUpdateItem={updateItem}
+                  onRemoveItem={removeItem}
+                  onAddItem={addItem}
+                  billItems={pricingBillItems}
+                  allowManualPriceEntry={allowManualPriceEntry}
+                />
+                <OpdBillItemsStepFooter
+                  subtotal={subtotal}
+                  tax={tax}
+                  grandTotal={grandTotal}
+                  gstPercent={gstPercent}
+                  onContinue={handleContinueToPayment}
+                  disabled={itemsStepDisabled}
+                />
+              </>
+            ) : (
+              <>
+                <OpdBillItemsRecap
+                  items={items}
+                  subtotal={subtotal}
+                  tax={tax}
+                  grandTotal={grandTotal}
+                  gstPercent={gstPercent}
+                />
+                <OpdBillPaymentFooter
+                  mode={mode}
+                  setMode={setMode}
+                  setPaymentRef={setPaymentRef}
+                  payLater={payLater}
+                  setPayLater={setPayLater}
+                  amountReceived={amountReceived}
+                  setAmountReceived={setAmountReceived}
+                  paymentRef={paymentRef}
+                  fieldErrors={fieldErrors}
+                  subtotal={subtotal}
+                  tax={tax}
+                  grandTotal={grandTotal}
+                  gstPercent={gstPercent}
+                  createBillPending={createBill.isPending}
+                  patientId={patientId}
+                  serviceReady={serviceReady}
+                  selectedPatient={selectedPatient}
+                  patientApptsFetched={patientApptsFetched}
+                  enabledPaymentModes={enabledPaymentModes}
+                  onBack={() => setBillStep('items')}
+                />
+              </>
+            )}
+          </form>
+        </div>
+
+        <OpdBillConfirmDialog
+          open={confirmOpen}
+          onClose={() => {
+            setConfirmOpen(false);
+            pendingBillRef.current = null;
+          }}
+          onConfirm={handleConfirmGenerate}
+          confirming={createBill.isPending}
+          summary={confirmSummary}
+        />
+
+        <OpdBillSuccessModal
+          successBill={successBill}
+          onClose={handleSuccessClose}
+        />
       </div>
-      <div className="card card__body opd-bill__card">
-        <form onSubmit={handleSubmit} className="opd-form">
-          <OpdBillPatientSection
-            patientOptions={patientOptions}
-            patientId={patientId}
-            onPatientChange={handlePatientChange}
-            onPatientSearchChange={handlePatientSearchChange}
-            patientSearchSynced={patientSearchSynced}
-            fieldErrors={fieldErrors}
-            selectedPatient={displayPatient}
-            service={service}
-            billAppointment={billAppointment}
-            patientApptsFetched={patientApptsFetched}
-            serviceReady={serviceReady}
-            departments={departments}
-            doctors={doctors}
-            deptId={deptId}
-            doctorId={doctorId}
-            onDeptChange={handleDeptChange}
-            onDoctorChange={handleDoctorChange}
-            billingContext={billingContext}
-            duplicateBills={duplicateBills}
-            existingBillAcknowledged={existingBillAcknowledged}
-            onAcknowledgeExistingBill={() => setExistingBillAcknowledged(true)}
-            onOpenBill={handleOpenBill}
-            onOpenOutstanding={handleOpenOutstanding}
-          />
-
-          {billStep === 'items' ? (
-            <>
-              <OpdBillItemsTable
-                items={items}
-                itemsScrollRef={itemsScrollRef}
-                quickAddSelection={quickAddSelection}
-                onQuickAddSelect={handleQuickAddSelect}
-                onUpdateItem={updateItem}
-                onRemoveItem={removeItem}
-                onAddItem={addItem}
-                billItems={pricingBillItems}
-                allowManualPriceEntry={allowManualPriceEntry}
-              />
-              <OpdBillItemsStepFooter
-                subtotal={subtotal}
-                tax={tax}
-                grandTotal={grandTotal}
-                gstPercent={gstPercent}
-                onContinue={handleContinueToPayment}
-                disabled={itemsStepDisabled}
-              />
-            </>
-          ) : (
-            <>
-              <OpdBillItemsRecap
-                items={items}
-                subtotal={subtotal}
-                tax={tax}
-                grandTotal={grandTotal}
-                gstPercent={gstPercent}
-              />
-              <OpdBillPaymentFooter
-                mode={mode}
-                setMode={setMode}
-                setPaymentRef={setPaymentRef}
-                payLater={payLater}
-                setPayLater={setPayLater}
-                amountReceived={amountReceived}
-                setAmountReceived={setAmountReceived}
-                paymentRef={paymentRef}
-                fieldErrors={fieldErrors}
-                subtotal={subtotal}
-                tax={tax}
-                grandTotal={grandTotal}
-                gstPercent={gstPercent}
-                createBillPending={createBill.isPending}
-                patientId={patientId}
-                serviceReady={serviceReady}
-                selectedPatient={selectedPatient}
-                patientApptsFetched={patientApptsFetched}
-                enabledPaymentModes={enabledPaymentModes}
-                onBack={() => setBillStep('items')}
-              />
-            </>
-          )}
-        </form>
-      </div>
-
-      <OpdBillConfirmDialog
-        open={confirmOpen}
-        onClose={() => {
-          setConfirmOpen(false);
-          pendingBillRef.current = null;
-        }}
-        onConfirm={handleConfirmGenerate}
-        confirming={createBill.isPending}
-        summary={confirmSummary}
-      />
-
-      <OpdBillSuccessModal
-        successBill={successBill}
-        onClose={handleSuccessClose}
-      />
-    </div>
     </QueryFeedback>
   );
 }

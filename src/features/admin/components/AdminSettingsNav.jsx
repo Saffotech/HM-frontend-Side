@@ -3,7 +3,7 @@ import { ROUTES } from '@/shared/constants';
 import '@/features/admin/styles/nurseWorkforce.css';
 
 const DEFAULT_LINKS = [
-  { to: ROUTES.ADMIN_SETTINGS_OPD, label: 'OPD', end: true },
+  { to: ROUTES.ADMIN_SETTINGS_OPD, label: 'OPD/IPD', end: true },
   { to: ROUTES.ADMIN_SETTINGS_DOCTOR, label: 'Doctor' },
   { to: ROUTES.ADMIN_SETTINGS_RECEPTIONIST, label: 'Receptionist' },
   { to: ROUTES.ADMIN_SETTINGS_LAB, label: 'LAB' },

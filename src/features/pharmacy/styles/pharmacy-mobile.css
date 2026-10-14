@@ -1,0 +1,216 @@
+/* Pharmacy phone layout — laptop/desktop tables stay unchanged */
+
+@media (max-width: 767px) {
+  .pharmacy-layout .data-table-shell:has(.pharmacy-table--stack) .data-table-shell__scroll,
+  .pharmacy-layout .pharmacy-dispense-table-wrap:has(.pharmacy-table--stack) {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  .pharmacy-layout .pharmacy-table--stack {
+    min-width: 0 !important;
+    width: 100% !important;
+    table-layout: auto !important;
+    white-space: normal !important;
+  }
+
+  .pharmacy-layout .pharmacy-table--stack thead,
+  .pharmacy-layout .pharmacy-table--stack colgroup {
+    display: none !important;
+  }
+
+  .pharmacy-layout .pharmacy-table--stack,
+  .pharmacy-layout .pharmacy-table--stack tbody,
+  .pharmacy-layout .pharmacy-table--stack tr {
+    display: block;
+    width: 100%;
+  }
+
+  .pharmacy-layout .pharmacy-table--stack tbody tr {
+    margin-bottom: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 0.75rem;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  .pharmacy-layout .pharmacy-table--stack tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .pharmacy-layout .pharmacy-table--stack tbody tr:hover,
+  .pharmacy-layout .pharmacy-table--stack tbody tr:hover td {
+    background: #fff;
+  }
+
+  .pharmacy-layout .pharmacy-table--stack tbody tr.pharmacy-rx-table__row:hover,
+  .pharmacy-layout .pharmacy-table--stack tbody tr.pharmacy-rx-table__row:hover td {
+    background: #f8fafc;
+  }
+
+  .pharmacy-layout .pharmacy-table--stack td {
+    display: grid !important;
+    grid-template-columns: minmax(5.5rem, 38%) minmax(0, 1fr);
+    align-items: center;
+    justify-items: end;
+    column-gap: 0.75rem;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    padding: 0.4rem 0 !important;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: right !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+  }
+
+  .pharmacy-layout .pharmacy-table--stack td::before {
+    content: attr(data-label);
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+    text-align: left !important;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .pharmacy-layout .pharmacy-table--stack td[data-label='Qty'],
+  .pharmacy-layout .pharmacy-table--stack td[data-label='Date'] {
+    white-space: nowrap !important;
+  }
+
+  .pharmacy-layout .pharmacy-table--stack td > * {
+    grid-column: 2;
+    min-width: 0;
+    justify-self: end;
+    text-align: right;
+  }
+
+  .pharmacy-layout .pharmacy-table--stack td:last-child {
+    border-bottom: none;
+    padding-bottom: 0.15rem !important;
+  }
+
+  .pharmacy-layout .pharmacy-table--stack td[colspan] {
+    display: block !important;
+    text-align: left;
+    border-bottom: none;
+    padding: 0.5rem 0 !important;
+  }
+
+  .pharmacy-layout .pharmacy-table--stack td[colspan]::before {
+    display: none;
+  }
+
+  .pharmacy-layout .pharmacy-table--stack .pharmacy-allergy-tag {
+    margin-left: 0;
+  }
+
+  .pharmacy-layout .pharmacy-table--stack .pharmacy-truncated-text:not(.is-expanded) {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+
+  .pharmacy-layout .pharmacy-table--stack .pharmacy-dispense-give-now {
+    justify-self: end;
+    align-items: flex-end;
+  }
+
+  .pharmacy-layout .pharmacy-table--stack .pharmacy-dispense-qty-input,
+  .pharmacy-layout .pharmacy-table--stack .pharmacy-dispense-price-input {
+    width: 5.5rem;
+  }
+
+  .pharmacy-layout .pharmacy-table--stack .pharmacy-dispense-row-error {
+    text-align: right;
+    min-width: 0;
+  }
+
+  .pharmacy-layout .pharmacy-rx-card__toolbar,
+  .pharmacy-layout .pharmacy-history-card__toolbar,
+  .pharmacy-layout .pharmacy-rx-toolbar-strip,
+  .pharmacy-layout .pharmacy-history-toolbar-strip,
+  .pharmacy-layout .pharmacy-history-date-range,
+  .pharmacy-layout .pharmacy-dispense-header,
+  .pharmacy-layout .pharmacy-dispense-patient-strip,
+  .pharmacy-layout .pharmacy-dispense-patient-strip__meta,
+  .pharmacy-layout .pharmacy-detail-table-header,
+  .pharmacy-layout .pharmacy-detail-toolbar,
+  .pharmacy-layout .pharmacy-profile-page__toolbar,
+  .pharmacy-layout .pharmacy-notif-filters__row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pharmacy-layout .pharmacy-rx-toolbar-strip__divider,
+  .pharmacy-layout .pharmacy-history-toolbar-strip__divider {
+    display: none;
+  }
+
+  .pharmacy-layout .pharmacy-rx-card__search,
+  .pharmacy-layout .pharmacy-rx-filter,
+  .pharmacy-layout .pharmacy-rx-filter__select,
+  .pharmacy-layout .pharmacy-rx-date-filter,
+  .pharmacy-layout .pharmacy-rx-date-filter__input,
+  .pharmacy-layout .pharmacy-rx-card__meta,
+  .pharmacy-layout .pharmacy-history-card__search,
+  .pharmacy-layout .pharmacy-history-date,
+  .pharmacy-layout .pharmacy-history-pagesize,
+  .pharmacy-layout .pharmacy-history-pagesize__select,
+  .pharmacy-layout .pharmacy-history-card__meta,
+  .pharmacy-layout .pharmacy-profile-page__actions,
+  .pharmacy-layout .pharmacy-profile-tabs,
+  .pharmacy-layout .pharmacy-notif-search,
+  .pharmacy-layout .pharmacy-notif-select,
+  .pharmacy-layout .pharmacy-notif-mark-all {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+  }
+
+  .pharmacy-layout .pharmacy-rx-date-filter .date-input__wrap,
+  .pharmacy-layout .pharmacy-history-date .date-input__wrap {
+    width: 100%;
+  }
+
+  .pharmacy-layout .pharmacy-rx-toolbar-strip,
+  .pharmacy-layout .pharmacy-history-toolbar-strip {
+    display: flex;
+    width: 100%;
+  }
+
+  .pharmacy-layout .pharmacy-history-date-range__sep {
+    text-align: center;
+  }
+
+  .pharmacy-layout .pharmacy-detail-grid,
+  .pharmacy-layout .pharmacy-profile-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .pharmacy-layout .pharmacy-dispense-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+
+  .pharmacy-layout .pharmacy-dispense-stat {
+    min-width: 0;
+  }
+
+  .pharmacy-layout .pharmacy-dispense-actions,
+  .pharmacy-layout .pharmacy-dispense-actions__buttons,
+  .pharmacy-layout .pharmacy-profile-page__actions .btn,
+  .pharmacy-layout .pharmacy-detail-toolbar .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

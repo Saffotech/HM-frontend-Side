@@ -530,6 +530,8 @@ export function mapBackendBillingBundleResponse(raw, context = {}) {
       raw.admission_id ?? raw.admissionId ?? context.admissionId ?? null,
     patientId: raw.patient_id ?? raw.patientId ?? context.patientId ?? null,
     claimId: raw.claim_id ?? raw.claimId ?? context.claimId ?? null,
+    paymentType: raw.payment_type ?? raw.paymentType ?? null,
+    preview: raw.preview ?? null,
     transactions,
     dailyCharges,
     finalBilling: buildFinalBillingSummary(chargeHeads),
