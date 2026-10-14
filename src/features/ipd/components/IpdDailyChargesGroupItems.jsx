@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { getDailyChargeItemPlaceholder } from '@/features/ipd/utils/insuranceDailyCharges';
-import { formatCurrency } from '@/shared/utils/formatCurrency';
+import { formatCurrency, currencyAmountLabel } from '@/shared/utils/formatCurrency';
 
 function formatChargeDate(iso) {
   if (!iso) return '—';
@@ -108,7 +108,7 @@ export default function IpdDailyChargesGroupItems({
         <span>Head</span>
         <span>Item / medicine / treatment</span>
         <span>Qty</span>
-        <span>Amount (₹)</span>
+        <span>{currencyAmountLabel('Amount')}</span>
         <span aria-hidden />
       </div>
 
@@ -189,7 +189,7 @@ export default function IpdDailyChargesGroupItems({
               <div className="ipd-ins-daily-pharmacy-card__head">
                 <span>Medicine</span>
                 <span>Qty</span>
-                <span>Amount (₹)</span>
+                <span>{currencyAmountLabel('Amount')}</span>
                 <span aria-hidden />
               </div>
               {pharmacyItems.map((row) => (

@@ -2,7 +2,7 @@
  * Hospital charge heads — shared by insurance cashless and self / pay-and-claim billing.
  */
 
-import { Fragment, useState } from 'react';
+import { Fragment, memo, useState } from 'react';
 import { Button } from '@/shared/components/common';
 import {
   calculateInsuranceChargeTotals,
@@ -14,9 +14,9 @@ import {
   sortInsuranceChargeHeads,
 } from '@/features/ipd/utils/insuranceChargeHeads';
 import { toast } from '@/shared/utils/toast';
-import { formatCurrency } from '@/shared/utils/formatCurrency';
+import { formatCurrency, currencyAmountLabel } from '@/shared/utils/formatCurrency';
 
-export default function IpdHospitalChargesCard({
+function IpdHospitalChargesCard({
   charges,
   onChargesChange,
   onSave,
@@ -80,7 +80,7 @@ export default function IpdHospitalChargesCard({
             <thead>
               <tr>
                 <th>Charge head</th>
-                <th className="ipd-num">Amount (₹)</th>
+                <th className="ipd-num">{currencyAmountLabel('Amount')}</th>
                 <th className="ipd-ins-charge-table__action" aria-label="Actions" />
               </tr>
             </thead>
@@ -186,5 +186,7 @@ export default function IpdHospitalChargesCard({
     </div>
   );
 }
+
+export default memo(IpdHospitalChargesCard);
 
 export { calculateInsuranceChargeTotals, normalizeInsuranceChargeHeads, sortInsuranceChargeHeads };

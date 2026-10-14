@@ -37,7 +37,7 @@ import {
   resolveAdmissionIdForPharmacyPatient,
 } from '@/features/pharmacy/utils/dispensePricing';
 import PharmacyTruncatedText from '@/features/pharmacy/components/PharmacyTruncatedText';
-import { formatCurrency } from '@/shared/utils/formatCurrency';
+import { formatCurrency, currencyAmountLabel } from '@/shared/utils/formatCurrency';
 import './DispensePage.css';
 
 function dispenseWasApplied(beforeItems, afterItems, quantitiesByItemId) {
@@ -260,7 +260,7 @@ export default function DispensePage() {
                           <th className="pharmacy-dispense-table__qty">Already Dispensed</th>
                           <th className="pharmacy-dispense-table__qty">Remaining</th>
                           <th className="pharmacy-dispense-table__input-col">Give Now</th>
-                          <th className="pharmacy-dispense-table__input-col">Amount (₹)</th>
+                          <th className="pharmacy-dispense-table__input-col">{currencyAmountLabel('Amount')}</th>
                           <th className="pharmacy-dispense-table__amount-col">Price</th>
                         </tr>
                       </thead>

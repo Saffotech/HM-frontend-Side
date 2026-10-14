@@ -26,7 +26,7 @@ import { getRevisitInfoFromVisits } from '@/shared/utils/revisit';
 
 import { generateAppointmentId } from '@/shared/utils/billHelpers';
 
-import { formatCurrency } from '@/shared/utils/formatCurrency';
+import { formatCurrency, currencyAmountLabel } from '@/shared/utils/formatCurrency';
 
 import { trimForm } from '@/shared/utils/trimForm';
 
@@ -566,7 +566,7 @@ export default function BookAppointmentPage() {
                           ))}
                         </div>
                         <Input
-                          label="Amount received (₹)"
+                          label={currencyAmountLabel('Amount received')}
                           type="number"
                           min={0}
                           max={grandTotal}

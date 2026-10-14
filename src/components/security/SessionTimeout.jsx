@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Modal, Button } from '@/shared/components/common';
 import { ROUTES, ROLES } from '@/shared/constants';
 import { useAuth } from '@/shared/hooks/useAuth';
@@ -8,8 +8,11 @@ const IDLE_MS = 30 * 60 * 1000;
 const WARNING_MS = 60 * 1000;
 
 export default function SessionTimeout() {
-  const { isAuthenticated, logout, user } = useAuth();
+  const { isAuthenticated: hospitalAuthenticated, logout, user } = useAuth();
   const navigate = useNavigate();
+  // Platform Admin: /platform/* has its own session, so the hospital idle timer is paused there
+  const { pathname } = useLocation();
+  const isAuthenticated = hospitalAuthenticated && !pathname.startsWith(ROUTES.PLATFORM);
   const [warningOpen, setWarningOpen] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(60);
   const idleTimerRef = useRef(null);

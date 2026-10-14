@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Modal, Button } from '@/shared/components/common';
 import { validateAddApprovedAmount } from '@/features/ipd/utils/claimStatusConstants';
-import { formatCurrency } from '@/shared/utils/formatCurrency';
+import { formatCurrency, currencyAmountLabel } from '@/shared/utils/formatCurrency';
 
 export default function UpdateApprovedAmountModal({
   open,
@@ -90,7 +90,7 @@ export default function UpdateApprovedAmountModal({
 
         <div className="ipd-toolbar__field" style={{ marginTop: '1rem' }}>
           <label className="ipd-toolbar__label" htmlFor="ipd-add-approved-amt">
-            Add Amount (₹)
+            {currencyAmountLabel('Add Amount')}
           </label>
           <input
             id="ipd-add-approved-amt"
@@ -132,7 +132,7 @@ export default function UpdateApprovedAmountModal({
                 setChangeReason(e.target.value);
                 setError('');
               }}
-              placeholder="e.g. ₹10,000 non-covered expenses"
+              placeholder={`e.g. ${formatCurrency(10000)} non-covered expenses`}
               required
             />
           </div>

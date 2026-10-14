@@ -79,6 +79,8 @@ export function mapInsuranceClaim(row = {}) {
     estimateAmount: pick(row, 'estimate_amount', 'estimateAmount') ?? null,
     approved: Number(pick(row, 'approved', 'approved_amount') ?? 0),
     netBill: Number(pick(row, 'net_bill', 'netBill') ?? 0),
+    patientPaid: Number(pick(row, 'patient_paid', 'patientPaid') ?? 0),
+    insurancePaid: Number(pick(row, 'insurance_paid', 'insurancePaid') ?? 0),
     patientResponsibility: pick(
       row,
       'patient_responsibility',

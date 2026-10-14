@@ -1,0 +1,37 @@
+.app-shell {
+  min-height: 100vh;
+  background: var(--color-background);
+}
+
+.main-column {
+  margin-left: var(--sidebar-width);
+  min-width: 0;
+  min-height: 100vh;
+}
+
+.content {
+  padding: 22px var(--space-page) 40px;
+}
+
+.sign-in-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.sign-in-card {
+  width: min(440px, 100%);
+  padding: 28px;
+  text-align: left;
+}
+
+.sign-in-card h1 {
+  font-size: 28px;
+  margin: 12px 0 8px;
+}
+
+.sign-in-card p {
+  color: var(--color-text-secondary);
+  margin-bottom: 18px;
+}

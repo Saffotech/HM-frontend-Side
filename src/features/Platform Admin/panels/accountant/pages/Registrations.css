@@ -1,0 +1,139 @@
+.hr-page {
+  display: grid;
+  gap: 14px;
+}
+
+.hr-flow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #d5c8f0;
+  border-radius: 8px;
+  background: #f8f5fd;
+  color: #4a3a75;
+}
+
+.hr-flow svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.hr-flow p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.hr-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--classic-border);
+  background: #fafbfc;
+}
+
+.hr-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: -1px;
+  padding: 11px 12px 10px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #5b6b82;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hr-tabs button:hover {
+  color: var(--color-text);
+}
+
+.hr-tabs button.active {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-text);
+}
+
+.hr-tabs button span {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #e6edf4;
+  color: #41536d;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.hr-tabs button.active span {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.hr-toolbar {
+  padding: 12px;
+  background: var(--classic-toolbar);
+  border-bottom: 1px solid var(--classic-border);
+}
+
+.hr-toolbar .search-bar {
+  max-width: 420px;
+  min-height: 34px;
+  padding: 0 10px;
+  border-color: var(--classic-border);
+  border-radius: var(--classic-radius);
+  background: #fff;
+  box-shadow: none;
+}
+
+.hr-toolbar .search-bar input {
+  padding: 6px 0;
+}
+
+.hr-page .data-table {
+  min-width: 900px;
+}
+
+.hr-note {
+  display: -webkit-box;
+  max-width: 260px;
+  overflow: hidden;
+  color: #41536d;
+  font-size: 12px;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.hr-hero {
+  border-left-color: #6b4fbb;
+}
+
+.hr-hero .inv-hero-amount {
+  font-size: 22px;
+}
+
+.hr-chip {
+  padding: 2px 8px;
+  border: 1px solid #d5c8f0;
+  border-radius: 2px;
+  background: #f4f0fc;
+  color: #5b3fa0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.hr-handover {
+  margin: 0 -14px -4px;
+  padding: 10px 14px;
+  border-top: 1px solid #dfe5ed;
+  background: #fbfcfd;
+  color: #31415c;
+  font-size: 13px;
+  line-height: 1.5;
+}

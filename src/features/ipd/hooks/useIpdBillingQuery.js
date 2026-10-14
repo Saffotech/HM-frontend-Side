@@ -35,7 +35,10 @@ import {
   selectBillingTransactionsFromBundle,
 } from '@/features/ipd/billing/ipdBillingMapper';
 
-function invalidateIpdBillingQueries(queryClient, { admissionId, patientId, claimId }) {
+function invalidateIpdBillingQueries(
+  queryClient,
+  { admissionId, patientId, claimId, skipInsuranceBundle = false } = {},
+) {
   queryClient.invalidateQueries({ queryKey: ['ipd', 'billing'] });
   if (admissionId) {
     queryClient.invalidateQueries({
@@ -54,7 +57,7 @@ function invalidateIpdBillingQueries(queryClient, { admissionId, patientId, clai
       queryKey: queryKeys.ipd.admission(admissionId),
     });
   }
-  if (patientId) {
+  if (patientId && !skipInsuranceBundle) {
     queryClient.invalidateQueries({
       queryKey: queryKeys.ipd.insuranceBillingBundle(patientId),
     });
@@ -175,11 +178,15 @@ export function useSaveIpdInsuranceClaimMutation() {
   const token = useQueryToken();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ claimId, patch, patientId, insuranceAdmit }) =>
-      saveIpdInsuranceClaimAmounts(
-        { claimId, patch, patientId, insuranceAdmit },
+    mutationFn: (variables) => {
+      const existingBundle = queryClient.getQueryData(
+        queryKeys.ipd.insuranceBillingBundle(variables.patientId),
+      );
+      return saveIpdInsuranceClaimAmounts(
+        { ...variables, existingBundle },
         token,
-      ),
+      );
+    },
     onSuccess: (bundle, variables) => {
       if (bundle) {
         queryClient.setQueryData(
@@ -187,11 +194,11 @@ export function useSaveIpdInsuranceClaimMutation() {
           bundle,
         );
       }
-      invalidateIpdBillingQueries(queryClient, {
-        admissionId: bundle?.admissionId,
-        patientId: variables.patientId,
-        claimId: variables.claimId,
-      });
+      if (variables.claimId) {
+        queryClient.invalidateQueries({
+          queryKey: ['ipd', 'insurance', 'claim', variables.claimId],
+        });
+      }
     },
     onError: mutationOnError,
   });

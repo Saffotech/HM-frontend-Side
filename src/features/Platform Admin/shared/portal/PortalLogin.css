@@ -1,0 +1,19 @@
+.portal-login {
+  display: grid;
+  gap: 12px;
+}
+
+.portal-login h1 {
+  margin-bottom: 0;
+}
+
+.portal-login .btn {
+  justify-self: start;
+  margin-top: 4px;
+}
+
+.portal-demo {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}

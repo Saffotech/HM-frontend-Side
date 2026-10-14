@@ -9,7 +9,8 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const FEATURES_DIR = path.join(ROOT, 'src', 'features');
-const FEATURES = ['opd', 'doctor', 'lab', 'nurse', 'pharmacy'];
+// Platform Admin: isolated from every hospital feature
+const FEATURES = ['opd', 'doctor', 'lab', 'nurse', 'pharmacy', 'Platform Admin'];
 
 const IMPORT_RE =
   /(?:import\s+[^'"]+from\s+|export\s+[^'"]+from\s+|import\s*\()\s*['"](@\/features\/([^/'"]+))[^'"]*['"]/g;

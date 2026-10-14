@@ -2,7 +2,7 @@
  * Date-wise daily charge lines — shared by insurance cashless and self / pay-and-claim.
  */
 
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Button, DateInput } from '@/shared/components/common';
 import {
@@ -32,7 +32,7 @@ function todayIsoDate() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export default function IpdDailyChargesCard({
+function IpdDailyChargesCard({
   dailyCharges,
   onDailyChargesChange,
   onSave,
@@ -242,3 +242,5 @@ export default function IpdDailyChargesCard({
     </div>
   );
 }
+
+export default memo(IpdDailyChargesCard);

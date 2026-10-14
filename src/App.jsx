@@ -32,6 +32,8 @@ const ReceptionistRegisterPage = lazy(
 const AdminLoginPage = lazy(() => import('@/features/admin/pages/AdminLoginPage'));
 const SuperAdminLoginPage = lazy(() => import('@/features/super-admin/pages/SuperAdminLoginPage'));
 const UnauthorizedPage = lazy(() => import('@/pages/UnauthorizedPage'));
+// Platform Admin: separate SaaS-owner app (super admin / CRM / accounts), lazy-loaded under /platform/*
+const PlatformApp = lazy(() => import('@/features/Platform Admin/PlatformApp'));
 
 export default function App() {
   return (
@@ -129,6 +131,16 @@ export default function App() {
               <GuestRoute>
                 <SuperAdminLoginPage />
               </GuestRoute>
+            </LazyRoute>
+          }
+        />
+
+        {/* Platform Admin: kept outside ProtectedRoute so hospital auth never applies to it */}
+        <Route
+          path={`${ROUTES.PLATFORM}/*`}
+          element={
+            <LazyRoute>
+              <PlatformApp />
             </LazyRoute>
           }
         />

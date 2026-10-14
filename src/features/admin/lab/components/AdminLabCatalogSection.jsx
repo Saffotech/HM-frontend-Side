@@ -12,6 +12,10 @@ import {
   labDepartmentLabel,
 } from '@/shared/utils/labDepartments';
 import { formatCatalogPrice } from '@/shared/api/mappers/labCatalogMapper';
+import {
+  formatCurrency,
+  getCurrencySymbol,
+} from '@/shared/utils/formatCurrency';
 import { Button, Input, QueryFeedback, Select } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
 
@@ -276,7 +280,7 @@ export default function AdminLabCatalogSection({ locked = false }) {
               </div>
               <div className="aos-lab-catalog__cell aos-lab-catalog__cell--price" role="cell">
                 <div className="aos-lab-catalog__price">
-                  <span aria-hidden>₹</span>
+                  <span aria-hidden>{getCurrencySymbol()}</span>
                   <Input
                     type="number"
                     min={0}
@@ -340,7 +344,7 @@ export default function AdminLabCatalogSection({ locked = false }) {
                       </div>
                       <div className="aos-lab-catalog__cell aos-lab-catalog__cell--price" role="cell">
                         <div className="aos-lab-catalog__price">
-                          <span aria-hidden>₹</span>
+                          <span aria-hidden>{getCurrencySymbol()}</span>
                           <Input
                             type="number"
                             min={0}
@@ -390,7 +394,7 @@ export default function AdminLabCatalogSection({ locked = false }) {
                       </div>
                       <div className="aos-lab-catalog__cell aos-lab-catalog__cell--price" role="cell">
                         <span className="aos-lab-catalog__amount">
-                          ₹{formatCatalogPrice(row.price) || '—'}
+                          {formatCurrency(row.price, { empty: '—' })}
                         </span>
                       </div>
                       <div className="aos-lab-catalog__cell" role="cell">

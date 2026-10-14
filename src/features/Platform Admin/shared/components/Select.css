@@ -1,0 +1,8 @@
+.field select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #667895 50%), linear-gradient(135deg, #667895 50%, transparent 50%);
+  background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 32px;
+}

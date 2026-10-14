@@ -4,6 +4,18 @@ import react from '@vitejs/plugin-react'; // eslint-disable-line import/default
 
 import path from 'path';
 
+// Platform Admin: scopes every CSS selector in src/features/Platform Admin under `.platform-root`
+import prefixSelector from 'postcss-prefix-selector';
+
+const PLATFORM_ROOT = '.platform-root';
+const PLATFORM_CSS_FILES = /[\\/]src[\\/]features[\\/]Platform Admin[\\/]/;
+
+function scopePlatformSelector(prefix, selector, prefixedSelector) {
+  if (selector.startsWith(prefix)) return selector;
+  if (/^(:root|html|body|#root)$/.test(selector)) return prefix;
+  return prefixedSelector;
+}
+
 
 
 export default defineConfig(({ mode }) => {
@@ -18,11 +30,24 @@ export default defineConfig(({ mode }) => {
 
     plugins: [react()],
 
+    // Platform Admin: keeps platform styles from leaking into the hospital app
+    css: {
+      postcss: {
+        plugins: [
+          prefixSelector({
+            prefix: PLATFORM_ROOT,
+            includeFiles: [PLATFORM_CSS_FILES],
+            transform: scopePlatformSelector,
+          }),
+        ],
+      },
+    },
+
     resolve: {
 
       alias: {
 
-        '@': path.resolve(__dirname, './src'),
+        '@': path.resolve(import.meta.dirname, './src'),
 
       },
 

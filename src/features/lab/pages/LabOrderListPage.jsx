@@ -12,6 +12,7 @@ import {
   uploadActionLabel,
   statusBadgeClass,
 } from '@/features/lab/utils/labOrderStatus';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 import {
   departmentCode,
   isLabOrRadCode,
@@ -328,7 +329,7 @@ export default function LabOrderListPage() {
                         <td className="lab-location-cell">{location.bed}</td>
                         <td>{o.doctorName}</td>
                         <td>{o.testName}</td>
-                        <td>{o.price != null ? `₹${o.price}` : '—'}</td>
+                        <td>{formatCurrency(o.price, { empty: '—' })}</td>
                         <td>
                           <span className={`lab-badge ${o.priority}`}>
                             {o.priority === 'urgent' || o.priority === 'stat' ? '⚠ ' : ''}

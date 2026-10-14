@@ -15,6 +15,11 @@ import {
 import { useBedInventoryListQuery, useBedInventorySummaryQuery } from '@/features/admin/hooks/useOpdBedsQuery';
 import AdminEditLockToggle from '@/features/admin/components/AdminEditLockToggle';
 import { Button, Input, Label } from '@/shared/components/common';
+import {
+  currencyAmountLabel,
+  currencyPerDayLabel,
+  getCurrencySymbol,
+} from '@/shared/utils/formatCurrency';
 
 import {
   coerceBedType,
@@ -570,7 +575,7 @@ export default function AdminOpdPricingSection({
         <p className="aos-card__note">Applies to all departments and doctors</p>
 
         <div className="aos-grid aos-grid--3">
-          <Field id="registration_fee" label="Registration fee (₹)">
+          <Field id="registration_fee" label={currencyAmountLabel('Registration fee')}>
             <Input
               id="registration_fee"
               type="number"
@@ -598,7 +603,7 @@ export default function AdminOpdPricingSection({
           </Field>
           <Field
             id="consultation_fee"
-            label="Default consultation fee (₹)"
+            label={currencyAmountLabel('Default consultation fee')}
           >
             <Input
               id="consultation_fee"
@@ -667,7 +672,7 @@ export default function AdminOpdPricingSection({
                     <option value="single">Single</option>
                     <option value="double">Double</option>
                   </select>
-                  <span className="aos-bed-tariff__hint">₹ / day</span>
+                  <span className="aos-bed-tariff__hint">{currencyPerDayLabel()}</span>
                 </div>
               ) : null}
             </div>
@@ -693,7 +698,7 @@ export default function AdminOpdPricingSection({
                       <span className="aos-ward-chip__name">{wardName}</span>
                       <span className={`aos-ward-chip__field ${fieldTone}`}>
                         <span className="aos-ward-chip__rs" aria-hidden>
-                          ₹
+                          {getCurrencySymbol()}
                         </span>
                         <Input
                           id={fieldId}
@@ -764,7 +769,7 @@ export default function AdminOpdPricingSection({
                   <tr>
                     <th>Bed</th>
                     <th>Type</th>
-                    <th>₹ / day</th>
+                    <th>{currencyPerDayLabel()}</th>
                     <th className="aos-bed-tariff__col-actions">Action</th>
                   </tr>
                 </thead>
@@ -819,7 +824,7 @@ export default function AdminOpdPricingSection({
                           <td>
                             <span className="aos-ward-chip__field aos-ward-chip__field--table">
                               <span className="aos-ward-chip__rs" aria-hidden>
-                                ₹
+                                {getCurrencySymbol()}
                               </span>
                               <Input
                                 type="number"
@@ -903,7 +908,7 @@ export default function AdminOpdPricingSection({
           </Field>
           <Field
             id="dept_fee_value"
-            label="Consultation fee (₹)"
+            label={currencyAmountLabel('Consultation fee')}
           >
             <Input
               id="dept_fee_value"
@@ -986,7 +991,7 @@ export default function AdminOpdPricingSection({
           </Field>
           <Field
             id="doctor_fee_value"
-            label="Consultation fee (₹)"
+            label={currencyAmountLabel('Consultation fee')}
           >
             <Input
               id="doctor_fee_value"

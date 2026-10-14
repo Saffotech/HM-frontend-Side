@@ -1,0 +1,24 @@
+.help-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.faq button {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 12px 0;
+  font-weight: 700;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.faq p {
+  color: var(--color-text-secondary);
+  padding-bottom: 12px;
+}
+
+@media (max-width: 800px) {
+  .help-grid { grid-template-columns: 1fr; }
+}

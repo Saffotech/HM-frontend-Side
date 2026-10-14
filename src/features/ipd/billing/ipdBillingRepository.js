@@ -9,6 +9,7 @@ import {
   updateIpdFinalBilling,
 } from '@/features/ipd/api/ipdBilling';
 import {
+  addIpdInsurancePatientPayment,
   getIpdInsurancePatient,
   updateIpdInsuranceClaim,
 } from '@/features/ipd/api/insurance';
@@ -82,6 +83,22 @@ async function resolveInsuranceBillingContext(
       claim,
       admission: insuranceAdmit?.admission ?? { id: admissionId },
     },
+  };
+}
+
+/** Merge claim PUT/POST response into an existing bundle — avoids refetching billing. */
+function mergeSerializedClaimIntoInsuranceBundle(bundle, serializedClaim) {
+  if (!bundle || !serializedClaim) return bundle ?? null;
+  const mappedClaim = mapInsuranceClaim({
+    ...serializedClaim,
+    charges: bundle.claim?.charges ?? serializedClaim.charges,
+    daily_charges: bundle.claim?.dailyCharges ?? serializedClaim.daily_charges,
+    dailyCharges: bundle.claim?.dailyCharges ?? serializedClaim.dailyCharges,
+  });
+  return {
+    ...bundle,
+    claim: mappedClaim,
+    claimId: mappedClaim.id ?? bundle.claimId,
   };
 }
 
@@ -203,7 +220,7 @@ export async function saveIpdInsuranceDailyCharges(
 }
 
 export async function saveIpdInsuranceClaimAmounts(
-  { claimId, patch, patientId, insuranceAdmit },
+  { claimId, patch, patientId, insuranceAdmit, patientPayment, existingBundle },
   token,
 ) {
   if (!IPD_BILLING_USE_LIVE_API) {
@@ -214,8 +231,20 @@ export async function saveIpdInsuranceClaimAmounts(
     token,
   );
   const id = claimId ?? ctx.claim?.id;
+  let latestSerializedClaim = null;
   if (id != null) {
-    await updateIpdInsuranceClaim(id, patch, token);
+    const { patientPaid: _ignored, ...claimPatch } = patch ?? {};
+    latestSerializedClaim = await updateIpdInsuranceClaim(id, claimPatch, token);
+    const payAmount = Number(patientPayment?.amount);
+    if (patientPayment && Number.isFinite(payAmount) && payAmount > 0) {
+      latestSerializedClaim = await addIpdInsurancePatientPayment(id, patientPayment, token);
+    }
+  }
+  if (existingBundle && latestSerializedClaim) {
+    return mergeSerializedClaimIntoInsuranceBundle(
+      existingBundle,
+      latestSerializedClaim,
+    );
   }
   return fetchIpdInsuranceBillingBundle(
     { patientId, insuranceAdmit: ctx.insuranceAdmit },

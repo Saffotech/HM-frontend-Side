@@ -1,5 +1,5 @@
 /**
- * Resolve bed ₹/day the same way as backend `opd_settings_service.resolve_bed_rate`,
+ * Resolve bed rate per day the same way as backend `opd_settings_service.resolve_bed_rate`,
  * plus frontend-only double-bed ward rates stored as `__double__:{ward}` in ward_rates.
  */
 

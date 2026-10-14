@@ -227,6 +227,8 @@ export const ROUTES = {
   PRICING: '/pricing',
   PAYMENT_HISTORY: '/payment-history',
   UNAUTHORIZED: '/unauthorized',
+  // Platform Admin: base path for the SaaS-owner panels (keep in sync with features/Platform Admin/shared/paths.js)
+  PLATFORM: '/platform',
 };
 
 export const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];

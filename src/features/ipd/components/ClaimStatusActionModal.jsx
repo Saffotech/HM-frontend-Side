@@ -10,7 +10,7 @@ import {
   validatePartiallyApprovedTransition,
   validateRejectTransition,
 } from '@/features/ipd/utils/claimStatusConstants';
-import { formatCurrency } from '@/shared/utils/formatCurrency';
+import { formatCurrency, currencyAmountLabel } from '@/shared/utils/formatCurrency';
 
 const ACTION_META = {
   approve: {
@@ -116,7 +116,7 @@ export default function ClaimStatusActionModal({
         {meta.requireApproved ? (
           <div className="ipd-toolbar__field" style={{ marginTop: '1rem' }}>
             <label className="ipd-toolbar__label" htmlFor="ipd-claim-action-approved">
-              Approved Amount (₹)
+              {currencyAmountLabel('Approved Amount')}
             </label>
             <input
               id="ipd-claim-action-approved"
@@ -148,7 +148,7 @@ export default function ClaimStatusActionModal({
               placeholder={
                 actionType === 'reject'
                   ? 'e.g. Treatment not covered by policy'
-                  : 'e.g. ₹25,000 non-covered expenses'
+                  : `e.g. ${formatCurrency(25000)} non-covered expenses`
               }
               required
             />

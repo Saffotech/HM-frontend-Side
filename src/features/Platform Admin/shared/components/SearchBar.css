@@ -1,0 +1,25 @@
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 220px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: 10px;
+  padding: 0 12px;
+  color: var(--color-text-secondary);
+}
+
+.search-bar input {
+  border: 0;
+  width: 100%;
+  padding: 10px 0;
+  outline: none;
+  background: transparent;
+  color: var(--color-text);
+}
+
+.search-bar:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(19, 135, 127, 0.15);
+}

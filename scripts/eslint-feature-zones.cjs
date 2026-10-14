@@ -1,5 +1,6 @@
 /** Builds import/no-restricted-paths zones for cross-feature boundary enforcement */
-const FEATURES = ['opd', 'doctor', 'lab', 'nurse', 'pharmacy'];
+// Platform Admin: isolated from every hospital feature
+const FEATURES = ['opd', 'doctor', 'lab', 'nurse', 'pharmacy', 'Platform Admin'];
 
 function buildCrossFeatureZones() {
   const zones = [];
