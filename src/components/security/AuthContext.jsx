@@ -138,17 +138,28 @@ async function fetchValidAccessToken(session) {
 
 
 
+function getInitialAuthState() {
+  const signedOut = { user: null, token: null, authReady: true };
+  const session = loadAuthSession();
+  if (!session?.token || !session?.user) return signedOut;
+  if (isLegacyDemoSuperAdminToken(session.token) || session.user?.isDemoSession) return signedOut;
+  if (isTokenExpired(session.token)) {
+    return { user: null, token: null, authReady: false };
+  }
+  return { user: session.user, token: session.token, authReady: true };
+}
+
 export function AuthProvider({ children }) {
 
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => getInitialAuthState().user);
 
-  const [token, setToken] = useState(null);
+  const [token, setToken] = useState(() => getInitialAuthState().token);
 
   const [loading, setLoading] = useState(false);
 
   const [error, setError] = useState(null);
 
-  const [authReady, setAuthReady] = useState(false);
+  const [authReady, setAuthReady] = useState(() => getInitialAuthState().authReady);
 
   const refreshTimerRef = useRef(null);
 
