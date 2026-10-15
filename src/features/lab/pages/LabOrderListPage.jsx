@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import LabLayout from '@/features/lab/components/LabLayout';
 import { useLabPermissionSet } from '@/features/lab/hooks/useLabPermission';
 import { useLabTechnicianProfileQuery } from '@/features/lab/hooks/useLabTechnicianProfileQuery';
-import { useLabOrdersQuery } from '@/shared/hooks/queries/useLabQuery';
+import { useLabOrderQuery, useLabOrdersQuery } from '@/shared/hooks/queries/useLabQuery';
 import { useAuth } from '@/shared/hooks/useAuth';
 import {
   LAB_STATUS_META,
@@ -25,10 +25,11 @@ import {
 } from '@/shared/utils/labDepartments';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { EmptyState, QueryFeedback, TablePagination } from '@/shared/components/common';
-import { ROUTES } from '@/shared/constants';
 import { DateInput } from '@/shared/components/common';
 import { ClipboardList } from 'lucide-react';
 import LabEncounterBadge from '@/features/lab/components/LabEncounterBadge';
+import LabReportDetailModal from '@/features/lab/components/LabReportDetailModal';
+import { toast } from '@/shared/utils/toast';
 import { visitLocationLabel, normalizeEncounterType } from '@/features/lab/utils/visitLocation';
 import '../styles/lab.css';
 
@@ -45,6 +46,31 @@ const LEGACY_VIEW_MAP = {
   sample_collected: 'ordered',
   processing: 'ordered',
 };
+
+function reportFromOrderDetail(order, fallback) {
+  const report = order?.report;
+  const reportDbId = report?.id ?? report?.report_id ?? null;
+  if (reportDbId == null) return null;
+  return {
+    reportDbId,
+    reportId: `RPT-${reportDbId}`,
+    orderId: order.id ?? fallback?.id,
+    patientId: order.patientId ?? fallback?.patientId,
+    patientName: order.patientName ?? fallback?.patientName,
+    testName: order.testName ?? fallback?.testName,
+    doctorName: order.doctorName ?? fallback?.doctorName,
+    encounterType: order.encounterType ?? fallback?.encounterType,
+    wardName: order.wardName ?? fallback?.wardName,
+    bedNumber: order.bedNumber ?? fallback?.bedNumber,
+    hasFile: Boolean(
+      order.reportUploaded
+      || report.file_name
+      || report.fileName
+      || report.report_file
+    ),
+    fileName: report.file_name ?? report.fileName ?? null,
+  };
+}
 
 function orderCreatedAtMs(order) {
   const value = order?.createdAt ?? order?.requestedAt;
@@ -101,6 +127,7 @@ export default function LabOrderListPage() {
     return raw === 'OPD' || raw === 'IPD' ? raw : 'all';
   });
   const [page, setPage] = useState(1);
+  const [viewOrder, setViewOrder] = useState(null);
 
   const debouncedSearch = useDebouncedValue(search, 300);
 
@@ -126,6 +153,36 @@ export default function LabOrderListPage() {
     if (filterSource !== 'all') params.set('source', filterSource);
     setSearchParams(params, { replace: true });
   }, [search, view, priority, category, date, filterSource, setSearchParams]);
+
+  const orderDetailQuery = useLabOrderQuery(viewOrder?.id ?? null, {
+    enabled: viewOrder?.id != null,
+  });
+  const selectedReport = useMemo(
+    () => reportFromOrderDetail(orderDetailQuery.data, viewOrder),
+    [orderDetailQuery.data, viewOrder],
+  );
+
+  useEffect(() => {
+    if (!viewOrder) return;
+    if (orderDetailQuery.isLoading || orderDetailQuery.isFetching) return;
+    if (orderDetailQuery.isError) {
+      toast.error(orderDetailQuery.error?.message || 'Could not open this report');
+      setViewOrder(null);
+      return;
+    }
+    if (orderDetailQuery.isSuccess && selectedReport == null) {
+      toast.error('No laboratory report is available for this test yet.');
+      setViewOrder(null);
+    }
+  }, [
+    viewOrder,
+    selectedReport,
+    orderDetailQuery.isLoading,
+    orderDetailQuery.isFetching,
+    orderDetailQuery.isError,
+    orderDetailQuery.isSuccess,
+    orderDetailQuery.error,
+  ]);
 
   const ordersQuery = useLabOrdersQuery(
     {
@@ -182,7 +239,7 @@ export default function LabOrderListPage() {
   const handleRowAction = (order) => {
     if (order.status === LAB_ORDER_STATUS.CANCELLED) return;
     if (order.status === LAB_ORDER_STATUS.COMPLETED) {
-      navigate(ROUTES.LAB_REPORTS);
+      setViewOrder(order);
       return;
     }
     navigate(labUploadPath(order.id));
@@ -202,8 +259,15 @@ export default function LabOrderListPage() {
     );
   }
 
+  const openingOrderId = viewOrder?.id ?? null;
+  const openingReport = openingOrderId != null && !selectedReport && (orderDetailQuery.isLoading || orderDetailQuery.isFetching);
+
   return (
     <LabLayout pageTitle="Pending Tests" compact>
+      <LabReportDetailModal
+        report={selectedReport}
+        onClose={() => setViewOrder(null)}
+      />
       <div className="lab-orders-page">
       <div className="lab-card">
         <div className="lab-status-tabs">
@@ -353,7 +417,10 @@ export default function LabOrderListPage() {
                                 ? 'lab-btn-secondary'
                                 : 'lab-btn-primary'
                             }`}
-                            disabled={o.status === LAB_ORDER_STATUS.CANCELLED}
+                            disabled={
+                              o.status === LAB_ORDER_STATUS.CANCELLED
+                              || (openingReport && openingOrderId === o.id)
+                            }
                             title={
                               o.status === LAB_ORDER_STATUS.CANCELLED
                                 ? 'This test was cancelled. Start / Upload is not available.'
@@ -361,7 +428,9 @@ export default function LabOrderListPage() {
                             }
                             onClick={() => handleRowAction(o)}
                           >
-                            {uploadActionLabel(o.status)}
+                            {openingReport && openingOrderId === o.id
+                              ? 'Opening…'
+                              : uploadActionLabel(o.status)}
                           </button>
                         </td>
                       </tr>

@@ -8,7 +8,7 @@ import {
   useSubmitLabWorkflowMutation,
 } from '@/shared/hooks/queries/useLabQuery';
 import { LAB_ORDER_STATUS, statusBadgeClass, statusLabel } from '@/features/lab/utils/labOrderStatus';
-import { DateInput, EmptyState, QueryFeedback } from '@/shared/components/common';
+import { ConfirmDialog, DateInput, EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 import {
@@ -26,6 +26,47 @@ function makeId() {
 
 function emptyParameterRow() {
   return { id: makeId(), parameter_name: '', value: '', unit: '', normal_range: '', flag: 'normal' };
+}
+
+/** Calendar day from a datetime-local value (`YYYY-MM-DDTHH:mm`). */
+function calendarDay(value) {
+  const day = String(value ?? '').slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : '';
+}
+
+const TEST_WINDOW_MS = 48 * 60 * 60 * 1000;
+const TEST_BEFORE_SAMPLE_MESSAGE = 'Must be at or after the sample collected time';
+const TEST_AFTER_WINDOW_MESSAGE = 'Must be within 48 hours of the sample collected time';
+
+function parseLocalDateTime(value) {
+  const match = String(value ?? '').match(/^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})/);
+  if (!match) return null;
+  const date = new Date(`${match[1]}T${match[2]}:${match[3]}:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatYmd(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/** Last calendar day that can still fall inside the 48-hour window. */
+function testWindowMaxDay(sampleAt) {
+  const sample = parseLocalDateTime(sampleAt);
+  if (!sample) return '';
+  return formatYmd(new Date(sample.getTime() + TEST_WINDOW_MS));
+}
+
+/** Empty when the test time is from sample collection through the next 48 hours. */
+function testDateError(sampleAt, testAt) {
+  const sample = parseLocalDateTime(sampleAt);
+  const test = parseLocalDateTime(testAt);
+  if (!sample || !test) return '';
+  if (test.getTime() < sample.getTime()) return TEST_BEFORE_SAMPLE_MESSAGE;
+  if (test.getTime() > sample.getTime() + TEST_WINDOW_MS) return TEST_AFTER_WINDOW_MESSAGE;
+  return '';
 }
 
 /** Digits + optional decimal only (e.g. 13.5). */
@@ -66,6 +107,7 @@ export default function LabUploadReportPage() {
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
   const [showFilePreview, setShowFilePreview] = useState(false);
+  const [sampleWindowNoticeOpen, setSampleWindowNoticeOpen] = useState(false);
 
   useEffect(() => {
     if (!order) return;
@@ -78,6 +120,13 @@ export default function LabUploadReportPage() {
       setParameters([emptyParameterRow()]);
     }
   }, [order]);
+
+  useEffect(() => {
+    const message = testDateError(sampleCollectedAt, testPerformedAt);
+    if (!message) return;
+    setTestPerformedAt('');
+    setErrors((er) => ({ ...er, testPerformedAt: message }));
+  }, [sampleCollectedAt, testPerformedAt]);
 
   const addRow = () => {
     setParameters((prev) => [...prev, emptyParameterRow()]);
@@ -128,6 +177,10 @@ export default function LabUploadReportPage() {
     const errs = {};
     if (!sampleCollectedAt) errs.sampleCollectedAt = 'Required';
     if (!testPerformedAt) errs.testPerformedAt = 'Required';
+    else {
+      const dateMessage = testDateError(sampleCollectedAt, testPerformedAt);
+      if (dateMessage) errs.testPerformedAt = dateMessage;
+    }
 
     const paramErrors = {};
     parameters.forEach((param) => {
@@ -397,10 +450,16 @@ export default function LabUploadReportPage() {
                 withTime
                 value={sampleCollectedAt}
                 onChange={(e) => {
-                  setSampleCollectedAt(e.target.value);
+                  const nextSample = e.target.value;
+                  const dateMessage = testDateError(nextSample, testPerformedAt);
+                  setSampleCollectedAt(nextSample);
+                  setSampleWindowNoticeOpen(Boolean(calendarDay(nextSample)));
+                  if (dateMessage) setTestPerformedAt('');
                   setErrors((er) => {
                     const n = { ...er };
                     delete n.sampleCollectedAt;
+                    if (dateMessage) n.testPerformedAt = dateMessage;
+                    else delete n.testPerformedAt;
                     return n;
                   });
                 }}
@@ -417,9 +476,17 @@ export default function LabUploadReportPage() {
                   </>
                 )}
                 withTime
+                min={calendarDay(sampleCollectedAt) || undefined}
+                max={testWindowMaxDay(sampleCollectedAt) || undefined}
                 value={testPerformedAt}
                 onChange={(e) => {
-                  setTestPerformedAt(e.target.value);
+                  const nextTest = e.target.value;
+                  const dateMessage = testDateError(sampleCollectedAt, nextTest);
+                  if (dateMessage) {
+                    setErrors((er) => ({ ...er, testPerformedAt: dateMessage }));
+                    return;
+                  }
+                  setTestPerformedAt(nextTest);
                   setErrors((er) => {
                     const n = { ...er };
                     delete n.testPerformedAt;
@@ -627,6 +694,15 @@ export default function LabUploadReportPage() {
       {showFilePreview && reportFile ? (
         <LabLocalFilePreviewModal file={reportFile} onClose={() => setShowFilePreview(false)} />
       ) : null}
+
+      <ConfirmDialog
+        isOpen={sampleWindowNoticeOpen}
+        title="Complete the test within 48 hours"
+        message="The test must be performed within 48 hours of the sample collected time."
+        confirmLabel="OK"
+        onConfirm={() => setSampleWindowNoticeOpen(false)}
+        onCancel={() => setSampleWindowNoticeOpen(false)}
+      />
     </LabLayout>
   );
 }
