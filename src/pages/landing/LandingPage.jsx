@@ -1,18 +1,15 @@
 import { useEffect } from 'react';
 import {
-  Navbar,
-  Hero,
-  TrustedBy,
-  Features,
-  DashboardPreview,
-  Modules,
-  Workflow,
-  WhyUs,
-  Testimonials,
-  Security,
-  FAQ,
+  AboutBand,
+  ClosingCta,
   Contact,
+  Features,
   Footer,
+  Hero,
+  Modules,
+  Navbar,
+  WhyUs,
+  Workflow,
 } from '@/pages/landing/components';
 import { useScrollToHash } from '@/pages/landing/useScrollToHash';
 import '@/pages/landing/styles/landing-theme.css';
@@ -30,15 +27,12 @@ export default function LandingPage() {
       <Navbar />
       <main>
         <Hero />
-        <TrustedBy />
         <Features />
-        <DashboardPreview />
         <Modules />
         <Workflow />
+        <AboutBand />
         <WhyUs />
-        <Testimonials />
-        <Security />
-        <FAQ />
+        <ClosingCta />
         <Contact />
       </main>
       <Footer />

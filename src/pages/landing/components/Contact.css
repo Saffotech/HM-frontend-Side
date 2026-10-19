@@ -29,8 +29,8 @@
   width: 2.75rem;
   height: 2.75rem;
   border-radius: 0.75rem;
-  background: rgba(29, 111, 164, 0.1);
-  color: var(--color-primary);
+  background: #e7f8f2;
+  color: #17613f;
   flex-shrink: 0;
 }
 

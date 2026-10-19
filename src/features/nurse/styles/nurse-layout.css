@@ -336,9 +336,13 @@
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
 }
 
-.nurse-kpi--active{
-  background: #f8fafc;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.35);
+.nurse-kpi {
+  cursor: pointer;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    background-color 0.25s ease,
+    filter 0.25s ease;
 }
 
 .nurse-section-title{
@@ -500,21 +504,26 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.nurse-dashboard-page .nurse-kpi{
-  padding: 0.45rem 0.65rem;
-  min-height: 0;
-  border-left-width: 3px;
-  border-radius: 10px;
+.nurse-dashboard-page .nurse-kpi {
+  transition:
+    background-color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s ease,
+    filter 0.25s ease;
 }
 
-.nurse-dashboard-page .nurse-kpi:hover{
-  transform: none;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+/* Hover: slightly darker */
+.nurse-dashboard-page .nurse-kpi:hover {
+  filter: brightness(0.92);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
 }
 
-.nurse-dashboard-page .nurse-kpi--active{
+/* Selected card: remains darker */
+.nurse-dashboard-page .nurse-kpi--active {
   background: var(--color-surface);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.28);
+  filter: brightness(0.88);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.35);
 }
 
 .nurse-dashboard-page .nurse-kpi__label{

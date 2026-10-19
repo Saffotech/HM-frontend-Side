@@ -26,18 +26,31 @@ export default function QueueHistoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const debouncedSearch = useDebouncedValue(search, 400);
 
+
   const load = () => {
     setLoading(true);
     setError('');
-    const isCancelled = historyFilter === 'cancelled';
+
     receptionistApi
       .getQueueHistory({
         search: debouncedSearch.trim() || undefined,
         doctor_id: docId !== 'all' ? Number(docId) : undefined,
-        department_id: deptId !== 'all' ? Number(deptId) : undefined,
-        status: isCancelled ? 'cancelled' : 'completed',
-        payment_status: historyFilter === 'paid' ? 'paid' : undefined,
+        department_id:
+          deptId !== 'all' ? Number(deptId) : undefined,
+
+        // All = completed + cancelled
+        // Completed = completed only
+        // Cancel = cancelled only
+        status:
+          historyFilter === 'all'
+            ? undefined
+            : historyFilter === 'cancelled'
+              ? 'cancelled'
+              : 'completed',
+
+        // Date filters are optional
         ...buildQueueHistoryDateParams(dateFrom, dateTo),
+
         page: currentPage,
         limit: PAGE_SIZE_LIST,
       })
@@ -46,9 +59,12 @@ export default function QueueHistoryPage() {
         setTotal(data.total);
         setTotalPages(data.totalPages);
       })
-      .catch((err) => setError(err?.message || 'Failed to load history'))
+      .catch((err) =>
+        setError(err?.message || 'Failed to load history')
+      )
       .finally(() => setLoading(false));
   };
+
 
   useEffect(() => {
     load();
@@ -65,166 +81,170 @@ export default function QueueHistoryPage() {
 
   return (
     <div className="rec-card rec-queue-history">
-        {error ? (
-          <div className="rec-queue-history__alert" role="alert">
-            <p>{error}</p>
-            <button type="button" className="rec-btn" onClick={load}>
-              Try again
-            </button>
-          </div>
-        ) : null}
+      {error ? (
+        <div className="rec-queue-history__alert" role="alert">
+          <p>{error}</p>
+          <button type="button" className="rec-btn" onClick={load}>
+            Try again
+          </button>
+        </div>
+      ) : null}
 
-        <div className="rec-queue-history__filters">
-          <div className="rec-queue-history__filter-row">
-            <div className="rec-search rec-queue-history__search">
-              <input
-                type="text"
-                placeholder="Search patient"
-                className="rec-input"
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setCurrentPage(1);
-                }}
-              />
-            </div>
-
-            <DepartmentDoctorFilter
-              compact
-              selectedDepartmentId={deptId}
-              onDepartmentChange={(d) => {
-                setDeptId(d);
-                setDocId('all');
-                setCurrentPage(1);
-              }}
-              selectedDoctorId={docId}
-              onDoctorChange={(d) => {
-                setDocId(d);
+      <div className="rec-queue-history__filters">
+        <div className="rec-queue-history__filter-row">
+          <div className="rec-search rec-queue-history__search">
+            <input
+              type="text"
+              placeholder="Search patient"
+              className="rec-input"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
                 setCurrentPage(1);
               }}
             />
+          </div>
 
-            <div className="rec-queue-history__date-range">
-              <DateInput
-                id="queue-history-date-from"
-                className="rec-queue-history__date"
-                value={dateFrom}
-                onChange={(e) => {
-                  setDateFrom(e.target.value);
-                  setCurrentPage(1);
-                }}
-                placeholder="DD/MM/YYYY"
-                aria-label="From date"
-              />
-              <span className="rec-queue-history__date-sep" aria-hidden>
-                to
-              </span>
-              <DateInput
-                id="queue-history-date-to"
-                className="rec-queue-history__date"
-                value={dateTo}
-                onChange={(e) => {
-                  setDateTo(e.target.value);
-                  setCurrentPage(1);
-                }}
-                placeholder="DD/MM/YYYY"
-                aria-label="To date"
-              />
-            </div>
+          <DepartmentDoctorFilter
+            compact
+            selectedDepartmentId={deptId}
+            onDepartmentChange={(d) => {
+              setDeptId(d);
+              setDocId('all');
+              setCurrentPage(1);
+            }}
+            selectedDoctorId={docId}
+            onDoctorChange={(d) => {
+              setDocId(d);
+              setCurrentPage(1);
+            }}
+          />
 
-            <select
-              className="rec-select rec-select--compact rec-queue-history__select"
-              value={historyFilter}
+          <div className="rec-queue-history__date-range">
+            <DateInput
+              id="queue-history-date-from"
+              className="rec-queue-history__date"
+              value={dateFrom}
               onChange={(e) => {
-                setHistoryFilter(e.target.value);
+                setDateFrom(e.target.value);
                 setCurrentPage(1);
               }}
-              aria-label="History filter"
-            >
-              <option value="all">All</option>
-              <option value="paid">Paid</option>
-              <option value="cancelled">Cancel</option>
-            </select>
+              placeholder="DD/MM/YYYY"
+              aria-label="From date"
+            />
+            <span className="rec-queue-history__date-sep" aria-hidden>
+              to
+            </span>
+            <DateInput
+              id="queue-history-date-to"
+              className="rec-queue-history__date"
+              value={dateTo}
+              onChange={(e) => {
+                setDateTo(e.target.value);
+                setCurrentPage(1);
+              }}
+              placeholder="DD/MM/YYYY"
+              aria-label="To date"
+            />
           </div>
-        </div>
 
-        <div className="rec-table-wrap rec-queue-history__table">
-          <table className="rec-table rec-table--stack">
-            <thead>
-              <tr>
-                <th className="rec-text-center" style={{ width: '4rem' }}>
-                  #
-                </th>
-                <th>Date</th>
-                <th>Patient ID</th>
-                <th>Patient Name</th>
-                <th>Doctor</th>
-                <th>Department</th>
-                <th>Status</th>
-                <th>Consultation / Cancel Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={8} className="rec-table__empty">
-                    Loading history...
-                  </td>
-                </tr>
-              ) : patients.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="rec-table__empty">
-                    <div className="rec-table__empty-icon">
-                      <Search size={24} />
-                    </div>
-                    <p>
-                      {historyFilter === 'cancelled'
-                        ? 'No cancelled consultations found for the selected filters'
-                        : 'No completed consultations found for the selected filters'}
-                    </p>
-                  </td>
-                </tr>
-              ) : (
-                patients.map((patient, index) => (
-                  <tr key={patient.id}>
-                    <td className="rec-text-center rec-text-muted" data-label="#">
-                      <span>{(currentPage - 1) * PAGE_SIZE_LIST + index + 1}</span>
-                    </td>
-                    <td className="rec-font-medium" data-label="Date">
-                      <span>{patient.date}</span>
-                    </td>
-                    <td className="rec-font-semibold" data-label="Patient ID">
-                      <span>{patient.patient_uid}</span>
-                    </td>
-                    <td className="rec-font-medium" data-label="Patient Name">
-                      <span>{patient.name}</span>
-                    </td>
-                    <td data-label="Doctor">
-                      <span>{getDoctorName(patient)}</span>
-                    </td>
-                    <td className="rec-text-muted" data-label="Department">
-                      <span>{patient.department ?? '—'}</span>
-                    </td>
-                    <td data-label="Status">
-                      <StatusBadge status={patient.display_status ?? patient.status} />
-                    </td>
-                    <td className="rec-font-medium" data-label="Consultation / Cancel Time">
-                      <span>{getConsultationTime(patient)}</span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <select
+            className="rec-select rec-select--compact rec-queue-history__select"
+            value={historyFilter}
+            onChange={(e) => {
+              setHistoryFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            aria-label="History filter"
+          >
+            <option value="all">All</option>
+            <option value="paid">Completed</option>
+            <option value="cancelled">Cancel</option>
+          </select>
         </div>
-
-        <PaginationBar
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-          totalItems={total}
-          itemsPerPage={PAGE_SIZE_LIST}
-        />
       </div>
+
+      <div className="rec-table-wrap rec-queue-history__table">
+        <table className="rec-table rec-table--stack">
+          <thead>
+            <tr>
+              <th className="rec-text-center" style={{ width: '4rem' }}>
+                #
+              </th>
+              <th>Date</th>
+              <th>Patient ID</th>
+              <th>Patient Name</th>
+              <th>Doctor</th>
+              <th>Department</th>
+              <th>Status</th>
+              <th>Consultation / Cancel Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={8} className="rec-table__empty">
+                  Loading history...
+                </td>
+              </tr>
+            ) : patients.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="rec-table__empty">
+                  <div className="rec-table__empty-icon">
+                    <Search size={24} />
+                  </div>
+
+                  <p>
+                    {historyFilter === 'cancelled'
+                      ? 'No cancelled consultations found for the selected filters'
+                      : historyFilter === 'completed'
+                        ? 'No completed consultations found for the selected filters'
+                        : 'No consultation history found for the selected filters'}
+                  </p>
+
+                </td>
+              </tr>
+            ) : (
+              patients.map((patient, index) => (
+                <tr key={patient.id}>
+                  <td className="rec-text-center rec-text-muted" data-label="#">
+                    <span>{(currentPage - 1) * PAGE_SIZE_LIST + index + 1}</span>
+                  </td>
+                  <td className="rec-font-medium" data-label="Date">
+                    <span>{patient.date}</span>
+                  </td>
+                  <td className="rec-font-semibold" data-label="Patient ID">
+                    <span>{patient.patient_uid}</span>
+                  </td>
+                  <td className="rec-font-medium" data-label="Patient Name">
+                    <span>{patient.name}</span>
+                  </td>
+                  <td data-label="Doctor">
+                    <span>{getDoctorName(patient)}</span>
+                  </td>
+                  <td className="rec-text-muted" data-label="Department">
+                    <span>{patient.department ?? '—'}</span>
+                  </td>
+                  <td data-label="Status">
+                    <StatusBadge status={patient.display_status ?? patient.status} />
+                  </td>
+                  <td className="rec-font-medium" data-label="Consultation / Cancel Time">
+                    <span>{getConsultationTime(patient)}</span>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <PaginationBar
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        totalItems={total}
+        itemsPerPage={PAGE_SIZE_LIST}
+      />
+    </div>
   );
 }

@@ -1,43 +1,128 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
+  Activity,
   ArrowLeft,
   ArrowRight,
+  CalendarCheck,
+  CheckCircle2,
+  Cross,
   Eye,
   EyeOff,
+  Loader2,
   Lock,
   Mail,
   ShieldCheck,
 } from 'lucide-react';
 import { ROUTES } from '@/shared/constants';
-import { BrandLogo, BrandName } from '@/shared/components/common';
 import { useAuthStore } from '@/shared/store/useAuthStore';
 import { getAppEntryForRole, getAppEntryForUser } from '@/shared/utils/authRedirect';
 import { trimCredentials, hasCredentials, normalizeEmailInput } from '@/shared/utils/credentials';
 import { toast } from '@/shared/utils/toast';
 import { isStaffModuleLive } from '@/shared/constants/moduleAvailability';
-import './LoginPage.css';
+import './LoginPage.design.css';
 
-const STATS = [
-  { value: '12+', label: 'Departments' },
-  { value: '99.9%', label: 'Uptime' },
-  { value: '256-bit', label: 'Encryption' },
+const HERO_IMAGE = '/images/hospital-login.png';
+
+const SLIDES = [
+  {
+    icon: Activity,
+    title: 'Real-time patient monitoring',
+    body: 'Vitals, lab results and care notes in one secure, unified record.',
+  },
+  {
+    icon: CalendarCheck,
+    title: 'Appointments without the wait',
+    body: 'Book, reschedule and check in for visits from any device.',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Privacy you can trust',
+    body: 'End-to-end encrypted and built to meet healthcare compliance standards.',
+  },
 ];
 
-/** public/videos/Login_Animetion.mp4 — bump ?v= when replacing the file (cache bust) */
-const STAFF_LOGIN_BG_VIDEO = '/videos/Login_Animetion.mp4?v=1';
+const COPY = {
+  signin: {
+    title: 'Welcome back',
+    subtitle: 'Sign in with your work email to open your SaffoCare portal.',
+    cta: 'Sign in',
+  },
+  forgot: {
+    title: 'Reset your password',
+    subtitle: "Enter your email and we'll send a secure reset link.",
+    cta: 'Send reset link',
+  },
+};
+
+const MODE_ORDER = { signin: 0, forgot: 1, sent: 2 };
+
+function isValidEmail(value) {
+  return /^\S+@\S+\.\S+$/.test(value);
+}
+
+function LoginField({
+  id,
+  label,
+  icon: Icon,
+  error,
+  type = 'text',
+  value,
+  onChange,
+  ...inputProps
+}) {
+  const [visible, setVisible] = useState(false);
+  const isPassword = type === 'password';
+
+  return (
+    <div className="hlogin-field">
+      <label htmlFor={id}>{label}</label>
+      <div className={`hlogin-input${isPassword ? ' hlogin-input--password' : ''}`}>
+        <Icon size={16} aria-hidden />
+        <input
+          id={id}
+          type={isPassword && visible ? 'text' : type}
+          value={value}
+          onChange={onChange}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? `${id}-error` : undefined}
+          {...inputProps}
+        />
+        {isPassword && (
+          <button
+            type="button"
+            className="hlogin-eye"
+            onClick={() => setVisible((current) => !current)}
+            aria-label={visible ? 'Hide password' : 'Show password'}
+          >
+            {visible ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        )}
+      </div>
+      {error ? (
+        <p id={`${id}-error`} className="hlogin-field-error">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const { login, logout, error, isAuthenticated, user, authReady } = useAuthStore();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [mode, setMode] = useState('signin');
+  const [direction, setDirection] = useState('forward');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [formError, setFormError] = useState('');
-  const [bgVideoOk, setBgVideoOk] = useState(true);
-  const bgVideoRef = useRef(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [slideIndex, setSlideIndex] = useState(0);
+
+  const slide = SLIDES[slideIndex];
+  const SlideIcon = slide.icon;
 
   useEffect(() => {
     if (searchParams.get('switch') === '1') {
@@ -51,11 +136,48 @@ export default function LoginPage() {
     navigate(getAppEntryForUser(user), { replace: true });
   }, [authReady, isAuthenticated, user, navigate]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    const id = setInterval(() => {
+      setSlideIndex((current) => (current + 1) % SLIDES.length);
+    }, 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    if (!submitting) return undefined;
+    const safety = setTimeout(() => setSubmitting(false), 10000);
+    return () => clearTimeout(safety);
+  }, [submitting]);
+
+  function goTo(next) {
+    setDirection(MODE_ORDER[next] >= MODE_ORDER[mode] ? 'forward' : 'back');
+    setFieldErrors({});
+    setFormError('');
+    setMode(next);
+  }
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setFormError('');
 
-    const trimmed = trimCredentials({ email, password });
+    const nextErrors = {};
+    const trimmedEmail = normalizeEmailInput(email);
+    if (!trimmedEmail) nextErrors.email = 'Email is required.';
+    else if (!isValidEmail(trimmedEmail)) nextErrors.email = 'Enter a valid email address.';
+    if (mode === 'signin' && !password) nextErrors.password = 'Password is required.';
+    setFieldErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+
+    if (mode === 'forgot') {
+      setSubmitting(true);
+      window.setTimeout(() => {
+        setSubmitting(false);
+        goTo('sent');
+      }, 800);
+      return;
+    }
+
+    const trimmed = trimCredentials({ email: trimmedEmail, password });
     if (!hasCredentials(trimmed)) {
       setFormError('Please enter your email and password');
       return;
@@ -85,75 +207,188 @@ export default function LoginPage() {
     }
   };
 
-  useEffect(() => {
-    if (!submitting) return undefined;
-    const safety = setTimeout(() => setSubmitting(false), 10000);
-    return () => clearTimeout(safety);
-  }, [submitting]);
-
-  useEffect(() => {
-    const video = bgVideoRef.current;
-    if (!video) return undefined;
-
-    const play = () => {
-      video.play().catch(() => {});
-    };
-
-    video.load();
-    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-      play();
-    } else {
-      video.addEventListener('loadeddata', play, { once: true });
-    }
-
-    return () => video.removeEventListener('loadeddata', play);
-  }, []);
-
   const displayError = formError || error;
+  const copy = mode === 'sent' ? null : COPY[mode];
 
   return (
-    <div className="staff-login-page">
-      <div className="staff-login-page__bg" aria-hidden>
-        {bgVideoOk ? (
-          <video
-            ref={bgVideoRef}
-            className="staff-login-page__bg-video"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-            onError={() => setBgVideoOk(false)}
-          >
-            <source src={STAFF_LOGIN_BG_VIDEO} type="video/mp4" />
-          </video>
-        ) : null}
-        <div className="staff-login-page__bg-overlay" />
-      </div>
-      <div className="staff-login-page__frame">
-        <aside className="staff-login-page__hero" aria-label="SaffoCare staff portal">
-          <Link to={ROUTES.HOME} className="staff-login-page__back">
-            <ArrowLeft size={16} aria-hidden />
-            Back
+    <main className="hlogin">
+      <div className="hlogin-glow hlogin-glow--left" aria-hidden />
+      <div className="hlogin-glow hlogin-glow--right" aria-hidden />
+
+      <div className="hlogin-grid">
+        <section className="hlogin-form-col">
+          <Link to={ROUTES.HOME} className="hlogin-brand">
+            <span className="hlogin-brand-mark">
+              <Cross size={20} aria-hidden />
+            </span>
+            <span className="hlogin-brand-name">
+              Saffo<span>care</span>
+            </span>
           </Link>
 
-          <div className="staff-login-page__hero-body">
-            <BrandLogo size={48} className="staff-login-page__hero-icon" />
-            <h1 className="staff-login-page__hero-title">
-              <BrandName variant="on-dark" /> staff portal
-            </h1>
-            <p className="staff-login-page__hero-lead">
-              One secure portal for doctors, pharmacists, lab techs and admin.
-            </p>
-
-            <svg
-              className="staff-login-page__ecg"
-              viewBox="0 0 320 48"
-              aria-hidden
-              xmlns="http://www.w3.org/2000/svg"
+          <div className="hlogin-form-wrap">
+            <div
+              key={mode}
+              className={`hlogin-card hlogin-card--${direction}`}
             >
+              {mode === 'sent' ? (
+                <div className="hlogin-sent" role="status">
+                  <div className="hlogin-sent-icon">
+                    <span>
+                      <CheckCircle2 size={40} aria-hidden />
+                    </span>
+                  </div>
+                  <h1 className="hlogin-title">Check your inbox</h1>
+                  <p className="hlogin-subtitle">
+                    If an account exists for that email, a reset link is on its way.
+                  </p>
+                  <button type="button" className="hlogin-sent-back" onClick={() => goTo('signin')}>
+                    <ArrowLeft size={16} aria-hidden />
+                    Back to sign in
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {mode === 'forgot' && (
+                    <button type="button" className="hlogin-back" onClick={() => goTo('signin')}>
+                      <ArrowLeft size={16} aria-hidden />
+                      Back to sign in
+                    </button>
+                  )}
+
+                  <header>
+                    {mode === 'signin' && (
+                      <Link to={ROUTES.HOME} className="hlogin-home-back">
+                        <ArrowLeft size={16} className="hlogin-home-back-arrow" aria-hidden />
+                        Back
+                      </Link>
+                    )}
+                    <h1 className="hlogin-title" id="staff-sign-in-title">
+                      {copy.title}
+                    </h1>
+                    <p className="hlogin-subtitle">{copy.subtitle}</p>
+                  </header>
+
+                  {mode === 'signin' && isAuthenticated && user && (
+                    <div className="hlogin-session" role="status">
+                      <p>
+                        Signed in as <strong>{user.full_name}</strong>
+                      </p>
+                      <div className="hlogin-session-actions">
+                        <button
+                          type="button"
+                          className="hlogin-outline"
+                          onClick={() => navigate(getAppEntryForUser(user), { replace: true })}
+                        >
+                          Continue
+                        </button>
+                        <button
+                          type="button"
+                          className="hlogin-ghost"
+                          onClick={() => navigate(`${ROUTES.LOGIN}?switch=1`, { replace: true })}
+                        >
+                          Switch user
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <form className="hlogin-form" onSubmit={handleSubmit} noValidate>
+                    <LoginField
+                      id="staff-email"
+                      label="Email address"
+                      icon={Mail}
+                      type="email"
+                      placeholder="you@saffocare.com"
+                      value={email}
+                      onChange={(event) => setEmail(normalizeEmailInput(event.target.value))}
+                      autoComplete="email"
+                      autoCapitalize="none"
+                      spellCheck={false}
+                      error={fieldErrors.email}
+                    />
+
+                    {mode === 'signin' && (
+                      <>
+                        <LoginField
+                          id="staff-password"
+                          label="Password"
+                          icon={Lock}
+                          type="password"
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={(event) => setPassword(event.target.value)}
+                          autoComplete="current-password"
+                          error={fieldErrors.password}
+                        />
+                        <div className="hlogin-row">
+                          <label className="hlogin-remember">
+                            <input type="checkbox" name="remember" />
+                            Remember me
+                          </label>
+                          <button type="button" className="hlogin-link" onClick={() => goTo('forgot')}>
+                            Forgot password?
+                          </button>
+                        </div>
+                      </>
+                    )}
+
+                    {displayError ? (
+                      <p className="hlogin-error" role="alert">
+                        {displayError}
+                      </p>
+                    ) : null}
+
+                    <button type="submit" className="hlogin-submit" disabled={submitting}>
+                      {submitting ? (
+                        <>
+                          <Loader2 size={16} className="hlogin-spin" aria-hidden />
+                          Please wait…
+                        </>
+                      ) : (
+                        <>
+                          {copy.cta}
+                          <ArrowRight size={16} className="hlogin-arrow" aria-hidden />
+                        </>
+                      )}
+                    </button>
+                  </form>
+
+                  {mode === 'signin' && (
+                    <p className="hlogin-trust">
+                      <ShieldCheck size={16} aria-hidden />
+                      Your health data is protected and never shared.
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          <footer className="hlogin-foot">
+            <p>© 2026 Saffocare Hospital</p>
+            <p>Need help? Call (800) 555-0199</p>
+          </footer>
+        </section>
+
+        <aside className="hlogin-hero" aria-label="SaffoCare highlights">
+          <img className="hlogin-hero-photo" src={HERO_IMAGE} alt="" />
+          <div className="hlogin-hero-shade" aria-hidden />
+
+          <div className="hlogin-hero-top">
+            <div className="hlogin-live">
+              <span className="hlogin-live-dot" aria-hidden>
+                <span />
+                <span />
+              </span>
+              Emergency line open 24/7
+            </div>
+          </div>
+
+          <div className="hlogin-hero-body">
+            <svg className="hlogin-ecg" viewBox="0 0 300 60" aria-hidden>
               <path
-                d="M0 24 H40 L52 8 L64 40 L76 16 L88 32 L100 24 H320"
+                d="M0 30 H90 L105 10 L120 50 L135 5 L150 55 L165 30 H300"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2.5"
@@ -162,153 +397,32 @@ export default function LoginPage() {
               />
             </svg>
 
-            <div className="staff-login-page__stats">
-              {STATS.map((item) => (
-                <div key={item.label} className="staff-login-page__stat">
-                  <span className="staff-login-page__stat-value">{item.value}</span>
-                  <span className="staff-login-page__stat-label">{item.label}</span>
-                </div>
+            <div key={slideIndex} className="hlogin-slide">
+              <div className="hlogin-slide-icon">
+                <SlideIcon size={20} aria-hidden />
+              </div>
+              <h2>{slide.title}</h2>
+              <p className="hlogin-hero-copy">{slide.body}</p>
+            </div>
+
+            <div className="hlogin-dots" role="tablist" aria-label="Highlights">
+              {SLIDES.map((item, index) => (
+                <button
+                  key={item.title}
+                  type="button"
+                  role="tab"
+                  aria-selected={index === slideIndex}
+                  aria-label={item.title}
+                  className={`hlogin-dot${index < slideIndex ? ' is-done' : ''}`}
+                  onClick={() => setSlideIndex(index)}
+                >
+                  {index === slideIndex ? <span className="hlogin-dot-fill" /> : null}
+                </button>
               ))}
             </div>
           </div>
-
-          <div className="staff-login-page__hero-foot">
-            <span>
-              <ShieldCheck size={14} aria-hidden />
-              HIPAA-ready infrastructure
-            </span>
-            <span>
-              <Lock size={14} aria-hidden />
-              End-to-end encrypted sessions
-            </span>
-          </div>
         </aside>
-
-        <section className="staff-login-page__form-panel" aria-labelledby="staff-sign-in-title">
-          <div className="staff-login-page__form-panel-bg" aria-hidden />
-          <Link to={ROUTES.HOME} className="staff-login-page__back staff-login-page__back--mobile">
-            <ArrowLeft size={16} aria-hidden />
-            Back
-          </Link>
-
-          <div className="staff-login-page__form-panel-inner">
-            <div className="staff-login-page__form-card">
-              <header className="staff-login-page__form-head">
-                <div className="staff-login-page__form-head-brand">
-                  <BrandLogo size={44} className="staff-login-page__form-logo" />
-                </div>
-                <h2 id="staff-sign-in-title">Sign in</h2>
-                <p>Welcome back. Enter your credentials to continue.</p>
-              </header>
-
-              {isAuthenticated && user && (
-                <div className="staff-login-page__session" role="status">
-                  <p>
-                    Signed in as <strong>{user.full_name}</strong>
-                  </p>
-                  <div className="staff-login-page__session-actions">
-                    <button
-                      type="button"
-                      className="staff-login-page__btn staff-login-page__btn--outline"
-                      onClick={() =>
-                        navigate(getAppEntryForUser(user), { replace: true })
-                      }
-                    >
-                      Continue
-                    </button>
-                    <button
-                      type="button"
-                      className="staff-login-page__btn staff-login-page__btn--ghost"
-                      onClick={() => navigate(`${ROUTES.LOGIN}?switch=1`, { replace: true })}
-                    >
-                      Switch user
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <form className="staff-login-page__form" onSubmit={handleSubmit}>
-                <div className="staff-login-page__field">
-                  <label htmlFor="staff-email">Work Email</label>
-                  <div className="staff-login-page__input">
-                    <span className="staff-login-page__input-icon" aria-hidden>
-                      <Mail size={17} />
-                    </span>
-                    <input
-                      id="staff-email"
-                      type="email"
-                      placeholder="you@saffocare.com"
-                      value={email}
-                      onChange={(e) => setEmail(normalizeEmailInput(e.target.value))}
-                      autoComplete="email"
-                      autoCapitalize="none"
-                      spellCheck={false}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="staff-login-page__field">
-                  <div className="staff-login-page__label-row">
-                    <label htmlFor="staff-password">Password</label>
-                    <a href="#forgot" className="staff-login-page__forgot">
-                      Forgot?
-                    </a>
-                  </div>
-                  <div className="staff-login-page__input">
-                    <span className="staff-login-page__input-icon" aria-hidden>
-                      <Lock size={17} />
-                    </span>
-                    <input
-                      id="staff-password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      autoComplete="current-password"
-                      required
-                    />
-                    <button
-                      type="button"
-                      className="staff-login-page__toggle-pw"
-                      onClick={() => setShowPassword((v) => !v)}
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    >
-                      {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-                    </button>
-                  </div>
-                </div>
-
-                {displayError && (
-                  <p className="staff-login-page__error" role="alert">
-                    {displayError}
-                  </p>
-                )}
-
-                <button
-                  type="submit"
-                  className="staff-login-page__submit"
-                  disabled={submitting}
-                >
-                  <span>{submitting ? 'Signing in…' : 'Sign in'}</span>
-                  {!submitting && <ArrowRight size={18} className="staff-login-page__submit-arrow" aria-hidden />}
-                </button>
-              </form>
-
-              <footer className="staff-login-page__form-trust">
-                <span>
-                  <ShieldCheck size={14} aria-hidden />
-                  Secure staff access
-                </span>
-                <span>
-                  <Lock size={14} aria-hidden />
-                  Encrypted connection
-                </span>
-              </footer>
-            </div>
-          </div>
-        </section>
       </div>
-    </div>
+    </main>
   );
 }

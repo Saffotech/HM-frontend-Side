@@ -1,0 +1,55 @@
+.landing-close {
+  padding: 1rem 0 4.5rem;
+  background: #fff;
+}
+
+.landing-close__panel {
+  padding: 2.4rem 1.5rem;
+  border-radius: 1.25rem;
+  background:
+    radial-gradient(50% 80% at 100% 0%, rgba(18, 184, 134, 0.16), transparent 60%),
+    #17613f;
+  color: #fff;
+}
+
+.landing-close__panel h2 {
+  margin: 0;
+  max-width: 16ch;
+  color: #fff;
+  font-size: clamp(1.7rem, 3vw, 2.3rem);
+  letter-spacing: -0.03em;
+}
+
+.landing-close__panel p {
+  max-width: 34rem;
+  margin: 0.75rem 0 0;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.6;
+}
+
+.landing-close__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.9rem 1.25rem;
+  margin-top: 1.4rem;
+}
+
+.landing-close__actions .landing-btn--primary {
+  background: #fff;
+  color: #17613f;
+}
+
+.landing-close__actions .landing-btn--primary:hover {
+  background: #f3faf6;
+}
+
+.landing-close__staff {
+  color: #fff;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.landing-close__staff:hover {
+  text-decoration: underline;
+}

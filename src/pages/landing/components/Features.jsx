@@ -1,67 +1,44 @@
 import {
-  Banknote,
-  BarChart3,
-  Boxes,
   CalendarClock,
-  ClipboardList,
+  ClipboardPen,
   FlaskConical,
-  Microscope,
   Pill,
-  Stethoscope,
+  Receipt,
   Users,
 } from 'lucide-react';
+import Reveal from './Reveal';
 import './Features.css';
 
 const FEATURES = [
   {
     icon: Users,
     title: 'Patient Management',
-    desc: 'Registration, medical history, digital records, emergency contacts, insurance & visit history.',
-  },
-  {
-    icon: Stethoscope,
-    title: 'Doctor Management',
-    desc: 'Profiles, department assignment, availability, consultations, prescriptions & performance.',
+    desc: 'Register patients and keep visit details available to the teams who need them.',
   },
   {
     icon: CalendarClock,
-    title: 'Appointment Management',
-    desc: 'Online booking, scheduling, queue, SMS/email reminders, and rescheduling.',
+    title: 'Appointment Scheduling',
+    desc: 'Book OPD visits and keep the front-desk queue moving through the day.',
   },
   {
-    icon: ClipboardList,
-    title: 'Electronic Medical Records',
-    desc: 'Diagnosis, treatments, prescriptions, lab reports, clinical notes & allergies.',
-  },
-  {
-    icon: Banknote,
-    title: 'Billing & Invoicing',
-    desc: 'Invoices, insurance billing, payment tracking, tax, refunds & financial reports.',
+    icon: ClipboardPen,
+    title: 'Clinical Documentation',
+    desc: 'Record diagnosis notes, treatment plans, and prescriptions in the doctor workspace.',
   },
   {
     icon: Pill,
     title: 'Pharmacy Management',
-    desc: 'Medicine inventory, prescription integration, stock alerts, expiry & suppliers.',
+    desc: 'Review prescriptions, track medicine stock, and record pharmacy sales.',
   },
   {
     icon: FlaskConical,
     title: 'Laboratory Management',
-    desc: 'Test booking, sample tracking, result management, and report generation.',
+    desc: 'Order tests, mark samples collected, and upload completed laboratory reports.',
   },
   {
-    icon: Microscope,
-    title: 'Staff & HR Management',
-    desc: 'Employee records, attendance, payroll, shifts and leave management.',
-  },
-  {
-    icon: Boxes,
-    title: 'Inventory Management',
-    desc: 'Medical equipment tracking, stock, purchase orders & vendor management.',
-  },
-  {
-    icon: BarChart3,
-    title: 'Reports & Analytics',
-    desc: 'Revenue, patient analytics, doctor performance and real-time dashboards.',
+    icon: Receipt,
+    title: 'Billing and Hospital Analytics',
+    desc: 'Handle OPD and IPD billing, and review hospital activity from admin reports.',
   },
 ];
 
@@ -69,22 +46,19 @@ export default function Features() {
   return (
     <section id="features" className="landing-features">
       <div className="landing-container">
-        <div className="landing-features__header">
-          <span className="landing-badge landing-badge--primary">Features</span>
-          <h2 className="landing-section-title">Complete Healthcare Management Features</h2>
-          <p className="landing-section-sub">
-            Every tool your hospital needs to run smoothly — built for clinicians, admins and patients.
-          </p>
-        </div>
+        <Reveal className="landing-features__header">
+          <span className="landing-badge">Features</span>
+          <h2 className="landing-section-title">Everything Your Hospital Needs. In One Place.</h2>
+        </Reveal>
         <div className="landing-features__grid">
-          {FEATURES.map((f) => (
-            <div key={f.title} className="landing-features__card landing-card">
+          {FEATURES.map((feature, index) => (
+            <Reveal key={feature.title} className="landing-features__card landing-card" delay={index * 0.05}>
               <span className="landing-features__icon">
-                <f.icon size={20} aria-hidden />
+                <feature.icon size={20} aria-hidden />
               </span>
-              <h3>{f.title}</h3>
-              <p>{f.desc}</p>
-            </div>
+              <h3>{feature.title}</h3>
+              <p>{feature.desc}</p>
+            </Reveal>
           ))}
         </div>
       </div>

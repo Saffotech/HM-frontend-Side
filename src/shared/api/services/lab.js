@@ -54,6 +54,7 @@ export async function fetchLabOrders(filters = {}, token) {
     page: 1,
     pageSize: allItems.length,
   };
+  
 }
 
 export async function fetchLabOrderById(orderId, token) {

@@ -8,6 +8,7 @@ const PAGE_LINKS = [
   { to: ROUTES.ABOUT, label: 'About Us' },
   { to: `${ROUTES.HOME}#features`, label: 'Features' },
   { to: `${ROUTES.HOME}#modules`, label: 'Modules' },
+  { to: `${ROUTES.HOME}#roles`, label: 'Roles' },
   { to: `${ROUTES.HOME}#contact`, label: 'Contact Us' },
 ];
 
