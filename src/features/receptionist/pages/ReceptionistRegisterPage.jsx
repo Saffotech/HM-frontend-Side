@@ -57,7 +57,7 @@ export default function ReceptionistRegisterPage() {
     try {
       const result = await authRegister(payload);
       toast.success(result?.message || 'Account registered successfully');
-      navigate(ROUTES.RECEPTIONIST_LOGIN, { replace: true });
+      navigate(ROUTES.LOGIN, { replace: true });
     } catch (err) {
       const message =
         err?.status === 401 || err?.status === 403
@@ -77,7 +77,7 @@ export default function ReceptionistRegisterPage() {
     <div className="staff-login-page">
       <div className="staff-login-page__frame">
         <aside className="staff-login-page__hero" aria-label="SaffoCare reception registration">
-          <Link to={ROUTES.RECEPTIONIST_LOGIN} className="staff-login-page__back">
+          <Link to={ROUTES.LOGIN} className="staff-login-page__back">
             <ArrowLeft size={16} aria-hidden />
             Back to login
           </Link>
@@ -197,7 +197,7 @@ export default function ReceptionistRegisterPage() {
             </form>
 
             <p className="staff-login-page__patient-link">
-              Already registered? <Link to={ROUTES.RECEPTIONIST_LOGIN}>Sign in →</Link>
+              Already registered? <Link to={ROUTES.LOGIN}>Sign in →</Link>
             </p>
           </div>
         </section>

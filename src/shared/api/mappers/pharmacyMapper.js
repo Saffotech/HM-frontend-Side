@@ -87,6 +87,8 @@ export function apiToUiPharmacyPrescriptionItem(item) {
     quantity_prescribed,
     quantity_dispensed,
     quantity_remaining,
+    unit_price: Number(item.unit_price) || 0,
+    amount_dispensed: Number(item.amount_dispensed) || 0,
     instructions_label: formatHumanInstructions({
       ...mapped,
       duration,
@@ -132,6 +134,7 @@ export function apiToUiPharmacyPrescriptionDetail(raw) {
     diagnoses: diagnosis ? [{ id: 'primary', label: diagnosis, noted_at: null }] : [],
     prescription_items: prescriptionItems,
     dispensings: raw.dispensings ?? [],
+    total_amount_dispensed: Number(raw.total_amount_dispensed) || 0,
   };
 }
 
@@ -177,6 +180,8 @@ export function mapDispenseHistory(raw) {
       medicine_name: medicineName,
       pharmacist_name: row.pharmacist_name ?? '',
       quantity_dispensed: qty,
+      unit_price: Number(row.unit_price) || 0,
+      amount: Number(row.amount) || 0,
       status: row.status ?? 'dispensed',
       dispensed_at: row.dispensed_at,
     };

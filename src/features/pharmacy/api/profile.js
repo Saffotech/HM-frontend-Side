@@ -3,8 +3,8 @@
  * Live backend; admin-owned fields must never be sent on PUT.
  */
 
-import { apiClient } from '@/shared/api/client';
-import { API_BASE_URL, API_PREFIX } from '@/shared/constants';
+import { apiClient, apiSessionRequest } from '@/shared/api/client';
+import { API_BASE_URL } from '@/shared/constants';
 
 export const PHARMACIST_PROFILE_EDITABLE_TOP_KEYS = [
   'qualification',
@@ -44,29 +44,12 @@ export async function updatePharmacistProfile(payload, token) {
 export async function uploadPharmacistProfileImage(file, token) {
   const formData = new FormData();
   formData.append('file', file);
-
-  const headers = {};
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  const response = await fetch(
-    `${API_BASE_URL}${API_PREFIX}/pharmacy/profile/image`,
-    {
-      method: 'POST',
-      headers,
-      body: formData,
-    }
-  );
-
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const detail = typeof body.detail === 'string' ? body.detail : body.message;
-    const err = new Error(detail || 'Profile image upload failed');
-    err.status = response.status;
-    throw err;
-  }
-  return body;
+  return apiSessionRequest('/pharmacy/profile/image', {
+    method: 'POST',
+    body: formData,
+    token,
+    fallbackMessage: 'Profile image upload failed',
+  });
 }
 
 export async function deletePharmacistProfileImage(token) {

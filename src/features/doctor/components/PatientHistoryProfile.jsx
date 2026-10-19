@@ -151,6 +151,8 @@ export default function PatientHistoryProfile({
   }, [patient, opdProfile?.patient, historyData?.phone]);
 
   const visits = useMemo(() => {
+    // External IPD consult cache updates bump this tick without changing query data.
+    void consultCacheTick;
     const fromApi = (historyData?.visits ?? []).filter((visit) =>
       matchesDoctorEncounterMode(visit, encounterMode),
     );

@@ -1,7 +1,6 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { CRM_BASE, crmPath } from "../../shared/paths";
+import { CRM_BASE, UNIVERSAL_LOGIN, crmPath } from "../../shared/paths";
 import CrmLayout from "./CrmLayout";
-import CrmLogin from "./CrmLogin";
 import Conversions from "./pages/Conversions";
 import Dashboard from "./pages/Dashboard";
 import FollowUps from "./pages/FollowUps";
@@ -18,7 +17,7 @@ function LegacyLeadsRedirect() {
 export default function CrmRoutes() {
   return (
     <Routes>
-      <Route path="login" element={<CrmLogin />} />
+      <Route path="login" element={<Navigate to={UNIVERSAL_LOGIN} replace />} />
       <Route element={<CrmLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="leads" element={<Leads />} />

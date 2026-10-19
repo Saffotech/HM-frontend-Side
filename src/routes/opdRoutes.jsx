@@ -1,7 +1,6 @@
 import { lazy } from 'react';
-import { Outlet } from 'react-router-dom';
-import { Layout } from '@/shared/components/common';
 import ProtectedRoute from '@/components/security/ProtectedRoute';
+import OpdLayoutShell from '@/routes/OpdLayoutShell';
 import { ROUTES } from '@/shared/constants';
 import { OPD_SHELL_ROLES } from '@/shared/utils/authRedirect';
 import LazyRoute from '@/routes/LazyRoute';
@@ -23,20 +22,12 @@ const OpdBillingProfilePage = lazy(() => import('@/features/opd/pages/OpdBilling
 const OpdBillingNotificationsPage = lazy(() => import('@/features/opd/pages/OpdBillingNotificationsPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
-function LayoutShell() {
-  return (
-    <Layout>
-      <Outlet />
-    </Layout>
-  );
-}
-
 export const opdRoutes = [
   {
     element: <ProtectedRoute allowedRoles={OPD_SHELL_ROLES} />,
     children: [
       {
-        element: <LayoutShell />,
+        element: <OpdLayoutShell />,
         children: [
           {
             path: ROUTES.DASHBOARD,

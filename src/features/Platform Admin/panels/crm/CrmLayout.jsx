@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, NavLink, Navigate, Outlet, useLocation } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   BadgeCheck,
   Bell,
@@ -15,8 +15,10 @@ import {
   X,
 } from "lucide-react";
 import logo from "../../shared/assets/images/logo.svg";
+import { portalSessionIsAuthenticated } from "../../shared/api/platformSession";
 import { usePlatform } from "../../shared/context/PlatformContext";
 import { CRM_BASE, crmPath } from "../../shared/paths";
+import PortalEntryFallback from "../../shared/portal/PortalEntryFallback";
 import { formatDate } from "../../shared/utils/formatDate";
 import { localDay, shiftDays } from "../../shared/utils/periods";
 import { includesQuery } from "../../shared/utils/table";
@@ -41,7 +43,7 @@ const NAV = [
 export default function CrmLayout() {
   const { sessionFor } = usePlatform();
   const session = sessionFor("crm");
-  if (!session?.userId) return <Navigate to={crmPath("/login")} replace />;
+  if (!portalSessionIsAuthenticated("crm", session)) return <PortalEntryFallback portal="crm" />;
   return (
     <CrmWorkspace>
       <CrmShell session={session} />

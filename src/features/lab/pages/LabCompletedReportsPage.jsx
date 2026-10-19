@@ -6,8 +6,7 @@ import LabReportEditModal from '@/features/lab/components/LabReportEditModal';
 import { useLabPermissionSet } from '@/features/lab/hooks/useLabPermission';
 import { useLabReportsQuery } from '@/shared/hooks/queries/useLabQuery';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
-import { EmptyState, QueryFeedback, TablePagination } from '@/shared/components/common';
-import { DateInput } from '@/shared/components/common';
+import { EmptyState, QueryFeedback, TablePagination, DateInput } from '@/shared/components/common';
 import LabEncounterBadge from '@/features/lab/components/LabEncounterBadge';
 import { visitLocationLabel, normalizeEncounterType, reportMatchesArchiveSearch } from '@/features/lab/utils/visitLocation';
 import { formatOrderPrice } from '@/shared/api/mappers/labCatalogMapper';
@@ -33,7 +32,7 @@ export default function LabCompletedReportsPage() {
     { enabled: canViewLab },
   );
 
-  const reports = reportsQuery.data?.data ?? [];
+  const reports = useMemo(() => reportsQuery.data?.data ?? [], [reportsQuery.data?.data]);
   const total = reportsQuery.data?.total ?? reports.length;
 
   const doctors = useMemo(

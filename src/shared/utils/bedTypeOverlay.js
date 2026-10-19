@@ -1,53 +1,33 @@
 /**
- * Frontend bed type overlay until backend persists `bed_type` on beds inventory.
- * Admin inventory create/update writes here; IPD/admit UIs merge on read.
+ * Bed type comes from the bed API (`bed_type` on create, update, and list).
+ * The old local overlay is not read: bed ids can collide across hospitals.
  */
 
-import { coerceBedType } from '@/features/admin/utils/bedTariffRates';
-
-const STORAGE_KEY = 'hm_bed_type_overlay_v1';
+import { coerceBedType } from '../../features/manager/utils/bedTariffRates.js';
 
 export const BED_TYPE_OPTIONS = [
   { value: 'single', label: 'Single' },
   { value: 'double', label: 'Double' },
 ];
 
+/** @deprecated Overlay removed. Always empty so callers cannot merge another hospital's types. */
 export function readBedTypeOverlay() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' ? parsed : {};
-  } catch {
-    return {};
-  }
+  return {};
 }
 
-export function writeBedTypeOverlay(map) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
-}
+/** @deprecated Overlay writes are obsolete. The bed API persists bed_type. */
+export function writeBedTypeOverlay() {}
 
-/** Persist type for one or more beds (admin inventory UI). */
-export function setBedTypesInOverlay(entries) {
-  const list = Array.isArray(entries) ? entries : [entries];
-  const map = readBedTypeOverlay();
-  for (const row of list) {
-    if (!row) continue;
-    const id = row.id ?? row.bedId ?? row.bed_id;
-    if (id == null) continue;
-    map[String(id)] = coerceBedType(row.bed_type ?? row.type);
-  }
-  writeBedTypeOverlay(map);
-}
+/** @deprecated No-op. Create and update requests already send bed_type. */
+export function setBedTypesInOverlay() {}
 
-/** API `bed_type` wins; overlay fills gaps; default single. */
+/** Prefer the bed record's bed_type. Missing values display as single. */
 export function resolveBedType(bed) {
   if (!bed) return 'single';
   if (bed.bed_type != null && String(bed.bed_type).trim()) {
     return coerceBedType(bed.bed_type);
   }
-  const overlay = readBedTypeOverlay();
-  return coerceBedType(overlay[String(bed.id)]);
+  return 'single';
 }
 
 export function mergeBedTypes(beds) {

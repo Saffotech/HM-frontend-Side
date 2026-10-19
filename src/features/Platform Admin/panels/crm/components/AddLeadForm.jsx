@@ -3,8 +3,7 @@ import Button from "../../../shared/components/Button";
 import Input from "../../../shared/components/Input";
 import Modal from "../../../shared/components/Modal";
 import Select from "../../../shared/components/Select";
-import { billingCycles, hospitalTypes } from "../../../shared/data/plansData";
-import { findPossibleDuplicates } from "../../../shared/utils/hospitals";
+import { billingCycles, hospitalTypes } from "../../../shared/data/catalog";
 import { isEmail, isPhone, required } from "../../../shared/utils/validation";
 import { LEAD_SOURCES, PRIORITIES, findLeadDuplicates } from "../utils/crmLeads";
 import { StatusMark } from "./CrmMarks";
@@ -41,7 +40,7 @@ function trimLead(form) {
   return Object.fromEntries(Object.entries(form).map(([key, value]) => [key, String(value || "").trim()]));
 }
 
-export default function AddLeadForm({ leads, hospitals, me, planOptions, onClose, onCreate, onOpenExisting, onClaim }) {
+export default function AddLeadForm({ leads, me, planOptions, onClose, onCreate, onOpenExisting, onClaim }) {
   const [form, setForm] = useState(blankLead);
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState("");
@@ -55,17 +54,22 @@ export default function AddLeadForm({ leads, hospitals, me, planOptions, onClose
     setFormError("");
   };
 
-  const create = (input) => {
+  const create = async (input, { allowDuplicate = false } = {}) => {
     if (creatingRef.current) return;
     creatingRef.current = true;
     setCreating(true);
     setFormError("");
     try {
-      onCreate({ ...input, priority: input.priority || "Medium" }, { shared });
-    } catch {
+      await onCreate({ ...input, priority: input.priority || "Medium" }, { shared, allowDuplicate });
+    } catch (error) {
       creatingRef.current = false;
       setCreating(false);
-      setFormError("Unable to create lead. Please try again.");
+      if (error?.matches) {
+        setMatches(error.matches);
+        setFormError(error.message || "This hospital matches an existing record.");
+        return;
+      }
+      setFormError(error?.message || "Unable to create lead. Please try again.");
     }
   };
 
@@ -77,9 +81,8 @@ export default function AddLeadForm({ leads, hospitals, me, planOptions, onClose
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
     const leadsFound = findLeadDuplicates(leads, input, me);
-    const hospitalsFound = findPossibleDuplicates(hospitals, { name: input.hospitalName, email: input.email, phone: input.phone });
-    if (leadsFound.length || hospitalsFound.length) {
-      setMatches({ leads: leadsFound, hospitals: hospitalsFound });
+    if (leadsFound.length) {
+      setMatches({ leads: leadsFound, hospitals: [] });
       return;
     }
     create(input);
@@ -96,7 +99,7 @@ export default function AddLeadForm({ leads, hospitals, me, planOptions, onClose
         footer={(
           <>
             <Button variant="secondary" onClick={() => setMatches(null)}>Back to form</Button>
-            <Button disabled={creating} onClick={() => create(trimLead(form))}>{creating ? "Creating lead..." : "Create lead anyway"}</Button>
+            <Button disabled={creating} onClick={() => create(trimLead(form), { allowDuplicate: true })}>{creating ? "Creating lead..." : "Create lead anyway"}</Button>
           </>
         )}
       >

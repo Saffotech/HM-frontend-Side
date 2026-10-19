@@ -18,7 +18,7 @@ export { default as DataTableShell } from '@/shared/components/common/DataTableS
 export { default as TablePagination } from '@/shared/components/common/TablePagination';
 export { default as EmptyState } from './EmptyState';
 export { default as Spinner } from './Spinner';
-export { default as Skeleton, PageSkeleton } from './Skeleton';
+export { Skeleton, PageSkeleton } from './Skeleton';
 export { default as Input } from './Input';
 export { default as NumberInput } from './NumberInput';
 export { default as PasswordInput } from './PasswordInput';

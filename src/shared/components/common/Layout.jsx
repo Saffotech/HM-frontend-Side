@@ -17,6 +17,7 @@ import { useAuth } from '@/shared/hooks/useAuth';
 import OpdNotificationsBell from '@/features/opd/components/OpdNotificationsBell';
 import BrandLogo from './BrandLogo';
 import BrandName from './BrandName';
+import HospitalName from './HospitalName';
 import UserProfileMenu from './UserProfileMenu';
 import './Layout.css';
 import '@/features/opd/styles/opd-mobile.css';
@@ -84,9 +85,12 @@ export default function Layout({ children }) {
 
       <aside className={`layout-sidebar no-print ${sidebarOpen ? 'layout-sidebar--open' : ''}`}>
         <div className="layout-sidebar__head">
-          <Link to={ROUTES.APP_ENTRY} className="layout-brand">
+          <Link to={ROUTES.APP_ENTRY} className="layout-brand shell-brand">
             <BrandLogo size={32} />
-            <BrandName />
+            <span className="shell-brand-text">
+              <BrandName />
+              <HospitalName />
+            </span>
           </Link>
           <button
             type="button"

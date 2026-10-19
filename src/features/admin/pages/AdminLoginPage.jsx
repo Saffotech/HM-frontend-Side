@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Lock, Mail, ShieldCheck, UserCog } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Lock, Mail, Shield, ShieldCheck } from 'lucide-react';
 import { ROUTES, ROLES } from '@/shared/constants';
 import { BrandLogo, BrandName } from '@/shared/components/common';
 import { useAuthStore } from '@/shared/store/useAuthStore';
-import { isStaffModuleLive } from '@/shared/constants/moduleAvailability';
+import { isSupersededSessionError } from '@/components/security/httpSessionPolicy';
 import { trimCredentials, hasCredentials, normalizeEmailInput } from '@/shared/utils/credentials';
 import { toast } from '@/shared/utils/toast';
 import '@/features/admin/styles/admin-login.css';
 
-export default function AdminLoginPage() {
+export default function SuperAdminLoginPage() {
   const { login, logout, error, isAuthenticated, user, authReady } = useAuthStore();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -21,10 +21,6 @@ export default function AdminLoginPage() {
     if (!authReady || !isAuthenticated || !user) return;
     if (user.role === ROLES.SUPER_ADMIN) {
       navigate(ROUTES.SUPER_ADMIN_DASHBOARD, { replace: true });
-      return;
-    }
-    if (user.role === ROLES.ADMIN) {
-      navigate(ROUTES.ADMIN_DASHBOARD, { replace: true });
       return;
     }
     navigate(ROUTES.LOGIN, { replace: true });
@@ -44,7 +40,7 @@ export default function AdminLoginPage() {
     try {
       const me = await login(trimmed);
 
-      if (me.role !== ROLES.ADMIN) {
+      if (me.role !== ROLES.SUPER_ADMIN) {
         logout();
         const blocked = 'This portal is for administrator accounts only.';
         setFormError(blocked);
@@ -52,17 +48,10 @@ export default function AdminLoginPage() {
         return;
       }
 
-      if (!isStaffModuleLive(me.department, me.role)) {
-        logout();
-        const blocked = `${me.department || 'Administration'} is not available yet.`;
-        setFormError(blocked);
-        toast.error(blocked);
-        return;
-      }
-
       toast.success(`Welcome, ${me.full_name}`);
-      navigate(ROUTES.ADMIN_DASHBOARD, { replace: true });
+      navigate(ROUTES.SUPER_ADMIN_DASHBOARD, { replace: true });
     } catch (err) {
+      if (isSupersededSessionError(err)) return;
       const message =
         err?.status === 401
           ? 'Invalid email or password'
@@ -77,7 +66,7 @@ export default function AdminLoginPage() {
   const displayError = formError || error;
 
   return (
-    <div className="admin-login-page">
+    <div className="admin-login-page super-admin-login-page">
       <div className="admin-login-page__frame">
         <aside className="admin-login-page__hero" aria-label="SaffoCare admin portal">
           <Link to={ROUTES.HOME} className="admin-login-page__back">
@@ -91,23 +80,23 @@ export default function AdminLoginPage() {
               <BrandName variant="on-dark" /> Admin
             </h1>
             <p className="admin-login-page__hero-lead">
-              Enterprise console for staff lifecycle, departments, roles, and hospital reports.
+              Owner console for roles, staff, settings, and hospital-wide configuration.
             </p>
           </div>
 
           <div className="admin-login-page__hero-foot">
             <span>
               <ShieldCheck size={14} aria-hidden />
-              Role-based permissions
+              Secure staff login
             </span>
             <span>
-              <UserCog size={14} aria-hidden />
-              Staff lifecycle management
+              <Shield size={14} aria-hidden />
+              Role & permission management
             </span>
           </div>
         </aside>
 
-        <section className="admin-login-page__form-panel" aria-labelledby="admin-sign-in-title">
+        <section className="admin-login-page__form-panel" aria-labelledby="super-admin-sign-in-title">
           <Link to={ROUTES.HOME} className="admin-login-page__back admin-login-page__back--mobile">
             <ArrowLeft size={16} aria-hidden />
             Back
@@ -115,39 +104,41 @@ export default function AdminLoginPage() {
 
           <div className="admin-login-page__form-panel-inner">
             <header className="admin-login-page__form-head">
-              <h2 id="admin-sign-in-title">Admin sign in</h2>
-              <p>Use an account with the <strong>admin</strong> role from the hospital system.</p>
+              <h2 id="super-admin-sign-in-title">Admin sign in</h2>
+              <p>Sign in with your administrator account registered in the hospital system.</p>
             </header>
 
             <form className="admin-login-page__form" onSubmit={handleSubmit}>
               <div className="admin-login-page__field">
-                <label htmlFor="admin-email">Work email</label>
+                <label htmlFor="super-admin-email">Work email</label>
                 <div className="admin-login-page__input">
                   <Mail size={18} aria-hidden />
                   <input
-                    id="admin-email"
+                    id="super-admin-email"
                     type="email"
                     autoComplete="username"
                     value={email}
                     onChange={(e) => setEmail(normalizeEmailInput(e.target.value))}
-                    placeholder="admin@hospital.com"
+                    placeholder="you@saffocare.com"
                     autoCapitalize="none"
                     spellCheck={false}
+                    required
                   />
                 </div>
               </div>
 
               <div className="admin-login-page__field">
-                <label htmlFor="admin-password">Password</label>
+                <label htmlFor="super-admin-password">Password</label>
                 <div className="admin-login-page__input">
                   <Lock size={18} aria-hidden />
                   <input
-                    id="admin-password"
+                    id="super-admin-password"
                     type="password"
                     autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
+                    required
                   />
                 </div>
               </div>
@@ -163,15 +154,13 @@ export default function AdminLoginPage() {
                 className="admin-login-page__submit"
                 disabled={submitting}
               >
-                {submitting ? 'Signing in…' : 'Sign in'}
+                {submitting ? 'Signing in…' : 'Sign in to Admin'}
                 <ArrowRight size={18} aria-hidden />
               </button>
             </form>
 
             <p className="admin-login-page__hint">
-              Super Admin demo? Use the{' '}
-              <Link to={ROUTES.SUPER_ADMIN_LOGIN}>Super Admin portal</Link>
-              {' '}— separate from this backend admin login.
+              Other staff? <Link to={ROUTES.LOGIN}>Staff login →</Link>
             </p>
           </div>
         </section>

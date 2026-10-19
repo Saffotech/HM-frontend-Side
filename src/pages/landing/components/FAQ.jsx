@@ -5,7 +5,7 @@ import './FAQ.css';
 const FAQS = [
   {
     q: 'Which hospital roles does SaffoCare support?',
-    a: 'SaffoCare supports Super Admin, Admin, OPD, Doctor, Nurse, Lab, Receptionist, and Pharmacy — each with a role-specific workspace. Permissions differ by role (for example, OPD has operational powers; Receptionist mainly guides).',
+    a: 'SaffoCare supports Admin, Manager, OPD, Doctor, Nurse, Lab, Receptionist, and Pharmacy — each with a role-specific workspace. Permissions differ by role (for example, OPD has operational powers; Receptionist mainly guides).',
   },
   {
     q: 'Can all departments work in one system?',

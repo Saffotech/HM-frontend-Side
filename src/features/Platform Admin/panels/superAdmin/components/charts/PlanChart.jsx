@@ -1,4 +1,5 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import EmptyState from "../../../../shared/components/EmptyState";
 import ChartTooltip from "./ChartTooltip";
 import "./TenantStatusChart.css";
 
@@ -9,22 +10,28 @@ export default function PlanChart({
   title = "Plan distribution",
   description = "Hospitals grouped by the subscription plan on each tenant record.",
 }) {
+  const rows = Array.isArray(data) ? data : [];
+
   return (
     <section className="card card-pad chart-card">
       <h2>{title}</h2>
       <p className="panel-copy">{description}</p>
       <div className="chart-box">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie data={data} dataKey="value" nameKey="name" innerRadius={58} outerRadius={86} paddingAngle={3}>
-              {data.map((entry, index) => <Cell key={entry.name} fill={palette[index % palette.length]} />)}
-            </Pie>
-            <Tooltip content={<ChartTooltip />} />
-          </PieChart>
-        </ResponsiveContainer>
+        {rows.length === 0 ? (
+          <EmptyState title="No plan data" message="Plan groups appear after a hospital is registered." />
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie data={rows} dataKey="value" nameKey="name" innerRadius={58} outerRadius={86} paddingAngle={3}>
+                {rows.map((entry, index) => <Cell key={entry.name} fill={palette[index % palette.length]} />)}
+              </Pie>
+              <Tooltip content={<ChartTooltip />} />
+            </PieChart>
+          </ResponsiveContainer>
+        )}
       </div>
       <ul className="chart-legend">
-        {data.map((entry, index) => (
+        {rows.map((entry, index) => (
           <li key={entry.name}>
             <i style={{ background: palette[index % palette.length] }} />
             <span>{entry.name}</span>

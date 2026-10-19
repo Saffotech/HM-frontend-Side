@@ -2,7 +2,7 @@
  * Admin nurse workforce — HTTP + light mapping.
  */
 
-import * as api from '@/features/admin/api/nurseWorkforce';
+import * as api from '@/features/manager/api/nurseWorkforce';
 
 export async function getWorkforceDashboard(params = {}) {
   return api.getWorkforceDashboard(params);

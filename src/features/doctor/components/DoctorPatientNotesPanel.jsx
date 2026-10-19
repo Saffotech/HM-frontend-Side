@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { ClipboardList } from 'lucide-react';
-import NurseNotesSnapshotView from '@/features/nurse/components/NurseNotesSnapshotView';
+import NurseNotesSnapshotView from '@/shared/components/clinical/NurseNotesSnapshotView';
 import { useDoctorPatientNotesQuery } from '@/features/doctor/hooks/useDoctorPatientQuery';
 import { useDoctorPermission, DOCTOR_PERMISSIONS } from '@/features/doctor/hooks/useDoctorPermission';
 import { withAssembledDoctorNoteHistory } from '@/shared/api/mappers/doctorPatientMapper';

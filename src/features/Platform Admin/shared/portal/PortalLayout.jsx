@@ -1,14 +1,16 @@
-import { Link, NavLink, Navigate, Outlet, useLocation } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import logo from "../assets/images/logo.svg";
+import { portalSessionIsAuthenticated } from "../api/platformSession";
 import { usePlatform } from "../context/PlatformContext";
+import PortalEntryFallback from "./PortalEntryFallback";
 import AvatarImage from "./profile/AvatarImage";
 import "../layout/AppShell.css";
 import "../layout/Sidebar.css";
 import "../layout/Header.css";
 import "./PortalLayout.css";
 
-export default function PortalLayout({ portal, name, login, profilePath, items, titles, className = "" }) {
+export default function PortalLayout({ portal, name, profilePath, items, titles, className = "" }) {
   const { sessionFor, signOutPortal, portalProfile } = usePlatform();
   const session = sessionFor(portal);
   const { pathname } = useLocation();
@@ -17,7 +19,7 @@ export default function PortalLayout({ portal, name, login, profilePath, items, 
     || Object.entries(titles).find(([path]) => path.endsWith("/") && pathname.startsWith(path))?.[1]
     || name;
 
-  if (!session?.userId) return <Navigate to={login} replace />;
+  if (!portalSessionIsAuthenticated(portal, session)) return <PortalEntryFallback portal={portal} />;
   const photo = portalProfile(portal)?.photoUrl || "";
   const user = (
     <>

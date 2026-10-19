@@ -15,13 +15,12 @@ import {
   uiStatusToApiStatus,
 } from '@/shared/api/mappers/appointmentMapper';
 import { fetchAllPages, totalPagesFrom } from '@/shared/utils/fetchAllPages';
-import { getTodayRangeIso } from '@/shared/utils/opdDates';
+import { getTodayRangeIso, isSameOpdCalendarDay } from '@/shared/utils/opdDates';
 import {
   normalizeAppointmentListParams,
   simplifyAppointmentListParams,
   minimalAppointmentListParams,
 } from '@/shared/api/utils/opdAppointmentParams';
-import { isSameOpdCalendarDay } from '@/shared/utils/opdDates';
 
 function mapAppointmentPage(raw) {
   const appointments = asList(raw)

@@ -39,11 +39,6 @@ export default function NursePermissionHint({
     setOpen(true);
   }, [clearCloseTimer, updatePosition]);
 
-  const closeTip = useCallback(() => {
-    clearCloseTimer();
-    setOpen(false);
-  }, [clearCloseTimer]);
-
   const closeTipSoon = useCallback(() => {
     clearCloseTimer();
     closeTimer.current = window.setTimeout(() => setOpen(false), 120);

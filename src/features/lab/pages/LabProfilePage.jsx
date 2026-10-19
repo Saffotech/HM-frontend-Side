@@ -750,7 +750,7 @@ export default function LabProfilePage() {
                   <Shield size={16} aria-hidden /> Account
                 </h3>
                 <p className="lab-profile-hint">
-                  Employee ID and department are managed by admin.
+                  Employee ID and department are managed by a manager.
                 </p>
                 <div className="lab-profile-grid">
                   <ReadField label="First name" value={profile.first_name} />

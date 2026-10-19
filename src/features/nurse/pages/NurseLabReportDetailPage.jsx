@@ -10,8 +10,9 @@ import {
   useDownloadNurseLabReportFileMutation,
   useNurseActiveDoctorsQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
-import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
+import { useNursePatientScope } from '@/features/nurse/context/nursePatientScope';
 import { toast } from '@/shared/utils/toast';
+import { isSupersededSessionError } from '@/components/security/httpSessionPolicy';
 import { ROUTES } from '@/shared/constants';
 
 function formatDateTime(iso) {
@@ -127,8 +128,8 @@ export default function NurseLabReportDetailPage() {
           loading: false,
         });
       })
-      .catch(() => {
-        if (!active) return;
+      .catch((err) => {
+        if (!active || isSupersededSessionError(err)) return;
         setPreview({
           url: null,
           fileName: report.file_name ?? null,
@@ -169,7 +170,8 @@ export default function NurseLabReportDetailPage() {
         ...scopeFilters,
       });
       await triggerBlobDownload(result);
-    } catch {
+    } catch (err) {
+      if (isSupersededSessionError(err)) return;
       toast.error('No file');
     }
   }, [reportId, report?.has_file, downloadMutation, scopeFilters, preview.url, preview.fileName]);

@@ -1,6 +1,8 @@
 export const PLATFORM_BASE = "/platform";
 export const CRM_BASE = `${PLATFORM_BASE}/crm`;
 export const ACCOUNTS_BASE = `${PLATFORM_BASE}/accounts`;
+/** Every role signs in here. Portal shells redirect here instead of /platform/.../login. */
+export const UNIVERSAL_LOGIN = "/login";
 
 function join(base, path) {
   if (!path || path === "/") return base;

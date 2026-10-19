@@ -51,7 +51,7 @@ export function isReportAvailable(order, report) {
 /**
  * Doctor-facing workflow status — Ordered / Completed / Cancelled only.
  */
-export function getDoctorDisplayStatus(order, doctorMeta = {}) {
+export function getDoctorDisplayStatus(order) {
   const raw = String(order?.status ?? '').toLowerCase();
   if (raw === 'cancelled') return 'Cancelled';
   if (raw === LAB_ORDER_STATUS.COMPLETED || raw === 'completed') return 'Completed';
@@ -115,7 +115,7 @@ export function formatNormalRange(parameters = [], fallback = '') {
 
 export function buildDoctorLabTest(order, report, doctorMeta = {}) {
   const category = inferTestCategory(order.testName, order.category, order.departmentName);
-  const doctorStatus = getDoctorDisplayStatus(order, doctorMeta);
+  const doctorStatus = getDoctorDisplayStatus(order);
   const orderedAt = order.orderedAt || order.requestedDate;
   const reportAvailable = isReportAvailable(order, report);
 

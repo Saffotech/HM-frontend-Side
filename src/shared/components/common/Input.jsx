@@ -21,6 +21,8 @@ export default function Input({
   autoComplete,
   readOnly = false,
 }) {
+  const autoId = useId();
+
   if (type === 'date') {
     return (
       <DateInput
@@ -35,10 +37,10 @@ export default function Input({
         className={className}
         min={min}
         max={max}
-      />
-    );
+    />
+  );
   }
-  const autoId = useId();
+
   const inputId =
     id ||
     (typeof label === 'string' ? label.toLowerCase().replace(/\s/g, '-') : autoId);

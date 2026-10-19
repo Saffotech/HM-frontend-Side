@@ -24,9 +24,8 @@ import {
   LAB_DEPT_CODE,
 } from '@/shared/utils/labDepartments';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
-import { EmptyState, QueryFeedback, TablePagination } from '@/shared/components/common';
+import { EmptyState, QueryFeedback, TablePagination, DateInput } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
-import { DateInput } from '@/shared/components/common';
 import { ClipboardList } from 'lucide-react';
 import LabEncounterBadge from '@/features/lab/components/LabEncounterBadge';
 import { visitLocationLabel, normalizeEncounterType } from '@/features/lab/utils/visitLocation';

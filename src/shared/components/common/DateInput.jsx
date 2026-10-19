@@ -337,7 +337,6 @@ export default function DateInput({
   value = '',
   onChange,
   placeholder = 'DD/MM/YYYY',
-  required = false,
   disabled = false,
   error,
   className = '',
@@ -456,7 +455,7 @@ export default function DateInput({
     if (!date) return;
     setViewYear(date.getFullYear());
     setViewMonth(date.getMonth());
-  }, [open]);
+  }, [open, dateValue]);
 
   useEffect(() => {
     if (!open) return undefined;

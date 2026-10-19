@@ -1,6 +1,6 @@
 /**
- * Admin Profile — live GET/PUT /admin/profile + image APIs.
- * Admin-owned fields stay read-only.
+ * Admin profile — live GET/PUT /super-admin/profile + image APIs.
+ * Lightweight identity: Account / Professional / Contact.
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -17,16 +17,17 @@ import {
   X,
 } from 'lucide-react';
 import {
-  ADMIN_PROFILE_EDITABLE_TOP_KEYS,
-  resolveAdminProfileImageUrl,
+  SUPER_ADMIN_PROFILE_EDITABLE_TOP_KEYS,
+  resolveSuperAdminProfileImageUrl,
 } from '@/features/admin/api/profile';
 import {
-  useDeleteAdminProfileImageMutation,
-  useAdminProfileQuery,
-  useUpdateAdminProfileMutation,
-  useUploadAdminProfileImageMutation,
+  useDeleteSuperAdminProfileImageMutation,
+  useSuperAdminProfileQuery,
+  useUpdateSuperAdminProfileMutation,
+  useUploadSuperAdminProfileImageMutation,
 } from '@/features/admin/hooks/useAdminProfileQuery';
-import AdminLayout from '@/features/admin/components/AdminLayout';
+import SuperAdminLayout from '@/features/admin/components/AdminLayout';
+import SuperAdminPageHeader from '@/features/admin/components/AdminPageHeader';
 import { ROUTES } from '@/shared/constants';
 import {
   Button,
@@ -37,6 +38,7 @@ import {
   ProfilePhotoCropDialog,
 } from '@/shared/components/common';
 import PageSpinner from '@/shared/components/PageSpinner';
+import { formatRoleLabel } from '@/features/manager/utils/formatRoleLabel';
 import { toast } from '@/shared/utils/toast';
 import { formatPhoneDisplay } from '@/shared/utils/phoneCountryCode';
 import { formatPhoneInput } from '@/shared/utils/validators';
@@ -60,7 +62,6 @@ const TEN_DIGIT_PHONE = /^\d{10}$/;
 const VALID_GENDER_VALUES = GENDER_OPTIONS.map((o) => o.value);
 const PROFILE_TABS = new Set(['account', 'professional', 'contact']);
 
-/** Nurse Phase 2 by Atharva — phone / emergency phone must be exactly 10 digits */
 function isStrictTenDigitPhone(value) {
   return TEN_DIGIT_PHONE.test(String(value ?? '').trim());
 }
@@ -75,33 +76,21 @@ function genderLabel(code) {
 
 function formatUpdatedAgo(iso) {
   if (!iso) return null;
-  const then = new Date(iso);
-  if (Number.isNaN(then.getTime())) return null;
-  const diffMs = Date.now() - then.getTime();
-  if (diffMs < 0) return 'just now';
-  const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return null;
+  const seconds = Math.floor((Date.now() - then) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  const weeks = Math.floor(days / 7);
-  if (weeks < 5) return `${weeks}w ago`;
-  return then.toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
+  if (days < 30) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString();
 }
 
 function buildEditableForm(profile) {
   return {
-    qualification: capitalizeFirst(profile?.qualification ?? ''),
-    experience_years:
-      profile?.experience_years === null || profile?.experience_years === undefined
-        ? ''
-        : String(profile.experience_years),
     bio: capitalizeFirst(profile?.bio ?? ''),
     languages: Array.isArray(profile?.languages)
       ? profile.languages.map((l) => capitalizeFirst(l)).join(', ')
@@ -118,26 +107,14 @@ function buildEditableForm(profile) {
   };
 }
 
-/**
- * Build dirty PUT payload only for editable fields; nest address / emergency_contact.
- */
 function buildDirtyPayload(form, baseline) {
   const payload = {};
 
-  ADMIN_PROFILE_EDITABLE_TOP_KEYS.forEach((key) => {
+  SUPER_ADMIN_PROFILE_EDITABLE_TOP_KEYS.forEach((key) => {
     if (key === 'languages') {
       const next = parseProfileLanguages(form.languages);
       const prev = Array.isArray(baseline.languages) ? baseline.languages : [];
       if (JSON.stringify(next) !== JSON.stringify(prev)) payload.languages = next;
-      return;
-    }
-    if (key === 'experience_years') {
-      const next =
-        form.experience_years === '' || form.experience_years === null
-          ? null
-          : Number(form.experience_years);
-      const prev = baseline.experience_years ?? null;
-      if (next !== prev) payload.experience_years = next;
       return;
     }
     if (key === 'gender') {
@@ -152,7 +129,7 @@ function buildDirtyPayload(form, baseline) {
       if ((next ?? null) !== (prev ?? null)) payload[key] = next;
       return;
     }
-    if (key === 'qualification' || key === 'bio') {
+    if (key === 'bio') {
       const next = form[key] === '' ? null : capitalizeFirst(form[key]);
       const prev = baseline[key] ?? null;
       if ((next ?? null) !== (prev ?? null)) payload[key] = next;
@@ -190,10 +167,10 @@ function buildDirtyPayload(form, baseline) {
 function ReadField({ label, value }) {
   const display = displayProfileText(value);
   return (
-    <div className="admin-profile-field">
-      <span className="admin-profile-field__label">{label}</span>
+    <div className="sa-profile-field">
+      <span className="sa-profile-field__label">{label}</span>
       <p
-        className={`admin-profile-field__value${!display ? ' admin-profile-field__value--empty' : ''}`}
+        className={`sa-profile-field__value${!display ? ' sa-profile-field__value--empty' : ''}`}
       >
         {display || 'Not set'}
       </p>
@@ -201,22 +178,20 @@ function ReadField({ label, value }) {
   );
 }
 
-export default function AdminProfilePage() {
+export default function SuperAdminProfilePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { data, isLoading, isError, error, refetch } = useAdminProfileQuery();
+  const { data, isLoading, isError, error, refetch } = useSuperAdminProfileQuery();
   const profile = data?.profile;
-  const updateProfile = useUpdateAdminProfileMutation();
-  const uploadImage = useUploadAdminProfileImageMutation();
-  const deleteImage = useDeleteAdminProfileImageMutation();
+  const updateProfile = useUpdateSuperAdminProfileMutation();
+  const uploadImage = useUploadSuperAdminProfileImageMutation();
+  const deleteImage = useDeleteSuperAdminProfileImageMutation();
 
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState(null);
   const [langDraft, setLangDraft] = useState('');
-  // Nurse Phase 2 by Atharva — tabs: show one section at a time; Account default
   const [activeTab, setActiveTab] = useState(() => {
-    const tab = location.state?.adminProfileTab;
-    if (tab === 'shift') return 'account';
+    const tab = location.state?.superAdminProfileTab;
     return PROFILE_TABS.has(tab) ? tab : 'account';
   });
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
@@ -227,9 +202,7 @@ export default function AdminProfilePage() {
   const fileInputRef = useRef(null);
 
   const startEdit = () => {
-    // Nurse Phase 2 by Atharva — Account is read-only; edit opens Professional
     setEditing(true);
-    if (activeTab === 'account') setActiveTab('professional');
   };
 
   useEffect(() => {
@@ -238,14 +211,11 @@ export default function AdminProfilePage() {
     }
   }, [profile, editing]);
 
-  // Nurse Phase 2 by Atharva — honor deep-link tab from notifications
   useEffect(() => {
-    const tab = location.state?.adminProfileTab;
-    if (tab === 'shift' || tab === 'account') setActiveTab('account');
-    else if (PROFILE_TABS.has(tab)) setActiveTab(tab);
+    const tab = location.state?.superAdminProfileTab;
+    if (PROFILE_TABS.has(tab)) setActiveTab(tab);
   }, [location.state]);
 
-  // Nurse Phase 2 by Atharva — close avatar menu on outside click / Escape
   useEffect(() => {
     if (!avatarMenuOpen) return undefined;
     const onPointerDown = (e) => {
@@ -265,12 +235,12 @@ export default function AdminProfilePage() {
   }, [avatarMenuOpen]);
 
   const displayName = useMemo(() => {
-    if (!profile) return 'Hospital Admin';
+    if (!profile) return 'Admin';
     const name = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email;
     return displayProfileText(name);
   }, [profile]);
 
-  const imageUrl = resolveAdminProfileImageUrl(profile?.profile_image_url);
+  const imageUrl = resolveSuperAdminProfileImageUrl(profile?.profile_image_url);
 
   const completionPct = Math.min(
     100,
@@ -293,60 +263,84 @@ export default function AdminProfilePage() {
   const handleSave = async (e) => {
     e.preventDefault();
 
-    // Nurse Phase 2 by Atharva — phone & emergency_contact.phone must be exactly 10 digits
     const phone = formatPhoneInput(form?.phone);
     const emergencyPhone = formatPhoneInput(form?.emergency_contact_phone);
-    if (!isStrictTenDigitPhone(phone)) {
-      toast.error('Phone must be a 10-digit number');
+
+    if (phone && !isStrictTenDigitPhone(phone)) {
+      toast.error('Phone must be exactly 10 digits');
       setActiveTab('contact');
       return;
     }
-    if (!isStrictTenDigitPhone(emergencyPhone)) {
-      toast.error('Emergency phone must be a 10-digit number');
+    if (emergencyPhone && !isStrictTenDigitPhone(emergencyPhone)) {
+      toast.error('Emergency phone must be exactly 10 digits');
       setActiveTab('contact');
       return;
     }
-    // Nurse Phase 2 by Atharva — gender must be one of the four options (not blank Select)
-    if (!isValidGender(form?.gender)) {
-      toast.error('Please select a gender');
+    if (form?.gender !== '' && form?.gender != null && !isValidGender(form.gender)) {
+      toast.error('Please select a valid gender');
       setActiveTab('contact');
       return;
     }
 
-    const formForSave = {
-      ...form,
-      phone,
-      emergency_contact_phone: emergencyPhone,
-      gender: Number(form.gender),
-    };
-    const payload = buildDirtyPayload(formForSave, profile);
+    const payload = buildDirtyPayload(
+      {
+        ...form,
+        phone: phone || '',
+        emergency_contact_phone: emergencyPhone || '',
+      },
+      profile
+    );
+
     if (Object.keys(payload).length === 0) {
       toast.info('No changes to save');
       setEditing(false);
       return;
     }
-    if (
-      payload.experience_years != null &&
-      (payload.experience_years < 0 || payload.experience_years > 60)
-    ) {
-      toast.error('Experience years must be between 0 and 60');
-      return;
-    }
+
     try {
       await updateProfile.mutateAsync(payload);
       toast.success('Profile updated');
       setEditing(false);
-    } catch {
-      /* toasted */
+    } catch (err) {
+      toast.error(err?.message || 'Failed to update profile');
     }
+  };
+
+  const addLanguageChip = () => {
+    const next = capitalizeFirst(langDraft.trim());
+    if (!next) return;
+    const current = parseProfileLanguages(form?.languages);
+    if (current.some((l) => l.toLowerCase() === next.toLowerCase())) {
+      setLangDraft('');
+      return;
+    }
+    setField('languages', [...current, next].join(', '));
+    setLangDraft('');
+  };
+
+  const removeLanguage = (lang) => {
+    const next = parseProfileLanguages(form?.languages).filter(
+      (l) => l.toLowerCase() !== String(lang).toLowerCase()
+    );
+    setField('languages', next.join(', '));
+  };
+
+  const handleAvatarUploadClick = () => {
+    setAvatarMenuOpen(false);
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarRemoveClick = () => {
+    setAvatarMenuOpen(false);
+    setRemovePhotoConfirmOpen(true);
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type) && !/\.(jpe?g|png|webp)$/i.test(file.name)) {
-      toast.error('Use a JPG, PNG, or WebP image');
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      toast.error('Only JPG, PNG, or WEBP images are allowed');
       return;
     }
     if (file.size > MAX_IMAGE_BYTES) {
@@ -361,9 +355,9 @@ export default function AdminProfilePage() {
     try {
       await uploadImage.mutateAsync(croppedFile);
       setCropFile(null);
-      toast.success('Profile image uploaded');
-    } catch {
-      /* toasted */
+      toast.success('Profile photo updated');
+    } catch (err) {
+      toast.error(err?.message || 'Failed to upload photo');
     } finally {
       setCropUploading(false);
     }
@@ -372,128 +366,107 @@ export default function AdminProfilePage() {
   const handleDeleteImage = async () => {
     try {
       await deleteImage.mutateAsync();
-      toast.success('Profile image removed');
       setRemovePhotoConfirmOpen(false);
-    } catch {
-      /* toasted */
+      toast.success('Profile photo removed');
+    } catch (err) {
+      toast.error(err?.message || 'Failed to remove photo');
     }
-  };
-
-  const handleAvatarUploadClick = () => {
-    setAvatarMenuOpen(false);
-    fileInputRef.current?.click();
-  };
-
-  // Nurse Phase 2 by Atharva — ask confirm before deleting profile photo
-  const handleAvatarRemoveClick = () => {
-    setAvatarMenuOpen(false);
-    setRemovePhotoConfirmOpen(true);
-  };
-
-  const addLanguageChip = () => {
-    const next = capitalizeFirst(langDraft.trim());
-    if (!next) return;
-    const list = parseProfileLanguages(form.languages);
-    if (!list.some((l) => l.toLowerCase() === next.toLowerCase())) {
-      setField('languages', [...list, next].join(', '));
-    }
-    setLangDraft('');
-  };
-
-  const removeLanguage = (lang) => {
-    setField(
-      'languages',
-      parseProfileLanguages(form.languages)
-        .filter((l) => l.toLowerCase() !== lang.toLowerCase())
-        .join(', ')
-    );
   };
 
   if (isLoading) {
     return (
-      <AdminLayout pageTitle="My Profile">
-        <PageSpinner />
-      </AdminLayout>
-    );
-  }
-
-  if (isError) {
-    return (
-      <AdminLayout pageTitle="My Profile">
-        <EmptyState
-          icon={User}
-          title="Could not load profile"
-          description={
-            error?.message
-            || (error?.status === 403
-              ? "You don't have permission to view this profile."
-              : error?.status === 404
-                ? 'Hospital Admin profile not found. Contact admin to create your profile.'
-                : 'Something went wrong. Please try again.')
-          }
-        />
-        <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <Button variant="primary" onClick={() => refetch()}>
-            Try again
-          </Button>
-          <Button variant="outline" onClick={() => navigate(ROUTES.ADMIN_DASHBOARD)}>
-            <ArrowLeft size={16} /> Back to dashboard
-          </Button>
+      <SuperAdminLayout pageTitle="My Profile" compact>
+        <div className="sa-profile-page">
+          <SuperAdminPageHeader
+            title="My Profile"
+          />
+          <PageSpinner label="Loading profile…" />
         </div>
-      </AdminLayout>
+      </SuperAdminLayout>
     );
   }
 
-  if (!profile) {
+  if (isError || !profile) {
     return (
-      <AdminLayout pageTitle="My Profile">
-        <EmptyState
-          icon={User}
-          title="Hospital Admin profile not found"
-          description="Contact admin to create your Hospital Admin profile."
-        />
-        <div style={{ marginTop: '1rem' }}>
-          <Button variant="outline" onClick={() => navigate(ROUTES.ADMIN_DASHBOARD)}>
-            <ArrowLeft size={16} /> Back to dashboard
-          </Button>
+      <SuperAdminLayout pageTitle="My Profile" compact>
+        <div className="sa-profile-page">
+          <SuperAdminPageHeader
+            title="My Profile"
+          />
+          <EmptyState
+            icon={User}
+            title="Could not load profile"
+            description={
+              error?.message
+              || (error?.status === 403
+                ? "You don't have permission to view this profile."
+                : error?.status === 404
+                  ? 'Admin profile not found. Run seed or contact support.'
+                  : 'Please try again.')
+            }
+          />
+          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
+            <Button variant="outline" onClick={() => refetch()}>
+              Retry
+            </Button>
+            <Button variant="ghost" onClick={() => navigate(ROUTES.SUPER_ADMIN_DASHBOARD)}>
+              <ArrowLeft size={16} /> Dashboard
+            </Button>
+          </div>
         </div>
-      </AdminLayout>
+      </SuperAdminLayout>
     );
   }
 
+  const roleName = profile.role?.name
+    ? formatRoleLabel(profile.role.name)
+    : 'Admin';
+  const hasProfileImage = Boolean(profile.profile_image_url);
   const saving = updateProfile.isPending;
-  const hasProfileImage = Boolean(profile.profile_image_url || imageUrl);
-  const roleName = typeof profile.role === 'object' ? profile.role?.name : profile.role;
+  const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
 
   return (
-    <AdminLayout pageTitle="My Profile">
-      <div className="admin-profile-page">
-        <div className="admin-profile-card">
-          <div className="admin-profile-hero">
-            <div className="admin-profile-avatar-wrap" ref={avatarWrapRef}>
+    <SuperAdminLayout pageTitle="My Profile" compact>
+      <div className="sa-profile-page">
+        <SuperAdminPageHeader
+          title="My Profile"
+          actions={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(ROUTES.SUPER_ADMIN_DASHBOARD)}
+            >
+              <ArrowLeft size={16} /> Dashboard
+            </Button>
+          }
+        />
+
+        <div className="sa-profile-card">
+          <div className="sa-profile-hero">
+            <div className="sa-profile-avatar-wrap" ref={avatarWrapRef}>
               <button
                 type="button"
-                className="admin-profile-avatar-trigger"
-                onClick={() => setAvatarMenuOpen((open) => !open)}
-                aria-expanded={avatarMenuOpen}
-                aria-haspopup="menu"
+                className="sa-profile-avatar"
                 aria-label="Profile photo options"
+                aria-haspopup="menu"
+                aria-expanded={avatarMenuOpen}
+                onClick={() => setAvatarMenuOpen((open) => !open)}
               >
                 {imageUrl ? (
-                  <img src={imageUrl} alt="" className="admin-profile-avatar-img" />
+                  <img src={imageUrl} alt="" className="sa-profile-avatar__img" />
                 ) : (
-                  <div className="admin-profile-avatar-fallback" aria-hidden>
-                    {(profile.first_name || 'R').charAt(0).toUpperCase()}
+                  <div className="sa-profile-avatar__placeholder" aria-hidden>
+                    <User size={34} strokeWidth={1.75} />
                   </div>
                 )}
               </button>
 
               {avatarMenuOpen ? (
-                <div className="admin-profile-avatar-menu" role="menu">
+                <div className="sa-profile-avatar-menu" role="menu">
                   <button
                     type="button"
                     role="menuitem"
-                    className="admin-profile-avatar-menu__item"
+                    className="sa-profile-avatar-menu__item"
                     onClick={handleAvatarUploadClick}
                     disabled={uploadImage.isPending}
                   >
@@ -503,7 +476,7 @@ export default function AdminProfilePage() {
                   <button
                     type="button"
                     role="menuitem"
-                    className="admin-profile-avatar-menu__item admin-profile-avatar-menu__item--danger"
+                    className="sa-profile-avatar-menu__item sa-profile-avatar-menu__item--danger"
                     onClick={handleAvatarRemoveClick}
                     disabled={deleteImage.isPending || !hasProfileImage}
                   >
@@ -522,50 +495,49 @@ export default function AdminProfilePage() {
                 disabled={uploadImage.isPending}
               />
             </div>
-            <div className="admin-profile-hero__meta">
-              <div className="admin-profile-hero__top">
+            <div className="sa-profile-hero__meta">
+              <div className="sa-profile-hero__top">
                 <div>
-                  <h2 className="admin-profile-hero__name">{displayName}</h2>
-                  <p className="admin-profile-hero__sub">{profile.email}</p>
+                  <h2 className="sa-profile-hero__name">{displayName}</h2>
+                  <p className="sa-profile-hero__sub">{profile.email}</p>
                 </div>
               </div>
-              <div className="admin-profile-hero__tags">
-                {roleName ? <span className="admin-profile-tag">{roleName}</span> : null}
+              <div className="sa-profile-hero__tags">
+                {roleName ? <span className="sa-profile-tag">{roleName}</span> : null}
                 <span
-                  className={`admin-profile-tag ${
+                  className={`sa-profile-tag ${
                     profile.is_profile_completed
-                      ? 'admin-profile-tag--ok'
-                      : 'admin-profile-tag--warn'
+                      ? 'sa-profile-tag--ok'
+                      : 'sa-profile-tag--warn'
                   }`}
                 >
                   {profile.is_profile_completed ? 'Profile complete' : 'Incomplete'}
                 </span>
                 {profile.is_active ? (
-                  <span className="admin-profile-tag admin-profile-tag--ok">Active</span>
+                  <span className="sa-profile-tag sa-profile-tag--ok">Active</span>
                 ) : (
-                  <span className="admin-profile-tag admin-profile-tag--warn">Inactive</span>
+                  <span className="sa-profile-tag sa-profile-tag--warn">Inactive</span>
                 )}
               </div>
-              {/* Nurse Phase 2 by Atharva — completion progress + updated ago side by side */}
-              <div className="admin-profile-hero__status-row">
+              <div className="sa-profile-hero__status-row">
                 <div
-                  className="admin-profile-progress"
+                  className="sa-profile-progress"
                   role="progressbar"
                   aria-valuenow={completionPct}
                   aria-valuemin={0}
                   aria-valuemax={100}
                   aria-label="Profile completion"
                 >
-                  <div className="admin-profile-progress__track">
+                  <div className="sa-profile-progress__track">
                     <div
-                      className="admin-profile-progress__fill"
+                      className="sa-profile-progress__fill"
                       style={{ width: `${completionPct}%` }}
                     />
                   </div>
-                  <span className="admin-profile-progress__label">{completionPct}% complete</span>
+                  <span className="sa-profile-progress__label">{completionPct}% complete</span>
                 </div>
                 {formatUpdatedAgo(profile.updated_at) ? (
-                  <p className="admin-profile-hero__updated">
+                  <p className="sa-profile-hero__updated">
                     Profile updated {formatUpdatedAgo(profile.updated_at)}
                   </p>
                 ) : null}
@@ -573,9 +545,8 @@ export default function AdminProfilePage() {
             </div>
           </div>
 
-          {/* Nurse Phase 2 by Atharva — tabs: one section visible; Account default */}
-          <div className="admin-profile-page__toolbar">
-            <div className="admin-profile-tabs" role="tablist" aria-label="Profile sections">
+          <div className="sa-profile-page__toolbar">
+            <div className="sa-profile-tabs" role="tablist" aria-label="Profile sections">
               {[
                 { id: 'account', label: 'Account', icon: Shield },
                 { id: 'professional', label: 'Professional', icon: Briefcase },
@@ -588,7 +559,7 @@ export default function AdminProfilePage() {
                     type="button"
                     role="tab"
                     aria-selected={activeTab === tab.id}
-                    className={`admin-profile-tab${activeTab === tab.id ? ' is-active' : ''}`}
+                    className={`sa-profile-tab${activeTab === tab.id ? ' is-active' : ''}`}
                     onClick={() => setActiveTab(tab.id)}
                   >
                     <Icon size={15} aria-hidden />
@@ -597,7 +568,7 @@ export default function AdminProfilePage() {
                 );
               })}
             </div>
-            <div className="admin-profile-page__actions">
+            <div className="sa-profile-page__actions">
               {editing ? (
                 <>
                   <Button variant="outline" size="sm" onClick={handleCancel} disabled={saving}>
@@ -606,8 +577,8 @@ export default function AdminProfilePage() {
                   <Button
                     size="sm"
                     type="button"
-                    disabled={saving || activeTab === 'account'}
-                    onClick={() => document.getElementById('admin-profile-form')?.requestSubmit()}
+                    disabled={saving}
+                    onClick={() => document.getElementById('sa-profile-form')?.requestSubmit()}
                   >
                     {saving ? 'Saving…' : 'Save changes'}
                   </Button>
@@ -620,130 +591,102 @@ export default function AdminProfilePage() {
             </div>
           </div>
 
-          <form id="admin-profile-form" className="admin-profile-body" onSubmit={handleSave}>
+          <form id="sa-profile-form" className="sa-profile-body" onSubmit={handleSave}>
             {activeTab === 'account' && (
               <section
-                id="admin-profile-section-account"
-                className="admin-profile-section is-active"
+                id="sa-profile-section-account"
+                className="sa-profile-section is-active"
                 role="tabpanel"
               >
-                <h3 className="admin-profile-section__title">
+                <h3 className="sa-profile-section__title">
                   <Shield size={16} aria-hidden /> Account
                 </h3>
-                <p className="admin-profile-hint">
-                  Employee ID is managed by admin.
+                <p className="sa-profile-hint">
+                  Profile photo is managed from the avatar above. Name and email are system-managed.
                 </p>
-                <div className="admin-profile-grid">
-                  <ReadField label="First name" value={profile.first_name} />
-                  <ReadField label="Last name" value={profile.last_name} />
+                <div className="sa-profile-grid">
+                  <ReadField label="Full name" value={fullName || null} />
                   <ReadField label="Email" value={profile.email} />
-                  <ReadField label="Employee ID" value={profile.employee_id} />
-                  <ReadField label="Joining date" value={profile.joining_date} />
                   <ReadField label="Role" value={roleName} />
+                  {editing && form ? (
+                    <label className="sa-profile-field sa-profile-field--span">
+                      <span className="sa-profile-field__label">Bio</span>
+                      <textarea
+                        className="sa-profile-input"
+                        rows={3}
+                        value={form.bio}
+                        onChange={(e) => setTextField('bio', e.target.value)}
+                      />
+                    </label>
+                  ) : (
+                    <ReadField label="Bio" value={profile.bio} />
+                  )}
                 </div>
               </section>
             )}
 
             {activeTab === 'professional' && (
               <section
-                id="admin-profile-section-professional"
-                className="admin-profile-section is-active"
+                id="sa-profile-section-professional"
+                className="sa-profile-section is-active"
                 role="tabpanel"
               >
-                <h3 className="admin-profile-section__title">
+                <h3 className="sa-profile-section__title">
                   <Briefcase size={16} aria-hidden /> Professional
                 </h3>
-                <div className="admin-profile-grid">
+                <p className="sa-profile-hint">
+                  Employee ID and joining date are system-managed.
+                </p>
+                <div className="sa-profile-grid">
+                  <ReadField label="Employee ID" value={profile.employee_id} />
+                  <ReadField label="Joining date" value={profile.joining_date} />
                   {editing && form ? (
-                    <>
-                      <label className="admin-profile-field">
-                        <span className="admin-profile-field__label">Qualification</span>
-                        <input
-                          className="admin-profile-input"
-                          value={form.qualification}
-                          maxLength={255}
-                          onChange={(e) => setTextField('qualification', e.target.value)}
-                        />
-                      </label>
-                      <label className="admin-profile-field">
-                        <span className="admin-profile-field__label">Experience (years)</span>
-                        <input
-                          className="admin-profile-input"
-                          type="number"
-                          min={0}
-                          max={60}
-                          value={form.experience_years}
-                          onChange={(e) => setField('experience_years', e.target.value)}
-                        />
-                      </label>
-                      <div className="admin-profile-field admin-profile-field--span">
-                        <span className="admin-profile-field__label">Languages</span>
-                        <div className="admin-profile-lang-row">
-                          {parseProfileLanguages(form.languages).map((lang) => (
-                            <button
-                              key={lang}
-                              type="button"
-                              className="admin-profile-lang-chip"
-                              onClick={() => removeLanguage(lang)}
-                            >
-                              {lang} ×
-                            </button>
-                          ))}
-                        </div>
-                        <div className="admin-profile-lang-add">
-                          <input
-                            className="admin-profile-input"
-                            placeholder="Add language"
-                            value={langDraft}
-                            onChange={(e) => setLangDraft(capitalizeFirst(e.target.value))}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                addLanguageChip();
-                              }
-                            }}
-                          />
-                          <Button
+                    <div className="sa-profile-field sa-profile-field--span">
+                      <span className="sa-profile-field__label">Languages</span>
+                      <div className="sa-profile-lang-row">
+                        {parseProfileLanguages(form.languages).map((lang) => (
+                          <button
+                            key={lang}
                             type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={addLanguageChip}
+                            className="sa-profile-lang-chip"
+                            onClick={() => removeLanguage(lang)}
                           >
-                            Add
-                          </Button>
-                        </div>
+                            {lang} ×
+                          </button>
+                        ))}
                       </div>
-                      <label className="admin-profile-field admin-profile-field--span">
-                        <span className="admin-profile-field__label">Bio</span>
-                        <textarea
-                          className="admin-profile-input"
-                          rows={3}
-                          value={form.bio}
-                          onChange={(e) => setTextField('bio', e.target.value)}
+                      <div className="sa-profile-lang-add">
+                        <input
+                          className="sa-profile-input"
+                          placeholder="Add language"
+                          value={langDraft}
+                          onChange={(e) => setLangDraft(capitalizeFirst(e.target.value))}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              addLanguageChip();
+                            }
+                          }}
                         />
-                      </label>
-                    </>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={addLanguageChip}
+                        >
+                          Add
+                        </Button>
+                      </div>
+                    </div>
                   ) : (
-                    <>
-                      <ReadField label="Qualification" value={profile.qualification} />
-                      <ReadField
-                        label="Experience (years)"
-                        value={
-                          profile.experience_years != null
-                            ? String(profile.experience_years)
-                            : null
-                        }
-                      />
-                      <ReadField
-                        label="Languages"
-                        value={
-                          (profile.languages || []).length
-                            ? profile.languages.join(', ')
-                            : null
-                        }
-                      />
-                      <ReadField label="Bio" value={profile.bio} />
-                    </>
+                    <ReadField
+                      label="Languages"
+                      value={
+                        (profile.languages || []).length
+                          ? profile.languages.join(', ')
+                          : null
+                      }
+                    />
                   )}
                 </div>
               </section>
@@ -751,39 +694,39 @@ export default function AdminProfilePage() {
 
             {activeTab === 'contact' && (
               <section
-                id="admin-profile-section-contact"
-                className="admin-profile-section is-active"
+                id="sa-profile-section-contact"
+                className="sa-profile-section is-active"
                 role="tabpanel"
               >
-                <h3 className="admin-profile-section__title">
+                <h3 className="sa-profile-section__title">
                   <Phone size={16} aria-hidden /> Contact
                 </h3>
-                <div className="admin-profile-grid">
+                <div className="sa-profile-grid">
                   {editing && form ? (
                     <>
-                      <label className="admin-profile-field">
-                        <span className="admin-profile-field__label">Phone</span>
+                      <label className="sa-profile-field">
+                        <span className="sa-profile-field__label">Phone</span>
                         <ProfilePhoneField
-                          inputClassName="admin-profile-input"
+                          inputClassName="sa-profile-input"
                           phoneCode={form.phone_code}
                           phone={form.phone}
                           onPhoneCodeChange={(value) => setField('phone_code', value)}
                           onPhoneChange={(value) => setField('phone', value)}
                         />
                       </label>
-                      <label className="admin-profile-field">
-                        <span className="admin-profile-field__label">Emergency contact name</span>
+                      <label className="sa-profile-field">
+                        <span className="sa-profile-field__label">Emergency contact name</span>
                         <input
-                          className="admin-profile-input"
+                          className="sa-profile-input"
                           maxLength={120}
                           value={form.emergency_contact_name}
                           onChange={(e) => setTextField('emergency_contact_name', e.target.value)}
                         />
                       </label>
-                      <label className="admin-profile-field">
-                        <span className="admin-profile-field__label">Emergency phone</span>
+                      <label className="sa-profile-field">
+                        <span className="sa-profile-field__label">Emergency phone</span>
                         <input
-                          className="admin-profile-input"
+                          className="sa-profile-input"
                           type="tel"
                           inputMode="numeric"
                           autoComplete="tel"
@@ -798,22 +741,18 @@ export default function AdminProfilePage() {
                           }
                         />
                       </label>
-                      <label className="admin-profile-field">
-                        <span className="admin-profile-field__label">Gender</span>
+                      <label className="sa-profile-field">
+                        <span className="sa-profile-field__label">Gender</span>
                         <select
-                          className="admin-profile-input"
-                          required
+                          className="sa-profile-input"
                           value={form.gender === '' || form.gender == null ? '' : form.gender}
                           onChange={(e) => {
-                            // Nurse Phase 2 by Atharva — only allow the four gender options
                             const next = Number(e.target.value);
                             if (!isValidGender(next)) return;
                             setField('gender', next);
                           }}
                         >
-                          <option value="" disabled>
-                            Select gender
-                          </option>
+                          <option value="">Select gender</option>
                           {GENDER_OPTIONS.map((o) => (
                             <option key={o.value} value={o.value}>
                               {o.label}
@@ -821,7 +760,7 @@ export default function AdminProfilePage() {
                           ))}
                         </select>
                       </label>
-                      <div className="admin-profile-field">
+                      <div className="sa-profile-field">
                         <DateInput
                           label="Date of birth"
                           className="profile-page-date-input"
@@ -830,33 +769,6 @@ export default function AdminProfilePage() {
                           placeholder="DD/MM/YYYY"
                         />
                       </div>
-                      <label className="admin-profile-field">
-                        <span className="admin-profile-field__label">City</span>
-                        <input
-                          className="admin-profile-input"
-                          maxLength={100}
-                          value={form.city}
-                          onChange={(e) => setTextField('city', e.target.value)}
-                        />
-                      </label>
-                      <label className="admin-profile-field">
-                        <span className="admin-profile-field__label">State</span>
-                        <input
-                          className="admin-profile-input"
-                          maxLength={100}
-                          value={form.state}
-                          onChange={(e) => setTextField('state', e.target.value)}
-                        />
-                      </label>
-                      <label className="admin-profile-field admin-profile-field--span">
-                        <span className="admin-profile-field__label">Address line</span>
-                        <textarea
-                          className="admin-profile-input"
-                          rows={2}
-                          value={form.address_line}
-                          onChange={(e) => setTextField('address_line', e.target.value)}
-                        />
-                      </label>
                     </>
                   ) : (
                     <>
@@ -874,9 +786,6 @@ export default function AdminProfilePage() {
                       />
                       <ReadField label="Gender" value={genderLabel(profile.gender)} />
                       <ReadField label="Date of birth" value={profile.date_of_birth} />
-                      <ReadField label="City" value={profile.address?.city} />
-                      <ReadField label="State" value={profile.address?.state} />
-                      <ReadField label="Address line" value={profile.address?.line} />
                     </>
                   )}
                 </div>
@@ -896,7 +805,6 @@ export default function AdminProfilePage() {
         onConfirm={handleCropConfirm}
       />
 
-      {/* Nurse Phase 2 by Atharva — confirm before removing profile photo */}
       <ConfirmDialog
         isOpen={removePhotoConfirmOpen}
         title="Remove profile photo?"
@@ -907,6 +815,6 @@ export default function AdminProfilePage() {
         }}
         onConfirm={handleDeleteImage}
       />
-    </AdminLayout>
+    </SuperAdminLayout>
   );
 }

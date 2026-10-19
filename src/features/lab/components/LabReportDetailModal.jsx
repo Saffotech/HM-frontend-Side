@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { printLabReport } from '@/features/lab/utils/labReportUtils';
 import {
   useLabReportQuery,
@@ -6,6 +6,7 @@ import {
 } from '@/shared/hooks/queries/useLabQuery';
 import { QueryFeedback } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
+import { isSupersededSessionError } from '@/components/security/httpSessionPolicy';
 import LabEncounterBadge from '@/features/lab/components/LabEncounterBadge';
 import { visitLocationLabel } from '@/features/lab/utils/visitLocation';
 
@@ -25,6 +26,8 @@ export default function LabReportDetailModal({ report, onClose, onEdit }) {
   const reportDbId = report?.reportDbId;
   const detailQuery = useLabReportQuery(reportDbId, { enabled: reportDbId != null });
   const downloadFile = useDownloadLabReportFileMutation();
+  const downloadMutateRef = useRef(downloadFile.mutateAsync);
+  downloadMutateRef.current = downloadFile.mutateAsync;
   const [preview, setPreview] = useState({
     url: null,
     fileName: null,
@@ -47,8 +50,7 @@ export default function LabReportDetailModal({ report, onClose, onEdit }) {
 
     setPreview((prev) => ({ ...prev, loading: true, error: null }));
 
-    downloadFile
-      .mutateAsync(reportDbId)
+    downloadMutateRef.current(reportDbId)
       .then(({ blob, fileName, contentType }) => {
         if (!active) return;
         objectUrl = URL.createObjectURL(blob);
@@ -60,8 +62,8 @@ export default function LabReportDetailModal({ report, onClose, onEdit }) {
           loading: false,
         });
       })
-      .catch(() => {
-        if (!active) return;
+      .catch((err) => {
+        if (!active || isSupersededSessionError(err)) return;
         setPreview({
           url: null,
           fileName: detail?.fileName ?? null,
@@ -89,7 +91,8 @@ export default function LabReportDetailModal({ report, onClose, onEdit }) {
       a.download = fileName;
       a.click();
       URL.revokeObjectURL(url);
-    } catch {
+    } catch (err) {
+      if (isSupersededSessionError(err)) return;
       toast.error('No file available for this report');
     }
   };

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Bell } from 'lucide-react';
-import { BrandLogo, BrandName, UserProfileMenu } from '@/shared/components/common';
+import { BrandLogo, BrandName, HospitalName, UserProfileMenu } from '@/shared/components/common';
 import '@/shared/components/common/Layout.css';
 
 function defaultIsNavLinkActive(pathname, link, homeRoute) {
@@ -80,9 +80,12 @@ function StandardRoleLayout({
 
       <aside className={`layout-sidebar no-print ${sidebarOpen ? 'layout-sidebar--open' : ''}`}>
         <div className="layout-sidebar__head">
-          <Link to={homeRoute} className="layout-brand">
+          <Link to={homeRoute} className="layout-brand shell-brand">
             <BrandLogo size={32} />
-            <BrandName className="brand-name--on-dark" />
+            <span className="shell-brand-text">
+              <BrandName className="brand-name--on-dark" />
+              <HospitalName />
+            </span>
           </Link>
           <button
             type="button"

@@ -6,12 +6,15 @@
 }
 
 .inv-page .page-header {
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 14px;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--classic-border);
 }
 
 .inv-page .page-header h1 {
+  margin: 0;
   font-size: 22px;
   letter-spacing: 0;
   font-weight: 700;

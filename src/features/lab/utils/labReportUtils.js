@@ -1,6 +1,8 @@
-import { APP_NAME } from '@/shared/constants';
+import { hospitalDisplayName } from '@/components/security/hospitalIdentity';
 import { fetchLabReportById } from '@/shared/api/services/lab';
 import { fetchLabReportFileBlob } from '@/features/lab/api/lab';
+import { currentSessionEpoch, isSessionCurrent } from '@/components/security/sessionEpoch';
+import { isSupersededSessionError, supersededSessionError } from '@/components/security/httpSessionPolicy';
 import { useAuthStore } from '@/shared/store/useAuthStore';
 import { toast } from '@/shared/utils/toast';
 import { visitLocationLabel } from '@/features/lab/utils/visitLocation';
@@ -161,7 +163,7 @@ function buildUploadedFileSection(report) {
 }
 
 function buildPrintHtml(report, hospitalName) {
-  const labTitle = `${hospitalName} Laboratory`;
+  const labTitle = hospitalName ? `${hospitalName} Laboratory` : 'Laboratory';
   const reportId = escapeHtml(displayValue(report.reportId));
   const patientName = escapeHtml(displayValue(report.patientName));
   const patientId = escapeHtml(displayValue(report.patientId));
@@ -418,7 +420,7 @@ function buildPrintHtml(report, hospitalName) {
           <header class="header">
             <div class="brand">
               <h1>${escapeHtml(labTitle)}</h1>
-              <p>${escapeHtml(hospitalName)} · Diagnostic Laboratory Report</p>
+              <p>${hospitalName ? `${escapeHtml(hospitalName)} · ` : ''}Diagnostic Laboratory Report</p>
             </div>
             <div class="report-meta">
               <div class="muted">Report ID</div>
@@ -532,6 +534,8 @@ async function resolveReportForPrint(report) {
     return report;
   }
 
+  const epochAtStart = currentSessionEpoch();
+
   try {
     const detail = hasParameters ? report : await fetchLabReportById(reportDbId, token);
     const pick = (next, prev) => {
@@ -567,13 +571,16 @@ async function resolveReportForPrint(report) {
         } else {
           nextReport.fileDataUrl = await blobToDataUrl(blob);
         }
-      } catch {
+      } catch (error) {
+        if (isSupersededSessionError(error)) throw error;
         // File preview in print is best-effort; keep report printable even if file fetch fails.
       }
     }
 
+    if (!isSessionCurrent(epochAtStart)) throw supersededSessionError();
     return nextReport;
-  } catch {
+  } catch (error) {
+    if (isSupersededSessionError(error)) throw error;
     return report;
   }
 }
@@ -582,14 +589,21 @@ async function resolveReportForPrint(report) {
 export async function getLabReportPrintHtml(report) {
   const fullReport = await resolveReportForPrint(report);
   if (!fullReport) return null;
-  return buildPrintHtml(fullReport, APP_NAME || 'SaffoCare');
+  const hospitalName = hospitalDisplayName(useAuthStore.getState()?.user);
+  return buildPrintHtml(fullReport, hospitalName);
 }
 
 /** Print a single lab report in a real laboratory layout. */
 export async function printLabReport(report) {
   if (!report) return;
 
-  const content = await getLabReportPrintHtml(report);
+  let content;
+  try {
+    content = await getLabReportPrintHtml(report);
+  } catch (error) {
+    if (isSupersededSessionError(error)) return;
+    throw error;
+  }
   if (!content) {
     toast.error('Report data not available');
     return;

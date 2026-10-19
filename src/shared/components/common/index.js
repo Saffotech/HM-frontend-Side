@@ -1,5 +1,6 @@
 export { default as BrandLogo } from './BrandLogo';
 export { default as BrandName } from './BrandName';
+export { default as HospitalName } from './HospitalName';
 export { default as Button } from './Button';
 export { default as Input } from './Input';
 export { default as DateInput } from './DateInput';

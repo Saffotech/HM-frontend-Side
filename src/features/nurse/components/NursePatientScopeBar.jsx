@@ -3,7 +3,7 @@ import { ROUTES } from '@/shared/constants';
 import {
   formatNurseShiftLabel,
   useNursePatientScope,
-} from '@/features/nurse/context/NursePatientScopeContext';
+} from '@/features/nurse/context/nursePatientScope';
 
 /** Exact list routes where All / Allocated changes the visible patient set. */
 const SCOPE_LIST_PATHS = new Set([

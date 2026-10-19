@@ -1,12 +1,16 @@
+import { getHospitalStorageScope } from '../../components/security/hospitalStorageScope.js';
+
 const STORAGE_PREFIX = 'doctor:consultation-draft';
 
 /** In-memory draft store — PHI never persisted to localStorage/sessionStorage. */
 const draftStore = new Map();
 
 function draftKey(appointmentDbId, doctorId) {
+  const { tenantId } = getHospitalStorageScope();
+  const tenant = tenantId == null || tenantId === '' ? 'unscoped' : String(tenantId);
   const appt = appointmentDbId != null ? String(appointmentDbId) : '';
   const doctor = doctorId != null ? String(doctorId) : 'anon';
-  return `${STORAGE_PREFIX}:${doctor}:${appt}`;
+  return `${STORAGE_PREFIX}:${tenant}:${doctor}:${appt}`;
 }
 
 function hasText(value) {
@@ -117,7 +121,18 @@ export function clearConsultationDraft(appointmentDbId, doctorId) {
   }
 }
 
-/** Remove all in-memory drafts (e.g. on logout). */
+/** Remove all in-memory drafts and any legacy local copies (e.g. on logout). */
 export function clearAllConsultationDrafts() {
   draftStore.clear();
+  if (typeof window === 'undefined') return;
+  try {
+    const keys = [];
+    for (let index = 0; index < window.localStorage.length; index += 1) {
+      const key = window.localStorage.key(index);
+      if (key && key.startsWith(STORAGE_PREFIX)) keys.push(key);
+    }
+    keys.forEach((key) => window.localStorage.removeItem(key));
+  } catch {
+    /* localStorage unavailable */
+  }
 }

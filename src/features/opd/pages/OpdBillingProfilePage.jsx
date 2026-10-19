@@ -64,13 +64,6 @@ function isStrictTenDigitPhone(value) {
   return TEN_DIGIT_PHONE.test(String(value ?? '').trim());
 }
 
-const CITY_STATE_REGEX = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
-
-function isValidCityState(value) {
-  return CITY_STATE_REGEX.test(String(value ?? '').trim());
-}
-
-
 function isValidGender(value) {
   return VALID_GENDER_VALUES.includes(Number(value));
 }
@@ -636,7 +629,7 @@ export default function OpdBillingProfilePage() {
                   <Shield size={16} aria-hidden /> Account
                 </h3>
                 <p className="opd-profile-hint">
-                  Employee ID is managed by admin.
+                  Employee ID is managed by a manager.
                 </p>
                 <div className="opd-profile-grid">
                   <ReadField label="First name" value={profile.first_name} />

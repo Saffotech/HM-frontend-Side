@@ -1,18 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Modal, Button } from '@/shared/components/common';
-import { ROUTES, ROLES } from '@/shared/constants';
+import { ROUTES } from '@/shared/constants';
 import { useAuth } from '@/shared/hooks/useAuth';
+import { shouldApplyHospitalSessionGuard } from '@/components/security/httpSessionPolicy';
 
 const IDLE_MS = 30 * 60 * 1000;
 const WARNING_MS = 60 * 1000;
 
 export default function SessionTimeout() {
-  const { isAuthenticated: hospitalAuthenticated, logout, user } = useAuth();
+  const { isAuthenticated: hospitalAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   // Platform Admin: /platform/* has its own session, so the hospital idle timer is paused there
   const { pathname } = useLocation();
-  const isAuthenticated = hospitalAuthenticated && !pathname.startsWith(ROUTES.PLATFORM);
+  const isAuthenticated = hospitalAuthenticated && shouldApplyHospitalSessionGuard(pathname);
   const [warningOpen, setWarningOpen] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(60);
   const idleTimerRef = useRef(null);
@@ -29,18 +30,11 @@ export default function SessionTimeout() {
   }, []);
 
   const forceLogout = useCallback(() => {
-    const returnToSuperAdminLogin = user?.role === ROLES.SUPER_ADMIN;
-    const returnToReceptionLogin = user?.role === ROLES.RECEPTIONIST;
     clearTimers();
     setWarningOpen(false);
     logout();
-    const target = returnToSuperAdminLogin
-      ? ROUTES.SUPER_ADMIN_LOGIN
-      : returnToReceptionLogin
-        ? ROUTES.RECEPTIONIST_LOGIN
-        : ROUTES.LOGIN;
-    navigate(target, { replace: true });
-  }, [clearTimers, logout, navigate, user]);
+    navigate(ROUTES.LOGIN, { replace: true });
+  }, [clearTimers, logout, navigate]);
 
   const startWarningCountdown = useCallback(() => {
     setSecondsLeft(60);

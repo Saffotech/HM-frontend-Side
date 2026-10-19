@@ -1,7 +1,5 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -11,42 +9,30 @@ import {
   useNurseBedAllocationSummaryQuery,
   useNurseBedPatientsQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
-
-const STORAGE_KEY = 'nurse-patient-list-mode';
-
-const NursePatientScopeContext = createContext(null);
-
-function readStoredListMode() {
-  try {
-    const stored = sessionStorage.getItem(STORAGE_KEY);
-    if (stored === 'allocated' || stored === 'all') return stored;
-  } catch {
-    /* ignore */
-  }
-  return null;
-}
+import { useAuth } from '@/shared/hooks/useAuth';
+import {
+  readNurseListMode,
+  writeNurseListMode,
+} from '@/components/security/hospitalBrowserStorage';
+import { NursePatientScopeContext } from '@/features/nurse/context/nursePatientScope';
 
 function writeStoredListMode(mode) {
-  try {
-    sessionStorage.setItem(STORAGE_KEY, mode);
-  } catch {
-    /* ignore */
-  }
-}
-
-export function formatNurseShiftLabel(shiftName) {
-  if (!shiftName) return 'Current Shift';
-  const name = String(shiftName).trim();
-  if (!name) return 'Current Shift';
-  return name.toLowerCase().includes('shift') ? name : `${name} Shift`;
+  writeNurseListMode(mode);
 }
 
 export function NursePatientScopeProvider({ children }) {
-  const stored = readStoredListMode();
-  // Never leave mode null — disabled All/Allocated buttons were breaking after navigation.
-  const [listMode, setListModeState] = useState(() => stored ?? 'all');
-  const userChosenRef = useRef(Boolean(stored));
-  const autoDefaultAppliedRef = useRef(Boolean(stored));
+  const { user } = useAuth();
+  const scopeKey = `${user?.tenant_id ?? ''}:${user?.user_id ?? user?.id ?? ''}`;
+  const [listMode, setListModeState] = useState(() => readNurseListMode() ?? 'all');
+  const userChosenRef = useRef(false);
+  const autoDefaultAppliedRef = useRef(false);
+
+  useEffect(() => {
+    const stored = readNurseListMode();
+    userChosenRef.current = Boolean(stored);
+    autoDefaultAppliedRef.current = Boolean(stored);
+    setListModeState(stored ?? 'all');
+  }, [scopeKey]);
 
   const {
     data: allocationSummary,
@@ -66,7 +52,7 @@ export function NursePatientScopeProvider({ children }) {
     setListModeState(next);
     writeStoredListMode(next);
     autoDefaultAppliedRef.current = true;
-  }, [allocationSummary, summaryLoading, summaryError]);
+  }, [allocationSummary, summaryLoading, summaryError, scopeKey]);
 
   const setListMode = useCallback((mode) => {
     if (mode !== 'allocated' && mode !== 'all') return;
@@ -153,17 +139,4 @@ export function NursePatientScopeProvider({ children }) {
       {children}
     </NursePatientScopeContext.Provider>
   );
-}
-
-export function useNursePatientScope() {
-  const ctx = useContext(NursePatientScopeContext);
-  if (!ctx) {
-    throw new Error('useNursePatientScope must be used within NursePatientScopeProvider');
-  }
-  return ctx;
-}
-
-/** Safe variant for optional usage outside provider (returns all-patients defaults). */
-export function useNursePatientScopeOptional() {
-  return useContext(NursePatientScopeContext);
 }

@@ -7,10 +7,17 @@ import {
 
 function getErrorMessage(error) {
   if (!error) return 'Something went wrong. Please try again.';
+  if (error.code === 'session_superseded') return '';
   if (isLabDepartmentUnassignedError(error)) return LAB_DEPT_UNASSIGNED_MESSAGE;
   const status = error.status;
   if (status === 404) return 'Record not found';
-  if (status === 403) return "You don't have permission to view this";
+  if (status === 403) {
+    const detail = `${error.detail || ''} ${error.message || ''}`;
+    if (error.code === 'permission_denied' || /permission denied/i.test(detail)) {
+      return "You don't have permission to view this";
+    }
+    return error.message || 'Request forbidden';
+  }
   if (status === 0) {
     return (
       error.message ||
@@ -30,6 +37,7 @@ export default function QueryFeedback({ isLoading, isError, error, onRetry, chil
     );
   }
   if (isError) {
+    if (error?.code === 'session_superseded') return null;
     return (
       <div className="query-feedback query-feedback--error" role="alert">
         <p>{getErrorMessage(error)}</p>

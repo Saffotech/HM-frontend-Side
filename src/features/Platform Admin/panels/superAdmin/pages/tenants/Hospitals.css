@@ -1,3 +1,10 @@
+.hospitals-api-note {
+  margin: 0 0 12px;
+  color: var(--color-text-secondary, #5b6573);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .hospitals-page {
   --classic-radius: 4px;
   --classic-border: #c9d3e0;

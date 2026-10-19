@@ -599,7 +599,7 @@ export function resolvePrescribedDoctorDepartment(item, doctorDepartmentMap) {
 export function mapMedicationToPrescription(
   item,
   latestHistoryRow = null,
-  patientMeta = {},
+  _patientMeta = {},
   firstHistoryRow = null,
 ) {
   if (!item) return null;

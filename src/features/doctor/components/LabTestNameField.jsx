@@ -25,7 +25,7 @@ export default function LabTestNameField({
     { active: true },
     { enabled: Boolean(deptCode) },
   );
-  const allCatalog = catalogQuery.data ?? [];
+  const allCatalog = useMemo(() => catalogQuery.data ?? [], [catalogQuery.data]);
   const catalogTests = useMemo(
     () => filterCatalogTestsForDept(allCatalog, deptCode, departmentId),
     [allCatalog, deptCode, departmentId],

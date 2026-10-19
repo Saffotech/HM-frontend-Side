@@ -4,8 +4,8 @@
  * Frontend-only; admin-owned fields must never be sent on PUT.
  */
 
-import { apiClient } from '@/shared/api/client';
-import { API_BASE_URL, API_PREFIX } from '@/shared/constants';
+import { apiClient, apiSessionRequest } from '@/shared/api/client';
+import { API_BASE_URL } from '@/shared/constants';
 
 export const NURSE_PROFILE_EDITABLE_TOP_KEYS = [
   'qualification',
@@ -50,26 +50,12 @@ export async function updateNurseProfile(payload, token) {
 export async function uploadNurseProfileImage(file, token) {
   const formData = new FormData();
   formData.append('file', file);
-
-  const headers = {};
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  const response = await fetch(`${API_BASE_URL}${API_PREFIX}/nurse/profile/image`, {
+  return apiSessionRequest('/nurse/profile/image', {
     method: 'POST',
-    headers,
     body: formData,
+    token,
+    fallbackMessage: 'Profile image upload failed',
   });
-
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const detail = typeof body.detail === 'string' ? body.detail : body.message;
-    const err = new Error(detail || 'Profile image upload failed');
-    err.status = response.status;
-    throw err;
-  }
-  return body;
 }
 
 export async function deleteNurseProfileImage(token) {

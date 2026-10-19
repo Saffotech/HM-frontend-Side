@@ -40,7 +40,7 @@ function subscriptionTone(status) {
 }
 
 export default function Dashboard() {
-  const { me, today, leads, hospitals, invoices, actions } = useCrm();
+  const { me, today, leads, hospitals, invoices, actions, billingAvailable, scopeLabel } = useCrm();
   const [params, setParams] = useSearchParams();
   const view = VIEWS.includes(params.get("card")) ? params.get("card") : "due";
   const prepared = useMemo(() => prepareLeads({ onboarding: leads, hospitals, invoices, today }), [leads, hospitals, invoices, today]);
@@ -174,8 +174,12 @@ export default function Dashboard() {
     },
     revenue: {
       title: "Attributed revenue",
-      note: paidInvoices ? `${plural(paidInvoices, "paid invoice")} · ${formatCurrency(revenue)}` : "Paid subscription invoices of your hospitals",
-      empty: ["No paid invoices yet", "Revenue shows once hospitals registered from your leads pay."],
+      note: billingAvailable
+        ? (paidInvoices ? `${plural(paidInvoices, "paid invoice")} · ${formatCurrency(revenue)}` : "Paid subscription invoices of your hospitals")
+        : "Platform invoices are not available from the server",
+      empty: billingAvailable
+        ? ["No paid invoices yet", "Revenue shows once hospitals registered from your leads pay."]
+        : ["Revenue unavailable", "There is no platform invoice API yet, so this is not estimated from demo data."],
       columns: ["Hospital", "Plan", "Registered", "Paid invoices", "Paid revenue"],
       cells: (lead) => {
         const fact = facts.get(lead.id);
@@ -225,6 +229,7 @@ export default function Dashboard() {
           <Button onClick={actions.addLead}><Plus size={16} aria-hidden="true" />Add lead</Button>
         </div>
       </section>
+      {scopeLabel && <p className="crm-callout crm-callout-info">{scopeLabel}</p>}
 
       <section className="crm-kpis" aria-label="Key numbers">
         <Kpi active={view === "open"} onClick={() => select("open")} icon={Users} label="Open leads" value={open.length} hint={`${fresh} new · ${open.length - fresh} contacted`} />
@@ -245,8 +250,10 @@ export default function Dashboard() {
           onClick={() => select("revenue")}
           icon={CircleDollarSign}
           label="Attributed revenue"
-          value={paidInvoices ? formatCurrency(revenue) : "No paid invoices yet"}
-          hint={paidInvoices ? `${plural(paidInvoices, "paid invoice")} from your hospitals` : "Shown once your hospitals pay"}
+          value={billingAvailable ? (paidInvoices ? formatCurrency(revenue) : "No paid invoices yet") : "Unavailable"}
+          hint={billingAvailable
+            ? (paidInvoices ? `${plural(paidInvoices, "paid invoice")} from your hospitals` : "Shown once your hospitals pay")
+            : "Platform invoices are not available from the server"}
           tone={paidInvoices ? "" : "muted"}
           title="Paid subscription invoices of hospitals registered from your leads"
         />

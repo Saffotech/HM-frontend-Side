@@ -13,6 +13,7 @@ import { opdReferenceApi } from '@/shared/api/services';
 import {
   BrandLogo,
   BrandName,
+  HospitalName,
   Button,
   QueryFeedback,
   ConfirmDialog,
@@ -162,8 +163,7 @@ export default function ViewBillPage() {
               <BrandLogo size={36} className="bill-letterhead__logo" />
               <BrandName className="bill-letterhead__brand-name" />
             </h1>
-            <p>123 Health Avenue, Medical District, Mumbai — 400001</p>
-            <p>Tel: +91 800 123 4567 | billing@saffocare.com | GSTIN: 27AABCM1234A1Z5</p>
+            <HospitalName className="bill-letterhead__hospital" />
           </div>
           <div className="bill-letterhead__meta">
             <p className="bill-letterhead__type">Tax Invoice</p>

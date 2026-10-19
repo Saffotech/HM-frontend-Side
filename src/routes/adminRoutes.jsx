@@ -1,240 +1,200 @@
 import { lazy } from 'react';
 import { Navigate } from 'react-router-dom';
 import ProtectedRoute from '@/components/security/ProtectedRoute';
-import AdminAppShell from '@/features/admin/components/AdminAppShell';
+import SuperAdminAppShell from '@/features/admin/components/AdminAppShell';
 import { ROUTES, ROLES } from '@/shared/constants';
 import LazyRoute from '@/routes/LazyRoute';
 
-const AdminDashboardPage = lazy(() => import('@/features/admin/pages/AdminDashboardPage'));
-const StaffListPage = lazy(() => import('@/features/admin/pages/StaffListPage'));
-const StaffDetailPage = lazy(() => import('@/features/admin/pages/StaffDetailPage'));
-const StaffRegisterPage = lazy(() => import('@/features/admin/pages/StaffRegisterPage'));
-const RolesListPage = lazy(() => import('@/features/admin/pages/RolesListPage'));
-const DepartmentListPage = lazy(() => import('@/features/admin/pages/DepartmentListPage'));
-const DepartmentCreatePage = lazy(() => import('@/features/admin/pages/DepartmentCreatePage'));
-const DepartmentDetailPage = lazy(() => import('@/features/admin/pages/DepartmentDetailPage'));
-const ReportsOverviewPage = lazy(() => import('@/features/admin/pages/ReportsOverviewPage'));
-const VisitsReportPage = lazy(() => import('@/features/admin/pages/VisitsReportPage'));
-const NurseBedAllocationListPage = lazy(() => import('@/features/admin/pages/NurseBedAllocationListPage'));
-const NurseBedAllocationCreatePage = lazy(() => import('@/features/admin/pages/NurseBedAllocationCreatePage'));
-const NurseBedAllocationDetailPage = lazy(() => import('@/features/admin/pages/NurseBedAllocationDetailPage'));
-const NurseBedAllocationEditPage = lazy(() => import('@/features/admin/pages/NurseBedAllocationEditPage'));
-const NurseWorkforceDashboardPage = lazy(() => import('@/features/admin/pages/NurseWorkforceDashboardPage'));
-const NurseWorkforceShiftsPage = lazy(() => import('@/features/admin/pages/NurseWorkforceShiftsPage'));
-const NurseWorkforceRosterPage = lazy(() => import('@/features/admin/pages/NurseWorkforceRosterPage'));
-const AdminSettingsPage = lazy(() => import('@/features/admin/pages/AdminSettingsPage'));
-const AdminProfilePage = lazy(() => import('@/features/admin/pages/AdminProfilePage'));
+const SuperAdminDashboardPage = lazy(() => import('@/features/admin/pages/AdminDashboardPage'));
+const SuperAdminStaffListPage = lazy(() => import('@/features/admin/pages/AdminStaffListPage'));
+const SuperAdminStaffRegisterPage = lazy(() => import('@/features/admin/pages/AdminStaffRegisterPage'));
+const SuperAdminStaffDetailPage = lazy(() => import('@/features/admin/pages/AdminStaffDetailPage'));
+const SuperAdminDepartmentCreatePage = lazy(() => import('@/features/admin/pages/AdminDepartmentCreatePage'));
+const SuperAdminDepartmentDetailPage = lazy(() => import('@/features/admin/pages/AdminDepartmentDetailPage'));
+const SuperAdminDepartmentsListPage = lazy(() => import('@/features/admin/pages/AdminDepartmentsListPage'));
+const SuperAdminRolesListPage = lazy(() => import('@/features/admin/pages/AdminRolesListPage'));
+const SuperAdminRoleCreatePage = lazy(() => import('@/features/admin/pages/AdminRoleCreatePage'));
+const SuperAdminAssignPermissionsPage = lazy(() => import('@/features/admin/pages/AdminAssignPermissionsPage'));
+const SuperAdminModuleSettingsPage = lazy(() => import('@/features/admin/pages/AdminModuleSettingsPage'));
+const SuperAdminReportsPage = lazy(() => import('@/features/admin/pages/AdminReportsPage'));
+const SuperAdminAuditLogPage = lazy(() => import('@/features/admin/pages/AdminAuditLogPage'));
+const SuperAdminProfilePage = lazy(() => import('@/features/admin/pages/AdminProfilePage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 export const adminRoutes = [
   {
-    element: <ProtectedRoute allowedRoles={[ROLES.ADMIN]} />,
+    element: (
+      <ProtectedRoute
+        allowedRoles={[ROLES.SUPER_ADMIN]}
+        loginPath={ROUTES.LOGIN}
+      />
+    ),
     children: [
       {
-        element: <AdminAppShell />,
+        element: <SuperAdminAppShell />,
         children: [
           {
-            path: ROUTES.ADMIN_DASHBOARD,
+            path: ROUTES.SUPER_ADMIN_DASHBOARD,
             element: (
               <LazyRoute>
-                <AdminDashboardPage />
+                <SuperAdminDashboardPage />
               </LazyRoute>
             ),
           },
           {
-            path: ROUTES.ADMIN_STAFF,
+            path: ROUTES.SUPER_ADMIN_STAFF,
             element: (
               <LazyRoute>
-                <StaffListPage />
+                <SuperAdminStaffListPage />
               </LazyRoute>
             ),
           },
           {
-            path: ROUTES.ADMIN_STAFF_NEW,
+            path: ROUTES.SUPER_ADMIN_STAFF_NEW,
             element: (
               <LazyRoute>
-                <StaffRegisterPage />
+                <SuperAdminStaffRegisterPage />
               </LazyRoute>
             ),
           },
           {
-            path: ROUTES.ADMIN_STAFF_DETAIL,
+            path: ROUTES.SUPER_ADMIN_STAFF_DETAIL,
             element: (
               <LazyRoute>
-                <StaffDetailPage />
+                <SuperAdminStaffDetailPage />
               </LazyRoute>
             ),
           },
           {
-            path: ROUTES.ADMIN_BED_ALLOCATION,
+            path: ROUTES.SUPER_ADMIN_DEPARTMENTS,
             element: (
               <LazyRoute>
-                <NurseBedAllocationListPage />
+                <SuperAdminDepartmentsListPage />
               </LazyRoute>
             ),
           },
           {
-            path: ROUTES.ADMIN_BED_ALLOCATION_NEW,
+            path: ROUTES.SUPER_ADMIN_DEPARTMENTS_NEW,
             element: (
               <LazyRoute>
-                <NurseBedAllocationCreatePage />
+                <SuperAdminDepartmentCreatePage />
               </LazyRoute>
             ),
           },
           {
-            path: ROUTES.ADMIN_BED_ALLOCATION_EDIT,
+            path: ROUTES.SUPER_ADMIN_DEPARTMENT_DETAIL,
             element: (
               <LazyRoute>
-                <NurseBedAllocationEditPage />
+                <SuperAdminDepartmentDetailPage />
               </LazyRoute>
             ),
           },
           {
-            path: ROUTES.ADMIN_BED_ALLOCATION_DETAIL,
+            path: ROUTES.SUPER_ADMIN_ROLES,
             element: (
               <LazyRoute>
-                <NurseBedAllocationDetailPage />
+                <SuperAdminRolesListPage />
               </LazyRoute>
             ),
           },
           {
-            path: ROUTES.ADMIN_NURSE_WORKFORCE,
+            path: ROUTES.SUPER_ADMIN_ROLES_NEW,
             element: (
               <LazyRoute>
-                <NurseWorkforceDashboardPage />
+                <SuperAdminRoleCreatePage />
               </LazyRoute>
             ),
           },
           {
-            path: ROUTES.ADMIN_NURSE_WORKFORCE_SHIFTS,
+            path: ROUTES.SUPER_ADMIN_ROLES_ASSIGN,
             element: (
               <LazyRoute>
-                <NurseWorkforceShiftsPage />
+                <SuperAdminAssignPermissionsPage />
               </LazyRoute>
             ),
           },
           {
-            path: ROUTES.ADMIN_NURSE_WORKFORCE_ROSTER,
+            path: ROUTES.SUPER_ADMIN_SETTINGS,
+            element: <Navigate to={ROUTES.SUPER_ADMIN_SETTINGS_OPD} replace />,
+          },
+          {
+            path: ROUTES.SUPER_ADMIN_SETTINGS_OPD,
             element: (
               <LazyRoute>
-                <NurseWorkforceRosterPage />
+                <SuperAdminModuleSettingsPage />
               </LazyRoute>
             ),
           },
           {
-            path: ROUTES.ADMIN_ROLES,
+            path: ROUTES.SUPER_ADMIN_SETTINGS_DOCTOR,
             element: (
               <LazyRoute>
-                <RolesListPage />
+                <SuperAdminModuleSettingsPage />
               </LazyRoute>
             ),
           },
           {
-            path: ROUTES.ADMIN_DEPARTMENTS,
+            path: ROUTES.SUPER_ADMIN_SETTINGS_RECEPTIONIST,
             element: (
               <LazyRoute>
-                <DepartmentListPage />
+                <SuperAdminModuleSettingsPage />
               </LazyRoute>
             ),
           },
           {
-            path: ROUTES.ADMIN_DEPARTMENTS_NEW,
+            path: ROUTES.SUPER_ADMIN_SETTINGS_LAB,
             element: (
               <LazyRoute>
-                <DepartmentCreatePage />
+                <SuperAdminModuleSettingsPage />
               </LazyRoute>
             ),
           },
           {
-            path: ROUTES.ADMIN_DEPARTMENT_DETAIL,
+            path: ROUTES.SUPER_ADMIN_SETTINGS_NURSE,
             element: (
               <LazyRoute>
-                <DepartmentDetailPage />
+                <SuperAdminModuleSettingsPage />
               </LazyRoute>
             ),
           },
           {
-            path: ROUTES.ADMIN_REPORTS,
+            path: ROUTES.SUPER_ADMIN_SETTINGS_PHARMACY,
             element: (
               <LazyRoute>
-                <ReportsOverviewPage />
+                <SuperAdminModuleSettingsPage />
               </LazyRoute>
             ),
           },
           {
-            path: ROUTES.ADMIN_REPORTS_VISITS,
+            path: ROUTES.SUPER_ADMIN_REPORTS,
             element: (
               <LazyRoute>
-                <VisitsReportPage />
+                <SuperAdminReportsPage />
               </LazyRoute>
             ),
           },
           {
-            path: ROUTES.ADMIN_SETTINGS,
-            element: <Navigate to={ROUTES.ADMIN_SETTINGS_OPD} replace />,
-          },
-          {
-            path: ROUTES.ADMIN_SETTINGS_OPD,
+            path: ROUTES.SUPER_ADMIN_AUDIT,
             element: (
               <LazyRoute>
-                <AdminSettingsPage />
+                <SuperAdminAuditLogPage />
               </LazyRoute>
             ),
           },
           {
-            path: ROUTES.ADMIN_SETTINGS_DOCTOR,
+            path: ROUTES.SUPER_ADMIN_PROFILE,
             element: (
               <LazyRoute>
-                <AdminSettingsPage />
+                <SuperAdminProfilePage />
               </LazyRoute>
             ),
           },
           {
-            path: ROUTES.ADMIN_SETTINGS_RECEPTIONIST,
-            element: (
-              <LazyRoute>
-                <AdminSettingsPage />
-              </LazyRoute>
-            ),
+            path: '/super-admin',
+            element: <Navigate to={ROUTES.SUPER_ADMIN_DASHBOARD} replace />,
           },
           {
-            path: ROUTES.ADMIN_SETTINGS_LAB,
-            element: (
-              <LazyRoute>
-                <AdminSettingsPage />
-              </LazyRoute>
-            ),
-          },
-          {
-            path: ROUTES.ADMIN_SETTINGS_NURSE,
-            element: (
-              <LazyRoute>
-                <AdminSettingsPage />
-              </LazyRoute>
-            ),
-          },
-          {
-            path: ROUTES.ADMIN_SETTINGS_PHARMACY,
-            element: (
-              <LazyRoute>
-                <AdminSettingsPage />
-              </LazyRoute>
-            ),
-          },
-          {
-            path: ROUTES.ADMIN_PROFILE,
-            element: (
-              <LazyRoute>
-                <AdminProfilePage />
-              </LazyRoute>
-            ),
-          },
-          {
-            path: '/admin',
-            element: <Navigate to={ROUTES.ADMIN_DASHBOARD} replace />,
-          },
-          {
-            path: '/admin/*',
+            path: '*',
             element: (
               <LazyRoute>
                 <NotFoundPage />

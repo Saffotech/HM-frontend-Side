@@ -15,11 +15,12 @@ import {
 import IpdPageHeader from '@/features/ipd/components/IpdPageHeader';
 import IpdBillPrintSheet from '@/features/ipd/components/IpdBillPrintSheet';
 import IpdDailyChargesCard from '@/features/ipd/components/IpdDailyChargesCard';
-import IpdHospitalChargesCard, {
+import IpdHospitalChargesCard from '@/features/ipd/components/IpdHospitalChargesCard';
+import {
   calculateInsuranceChargeTotals,
   normalizeInsuranceChargeHeads,
   sortInsuranceChargeHeads,
-} from '@/features/ipd/components/IpdHospitalChargesCard';
+} from '@/features/ipd/utils/insuranceChargeHeads';
 import IpdStatusBadge from '@/features/ipd/components/IpdStatusBadge';
 import { useIpdPermissionSet } from '@/features/ipd/hooks/useIpdPermission';
 import IpdPermissionButton from '@/features/ipd/components/IpdPermissionButton';
@@ -101,12 +102,6 @@ export default function IpdBillPreviewPage() {
   });
   const preview = previewFromBundle ?? previewFallbackQuery.data ?? null;
 
-  const patientId =
-    billingQuery.data?.patientId ??
-    detailQuery.data?.patient_id ??
-    detailQuery.data?.patient?.id ??
-    null;
-
   const admission = detailQuery.data?.admission;
   const doctorVisits = detailQuery.data?.doctor_visits ?? [];
   const admittedAt = admission?.admitted_at ?? null;
@@ -126,7 +121,7 @@ export default function IpdBillPreviewPage() {
   const saveFinalBillingMutation = useSaveIpdSelfPayFinalBillingMutation();
   const saveDailyBillingMutation = useSaveIpdSelfPayDailyBillingMutation();
 
-  const bills = detailQuery.data?.bills ?? [];
+  const bills = useMemo(() => detailQuery.data?.bills ?? [], [detailQuery.data?.bills]);
 
   const [charges, setCharges] = useState(() => initChargeHeadsFromClaim(null));
   const [dailyCharges, setDailyCharges] = useState([]);
@@ -149,7 +144,7 @@ export default function IpdBillPreviewPage() {
 
     const daily = initDailyCharges({ dailyCharges: bundle.dailyCharges });
     setDailyCharges((prev) => (dailyChargesMatch(prev, daily) ? prev : daily));
-  }, [admissionId, billingQuery.dataUpdatedAt]);
+  }, [admissionId, billingQuery.data, billingQuery.dataUpdatedAt]);
 
   const [payMode, setPayMode] = useState('Cash');
   const [payAmount, setPayAmount] = useState('');
@@ -172,16 +167,6 @@ export default function IpdBillPreviewPage() {
       ? Math.round((billingSubtotal * gstPercent) / 100 * 100) / 100
       : Number(preview?.gst_amount) || 0;
   const billingGrandTotal = billingSubtotal + billingGst;
-
-  const insuranceAmount = Number(
-    admissionInsuranceQuery.data?.claim_amount
-  ) || 0;
-
-  // Amount the patient needs to pay after insurance
-  const patientPayableAmount = Math.max(
-    0,
-    billingGrandTotal - insuranceAmount
-  );
 
   const paymentView = useMemo(
     () => resolveIpdBillPreviewPayment({

@@ -1,6 +1,7 @@
 import { saveDoctorIpdConsultation } from '@/features/doctor/api/ipd';
 import { cacheIpdConsultVisit } from '@/features/doctor/utils/ipdConsultVisitCache';
 import { buildIpdConsultVisitNotes } from '@/features/doctor/utils/ipdConsultNotes';
+import { currentSessionEpoch, isSessionCurrent } from '@/components/security/sessionEpoch';
 
 /**
  * IPD consult save — POST /doctor/ipd-admissions/{id}/consultations.
@@ -18,12 +19,14 @@ export async function finalizeIpdConsultationOnSave({
 
   const visitNotes = buildIpdConsultVisitNotes(clinical);
   const visitedAt = new Date().toISOString();
+  const epochAtStart = currentSessionEpoch();
 
   cacheIpdConsultVisit({
     admissionId,
     patientUid,
     visitNotes,
     visitedAt,
+    epochAtStart,
   });
 
   const response = await saveDoctorIpdConsultation(
@@ -38,6 +41,12 @@ export async function finalizeIpdConsultationOnSave({
     },
     token,
   );
+
+  if (!isSessionCurrent(epochAtStart)) {
+    const error = new Error('Session changed before the consultation result could be applied.');
+    error.code = 'session_superseded';
+    throw error;
+  }
 
   return {
     visitedAt: response?.visit?.visited_at ?? visitedAt,

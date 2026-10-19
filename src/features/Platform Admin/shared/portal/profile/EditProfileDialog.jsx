@@ -3,15 +3,10 @@ import { AlertCircle, Camera, Crop, Loader2, Lock, Trash2, Undo2 } from "lucide-
 import Button from "../../components/Button";
 import Input from "../../components/Input";
 import Modal from "../../components/Modal";
-import { usePlatform } from "../../context/PlatformContext";
 import { confirmDiscard } from "../../hooks/useUnsavedChanges";
-import { useToast } from "../../hooks/useToast";
 import {
-  PortalAccountError,
   PROFILE_PHOTO_TYPES,
   profilePhotoIssue,
-  removeProfilePhoto,
-  uploadProfilePhoto,
 } from "../../services/portalAccount";
 import { isPhone } from "../../utils/validation";
 import AvatarImage from "./AvatarImage";
@@ -30,18 +25,14 @@ function fieldErrors(draft) {
   return errors;
 }
 
-const serviceMessage = (error) => (error instanceof PortalAccountError ? error.message : "Something went wrong. Try again.");
-
-export default function EditProfileDialog({ portal, profile, onDirtyChange, onClose }) {
-  const { saveMyProfile } = usePlatform();
-  const { push } = useToast();
+export default function EditProfileDialog({ profile, onDirtyChange, onClose }) {
   const [draft, setDraft] = useState(() => Object.fromEntries(TEXT_FIELDS.map((key) => [key, profile[key] || ""])));
   const [photo, setPhoto] = useState(NO_PHOTO_CHANGE);
   const [crop, setCrop] = useState(null);
   const [errors, setErrors] = useState({});
   const [photoError, setPhotoError] = useState("");
   const [formError, setFormError] = useState("");
-  const [busy, setBusy] = useState(false);
+  const busy = false;
   const fileRef = useRef(null);
   const formId = useId();
   const photoHintId = useId();
@@ -118,30 +109,7 @@ export default function EditProfileDialog({ portal, profile, onDirtyChange, onCl
     const nextErrors = fieldErrors(draft);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
-    setFormError("");
-
-    if (textDirty && !saveMyProfile(portal, draft)) {
-      setFormError("Your changes weren't saved because your session has ended. Sign in again and retry.");
-      return;
-    }
-
-    if (photo.file || photo.remove) {
-      setBusy(true);
-      try {
-        if (photo.file) await uploadProfilePhoto(photo.file);
-        else await removeProfilePhoto();
-      } catch (error) {
-        setFormError(textDirty
-          ? `Your details were saved, but your photo wasn't. ${serviceMessage(error)}`
-          : `Your photo wasn't saved. ${serviceMessage(error)}`);
-        setBusy(false);
-        return;
-      }
-      setBusy(false);
-    }
-
-    push("Profile updated.", "success");
-    onClose(true);
+    setFormError("Profile updates are not available. There is no portal profile API.");
   };
 
   return (

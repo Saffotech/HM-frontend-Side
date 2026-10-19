@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Pencil, User } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
-import NurseNotesSnapshotView from '@/features/nurse/components/NurseNotesSnapshotView';
+import NurseNotesSnapshotView from '@/shared/components/clinical/NurseNotesSnapshotView';
 import { useNursePermission } from '@/features/nurse/hooks/useNursePermission';
 import { QueryFeedback } from '@/shared/components/common';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';

@@ -22,6 +22,17 @@
   text-decoration: underline;
 }
 
+.td-api-note {
+  margin: 12px 0;
+  padding: 12px 14px;
+  border: 1px solid #d5c8f0;
+  border-radius: 8px;
+  background: #f8f5fd;
+  color: #4a3a75;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .td-record {
   display: flex;
   justify-content: space-between;

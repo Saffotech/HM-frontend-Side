@@ -263,7 +263,7 @@ export function formatAllocationDate(value) {
   });
 }
 
-export function formatAssignedUntil(assignedUntil, isActive) {
+export function formatAssignedUntil(assignedUntil) {
   if (assignedUntil) return formatAllocationDate(assignedUntil);
   return '—';
 }

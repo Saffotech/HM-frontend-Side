@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '@/shared/hooks/useAuth';
+import { matchesHospitalBump } from '@/components/security/hospitalBrowserStorage';
 import ReceptionistLayout from './ReceptionistLayout';
 
 export const RECEPTIONIST_PERMISSIONS_BUMP_KEY = 'hms:receptionist-permissions-bump';
@@ -22,7 +23,7 @@ function ReceptionistPermissionSync({ children }) {
       if (document.visibilityState === 'visible') sync();
     };
     const onStorage = (event) => {
-      if (event.key === RECEPTIONIST_PERMISSIONS_BUMP_KEY) sync();
+      if (matchesHospitalBump(event.key, RECEPTIONIST_PERMISSIONS_BUMP_KEY)) sync();
     };
     const onBump = () => sync();
 

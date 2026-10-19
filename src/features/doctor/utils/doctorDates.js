@@ -80,10 +80,6 @@ export function getAppointmentSortTime(appt) {
   return base.getTime();
 }
 
-function getAppointmentDateTime(appt) {
-  return getAppointmentSortTime(appt);
-}
-
 export function compareAppointmentsByDateTime(a, b) {
   return getAppointmentSortTime(a) - getAppointmentSortTime(b);
 }

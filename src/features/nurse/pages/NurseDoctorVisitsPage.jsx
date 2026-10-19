@@ -9,7 +9,7 @@ import NurseLogVisitModal from '@/features/nurse/components/NurseLogVisitModal';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
 import { QueryFeedback, DateInput } from '@/shared/components/common';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
-import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
+import { useNursePatientScope } from '@/features/nurse/context/nursePatientScope';
 import { ROUTES } from '@/shared/constants';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
 import { formatIpdDateTime } from '@/features/ipd/utils/ipdFormat';

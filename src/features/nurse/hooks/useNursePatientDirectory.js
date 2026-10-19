@@ -5,7 +5,7 @@ import {
   useNurseMedicationPatientsQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
 import { NURSE_QUEUE_MAX_PAGE_SIZE } from '@/shared/api/services/nurse';
-import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
+import { useNursePatientScope } from '@/features/nurse/context/nursePatientScope';
 
 /**
  * Searchable nurse patient directory (bed-assigned + active medication patients).

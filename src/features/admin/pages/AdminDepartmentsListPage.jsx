@@ -1,0 +1,215 @@
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Building2, Eye, Plus, RotateCcw } from 'lucide-react';
+import SuperAdminLayout from '@/features/admin/components/AdminLayout';
+import SuperAdminPageHeader from '@/features/admin/components/AdminPageHeader';
+import AdminStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
+import { useDepartmentDoctorsData } from '@/features/admin/hooks/useDepartmentDoctors';
+import { useAdminDepartmentsQuery } from '@/shared/hooks/queries/useAdminQuery';
+import { isLabOrRadDepartment } from '@/shared/utils/labDepartments';
+import {
+  Button,
+  QueryFeedback,
+  SearchBar,
+  Select,
+} from '@/shared/components/common';
+import { ROUTES } from '@/shared/constants';
+
+export default function SuperAdminDepartmentsListPage() {
+  const navigate = useNavigate();
+  const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  const queryFilters = useMemo(() => {
+    if (statusFilter === 'active') return { is_active: true };
+    if (statusFilter === 'inactive') return { is_active: false };
+    return {};
+  }, [statusFilter]);
+
+  const { data: departments, isLoading, isError, error, refetch } =
+    useAdminDepartmentsQuery(queryFilters);
+
+  const {
+    doctorCountByDepartment,
+    labTechCountByDepartment,
+    isLoading: doctorsLoading,
+    isError: doctorsError,
+    error: doctorsErrorObj,
+    refetch: refetchDoctors,
+  } = useDepartmentDoctorsData();
+
+  const filtered = useMemo(() => {
+    let rows = departments ?? [];
+    if (typeFilter === 'lab') {
+      rows = rows.filter((dept) => isLabOrRadDepartment(dept));
+    } else if (typeFilter === 'doctor') {
+      rows = rows.filter((dept) => !isLabOrRadDepartment(dept));
+    }
+    const term = search.trim().toLowerCase();
+    if (!term) return rows;
+    return rows.filter(
+      (dept) =>
+        dept.name?.toLowerCase().includes(term)
+        || (dept.code || '').toLowerCase().includes(term),
+    );
+  }, [departments, search, typeFilter]);
+
+  const hasActiveFilters =
+    Boolean(search.trim()) || typeFilter !== 'all' || statusFilter !== 'all';
+  const tableLoading = isLoading || doctorsLoading;
+  const tableError = isError || doctorsError;
+  const tableErrorObj = error || doctorsErrorObj;
+
+  const resetFilters = () => {
+    setSearch('');
+    setTypeFilter('all');
+    setStatusFilter('all');
+  };
+
+  const handleRetry = () => {
+    refetch();
+    refetchDoctors();
+  };
+
+  return (
+    <SuperAdminLayout compact>
+      <div className="admin-page sa-dept-list-page admin-page--compact">
+        <SuperAdminPageHeader
+          title="Departments"
+          actions={(
+            <Button onClick={() => navigate(ROUTES.SUPER_ADMIN_DEPARTMENTS_NEW)}>
+              <Plus size={16} aria-hidden />
+              New department
+            </Button>
+          )}
+        />
+
+        <div className="admin-card sa-panel-card admin-card--flat admin-datatable">
+          <div className="admin-datatable__toolbar">
+            <SearchBar
+              value={search}
+              onChange={setSearch}
+              placeholder="Search by name or code…"
+            />
+            <Select
+              value={typeFilter}
+              onChange={setTypeFilter}
+              options={[
+                { value: 'all', label: 'All types' },
+                { value: 'doctor', label: 'Doctor' },
+                { value: 'lab', label: 'Lab' },
+              ]}
+              placeholder="All types"
+            />
+            <Select
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={[
+                { value: 'all', label: 'All statuses' },
+                { value: 'active', label: 'Active only' },
+                { value: 'inactive', label: 'Inactive only' },
+              ]}
+              placeholder="All statuses"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className={`admin-toolbar__reset${hasActiveFilters ? ' is-active' : ''}`}
+              onClick={resetFilters}
+              disabled={!hasActiveFilters}
+            >
+              <RotateCcw size={14} aria-hidden />
+              Reset
+            </Button>
+          </div>
+
+          {!tableLoading && !tableError && filtered.length > 0 && (
+            <div className="admin-datatable__summary">
+              <span>
+                Showing <strong>{filtered.length}</strong> department
+                {filtered.length === 1 ? '' : 's'}
+                {hasActiveFilters ? ' (filtered)' : ''}
+              </span>
+            </div>
+          )}
+
+          <div className="admin-datatable__body">
+            <QueryFeedback
+              isLoading={tableLoading}
+              isError={tableError}
+              error={tableErrorObj}
+              onRetry={handleRetry}
+            >
+              {!filtered.length ? (
+                <div className="admin-empty-state">
+                  <Building2 size={22} aria-hidden />
+                  <p>No departments found.</p>
+                </div>
+              ) : (
+                <div className="admin-table-wrap">
+                  <table className="admin-table admin-table--stack">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Code</th>
+                        <th>Type</th>
+                        <th>Assigned</th>
+                        <th>Status</th>
+                        <th className="admin-table__actions">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.map((dept) => (
+                        <tr key={dept.id}>
+                          <td className="admin-table__primary" data-label="Name">
+                            <span>{dept.name}</span>
+                          </td>
+                          <td className="admin-table__muted" data-label="Code">
+                            <span>{dept.code || '—'}</span>
+                          </td>
+                          <td data-label="Type">
+                            {isLabOrRadDepartment(dept) ? (
+                              <span className="sa-dept-type sa-dept-type--lab">Lab</span>
+                            ) : (
+                              <span className="sa-dept-type sa-dept-type--doctor">Doctor</span>
+                            )}
+                          </td>
+                          <td data-label="Assigned">
+                            <span className="sa-dept-list__doctor-count">
+                              {isLabOrRadDepartment(dept)
+                                ? (labTechCountByDepartment[dept.id] ?? 0)
+                                : (doctorCountByDepartment[dept.id] ?? 0)}
+                            </span>
+                          </td>
+                          <td data-label="Status">
+                            <AdminStaffStatusBadge isActive={dept.is_active} />
+                          </td>
+                          <td className="admin-table__actions" data-label="Actions">
+                            <button
+                              type="button"
+                              className="sa-staff-list__action sa-staff-list__action--view"
+                              onClick={() =>
+                                navigate(
+                                  ROUTES.SUPER_ADMIN_DEPARTMENT_DETAIL.replace(':id', dept.id),
+                                )
+                              }
+                            >
+                              <Eye size={14} aria-hidden />
+                              View
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </QueryFeedback>
+          </div>
+        </div>
+      </div>
+    </SuperAdminLayout>
+  );
+}

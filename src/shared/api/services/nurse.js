@@ -72,13 +72,6 @@ function bedMapFromNurseBedPatients(bedItems = []) {
   return map;
 }
 
-async function fetchTodayQueueItems(token) {
-  const raw = await nurseApi.getTodayQueue({ page: 1, page_size: NURSE_QUEUE_MAX_PAGE_SIZE }, token);
-  const mapped = mapQueueResponse(raw);
-  const enriched = await enrichQueueResponse(mapped, token);
-  return enriched.items ?? [];
-}
-
 async function fetchBedPatientItems(token) {
   const raw = await nurseApi.getBedPatients({ page: 1, page_size: NURSE_QUEUE_MAX_PAGE_SIZE }, token);
   return mapBedPatientsResponse(raw).items ?? [];

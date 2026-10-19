@@ -1,0 +1,39 @@
+import { ClipboardList, FileText, Stethoscope } from 'lucide-react';
+
+export const NOTE_FIELDS = [
+  {
+    key: 'symptoms',
+    label: 'Symptoms',
+    icon: Stethoscope,
+    accent: 'rose',
+    placeholder: 'Onset, duration, severity, and associated complaints…',
+  },
+  {
+    key: 'treatment_response',
+    label: 'Treatment Response',
+    icon: ClipboardList,
+    accent: 'blue',
+    placeholder: 'Improvement, no change, worsening, or side effects…',
+  },
+  {
+    key: 'additional_notes',
+    label: 'Additional Notes',
+    icon: FileText,
+    accent: 'green',
+    placeholder: 'Other observations, allergies, or follow-up advice…',
+  },
+];
+
+export const INITIAL_NOTE_FORM = {
+  symptoms: '',
+  treatment_response: '',
+  additional_notes: '',
+};
+
+export function noteToForm(note) {
+  return {
+    symptoms: note?.symptoms || '',
+    treatment_response: note?.treatment_response || '',
+    additional_notes: note?.additional_notes || '',
+  };
+}

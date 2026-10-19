@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, CalendarClock, CheckCircle2, Mail, Pencil, Phone, RotateCcw, SearchX, Send, XCircle } from "lucide-react";
+import { getLead, mapLead } from "../../../shared/api/leadApi";
+import { isNumericLeadId } from "../../../shared/api/hospitalRegistration";
 import Button from "../../../shared/components/Button";
+import { usePlatform } from "../../../shared/context/PlatformContext";
 import { CRM_BASE, crmPath } from "../../../shared/paths";
 import { formatDate, formatDateTime } from "../../../shared/utils/formatDate";
 import { followUpsFor } from "../../../shared/utils/leadMetrics";
@@ -29,15 +32,47 @@ function backLabel(from) {
 
 export default function LeadDetails() {
   const { leadId } = useParams();
-  const { leads, today, actions } = useCrm();
+  const { records = [], today, actions, reloadLeads } = useCrm();
+  const { crmSession, signOutPortal } = usePlatform();
   const navigate = useNavigate();
   const { state } = useLocation();
   const from = state?.from || "";
-  const lead = leads.find((item) => item.id === leadId) || null;
+  const fromList = records.find((item) => String(item.id) === String(leadId)) || null;
+  const [fetched, setFetched] = useState(null);
+  const [loading, setLoading] = useState(() => !fromList && isNumericLeadId(leadId));
+  const [error, setError] = useState("");
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [leadId]);
+
+  useEffect(() => {
+    if (fromList || !isNumericLeadId(leadId)) {
+      setFetched(null);
+      setLoading(false);
+      setError(fromList || isNumericLeadId(leadId) ? "" : "This lead link is not a CRM lead.");
+      return undefined;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setError("");
+    getLead(leadId)
+      .then((body) => {
+        if (!cancelled) setFetched(mapLead(body, crmSession));
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setFetched(null);
+        setError(err?.message || "This lead could not be opened.");
+        if (err?.status === 401 && err?.code !== "missing_token") signOutPortal("crm");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [crmSession, fromList, leadId, signOutPortal]);
 
   const goBack = () => {
     if (from) navigate(-1);
@@ -50,6 +85,22 @@ export default function LeadDetails() {
     </button>
   );
 
+  const lead = fromList || fetched;
+
+  if (loading) {
+    return (
+      <div className="crm-page crm-lead-page">
+        {back}
+        <section className="crm-card">
+          <div className="crm-empty">
+            <strong>Loading this lead</strong>
+            <span>Fetching the record from the server.</span>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   if (!lead) {
     return (
       <div className="crm-page crm-lead-page">
@@ -58,7 +109,8 @@ export default function LeadDetails() {
           <div className="crm-empty">
             <SearchX size={26} aria-hidden="true" />
             <strong>Lead not found</strong>
-            <span>It may have been reassigned to someone else, or the link is out of date.</span>
+            <span>{error || "It may have been reassigned to someone else, or the link is out of date."}</span>
+            <Button variant="secondary" onClick={() => reloadLeads?.()}>Retry</Button>
             <Link to={crmPath("/leads")}>Go to My Leads</Link>
           </div>
         </section>
@@ -83,12 +135,13 @@ function LeadView({ lead, today, actions, back }) {
     ? history
     : [...history, { at: lead.submittedAt, by: lead.source || "Onboarding request", method: "Lead received", note: "" }];
 
-  const saveNote = () => {
+  const saveNote = async () => {
     if (!note.trim()) {
       setNoteError("Write a note first.");
       return;
     }
-    if (actions.note(lead, note.trim())) setNote("");
+    const saved = await actions.note(lead, note.trim());
+    if (saved) setNote("");
   };
 
   return (

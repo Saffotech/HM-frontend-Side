@@ -1,7 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import { ACCOUNTS_BASE } from "../../shared/paths";
+import { ACCOUNTS_BASE, UNIVERSAL_LOGIN } from "../../shared/paths";
 import AccountantLayout from "./AccountantLayout";
-import AccountantLogin from "./AccountantLogin";
 import Collections from "./pages/Collections";
 import HospitalBilling from "./pages/HospitalBilling";
 import InvoicesPayments from "./pages/InvoicesPayments";
@@ -12,7 +11,7 @@ import Registrations from "./pages/Registrations";
 export default function AccountantRoutes() {
   return (
     <Routes>
-      <Route path="login" element={<AccountantLogin />} />
+      <Route path="login" element={<Navigate to={UNIVERSAL_LOGIN} replace />} />
       <Route element={<AccountantLayout />}>
         <Route index element={<Collections />} />
         <Route path="invoices" element={<InvoicesPayments />} />

@@ -2,7 +2,7 @@ import {
   enrichAppointmentsWithApiPayment,
   getAppointmentDisplayStatus,
   buildPaymentFromApiFields,
-} from '@/features/opd/utils/appointmentPaymentUtils';
+} from '@/shared/utils/appointmentPaymentUtils';
 import { isIpdEncounter } from '@/features/doctor/utils/encounterType';
 
 /**

@@ -17,7 +17,7 @@ import {
   useNurseBedPatientsQuery,
   useNurseVitalsListQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
-import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
+import { useNursePatientScope } from '@/features/nurse/context/nursePatientScope';
 import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
 import NursePatientAllocationTags from '@/features/nurse/components/NursePatientAllocationTags';
 import { useAuth } from '@/shared/hooks/useAuth';

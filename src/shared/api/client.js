@@ -1,4 +1,4 @@
-import { API_BASE_URL, API_PREFIX, ROUTES, ROLES } from '@/shared/constants';
+import { API_BASE_URL, API_PREFIX, ROUTES } from '@/shared/constants';
 import { getAuthRef } from '@/components/security/authRef';
 import {
   applyRefreshedTokens,
@@ -6,6 +6,16 @@ import {
 } from '@/components/security/authSession';
 import { refreshAccessToken } from '@/shared/api/auth';
 import { isTokenExpired, decodeJwt } from '@/shared/utils/jwtHelper';
+import { currentSessionEpoch, isSessionCurrent } from '@/components/security/sessionEpoch';
+import {
+  classifyForbidden,
+  loginRouteForRole,
+  messageForSessionError,
+  sanitizeRequestHeaders,
+  sessionActionForHttpStatus,
+  shouldRedirectToHospitalLogin,
+  supersededSessionError,
+} from '@/components/security/httpSessionPolicy';
 
 function isLegacyDemoSession(user, token) {
   if (user?.isDemoSession) return true;
@@ -19,6 +29,16 @@ const DEFAULT_TIMEOUT_MS = 15000;
 const AUTH_LOGIN_TIMEOUT_MS = 8000;
 
 let refreshInFlight = null;
+let refreshEpoch = null;
+
+const HOSPITAL_LOGIN_PATHS = [
+  ROUTES.LOGIN,
+  ROUTES.ADMIN_LOGIN,
+  ROUTES.SUPER_ADMIN_LOGIN,
+  ROUTES.RECEPTIONIST_LOGIN,
+  ROUTES.PHARMACY_LOGIN,
+  ROUTES.PATIENT_LOGIN,
+];
 
 function parseDetail(detail) {
   if (typeof detail === 'string') return detail;
@@ -33,29 +53,55 @@ function resolveAuthToken(explicitToken) {
   return loadAuthSession()?.token ?? null;
 }
 
+function redirectToHospitalLogin(role) {
+  if (typeof window === 'undefined') return;
+  const path = window.location.pathname;
+  if (!shouldRedirectToHospitalLogin(path, HOSPITAL_LOGIN_PATHS)) return;
+  const target = loginRouteForRole(role, {
+    default: ROUTES.LOGIN,
+  });
+  if (path === target) return;
+  window.location.assign(target);
+}
+
+function endHospitalSession(message, role, notifyServer) {
+  const sessionUser = loadAuthSession()?.user;
+  getAuthRef().logout?.({
+    message,
+    notifyServer,
+  });
+  redirectToHospitalLogin(role ?? sessionUser?.role);
+}
+
 async function refreshSessionTokens() {
+  const epochAtStart = currentSessionEpoch();
+  if (refreshInFlight && refreshEpoch === epochAtStart) return refreshInFlight;
+
   const session = loadAuthSession();
   if (isLegacyDemoSession(session?.user, session?.token)) return null;
 
   const refreshToken = session?.refreshToken;
   if (!refreshToken || isTokenExpired(refreshToken)) return null;
 
-  if (!refreshInFlight) {
-    refreshInFlight = refreshAccessToken(refreshToken)
-      .then((data) => {
-        const accessToken = data?.access_token;
-        const nextRefresh = data?.refresh_token ?? refreshToken;
-        if (!accessToken) return null;
-        applyRefreshedTokens(accessToken, nextRefresh);
-        const auth = getAuthRef();
-        auth.applyTokens?.(accessToken, nextRefresh);
-        return accessToken;
-      })
-      .catch(() => null)
-      .finally(() => {
+  refreshEpoch = epochAtStart;
+  refreshInFlight = refreshAccessToken(refreshToken)
+    .then((data) => {
+      if (!isSessionCurrent(epochAtStart)) return null;
+      const accessToken = data?.access_token;
+      const nextRefresh = data?.refresh_token ?? refreshToken;
+      if (!accessToken) return null;
+      applyRefreshedTokens(accessToken, nextRefresh);
+      const auth = getAuthRef();
+      auth.applyTokens?.(accessToken, nextRefresh, epochAtStart);
+      return accessToken;
+    })
+    .catch(() => null)
+    .finally(() => {
+      if (refreshEpoch === epochAtStart) {
         refreshInFlight = null;
-      });
-  }
+        refreshEpoch = null;
+      }
+    });
 
   return refreshInFlight;
 }
@@ -86,7 +132,7 @@ async function fetchWithTimeout(url, options, timeoutMs = DEFAULT_TIMEOUT_MS) {
 
 /**
  * Base fetch wrapper for API calls.
- * Mirrors shared request logic used across Routers/.
+ * Hospital identity comes from the Bearer token. Callers cannot select a hospital.
  */
 export async function apiClient(endpoint, options = {}) {
   const {
@@ -96,21 +142,16 @@ export async function apiClient(endpoint, options = {}) {
     _retriedAfterRefresh = false,
     ...rest
   } = options;
-  // Only login is public. /auth/register requires an admin Bearer token
-  // (users:create) — do not strip Authorization for it.
   const isLoginRequest = endpoint === '/auth/login';
   const isRefreshRequest = endpoint === '/auth/refresh';
+  const isLogoutRequest = endpoint === '/auth/logout';
+  const epochAtStart = currentSessionEpoch();
 
   const authToken = isLoginRequest ? token : resolveAuthToken(token);
-
-  const headers = {
-    'Content-Type': 'application/json',
-    ...customHeaders,
-  };
-
-  if (authToken && !isRefreshRequest) {
-    headers.Authorization = `Bearer ${authToken}`;
-  }
+  const headers = sanitizeRequestHeaders(customHeaders, {
+    authToken,
+    isRefreshRequest,
+  });
 
   const timeoutMs = isLoginRequest ? AUTH_LOGIN_TIMEOUT_MS : DEFAULT_TIMEOUT_MS;
 
@@ -120,19 +161,28 @@ export async function apiClient(endpoint, options = {}) {
     timeoutMs
   );
 
+  if (!isLoginRequest && !isRefreshRequest && !isSessionCurrent(epochAtStart)) {
+    throw supersededSessionError();
+  }
+
   if (response.status === 204) return null;
 
   const body = await response.json().catch(() => ({}));
 
   if (response.status === 401) {
     const detail = parseDetail(body.detail);
-    if (isLoginRequest || isRefreshRequest) {
+    if (isLoginRequest || isRefreshRequest || isLogoutRequest) {
       const err = new Error(
-        detail || (isRefreshRequest ? 'Session expired. Please sign in again.' : 'Invalid email or password')
+        detail || (isRefreshRequest || isLogoutRequest
+          ? 'Session expired. Please sign in again.'
+          : 'Invalid email or password')
       );
       err.status = 401;
+      err.detail = detail;
       throw err;
     }
+
+    if (!isSessionCurrent(epochAtStart)) throw supersededSessionError();
 
     if (
       !skipSessionLogout
@@ -140,6 +190,7 @@ export async function apiClient(endpoint, options = {}) {
       && authToken
     ) {
       const newToken = await refreshSessionTokens();
+      if (!isSessionCurrent(epochAtStart)) throw supersededSessionError();
       if (newToken) {
         return apiClient(endpoint, {
           ...options,
@@ -149,27 +200,40 @@ export async function apiClient(endpoint, options = {}) {
       }
     }
 
+    if (!isSessionCurrent(epochAtStart)) throw supersededSessionError();
+
     if (!skipSessionLogout && authToken) {
       const sessionUser = loadAuthSession()?.user;
-      if (isLegacyDemoSession(sessionUser, authToken)) {
-        const err = new Error('Session expired. Please sign in again.');
-        err.status = 401;
-        throw err;
-      }
-      getAuthRef().logout();
-      const loginRoute =
-        sessionUser?.role === ROLES.SUPER_ADMIN
-          ? ROUTES.SUPER_ADMIN_LOGIN
-          : sessionUser?.role === ROLES.RECEPTIONIST
-          ? ROUTES.RECEPTIONIST_LOGIN
-          : ROUTES.LOGIN;
-      if (typeof window !== 'undefined' && window.location.pathname !== loginRoute) {
-        window.location.assign(loginRoute);
+      if (!isLegacyDemoSession(sessionUser, authToken)) {
+        const failureMessage = detail || messageForSessionError({ status: 401 });
+        endHospitalSession(failureMessage, sessionUser?.role, false);
       }
     }
 
     const err = new Error(detail || 'Session expired. Please sign in again.');
     err.status = 401;
+    err.detail = detail;
+    throw err;
+  }
+
+  if (response.status === 403) {
+    const detail = parseDetail(body.detail);
+    const action = sessionActionForHttpStatus(403, detail);
+    const kind = classifyForbidden(detail);
+
+    if (action === 'logout' && !skipSessionLogout && isSessionCurrent(epochAtStart)) {
+      const sessionUser = loadAuthSession()?.user;
+      endHospitalSession(messageForSessionError({ status: 403, detail }), sessionUser?.role, true);
+    }
+
+    const err = new Error(
+      kind === 'permission_denied'
+        ? messageForSessionError({ status: 403, detail })
+        : (detail || 'Request failed')
+    );
+    err.status = 403;
+    err.detail = detail;
+    err.code = kind === 'other' ? undefined : kind;
     throw err;
   }
 
@@ -184,8 +248,125 @@ export async function apiClient(endpoint, options = {}) {
         : 'Request failed';
     const err = new Error(detail || body.message || fallback);
     err.status = response.status;
+    err.detail = detail;
     throw err;
   }
 
+  return body;
+}
+
+/**
+ * Multipart uploads and binary downloads.
+ * Uses the same Bearer token, one-time refresh, and 403 policy as apiClient.
+ * Content-Type is left unset so the browser can set the multipart boundary.
+ * A response that finishes after the session changes is discarded.
+ */
+export async function apiSessionRequest(endpoint, options = {}) {
+  const {
+    token,
+    headers: customHeaders,
+    skipSessionLogout = false,
+    _retriedAfterRefresh = false,
+    responseType = 'json',
+    fallbackMessage = 'Request failed',
+    fallbackFileName = 'download',
+    ...rest
+  } = options;
+  const epochAtStart = currentSessionEpoch();
+  const authToken = resolveAuthToken(token);
+  const headers = sanitizeRequestHeaders(customHeaders, {
+    authToken,
+    omitContentType: true,
+  });
+
+  const response = await fetchWithTimeout(
+    `${API_BASE_URL}${API_PREFIX}${endpoint}`,
+    { headers, ...rest },
+  );
+
+  if (!isSessionCurrent(epochAtStart)) throw supersededSessionError();
+
+  if (response.status === 401) {
+    const body = await response.json().catch(() => ({}));
+    if (!isSessionCurrent(epochAtStart)) throw supersededSessionError();
+    const detail = parseDetail(body.detail);
+    if (!skipSessionLogout && !_retriedAfterRefresh && authToken) {
+      const newToken = await refreshSessionTokens();
+      if (!isSessionCurrent(epochAtStart)) throw supersededSessionError();
+      if (newToken) {
+        return apiSessionRequest(endpoint, {
+          ...options,
+          token: newToken,
+          _retriedAfterRefresh: true,
+        });
+      }
+    }
+
+    if (!isSessionCurrent(epochAtStart)) throw supersededSessionError();
+
+    if (!skipSessionLogout && authToken) {
+      const sessionUser = loadAuthSession()?.user;
+      if (!isLegacyDemoSession(sessionUser, authToken)) {
+        endHospitalSession(
+          detail || messageForSessionError({ status: 401 }),
+          sessionUser?.role,
+          false,
+        );
+      }
+    }
+
+    const err = new Error(detail || 'Session expired. Please sign in again.');
+    err.status = 401;
+    err.detail = detail;
+    throw err;
+  }
+
+  if (response.status === 403) {
+    const body = await response.json().catch(() => ({}));
+    if (!isSessionCurrent(epochAtStart)) throw supersededSessionError();
+    const detail = parseDetail(body.detail);
+    const action = sessionActionForHttpStatus(403, detail);
+    const kind = classifyForbidden(detail);
+    if (action === 'logout' && !skipSessionLogout && isSessionCurrent(epochAtStart)) {
+      const sessionUser = loadAuthSession()?.user;
+      endHospitalSession(messageForSessionError({ status: 403, detail }), sessionUser?.role, true);
+    }
+    const err = new Error(
+      kind === 'permission_denied'
+        ? messageForSessionError({ status: 403, detail })
+        : (detail || fallbackMessage),
+    );
+    err.status = 403;
+    err.detail = detail;
+    err.code = kind === 'other' ? undefined : kind;
+    throw err;
+  }
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    if (!isSessionCurrent(epochAtStart)) throw supersededSessionError();
+    const detail = parseDetail(body.detail);
+    const err = new Error(detail || body.message || fallbackMessage);
+    err.status = response.status;
+    err.detail = detail;
+    throw err;
+  }
+
+  if (responseType === 'blob') {
+    const blob = await response.blob();
+    if (!isSessionCurrent(epochAtStart)) throw supersededSessionError();
+    const disposition = response.headers.get('content-disposition') ?? '';
+    const match = disposition.match(/filename="?([^"]+)"?/i);
+    return {
+      blob,
+      fileName: match?.[1] ?? fallbackFileName,
+      contentType: response.headers.get('content-type') ?? blob.type ?? '',
+    };
+  }
+
+  if (response.status === 204) return null;
+
+  const body = await response.json().catch(() => ({}));
+  if (!isSessionCurrent(epochAtStart)) throw supersededSessionError();
   return body;
 }

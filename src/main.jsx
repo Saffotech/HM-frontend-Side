@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import ErrorBoundary from '@/shared/components/ErrorBoundary';
 import { AuthProvider } from '@/shared/hooks/useAuth';
 import App from './App';
@@ -41,12 +40,11 @@ function appErrorFallback(error, reset) {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary fallback={appErrorFallback}>
-      <AuthProvider>
-        <QueryClientProvider client={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
           <App />
-          {/* {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />} */}
-        </QueryClientProvider>
-      </AuthProvider>
+        </AuthProvider>
+      </QueryClientProvider>
     </ErrorBoundary>
   </React.StrictMode>
 );

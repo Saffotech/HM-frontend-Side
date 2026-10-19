@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import {
   ArrowLeft,
   Briefcase,
@@ -214,7 +214,6 @@ function ReadField({ label, value }) {
 }
 
 export default function IpdProfilePage() {
-  const navigate = useNavigate();
   const location = useLocation();
   const goBack = useIpdBackNavigation(ROUTES.IPD_DASHBOARD);
   const {
@@ -708,7 +707,7 @@ export default function IpdProfilePage() {
                   <Shield size={16} aria-hidden /> Account
                 </h3>
                 <p className="opd-profile-hint">
-                  Employee ID is managed by admin.
+                  Employee ID is managed by a manager.
                 </p>
                 <div className="opd-profile-grid">
                   <ReadField label="First name" value={profile.first_name} />

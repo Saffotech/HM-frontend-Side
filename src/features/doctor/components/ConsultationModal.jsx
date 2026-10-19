@@ -28,7 +28,7 @@ import {
   isLabDuplicateOrderError,
   resolveLabIsRepeat,
 } from '@/features/doctor/utils/labRepeatRequired';
-import { stripInternalAppointmentMarkers } from '@/features/opd/utils/appointmentPaymentUtils';
+import { stripInternalAppointmentMarkers } from '@/shared/utils/appointmentPaymentUtils';
 import { Modal, Button, Input, Textarea, Select } from '@/shared/components/common';
 import { doctorLabsApi, doctorPrescriptionsApi } from '@/shared/api/services';
 import { uiMedicinesToApiItems } from '@/shared/api/mappers/clinicalMapper';
@@ -37,6 +37,7 @@ import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { useAuthStore } from '@/shared/store/useAuthStore';
 import { toast } from '@/shared/utils/toast';
 import { bumpDoctorIpdCache } from '@/shared/utils/doctorIpdSync';
+import { isSupersededSessionError } from '@/components/security/httpSessionPolicy';
 import { useLabRoutingDepartmentsQuery } from '@/shared/hooks/queries/useOpdReferenceQuery';
 import { resolveLabDepartmentId, departmentCode, labDepartmentLabel } from '@/shared/utils/labDepartments';
 import LabTestNameField from './LabTestNameField';
@@ -337,11 +338,14 @@ export default function ConsultationModal({
   const patientUid = appointment?.patientUid ?? appointment?.patientId;
 
   const labRoutingQuery = useLabRoutingDepartmentsQuery({ enabled: open });
-  const labRoutingDepts = (labRoutingQuery.data?.length
-    ? labRoutingQuery.data
-    : isIpdConsult
-      ? ipdStaticLabRoutingDepartments()
-      : []) ?? [];
+  const labRoutingDepts = useMemo(
+    () => (labRoutingQuery.data?.length
+      ? labRoutingQuery.data
+      : isIpdConsult
+        ? ipdStaticLabRoutingDepartments()
+        : []) ?? [],
+    [labRoutingQuery.data, isIpdConsult],
+  );
 
   const consultationContextQuery = useConsultationContextQuery(appointmentDbId, {
     enabled: open && !isIpdConsult && appointmentDbId != null,
@@ -511,6 +515,7 @@ export default function ConsultationModal({
             });
           }
         } catch (err) {
+          if (isSupersededSessionError(err)) return;
           toast.error(err?.message || 'Could not save consultation. Please try again.');
           if (isIpd) {
             invalidateDoctorIpdAdmissions(queryClient);

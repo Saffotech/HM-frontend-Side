@@ -61,7 +61,7 @@ export function RegistrationChart({ data }) {
           </BarChart>
         </ResponsiveContainer>
       ) : (
-        <EmptyState title="No registration data" message="Registration months could not be built from the hospital records." />
+        <EmptyState title="No registration data" message="Months appear after a hospital is registered." />
       )}
     </ChartFrame>
   );
@@ -75,7 +75,7 @@ export function RevenueTrendChart({ data }) {
     <ChartFrame
       title="Revenue trend"
       label="Paid demonstration revenue by month"
-      description="Paid demonstration invoices grouped by invoice month. Months with no payment show $0. These are not live collections."
+      description="Paid invoices grouped by invoice month. This chart fills in when a billing API is connected."
     >
       {ready ? (
         <ResponsiveContainer width="100%" height="100%">
@@ -110,7 +110,7 @@ export function RevenueTrendChart({ data }) {
           </LineChart>
         </ResponsiveContainer>
       ) : (
-        <EmptyState title="No revenue data" message="Paid invoice months could not be built from the billing records." />
+        <EmptyState title="No revenue data" message="This chart stays empty until a billing API is connected." />
       )}
     </ChartFrame>
   );

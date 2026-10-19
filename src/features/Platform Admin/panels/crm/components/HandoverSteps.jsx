@@ -1,4 +1,4 @@
-import { CONTACT_METHODS } from "../../../shared/data/tenantsData";
+import { CONTACT_METHODS } from "../../../shared/data/catalog";
 import { formatDate } from "../../../shared/utils/formatDate";
 import { time } from "../../../shared/utils/leadMetrics";
 import { daysBetween, localDay } from "../../../shared/utils/periods";

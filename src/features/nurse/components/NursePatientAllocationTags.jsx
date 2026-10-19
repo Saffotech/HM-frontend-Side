@@ -1,4 +1,4 @@
-import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
+import { useNursePatientScope } from '@/features/nurse/context/nursePatientScope';
 
 /**
  * Allocated / Outside Allocation tags for patient name cells.

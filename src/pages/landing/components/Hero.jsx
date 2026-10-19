@@ -35,7 +35,7 @@ export default function Hero() {
             operations from one secure platform.
           </p>
           <p className="landing-hero__sub">
-            Built for a single hospital — with dedicated workspaces for Super Admin, Admin, OPD,
+            Built for a single hospital — with dedicated workspaces for Admin, Manager, OPD,
             Doctor, Nurse, Lab, Receptionist, and Pharmacy, each with the right permissions.
           </p>
           <div className="landing-hero__actions">

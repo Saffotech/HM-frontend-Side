@@ -359,7 +359,10 @@ export default function LabsSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD 
     limit: 500,
     encounter_type: encounterMode,
   });
-  const patientVisits = patientVisitsData?.visits ?? [];
+  const patientVisits = useMemo(
+    () => patientVisitsData?.visits ?? [],
+    [patientVisitsData?.visits],
+  );
   const patientSourceByDbId = useMemo(() => {
     const map = new Map();
     for (const row of patientVisits) {

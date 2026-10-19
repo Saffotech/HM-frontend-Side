@@ -15,8 +15,8 @@ export function normalizeRole(role) {
 
 /** Display department for module gate (not sent to API). */
 export const DEPARTMENT_BY_ROLE = {
-  super_admin: 'Super Administration',
-  admin: 'Administration',
+  super_admin: 'Administration',
+  admin: 'Management',
   doctor: 'Doctor',
   opd: 'OPD',
   nurse: 'Nursing',
@@ -29,8 +29,8 @@ export const DEPARTMENT_BY_ROLE = {
 
 /** Short module label shown next to the avatar in every module shell. */
 export const ROLE_LABELS = {
-  super_admin: 'Super Admin',
-  admin: 'Admin',
+  super_admin: 'Admin',
+  admin: 'Manager',
   doctor: 'Doctor',
   opd: 'OPD Billing',
   nurse: 'Nurse',

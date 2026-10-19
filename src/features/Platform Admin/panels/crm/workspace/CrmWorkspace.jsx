@@ -1,41 +1,121 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import {
+  PLAN_NAMES,
+} from "../../../shared/data/catalog";
+import {
+  agreeLead,
+  addLeadNote,
+  claimLead,
+  closeLead,
+  createLead,
+  listLeads,
+  logLeadContact,
+  mapLead,
+  mapLeadList,
+  reopenLead,
+  scheduleLeadFollowUp,
+  updateLead,
+  leadUpdateBody,
+} from "../../../shared/api/leadApi";
 import { usePlatform } from "../../../shared/context/PlatformContext";
 import { useToast } from "../../../shared/hooks/useToast";
 import { crmPath } from "../../../shared/paths";
 import { todayInput } from "../../../shared/utils/formatDate";
+import Button from "../../../shared/components/Button";
 import AddLeadForm from "../components/AddLeadForm";
-import { CLAIM_LIMIT, CONTACT_OUTCOMES, isUnclaimed } from "../utils/crmLeads";
+import { CLAIM_LIMIT, isUnclaimed } from "../utils/crmLeads";
 import { AgreeDialog, CloseDialog, ContactDialog, EditLeadDialog, ReopenDialog, ScheduleDialog } from "./CrmDialogs";
 import { WorkspaceContext } from "./workspace-context";
 
-const outcomeLabel = (value) => CONTACT_OUTCOMES.find(([key]) => key === value)?.[1] || "";
 const BLOCKED = "This lead can't be changed. It may have been reassigned or its status has changed.";
+
+function sameId(left, right) {
+  return String(left) === String(right);
+}
+
+function conflictMatches(detail) {
+  const matches = Array.isArray(detail?.matches) ? detail.matches : [];
+  return {
+    leads: matches.filter((item) => item.kind === "lead").map((item, index) => ({
+      id: item.id ?? `hidden-${index}`,
+      mine: item.visibility === "mine",
+      unclaimed: item.visibility === "unclaimed",
+      name: item.name || "",
+      contact: "",
+      phone: "",
+      status: item.status || "",
+      owner: item.visibility === "mine" ? "You" : item.visibility === "unclaimed" ? "Unassigned" : "Another team member",
+      reasons: item.reasons || [],
+    })),
+    hospitals: matches.filter((item) => item.kind === "hospital").map((item) => ({
+      id: item.id,
+      name: item.name || "Registered hospital",
+      city: item.city || "",
+      reasons: item.reasons || [],
+    })),
+  };
+}
 
 /** Holds the signed-in employee's leads plus the dialogs every CRM page shares. */
 export default function CrmWorkspace({ children }) {
-  const platform = usePlatform();
-  const { onboarding, hospitals, plans, crmSession } = platform;
+  const { crmSession, signOutPortal } = usePlatform();
   const { push } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const me = crmSession?.name || "";
   const today = todayInput();
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [dialog, setDialog] = useState(null);
   const [adding, setAdding] = useState(false);
 
-  const leads = useMemo(() => onboarding.filter((lead) => lead.assignedTo === me), [onboarding, me]);
-  const pool = useMemo(() => onboarding.filter(isUnclaimed).sort((a, b) => String(b.submittedAt).localeCompare(String(a.submittedAt))), [onboarding]);
+  const remember = useCallback((lead) => {
+    const mapped = mapLead(lead, crmSession);
+    setRows((current) => [mapped, ...current.filter((item) => !sameId(item.id, mapped.id))]);
+    return mapped;
+  }, [crmSession]);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError("");
+    try {
+      const body = await listLeads();
+      setRows(mapLeadList(body, crmSession));
+    } catch (error) {
+      setRows([]);
+      setLoadError(error?.message || "Leads could not be loaded.");
+      if (error?.status === 401 && error?.code !== "missing_token") signOutPortal("crm");
+    } finally {
+      setLoading(false);
+    }
+  }, [crmSession, signOutPortal]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const leads = useMemo(() => rows.filter((lead) => lead.assignedTo === me), [rows, me]);
+  const pool = useMemo(() => rows.filter(isUnclaimed).sort((a, b) => String(b.submittedAt).localeCompare(String(a.submittedAt))), [rows]);
   const uncontacted = leads.filter((lead) => lead.status === "New").length;
-  const planOptions = useMemo(() => plans.filter((plan) => plan.status === "Active").map((plan) => plan.name), [plans]);
-  const find = (id) => leads.find((lead) => lead.id === id) || null;
+  const planOptions = PLAN_NAMES;
+  const find = (id) => rows.find((lead) => sameId(lead.id, id)) || null;
   const dialogLead = dialog ? find(dialog.id) : null;
 
-  const report = (ok, message) => {
-    push(ok ? message : BLOCKED, ok ? "success" : "error");
-    return ok;
+  const fail = (error) => {
+    if (error?.status === 401 && error?.code !== "missing_token") signOutPortal("crm");
+    push(error?.message || BLOCKED, "error");
+    return null;
   };
-  const closeDialog = () => setDialog(null);
+
+  const apply = async (request) => {
+    try {
+      return remember(await request());
+    } catch (error) {
+      return fail(error);
+    }
+  };
 
   const openLead = (id, { replace = false } = {}) => {
     navigate(crmPath(`/leads/${encodeURIComponent(id)}`), {
@@ -44,17 +124,15 @@ export default function CrmWorkspace({ children }) {
     });
   };
 
-  const claim = (lead) => {
+  const claim = async (lead) => {
     if (uncontacted >= CLAIM_LIMIT) {
       push(`You already have ${CLAIM_LIMIT} new leads you haven't contacted. Contact one of them before claiming more.`, "error");
       return false;
     }
-    if (!platform.claimOnboarding(lead.id)) {
-      push(`${lead.hospitalName} has already been claimed by someone else.`, "error");
-      return false;
-    }
-    push(`${lead.hospitalName} is now yours. Contact details are unlocked.`, "success");
-    openLead(lead.id);
+    const saved = await apply(() => claimLead(lead.id));
+    if (!saved) return false;
+    push(`${saved.hospitalName} is now yours. Contact details are unlocked.`, "success");
+    openLead(saved.id);
     return true;
   };
 
@@ -68,103 +146,176 @@ export default function CrmWorkspace({ children }) {
     reopen: (lead) => setDialog({ type: "reopen", id: lead.id }),
     edit: (lead) => setDialog({ type: "edit", id: lead.id }),
     addLead: () => setAdding(true),
-    note: (lead, text) => report(platform.addOnboardingNote(lead.id, text), "Note added."),
+    note: async (lead, text) => {
+      const saved = await apply(() => addLeadNote(lead.id, text));
+      if (saved) push("Note added.", "success");
+      return Boolean(saved);
+    },
   };
 
-  const saveContact = (values) => {
+  const saveContact = async (values) => {
     const lead = dialogLead;
-    const outcome = outcomeLabel(values.outcome);
     const closing = values.outcome === "not-interested";
-    const keepsGoing = values.outcome === "interested" || values.outcome === "callback";
-    const ok = platform.logOnboardingContact(lead.id, {
-      method: values.method,
-      note: values.note,
-      outcome,
-      followUpDate: keepsGoing ? values.followUpDate : "",
-      nextAction: keepsGoing ? values.nextAction : "",
-      notInterestedReason: closing ? values.reason : "",
-    });
-    if (!report(ok, closing ? `${lead.hospitalName} closed as not interested.` : `Contact logged for ${lead.hospitalName}.`)) {
-      closeDialog();
+    const saved = await apply(() => logLeadContact(lead.id, values));
+    if (!saved) {
+      setDialog(null);
       return;
     }
-    if (values.outcome === "agreed") setDialog({ type: "agree", id: lead.id });
-    else closeDialog();
+    push(closing ? `${saved.hospitalName} closed as not interested.` : `Contact logged for ${saved.hospitalName}.`, "success");
+    if (values.outcome === "agreed") setDialog({ type: "agree", id: saved.id });
+    else setDialog(null);
   };
 
-  const run = (ok, message) => {
-    report(ok, message);
-    closeDialog();
+  const finish = async (request, message) => {
+    const saved = await apply(request);
+    if (!saved) return;
+    push(message(saved), "success");
+    setDialog(null);
   };
 
-  const value = { me, today, leads, pool, uncontacted, hospitals, invoices: platform.invoices, planOptions, actions };
+  const value = {
+    me,
+    today,
+    leads,
+    pool,
+    records: rows,
+    uncontacted,
+    hospitals: [],
+    invoices: [],
+    billingAvailable: false,
+    scopeLabel: "Your assigned leads and unclaimed new enquiries. Other people's leads are not included.",
+    loadError,
+    reloadLeads: load,
+    planOptions,
+    actions,
+  };
+
+  if (loading && rows.length === 0) {
+    return (
+      <div className="crm-page">
+        <section className="crm-card">
+          <div className="crm-empty">
+            <strong>Loading your leads</strong>
+            <span>Fetching the leads assigned to you and unclaimed new enquiries.</span>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  if (loadError && rows.length === 0) {
+    return (
+      <div className="crm-page">
+        <section className="crm-card">
+          <div className="crm-empty">
+            <strong>Leads could not be loaded</strong>
+            <span>{loadError}</span>
+            <Button onClick={load}>Retry</Button>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <WorkspaceContext.Provider value={value}>
       {children}
       {dialogLead && dialog.type === "contact" && (
-        <ContactDialog key={dialogLead.id} lead={dialogLead} mode={dialog.mode} today={today} onCancel={closeDialog} onSubmit={saveContact} />
+        <ContactDialog key={`${dialogLead.id}-contact`} lead={dialogLead} mode={dialog.mode} today={today} onCancel={() => setDialog(null)} onSubmit={saveContact} />
       )}
       {dialogLead && dialog.type === "schedule" && (
         <ScheduleDialog
           lead={dialogLead}
           today={today}
-          onCancel={closeDialog}
-          onSubmit={(values) => run(platform.scheduleOnboardingFollowUp(dialogLead.id, values), `Follow-up ${dialogLead.followUpDate ? "rescheduled" : "scheduled"} for ${dialogLead.hospitalName}.`)}
+          onCancel={() => setDialog(null)}
+          onSubmit={(values) => finish(
+            () => scheduleLeadFollowUp(dialogLead.id, values),
+            (saved) => `Follow-up ${saved.followUpDate ? "saved" : "scheduled"} for ${saved.hospitalName}.`,
+          )}
         />
       )}
       {dialogLead && dialog.type === "agree" && (
         <AgreeDialog
           lead={dialogLead}
           planOptions={planOptions}
-          onCancel={closeDialog}
-          onSubmit={(values) => run(platform.agreeOnboarding(dialogLead.id, values), `${dialogLead.hospitalName} sent to Accounts for registration.`)}
+          onCancel={() => setDialog(null)}
+          onSubmit={(values) => finish(
+            () => agreeLead(dialogLead.id, values),
+            (saved) => `${saved.hospitalName} sent to Accounts for registration.`,
+          )}
         />
       )}
       {dialogLead && dialog.type === "close" && (
         <CloseDialog
           lead={dialogLead}
-          onCancel={closeDialog}
-          onSubmit={(values) => run(platform.closeOnboarding(dialogLead.id, values), `${dialogLead.hospitalName} closed as not interested.`)}
+          onCancel={() => setDialog(null)}
+          onSubmit={(values) => finish(
+            () => closeLead(dialogLead.id, values),
+            (saved) => `${saved.hospitalName} closed as not interested.`,
+          )}
         />
       )}
       {dialogLead && dialog.type === "reopen" && (
         <ReopenDialog
           lead={dialogLead}
-          onCancel={closeDialog}
-          onConfirm={() => run(platform.reopenOnboarding(dialogLead.id), `${dialogLead.hospitalName} reopened.`)}
+          onCancel={() => setDialog(null)}
+          onConfirm={() => finish(
+            () => reopenLead(dialogLead.id),
+            (saved) => `${saved.hospitalName} reopened.`,
+          )}
         />
       )}
       {dialogLead && dialog.type === "edit" && (
         <EditLeadDialog
           lead={dialogLead}
           planOptions={planOptions}
-          onCancel={closeDialog}
-          onSubmit={(values) => run(platform.updateOnboardingLead(dialogLead.id, values), "Lead details saved.")}
+          onCancel={() => setDialog(null)}
+          onSubmit={(values) => {
+            if (!Object.keys(leadUpdateBody(dialogLead, values)).length) {
+              push("Lead details saved.", "success");
+              setDialog(null);
+              return;
+            }
+            finish(
+              () => updateLead(dialogLead.id, dialogLead, values),
+              () => "Lead details saved.",
+            );
+          }}
         />
       )}
       {adding && (
         <AddLeadForm
-          leads={onboarding}
-          hospitals={hospitals}
+          leads={rows}
           me={me}
           planOptions={planOptions}
           onClose={() => setAdding(false)}
           onOpenExisting={(id) => { setAdding(false); openLead(id); }}
           onClaim={(id) => {
-            const lead = pool.find((item) => item.id === id);
-            if (lead && claim(lead)) setAdding(false);
+            const lead = pool.find((item) => sameId(item.id, id));
+            if (lead) claim(lead).then((ok) => { if (ok) setAdding(false); });
           }}
-          onCreate={(input, { shared }) => {
-            const created = platform.addOnboardingLead(input, { shared });
-            setAdding(false);
-            if (shared) {
-              push(`${created.hospitalName} added to New enquiries for the team to claim.`, "success");
-              navigate(`${crmPath("/leads")}?tab=New`);
-              return;
+          hospitals={[]}
+          onCreate={async (input, { shared, allowDuplicate }) => {
+            try {
+              const created = remember(await createLead(input, { shared, allowDuplicate }));
+              setAdding(false);
+              if (shared) {
+                push(`${created.hospitalName} added to New enquiries for the team to claim.`, "success");
+                navigate(`${crmPath("/leads")}?tab=New`);
+                return created;
+              }
+              push(`${created.hospitalName} added as a new lead.`, "success");
+              openLead(created.id);
+              return created;
+            } catch (error) {
+              if (error?.status === 401 && error?.code !== "missing_token") signOutPortal("crm");
+              if (error?.status === 409 && error?.detail?.matches) {
+                const duplicate = new Error(error.message);
+                duplicate.matches = conflictMatches(error.detail);
+                throw duplicate;
+              }
+              throw error;
             }
-            push(`${created.hospitalName} added as a new lead.`, "success");
-            openLead(created.id);
           }}
         />
       )}

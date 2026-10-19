@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
+import { useNursePatientScope } from '@/features/nurse/context/nursePatientScope';
 
 /**
  * Client-side filter for list rows when global scope is Allocated.

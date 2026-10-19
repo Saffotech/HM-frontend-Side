@@ -15,11 +15,6 @@ import {
   getPrescriptionDiagnoses,
 } from '@/features/pharmacy/utils/prescriptionMeta';
 import { formatQuantityLabel } from '@/features/pharmacy/utils/prescriptionQuantity';
-import {
-  getPrescriptionItemPricingSummary,
-  loadPrescriptionDispensePricing,
-  matchDispenseHistoryPricing,
-} from '@/features/pharmacy/utils/dispensePricing';
 import PharmacyTruncatedText from '@/features/pharmacy/components/PharmacyTruncatedText';
 import { ROUTES } from '@/shared/constants';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
@@ -85,11 +80,7 @@ export default function PrescriptionDetailPage() {
 
   const doctors = rx ? getPrescriptionDoctors(rx) : [];
   const diagnoses = rx ? getPrescriptionDiagnoses(rx) : [];
-  const dispensePricing = loadPrescriptionDispensePricing(id);
-  const totalDispensedAmount = dispensePricing.reduce(
-    (sum, row) => sum + (Number(row.amount) || 0),
-    0,
-  );
+  const totalDispensedAmount = Number(rx?.total_amount_dispensed) || 0;
 
   if (!canViewPrescriptions) {
     return (
@@ -221,7 +212,6 @@ export default function PrescriptionDetailPage() {
                   </thead>
                   <tbody>
                     {(rx.prescription_items ?? []).map((item) => {
-                      const pricing = getPrescriptionItemPricingSummary(id, item.id);
                       return (
                       <tr key={item.id}>
                         <td data-label="Medicine">{item.medicine_name}</td>
@@ -239,10 +229,10 @@ export default function PrescriptionDetailPage() {
                           )}
                         </td>
                         <td className="pharmacy-detail-money" data-label="Price per unit">
-                          {formatCurrency(pricing?.unitPrice, { empty: '—' })}
+                          {formatCurrency(item.unit_price, { empty: '—' })}
                         </td>
                         <td className="pharmacy-detail-money" data-label="Total amount">
-                          {formatCurrency(pricing?.totalAmount, { empty: '—' })}
+                          {formatCurrency(item.amount_dispensed, { empty: '—' })}
                         </td>
                       </tr>
                       );
@@ -277,17 +267,16 @@ export default function PrescriptionDetailPage() {
                     </thead>
                     <tbody>
                       {previousDispensing.map((row) => {
-                        const pricing = matchDispenseHistoryPricing(id, row);
                         return (
                         <tr key={row.id}>
                           <td data-label="Date">{fmtDt(row.dispensed_at)}</td>
                           <td data-label="Medicine">{row.medicine_name || '—'}</td>
                           <td className="pharmacy-detail-qty" data-label="Quantity dispensed">{row.quantity_dispensed ?? '—'}</td>
                           <td className="pharmacy-detail-money" data-label="Price per unit">
-                            {formatCurrency(pricing?.unitPrice, { empty: '—' })}
+                            {formatCurrency(row.unit_price, { empty: '—' })}
                           </td>
                           <td className="pharmacy-detail-money" data-label="Total amount">
-                            {formatCurrency(pricing?.amount, { empty: '—' })}
+                            {formatCurrency(row.amount, { empty: '—' })}
                           </td>
                         </tr>
                         );

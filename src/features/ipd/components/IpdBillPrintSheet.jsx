@@ -2,7 +2,7 @@
  * Standard IPD tax invoice layout — shared by view-bill and bill-preview print.
  */
 
-import { BrandLogo, BrandName, MoneyAmount } from '@/shared/components/common';
+import { BrandLogo, BrandName, HospitalName, MoneyAmount } from '@/shared/components/common';
 import { APP_NAME } from '@/shared/constants';
 
 function formatQty(qty) {
@@ -65,8 +65,7 @@ export default function IpdBillPrintSheet({ invoice, className = '' }) {
             <BrandLogo size={36} className="bill-letterhead__logo" />
             <BrandName className="bill-letterhead__brand-name" />
           </h1>
-          <p>123 Health Avenue, Medical District, Mumbai — 400001</p>
-          <p>Tel: +91 800 123 4567 | billing@saffocare.com | GSTIN: 27AABCM1234A1Z5</p>
+          <HospitalName className="bill-letterhead__hospital" />
         </div>
         <div className="bill-letterhead__meta">
           <p className="bill-letterhead__type">IPD Tax Invoice</p>

@@ -8,7 +8,7 @@ import {
   DOUBLE_WARD_PREFIX,
   doubleWardStorageKey,
   isDoubleWardStorageKey,
-} from '@/features/admin/utils/bedTariffRates';
+} from '@/features/manager/utils/bedTariffRates';
 
 function finiteCharge(value) {
   const n = Number(value);

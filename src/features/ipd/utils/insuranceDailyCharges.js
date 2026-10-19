@@ -8,7 +8,6 @@
 import {
   CHARGE_CATEGORY,
   DEFAULT_INSURANCE_CHARGE_HEADS,
-  cloneDefaultChargeHeads,
   isDiscountCharge,
   normalizeInsuranceChargeHeads,
 } from '@/features/ipd/utils/insuranceChargeHeads';

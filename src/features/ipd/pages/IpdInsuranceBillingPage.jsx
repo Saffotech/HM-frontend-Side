@@ -2,16 +2,15 @@
  * Insurance IPD billing — charge breakdown with add/remove.
  */
 
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Printer } from 'lucide-react';
 import { Button, EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import IpdInsuranceBillPrintSheet from '@/features/ipd/components/IpdInsuranceBillPrintSheet';
 import IpdInsuranceClaimBillingCard from '@/features/ipd/components/IpdInsuranceClaimBillingCard';
-import IpdHospitalChargesCard, {
-  calculateInsuranceChargeTotals,
-} from '@/features/ipd/components/IpdHospitalChargesCard';
+import IpdHospitalChargesCard from '@/features/ipd/components/IpdHospitalChargesCard';
+import { calculateInsuranceChargeTotals } from '@/features/ipd/utils/insuranceChargeHeads';
 import IpdDailyChargesCard from '@/features/ipd/components/IpdDailyChargesCard';
 import useIpdBackNavigation from '@/features/ipd/hooks/useIpdBackNavigation';
 import {
@@ -124,6 +123,8 @@ export default function IpdInsuranceBillingPage() {
 
   const patient = bundleQuery.data?.patient;
   const claim = bundleQuery.data?.claim;
+  const claimRef = useRef(claim);
+  claimRef.current = claim;
 
   const [charges, setCharges] = useState(() => initCharges(claim));
   const [savedClaim, setSavedClaim] = useState(claim);
@@ -131,10 +132,11 @@ export default function IpdInsuranceBillingPage() {
   const [printSheetMounted, setPrintSheetMounted] = useState(false);
 
   useEffect(() => {
-    if (!claim) return;
-    setCharges(initCharges(claim));
-    setSavedClaim(claim);
-    setDailyCharges(initDailyCharges(claim));
+    const current = claimRef.current;
+    if (!current) return;
+    setCharges(initCharges(current));
+    setSavedClaim(current);
+    setDailyCharges(initDailyCharges(current));
   }, [claim?.id]);
 
   // Fill hospital charges from the server once. Later saves must not replace
@@ -158,7 +160,12 @@ export default function IpdInsuranceBillingPage() {
         claimsMatchForSync(prev, bundleClaim) ? prev : bundleClaim,
       );
     }
-  }, [bundleQuery.dataUpdatedAt]);
+  }, [
+    bundleQuery.data?.claim,
+    bundleQuery.data?.dailyCharges,
+    bundleQuery.data?.finalBilling?.chargeHeads,
+    bundleQuery.dataUpdatedAt,
+  ]);
 
   const totals = useMemo(
     () => calculateInsuranceChargeTotals(charges),

@@ -1,18 +1,23 @@
 /** Persistent cache for IPD consult visits — doctor history API omits admitted stays. */
 
-const STORAGE_KEY = 'hms:doctor:ipd-consult-visits';
-const LEGACY_SESSION_KEY = STORAGE_KEY;
+import {
+  activeStorageScope,
+  canWriteHospitalStorage,
+  doctorIpdConsultStorageKey,
+} from '../../../components/security/hospitalBrowserStorage.js';
+import { currentSessionEpoch } from '../../../components/security/sessionEpoch.js';
+
+function storageKey() {
+  const scope = activeStorageScope();
+  if (!scope) return null;
+  return doctorIpdConsultStorageKey(scope.tenantId, scope.userId);
+}
 
 function readStore() {
+  const key = storageKey();
+  if (!key || typeof localStorage === 'undefined') return {};
   try {
-    let raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      raw = sessionStorage.getItem(LEGACY_SESSION_KEY);
-      if (raw) {
-        localStorage.setItem(STORAGE_KEY, raw);
-        sessionStorage.removeItem(LEGACY_SESSION_KEY);
-      }
-    }
+    const raw = localStorage.getItem(key);
     if (!raw) return {};
     const parsed = JSON.parse(raw);
     return parsed && typeof parsed === 'object' ? parsed : {};
@@ -22,8 +27,10 @@ function readStore() {
 }
 
 function writeStore(store) {
+  const key = storageKey();
+  if (!key || typeof localStorage === 'undefined') return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    localStorage.setItem(key, JSON.stringify(store));
   } catch {
     /* storage unavailable */
   }
@@ -31,13 +38,16 @@ function writeStore(store) {
 
 /**
  * Persist one IPD consult visit for visit-history merge (server save via doctor IPD consult API).
+ * Refuses the write when the session that started the save is no longer current.
  */
 export function cacheIpdConsultVisit({
   admissionId,
   patientUid,
   visitNotes,
   visitedAt,
+  epochAtStart = currentSessionEpoch(),
 }) {
+  if (!canWriteHospitalStorage(epochAtStart)) return;
   if (admissionId == null || !patientUid || !visitNotes?.trim()) return;
 
   const store = readStore();
@@ -56,12 +66,15 @@ export function cacheIpdConsultVisit({
     (row) => row.visitNotes === entry.visitNotes && row.visitedAt === entry.visitedAt,
   );
   if (!duplicate) {
+    if (!canWriteHospitalStorage(epochAtStart)) return;
     list.unshift(entry);
     store[key] = list.slice(0, 100);
     writeStore(store);
   }
 
-  window.dispatchEvent(new CustomEvent('hms:ipd-consult-cache-updated', { detail: entry }));
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('hms:ipd-consult-cache-updated', { detail: entry }));
+  }
 }
 
 /** @returns {Record<string, Array>} admissionId -> consult visits */

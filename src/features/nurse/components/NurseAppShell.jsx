@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { NursePatientScopeProvider } from '@/features/nurse/context/NursePatientScopeContext';
 import { useAuth } from '@/shared/hooks/useAuth';
+import { matchesHospitalBump } from '@/components/security/hospitalBrowserStorage';
 
 export const NURSE_PERMISSIONS_BUMP_KEY = 'hms:nurse-permissions-bump';
 
@@ -23,7 +24,7 @@ function NursePermissionSync({ children }) {
       if (document.visibilityState === 'visible') sync();
     };
     const onStorage = (event) => {
-      if (event.key === NURSE_PERMISSIONS_BUMP_KEY) sync();
+      if (matchesHospitalBump(event.key, NURSE_PERMISSIONS_BUMP_KEY)) sync();
     };
     const onBump = () => sync();
 

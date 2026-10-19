@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import IpdPageHeader from '@/features/ipd/components/IpdPageHeader';
@@ -13,7 +13,6 @@ import { useIpdPermissionSet } from '@/features/ipd/hooks/useIpdPermission';
 import IpdPermissionButton from '@/features/ipd/components/IpdPermissionButton';
 
 export default function IpdBedTransferPage() {
-  const navigate = useNavigate();
   const goBack = useIpdBackNavigation(ROUTES.IPD_BEDS);
   const [searchParams] = useSearchParams();
   const { canTransferBed } = useIpdPermissionSet();

@@ -13,10 +13,11 @@ import {
   useDownloadNurseLabReportFileMutation,
   useNurseActiveDoctorsQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
-import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
+import { useNursePatientScope } from '@/features/nurse/context/nursePatientScope';
 import NursePatientAllocationTags from '@/features/nurse/components/NursePatientAllocationTags';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { toast } from '@/shared/utils/toast';
+import { isSupersededSessionError } from '@/components/security/httpSessionPolicy';
 import { ROUTES } from '@/shared/constants';
 import './NurseMedicationPatientsPage.css';
 
@@ -136,7 +137,8 @@ export default function NurseLabReportsRegistryPage() {
         ...scopeFilters,
       });
       await triggerBlobDownload(result);
-    } catch {
+    } catch (err) {
+      if (isSupersededSessionError(err)) return;
       toast.error('No file');
     }
   }, [downloadMutation, scopeFilters]);

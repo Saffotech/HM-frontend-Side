@@ -1,7 +1,6 @@
 /** Lab technician API — mirrors HM-Backend Routers/lab_router.py */
 
-import { API_BASE_URL, API_PREFIX } from '@/shared/constants';
-import { apiClient } from '@/shared/api/client';
+import { apiClient, apiSessionRequest } from '@/shared/api/client';
 
 function buildQuery(params = {}) {
   const search = new URLSearchParams();
@@ -68,54 +67,19 @@ export async function getLabReportById(reportId, token) {
 export async function postLabReportFile(orderId, file, token) {
   const formData = new FormData();
   formData.append('file', file);
-
-  const headers = {};
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  const response = await fetch(
-    `${API_BASE_URL}${API_PREFIX}/lab/orders/${orderId}/upload-file`,
-    {
-      method: 'POST',
-      headers,
-      body: formData,
-    }
-  );
-
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const detail = typeof body.detail === 'string' ? body.detail : body.message;
-    const err = new Error(detail || 'File upload failed');
-    err.status = response.status;
-    throw err;
-  }
-  return body;
+  return apiSessionRequest(`/lab/orders/${orderId}/upload-file`, {
+    method: 'POST',
+    body: formData,
+    token,
+    fallbackMessage: 'File upload failed',
+  });
 }
 
 export async function fetchLabReportFileBlob(reportId, token) {
-  const headers = {};
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  const response = await fetch(
-    `${API_BASE_URL}${API_PREFIX}/lab/reports/${reportId}/file`,
-    { headers }
-  );
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    const detail = typeof body.detail === 'string' ? body.detail : 'Could not download file';
-    const err = new Error(detail);
-    err.status = response.status;
-    throw err;
-  }
-
-  const blob = await response.blob();
-  const disposition = response.headers.get('content-disposition') ?? '';
-  const match = disposition.match(/filename="?([^"]+)"?/i);
-  const fileName = match?.[1] ?? `lab-report-${reportId}`;
-
-  return { blob, fileName, contentType: response.headers.get('content-type') };
+  return apiSessionRequest(`/lab/reports/${reportId}/file`, {
+    token,
+    responseType: 'blob',
+    fallbackFileName: `lab-report-${reportId}`,
+    fallbackMessage: 'Could not download file',
+  });
 }

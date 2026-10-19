@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/shared/store/useAuthStore';
-import { getAppEntryForRole } from '@/shared/utils/authRedirect';
+import { useUniversalSignIn } from '@/shared/auth/useUniversalSignIn';
 import { useFormValidation } from '@/shared/hooks/useFormValidation';
 import { trimForm } from '@/shared/utils/trimForm';
 import { normalizeEmailInput } from '@/shared/utils/credentials';
@@ -16,7 +16,8 @@ function validateLogin(values) {
 }
 
 export default function LoginForm() {
-  const { login, loading, error } = useAuthStore();
+  const { loading, error } = useAuthStore();
+  const { signIn } = useUniversalSignIn();
   const navigate = useNavigate();
   const { values, errors, handleChange, handleSubmit } = useFormValidation(
     { email: '', password: '' },
@@ -28,11 +29,11 @@ export default function LoginForm() {
     const trimmed = trimForm(raw);
     setFormError('');
     try {
-      const me = await login({
+      const result = await signIn({
         email: normalizeEmailInput(trimmed.email),
         password: trimmed.password,
       });
-      navigate(getAppEntryForRole(me.role));
+      navigate(result.destination);
     } catch {
       setFormError('Invalid email or password');
     }

@@ -15,7 +15,7 @@ import NurseDataTable from '@/features/nurse/components/NurseDataTable';
 import NursePagination from '@/features/nurse/components/NursePagination';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
 import { useNurseDocumentedPatients } from '@/features/nurse/hooks/useNurseDocumentedPatients';
-import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
+import { useNursePatientScope } from '@/features/nurse/context/nursePatientScope';
 import { QueryFeedback } from '@/shared/components/common';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
 import { ROUTES } from '@/shared/constants';
@@ -139,7 +139,7 @@ export default function NurseQueuePage() {
     page_size: 100,
   });
 
-  const allPatients = data?.items || [];
+  const allPatients = useMemo(() => data?.items || [], [data?.items]);
   const filteredPatients = useMemo(
     () => allPatients.filter((row) => matchesWard(row.ward_name, wardFilter)),
     [allPatients, wardFilter],

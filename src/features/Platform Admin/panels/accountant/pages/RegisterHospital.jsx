@@ -1,18 +1,20 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { interpretPlatformError } from "../../../shared/api/platformErrors";
+import { isNumericLeadId, LEAD_FIELD_MAP, mapRegistration } from "../../../shared/api/hospitalRegistration";
+import { hasPlatformAccessToken, platformAuth } from "../../../shared/api/platformSession";
+import { getRegistration, registerFromLead } from "../../../shared/api/registrationApi";
 import Button from "../../../shared/components/Button";
 import ConfirmDialog from "../../../shared/components/ConfirmDialog";
 import Input from "../../../shared/components/Input";
 import PasswordField from "../../../shared/components/PasswordField";
 import Select from "../../../shared/components/Select";
-import { billingCycles, hospitalTypes, tenantStatuses, trialPeriods } from "../../../shared/data/plansData";
+import { PLAN_NAMES, billingCycles, tenantStatuses, trialPeriods } from "../../../shared/data/catalog";
 import { usePlatform } from "../../../shared/context/PlatformContext";
 import { useToast } from "../../../shared/hooks/useToast";
 import { accountsPath } from "../../../shared/paths";
 import { formatDate } from "../../../shared/utils/formatDate";
-import { formatCurrency } from "../../../shared/utils/formatCurrency";
-import { findPossibleDuplicates, priceFor } from "../../../shared/utils/hospitals";
-import { PASSWORD_HINT, isEmail, isPhone, isPostalCode, isTenantCode, passwordIssue, required } from "../../../shared/utils/validation";
+import { PASSWORD_HINT, isPostalCode, isTenantCode, passwordIssue, required } from "../../../shared/utils/validation";
 import "./RegisterHospital.css";
 
 const blank = {
@@ -71,20 +73,66 @@ function SectionHead({ number, title }) {
   );
 }
 
+function Missing({ message, detail }) {
+  return (
+    <section className="register-page">
+      <div className="reg-panel reg-missing">
+        <strong>{message}</strong>
+        <span>{detail}</span>
+        <Link to={accountsPath("/registrations")}>Back to Hospital Registrations</Link>
+      </div>
+    </section>
+  );
+}
+
 export default function RegisterHospital() {
   const { id } = useParams();
-  const { onboarding } = usePlatform();
-  const request = onboarding.find((item) => item.id === id && item.status === "Agreed") || null;
+  const { signOutPortal } = usePlatform();
+  const signOutRef = useRef(signOutPortal);
+  signOutRef.current = signOutPortal;
+  const [request, setRequest] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  if (!request) {
+  useEffect(() => {
+    if (!isNumericLeadId(id)) {
+      setLoading(false);
+      setError("This registration link is not a hospital lead.");
+      return undefined;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setError("");
+    getRegistration(id)
+      .then((body) => {
+        if (!cancelled) setRequest(mapRegistration(body));
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        const result = interpretPlatformError(err);
+        setError(result.toast);
+        if (err?.status === 401 && err?.code !== "missing_token") signOutRef.current("accountant");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  if (loading) {
+    return <Missing message="Loading this lead." detail="Fetching the agreed hospital from the server." />;
+  }
+  if (error) {
+    return <Missing message="This lead could not be opened." detail={error} />;
+  }
+  if (!request || request.status !== "Agreed") {
     return (
-      <section className="register-page">
-        <div className="reg-panel reg-missing">
-          <strong>This hospital is not waiting for registration.</strong>
-          <span>It may already be registered, or CRM has not marked it as agreed yet.</span>
-          <Link to={accountsPath("/registrations")}>Back to Hospital Registrations</Link>
-        </div>
-      </section>
+      <Missing
+        message="This hospital is not waiting for registration."
+        detail="It may already be registered, or CRM has not marked it as agreed yet."
+      />
     );
   }
 
@@ -93,17 +141,15 @@ export default function RegisterHospital() {
 
 function RegisterForm({ request }) {
   const navigate = useNavigate();
-  const { hospitals, plans, addHospital } = usePlatform();
+  const { signOutPortal } = usePlatform();
   const { push } = useToast();
   const initialValues = valuesFromRequest(request);
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState({});
   const [confirming, setConfirming] = useState(false);
-  const [duplicates, setDuplicates] = useState([]);
-  const activePlans = plans.filter((plan) => plan.status === "Active");
-  const selectedPlan = plans.find((plan) => plan.name === values.plan);
+  const [submitting, setSubmitting] = useState(false);
+  const signedIn = hasPlatformAccessToken();
   const isTrial = values.tenantStatus === "Trial" || values.trialPeriod !== "None";
-  const pricing = priceFor(selectedPlan, values.billingCycle, isTrial);
   const backToList = () => navigate(accountsPath("/registrations"));
 
   const setField = (key, value) => {
@@ -113,21 +159,9 @@ function RegisterForm({ request }) {
 
   const validate = () => {
     const next = {};
-    if (!required(values.name)) next.name = "Hospital name is required.";
     if (!isTenantCode(values.code)) next.code = "Use 3–12 letters, numbers, or hyphens.";
-    const code = values.code.trim().toUpperCase();
-    const duplicate = hospitals.some((hospital) => hospital.code.toUpperCase() === code);
-    if (!next.code && duplicate) next.code = "This tenant code is already used by another hospital.";
-    if (!required(values.type)) next.type = "Hospital type is required.";
-    if (!isEmail(values.email)) next.email = "Enter a valid email address.";
-    if (!isPhone(values.phone)) next.phone = "Enter a valid phone number.";
     if (!required(values.address)) next.address = "Address is required.";
-    if (!required(values.city)) next.city = "City is required.";
-    if (!required(values.state)) next.state = "State is required.";
     if (!isPostalCode(values.postalCode)) next.postalCode = "Enter a valid postal code.";
-    if (!required(values.adminName)) next.adminName = "Administrator name is required.";
-    if (!isEmail(values.adminEmail)) next.adminEmail = "Enter a valid administrator email.";
-    if (!isPhone(values.adminPhone)) next.adminPhone = "Enter a valid administrator phone.";
     const passwordError = passwordIssue(values.adminPassword);
     if (passwordError) next.adminPassword = passwordError;
     if (!values.adminPasswordConfirm) next.adminPasswordConfirm = "Re-enter the password.";
@@ -137,19 +171,35 @@ function RegisterForm({ request }) {
     return Object.keys(next).length === 0;
   };
 
-  const finish = () => {
-    const created = addHospital(values, request.id);
-    push(`${created.name} was registered. CRM can now see it as converted.`, "success");
-    navigate(accountsPath("/registrations"), { state: { tab: "Registered" } });
+  const finish = async () => {
+    setSubmitting(true);
+    try {
+      const created = await registerFromLead(request.id, values);
+      platformAuth.rememberLeadSubmission(created.id, {
+        trialPeriod: values.trialPeriod,
+        tenantStatus: values.tenantStatus,
+      });
+      const hospitalLabel = created.hospitalId != null ? `hospital ${created.hospitalId}` : "the server";
+      const code = created.hospitalCode ? ` Code ${created.hospitalCode}.` : "";
+      push(`${created.hospitalName} was registered as ${hospitalLabel}.${code} Trial ${values.trialPeriod}, status ${values.tenantStatus}.`, "success");
+      navigate(accountsPath("/registrations"), { state: { tab: "Registered" } });
+    } catch (error) {
+      const result = interpretPlatformError(error, LEAD_FIELD_MAP);
+      if (Object.keys(result.fieldErrors).length) setErrors((current) => ({ ...current, ...result.fieldErrors }));
+      push(result.toast, "error");
+      if (error?.status === 401 && error?.code !== "missing_token") signOutPortal("accountant");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const submit = (event) => {
     event.preventDefault();
+    if (submitting) return;
     if (!validate()) {
       push("Check the highlighted fields before registering.", "error");
       return;
     }
-    setDuplicates(findPossibleDuplicates(hospitals, values));
     setConfirming(true);
   };
 
@@ -160,10 +210,16 @@ function RegisterForm({ request }) {
       <form className="reg-layout" onSubmit={submit} noValidate>
         <div className="reg-panel">
           <div className="reg-source-bar">
-            <span>Request <Link to={accountsPath("/registrations")} className="mono">{request.id}</Link></span>
-            <span>Agreed by <strong>{request.agreedBy || request.assignedTo || "CRM"}</strong> (CRM) on {formatDate(request.agreedAt)}</span>
+            <span>Lead <Link to={accountsPath("/registrations")} className="mono">{request.id}</Link></span>
+            <span>Agreed by <strong>{request.agreedBy || "CRM"}</strong> on {formatDate(request.agreedAt)}</span>
             {request.handoverNote && <span className="reg-source-note">Note from CRM: {request.handoverNote}</span>}
+            <span className="reg-source-note">Name, type, contact, and administrator identity come from the lead. Only the tenant code, address, postal code, password, and subscription are sent.</span>
           </div>
+          {!signedIn && (
+            <div className="reg-error-bar" role="alert">
+              Log out and sign in with your accountant account before registering. This browser does not have a backend session yet.
+            </div>
+          )}
           {errorCount > 0 && (
             <div className="reg-error-bar" role="alert">
               {errorCount} field{errorCount === 1 ? " needs" : "s need"} attention before the hospital can be registered.
@@ -173,16 +229,16 @@ function RegisterForm({ request }) {
           <section className="reg-section">
             <SectionHead number="1" title="Organization details" />
             <div className="reg-grid">
-              <Input className="span-2" label={<Label text="Hospital Name" />} value={values.name} error={errors.name} onChange={(event) => setField("name", event.target.value)} />
+              <Input className="span-2" label={<Label text="Hospital Name" />} value={values.name} readOnly />
               <Input label={<Label text="Tenant Code" />} value={values.code} error={errors.code} placeholder="e.g. CITYGEN" onChange={(event) => setField("code", event.target.value.toUpperCase())} />
-              <Select label={<Label text="Hospital Type" />} value={values.type} error={errors.type} onChange={(event) => setField("type", event.target.value)}>
-                {hospitalTypes.map((type) => <option key={type}>{type}</option>)}
+              <Select label={<Label text="Hospital Type" />} value={values.type} disabled>
+                <option>{values.type}</option>
               </Select>
-              <Input label={<Label text="Email Address" />} type="email" value={values.email} error={errors.email} onChange={(event) => setField("email", event.target.value)} />
-              <Input label={<Label text="Contact Number" />} value={values.phone} error={errors.phone} placeholder="+91 80 4000 2100" onChange={(event) => setField("phone", event.target.value)} />
+              <Input label={<Label text="Email Address" />} type="email" value={values.email} error={errors.email} readOnly />
+              <Input label={<Label text="Contact Number" />} value={values.phone} readOnly />
               <Input className="span-3" label={<Label text="Address" />} value={values.address} error={errors.address} onChange={(event) => setField("address", event.target.value)} />
-              <Input label={<Label text="City" />} value={values.city} error={errors.city} onChange={(event) => setField("city", event.target.value)} />
-              <Input label={<Label text="State" />} value={values.state} error={errors.state} onChange={(event) => setField("state", event.target.value)} />
+              <Input label={<Label text="City" />} value={values.city} readOnly />
+              <Input label={<Label text="State" />} value={values.state} readOnly />
               <Input label={<Label text="Postal Code" />} value={values.postalCode} error={errors.postalCode} onChange={(event) => setField("postalCode", event.target.value)} />
             </div>
           </section>
@@ -190,9 +246,9 @@ function RegisterForm({ request }) {
           <section className="reg-section">
             <SectionHead number="2" title="Administrator details" />
             <div className="reg-grid">
-              <Input label={<Label text="Full Name" />} value={values.adminName} error={errors.adminName} onChange={(event) => setField("adminName", event.target.value)} />
-              <Input label={<Label text="Email" />} type="email" value={values.adminEmail} error={errors.adminEmail} onChange={(event) => setField("adminEmail", event.target.value)} />
-              <Input label={<Label text="Contact Number" />} value={values.adminPhone} error={errors.adminPhone} onChange={(event) => setField("adminPhone", event.target.value)} />
+              <Input label={<Label text="Full Name" />} value={values.adminName} readOnly />
+              <Input label={<Label text="Email" />} type="email" value={values.adminEmail} error={errors.adminEmail} readOnly />
+              <Input label={<Label text="Contact Number" />} value={values.adminPhone} readOnly />
               <PasswordField label={<Label text="Password" />} value={values.adminPassword} error={errors.adminPassword} hint={PASSWORD_HINT} autoComplete="new-password" onChange={(event) => setField("adminPassword", event.target.value)} />
               <PasswordField label={<Label text="Confirm Password" />} value={values.adminPasswordConfirm} error={errors.adminPasswordConfirm} autoComplete="new-password" onChange={(event) => setField("adminPasswordConfirm", event.target.value)} />
             </div>
@@ -202,7 +258,7 @@ function RegisterForm({ request }) {
             <SectionHead number="3" title="Subscription configuration" />
             <div className="reg-grid reg-grid-4">
               <Select label={<Label text="Subscription Plan" />} value={values.plan} error={errors.plan} onChange={(event) => setField("plan", event.target.value)}>
-                {activePlans.map((plan) => <option key={plan.id}>{plan.name}</option>)}
+                {PLAN_NAMES.map((plan) => <option key={plan}>{plan}</option>)}
               </Select>
               <Select label={<Label text="Billing Cycle" />} value={values.billingCycle} onChange={(event) => setField("billingCycle", event.target.value)}>
                 {billingCycles.map((cycle) => <option key={cycle}>{cycle}</option>)}
@@ -221,7 +277,7 @@ function RegisterForm({ request }) {
             <div className="reg-footer-actions">
               <Button variant="secondary" onClick={backToList}>Cancel</Button>
               <Button variant="secondary" onClick={() => { setValues(initialValues); setErrors({}); }}>Reset</Button>
-              <Button type="submit">Register Hospital</Button>
+              <Button type="submit" disabled={submitting}>{submitting ? "Registering…" : "Register Hospital"}</Button>
             </div>
           </footer>
         </div>
@@ -242,40 +298,22 @@ function RegisterForm({ request }) {
               <span>{values.plan || "No plan"}</span>
               <span>{values.billingCycle}</span>
             </div>
-            <strong>{formatCurrency(pricing.amount)}</strong>
             <span className="reg-plan-sub">
-              {isTrial ? `Trial: ${values.trialPeriod === "None" ? "14 days" : values.trialPeriod}, no charge` : `per ${values.billingCycle === "Annual" ? "year" : "month"}`}
+              {isTrial ? `Trial: ${values.trialPeriod === "None" ? "14 days" : values.trialPeriod}` : values.billingCycle}
+              . The server does not publish plan prices.
             </span>
-            {selectedPlan && (
-              <ul>
-                <li>{selectedPlan.userLimit} users</li>
-                <li>{selectedPlan.storageLimitGb} GB storage</li>
-                <li>{selectedPlan.tenantLimit}</li>
-              </ul>
-            )}
           </div>
         </aside>
       </form>
       <ConfirmDialog
         open={confirming}
-        title={duplicates.length ? "Possible existing hospital found." : "Register this hospital?"}
-        message="You are about to create a new hospital tenant. CRM will see this request as converted."
-        confirmLabel="Register hospital"
+        title="Register this hospital?"
+        message="You are about to create the hospital on the server. The lead will be marked registered."
+        confirmLabel={submitting ? "Registering…" : "Register hospital"}
         tone="primary"
-        onCancel={() => setConfirming(false)}
+        onCancel={() => { if (!submitting) setConfirming(false); }}
         onConfirm={() => { setConfirming(false); finish(); }}
-      >
-        {duplicates.length > 0 && (
-          <ul className="reg-duplicates">
-            {duplicates.map((item) => (
-              <li key={item.id}>
-                <strong>{item.name}</strong>
-                <span>{item.code} · {item.city} · {item.reasons.join(", ")}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </ConfirmDialog>
+      />
     </section>
   );
 }

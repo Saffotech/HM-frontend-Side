@@ -8,6 +8,7 @@ import { doctorLabsApi } from '@/shared/api/services';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { Modal, Button, QueryFeedback } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
+import { isSupersededSessionError } from '@/components/security/httpSessionPolicy';
 import StatusPill from './StatusPill';
 import '../styles/doctor-ui.css';
 
@@ -83,7 +84,7 @@ export default function DoctorLabReportModal({ test, open, onClose }) {
         setPreviewLoading(false);
       })
       .catch((err) => {
-        if (!active) return;
+        if (!active || isSupersededSessionError(err)) return;
         setPreviewError(err?.message ?? 'Could not load image preview');
         setPreviewUrl(null);
         setPreviewLoading(false);
@@ -124,6 +125,7 @@ export default function DoctorLabReportModal({ test, open, onClose }) {
       anchor.click();
       URL.revokeObjectURL(url);
     } catch (err) {
+      if (isSupersededSessionError(err)) return;
       toast.error(err?.message ?? 'No file available for this report');
     }
   };

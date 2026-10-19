@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Calendar, FileText, Stethoscope } from 'lucide-react';
-import NurseHistoryFilter from '@/features/nurse/components/NurseHistoryFilter';
+import NurseHistoryFilter from '@/shared/components/clinical/NurseHistoryFilter';
 import StatusPill from '@/features/doctor/components/StatusPill';
 import '../styles/doctor-patient-clinical.css';
 

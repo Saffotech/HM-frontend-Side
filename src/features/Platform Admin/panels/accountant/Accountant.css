@@ -16,6 +16,8 @@
 }
 
 .accounts-stat {
+  display: grid;
+  gap: 2px;
   position: relative;
   padding: 14px 16px 14px 18px;
   box-shadow: none;
@@ -68,6 +70,7 @@
 .accounts-stat-collected::before { background: #1c7a55; }
 
 .accounts-stat strong {
+  display: block;
   font-size: 24px;
 }
 

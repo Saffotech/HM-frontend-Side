@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Activity } from 'lucide-react';
-import NurseVitalsSnapshotView from '@/features/nurse/components/NurseVitalsSnapshotView';
+import NurseVitalsSnapshotView from '@/shared/components/clinical/NurseVitalsSnapshotView';
 import { useDoctorPatientVitalsQuery } from '@/features/doctor/hooks/useDoctorPatientQuery';
 import { useDoctorPermission, DOCTOR_PERMISSIONS } from '@/features/doctor/hooks/useDoctorPermission';
 import { withAssembledDoctorVitalHistory } from '@/shared/api/mappers/doctorPatientMapper';

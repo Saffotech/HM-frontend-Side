@@ -1,7 +1,7 @@
 import {
   BarChart3,
-  BedDouble,
-  CalendarDays,
+  Building2,
+  ClipboardList,
   LayoutDashboard,
   Settings,
   User,
@@ -15,14 +15,14 @@ import '../styles/admin.css';
 import '../styles/admin-mobile.css';
 
 const NAV_LINKS = [
-  { href: ROUTES.ADMIN_DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
-  { href: ROUTES.ADMIN_STAFF, label: 'Staff', icon: Users },
-  { href: ROUTES.ADMIN_BED_ALLOCATION, label: 'Nurse Bed Allocation', icon: BedDouble },
-  { href: ROUTES.ADMIN_NURSE_WORKFORCE, label: 'Nurse Workforce', icon: CalendarDays },
-  { href: ROUTES.ADMIN_REPORTS, label: 'Reports', icon: BarChart3 },
-  { href: ROUTES.ADMIN_ROLES, label: 'Roles', icon: UserCog },
-  { href: ROUTES.ADMIN_SETTINGS, label: 'Settings', icon: Settings },
-  { href: ROUTES.ADMIN_PROFILE, label: 'Profile', icon: User },
+  { href: ROUTES.SUPER_ADMIN_DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
+  { href: ROUTES.SUPER_ADMIN_STAFF, label: 'Staff', icon: Users },
+  { href: ROUTES.SUPER_ADMIN_DEPARTMENTS, label: 'Departments', icon: Building2 },
+  { href: ROUTES.SUPER_ADMIN_ROLES, label: 'Roles', icon: UserCog },
+  { href: ROUTES.SUPER_ADMIN_SETTINGS, label: 'Settings', icon: Settings },
+  { href: ROUTES.SUPER_ADMIN_REPORTS, label: 'Reports', icon: BarChart3 },
+  { href: ROUTES.SUPER_ADMIN_AUDIT, label: 'Audit Log', icon: ClipboardList },
+  { href: ROUTES.SUPER_ADMIN_PROFILE, label: 'Profile', icon: User },
 ];
 
 /** Top shell title stays "Admin"; page names live in each screen header. */
@@ -33,62 +33,43 @@ function resolveTitle() {
 }
 
 function isStaffActive(pathname) {
-  return pathname === ROUTES.ADMIN_STAFF || pathname.startsWith('/admin/staff/');
+  return pathname === ROUTES.SUPER_ADMIN_STAFF || pathname.startsWith('/super-admin/staff/');
 }
 
-function isReportsActive(pathname) {
-  return pathname.startsWith(ROUTES.ADMIN_REPORTS);
+function isDepartmentsActive(pathname) {
+  return pathname === ROUTES.SUPER_ADMIN_DEPARTMENTS
+    || pathname.startsWith('/super-admin/departments/');
 }
 
 function isRolesActive(pathname) {
-  return pathname === ROUTES.ADMIN_ROLES;
-}
-
-function isBedAllocationActive(pathname) {
-  return pathname === ROUTES.ADMIN_BED_ALLOCATION || pathname.startsWith('/admin/bed-allocation');
-}
-
-function isSettingsActive(pathname) {
-  return pathname === ROUTES.ADMIN_SETTINGS || pathname.startsWith(`${ROUTES.ADMIN_SETTINGS}/`);
+  return pathname === ROUTES.SUPER_ADMIN_ROLES || pathname.startsWith('/super-admin/roles/');
 }
 
 function isNavLinkActive(pathname, link) {
-  if (link.href === ROUTES.ADMIN_STAFF) {
-    return isStaffActive(pathname);
-  }
-  if (link.href === ROUTES.ADMIN_REPORTS) {
-    return isReportsActive(pathname);
-  }
-  if (link.href === ROUTES.ADMIN_ROLES) {
-    return isRolesActive(pathname);
-  }
-  if (link.href === ROUTES.ADMIN_BED_ALLOCATION) {
-    return isBedAllocationActive(pathname);
-  }
-  if (link.href === ROUTES.ADMIN_SETTINGS) {
-    return isSettingsActive(pathname);
-  }
-  return pathname === link.href || pathname.startsWith(link.href);
+  if (link.href === ROUTES.SUPER_ADMIN_STAFF) return isStaffActive(pathname);
+  if (link.href === ROUTES.SUPER_ADMIN_DEPARTMENTS) return isDepartmentsActive(pathname);
+  if (link.href === ROUTES.SUPER_ADMIN_ROLES) return isRolesActive(pathname);
+  return pathname === link.href || pathname.startsWith(`${link.href}/`);
 }
 
-export default function AdminLayout({ children, compact = false }) {
+export default function SuperAdminLayout({ children, compact = false }) {
   const location = useLocation();
-  const onProfilePage = location.pathname === ROUTES.ADMIN_PROFILE;
+  const onProfilePage = location.pathname === ROUTES.SUPER_ADMIN_PROFILE;
 
   return (
     <RoleLayout
       navLinks={NAV_LINKS}
       resolveTitle={resolveTitle}
-      homeRoute={ROUTES.ADMIN_DASHBOARD}
+      homeRoute={ROUTES.SUPER_ADMIN_DASHBOARD}
+      layoutClassName="layout--super-admin"
       defaultTitle={HEADER_TITLE}
       compact={compact}
-      layoutClassName="admin-layout"
       isNavLinkActive={isNavLinkActive}
       showBell={false}
-      profileHref={ROUTES.ADMIN_PROFILE}
+      profileHref={ROUTES.SUPER_ADMIN_PROFILE}
       logoutMenuOnly={onProfilePage}
     >
-      <div className="admin-shell">{children}</div>
+      <div className="sa-shell">{children}</div>
     </RoleLayout>
   );
 }

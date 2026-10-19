@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '@/shared/hooks/useAuth';
+import { matchesHospitalBump } from '@/components/security/hospitalBrowserStorage';
 
 export const LAB_PERMISSIONS_BUMP_KEY = 'hms:lab-permissions-bump';
 
@@ -21,7 +22,7 @@ function LabPermissionSync({ children }) {
       if (document.visibilityState === 'visible') sync();
     };
     const onStorage = (event) => {
-      if (event.key === LAB_PERMISSIONS_BUMP_KEY) sync();
+      if (matchesHospitalBump(event.key, LAB_PERMISSIONS_BUMP_KEY)) sync();
     };
     const onBump = () => sync();
 

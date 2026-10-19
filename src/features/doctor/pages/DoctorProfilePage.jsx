@@ -757,7 +757,7 @@ export default function DoctorProfilePage() {
               </h3>
               <p className="doc-profile-hint">
                 License, fee, specialization, department, employee ID, and joining date are
-                managed by admin.
+                managed by a manager.
               </p>
               <div className="doc-profile-grid">
                 <ReadField label="First name" value={profile.first_name} />

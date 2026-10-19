@@ -16,7 +16,7 @@ export const STAFF_MODULE_AVAILABILITY = {
   'Lab Technician': MODULE_STATUS.LIVE,
   OPD: MODULE_STATUS.LIVE,
   Administration: MODULE_STATUS.LIVE,
-  'Super Administration': MODULE_STATUS.LIVE,
+  Management: MODULE_STATUS.LIVE,
   Pharmacy: MODULE_STATUS.LIVE,
   Nursing: MODULE_STATUS.LIVE,
   Reception: MODULE_STATUS.LIVE,

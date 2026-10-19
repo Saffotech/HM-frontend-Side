@@ -25,7 +25,7 @@ const COLUMNS = {
 };
 
 export default function Conversions() {
-  const { leads, hospitals, invoices, today, actions } = useCrm();
+  const { leads, hospitals, invoices, today, actions, billingAvailable, scopeLabel } = useCrm();
   const [params, setParams] = useSearchParams();
   const tab = TABS.some(([key]) => key === params.get("tab")) ? params.get("tab") : "pending";
   const query = params.get("q") || "";
@@ -52,6 +52,7 @@ export default function Conversions() {
 
   return (
     <div className="crm-page">
+      {scopeLabel && <p className="crm-callout crm-callout-info">{scopeLabel}</p>}
       <p className="crm-callout crm-callout-purple">
         <BadgeCheck size={16} aria-hidden="true" />
         <span>You hand agreed hospitals to Accounts; Accounts registers them and sets up billing. Registration status here is read-only and updates as soon as Accounts finishes.</span>
@@ -116,9 +117,12 @@ export default function Conversions() {
                     <td>{hospital?.plan || lead.plan || "—"}<span className="crm-sub">{hospital?.billingCycle || lead.billingCycle || "—"}</span></td>
                     <td className="crm-nowrap">{formatDate(lead.registeredAt)}</td>
                     <td>{lead.registeredBy || "—"}</td>
-                    <td>{hospital ? <span className={`crm-badge crm-badge-${hospital.subscriptionStatus === "Active" ? "converted" : hospital.subscriptionStatus === "Trial" ? "new" : "closed"}`}>{hospital.subscriptionStatus}</span> : <span className="crm-sub">Not found</span>}</td>
+                    <td>{billingAvailable && hospital
+                      ? <span className={`crm-badge crm-badge-${hospital.subscriptionStatus === "Active" ? "converted" : hospital.subscriptionStatus === "Trial" ? "new" : "closed"}`}>{hospital.subscriptionStatus}</span>
+                      : <span className="crm-sub">Unavailable</span>}
+                    </td>
                     <td>{days === null ? "—" : plural(days, "day")}</td>
-                    <td className="crm-nowrap">{fact?.paidInvoices.length ? formatCurrency(fact.revenue) : <span className="crm-sub">No paid invoices</span>}</td>
+                    <td className="crm-nowrap">{billingAvailable && fact?.paidInvoices.length ? formatCurrency(fact.revenue) : <span className="crm-sub">{billingAvailable ? "No paid invoices" : "Unavailable"}</span>}</td>
                     <td><div className="crm-row-actions"><button type="button" className="crm-link" onClick={() => actions.openLead(lead.id)}>View</button></div></td>
                   </tr>
                 );

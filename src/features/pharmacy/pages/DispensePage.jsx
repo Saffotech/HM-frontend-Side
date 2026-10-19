@@ -29,11 +29,11 @@ import {
   formatSummaryQuantity,
   inferMedicineUnit,
 } from '@/features/pharmacy/utils/prescriptionQuantity';
+import { currentSessionEpoch, isSessionCurrent } from '@/components/security/sessionEpoch';
+import { isSupersededSessionError } from '@/components/security/httpSessionPolicy';
 import {
   calculateUnitPriceFromLineAmount,
   parseDispenseAmountInput,
-  recordPharmacyDispenseWithPricing,
-  resolveAdmissionIdForPharmacyPatient,
 } from '@/features/pharmacy/utils/dispensePricing';
 import PharmacyTruncatedText from '@/features/pharmacy/components/PharmacyTruncatedText';
 import { formatCurrency, currencyAmountLabel } from '@/shared/utils/formatCurrency';
@@ -135,48 +135,24 @@ export default function DispensePage() {
       return;
     }
 
-    const dispensedAt = new Date().toISOString();
-    const pricingItems = enrichedItems
-      .map((item) => {
-        const qty = parseDispenseQuantityInput(quantities[item.id]) ?? 0;
-        const lineAmount = parseDispenseAmountInput(amounts[item.id]) ?? 0;
-        if (qty <= 0) return null;
-        return {
-          prescriptionItemId: getPrescriptionItemDbId(item),
-          medicineName: item.medicine_name,
-          quantity: qty,
-          unitPrice: calculateUnitPriceFromLineAmount(lineAmount, qty),
-          amount: lineAmount,
-        };
-      })
-      .filter(Boolean);
-
-    const persistDispensePricing = () => {
-      recordPharmacyDispenseWithPricing({
-        prescriptionId: id,
-        patientId: rx.patient_id,
-        patientUid: rx.patient_uid,
-        admissionId: resolveAdmissionIdForPharmacyPatient(rx.patient_id, rx.patient_uid),
-        dispensedAt,
-        items: pricingItems,
-      });
-    };
+    const epochAtStart = currentSessionEpoch();
 
     try {
       await dispenseMutation.mutateAsync({ prescriptionId: id, body });
-      persistDispensePricing();
+      if (!isSessionCurrent(epochAtStart)) return;
       toast.success('Dispensed successfully');
       navigate(`/pharmacy/prescriptions/${id}`);
     } catch (err) {
+      if (!isSessionCurrent(epochAtStart) || isSupersededSessionError(err)) return;
       if (err?.status >= 500 && token) {
         try {
           const refreshed = await fetchPrescriptionById(id, token);
+          if (!isSessionCurrent(epochAtStart)) return;
           const afterItems = enrichPrescriptionItems(refreshed);
           if (
             refreshed?.status !== rx?.status
             || dispenseWasApplied(enrichedItems, afterItems, quantities)
           ) {
-            persistDispensePricing();
             queryClient.invalidateQueries({ queryKey: queryKeys.pharmacy.all });
             toast.success('Dispense completed');
             navigate(`/pharmacy/prescriptions/${id}`);

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { UserPlus, CalendarPlus, Receipt, Clock } from 'lucide-react';
 import { useOpdDashboardQuery } from '@/shared/hooks/queries/useOpdDashboardQuery';
-import { enrichAppointmentsWithApiPayment, prepareOpdDashboardAppointments } from '@/features/opd/utils/appointmentPaymentUtils';
+import { enrichAppointmentsWithApiPayment, prepareOpdDashboardAppointments } from '@/shared/utils/appointmentPaymentUtils';
 import { Avatar, StatusBadge, QueryFeedback } from '@/shared/components/common';
 import TodayOverviewCard from '@/features/opd/today-overview/components/TodayOverviewCard';
 import { useAuthStore } from '@/shared/store/useAuthStore';

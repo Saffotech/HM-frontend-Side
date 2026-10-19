@@ -2,7 +2,7 @@
  * Per-lead facts shared by the Super Admin CRM performance report and the CRM employee portal,
  * so both show the same numbers for the same lead.
  */
-import { CONTACT_METHODS } from "../data/tenantsData";
+import { CONTACT_METHODS } from "../data/catalog";
 import { subscriptionIdFromTenant } from "./invoices";
 import { localDay } from "./periods";
 

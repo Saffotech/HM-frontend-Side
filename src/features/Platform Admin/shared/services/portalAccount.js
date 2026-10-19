@@ -1,14 +1,6 @@
 /**
- * Account operations for the CRM and Accountant portals.
- *
- * The portals sign in against a fixed demo user list, so there is no account service yet.
- * Expected contracts once the backend exists (identity comes from the session token, never the body):
- *   GET    /api/v1/users/me                  200 PortalProfileResponse
- *   PATCH  /api/v1/users/me                  { phone, jobTitle, department } → 200 PortalProfileResponse · 400 { field, message }
- *   POST   /api/v1/users/me/photo            multipart/form-data "photo" (JPEG/PNG/WebP, ≤ 2 MB) → 200 { photoUrl } · 413 · 415
- *   DELETE /api/v1/users/me/photo            204
- *   POST   /api/v1/auth/change-password      { currentPassword, newPassword }
- *     204 on success · 400 { field, message } on validation · 401 when the current password is wrong or the session expired
+ * Portal account mutations. Identity is GET /auth/me.
+ * There is no platform profile PATCH, photo, or change-password route.
  */
 
 /**

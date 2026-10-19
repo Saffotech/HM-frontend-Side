@@ -137,15 +137,11 @@ export function buildDispensePayload(
         Number.isFinite(lineAmount) && lineAmount >= 0
           ? Math.round(lineAmount * 100) / 100
           : 0;
-      const unit_price =
-        qty > 0 ? Math.round((amount / qty) * 100) / 100 : 0;
 
       return {
         prescription_item_id: itemDbId,
         quantity_dispensed: qty,
-        // Backend may ignore until pharmacy dispense pricing is implemented.
         amount,
-        unit_price,
       };
     })
     .filter(Boolean);

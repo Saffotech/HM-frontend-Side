@@ -12,6 +12,7 @@
 
 .dash-page .kpi-grid {
   gap: 12px;
+  margin-top: 16px;
 }
 
 .dash-page .dash-kpi.skeleton {

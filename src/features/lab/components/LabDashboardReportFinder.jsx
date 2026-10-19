@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { X, Printer } from 'lucide-react';
 import { useLabReportsQuery } from '@/shared/hooks/queries/useLabQuery';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';

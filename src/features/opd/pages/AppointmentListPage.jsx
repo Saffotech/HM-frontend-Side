@@ -18,7 +18,7 @@ import {
   buildPaymentFromApiFields,
   matchesAppointmentStatusFilter,
   countAppointmentsByStatusFilter,
-} from '@/features/opd/utils/appointmentPaymentUtils';
+} from '@/shared/utils/appointmentPaymentUtils';
 import { useDepartmentsQuery, useDoctorsByDepartmentQuery } from '@/shared/hooks/queries/useOpdReferenceQuery';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import {

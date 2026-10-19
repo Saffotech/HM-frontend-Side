@@ -62,7 +62,6 @@ function NavItem({ item, className, onClick }) {
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
-  const location = useLocation();
   const links = getLinks();
 
   return (

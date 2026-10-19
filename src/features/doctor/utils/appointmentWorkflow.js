@@ -3,7 +3,7 @@ import {
   buildPaymentFromApiFields,
   getAppointmentDisplayStatus,
   isAppointmentPending,
-} from '@/features/opd/utils/appointmentPaymentUtils';
+} from '@/shared/utils/appointmentPaymentUtils';
 
 /** Primary workflow status (API → UI mapped `status` field). */
 export function getAppointmentStatus(appt) {

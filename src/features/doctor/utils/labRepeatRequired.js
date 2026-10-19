@@ -132,7 +132,7 @@ export function isLabRepeatRequired(row, index, { existingOrders = [], labOrders
  * (same-day duplicates require the checkbox — not auto-sent).
  */
 export function resolveLabIsRepeat(row, index, context = {}) {
-  if (Boolean(row?.isRepeat)) return true;
+  if (row?.isRepeat) return true;
   if (isLabRepeatRequired(row, index, context)) return false;
   const { existingOrders = [], visit = {} } = context;
   return hasInFlightLabOrder(existingOrders, row, visit);

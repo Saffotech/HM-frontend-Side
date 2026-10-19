@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import dashboardAdmin from '@/assets/Admin1.png';
+import dashboardAdmin from '@/assets/Manager1.png';
 import dashboardDoctor from '@/assets/Doctor2.png';
 import dashboardReception from '@/assets/Receptionist1.png';
-import dashboardSuperAdmin from '@/assets/Super_Admin1.png';
+import dashboardSuperAdmin from '@/assets/Admin1.png';
 import dashboardOpd from '@/assets/OPD1.png';
 import dashboardIpd from '@/assets/IPD1.png';
 import dashboardNurse from '@/assets/Nurse1.png';
@@ -11,8 +11,8 @@ import dashboardPharmacy from '@/assets/Pharmacy1.png';
 import './DashboardPreview.css';
 
 const TABS = [
-  { id: 'super-admin', label: 'Super Admin', img: dashboardSuperAdmin },
-  { id: 'admin', label: 'Admin', img: dashboardAdmin },
+  { id: 'super-admin', label: 'Admin', img: dashboardSuperAdmin },
+  { id: 'admin', label: 'Manager', img: dashboardAdmin },
   { id: 'opd', label: 'OPD', img: dashboardOpd },
   { id: 'ipd', label: 'IPD', img: dashboardIpd },
   { id: 'doctor', label: 'Doctor', img: dashboardDoctor },

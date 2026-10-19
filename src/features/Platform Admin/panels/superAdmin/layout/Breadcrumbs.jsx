@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
-import { usePlatform } from "../../../shared/context/PlatformContext";
+import { platformAuth } from "../../../shared/api/platformSession";
 import { PLATFORM_BASE } from "../../../shared/paths";
 import "./Breadcrumbs.css";
 
@@ -20,16 +20,15 @@ const titles = {
 export default function Breadcrumbs() {
   const location = useLocation();
   const pathname = location.pathname.slice(PLATFORM_BASE.length).replace(/\/$/, "") || "/";
-  const { hospitals } = usePlatform();
   const tenantMatch = pathname.match(/^\/hospitals\/([^/]+)$/);
 
   if (!titles[pathname] && tenantMatch) {
-    const hospital = hospitals.find((item) => item.id === decodeURIComponent(tenantMatch[1]));
+    const tenant = platformAuth.recallRegisteredTenant(decodeURIComponent(tenantMatch[1]));
     return (
       <nav className="breadcrumbs" aria-label="Breadcrumb">
         <Link to={`${PLATFORM_BASE}/hospitals`}>{titles["/hospitals"]}</Link>
         <ChevronRight size={20} aria-hidden="true" />
-        <span className="breadcrumbs-current">{hospital?.name || "Tenant details"}</span>
+        <span className="breadcrumbs-current">{tenant?.name || "Tenant details"}</span>
       </nav>
     );
   }

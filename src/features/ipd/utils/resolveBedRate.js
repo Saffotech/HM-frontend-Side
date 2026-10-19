@@ -7,7 +7,7 @@ import {
   coerceBedType,
   doubleWardStorageKey,
   isDoubleWardStorageKey,
-} from '@/features/admin/utils/bedTariffRates';
+} from '@/features/manager/utils/bedTariffRates';
 
 function findWardRate(bedTariff, wardName) {
   const wardKey = String(wardName || '').trim().toLowerCase();

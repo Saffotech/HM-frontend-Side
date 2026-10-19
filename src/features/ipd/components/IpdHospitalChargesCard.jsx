@@ -10,7 +10,6 @@ import {
   groupHospitalChargeBuckets,
   isDefaultChargeHead,
   isDiscountCharge,
-  normalizeInsuranceChargeHeads,
   sortInsuranceChargeHeads,
 } from '@/features/ipd/utils/insuranceChargeHeads';
 import { toast } from '@/shared/utils/toast';
@@ -238,5 +237,3 @@ function IpdHospitalChargesCard({
 }
 
 export default memo(IpdHospitalChargesCard);
-
-export { calculateInsuranceChargeTotals, normalizeInsuranceChargeHeads, sortInsuranceChargeHeads };

@@ -15,14 +15,14 @@ const CONTACT_INFO = [
 ];
 
 const ROLE_OPTIONS = [
-  'Hospital Admin / Decision Maker',
+  'Hospital Manager / Decision Maker',
   'OPD / Front Office',
   'Doctor',
   'Nurse',
   'Lab',
   'Receptionist',
   'Pharmacy',
-  'IT / Super Admin',
+  'IT / Admin',
   'Other',
 ];
 

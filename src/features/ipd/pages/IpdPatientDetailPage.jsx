@@ -45,7 +45,7 @@ export default function IpdPatientDetailPage() {
 
   const admission = data?.admission;
   const visits = data?.doctor_visits ?? [];
-  const bills = data?.bills ?? [];
+  const bills = useMemo(() => data?.bills ?? [], [data?.bills]);
   const running = data?.running_bill;
   const admitted = admission?.status === 'admitted';
 

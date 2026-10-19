@@ -7,7 +7,7 @@
 
 
 import { memo } from 'react';
-import { BrandLogo, BrandName } from '@/shared/components/common';
+import { BrandLogo, BrandName, HospitalName } from '@/shared/components/common';
 import { APP_NAME } from '@/shared/constants';
 import { formatCurrency, currencyAmountLabel } from '@/shared/utils/formatCurrency';
 import './IpdInsuranceBillPrint.css';
@@ -173,17 +173,7 @@ function IpdInsuranceBillPrintSheet({ model, className = '' }) {
 
               </h1>
 
-              <p className="ipd-ins-print-header__address">
-
-                123 Health Avenue, Medical District, Mumbai — 400001
-
-              </p>
-
-              <p className="ipd-ins-print-header__contact">
-
-                Tel: +91 800 123 4567 · billing@saffocare.com · GSTIN: 27AABCM1234A1Z5
-
-              </p>
+              <HospitalName className="ipd-ins-print-header__address" />
 
             </div>
 

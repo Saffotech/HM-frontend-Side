@@ -37,23 +37,15 @@ export async function submitDispense(prescriptionId, body, token) {
       if (!Number.isInteger(qty) || qty <= 0) return null;
 
       const amountRaw = Number(row.amount);
-      const unitPriceRaw = Number(row.unit_price);
       const amount =
         Number.isFinite(amountRaw) && amountRaw >= 0
           ? Math.round(amountRaw * 100) / 100
           : 0;
-      const unit_price =
-        Number.isFinite(unitPriceRaw) && unitPriceRaw >= 0
-          ? Math.round(unitPriceRaw * 100) / 100
-          : qty > 0
-            ? Math.round((amount / qty) * 100) / 100
-            : 0;
 
       return {
         prescription_item_id: itemId,
         quantity_dispensed: qty,
         amount,
-        unit_price,
       };
     })
     .filter(Boolean);
@@ -71,9 +63,12 @@ export async function submitDispense(prescriptionId, body, token) {
 }
 
 export async function fetchPrescriptionDispenseHistory(prescriptionId, token) {
-  const raw = await getDispenseHistory(token, { page: 1, limit: 100 });
-  const rows = mapDispenseHistory(raw);
-  return rows.filter((row) => String(row.prescription_id) === String(prescriptionId));
+  const raw = await getDispenseHistory(token, {
+    page: 1,
+    limit: 100,
+    prescription_id: Number(prescriptionId),
+  });
+  return mapDispenseHistory(raw);
 }
 
 export async function fetchDispenseHistory(

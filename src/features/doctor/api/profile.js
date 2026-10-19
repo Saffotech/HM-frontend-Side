@@ -4,8 +4,8 @@
  * GET/PUT /doctor/profile + image upload/delete. Frontend-only wiring.
  */
 
-import { apiClient } from '@/shared/api/client';
-import { API_BASE_URL, API_PREFIX } from '@/shared/constants';
+import { apiClient, apiSessionRequest } from '@/shared/api/client';
+import { API_BASE_URL } from '@/shared/constants';
 
 /** Top-level fields allowed on PUT — nested address / emergency_contact handled separately. */
 export const DOCTOR_PROFILE_EDITABLE_TOP_KEYS = [
@@ -51,29 +51,12 @@ export async function updateDoctorProfile(payload, token) {
 export async function uploadDoctorProfileImage(file, token) {
   const formData = new FormData();
   formData.append('file', file);
-
-  const headers = {};
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  const response = await fetch(
-    `${API_BASE_URL}${API_PREFIX}/doctor/profile/image`,
-    {
-      method: 'POST',
-      headers,
-      body: formData,
-    }
-  );
-
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const detail = typeof body.detail === 'string' ? body.detail : body.message;
-    const err = new Error(detail || 'Profile image upload failed');
-    err.status = response.status;
-    throw err;
-  }
-  return body;
+  return apiSessionRequest('/doctor/profile/image', {
+    method: 'POST',
+    body: formData,
+    token,
+    fallbackMessage: 'Profile image upload failed',
+  });
 }
 
 export async function deleteDoctorProfileImage(token) {

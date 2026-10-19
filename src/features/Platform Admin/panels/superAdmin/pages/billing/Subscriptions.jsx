@@ -1,262 +1,179 @@
 import { useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { X } from "lucide-react";
 import Button from "../../../../shared/components/Button";
-import DataTable from "../../../../shared/components/DataTable";
 import Modal from "../../../../shared/components/Modal";
-import Pagination from "../../../../shared/components/Pagination";
 import SearchBar from "../../../../shared/components/SearchBar";
 import Select from "../../../../shared/components/Select";
-import { buildSubscriptions } from "../../../../shared/data/subscriptionsData";
-import { usePlatform } from "../../../../shared/context/PlatformContext";
-import { usePagination } from "../../../../shared/hooks/usePagination";
+import { PLAN_NAMES } from "../../../../shared/data/catalog";
 import { PLATFORM_BASE } from "../../../../shared/paths";
-import { daysUntil, formatDate } from "../../../../shared/utils/formatDate";
-import { formatCurrency } from "../../../../shared/utils/formatCurrency";
-import { includesQuery, sortRows } from "../../../../shared/utils/table";
+import { formatDate } from "../../../../shared/utils/formatDate";
+import { useRegisteredHospitals } from "../../useRegisteredHospitals";
 import "./Subscriptions.css";
 
-const STATUSES = ["Active", "Trial", "Past Due", "Suspended", "Cancelled"];
-const CYCLES = ["Monthly", "Annual"];
+const FILTERS = { query: "", plan: "", status: "", cycle: "" };
 
-function renewsWithin30Days(item) {
-  if (item.status === "Cancelled") return false;
-  const days = daysUntil(item.renewalDate);
-  return days >= 0 && days <= 30;
+function statusKey(hospital) {
+  return String(hospital.subscription_status || hospital.tenant_status || "").toLowerCase();
+}
+
+function chipClass(status) {
+  if (status === "active") return "subs-chip subs-chip-active";
+  if (status === "trial") return "subs-chip subs-chip-trial";
+  if (status === "past due") return "subs-chip subs-chip-pastdue";
+  if (status === "suspended") return "subs-chip subs-chip-suspended";
+  return "subs-chip subs-chip-cancelled";
 }
 
 export default function Subscriptions() {
-  const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const { hospitals } = usePlatform();
-  const query = params.get("q") || "";
-  const [search, setSearch] = useState(query);
-  const [urlQuery, setUrlQuery] = useState(query);
-  const [status, setStatus] = useState("All");
-  const [plan, setPlan] = useState("All");
-  const [cycle, setCycle] = useState("All");
-  const [renewingSoon, setRenewingSoon] = useState(false);
-  const [sortKey, setSortKey] = useState("tenant");
-  const [sortDirection, setSortDirection] = useState("asc");
-  const [selectedId, setSelectedId] = useState(null);
-  if (query !== urlQuery) {
-    setUrlQuery(query);
-    setSearch(query);
-  }
+  const { hospitals, loading, error } = useRegisteredHospitals();
+  const [filters, setFilters] = useState(FILTERS);
+  const [open, setOpen] = useState(null);
+  const set = (key, value) => setFilters((current) => ({ ...current, [key]: value }));
 
-  const subscriptions = useMemo(() => buildSubscriptions(hospitals), [hospitals]);
-  const selected = subscriptions.find((item) => item.id === selectedId) || null;
-  const plans = [...new Set(hospitals.map((hospital) => hospital.plan))];
+  const counts = useMemo(() => ({
+    all: hospitals.length,
+    active: hospitals.filter((hospital) => statusKey(hospital) === "active").length,
+    trial: hospitals.filter((hospital) => statusKey(hospital) === "trial").length,
+    pastdue: hospitals.filter((hospital) => statusKey(hospital) === "past due").length,
+    suspended: hospitals.filter((hospital) => statusKey(hospital) === "suspended").length,
+  }), [hospitals]);
 
-  const summary = useMemo(() => {
-    return {
-      active: subscriptions.filter((item) => item.status === "Active").length,
-      trial: subscriptions.filter((item) => item.status === "Trial").length,
-      pastDue: subscriptions.filter((item) => item.status === "Past Due").length,
-      renewing: subscriptions.filter(renewsWithin30Days).length,
-      mrr: subscriptions.reduce((sum, item) => sum + (item.monthlyRecurring || 0), 0),
-    };
-  }, [subscriptions]);
+  const rows = useMemo(() => hospitals.filter((hospital) => {
+    const haystack = `${hospital.name || ""} ${hospital.code || ""} ${hospital.tenant_id || ""}`.toLowerCase();
+    if (filters.query && !haystack.includes(filters.query.trim().toLowerCase())) return false;
+    if (filters.plan && hospital.plan !== filters.plan) return false;
+    if (filters.status && statusKey(hospital) !== filters.status) return false;
+    if (filters.cycle && hospital.billing_cycle !== filters.cycle) return false;
+    return true;
+  }), [hospitals, filters]);
 
-  const rows = useMemo(() => {
-    const filtered = subscriptions.filter((item) => {
-      const matchesStatus = status === "All" || item.status === status;
-      const matchesPlan = plan === "All" || item.plan === plan;
-      const matchesCycle = cycle === "All" || item.billingCycle === cycle;
-      const matchesRenewal = !renewingSoon || renewsWithin30Days(item);
-      return matchesStatus && matchesPlan && matchesCycle && matchesRenewal && includesQuery([item.tenant, item.plan, item.tenantId], search);
-    });
-    return sortRows(filtered, sortKey, sortDirection);
-  }, [subscriptions, plan, cycle, renewingSoon, search, sortDirection, sortKey, status]);
-  const pagination = usePagination(rows, 10, `${search}|${status}|${plan}|${cycle}|${renewingSoon}|${sortKey}|${sortDirection}`);
-
-  const resetFilters = () => {
-    setSearch("");
-    setStatus("All");
-    setPlan("All");
-    setCycle("All");
-    setRenewingSoon(false);
-  };
-
-  const showStatus = (next) => {
-    setStatus(next);
-    setRenewingSoon(false);
-  };
-
-  const showRenewingSoon = () => {
-    setStatus("All");
-    setRenewingSoon(true);
-    setSortKey("renewalDate");
-    setSortDirection("asc");
-  };
+  const summary = [
+    ["all", "All", counts.all, ""],
+    ["active", "Active", counts.active, "tone-active"],
+    ["trial", "Trial", counts.trial, "tone-trial"],
+    ["past due", "Past due", counts.pastdue, "tone-pastdue"],
+    ["suspended", "Suspended", counts.suspended, ""],
+  ];
 
   return (
     <section className="subs-page">
+      <header className="page-header">
+        <h1>Subscriptions</h1>
+      </header>
+      <p className="panel-copy" style={{ marginTop: -6, marginBottom: 14 }}>
+        Rows are hospitals registered on the server. Renewal changes are not available without a subscriptions API.
+      </p>
+
       <div className="subs-summary">
-        <SummaryCell label="Active" value={summary.active} tone="active" onClick={() => showStatus("Active")} selected={!renewingSoon && status === "Active"} />
-        <SummaryCell label="On trial" value={summary.trial} tone="trial" onClick={() => showStatus("Trial")} selected={!renewingSoon && status === "Trial"} />
-        <SummaryCell label="Past due" value={summary.pastDue} tone="pastdue" onClick={() => showStatus("Past Due")} selected={!renewingSoon && status === "Past Due"} />
-        <SummaryCell label="Renewing in 30 days" value={summary.renewing} onClick={showRenewingSoon} selected={renewingSoon} />
-        <SummaryCell label="Monthly recurring revenue" value={formatCurrency(summary.mrr)} />
+        {summary.map(([key, label, value, tone]) => (
+          <button
+            key={key}
+            type="button"
+            className={`subs-summary-item clickable${filters.status === (key === "all" ? "" : key) && (key === "all" ? !filters.status : true) ? " selected" : ""}`}
+            onClick={() => set("status", key === "all" ? "" : key)}
+          >
+            <span>{label}</span>
+            <strong className={tone}>{value}</strong>
+          </button>
+        ))}
       </div>
 
       <section className="subs-panel">
         <div className="subs-toolbar">
-          <SearchBar value={search} onChange={setSearch} placeholder="Search tenant, ID, or plan" />
-          <Select label="Status" value={status} onChange={(event) => setStatus(event.target.value)}>
-            <option>All</option>
-            {STATUSES.map((item) => <option key={item}>{item}</option>)}
+          <SearchBar value={filters.query} onChange={(value) => set("query", value)} placeholder="Search hospital or code" />
+          <Select label="Plan" value={filters.plan} onChange={(event) => set("plan", event.target.value)}>
+            <option value="">All plans</option>
+            {PLAN_NAMES.map((plan) => <option key={plan} value={plan}>{plan}</option>)}
           </Select>
-          <Select label="Plan" value={plan} onChange={(event) => setPlan(event.target.value)}>
-            <option>All</option>
-            {plans.map((item) => <option key={item}>{item}</option>)}
+          <Select label="Status" value={filters.status} onChange={(event) => set("status", event.target.value)}>
+            <option value="">All statuses</option>
+            <option value="active">Active</option>
+            <option value="trial">Trial</option>
+            <option value="past due">Past due</option>
+            <option value="suspended">Suspended</option>
           </Select>
-          <Select label="Billing cycle" value={cycle} onChange={(event) => setCycle(event.target.value)}>
-            <option>All</option>
-            {CYCLES.map((item) => <option key={item}>{item}</option>)}
+          <Select label="Billing" value={filters.cycle} onChange={(event) => set("cycle", event.target.value)}>
+            <option value="">All cycles</option>
+            <option value="Monthly">Monthly</option>
+            <option value="Annual">Annual</option>
           </Select>
-          <Button variant="secondary" onClick={resetFilters}>Reset</Button>
+          <Button variant="secondary" onClick={() => setFilters(FILTERS)}>Reset</Button>
         </div>
         <div className="subs-meta">
           <span>{rows.length} subscription{rows.length === 1 ? "" : "s"}</span>
-          {renewingSoon && (
+          {filters.status && (
             <span className="subs-filter-tag">
-              Renewing in the next 30 days
-              <button type="button" aria-label="Clear renewing in 30 days filter" onClick={() => setRenewingSoon(false)}>
-                <X size={12} aria-hidden="true" />
-              </button>
+              {filters.status}
+              <button type="button" aria-label="Clear status filter" onClick={() => set("status", "")}><X size={12} /></button>
             </span>
           )}
         </div>
-        <DataTable
-          rows={pagination.rows}
-          sortKey={sortKey}
-          sortDirection={sortDirection}
-          onSort={(key) => {
-            if (sortKey === key) setSortDirection((direction) => direction === "asc" ? "desc" : "asc");
-            else { setSortKey(key); setSortDirection("asc"); }
-          }}
-          emptyTitle="No subscriptions"
-          emptyMessage="No subscriptions match these filters."
-          columns={[
-            {
-              key: "tenant",
-              label: "Tenant",
-              sortable: true,
-              render: (row) => (
-                <>
-                  <span className="subs-name">{row.tenant}</span>
-                  <span className="subs-id">{row.tenantId}</span>
-                </>
-              ),
-            },
-            { key: "plan", label: "Plan", sortable: true },
-            { key: "status", label: "Status", sortable: true, render: (row) => <StatusChip status={row.status} /> },
-            { key: "billingCycle", label: "Cycle", sortable: true },
-            {
-              key: "amount",
-              label: "Amount",
-              sortable: true,
-              render: (row) => (
-                <span className="subs-amount">
-                  {formatCurrency(row.amount)}
-                  <small>/{row.billingCycle === "Annual" ? "yr" : "mo"}</small>
-                </span>
-              ),
-            },
-            { key: "startDate", label: "Start Date", sortable: true, render: (row) => formatDate(row.startDate) },
-            { key: "renewalDate", label: "Renewal", sortable: true, render: (row) => <Renewal row={row} /> },
-            {
-              key: "actions",
-              label: "Actions",
-              render: (row) => (
-                <div className="subs-actions">
-                  <button type="button" className="action-link" onClick={() => setSelectedId(row.id)}>View</button>
-                </div>
-              ),
-            },
-          ]}
-        />
-        <Pagination {...pagination} onPageChange={pagination.setPage} />
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Hospital</th>
+                <th>Plan</th>
+                <th>Billing</th>
+                <th>Amount</th>
+                <th>Renewal</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
+                <tr>
+                  <td colSpan={7}><p className="subs-muted" style={{ margin: "14px 0" }}>{loading ? "Loading hospitals." : error || "No hospitals are registered yet."}</p></td>
+                </tr>
+              ) : rows.map((hospital) => {
+                const status = statusKey(hospital);
+                return (
+                  <tr key={hospital.tenant_id}>
+                    <td>
+                      <Link className="subs-name" to={`${PLATFORM_BASE}/hospitals/${hospital.tenant_id}`}>{hospital.name || "Hospital"}</Link>
+                      <span className="subs-id">{hospital.code || hospital.tenant_id}</span>
+                    </td>
+                    <td>{hospital.plan || "—"}</td>
+                    <td>{hospital.billing_cycle || "—"}</td>
+                    <td className="subs-amount">—</td>
+                    <td className="subs-renewal">{formatDate(hospital.subscription_renews_on)}</td>
+                    <td><span className={chipClass(status)}>{hospital.subscription_status || hospital.tenant_status || "—"}</span></td>
+                    <td>
+                      <div className="subs-actions">
+                        <button type="button" className="action-link" onClick={() => setOpen(hospital)}>View</button>
+                        <button type="button" className="action-link" disabled>Change plan</button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <Modal
-        open={Boolean(selected)}
-        title={selected?.tenant || "Subscription"}
-        subtitle={selected ? `${selected.id} · ${selected.plan} plan` : ""}
-        onClose={() => setSelectedId(null)}
-        size="lg"
-        footer={selected && (
-          <>
-            <Button variant="secondary" onClick={() => setSelectedId(null)}>Close</Button>
-            <Button onClick={() => navigate(`${PLATFORM_BASE}/hospitals/${selected.tenantId}`)}>Open hospital</Button>
-          </>
-        )}
+        open={Boolean(open)}
+        title={open?.name || "Subscription"}
+        subtitle="From the hospital registration"
+        onClose={() => setOpen(null)}
+        footer={<Button variant="secondary" onClick={() => setOpen(null)}>Close</Button>}
       >
-        {selected && (
+        {open && (
           <dl className="subs-info">
-            <InfoRow label="Plan" value={selected.plan} />
-            <InfoRow label="Status" value={<StatusChip status={selected.status} />} />
-            <InfoRow label="Billing cycle" value={selected.billingCycle} />
-            <InfoRow label="Cycle amount" value={formatCurrency(selected.amount)} />
-            <InfoRow label="Monthly value" value={formatCurrency(selected.monthlyRecurring)} />
-            <InfoRow label="Tenant ID" value={<span className="subs-id">{selected.tenantId}</span>} />
-            <InfoRow label="Started" value={formatDate(selected.startDate)} />
-            <InfoRow label="Renews" value={<Renewal row={selected} />} />
+            <div className="subs-info-row"><dt>Hospital</dt><dd>{open.name || "—"}</dd></div>
+            <div className="subs-info-row"><dt>Code</dt><dd>{open.code || "—"}</dd></div>
+            <div className="subs-info-row"><dt>Plan</dt><dd>{open.plan || "—"}</dd></div>
+            <div className="subs-info-row"><dt>Billing</dt><dd>{open.billing_cycle || "—"}</dd></div>
+            <div className="subs-info-row"><dt>Started</dt><dd>{formatDate(open.subscription_started_on)}</dd></div>
+            <div className="subs-info-row"><dt>Renews</dt><dd>{formatDate(open.subscription_renews_on)}</dd></div>
+            <div className="subs-info-row"><dt>Status</dt><dd>{open.subscription_status || open.tenant_status || "—"}</dd></div>
+            <div className="subs-info-row"><dt>Amount</dt><dd>—</dd></div>
           </dl>
         )}
       </Modal>
     </section>
-  );
-}
-
-function SummaryCell({ label, value, tone, onClick, selected }) {
-  const content = (
-    <>
-      <span>{label}</span>
-      <strong className={tone ? `tone-${tone}` : ""}>{value}</strong>
-    </>
-  );
-  if (!onClick) return <div className="subs-summary-item">{content}</div>;
-  return (
-    <button type="button" className={`subs-summary-item clickable ${selected ? "selected" : ""}`} onClick={onClick}>
-      {content}
-    </button>
-  );
-}
-
-function StatusChip({ status }) {
-  const tone = {
-    Active: "active",
-    Trial: "trial",
-    "Past Due": "pastdue",
-    Suspended: "suspended",
-    Cancelled: "cancelled",
-  }[status] || "cancelled";
-  return <span className={`subs-chip subs-chip-${tone}`}>{status}</span>;
-}
-
-function Renewal({ row }) {
-  if (row.status === "Cancelled") return <span className="subs-muted">—</span>;
-  const days = daysUntil(row.renewalDate);
-  let hint = `in ${days} days`;
-  let tone = "";
-  if (days < 0) { hint = `${Math.abs(days)} days overdue`; tone = "late"; }
-  else if (days === 0) { hint = "today"; tone = "soon"; }
-  else if (days <= 7) tone = "soon";
-  return (
-    <span className="subs-renewal">
-      {formatDate(row.renewalDate)}
-      <small className={tone}>{hint}</small>
-    </span>
-  );
-}
-
-function InfoRow({ label, value }) {
-  return (
-    <div className="subs-info-row">
-      <dt>{label}</dt>
-      <dd>{value}</dd>
-    </div>
   );
 }

@@ -36,7 +36,7 @@ import { useFormValidation } from '@/shared/hooks/useFormValidation';
 import { toast } from '@/shared/utils/toast';
 
 import { validatePaymentTransactionRef, requiresTransactionReference } from '@/shared/utils/validators';
-import { APPT_PAY_LATER_NOTE } from '@/features/opd/utils/appointmentPaymentUtils';
+import { APPT_PAY_LATER_NOTE } from '@/shared/utils/appointmentPaymentUtils';
 import { useOpdPricingControls } from '@/features/opd/hooks/useOpdBillingSettingsQuery';
 import {
   BOOK_APPOINTMENT_INITIAL_VALUES,
@@ -76,13 +76,6 @@ export default function BookAppointmentPage() {
     [scheduledAppointmentsData],
   );
 
-  const scheduledAppointments = useMemo(
-    () => asAppointmentList(scheduledAppointmentsData),
-    [scheduledAppointmentsData],
-  );
-
- 
-
   const bookablePatients = useMemo(
     () => filterPatientsAvailableForBooking(patients, bookedPatientKeys),
     [patients, bookedPatientKeys],
@@ -110,23 +103,23 @@ export default function BookAppointmentPage() {
   const set = (key, val) => handleChange(key, val);
 
   const handlePatientSelectChange = useCallback((v) => {
-    set('patientId', v);
+    handleChange('patientId', v);
     if (!v) setPatientSearch('');
-    set('deptId', '');
-    set('doctorId', '');
-    set('dateStr', '');
-    set('time', '');
+    handleChange('deptId', '');
+    handleChange('doctorId', '');
+    handleChange('dateStr', '');
+    handleChange('time', '');
   }, [handleChange]);
 
   const handleDeptSelectChange = useCallback((v) => {
-    set('deptId', v);
-    set('doctorId', '');
+    handleChange('deptId', v);
+    handleChange('doctorId', '');
   }, [handleChange]);
 
   const handleDoctorSelectChange = useCallback((v) => {
-    set('doctorId', v);
-    set('dateStr', '');
-    set('time', '');
+    handleChange('doctorId', v);
+    handleChange('dateStr', '');
+    handleChange('time', '');
   }, [handleChange]);
 
   const { data: doctors = [] } = useDoctorsByDepartmentQuery(deptId);
@@ -135,53 +128,8 @@ export default function BookAppointmentPage() {
   const selectedPatient =
     patients.find((p) => p.id === patientId) ?? patientDetail ?? null;
 
-    const hasAppointmentOnSelectedDate = useMemo(() => {
-  if (!patientId || !dateStr || !selectedPatient) return false;
-
-  const selectedPatientKey = String(
-    selectedPatient.dbId || selectedPatient.id || patientId
-  );
-
-  return scheduledAppointments.some((appointment) => {
-    const appointmentPatientKey = String(
-      appointment.patientDbId ||
-      appointment.patientId ||
-      appointment.patientUid ||
-      ''
-    );
-
-    if (appointmentPatientKey !== selectedPatientKey) {
-      return false;
-    }
-
-    if (!appointment.date) {
-      return false;
-    }
-
-    const appointmentDate = new Date(appointment.date);
-
-    if (Number.isNaN(appointmentDate.getTime())) {
-      return false;
-    }
-
-    const appointmentDateStr =
-      `${appointmentDate.getFullYear()}-${String(
-        appointmentDate.getMonth() + 1
-      ).padStart(2, '0')}-${String(
-        appointmentDate.getDate()
-      ).padStart(2, '0')}`;
-
-    return appointmentDateStr === dateStr;
-  });
-}, [
-  patientId,
-  dateStr,
-  selectedPatient,
-  scheduledAppointments,
-]);
-
   const { data: patientProfile } = usePatientProfileQuery(selectedPatient?.dbId);
-  const profileVisits = patientProfile?.visits ?? [];
+  const profileVisits = useMemo(() => patientProfile?.visits ?? [], [patientProfile?.visits]);
 
   const selectedDept = departments.find((d) => String(d.id) === String(deptId));
   const selectedDoctor = doctors.find((d) => String(d.id) === String(doctorId));

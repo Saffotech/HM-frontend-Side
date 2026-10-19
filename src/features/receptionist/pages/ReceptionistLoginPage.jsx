@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Lock, Mail, ShieldCheck, UserRound } from 'lucid
 import { ROUTES, ROLES } from '@/shared/constants';
 import { BrandLogo, BrandName } from '@/shared/components/common';
 import { useAuthStore } from '@/shared/store/useAuthStore';
+import { isSupersededSessionError } from '@/components/security/httpSessionPolicy';
 import { getAppEntryForRole } from '@/shared/utils/authRedirect';
 import { trimCredentials, hasCredentials, normalizeEmailInput } from '@/shared/utils/credentials';
 import { toast } from '@/shared/utils/toast';
@@ -56,6 +57,7 @@ export default function ReceptionistLoginPage() {
       toast.success(`Welcome, ${me.full_name}`);
       navigate(ROUTES.RECEPTIONIST_DASHBOARD, { replace: true });
     } catch (err) {
+      if (isSupersededSessionError(err)) return;
       const message =
         err?.status === 401
           ? 'Invalid email or password'

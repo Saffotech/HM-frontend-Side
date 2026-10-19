@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Lock, Mail, Pill, ShieldCheck } from 'lucide-rea
 import { ROUTES, ROLES } from '@/shared/constants';
 import { BrandLogo, BrandName } from '@/shared/components/common';
 import { useAuthStore } from '@/shared/store/useAuthStore';
+import { isSupersededSessionError } from '@/components/security/httpSessionPolicy';
 import { getAppEntryForRole } from '@/shared/utils/authRedirect';
 import { trimCredentials, hasCredentials, normalizeEmailInput } from '@/shared/utils/credentials';
 import { toast } from '@/shared/utils/toast';
@@ -56,6 +57,7 @@ export default function PharmacyLoginPage() {
       toast.success(`Welcome, ${me.full_name}`);
       navigate(ROUTES.PHARMACY_PRESCRIPTIONS, { replace: true });
     } catch (err) {
+      if (isSupersededSessionError(err)) return;
       const message =
         err?.status === 401
           ? 'Invalid email or password'

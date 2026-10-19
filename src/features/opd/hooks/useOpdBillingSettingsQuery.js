@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { getOpdBillingSettings } from '@/features/opd/api/opdSettings';
-import { opdSettingsApiToForm } from '@/features/admin/utils/opdSettingsMapper';
+import { opdSettingsApiToForm } from '@/features/manager/utils/opdSettingsMapper';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { QUICK_BILL_ITEMS } from '@/shared/constants/billing';
 import { TAX_RATE } from '@/shared/constants';

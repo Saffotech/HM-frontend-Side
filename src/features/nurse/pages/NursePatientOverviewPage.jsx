@@ -11,12 +11,12 @@ import {
 } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseQueueStatusBadge from '@/features/nurse/components/NurseQueueStatusBadge';
-import NurseNotesSnapshotView from '@/features/nurse/components/NurseNotesSnapshotView';
-import NurseVitalsSnapshotView from '@/features/nurse/components/NurseVitalsSnapshotView';
+import NurseNotesSnapshotView from '@/shared/components/clinical/NurseNotesSnapshotView';
+import NurseVitalsSnapshotView from '@/shared/components/clinical/NurseVitalsSnapshotView';
 import NurseMedicineCell from '@/features/nurse/components/NurseMedicineCell';
 import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
-import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
+import { useNursePatientScope } from '@/features/nurse/context/nursePatientScope';
 import { QueryFeedback } from '@/shared/components/common';
 import {
   formatPatientIdDisplay,

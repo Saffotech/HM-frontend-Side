@@ -2,7 +2,7 @@
  * Admin bed allocation — live backend HTTP + mapping.
  */
 
-import * as allocationApi from '@/features/admin/api/nurseBedAllocation';
+import * as allocationApi from '@/features/manager/api/nurseBedAllocation';
 import {
   mapAllocationDetailResponse,
   mapAllocationListResponse,

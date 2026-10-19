@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
   ArrowRight,
@@ -12,10 +12,12 @@ import {
 import { ROUTES } from '@/shared/constants';
 import { BrandLogo, BrandName } from '@/shared/components/common';
 import { useAuthStore } from '@/shared/store/useAuthStore';
-import { getAppEntryForRole, getAppEntryForUser } from '@/shared/utils/authRedirect';
+import { isSupersededSessionError } from '@/components/security/httpSessionPolicy';
+import { getAppEntryForRole } from '@/shared/utils/authRedirect';
+import { resolvePostLoginDestination } from '@/shared/auth/universalLoginPolicy';
+import { useUniversalSignIn } from '@/shared/auth/useUniversalSignIn';
 import { trimCredentials, hasCredentials, normalizeEmailInput } from '@/shared/utils/credentials';
 import { toast } from '@/shared/utils/toast';
-import { isStaffModuleLive } from '@/shared/constants/moduleAvailability';
 import './LoginPage.css';
 
 const STATS = [
@@ -28,9 +30,12 @@ const STATS = [
 const STAFF_LOGIN_BG_VIDEO = '/videos/Login_Animetion.mp4?v=1';
 
 export default function LoginPage() {
-  const { login, logout, error, isAuthenticated, user, authReady } = useAuthStore();
+  const { error, isAuthenticated, user, authReady } = useAuthStore();
+  const { signIn, signOutEverywhere, activePortal } = useUniversalSignIn();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
+  const switching = searchParams.get('switch') === '1';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -40,16 +45,18 @@ export default function LoginPage() {
   const bgVideoRef = useRef(null);
 
   useEffect(() => {
-    if (searchParams.get('switch') === '1') {
-      logout();
-      navigate(ROUTES.LOGIN, { replace: true });
-    }
-  }, [searchParams, logout, navigate]);
+    if (!switching) return;
+    signOutEverywhere();
+    navigate(ROUTES.LOGIN, { replace: true });
+  }, [switching, signOutEverywhere, navigate]);
 
   useEffect(() => {
-    if (!authReady || !isAuthenticated || !user) return;
-    navigate(getAppEntryForUser(user), { replace: true });
-  }, [authReady, isAuthenticated, user, navigate]);
+    if (switching || !authReady || !isAuthenticated || !user) return;
+    navigate(
+      resolvePostLoginDestination(user.role, location.state?.from, getAppEntryForRole),
+      { replace: true },
+    );
+  }, [switching, authReady, isAuthenticated, user, navigate, location.state]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -63,17 +70,12 @@ export default function LoginPage() {
 
     setSubmitting(true);
     try {
-      const me = await login(trimmed);
-      if (!isStaffModuleLive(me.department, me.role)) {
-        logout();
-        const blocked = `${me.department || 'This module'} is not available yet.`;
-        setFormError(blocked);
-        toast.error(blocked);
-        return;
-      }
-      toast.success(`Welcome, ${me.full_name}`);
-      navigate(getAppEntryForRole(me.role), { replace: true });
+      const result = await signIn(trimmed);
+      const name = result.profile?.full_name || result.profile?.name || 'back';
+      toast.success(`Welcome, ${name}`);
+      navigate(result.destination, { replace: true });
     } catch (err) {
+      if (isSupersededSessionError(err)) return;
       const message =
         err?.status === 401
           ? 'Invalid email or password'
@@ -110,6 +112,13 @@ export default function LoginPage() {
   }, []);
 
   const displayError = formError || error;
+  const resumePath = !switching && authReady && !isAuthenticated && activePortal?.role
+    ? resolvePostLoginDestination(activePortal.role, location.state?.from, getAppEntryForRole)
+    : null;
+
+  if (resumePath) {
+    return <Navigate to={resumePath} replace />;
+  }
 
   return (
     <div className="staff-login-page">
@@ -143,7 +152,7 @@ export default function LoginPage() {
               <BrandName variant="on-dark" /> staff portal
             </h1>
             <p className="staff-login-page__hero-lead">
-              One secure portal for doctors, pharmacists, lab techs and admin.
+              One sign-in for hospital staff, platform admin, CRM, and accounts.
             </p>
 
             <svg
@@ -211,7 +220,10 @@ export default function LoginPage() {
                       type="button"
                       className="staff-login-page__btn staff-login-page__btn--outline"
                       onClick={() =>
-                        navigate(getAppEntryForUser(user), { replace: true })
+                        navigate(
+                          resolvePostLoginDestination(user.role, location.state?.from, getAppEntryForRole),
+                          { replace: true },
+                        )
                       }
                     >
                       Continue

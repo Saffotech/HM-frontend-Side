@@ -18,6 +18,13 @@ import {
 } from '@/shared/hooks/queries/useNurseQuery';
 import { NURSE_QUEUE_MAX_PAGE_SIZE } from '@/shared/api/services/nurse';
 import { toast } from '@/shared/utils/toast';
+import { useAuth } from '@/shared/hooks/useAuth';
+import {
+  clearNurseHandoverPrefill,
+  readNurseHandoverPrefill,
+  writeNurseHandoverPrefill,
+} from '@/components/security/hospitalBrowserStorage';
+import { currentSessionEpoch, isSessionCurrent } from '@/components/security/sessionEpoch';
 
 const PATIENT_FIELDS = [
   { key: 'patient_summary', label: 'Patient Summary' },
@@ -37,6 +44,7 @@ function formatShiftLabel(shiftName) {
 export default function NurseHandoverDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { canUpdateHandovers, canSubmitHandovers } = useNursePermissionSet();
   const { data: handover, isLoading, isError, error, refetch } = useNurseHandoverQuery(id);
   const bulkMut = useBulkAddHandoverPatientsMutation(id);
@@ -84,7 +92,10 @@ export default function NurseHandoverDetailPage() {
     [handoverPatientIds],
   );
 
-  const allocatedOccupiedPatients = allocatedOccupied?.items ?? [];
+  const allocatedOccupiedPatients = useMemo(
+    () => allocatedOccupied?.items ?? [],
+    [allocatedOccupied?.items],
+  );
 
   const allocatedPatientIdSet = useMemo(
     () => new Set(allocatedOccupiedPatients.map((p) => Number(p.patient_id))),
@@ -107,35 +118,36 @@ export default function NurseHandoverDetailPage() {
   }, [hasAllocations, allocatedOccupiedPatients, handoverPatientIdSet]);
 
   const isDraft = handover?.status === 'pending';
-  const prefillStorageKey = id ? `nurse-handover-prefill:${id}` : null;
+  const scopeKey = `${user?.tenant_id ?? ''}:${user?.user_id ?? user?.id ?? ''}`;
+  const prefillStorageKey = id ? `${scopeKey}:${id}` : null;
+  const prefillKeyRef = useRef(prefillStorageKey);
+  if (prefillKeyRef.current !== prefillStorageKey) {
+    prefillKeyRef.current = prefillStorageKey;
+    autoPrefillDone.current = false;
+  }
 
   // Auto-add allocated occupied patients once for empty draft handovers.
   useEffect(() => {
     if (!handover || !isDraft || !canUpdateHandovers || !prefillStorageKey) return;
     if (autoPrefillDone.current) return;
-    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(prefillStorageKey)) {
+    const epochAtStart = currentSessionEpoch();
+    if (readNurseHandoverPrefill(id)) {
       autoPrefillDone.current = true;
       return;
     }
     if (summaryLoading) return;
 
+    const writeFlag = (value) => writeNurseHandoverPrefill(id, value, epochAtStart);
+
     if (!hasAllocations) {
       autoPrefillDone.current = true;
-      try {
-        sessionStorage.setItem(prefillStorageKey, 'skip');
-      } catch {
-        /* ignore */
-      }
+      writeFlag('skip');
       return;
     }
 
     if ((handover.patients?.length ?? 0) > 0) {
       autoPrefillDone.current = true;
-      try {
-        sessionStorage.setItem(prefillStorageKey, 'done');
-      } catch {
-        /* ignore */
-      }
+      writeFlag('done');
       return;
     }
 
@@ -147,28 +159,17 @@ export default function NurseHandoverDetailPage() {
       .map((patient_id) => ({ patient_id }));
 
     autoPrefillDone.current = true;
-    try {
-      sessionStorage.setItem(prefillStorageKey, 'pending');
-    } catch {
-      /* ignore */
-    }
+    writeFlag('pending');
 
     if (toAdd.length === 0) {
-      try {
-        sessionStorage.setItem(prefillStorageKey, 'done');
-      } catch {
-        /* ignore */
-      }
+      writeFlag('done');
       return;
     }
 
     bulkMut.mutate(toAdd, {
       onSuccess: () => {
-        try {
-          sessionStorage.setItem(prefillStorageKey, 'done');
-        } catch {
-          /* ignore */
-        }
+        if (!isSessionCurrent(epochAtStart)) return;
+        writeFlag('done');
         toast.success(
           toAdd.length === 1
             ? 'Allocated patient added to handover'
@@ -176,16 +177,14 @@ export default function NurseHandoverDetailPage() {
         );
       },
       onError: (err) => {
+        if (!isSessionCurrent(epochAtStart)) return;
         autoPrefillDone.current = false;
-        try {
-          sessionStorage.removeItem(prefillStorageKey);
-        } catch {
-          /* ignore */
-        }
+        clearNurseHandoverPrefill(id, epochAtStart);
         toast.error(err?.message || 'Failed to pre-add allocated patients');
       },
     });
   }, [
+    id,
     handover,
     isDraft,
     canUpdateHandovers,

@@ -32,7 +32,7 @@ export const receptionistRoutes = [
     element: (
       <ProtectedRoute
         allowedRoles={[ROLES.RECEPTIONIST]}
-        loginPath={ROUTES.RECEPTIONIST_LOGIN}
+        loginPath={ROUTES.LOGIN}
       />
     ),
     children: [

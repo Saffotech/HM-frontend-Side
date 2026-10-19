@@ -3,7 +3,7 @@
  * does not re-render hospital charges / daily charges on the billing page.
  */
 
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { Button } from '@/shared/components/common';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
 import { resolveAdmissionIdFromBillingContext } from '@/features/ipd/billing/ipdBillingMapper';
@@ -102,15 +102,18 @@ function IpdInsuranceClaimBillingCard({
   });
   const previewQuery = useIpdBillPreviewQuery(admissionId);
   const gstPercent = automaticGstPercent(previewQuery.data?.gst_percent);
+  const claimRef = useRef(claim);
+  claimRef.current = claim;
 
   useEffect(() => {
-    if (!claim) return;
+    const current = claimRef.current;
+    if (!current) return;
     setClaimedInput(
-      claim.claimed != null && claim.claimed !== '' ? String(claim.claimed) : '',
+      current.claimed != null && current.claimed !== '' ? String(current.claimed) : '',
     );
     setEstimateInput(
-      claim.estimateAmount != null && claim.estimateAmount !== ''
-        ? String(claim.estimateAmount)
+      current.estimateAmount != null && current.estimateAmount !== ''
+        ? String(current.estimateAmount)
         : '',
     );
     setClaimEditing(false);

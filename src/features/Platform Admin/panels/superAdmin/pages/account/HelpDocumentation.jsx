@@ -4,17 +4,16 @@ import { platformPath } from "../../../../shared/paths";
 import "./HelpDocumentation.css";
 
 const modules = [
-  ["Dashboard", "Review tenant counts, revenue, and items that need attention.", platformPath("/")],
-  ["Hospitals", "Search tenants, change sample status, and open a hospital record.", platformPath("/hospitals")],
-  ["Register Hospital", "Validate a new demonstration tenant and add it to the local list.", platformPath("/hospitals/register")],
-  ["CRM & Performance", "Follow up hospital requests, log calls, and track CRM team performance.", platformPath("/crm-performance")],
-  ["Billing", "Review plans, subscriptions, and printable sample invoices.", platformPath("/billing/plans")],
-  ["Profile", "Update your name, contact details, and display density.", platformPath("/profile")],
+  ["Hospitals", "Register a hospital with POST /tenants. The directory lists every hospital on the server.", platformPath("/hospitals")],
+  ["Register Hospital", "Creates a tenant and hospital admin on the server.", platformPath("/hospitals/register")],
+  ["CRM", "Work leads in the CRM portal. Company-wide CRM analytics are not available.", platformPath("/crm-performance")],
+  ["Accountant", "Register agreed leads from the Accountant portal.", "/platform/accounts/registrations"],
+  ["Profile", "Shows GET /auth/me. Profile edits are not available.", platformPath("/profile")],
 ];
 
 const faqs = [
-  ["Does this dashboard talk to a hospital or payment provider?", "No. Every screen uses demonstration records stored in this browser."],
-  ["Will suspend or register change a real tenant?", "No. Those actions update the local sample list and add an activity entry."],
+  ["Does dashboard analytics use live hospital data?", "Hospital counts, registrations, plans, and locations come from GET /tenants. Revenue and CRM figures stay empty until those APIs exist."],
+  ["Does register hospital create a real tenant?", "Yes. POST /tenants creates the hospital. The directory lists hospitals registered by platform admin and by the accountant."],
 ];
 
 export default function HelpDocumentation() {
@@ -25,7 +24,7 @@ export default function HelpDocumentation() {
       <div className="help-grid">
         <section className="card card-pad">
           <h2>Navigation guide</h2>
-          <p className="panel-copy">Use the sidebar groups to move between overview, tenants, billing, and your account.</p>
+          <p className="panel-copy">Use the sidebar to register hospitals or open CRM and Accountant on their APIs.</p>
           <ul className="list-reset link-list">
             {modules.map(([title, copy, href]) => (
               <li key={href}>
@@ -46,13 +45,6 @@ export default function HelpDocumentation() {
           ))}
         </section>
       </div>
-      <section className="card card-pad" style={{ marginTop: 16 }}>
-        <h2>Troubleshooting</h2>
-        <ul>
-          <li>If a hospital you registered is missing, check the search box and status filter, then reset filters.</li>
-          <li>If charts look empty, widen the analytics period to the last 12 months.</li>
-          <li>If the layout feels cramped, set Display density to Comfortable on My Profile and save.</li>        </ul>
-      </section>
     </section>
   );
 }

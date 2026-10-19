@@ -40,8 +40,15 @@ export async function register(userData) {
   });
 }
 
-export async function logout() {
-  return { ok: true };
+export function logout(token) {
+  if (!token) return Promise.resolve(null);
+  // Start the request immediately so the Bearer header is attached before
+  // the caller deletes the stored hospital session. Failures are ignored.
+  return apiClient('/auth/logout', {
+    method: 'POST',
+    token,
+    skipSessionLogout: true,
+  }).catch(() => null);
 }
 
 export async function getCurrentUser(token) {

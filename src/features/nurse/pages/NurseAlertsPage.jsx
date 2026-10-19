@@ -14,7 +14,7 @@ import {
   useNurseAlertSummaryQuery,
   useNurseBedPatientsQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
-import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
+import { useNursePatientScope } from '@/features/nurse/context/nursePatientScope';
 import { ROUTES } from '@/shared/constants';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
 import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';

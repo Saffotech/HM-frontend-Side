@@ -40,7 +40,7 @@ export default function DoctorPatientVisitsPanel({
   );
   const [page, setPage] = useState(1);
 
-  const visits = data?.visits ?? [];
+  const visits = useMemo(() => data?.visits ?? [], [data?.visits]);
 
   useEffect(() => {
     setPage(1);

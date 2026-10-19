@@ -1,0 +1,6 @@
+.unavailable-feature {
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 12px;
+  padding: 24px 16px;
+}

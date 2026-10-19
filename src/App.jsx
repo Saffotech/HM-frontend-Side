@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ToastContainer } from '@/shared/components/common';
 import ProtectedRoute from '@/components/security/ProtectedRoute';
 import GuestRoute from '@/components/security/GuestRoute';
@@ -15,22 +15,16 @@ import { nurseRoutes } from '@/routes/nurseRoutes';
 import { opdRoutes } from '@/routes/opdRoutes';
 import { receptionistRoutes } from '@/routes/receptionistRoutes';
 import { ipdRoutes } from '@/routes/ipdRoutes';
+import { managerRoutes } from '@/routes/managerRoutes';
 import { adminRoutes } from '@/routes/adminRoutes';
-import { superAdminRoutes } from '@/routes/superAdminRoutes';
 
 const LandingPage = lazy(() => import('@/pages/landing/LandingPage'));
 const AboutPage = lazy(() => import('@/pages/landing/AboutPage'));
 const LoginPage = lazy(() => import('@/pages/landing/LoginPage'));
 const PatientLoginPage = lazy(() => import('@/pages/landing/PatientLoginPage'));
-const PharmacyLoginPage = lazy(() => import('@/features/pharmacy/pages/PharmacyLoginPage'));
-const ReceptionistLoginPage = lazy(
-  () => import('@/features/receptionist/pages/ReceptionistLoginPage')
-);
 const ReceptionistRegisterPage = lazy(
   () => import('@/features/receptionist/pages/ReceptionistRegisterPage')
 );
-const AdminLoginPage = lazy(() => import('@/features/admin/pages/AdminLoginPage'));
-const SuperAdminLoginPage = lazy(() => import('@/features/super-admin/pages/SuperAdminLoginPage'));
 const UnauthorizedPage = lazy(() => import('@/pages/UnauthorizedPage'));
 // Platform Admin: separate SaaS-owner app (super admin / CRM / accounts), lazy-loaded under /platform/*
 const PlatformApp = lazy(() => import('@/features/Platform Admin/PlatformApp'));
@@ -82,27 +76,9 @@ export default function App() {
           }
         />
 
-        <Route
-          path={ROUTES.PHARMACY_LOGIN}
-          element={
-            <LazyRoute>
-              <GuestRoute>
-                <PharmacyLoginPage />
-              </GuestRoute>
-            </LazyRoute>
-          }
-        />
+        <Route path={ROUTES.PHARMACY_LOGIN} element={<Navigate to={ROUTES.LOGIN} replace />} />
 
-        <Route
-          path={ROUTES.RECEPTIONIST_LOGIN}
-          element={
-            <LazyRoute>
-              <GuestRoute>
-                <ReceptionistLoginPage />
-              </GuestRoute>
-            </LazyRoute>
-          }
-        />
+        <Route path={ROUTES.RECEPTIONIST_LOGIN} element={<Navigate to={ROUTES.LOGIN} replace />} />
 
         <Route
           path={ROUTES.RECEPTIONIST_REGISTER}
@@ -113,27 +89,9 @@ export default function App() {
           }
         />
 
-        <Route
-          path={ROUTES.ADMIN_LOGIN}
-          element={
-            <LazyRoute>
-              <GuestRoute>
-                <AdminLoginPage />
-              </GuestRoute>
-            </LazyRoute>
-          }
-        />
+        <Route path={ROUTES.ADMIN_LOGIN} element={<Navigate to={ROUTES.LOGIN} replace />} />
 
-        <Route
-          path={ROUTES.SUPER_ADMIN_LOGIN}
-          element={
-            <LazyRoute>
-              <GuestRoute>
-                <SuperAdminLoginPage />
-              </GuestRoute>
-            </LazyRoute>
-          }
-        />
+        <Route path={ROUTES.SUPER_ADMIN_LOGIN} element={<Navigate to={ROUTES.LOGIN} replace />} />
 
         {/* Platform Admin: kept outside ProtectedRoute so hospital auth never applies to it */}
         <Route
@@ -162,8 +120,8 @@ export default function App() {
           {renderRoutes(receptionistRoutes)}
           {renderRoutes(ipdRoutes)}
           {renderRoutes(opdRoutes)}
+          {renderRoutes(managerRoutes)}
           {renderRoutes(adminRoutes)}
-          {renderRoutes(superAdminRoutes)}
         </Route>
       </Routes>
 

@@ -4,7 +4,7 @@ import {
   useNurseNotesListQuery,
   useNurseVitalsListQuery,
 } from '@/shared/hooks/queries/useNurseQuery';
-import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
+import { useNursePatientScope } from '@/features/nurse/context/nursePatientScope';
 
 function patientIdsWithRecords(items = []) {
   const ids = new Set();

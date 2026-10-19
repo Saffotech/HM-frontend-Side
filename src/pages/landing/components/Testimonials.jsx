@@ -14,12 +14,12 @@ import './Testimonials.css';
 const ROLES = [
   {
     icon: Shield,
-    role: 'Super Admin',
+    role: 'Admin',
     text: 'Hospital-wide control — users, roles, and system configuration in one place.',
   },
   {
     icon: UserCog,
-    role: 'Admin',
+    role: 'Manager',
     text: 'Manage staff, departments, settings, and day-to-day hospital operations.',
   },
   {

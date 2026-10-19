@@ -716,7 +716,7 @@ export default function ReceptionistProfilePage() {
                   <Shield size={16} aria-hidden /> Account
                 </h3>
                 <p className="receptionist-profile-hint">
-                  Employee ID is managed by admin.
+                  Employee ID is managed by a manager.
                 </p>
                 <div className="receptionist-profile-grid">
                   <ReadField label="First name" value={profile.first_name} />

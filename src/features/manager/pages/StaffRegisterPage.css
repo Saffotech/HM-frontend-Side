@@ -1,0 +1,212 @@
+.staff-register-page.admin-page {
+  gap: 0;
+  max-width: 1080px;
+}
+
+.staff-register-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (min-width: 960px) {
+  .staff-register-layout {
+    grid-template-columns: minmax(0, 1fr) 16.5rem;
+  }
+}
+
+.staff-register-shell {
+  overflow: hidden;
+  border-radius: 16px;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 12px 28px -18px rgba(15, 23, 42, 0.28);
+}
+
+.staff-register-shell:hover {
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 12px 28px -18px rgba(15, 23, 42, 0.28);
+}
+
+.staff-register-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.9rem 1.2rem;
+  border-bottom: 1px solid var(--admin-primary-border);
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbf8 100%);
+}
+
+.staff-register-back {
+  flex-shrink: 0;
+  padding-inline: 0.55rem !important;
+  font-size: 0.84rem !important;
+}
+
+.staff-register-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.staff-register-heading__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  flex-shrink: 0;
+  border-radius: 10px;
+  color: var(--admin-primary-dark);
+  background: var(--admin-primary-soft);
+  border: 1px solid var(--admin-primary-border);
+}
+
+.staff-register-heading h1 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+
+.staff-register-heading p {
+  margin: 0.15rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+.staff-register-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  padding: 1.15rem 1.2rem 0.35rem;
+}
+
+.staff-register-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.staff-register-section + .staff-register-section {
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--admin-border-soft);
+}
+
+.staff-register-section h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
+.staff-register-grid {
+  display: grid;
+  gap: 0.85rem 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 720px) {
+  .staff-register-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.staff-register-hint,
+.staff-register-note {
+  margin: 0.4rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.staff-register-hint.is-ready {
+  color: #047857;
+}
+
+.staff-register-note {
+  margin: 0;
+  align-self: end;
+  padding: 0.75rem 0.85rem;
+  border: 1px dashed var(--admin-primary-border);
+  border-radius: 12px;
+  background: #f8fbf9;
+}
+
+.staff-register-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.1rem;
+  padding: 0.85rem 1.2rem 1rem;
+  border-top: 1px solid var(--admin-border-soft);
+  background: #f8fafc;
+}
+
+.staff-register-aside {
+  padding: 1rem 1.05rem 1.1rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: var(--admin-shadow-sm);
+}
+
+.staff-register-aside h2 {
+  margin: 0 0 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
+.staff-register-aside dl {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin: 0;
+}
+
+.staff-register-aside dt {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.staff-register-aside dd {
+  margin: 0.1rem 0 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0f172a;
+  overflow-wrap: anywhere;
+}
+
+.staff-register-aside p {
+  margin: 0.9rem 0 0;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--admin-border-soft);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+@media (max-width: 719px) {
+  .staff-register-toolbar {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+}

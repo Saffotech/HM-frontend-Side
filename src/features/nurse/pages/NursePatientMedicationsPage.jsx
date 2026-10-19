@@ -214,7 +214,10 @@ export default function NursePatientMedicationsPage() {
     scheduled_time: toDateTimeLocalValue(),
   });
 
-  const prescriptions = patientData?.prescriptions ?? [];
+  const prescriptions = useMemo(
+    () => patientData?.prescriptions ?? [],
+    [patientData?.prescriptions],
+  );
   const expectedMedicineCount = Math.max(
     Number(patientData?.expectedMedicineCount) || 0,
     Number(location.state?.medicineCount) || 0,

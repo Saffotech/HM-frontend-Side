@@ -1,20 +1,21 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
+import { portalSessionIsAuthenticated } from "../../../shared/api/platformSession";
 import { usePlatform } from "../../../shared/context/PlatformContext";
-import { platformPath } from "../../../shared/paths";
+import PortalEntryFallback from "../../../shared/portal/PortalEntryFallback";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import "../../../shared/layout/AppShell.css";
 import "./AppLayout.css";
 
 export default function AppLayout() {
-  const { sessionFor, profile } = usePlatform();
+  const { sessionFor } = usePlatform();
 
-  if (!sessionFor("platform")?.userId) {
-    return <Navigate to={platformPath("/login")} replace />;
+  if (!portalSessionIsAuthenticated("platform", sessionFor("platform"))) {
+    return <PortalEntryFallback portal="platform" />;
   }
 
   return (
-    <div className={`app-shell ${profile.density === "Compact" ? "density-compact" : ""}`}>
+    <div className="app-shell">
       <Sidebar />
       <div className="main-column">
         <Header />

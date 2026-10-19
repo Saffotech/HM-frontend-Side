@@ -1,15 +1,17 @@
 import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { interpretPlatformError } from "../../../../shared/api/platformErrors";
+import { TENANT_FIELD_MAP } from "../../../../shared/api/hospitalRegistration";
+import { hasPlatformAccessToken, platformAuth } from "../../../../shared/api/platformSession";
+import { registerTenant } from "../../../../shared/api/registrationApi";
 import Button from "../../../../shared/components/Button";
 import Input from "../../../../shared/components/Input";
 import PasswordField from "../../../../shared/components/PasswordField";
 import Select from "../../../../shared/components/Select";
-import { billingCycles, hospitalTypes, tenantStatuses, trialPeriods } from "../../../../shared/data/plansData";
+import { PLAN_NAMES, billingCycles, hospitalTypes, tenantStatuses, trialPeriods } from "../../../../shared/data/catalog";
 import { usePlatform } from "../../../../shared/context/PlatformContext";
 import { useToast } from "../../../../shared/hooks/useToast";
 import { PLATFORM_BASE, platformPath } from "../../../../shared/paths";
-import { formatCurrency } from "../../../../shared/utils/formatCurrency";
-import { priceFor } from "../../../../shared/utils/hospitals";
 import { PASSWORD_HINT, isEmail, isPhone, isPostalCode, isTenantCode, passwordIssue, required } from "../../../../shared/utils/validation";
 import "./RegisterHospital.css";
 
@@ -34,24 +36,6 @@ const blank = {
   tenantStatus: "Active",
 };
 
-function valuesFromRequest(request) {
-  if (!request) return blank;
-  return {
-    ...blank,
-    name: request.hospitalName,
-    type: request.type,
-    email: request.hospitalEmail,
-    phone: request.contactPhone,
-    city: request.city,
-    state: request.state,
-    adminName: request.contactPerson,
-    adminEmail: request.contactEmail,
-    adminPhone: request.contactPhone,
-    plan: request.plan,
-    billingCycle: request.billingCycle,
-  };
-}
-
 function Label({ text, optional = false }) {
   return (
     <>
@@ -72,20 +56,14 @@ function SectionHead({ number, title }) {
 
 export default function RegisterHospital() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { hospitals, onboarding, plans, addHospital } = usePlatform();
+  const { signOutPortal } = usePlatform();
   const { push } = useToast();
-  const sourceRequest = onboarding.find((item) => (
-    item.id === searchParams.get("request")
-    && item.status !== "Registered"
-  )) || null;
-  const initialValues = valuesFromRequest(sourceRequest);
+  const initialValues = blank;
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState({});
-  const activePlans = plans.filter((plan) => plan.status === "Active");
-  const selectedPlan = plans.find((plan) => plan.name === values.plan);
+  const [submitting, setSubmitting] = useState(false);
+  const signedIn = hasPlatformAccessToken();
   const isTrial = values.tenantStatus === "Trial" || values.trialPeriod !== "None";
-  const pricing = priceFor(selectedPlan, values.billingCycle, isTrial);
 
   const setField = (key, value) => {
     setValues((current) => ({ ...current, [key]: value }));
@@ -96,9 +74,6 @@ export default function RegisterHospital() {
     const next = {};
     if (!required(values.name)) next.name = "Hospital name is required.";
     if (!isTenantCode(values.code)) next.code = "Use 3–12 letters, numbers, or hyphens.";
-    const code = values.code.trim().toUpperCase();
-    const duplicate = hospitals.some((hospital) => hospital.code.toUpperCase() === code);
-    if (!next.code && duplicate) next.code = "This tenant code is already used by another hospital.";
     if (!required(values.type)) next.type = "Hospital type is required.";
     if (!isEmail(values.email)) next.email = "Enter a valid email address.";
     if (!isPhone(values.phone)) next.phone = "Enter a valid phone number.";
@@ -118,14 +93,30 @@ export default function RegisterHospital() {
     return Object.keys(next).length === 0;
   };
 
-  const finish = () => {
-    const created = addHospital(values, sourceRequest?.id);
-    push(`${created.name} was registered.`, "success");
-    navigate(`${PLATFORM_BASE}/hospitals/${created.id}`);
+  const finish = async () => {
+    setSubmitting(true);
+    try {
+      const created = await registerTenant(values);
+      if (created?.tenant_id == null) {
+        push("Registration did not return a tenant id. Nothing was saved in this browser.", "error");
+        return;
+      }
+      platformAuth.rememberRegisteredTenant(created);
+      push(`${created.name} was registered.`, "success");
+      navigate(`${PLATFORM_BASE}/hospitals/${created.tenant_id}`, { state: { registeredTenant: created } });
+    } catch (error) {
+      const result = interpretPlatformError(error, TENANT_FIELD_MAP);
+      if (Object.keys(result.fieldErrors).length) setErrors((current) => ({ ...current, ...result.fieldErrors }));
+      push(result.toast, "error");
+      if (result.unauthenticated && signedIn) signOutPortal("platform");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const submit = (event) => {
     event.preventDefault();
+    if (submitting) return;
     if (!validate()) {
       push("Check the highlighted fields before registering.", "error");
       return;
@@ -139,12 +130,9 @@ export default function RegisterHospital() {
     <section className="register-page">
       <form className="reg-layout" onSubmit={submit} noValidate>
         <div className="reg-panel">
-          {sourceRequest && (
-            <div className="reg-source-bar">
-              <span>From onboarding request</span>
-              <Link to={platformPath("/crm-performance")} className="mono">{sourceRequest.id}</Link>
-              <span>·</span>
-              <strong>{sourceRequest.hospitalName}</strong>
+          {!signedIn && (
+            <div className="reg-error-bar" role="alert">
+              Log out and sign in with your platform account before registering. This browser does not have a backend session yet.
             </div>
           )}
           {errorCount > 0 && (
@@ -185,7 +173,7 @@ export default function RegisterHospital() {
             <SectionHead number="3" title="Subscription configuration" />
             <div className="reg-grid reg-grid-4">
               <Select label={<Label text="Subscription Plan" />} value={values.plan} error={errors.plan} onChange={(event) => setField("plan", event.target.value)}>
-                {activePlans.map((plan) => <option key={plan.id}>{plan.name}</option>)}
+                {PLAN_NAMES.map((plan) => <option key={plan}>{plan}</option>)}
               </Select>
               <Select label={<Label text="Billing Cycle" />} value={values.billingCycle} onChange={(event) => setField("billingCycle", event.target.value)}>
                 {billingCycles.map((cycle) => <option key={cycle}>{cycle}</option>)}
@@ -202,9 +190,9 @@ export default function RegisterHospital() {
           <footer className="reg-footer">
             <span className="reg-footnote"><span className="req">*</span> Required field</span>
             <div className="reg-footer-actions">
-              <Button variant="secondary" onClick={() => navigate(platformPath(sourceRequest ? "/crm-performance" : "/hospitals"))}>Cancel</Button>
+              <Button variant="secondary" onClick={() => navigate(platformPath("/hospitals"))}>Cancel</Button>
               <Button variant="secondary" onClick={() => { setValues(initialValues); setErrors({}); }}>Reset</Button>
-              <Button type="submit">Register Hospital</Button>
+              <Button type="submit" disabled={submitting}>{submitting ? "Registering…" : "Register Hospital"}</Button>
             </div>
           </footer>
         </div>
@@ -223,17 +211,10 @@ export default function RegisterHospital() {
               <span>{values.plan || "No plan"}</span>
               <span>{values.billingCycle}</span>
             </div>
-            <strong>{formatCurrency(pricing.amount)}</strong>
             <span className="reg-plan-sub">
-              {isTrial ? `Trial: ${values.trialPeriod === "None" ? "14 days" : values.trialPeriod}, no charge` : `per ${values.billingCycle === "Annual" ? "year" : "month"}`}
+              {isTrial ? `Trial: ${values.trialPeriod === "None" ? "14 days" : values.trialPeriod}` : values.billingCycle}
+              . The server does not publish plan prices.
             </span>
-            {selectedPlan && (
-              <ul>
-                <li>{selectedPlan.userLimit} users</li>
-                <li>{selectedPlan.storageLimitGb} GB storage</li>
-                <li>{selectedPlan.tenantLimit}</li>
-              </ul>
-            )}
           </div>
         </aside>
       </form>

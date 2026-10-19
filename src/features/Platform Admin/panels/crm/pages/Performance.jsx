@@ -33,7 +33,7 @@ function ChartTip({ active, payload, label, money = false }) {
 }
 
 export default function Performance() {
-  const { me, today, leads, hospitals, invoices } = useCrm();
+  const { me, today, leads, hospitals, invoices, billingAvailable, scopeLabel } = useCrm();
   const [params, setParams] = useSearchParams();
   const preset = PRESETS.some(([key]) => key === params.get("period")) ? params.get("period") : "month";
   const custom = { start: params.get("from") || today, end: params.get("to") || today };
@@ -58,6 +58,7 @@ export default function Performance() {
 
   return (
     <div className="crm-page crm-perf-page">
+      {scopeLabel && <p className="crm-callout crm-callout-info">{scopeLabel}</p>}
       <section className="crm-card crm-perf-bar">
         <div className="crm-segment" role="group" aria-label="Period">
           {PRESETS.map(([key, label]) => (
@@ -89,10 +90,15 @@ export default function Performance() {
             tone={followUps.missed ? "warn" : ""}
           />
           <Metric label="Overdue Now" value={data.overdueNow} hint="Past follow-up date" tone={data.overdueNow ? "alert" : ""} />
-          {data.hasRevenueData ? (
+          {billingAvailable && data.hasRevenueData ? (
             <Metric label="Attributed Revenue" value={formatCurrency(data.revenue)} before={data.previousRevenue} money hint="Paid invoices" />
           ) : (
-            <Metric label="Attributed Revenue" value="Not available" hint="No paid invoices yet" tone="muted" />
+            <Metric
+              label="Attributed Revenue"
+              value="Unavailable"
+              hint={billingAvailable ? "No paid invoices yet" : "Platform invoices are not available from the server"}
+              tone="muted"
+            />
           )}
           <Metric label="Monthly Target" icon={Target} value="Not set" hint="Not configured for you" tone="muted" />
           <Metric
@@ -160,7 +166,9 @@ export default function Performance() {
         </ChartCard>
 
         <ChartCard title="Attributed revenue" copy="Paid invoices of hospitals from your leads, by invoice date.">
-          {revenueMonths ? (
+          {!billingAvailable ? (
+            <p className="crm-perf-none">Revenue unavailable — there is no platform invoice API yet. Dummy invoices are not used.</p>
+          ) : revenueMonths ? (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.monthly} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                 <CartesianGrid stroke="#e8edf3" vertical={false} />

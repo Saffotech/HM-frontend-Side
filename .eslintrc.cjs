@@ -16,7 +16,7 @@ module.exports = {
   settings: {
     react: { version: 'detect' },
     'import/resolver': {
-      alias: {
+      [path.resolve(__dirname, 'scripts/eslint-vite-import-resolver.cjs')]: {
         map: [['@', path.resolve(__dirname, 'src')]],
         extensions: ['.js', '.jsx'],
       },
@@ -25,6 +25,10 @@ module.exports = {
   plugins: ['react-refresh', 'import'],
   rules: {
     'react/prop-types': 'off',
+    'no-unused-vars': ['error', {
+      ignoreRestSiblings: true,
+      argsIgnorePattern: '^_',
+    }],
     'react-refresh/only-export-components': [
       'warn',
       { allowConstantExport: true },

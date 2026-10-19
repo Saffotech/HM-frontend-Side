@@ -63,6 +63,7 @@ export default function PatientListPage() {
 
   const { sorted, sortKey, sortDir, toggleSort } = useTableSort(filtered, 'name', 'asc');
   const clientPagination = usePagination(sorted, pageSize);
+  const resetClientPage = clientPagination.resetPage;
   const payloadOverflowsPage = sorted.length > pageSize;
   const paginateLocally = useClientDateFilter || payloadOverflowsPage;
 
@@ -77,8 +78,8 @@ export default function PatientListPage() {
   const goToPage = paginateLocally ? clientPagination.goToPage : (p) => setServerPage(p);
 
   useEffect(() => {
-    if (useClientDateFilter) clientPagination.resetPage();
-  }, [debouncedSearch, dateFilter, customDate, useClientDateFilter, clientPagination.resetPage]);
+    if (useClientDateFilter) resetClientPage();
+  }, [debouncedSearch, dateFilter, customDate, useClientDateFilter, resetClientPage]);
 
   const SortTh = ({ label, field, className = '' }) => (
     <th

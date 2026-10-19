@@ -1,13 +1,11 @@
 /**
- * Hospital Admin self-service profile API client (GET/PUT /admin/profile + image).
+ * Admin self-service profile API client (GET/PUT /super-admin/profile + image).
  */
 
-import { apiClient } from '@/shared/api/client';
-import { API_BASE_URL, API_PREFIX } from '@/shared/constants';
+import { apiClient, apiSessionRequest } from '@/shared/api/client';
+import { API_BASE_URL } from '@/shared/constants';
 
-export const ADMIN_PROFILE_EDITABLE_TOP_KEYS = [
-  'qualification',
-  'experience_years',
+export const SUPER_ADMIN_PROFILE_EDITABLE_TOP_KEYS = [
   'bio',
   'languages',
   'phone',
@@ -16,7 +14,7 @@ export const ADMIN_PROFILE_EDITABLE_TOP_KEYS = [
   'gender',
 ];
 
-export function resolveAdminProfileImageUrl(profileImageUrl) {
+export function resolveSuperAdminProfileImageUrl(profileImageUrl) {
   if (!profileImageUrl) return null;
   if (/^(https?:|blob:)/i.test(profileImageUrl)) return profileImageUrl;
   const base =
@@ -25,48 +23,31 @@ export function resolveAdminProfileImageUrl(profileImageUrl) {
   return `${base}${profileImageUrl}`;
 }
 
-export async function getAdminProfile(token) {
-  return apiClient('/admin/profile', { token });
+export async function getSuperAdminProfile(token) {
+  return apiClient('/super-admin/profile', { token });
 }
 
-export async function updateAdminProfile(payload, token) {
-  return apiClient('/admin/profile', {
+export async function updateSuperAdminProfile(payload, token) {
+  return apiClient('/super-admin/profile', {
     method: 'PUT',
     body: JSON.stringify(payload),
     token,
   });
 }
 
-export async function uploadAdminProfileImage(file, token) {
+export async function uploadSuperAdminProfileImage(file, token) {
   const formData = new FormData();
   formData.append('file', file);
-
-  const headers = {};
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  const response = await fetch(
-    `${API_BASE_URL}${API_PREFIX}/admin/profile/image`,
-    {
-      method: 'POST',
-      headers,
-      body: formData,
-    }
-  );
-
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const detail = typeof body.detail === 'string' ? body.detail : body.message;
-    const err = new Error(detail || 'Profile image upload failed');
-    err.status = response.status;
-    throw err;
-  }
-  return body;
+  return apiSessionRequest('/super-admin/profile/image', {
+    method: 'POST',
+    body: formData,
+    token,
+    fallbackMessage: 'Profile image upload failed',
+  });
 }
 
-export async function deleteAdminProfileImage(token) {
-  return apiClient('/admin/profile/image', {
+export async function deleteSuperAdminProfileImage(token) {
+  return apiClient('/super-admin/profile/image', {
     method: 'DELETE',
     token,
   });

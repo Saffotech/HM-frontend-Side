@@ -1,7 +1,6 @@
 /** Doctor lab test orders API — root /lab-tests paths */
 
-import { API_BASE_URL, API_PREFIX } from '@/shared/constants';
-import { apiClient } from '@/shared/api/client';
+import { apiClient, apiSessionRequest } from '@/shared/api/client';
 
 export async function getLabTests(token, params = {}) {
   const qs = new URLSearchParams();
@@ -48,27 +47,10 @@ export async function getLabTestReport(testId, token) {
 
 /** Download uploaded report file (image/PDF) for doctor view */
 export async function fetchLabTestReportFileBlob(testId, token) {
-  const headers = {};
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  const response = await fetch(
-    `${API_BASE_URL}${API_PREFIX}/lab-tests/${testId}/report/file`,
-    { headers },
-  );
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    const detail = typeof body.detail === 'string' ? body.detail : 'Could not load report file';
-    const err = new Error(detail);
-    err.status = response.status;
-    throw err;
-  }
-
-  const blob = await response.blob();
-  const disposition = response.headers.get('content-disposition') ?? '';
-  const match = disposition.match(/filename="?([^"]+)"?/i);
-  const fileName = match?.[1] ?? `lab-report-${testId}`;
-  const contentType = response.headers.get('content-type') ?? blob.type ?? '';
-
-  return { blob, fileName, contentType };
+  return apiSessionRequest(`/lab-tests/${testId}/report/file`, {
+    token,
+    responseType: 'blob',
+    fallbackFileName: `lab-report-${testId}`,
+    fallbackMessage: 'Could not load report file',
+  });
 }

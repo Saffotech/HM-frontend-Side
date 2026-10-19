@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { ROUTES } from '@/shared/constants';
-import { BrandLogo, BrandName, UserProfileMenu } from '@/shared/components/common';
+import { BrandLogo, BrandName, HospitalName, UserProfileMenu } from '@/shared/components/common';
 import DoctorNotificationsBell from './DoctorNotificationsBell';
 import DoctorEncounterModeToggle from './DoctorEncounterModeToggle';
 import './DoctorShell.css';
@@ -55,9 +55,12 @@ export default function DoctorShell({
 
       <aside className={`doctor-shell__sidebar no-print ${mobileOpen ? 'doctor-shell__sidebar--open' : ''}`}>
         <div className="doctor-shell__sidebar-head">
-          <Link to={dashboardHref} className="doctor-shell__brand">
+          <Link to={dashboardHref} className="doctor-shell__brand shell-brand">
             <BrandLogo size={32} />
-            <BrandName className="brand-name--on-dark" />
+            <span className="shell-brand-text">
+              <BrandName className="brand-name--on-dark" />
+              <HospitalName />
+            </span>
           </Link>
           <button type="button" className="doctor-shell__close" onClick={() => setMobileOpen(false)} aria-label="Close">
             <X size={20} />

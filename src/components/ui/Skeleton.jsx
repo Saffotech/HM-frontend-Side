@@ -1,1 +1,1 @@
-export { default, PageSkeleton } from '@/shared/components/common/Skeleton';
+export { default as Skeleton, PageSkeleton } from '@/shared/components/common/Skeleton';

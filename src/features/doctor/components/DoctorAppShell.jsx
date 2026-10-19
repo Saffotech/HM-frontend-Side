@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/shared/hooks/useAuth';
+import { matchesHospitalBump } from '@/components/security/hospitalBrowserStorage';
 import { invalidateDoctorIpdAdmissions } from '@/features/doctor/utils/doctorDashboardCache';
 import {
   DOCTOR_IPD_BUMP_EVENT,
@@ -27,7 +28,7 @@ function DoctorPermissionSync({ children }) {
       if (document.visibilityState === 'visible') sync();
     };
     const onStorage = (event) => {
-      if (event.key === DOCTOR_PERMISSIONS_BUMP_KEY) sync();
+      if (matchesHospitalBump(event.key, DOCTOR_PERMISSIONS_BUMP_KEY)) sync();
     };
     const onBump = () => sync();
 
@@ -62,7 +63,7 @@ function DoctorIpdDataSync({ children }) {
     };
 
     const onStorage = (event) => {
-      if (event.key === DOCTOR_IPD_BUMP_KEY) sync();
+      if (matchesHospitalBump(event.key, DOCTOR_IPD_BUMP_KEY)) sync();
     };
 
     window.addEventListener(DOCTOR_IPD_BUMP_EVENT, sync);

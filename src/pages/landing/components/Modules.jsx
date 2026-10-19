@@ -16,10 +16,10 @@ import './Modules.css';
 const MODULES = [
   {
     icon: UserCog,
-    title: 'Admin Module',
+    title: 'Manager Module',
     items: ['User management', 'Role permissions', 'Hospital analytics', 'System settings'],
     to: ROUTES.LOGIN,
-    cta: 'Open Admin Login',
+    cta: 'Open Manager Login',
   },
   {
     icon: Stethoscope,
@@ -39,7 +39,7 @@ const MODULES = [
     icon: Pill,
     title: 'Pharmacy Module',
     items: ['Medicine stock', 'Prescription management', 'Sales management'],
-    to: ROUTES.PHARMACY_LOGIN,
+    to: ROUTES.LOGIN,
     cta: 'Pharmacy Login',
   },
   {

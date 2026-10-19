@@ -1,0 +1,400 @@
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Eye, Plus, RotateCcw, UserX } from 'lucide-react';
+import AdminLayout from '@/features/manager/components/ManagerLayout';
+import AdminEmptyState from '@/features/manager/components/ManagerEmptyState';
+import AdminAllocationStatusBadge from '@/features/manager/components/ManagerAllocationStatusBadge';
+import { useAdminBedAllocationPermissions } from '@/features/manager/hooks/useManagerBedAllocationPermissions';
+import {
+  useAdminBedAllocationsQuery,
+  useAdminRolesQuery,
+  useAdminStaffListQuery,
+  useDeactivateBedAllocationMutation,
+} from '@/shared/hooks/queries/useAdminQuery';
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
+import {
+  Button,
+  ConfirmDialog,
+  DateInput,
+  Modal,
+  QueryFeedback,
+  SearchBar,
+  Select,
+  TablePagination,
+} from '@/shared/components/common';
+import { ROUTES } from '@/shared/constants';
+import {
+  formatAllocationDate,
+  formatAssignedUntil,
+  groupAllocationListItems,
+} from '@/shared/api/mappers/adminBedAllocationMapper';
+import { toast } from '@/shared/utils/toast';
+import '@/features/manager/styles/nurseBedAllocation.css';
+
+const PAGE_SIZE = 100;
+
+export default function NurseBedAllocationListPage() {
+  const navigate = useNavigate();
+  const { canView, canCreate, canAssign, canUpdate } = useAdminBedAllocationPermissions();
+  const canMakeNew = canCreate || canAssign;
+
+  const [search, setSearch] = useState('');
+  const [shiftDate, setShiftDate] = useState('');
+  const [nurseId, setNurseId] = useState('');
+  const [statusFilter, setStatusFilter] = useState('true');
+  const [page, setPage] = useState(1);
+  const [deactivateIds, setDeactivateIds] = useState(null);
+  const [bedsPreview, setBedsPreview] = useState(null);
+
+  const debouncedSearch = useDebouncedValue(search.trim(), 300);
+
+  const { data: roles = [] } = useAdminRolesQuery({ enabled: canView });
+  const nurseRoleId = useMemo(
+    () => roles.find((r) => r.name === 'nurse')?.id,
+    [roles],
+  );
+
+  const { data: staffData } = useAdminStaffListQuery(
+    { role_id: nurseRoleId, is_active: true, page: 1, limit: 100 },
+    { enabled: canView && Boolean(nurseRoleId) },
+  );
+  const nurses = useMemo(() => {
+    const items = staffData?.staff ?? staffData?.items ?? [];
+    return Array.isArray(items) ? items : [];
+  }, [staffData]);
+
+  const filters = useMemo(
+    () => ({
+      search: debouncedSearch || undefined,
+      shift_date: shiftDate || undefined,
+      nurse_id: nurseId ? Number(nurseId) : undefined,
+      is_active: statusFilter === 'all' ? undefined : statusFilter === 'true',
+      page,
+      page_size: PAGE_SIZE,
+    }),
+    [debouncedSearch, shiftDate, nurseId, statusFilter, page],
+  );
+
+  const { data, isLoading, isError, error, refetch } = useAdminBedAllocationsQuery(
+    filters,
+    { enabled: canView },
+  );
+
+  const deactivateMut = useDeactivateBedAllocationMutation();
+
+  const items = useMemo(
+    () => groupAllocationListItems(data?.items ?? []),
+    [data?.items],
+  );
+  const total = items.length;
+
+  const hasFilters = Boolean(
+    search.trim() ||
+      shiftDate ||
+      nurseId ||
+      statusFilter !== 'true',
+  );
+
+  const resetFilters = () => {
+    setSearch('');
+    setShiftDate('');
+    setNurseId('');
+    setStatusFilter('true');
+    setPage(1);
+  };
+
+  const confirmDeactivate = async () => {
+    if (!deactivateIds?.length) return;
+    const ids = [...deactivateIds];
+    let ok = 0;
+    let failed = 0;
+    for (const id of ids) {
+      try {
+        await deactivateMut.mutateAsync(id);
+        ok += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+    setDeactivateIds(null);
+    if (ok) toast.success(ok === 1 ? 'Allocation deactivated' : `${ok} allocations deactivated`);
+    if (failed) toast.error(`${failed} failed to deactivate`);
+    refetch();
+  };
+
+  if (!canView) {
+    return (
+      <AdminLayout pageTitle="Nurse Bed Allocation">
+        <div className="admin-card nba-denied">
+          <h2>Access denied</h2>
+          <p className="nba-muted">You do not have permission to view bed allocations.</p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  return (
+    <AdminLayout pageTitle="Nurse Bed Allocation">
+      <div className="admin-page nba-page">
+        <div className="nba-header-actions nba-list-actions">
+          <div className="nba-list-heading">
+            <h1 className="nba-list-heading__title">Bed allocations</h1>
+            <p className="nba-list-heading__subtitle">
+              Beds stay assigned until admin changes them. Filter by date if needed (default: all).
+            </p>
+          </div>
+          <div className="nba-list-actions__buttons">
+            {canMakeNew ? (
+              <Button onClick={() => navigate(ROUTES.ADMIN_BED_ALLOCATION_NEW)}>
+                <Plus size={16} aria-hidden />
+                New allocation
+              </Button>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="admin-card admin-card--flat admin-datatable nba-list-card">
+          <div className="admin-datatable__toolbar nba-toolbar">
+            <SearchBar
+              value={search}
+              onChange={(v) => {
+                setSearch(v);
+                setPage(1);
+              }}
+              placeholder="Search nurse, bed, ward, allocation ID…"
+            />
+            <DateInput
+              aria-label="Filter by date"
+              value={shiftDate}
+              onChange={(e) => {
+                setShiftDate(e.target.value);
+                setPage(1);
+              }}
+              className="nba-toolbar-date"
+            />
+            <Select
+              value={nurseId}
+              onChange={(v) => {
+                setNurseId(v);
+                setPage(1);
+              }}
+              options={[
+                { value: '', label: 'All nurses' },
+                ...nurses.map((n) => ({
+                  value: String(n.id),
+                  label:
+                    `${n.first_name || ''} ${n.last_name || ''}`.trim() ||
+                    n.email ||
+                    `Nurse #${n.id}`,
+                })),
+              ]}
+            />
+            <Select
+              value={statusFilter}
+              onChange={(v) => {
+                setStatusFilter(v);
+                setPage(1);
+              }}
+              options={[
+                { value: 'true', label: 'Active only' },
+                { value: 'false', label: 'Inactive only' },
+                { value: 'all', label: 'All statuses' },
+              ]}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="nba-toolbar__reset"
+              onClick={resetFilters}
+              disabled={!hasFilters}
+            >
+              <RotateCcw size={14} aria-hidden />
+              Reset
+            </Button>
+          </div>
+
+          <QueryFeedback
+            isLoading={isLoading}
+            isError={isError}
+            error={error}
+            onRetry={refetch}
+          >
+            {!isLoading && items.length === 0 ? (
+              <AdminEmptyState
+                title="No allocations found"
+                description={
+                  hasFilters
+                    ? 'Try adjusting filters or create a new assignment.'
+                    : 'Assign beds to a nurse. They stay assigned until you change them.'
+                }
+              />
+            ) : (
+              <>
+                <div className="admin-datatable__summary">
+                  Showing <strong>{items.length}</strong> of <strong>{total}</strong>
+                  {hasFilters ? ' (filtered)' : ''}
+                </div>
+                <div className="nba-table-wrap">
+                  <table className="nba-table admin-table--stack">
+                    <thead>
+                      <tr>
+                        <th>Nurse</th>
+                        <th>Assigned From</th>
+                        <th>Assigned Until</th>
+                        <th>Allocated Beds</th>
+                        <th>Status</th>
+                        <th>Assigned By</th>
+                        <th>Created</th>
+                        <th className="nba-th-actions">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((row) => (
+                        <tr key={`${row.nurseId}-${row.isActive ? 'a' : 'i'}-${row.id}`}>
+                          <td data-label="Nurse"><span>{row.nurseName}</span></td>
+                          <td data-label="Assigned From"><span>{formatAllocationDate(row.shiftDate)}</span></td>
+                          <td data-label="Assigned Until"><span>{formatAssignedUntil(row.assignedUntil, row.isActive)}</span></td>
+                          <td data-label="Allocated Beds">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                setBedsPreview({
+                                  nurseName: row.nurseName,
+                                  beds: row.beds?.length
+                                    ? row.beds
+                                    : [
+                                        {
+                                          id: row.id,
+                                          bedId: row.bedId,
+                                          bedNumber: row.bedNumber,
+                                          wardName: row.wardName,
+                                        },
+                                      ],
+                                })
+                              }
+                            >
+                              <Eye size={14} aria-hidden />
+                              View beds
+                            </Button>
+                          </td>
+                          <td data-label="Status">
+                            <AdminAllocationStatusBadge isActive={row.isActive} />
+                          </td>
+                          <td data-label="Assigned By"><span>{row.assignedByName}</span></td>
+                          <td data-label="Created"><span>{formatAllocationDate(row.createdAt)}</span></td>
+                          <td className="nba-td-actions" data-label="Actions">
+                            <div className="nba-table__actions">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="primary"
+                                onClick={() =>
+                                  navigate(
+                                    ROUTES.ADMIN_BED_ALLOCATION_DETAIL.replace(
+                                      ':id',
+                                      String(row.id),
+                                    ),
+                                  )
+                                }
+                              >
+                                <Eye size={14} aria-hidden />
+                                View
+                              </Button>
+                              {canUpdate && row.isActive && (
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="danger"
+                                  onClick={() =>
+                                    setDeactivateIds(row.allocationIds?.length
+                                      ? row.allocationIds
+                                      : [row.id])
+                                  }
+                                >
+                                  <UserX size={14} aria-hidden />
+                                  Deactivate
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <TablePagination
+                  page={page}
+                  pageSize={PAGE_SIZE}
+                  totalPages={Math.max(1, Math.ceil(total / PAGE_SIZE))}
+                  totalItems={total}
+                  onPageChange={setPage}
+                  itemLabel="allocations"
+                />
+              </>
+            )}
+          </QueryFeedback>
+        </div>
+      </div>
+
+      <Modal
+        isOpen={bedsPreview != null}
+        onClose={() => setBedsPreview(null)}
+        title={
+          bedsPreview?.nurseName
+            ? `Allocated beds — ${bedsPreview.nurseName}`
+            : 'Allocated beds'
+        }
+        size="md"
+        footer={
+          <Button type="button" variant="outline" onClick={() => setBedsPreview(null)}>
+            Close
+          </Button>
+        }
+      >
+        {bedsPreview?.beds?.length ? (
+          <div className="nba-beds-preview">
+            <p className="nba-muted nba-beds-preview__count">
+              {bedsPreview.beds.length} bed{bedsPreview.beds.length === 1 ? '' : 's'}
+            </p>
+            <div className="nba-table-wrap">
+              <table className="nba-table nba-table--compact admin-table--stack">
+                <thead>
+                  <tr>
+                    <th>Ward</th>
+                    <th>Bed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bedsPreview.beds.map((bed) => (
+                    <tr key={bed.id ?? `${bed.wardName}-${bed.bedNumber}`}>
+                      <td data-label="Ward"><span>{bed.wardName || '—'}</span></td>
+                      <td data-label="Bed"><span>{bed.bedNumber || '—'}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <p className="nba-muted">No beds in this allocation.</p>
+        )}
+      </Modal>
+
+      <ConfirmDialog
+        isOpen={deactivateIds != null}
+        title="Deactivate allocation?"
+        message={
+          deactivateIds?.length > 1
+            ? `This will deactivate ${deactivateIds.length} bed assignments for this nurse shift. You can create new assignments later.`
+            : 'This bed will no longer be assigned to the nurse for this shift. You can create a new assignment later.'
+        }
+        confirmLabel="Deactivate"
+        onConfirm={confirmDeactivate}
+        onCancel={() => setDeactivateIds(null)}
+      />
+    </AdminLayout>
+  );
+}

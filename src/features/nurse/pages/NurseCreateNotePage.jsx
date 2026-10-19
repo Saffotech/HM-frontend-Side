@@ -8,7 +8,8 @@ import NurseLayout from '@/features/nurse/components/NurseLayout';
 import { useNursePermission } from '@/features/nurse/hooks/useNursePermission';
 import { QueryFeedback } from '@/shared/components/common';
 
-import NurseNoteFormFields, { INITIAL_NOTE_FORM } from '@/features/nurse/components/NurseNoteFormFields';
+import NurseNoteFormFields from '@/features/nurse/components/NurseNoteFormFields';
+import { INITIAL_NOTE_FORM } from '@/features/nurse/utils/nurseNoteFields';
 import {
   useCreateNoteMutation,
   useNursePatientQueueAppointmentId,

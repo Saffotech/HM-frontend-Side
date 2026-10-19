@@ -17,7 +17,7 @@ import NursePagination from '@/features/nurse/components/NursePagination';
 import { QueryFeedback } from '@/shared/components/common';
 import { formatPatientIdDisplay, getPagedListCount } from '@/shared/api/mappers/nurseMapper';
 import { useNurseMedicationPatientsQuery } from '@/shared/hooks/queries/useNurseQuery';
-import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
+import { useNursePatientScope } from '@/features/nurse/context/nursePatientScope';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
 import { useNursePagedListGuard } from '@/features/nurse/hooks/useNursePagedListGuard';
 import NursePatientAllocationTags from '@/features/nurse/components/NursePatientAllocationTags';

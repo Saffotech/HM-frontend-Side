@@ -17,8 +17,8 @@ import {
   registerStaff,
   updateDepartment,
   updateStaff,
-} from '@/features/admin/api/admin';
-import { loadPermissionCatalog } from '@/features/admin/utils/permissionCatalog';
+} from '@/features/manager/api/manager';
+import { loadPermissionCatalog } from '@/features/manager/utils/permissionCatalog';
 import {
   bulkCreateBedAllocations,
   createBedAllocation,

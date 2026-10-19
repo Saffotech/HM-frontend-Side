@@ -65,7 +65,7 @@ const [paymentCollected, setPaymentCollected] = useState(false);
 
   const admission = detailQuery.data?.admission;
   const preview = previewQuery.data;
-  const bills = detailQuery.data?.bills ?? [];
+  const bills = useMemo(() => detailQuery.data?.bills ?? [], [detailQuery.data?.bills]);
   const paymentView = useMemo(
     () =>
       resolveIpdBillPreviewPayment({

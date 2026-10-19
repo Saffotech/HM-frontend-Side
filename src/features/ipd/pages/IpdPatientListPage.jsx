@@ -34,7 +34,6 @@ import {
   resolveIpdPatientOpenPath,
   paymentTypeQueryValue,
 } from '@/features/ipd/utils/ipdPaymentTypes';
-import { formatCurrency } from '@/shared/utils/formatCurrency';
 import { toast } from '@/shared/utils/toast';
 
 const WARD_CHIP = {
@@ -179,8 +178,10 @@ export default function IpdPatientListPage() {
       enabled: patientsQueryEnabled,
     });
 
-  const admissionListItems =
-    data?.items ?? cachedPatientsPage?.items ?? [];
+  const admissionListItems = useMemo(
+    () => data?.items ?? cachedPatientsPage?.items ?? [],
+    [data?.items, cachedPatientsPage?.items],
+  );
 
   const cashlessPatients = useMemo(() => {
     const fromApi = (insurancePatientsQuery.data?.items ?? []).map(

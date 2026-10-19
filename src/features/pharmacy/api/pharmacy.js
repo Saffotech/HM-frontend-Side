@@ -55,17 +55,8 @@ export async function getPrescriptionById(id, token) {
 
 
 export async function dispenseMedicine(prescriptionId, body, token) {
-
-  // Item-level body (target contract):
-  // {
-  //   items: [{
-  //     prescription_item_id,
-  //     quantity_dispensed,
-  //     amount,      // line total ₹ (frontend sends; backend may persist later)
-  //     unit_price,  // amount / quantity
-  //   }],
-  //   remarks?: string
-  // }
+  // DispenseItemRequest: prescription_item_id, quantity_dispensed, amount.
+  // unit_price is returned by the backend, not sent.
 
   return apiClient(`/pharmacy/dispense/${prescriptionId}`, {
 
@@ -83,13 +74,14 @@ export async function dispenseMedicine(prescriptionId, body, token) {
 
 export async function getDispenseHistory(
   token,
-  { page = 1, limit = 20, date_from, date_to } = {}
+  { page = 1, limit = 20, date_from, date_to, prescription_id } = {}
 ) {
   const search = new URLSearchParams();
   search.set('page', String(page));
   search.set('limit', String(limit));
   if (date_from) search.set('date_from', date_from);
   if (date_to) search.set('date_to', date_to);
+  if (prescription_id) search.set('prescription_id', String(prescription_id));
   return apiClient(`/pharmacy/history?${search.toString()}`, { token });
 }
 

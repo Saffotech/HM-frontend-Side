@@ -721,7 +721,7 @@ export default function NurseProfilePage() {
                   <Shield size={16} aria-hidden /> Account
                 </h3>
                 <p className="nurse-profile-hint">
-                  Employee ID is managed by admin.
+                  Employee ID is managed by a manager.
                   Daily patient responsibility comes from bed allocation, not department.
                 </p>
                 <div className="nurse-profile-grid">

@@ -5,7 +5,7 @@ import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseDataTable from '@/features/nurse/components/NurseDataTable';
 import NursePagination from '@/features/nurse/components/NursePagination';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
-import { useNursePatientScope } from '@/features/nurse/context/NursePatientScopeContext';
+import { useNursePatientScope } from '@/features/nurse/context/nursePatientScope';
 import { QueryFeedback } from '@/shared/components/common';
 import {
   buildNurseNotesUrl,
@@ -22,7 +22,7 @@ import { ROUTES } from '@/shared/constants';
 const PAGE_SIZE = 10;
 
 const KPI_FILTERS = {
-  all: (row) => true,
+  all: () => true,
   pending_meds: (row) => (row.pending_medications ?? 0) > 0,
   needs_vitals: (row) => !row.has_vitals,
   needs_notes: (row) => !row.has_notes,
