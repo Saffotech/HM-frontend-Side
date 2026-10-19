@@ -1,6 +1,6 @@
 /**
  * Hospital Owner audit client. Supported route: GET /admin/audit.
- * The owner screen is only mounted for role `admin`.
+ * Access is the backend `audit:view` permission. Errors are returned unchanged.
  */
 
 import { apiClient } from '@/shared/api/client';

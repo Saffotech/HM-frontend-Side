@@ -1,7 +1,8 @@
 /**
  * Hospital Owner profile client.
  * Supported routes: GET/PUT /admin/profile and POST/DELETE /admin/profile/image.
- * The owner screen is only mounted for role `admin`, which the backend authorizes.
+ * The backend allows only role `admin`. A hospital `super_admin` token receives 403;
+ * that error is returned unchanged.
  */
 
 import { apiClient, apiSessionRequest } from '@/shared/api/client';

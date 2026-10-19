@@ -53,6 +53,9 @@ function screen(page) {
   );
 }
 
+/** Hospital registration returns super_admin. Role admin remains an owner too. */
+const OWNER_PANEL_ROLES = [ROLES.ADMIN, ROLES.SUPER_ADMIN];
+
 function ownerPanelRoutes(allowedRoles, paths, unmatchedPath) {
   return {
     element: (
@@ -103,5 +106,5 @@ function LegacyOwnerRedirect() {
 export const adminRoutes = [
   { path: '/super-admin', element: <Navigate to={ROUTES.ADMIN_DASHBOARD} replace /> },
   { path: '/super-admin/*', element: <LegacyOwnerRedirect /> },
-  ownerPanelRoutes([ROLES.ADMIN], HOSPITAL_ADMIN_PATHS, '/admin/*'),
+  ownerPanelRoutes(OWNER_PANEL_ROLES, HOSPITAL_ADMIN_PATHS, '/admin/*'),
 ];

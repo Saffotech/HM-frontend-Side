@@ -1,6 +1,6 @@
 import { ROUTES, ROLES } from '@/shared/constants';
 import { dashboardForRole } from '@/shared/auth/universalLoginPolicy';
-import { normalizeRole } from '@/shared/utils/roleUtils';
+import { hospitalEntryPath, normalizeRole } from '@/shared/utils/roleUtils';
 
 /** Where to send user after login based on role */
 export function getAppEntryForRole(role) {
@@ -33,18 +33,8 @@ export function getAppEntryForRole(role) {
     return ROUTES.IPD_DASHBOARD;
   }
 
-  // Keep the raw hospital super_admin identity. Owner screens authorize role admin.
-  if (normalized === ROLES.SUPER_ADMIN) {
-    return ROUTES.UNAUTHORIZED;
-  }
-
-  if (normalized === ROLES.ADMIN) {
-    return ROUTES.ADMIN_DASHBOARD;
-  }
-
-  if (normalized === ROLES.MANAGER) {
-    return ROUTES.MANAGER_DASHBOARD;
-  }
+  const hospitalEntry = hospitalEntryPath(normalized);
+  if (hospitalEntry) return hospitalEntry;
 
   if (normalized === ROLES.BILLING || normalized === ROLES.OPD) {
     return ROUTES.APP_ENTRY;

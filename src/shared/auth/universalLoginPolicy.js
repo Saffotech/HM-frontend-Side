@@ -44,6 +44,7 @@ const HOSPITAL_RETURN_PREFIXES = {
   receptionist: ['/receptionist'],
   ipd: ['/ipd'],
   admin: ['/admin'],
+  super_admin: ['/admin'],
   manager: ['/manager'],
   opd: ['/dashboard', '/billing', '/appointments', '/patients', '/pricing', '/payment-history', '/opd'],
   billing: ['/dashboard', '/billing', '/appointments', '/patients', '/pricing', '/payment-history', '/opd'],

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/shared/hooks/useAuth';
-import { ROUTES, ROLES } from '@/shared/constants';
+import { ROUTES } from '@/shared/constants';
 import PageSpinner from '@/shared/components/PageSpinner';
 import { isValidTenantId } from '@/components/security/hospitalIdentity';
 import {
@@ -50,16 +50,6 @@ export default function ProtectedRoute({ allowedRoles, loginPath = ROUTES.LOGIN 
     const home = getAppEntryForRole(user.role);
     if (home && home !== ROUTES.APP_ENTRY && home !== pathname) {
       return <Navigate to={home} replace />;
-    }
-    // Legacy hospital super_admin is not an owner session. Role admin uses /admin.
-    if (user.role === ROLES.SUPER_ADMIN) {
-      return <Navigate to={ROUTES.UNAUTHORIZED} replace />;
-    }
-    if (user.role === ROLES.ADMIN) {
-      return <Navigate to={ROUTES.ADMIN_DASHBOARD} replace />;
-    }
-    if (user.role === ROLES.MANAGER) {
-      return <Navigate to={ROUTES.MANAGER_DASHBOARD} replace />;
     }
     return <Navigate to={ROUTES.UNAUTHORIZED} replace />;
   }

@@ -9,7 +9,7 @@ import {
   loginRedirectState,
   resolvePostLoginDestination,
 } from './universalLoginPolicy.js';
-import { getRoleLabel, normalizeRole } from '../utils/roleUtils.js';
+import { getRoleLabel, hospitalEntryPath, normalizeRole } from '../utils/roleUtils.js';
 import {
   createPlatformAuthStore,
   readActivePortalSession,
@@ -148,8 +148,11 @@ describe('hospital admin and manager stay separate', () => {
     assert.equal(isReturnPathForRole('admin', '/manager/dashboard'), false);
     assert.equal(isReturnPathForRole('manager', '/manager/staff'), true);
     assert.equal(isReturnPathForRole('manager', '/admin/dashboard'), false);
+    assert.equal(isReturnPathForRole('super_admin', '/admin/dashboard'), true);
+    assert.equal(isReturnPathForRole('super_admin', '/admin/staff'), true);
     assert.equal(isReturnPathForRole('super_admin', '/super-admin/dashboard'), false);
-    assert.equal(isReturnPathForRole('super_admin', '/admin/dashboard'), false);
+    assert.equal(isReturnPathForRole('super_admin', '/manager/dashboard'), false);
+    assert.equal(isReturnPathForRole('super_admin', '/platform'), false);
     assert.equal(normalizeRole('super_admin'), 'super_admin');
     assert.equal(isReturnPathForRole('platform_admin', '/platform/hospitals'), true);
     assert.equal(isReturnPathForRole('crm', '/platform/crm'), true);
@@ -163,21 +166,20 @@ describe('hospital admin and manager stay separate', () => {
     const guard = readFileSync(new URL('../../components/security/ProtectedRoute.jsx', import.meta.url), 'utf8');
     const login = readFileSync(new URL('../../features/manager/pages/ManagerLoginPage.jsx', import.meta.url), 'utf8');
 
-    assert.match(redirect, /ROLES\.ADMIN[\s\S]{0,80}ROUTES\.ADMIN_DASHBOARD/);
-    assert.match(redirect, /ROLES\.MANAGER[\s\S]{0,80}ROUTES\.MANAGER_DASHBOARD/);
-    assert.match(redirect, /ROLES\.SUPER_ADMIN[\s\S]{0,80}ROUTES\.UNAUTHORIZED/);
+    assert.match(redirect, /hospitalEntryPath\(normalized\)/);
+    assert.doesNotMatch(redirect, /ROLES\.SUPER_ADMIN[\s\S]{0,80}ROUTES\.UNAUTHORIZED/);
     assert.doesNotMatch(redirect, /admin:\s*'manager'|normalized === ROLES\.ADMIN[\s\S]{0,40}MANAGER_DASHBOARD/);
 
     assert.match(managerRoutes, /allowedRoles=\{\[ROLES\.MANAGER\]\}/);
     assert.match(managerRoutes, /ROUTES\.MANAGER_DASHBOARD/);
     assert.doesNotMatch(managerRoutes, /ROUTES\.ADMIN_|path: '\/admin/);
-    assert.match(adminRoutes, /ownerPanelRoutes\(\[ROLES\.ADMIN\]/);
+    assert.match(adminRoutes, /OWNER_PANEL_ROLES = \[ROLES\.ADMIN, ROLES\.SUPER_ADMIN\]/);
+    assert.match(adminRoutes, /ownerPanelRoutes\(OWNER_PANEL_ROLES/);
     assert.match(adminRoutes, /ROUTES\.ADMIN_DASHBOARD/);
     assert.match(adminRoutes, /path: '\/super-admin\/\*'/);
-    assert.doesNotMatch(adminRoutes, /ownerPanelRoutes\(\[ROLES\.SUPER_ADMIN\]/);
-    assert.doesNotMatch(adminRoutes, /allowedRoles=\{\[ROLES\.ADMIN, ROLES\.SUPER_ADMIN\]\}/);
-    assert.match(guard, /ROLES\.ADMIN[\s\S]{0,120}ROUTES\.ADMIN_DASHBOARD/);
-    assert.match(guard, /ROLES\.MANAGER[\s\S]{0,120}ROUTES\.MANAGER_DASHBOARD/);
+    assert.match(guard, /getAppEntryForRole\(user\.role\)/);
+    assert.match(guard, /ROUTES\.UNAUTHORIZED/);
+    assert.doesNotMatch(guard, /ROLES\.SUPER_ADMIN[\s\S]{0,80}ROUTES\.UNAUTHORIZED/);
     assert.match(login, /me\.role !== ROLES\.MANAGER/);
     assert.match(login, /ROUTES\.MANAGER_DASHBOARD/);
   });
@@ -211,6 +213,50 @@ describe('hospital admin and manager stay separate', () => {
     assert.doesNotMatch(ownerProfile, /\/super-admin\/profile/);
     assert.match(ownerAudit, /\/admin\/audit/);
     assert.doesNotMatch(ownerAudit, /\/super-admin\/audit/);
+  });
+});
+
+describe('hospital owner entry', () => {
+  function homeForRole(role) {
+    return dashboardForRole(role) || hospitalEntryPath(role) || '/dashboard';
+  }
+
+  it('opens the owner panel for super_admin and admin, and keeps the other portals', () => {
+    assert.equal(hospitalEntryPath('super_admin'), '/admin/dashboard');
+    assert.equal(hospitalEntryPath('admin'), '/admin/dashboard');
+    assert.equal(hospitalEntryPath('manager'), '/manager/dashboard');
+    assert.equal(hospitalEntryPath('platform_admin'), null);
+    assert.equal(normalizeRole('super_admin'), 'super_admin');
+    assert.equal(resolvePostLoginDestination('super_admin', null, homeForRole), '/admin/dashboard');
+    assert.equal(resolvePostLoginDestination('admin', null, homeForRole), '/admin/dashboard');
+    assert.equal(resolvePostLoginDestination('manager', null, homeForRole), '/manager/dashboard');
+    assert.equal(resolvePostLoginDestination('platform_admin', null, homeForRole), '/platform');
+    assert.equal(resolvePostLoginDestination('crm', null, homeForRole), '/platform/crm');
+    assert.equal(resolvePostLoginDestination('accountant', null, homeForRole), '/platform/accounts');
+    assert.equal(
+      resolvePostLoginDestination('super_admin', { pathname: '/admin/staff' }, homeForRole),
+      '/admin/staff',
+    );
+    assert.equal(
+      resolvePostLoginDestination('super_admin', { pathname: '/manager/dashboard' }, homeForRole),
+      '/admin/dashboard',
+    );
+  });
+
+  it('keeps a hospital super_admin without a tenant out of the owner panel', () => {
+    const missing = classifyLoginBody({ role: 'super_admin', tenant_id: null });
+    assert.equal(missing.realm, 'rejected');
+    assert.equal(missing.reason, 'invalid_tenant');
+    assert.equal(missing.role, 'super_admin');
+
+    const owner = classifyLoginBody({ role: 'super_admin', tenant_id: 4 });
+    assert.equal(owner.realm, 'hospital');
+    assert.equal(owner.role, 'super_admin');
+    assert.equal(owner.tenantId, 4);
+
+    const unknown = classifyLoginBody({ role: 'patient', tenant_id: 4 });
+    assert.equal(unknown.realm, 'rejected');
+    assert.equal(unknown.reason, 'unauthorized_role');
   });
 });
 
