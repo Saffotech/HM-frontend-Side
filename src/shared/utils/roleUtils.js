@@ -1,6 +1,10 @@
 /**
  * Backend role names ↔ frontend route/UI roles.
- * Backend seed: admin, doctor, nurse, opd_billing, pharmacist
+ * Hospital owner UI is role `admin`. Hospital operations UI is role `manager`.
+ * Legacy hospital `super_admin` is not rewritten to `admin`. Login and
+ * /auth/me stay authoritative. Hospital registration still creates owners as
+ * `super_admin`, and /admin/profile rejects every role except `admin`.
+ * `platform_admin` is unrelated and is not mapped here.
  */
 
 export function normalizeRole(role) {
@@ -17,6 +21,7 @@ export function normalizeRole(role) {
 export const DEPARTMENT_BY_ROLE = {
   super_admin: 'Administration',
   admin: 'Management',
+  manager: 'Management',
   doctor: 'Doctor',
   opd: 'OPD',
   nurse: 'Nursing',
@@ -30,7 +35,8 @@ export const DEPARTMENT_BY_ROLE = {
 /** Short module label shown next to the avatar in every module shell. */
 export const ROLE_LABELS = {
   super_admin: 'Admin',
-  admin: 'Manager',
+  admin: 'Hospital Admin',
+  manager: 'Manager',
   doctor: 'Doctor',
   opd: 'OPD Billing',
   nurse: 'Nurse',

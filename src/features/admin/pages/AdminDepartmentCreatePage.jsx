@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Building2, Save } from 'lucide-react';
 import SuperAdminLayout from '@/features/admin/components/AdminLayout';
 import DepartmentForm from '@/features/manager/components/DepartmentForm';
@@ -9,19 +9,21 @@ import {
 } from '@/features/manager/utils/departmentFormModel';
 import { useCreateDepartmentMutation } from '@/shared/hooks/queries/useAdminQuery';
 import { Button } from '@/shared/components/common';
-import { ROUTES } from '@/shared/constants';
+import { adminPanelRoutes } from '@/shared/constants';
 import { isLabOrRadCode } from '@/shared/utils/labDepartments';
 import { toast } from '@/shared/utils/toast';
 
 export default function SuperAdminDepartmentCreatePage() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const panel = adminPanelRoutes(pathname);
   const [form, setForm] = useState(() => emptyDepartmentForm());
   const createMutation = useCreateDepartmentMutation();
 
   useEffect(() => {
     setForm(emptyDepartmentForm());
   }, []);
-  const listRoute = ROUTES.SUPER_ADMIN_DEPARTMENTS;
+  const listRoute = panel.departments;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,7 +41,7 @@ export default function SuperAdminDepartmentCreatePage() {
       toast.success(result?.message || 'Department created successfully');
       const id = result?.department?.id;
       if (id) {
-        navigate(ROUTES.SUPER_ADMIN_DEPARTMENT_DETAIL.replace(':id', id));
+        navigate(panel.departmentDetail(id));
       } else {
         navigate(listRoute);
       }

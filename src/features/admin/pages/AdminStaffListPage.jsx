@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Eye, Plus, Trash2, UserCheck, UserX } from 'lucide-react';
 import SuperAdminLayout from '@/features/admin/components/AdminLayout';
 import SuperAdminPageHeader from '@/features/admin/components/AdminPageHeader';
@@ -20,7 +20,7 @@ import {
   Select,
   TablePagination,
 } from '@/shared/components/common';
-import { ROUTES } from '@/shared/constants';
+import { adminPanelRoutes } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 
 const PAGE_SIZE = 20;
@@ -31,12 +31,10 @@ function staffName(u) {
   return `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || 'this user';
 }
 
-function staffDetailPath(id) {
-  return ROUTES.SUPER_ADMIN_STAFF_DETAIL.replace(':id', String(id));
-}
-
 export default function SuperAdminStaffListPage() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const panel = adminPanelRoutes(pathname);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -116,7 +114,7 @@ export default function SuperAdminStaffListPage() {
         <SuperAdminPageHeader
           title="Staff Member"
           actions={(
-            <Button onClick={() => navigate(ROUTES.SUPER_ADMIN_STAFF_NEW)}>
+            <Button onClick={() => navigate(panel.staffNew)}>
               <Plus size={16} aria-hidden />
               Register Staff
             </Button>
@@ -185,7 +183,7 @@ export default function SuperAdminStaffListPage() {
                               <button
                                 type="button"
                                 className="sa-staff-list__action sa-staff-list__action--view"
-                                onClick={() => navigate(staffDetailPath(u.id))}
+                                onClick={() => navigate(panel.staffDetail(u.id))}
                               >
                                 <Eye size={14} aria-hidden />
                                 View

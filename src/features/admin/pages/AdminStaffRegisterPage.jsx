@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, UserPlus } from 'lucide-react';
 import SuperAdminLayout from '@/features/admin/components/AdminLayout';
 import {
@@ -8,7 +8,7 @@ import {
   useRegisterStaffMutation,
 } from '@/shared/hooks/queries/useAdminQuery';
 import { Button, Input, Label, QueryFeedback, Select } from '@/shared/components/common';
-import { ROUTES } from '@/shared/constants';
+import { adminPanelRoutes } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 import { normalizeEmailInput } from '@/shared/utils/credentials';
 import { ensureLabTechDepartmentId } from '@/features/manager/utils/ensureLabTechDepartment';
@@ -54,6 +54,8 @@ function RegisterField({ id, label, required, children, className = '' }) {
 
 export default function SuperAdminStaffRegisterPage() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const panel = adminPanelRoutes(pathname);
   const [form, setForm] = useState(EMPTY_FORM);
 
   const rolesQuery = useAdminRolesQuery();
@@ -151,7 +153,7 @@ export default function SuperAdminStaffRegisterPage() {
       const result = await registerMutation.mutateAsync({ data: payload });
       toast.success(result?.message || 'Staff registered successfully');
       setForm(EMPTY_FORM);
-      navigate(ROUTES.SUPER_ADMIN_STAFF);
+      navigate(panel.staff);
     } catch (err) {
       const message =
         err?.status === 409
@@ -170,7 +172,7 @@ export default function SuperAdminStaffRegisterPage() {
               type="button"
               variant="ghost"
               className="sa-register-back"
-              onClick={() => navigate(ROUTES.SUPER_ADMIN_STAFF)}
+              onClick={() => navigate(panel.staff)}
             >
               <ArrowLeft size={16} aria-hidden />
               Back
@@ -302,7 +304,7 @@ export default function SuperAdminStaffRegisterPage() {
                 <Button
                   type="button"
                   variant="ghost"
-                  onClick={() => navigate(ROUTES.SUPER_ADMIN_STAFF)}
+                  onClick={() => navigate(panel.staff)}
                 >
                   Cancel
                 </Button>

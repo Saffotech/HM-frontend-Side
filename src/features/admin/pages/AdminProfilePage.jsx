@@ -28,7 +28,7 @@ import {
 } from '@/features/admin/hooks/useAdminProfileQuery';
 import SuperAdminLayout from '@/features/admin/components/AdminLayout';
 import SuperAdminPageHeader from '@/features/admin/components/AdminPageHeader';
-import { ROUTES } from '@/shared/constants';
+import { adminPanelRoutes } from '@/shared/constants';
 import {
   Button,
   ConfirmDialog,
@@ -181,6 +181,7 @@ function ReadField({ label, value }) {
 export default function SuperAdminProfilePage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const panel = adminPanelRoutes(location.pathname);
   const { data, isLoading, isError, error, refetch } = useSuperAdminProfileQuery();
   const profile = data?.profile;
   const updateProfile = useUpdateSuperAdminProfileMutation();
@@ -409,7 +410,7 @@ export default function SuperAdminProfilePage() {
             <Button variant="outline" onClick={() => refetch()}>
               Retry
             </Button>
-            <Button variant="ghost" onClick={() => navigate(ROUTES.SUPER_ADMIN_DASHBOARD)}>
+            <Button variant="ghost" onClick={() => navigate(panel.dashboard)}>
               <ArrowLeft size={16} /> Dashboard
             </Button>
           </div>
@@ -434,7 +435,7 @@ export default function SuperAdminProfilePage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(ROUTES.SUPER_ADMIN_DASHBOARD)}
+              onClick={() => navigate(panel.dashboard)}
             >
               <ArrowLeft size={16} /> Dashboard
             </Button>

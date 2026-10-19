@@ -1,5 +1,6 @@
 /**
- * Admin API — audit (live backend).
+ * Hospital Owner audit client. Supported route: GET /admin/audit.
+ * The owner screen is only mounted for role `admin`.
  */
 
 import { apiClient } from '@/shared/api/client';
@@ -14,7 +15,7 @@ function buildQuery(params = {}) {
   return query ? `?${query}` : '';
 }
 
-/** GET /super-admin/audit */
+/** GET /admin/audit */
 export async function listAuditLogs(params = {}) {
   const query = buildQuery({
     search: params.search?.trim() || undefined,
@@ -25,5 +26,5 @@ export async function listAuditLogs(params = {}) {
     page: params.page ?? 1,
     limit: params.limit ?? 100,
   });
-  return apiClient(`/super-admin/audit${query}`);
+  return apiClient(`/admin/audit${query}`);
 }

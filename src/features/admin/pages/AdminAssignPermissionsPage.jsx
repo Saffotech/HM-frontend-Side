@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Save } from 'lucide-react';
 import SuperAdminLayout from '@/features/admin/components/AdminLayout';
 import SuperAdminPermissionPicker from '@/features/admin/components/AdminPermissionPicker';
@@ -10,13 +10,15 @@ import {
 } from '@/shared/hooks/queries/useAdminQuery';
 import { useSuperAdminPermissionCatalogQuery } from '@/features/admin/hooks/useAdminQuery';
 import { Button, QueryFeedback } from '@/shared/components/common';
-import { ROUTES } from '@/shared/constants';
+import { adminPanelRoutes } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 import { formatRoleLabel } from '@/features/admin/utils/permissionPresentation';
 
 export default function SuperAdminAssignPermissionsPage() {
   const { roleId } = useParams();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const panel = adminPanelRoutes(pathname);
   const [selectedIds, setSelectedIds] = useState([]);
 
   const apiRolesQuery = useAdminRolesQuery();
@@ -83,7 +85,7 @@ export default function SuperAdminAssignPermissionsPage() {
         permissionIds: selectedIds,
       });
       toast.success(result?.message || 'Permissions saved');
-      navigate(ROUTES.SUPER_ADMIN_ROLES);
+      navigate(panel.roles);
     } catch (err) {
       toast.error(err?.message || 'Failed to assign permissions');
     }
@@ -99,14 +101,14 @@ export default function SuperAdminAssignPermissionsPage() {
   return (
     <SuperAdminLayout pageTitle="Assign Permissions">
       <div className="admin-page sa-perm-page">
-        <AdminBackBar onBack={() => navigate(ROUTES.SUPER_ADMIN_ROLES)} />
+        <AdminBackBar onBack={() => navigate(panel.roles)} />
 
         <QueryFeedback isLoading={isLoading} isError={isError} error={error}>
           {!selectedRole ? (
             <div className="admin-card sa-panel-card">
               <div className="admin-empty-state">
                 <p>Role not found. Choose a role from the list.</p>
-                <Button variant="outline" onClick={() => navigate(ROUTES.SUPER_ADMIN_ROLES)}>
+                <Button variant="outline" onClick={() => navigate(panel.roles)}>
                   Back to roles
                 </Button>
               </div>

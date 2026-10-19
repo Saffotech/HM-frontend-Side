@@ -1,5 +1,5 @@
 /**
- * TanStack Query hooks for Manager profile against live /admin/profile APIs.
+ * TanStack Query hooks for Manager profile against live /manager/profile APIs.
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';

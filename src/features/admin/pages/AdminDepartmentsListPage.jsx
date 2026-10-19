@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Building2, Eye, Plus, RotateCcw } from 'lucide-react';
 import SuperAdminLayout from '@/features/admin/components/AdminLayout';
 import SuperAdminPageHeader from '@/features/admin/components/AdminPageHeader';
@@ -13,10 +13,12 @@ import {
   SearchBar,
   Select,
 } from '@/shared/components/common';
-import { ROUTES } from '@/shared/constants';
+import { adminPanelRoutes } from '@/shared/constants';
 
 export default function SuperAdminDepartmentsListPage() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const panel = adminPanelRoutes(pathname);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -78,7 +80,7 @@ export default function SuperAdminDepartmentsListPage() {
         <SuperAdminPageHeader
           title="Departments"
           actions={(
-            <Button onClick={() => navigate(ROUTES.SUPER_ADMIN_DEPARTMENTS_NEW)}>
+            <Button onClick={() => navigate(panel.departmentsNew)}>
               <Plus size={16} aria-hidden />
               New department
             </Button>
@@ -191,9 +193,7 @@ export default function SuperAdminDepartmentsListPage() {
                               type="button"
                               className="sa-staff-list__action sa-staff-list__action--view"
                               onClick={() =>
-                                navigate(
-                                  ROUTES.SUPER_ADMIN_DEPARTMENT_DETAIL.replace(':id', dept.id),
-                                )
+                                navigate(panel.departmentDetail(dept.id))
                               }
                             >
                               <Eye size={14} aria-hidden />

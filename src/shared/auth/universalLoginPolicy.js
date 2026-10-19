@@ -23,6 +23,7 @@ const PLATFORM_DASHBOARD = {
 /** Roles that belong to a hospital and must have a real tenant id. */
 const HOSPITAL_ROLES = new Set([
   'admin',
+  'manager',
   'doctor',
   'nurse',
   'opd',
@@ -42,8 +43,8 @@ const HOSPITAL_RETURN_PREFIXES = {
   nurse: ['/nurse'],
   receptionist: ['/receptionist'],
   ipd: ['/ipd'],
-  super_admin: ['/super-admin'],
   admin: ['/admin'],
+  manager: ['/manager'],
   opd: ['/dashboard', '/billing', '/appointments', '/patients', '/pricing', '/payment-history', '/opd'],
   billing: ['/dashboard', '/billing', '/appointments', '/patients', '/pricing', '/payment-history', '/opd'],
 };

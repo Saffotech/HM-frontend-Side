@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ShieldPlus } from 'lucide-react';
 import SuperAdminLayout from '@/features/admin/components/AdminLayout';
 import AdminBackBar from '@/features/manager/components/ManagerBackBar';
 import { useCreateRoleMutation } from '@/shared/hooks/queries/useAdminQuery';
 import { Button, Input, Label } from '@/shared/components/common';
-import { ROUTES } from '@/shared/constants';
+import { adminPanelRoutes } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 
 export default function SuperAdminRoleCreatePage() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const panel = adminPanelRoutes(pathname);
   const [form, setForm] = useState({ name: '', description: '' });
   const createMutation = useCreateRoleMutation();
 
@@ -28,9 +30,9 @@ export default function SuperAdminRoleCreatePage() {
       toast.success(result?.message || 'Role created');
       const roleId = result?.id ?? result?.role_id;
       if (roleId) {
-        navigate(`/super-admin/roles/${roleId}/permissions`);
+        navigate(panel.rolesAssign(roleId));
       } else {
-        navigate(ROUTES.SUPER_ADMIN_ROLES);
+        navigate(panel.roles);
       }
     } catch (err) {
       toast.error(err?.message || 'Failed to create role');
@@ -40,7 +42,7 @@ export default function SuperAdminRoleCreatePage() {
   return (
     <SuperAdminLayout pageTitle="Create Role">
       <div className="admin-page">
-        <AdminBackBar onBack={() => navigate(ROUTES.SUPER_ADMIN_ROLES)} />
+        <AdminBackBar onBack={() => navigate(panel.roles)} />
         <div className="admin-card admin-card--narrow">
           <div className="admin-card__header">
             <h2 className="admin-card__title">New role</h2>

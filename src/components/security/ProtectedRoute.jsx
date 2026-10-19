@@ -51,11 +51,15 @@ export default function ProtectedRoute({ allowedRoles, loginPath = ROUTES.LOGIN 
     if (home && home !== ROUTES.APP_ENTRY && home !== pathname) {
       return <Navigate to={home} replace />;
     }
+    // Legacy hospital super_admin is not an owner session. Role admin uses /admin.
     if (user.role === ROLES.SUPER_ADMIN) {
-      return <Navigate to={ROUTES.SUPER_ADMIN_DASHBOARD} replace />;
+      return <Navigate to={ROUTES.UNAUTHORIZED} replace />;
     }
     if (user.role === ROLES.ADMIN) {
       return <Navigate to={ROUTES.ADMIN_DASHBOARD} replace />;
+    }
+    if (user.role === ROLES.MANAGER) {
+      return <Navigate to={ROUTES.MANAGER_DASHBOARD} replace />;
     }
     return <Navigate to={ROUTES.UNAUTHORIZED} replace />;
   }

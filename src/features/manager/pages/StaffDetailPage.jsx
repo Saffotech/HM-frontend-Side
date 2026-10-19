@@ -252,7 +252,7 @@ export default function StaffDetailPage() {
   return (
     <AdminLayout pageTitle={displayName}>
       <div className="admin-page sa-staff-detail-page staff-detail-page">
-        <AdminBackBar onBack={() => navigate(ROUTES.ADMIN_STAFF)} label="Back to staff">
+        <AdminBackBar onBack={() => navigate(ROUTES.MANAGER_STAFF)} label="Back to staff">
           {user && !editing ? (
             <div className="sa-staff-detail__toolbar-actions">
               <Button
@@ -319,7 +319,7 @@ export default function StaffDetailPage() {
             <div className="admin-card sa-staff-detail__empty">
               <div className="admin-empty-state">
                 <p>Staff record not found.</p>
-                <Button variant="outline" onClick={() => navigate(ROUTES.ADMIN_STAFF)}>
+                <Button variant="outline" onClick={() => navigate(ROUTES.MANAGER_STAFF)}>
                   Back to staff list
                 </Button>
               </div>

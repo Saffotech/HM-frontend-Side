@@ -1,4 +1,4 @@
-/** Admin nurse bed allocation API — Phase 2 `/admin/nurse-bed-allocations`. */
+/** Manager nurse bed allocation API — `/admin/nurse-bed-allocations`. */
 
 import { apiClient } from '@/shared/api/client';
 

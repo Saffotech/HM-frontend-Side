@@ -63,7 +63,7 @@ export default function DepartmentListPage() {
           title="Departments"
           subtitle="Manage hospital departments and clinical units."
           actions={(
-            <Button onClick={() => navigate(ROUTES.ADMIN_DEPARTMENTS_NEW)}>
+            <Button onClick={() => navigate(ROUTES.MANAGER_DEPARTMENTS_NEW)}>
               <Plus size={16} aria-hidden />
               New department
             </Button>
@@ -173,7 +173,7 @@ export default function DepartmentListPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() =>
-                                navigate(ROUTES.ADMIN_DEPARTMENT_DETAIL.replace(':id', dept.id))
+                                navigate(ROUTES.MANAGER_DEPARTMENT_DETAIL.replace(':id', dept.id))
                               }
                             >
                               <Eye size={14} aria-hidden />

@@ -252,7 +252,7 @@ export default function NurseBedAllocationEditPage() {
           ? 'Allocation updated'
           : `Updated assignment with ${bedIds.length} beds`,
       );
-      navigate(ROUTES.ADMIN_BED_ALLOCATION);
+      navigate(ROUTES.MANAGER_BED_ALLOCATION);
     } catch (err) {
       toast.error(err?.message || 'Failed to update allocation');
     } finally {
@@ -277,7 +277,7 @@ export default function NurseBedAllocationEditPage() {
     <AdminLayout pageTitle="Edit Bed Allocation">
       <div className="admin-page nba-page nba-detail-page nba-edit-page">
         <AdminBackBar
-          onBack={() => navigate(ROUTES.ADMIN_BED_ALLOCATION)}
+          onBack={() => navigate(ROUTES.MANAGER_BED_ALLOCATION)}
           label="Back to allocations"
         />
 
@@ -429,7 +429,7 @@ export default function NurseBedAllocationEditPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate(ROUTES.ADMIN_BED_ALLOCATION)}
+                  onClick={() => navigate(ROUTES.MANAGER_BED_ALLOCATION)}
                   disabled={saving}
                 >
                   Cancel

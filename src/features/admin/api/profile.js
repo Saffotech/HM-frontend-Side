@@ -1,5 +1,7 @@
 /**
- * Admin self-service profile API client (GET/PUT /super-admin/profile + image).
+ * Hospital Owner profile client.
+ * Supported routes: GET/PUT /admin/profile and POST/DELETE /admin/profile/image.
+ * The owner screen is only mounted for role `admin`, which the backend authorizes.
  */
 
 import { apiClient, apiSessionRequest } from '@/shared/api/client';
@@ -24,11 +26,11 @@ export function resolveSuperAdminProfileImageUrl(profileImageUrl) {
 }
 
 export async function getSuperAdminProfile(token) {
-  return apiClient('/super-admin/profile', { token });
+  return apiClient('/admin/profile', { token });
 }
 
 export async function updateSuperAdminProfile(payload, token) {
-  return apiClient('/super-admin/profile', {
+  return apiClient('/admin/profile', {
     method: 'PUT',
     body: JSON.stringify(payload),
     token,
@@ -38,7 +40,7 @@ export async function updateSuperAdminProfile(payload, token) {
 export async function uploadSuperAdminProfileImage(file, token) {
   const formData = new FormData();
   formData.append('file', file);
-  return apiSessionRequest('/super-admin/profile/image', {
+  return apiSessionRequest('/admin/profile/image', {
     method: 'POST',
     body: formData,
     token,
@@ -47,7 +49,7 @@ export async function uploadSuperAdminProfileImage(file, token) {
 }
 
 export async function deleteSuperAdminProfileImage(token) {
-  return apiClient('/super-admin/profile/image', {
+  return apiClient('/admin/profile/image', {
     method: 'DELETE',
     token,
   });

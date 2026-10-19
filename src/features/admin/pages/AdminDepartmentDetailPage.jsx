@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Mail, Pencil, Save, User, X } from 'lucide-react';
 import SuperAdminLayout from '@/features/admin/components/AdminLayout';
 import AdminBackBar from '@/features/manager/components/ManagerBackBar';
@@ -20,13 +20,15 @@ import {
   useUpdateDepartmentMutation,
 } from '@/shared/hooks/queries/useAdminQuery';
 import { Button, QueryFeedback } from '@/shared/components/common';
-import { ROUTES } from '@/shared/constants';
+import { adminPanelRoutes } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 
 export default function SuperAdminDepartmentDetailPage() {
   const { id } = useParams();
   const departmentId = Number(id);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const panel = adminPanelRoutes(pathname);
   const [searchParams] = useSearchParams();
   const initialEdit = searchParams.get('edit') === '1' || searchParams.get('edit') === 'true';
 
@@ -96,7 +98,7 @@ export default function SuperAdminDepartmentDetailPage() {
   return (
     <SuperAdminLayout pageTitle={department?.name || 'Department'}>
       <div className="admin-page sa-dept-detail-page">
-        <AdminBackBar onBack={() => navigate(ROUTES.SUPER_ADMIN_DEPARTMENTS)}>
+        <AdminBackBar onBack={() => navigate(panel.departments)}>
           {!pageLoading && department && !isEditing && (
             <Button onClick={() => setIsEditing(true)}>
               <Pencil size={16} aria-hidden />

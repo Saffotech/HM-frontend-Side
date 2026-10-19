@@ -1,5 +1,5 @@
 /**
- * Admin Profile — live GET/PUT /admin/profile + image APIs.
+ * Manager profile — live GET/PUT /manager/profile + image APIs.
  * Admin-owned fields stay read-only.
  */
 
@@ -437,7 +437,7 @@ export default function AdminProfilePage() {
           <Button variant="primary" onClick={() => refetch()}>
             Try again
           </Button>
-          <Button variant="outline" onClick={() => navigate(ROUTES.ADMIN_DASHBOARD)}>
+          <Button variant="outline" onClick={() => navigate(ROUTES.MANAGER_DASHBOARD)}>
             <ArrowLeft size={16} /> Back to dashboard
           </Button>
         </div>
@@ -454,7 +454,7 @@ export default function AdminProfilePage() {
           description="Contact admin to create your Manager profile."
         />
         <div style={{ marginTop: '1rem' }}>
-          <Button variant="outline" onClick={() => navigate(ROUTES.ADMIN_DASHBOARD)}>
+          <Button variant="outline" onClick={() => navigate(ROUTES.MANAGER_DASHBOARD)}>
             <ArrowLeft size={16} /> Back to dashboard
           </Button>
         </div>

@@ -145,7 +145,7 @@ export default function NurseBedAllocationListPage() {
           </div>
           <div className="nba-list-actions__buttons">
             {canMakeNew ? (
-              <Button onClick={() => navigate(ROUTES.ADMIN_BED_ALLOCATION_NEW)}>
+              <Button onClick={() => navigate(ROUTES.MANAGER_BED_ALLOCATION_NEW)}>
                 <Plus size={16} aria-hidden />
                 New allocation
               </Button>
@@ -293,7 +293,7 @@ export default function NurseBedAllocationListPage() {
                                 variant="primary"
                                 onClick={() =>
                                   navigate(
-                                    ROUTES.ADMIN_BED_ALLOCATION_DETAIL.replace(
+                                    ROUTES.MANAGER_BED_ALLOCATION_DETAIL.replace(
                                       ':id',
                                       String(row.id),
                                     ),

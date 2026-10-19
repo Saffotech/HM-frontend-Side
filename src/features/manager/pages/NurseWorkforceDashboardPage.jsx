@@ -452,9 +452,9 @@ export default function NurseWorkforceDashboardPage() {
           {!assignedBeds.length ? (
             <p className="nwf-panel__hint">
               Beds stay assigned until an admin changes them.{' '}
-              <Link to={ROUTES.ADMIN_BED_ALLOCATION_NEW}>Create an allocation</Link>
+              <Link to={ROUTES.MANAGER_BED_ALLOCATION_NEW}>Create an allocation</Link>
               {' '}or open{' '}
-              <Link to={ROUTES.ADMIN_BED_ALLOCATION}>Nurse Bed Allocation</Link>.
+              <Link to={ROUTES.MANAGER_BED_ALLOCATION}>Nurse Bed Allocation</Link>.
             </p>
           ) : null}
         </>

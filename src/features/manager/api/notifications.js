@@ -1,5 +1,5 @@
 /**
- * Live /opd/notifications client (list, unread-count, mark read / read-all).
+ * Manager notifications client (list, unread-count, mark read / read-all).
  */
 
 import { apiClient } from '@/shared/api/client';

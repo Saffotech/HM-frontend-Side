@@ -9,21 +9,23 @@ import {
   Users,
 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
-import { ROUTES } from '@/shared/constants';
+import { adminPanelRoutes } from '@/shared/constants';
 import RoleLayout from '@/shared/components/layout/RoleLayout';
 import '../styles/admin.css';
 import '../styles/admin-mobile.css';
 
-const NAV_LINKS = [
-  { href: ROUTES.SUPER_ADMIN_DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
-  { href: ROUTES.SUPER_ADMIN_STAFF, label: 'Staff', icon: Users },
-  { href: ROUTES.SUPER_ADMIN_DEPARTMENTS, label: 'Departments', icon: Building2 },
-  { href: ROUTES.SUPER_ADMIN_ROLES, label: 'Roles', icon: UserCog },
-  { href: ROUTES.SUPER_ADMIN_SETTINGS, label: 'Settings', icon: Settings },
-  { href: ROUTES.SUPER_ADMIN_REPORTS, label: 'Reports', icon: BarChart3 },
-  { href: ROUTES.SUPER_ADMIN_AUDIT, label: 'Audit Log', icon: ClipboardList },
-  { href: ROUTES.SUPER_ADMIN_PROFILE, label: 'Profile', icon: User },
-];
+function navLinksFor(panel) {
+  return [
+    { href: panel.dashboard, label: 'Dashboard', icon: LayoutDashboard },
+    { href: panel.staff, label: 'Staff', icon: Users },
+    { href: panel.departments, label: 'Departments', icon: Building2 },
+    { href: panel.roles, label: 'Roles', icon: UserCog },
+    { href: panel.settings, label: 'Settings', icon: Settings },
+    { href: panel.reports, label: 'Reports', icon: BarChart3 },
+    { href: panel.audit, label: 'Audit Log', icon: ClipboardList },
+    { href: panel.profile, label: 'Profile', icon: User },
+  ];
+}
 
 /** Top shell title stays "Admin"; page names live in each screen header. */
 const HEADER_TITLE = 'Admin';
@@ -32,41 +34,34 @@ function resolveTitle() {
   return HEADER_TITLE;
 }
 
-function isStaffActive(pathname) {
-  return pathname === ROUTES.SUPER_ADMIN_STAFF || pathname.startsWith('/super-admin/staff/');
+function isSectionActive(pathname, root) {
+  return pathname === root || pathname.startsWith(`${root}/`);
 }
 
-function isDepartmentsActive(pathname) {
-  return pathname === ROUTES.SUPER_ADMIN_DEPARTMENTS
-    || pathname.startsWith('/super-admin/departments/');
-}
-
-function isRolesActive(pathname) {
-  return pathname === ROUTES.SUPER_ADMIN_ROLES || pathname.startsWith('/super-admin/roles/');
-}
-
-function isNavLinkActive(pathname, link) {
-  if (link.href === ROUTES.SUPER_ADMIN_STAFF) return isStaffActive(pathname);
-  if (link.href === ROUTES.SUPER_ADMIN_DEPARTMENTS) return isDepartmentsActive(pathname);
-  if (link.href === ROUTES.SUPER_ADMIN_ROLES) return isRolesActive(pathname);
+function isNavLinkActive(pathname, link, panel) {
+  if (link.href === panel.staff) return isSectionActive(pathname, panel.staff);
+  if (link.href === panel.departments) return isSectionActive(pathname, panel.departments);
+  if (link.href === panel.roles) return isSectionActive(pathname, panel.roles);
+  if (link.href === panel.settings) return isSectionActive(pathname, panel.settings);
   return pathname === link.href || pathname.startsWith(`${link.href}/`);
 }
 
 export default function SuperAdminLayout({ children, compact = false }) {
   const location = useLocation();
-  const onProfilePage = location.pathname === ROUTES.SUPER_ADMIN_PROFILE;
+  const panel = adminPanelRoutes(location.pathname);
+  const onProfilePage = location.pathname === panel.profile;
 
   return (
     <RoleLayout
-      navLinks={NAV_LINKS}
+      navLinks={navLinksFor(panel)}
       resolveTitle={resolveTitle}
-      homeRoute={ROUTES.SUPER_ADMIN_DASHBOARD}
+      homeRoute={panel.dashboard}
       layoutClassName="layout--super-admin"
       defaultTitle={HEADER_TITLE}
       compact={compact}
-      isNavLinkActive={isNavLinkActive}
+      isNavLinkActive={(pathname, link) => isNavLinkActive(pathname, link, panel)}
       showBell={false}
-      profileHref={ROUTES.SUPER_ADMIN_PROFILE}
+      profileHref={panel.profile}
       logoutMenuOnly={onProfilePage}
     >
       <div className="sa-shell">{children}</div>

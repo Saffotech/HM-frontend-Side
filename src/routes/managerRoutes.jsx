@@ -28,13 +28,13 @@ const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 export const managerRoutes = [
   {
-    element: <ProtectedRoute allowedRoles={[ROLES.ADMIN]} />,
+    element: <ProtectedRoute allowedRoles={[ROLES.MANAGER]} />,
     children: [
       {
         element: <AdminAppShell />,
         children: [
           {
-            path: ROUTES.ADMIN_DASHBOARD,
+            path: ROUTES.MANAGER_DASHBOARD,
             element: (
               <LazyRoute>
                 <AdminDashboardPage />
@@ -42,7 +42,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_STAFF,
+            path: ROUTES.MANAGER_STAFF,
             element: (
               <LazyRoute>
                 <StaffListPage />
@@ -50,7 +50,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_STAFF_NEW,
+            path: ROUTES.MANAGER_STAFF_NEW,
             element: (
               <LazyRoute>
                 <StaffRegisterPage />
@@ -58,7 +58,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_STAFF_DETAIL,
+            path: ROUTES.MANAGER_STAFF_DETAIL,
             element: (
               <LazyRoute>
                 <StaffDetailPage />
@@ -66,7 +66,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_BED_ALLOCATION,
+            path: ROUTES.MANAGER_BED_ALLOCATION,
             element: (
               <LazyRoute>
                 <NurseBedAllocationListPage />
@@ -74,7 +74,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_BED_ALLOCATION_NEW,
+            path: ROUTES.MANAGER_BED_ALLOCATION_NEW,
             element: (
               <LazyRoute>
                 <NurseBedAllocationCreatePage />
@@ -82,7 +82,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_BED_ALLOCATION_EDIT,
+            path: ROUTES.MANAGER_BED_ALLOCATION_EDIT,
             element: (
               <LazyRoute>
                 <NurseBedAllocationEditPage />
@@ -90,7 +90,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_BED_ALLOCATION_DETAIL,
+            path: ROUTES.MANAGER_BED_ALLOCATION_DETAIL,
             element: (
               <LazyRoute>
                 <NurseBedAllocationDetailPage />
@@ -98,7 +98,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_NURSE_WORKFORCE,
+            path: ROUTES.MANAGER_NURSE_WORKFORCE,
             element: (
               <LazyRoute>
                 <NurseWorkforceDashboardPage />
@@ -106,7 +106,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_NURSE_WORKFORCE_SHIFTS,
+            path: ROUTES.MANAGER_NURSE_WORKFORCE_SHIFTS,
             element: (
               <LazyRoute>
                 <NurseWorkforceShiftsPage />
@@ -114,7 +114,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_NURSE_WORKFORCE_ROSTER,
+            path: ROUTES.MANAGER_NURSE_WORKFORCE_ROSTER,
             element: (
               <LazyRoute>
                 <NurseWorkforceRosterPage />
@@ -122,7 +122,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_ROLES,
+            path: ROUTES.MANAGER_ROLES,
             element: (
               <LazyRoute>
                 <RolesListPage />
@@ -130,7 +130,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_DEPARTMENTS,
+            path: ROUTES.MANAGER_DEPARTMENTS,
             element: (
               <LazyRoute>
                 <DepartmentListPage />
@@ -138,7 +138,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_DEPARTMENTS_NEW,
+            path: ROUTES.MANAGER_DEPARTMENTS_NEW,
             element: (
               <LazyRoute>
                 <DepartmentCreatePage />
@@ -146,7 +146,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_DEPARTMENT_DETAIL,
+            path: ROUTES.MANAGER_DEPARTMENT_DETAIL,
             element: (
               <LazyRoute>
                 <DepartmentDetailPage />
@@ -154,7 +154,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_REPORTS,
+            path: ROUTES.MANAGER_REPORTS,
             element: (
               <LazyRoute>
                 <ReportsOverviewPage />
@@ -162,7 +162,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_REPORTS_VISITS,
+            path: ROUTES.MANAGER_REPORTS_VISITS,
             element: (
               <LazyRoute>
                 <VisitsReportPage />
@@ -170,11 +170,11 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_SETTINGS,
-            element: <Navigate to={ROUTES.ADMIN_SETTINGS_OPD} replace />,
+            path: ROUTES.MANAGER_SETTINGS,
+            element: <Navigate to={ROUTES.MANAGER_SETTINGS_OPD} replace />,
           },
           {
-            path: ROUTES.ADMIN_SETTINGS_OPD,
+            path: ROUTES.MANAGER_SETTINGS_OPD,
             element: (
               <LazyRoute>
                 <AdminSettingsPage />
@@ -182,7 +182,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_SETTINGS_DOCTOR,
+            path: ROUTES.MANAGER_SETTINGS_DOCTOR,
             element: (
               <LazyRoute>
                 <AdminSettingsPage />
@@ -190,7 +190,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_SETTINGS_RECEPTIONIST,
+            path: ROUTES.MANAGER_SETTINGS_RECEPTIONIST,
             element: (
               <LazyRoute>
                 <AdminSettingsPage />
@@ -198,7 +198,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_SETTINGS_LAB,
+            path: ROUTES.MANAGER_SETTINGS_LAB,
             element: (
               <LazyRoute>
                 <AdminSettingsPage />
@@ -206,7 +206,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_SETTINGS_NURSE,
+            path: ROUTES.MANAGER_SETTINGS_NURSE,
             element: (
               <LazyRoute>
                 <AdminSettingsPage />
@@ -214,7 +214,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_SETTINGS_PHARMACY,
+            path: ROUTES.MANAGER_SETTINGS_PHARMACY,
             element: (
               <LazyRoute>
                 <AdminSettingsPage />
@@ -222,7 +222,7 @@ export const managerRoutes = [
             ),
           },
           {
-            path: ROUTES.ADMIN_PROFILE,
+            path: ROUTES.MANAGER_PROFILE,
             element: (
               <LazyRoute>
                 <AdminProfilePage />
@@ -230,11 +230,11 @@ export const managerRoutes = [
             ),
           },
           {
-            path: '/admin',
-            element: <Navigate to={ROUTES.ADMIN_DASHBOARD} replace />,
+            path: '/manager',
+            element: <Navigate to={ROUTES.MANAGER_DASHBOARD} replace />,
           },
           {
-            path: '/admin/*',
+            path: '/manager/*',
             element: (
               <LazyRoute>
                 <NotFoundPage />

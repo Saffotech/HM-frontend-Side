@@ -215,7 +215,7 @@ export default function StaffListPage() {
 
           actions={(
 
-            <Button onClick={() => navigate(ROUTES.ADMIN_STAFF_NEW)}>
+            <Button onClick={() => navigate(ROUTES.MANAGER_STAFF_NEW)}>
 
               <Plus size={16} aria-hidden />
 
@@ -411,7 +411,7 @@ export default function StaffListPage() {
 
                                     className="admin-staff-list__action admin-staff-list__action--view"
 
-                                    onClick={() => navigate(`/admin/staff/${member.id}`)}
+                                    onClick={() => navigate(`/manager/staff/${member.id}`)}
 
                                   >
 

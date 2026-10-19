@@ -110,7 +110,7 @@ export default function NurseBedAllocationCreatePage() {
                 : `${skipped} bed(s) skipped (duplicates or errors)`,
             );
           }
-          if (created) navigate(ROUTES.ADMIN_BED_ALLOCATION);
+          if (created) navigate(ROUTES.MANAGER_BED_ALLOCATION);
         },
         onError: (err) => toast.error(err?.message || 'Failed to create allocation'),
       },
@@ -123,7 +123,7 @@ export default function NurseBedAllocationCreatePage() {
         <div className="admin-card nba-denied">
           <h2>Access denied</h2>
           <p className="nba-muted">You do not have permission to create bed allocations.</p>
-          <Button variant="outline" onClick={() => navigate(ROUTES.ADMIN_BED_ALLOCATION)}>
+          <Button variant="outline" onClick={() => navigate(ROUTES.MANAGER_BED_ALLOCATION)}>
             Back to list
           </Button>
         </div>
@@ -135,7 +135,7 @@ export default function NurseBedAllocationCreatePage() {
     <AdminLayout pageTitle="New Bed Allocation">
       <div className="admin-page nba-page nba-page--compact">
         <AdminBackBar
-          onBack={() => navigate(ROUTES.ADMIN_BED_ALLOCATION)}
+          onBack={() => navigate(ROUTES.MANAGER_BED_ALLOCATION)}
           label="Back to allocations"
         />
 
@@ -201,7 +201,7 @@ export default function NurseBedAllocationCreatePage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate(ROUTES.ADMIN_BED_ALLOCATION)}
+              onClick={() => navigate(ROUTES.MANAGER_BED_ALLOCATION)}
             >
               Cancel
             </Button>

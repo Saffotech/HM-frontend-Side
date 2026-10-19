@@ -21,7 +21,7 @@ export default function DepartmentCreatePage() {
   useEffect(() => {
     setForm(emptyDepartmentForm());
   }, []);
-  const listRoute = ROUTES.ADMIN_DEPARTMENTS;
+  const listRoute = ROUTES.MANAGER_DEPARTMENTS;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,7 +39,7 @@ export default function DepartmentCreatePage() {
       toast.success(result?.message || 'Department created successfully');
       const id = result?.department?.id;
       if (id) {
-        navigate(ROUTES.ADMIN_DEPARTMENT_DETAIL.replace(':id', id));
+        navigate(ROUTES.MANAGER_DEPARTMENT_DETAIL.replace(':id', id));
       } else {
         navigate(listRoute);
       }

@@ -1,12 +1,12 @@
 /**
  * Admin OPD Settings — frontend API contract.
  *
- * Backend endpoints (expected):
+ * Supported backend routes:
  *   GET  /admin/settings/opd
  *   PATCH /admin/settings/opd
  *
- * Until the backend ships these routes, the service layer falls back to
- * localStorage so Admin can configure and persist settings in the UI.
+ * The service layer falls back to localStorage only when this route is
+ * unavailable or the network fails.
  */
 
 import { apiClient } from '@/shared/api/client';

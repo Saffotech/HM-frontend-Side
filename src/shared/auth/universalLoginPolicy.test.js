@@ -9,7 +9,7 @@ import {
   loginRedirectState,
   resolvePostLoginDestination,
 } from './universalLoginPolicy.js';
-import { normalizeRole } from '../utils/roleUtils.js';
+import { getRoleLabel, normalizeRole } from '../utils/roleUtils.js';
 import {
   createPlatformAuthStore,
   readActivePortalSession,
@@ -113,6 +113,104 @@ describe('post-login destination', () => {
     assert.deepEqual(loginRedirectState({ pathname: '/platform/hospitals', search: '', hash: '' }), {
       from: { pathname: '/platform/hospitals', search: '', hash: '' },
     });
+  });
+});
+
+describe('hospital admin and manager stay separate', () => {
+  it('does not collapse the backend admin role into manager', () => {
+    assert.equal(normalizeRole('admin'), 'admin');
+    assert.equal(normalizeRole('manager'), 'manager');
+    assert.equal(normalizeRole('super_admin'), 'super_admin');
+    assert.equal(normalizeRole('platform_admin'), 'platform_admin');
+    assert.equal(normalizeRole('crm'), 'crm');
+    assert.equal(normalizeRole('accountant'), 'accountant');
+    assert.equal(getRoleLabel({ role: 'admin' }), 'Hospital Admin');
+    assert.equal(getRoleLabel({ role: 'manager' }), 'Manager');
+  });
+
+  it('sends manager through the hospital realm and leaves platform homes unchanged', () => {
+    const manager = classifyLoginBody({ role: 'manager', tenant_id: 2 });
+    assert.equal(manager.realm, 'hospital');
+    assert.equal(manager.role, 'manager');
+    assert.equal(classifyLoginBody({ role: 'admin', tenant_id: 2 }).realm, 'hospital');
+    assert.equal(classifyLoginBody({ role: 'manager', tenant_id: null }).reason, 'invalid_tenant');
+    assert.equal(dashboardForRole('admin'), null);
+    assert.equal(dashboardForRole('manager'), null);
+    assert.equal(dashboardForRole('super_admin'), null);
+    assert.equal(dashboardForRole('platform_admin'), '/platform');
+    assert.equal(dashboardForRole('crm'), '/platform/crm');
+    assert.equal(dashboardForRole('accountant'), '/platform/accounts');
+  });
+
+  it('keeps each role on its own panel prefix', () => {
+    assert.equal(isReturnPathForRole('admin', '/admin/dashboard'), true);
+    assert.equal(isReturnPathForRole('admin', '/admin/audit'), true);
+    assert.equal(isReturnPathForRole('admin', '/manager/dashboard'), false);
+    assert.equal(isReturnPathForRole('manager', '/manager/staff'), true);
+    assert.equal(isReturnPathForRole('manager', '/admin/dashboard'), false);
+    assert.equal(isReturnPathForRole('super_admin', '/super-admin/dashboard'), false);
+    assert.equal(isReturnPathForRole('super_admin', '/admin/dashboard'), false);
+    assert.equal(normalizeRole('super_admin'), 'super_admin');
+    assert.equal(isReturnPathForRole('platform_admin', '/platform/hospitals'), true);
+    assert.equal(isReturnPathForRole('crm', '/platform/crm'), true);
+    assert.equal(isReturnPathForRole('accountant', '/platform/accounts'), true);
+  });
+
+  it('registers /admin for hospital admin and /manager for the operations panel', () => {
+    const managerRoutes = readFileSync(new URL('../../routes/managerRoutes.jsx', import.meta.url), 'utf8');
+    const adminRoutes = readFileSync(new URL('../../routes/adminRoutes.jsx', import.meta.url), 'utf8');
+    const redirect = readFileSync(new URL('../utils/authRedirect.js', import.meta.url), 'utf8');
+    const guard = readFileSync(new URL('../../components/security/ProtectedRoute.jsx', import.meta.url), 'utf8');
+    const login = readFileSync(new URL('../../features/manager/pages/ManagerLoginPage.jsx', import.meta.url), 'utf8');
+
+    assert.match(redirect, /ROLES\.ADMIN[\s\S]{0,80}ROUTES\.ADMIN_DASHBOARD/);
+    assert.match(redirect, /ROLES\.MANAGER[\s\S]{0,80}ROUTES\.MANAGER_DASHBOARD/);
+    assert.match(redirect, /ROLES\.SUPER_ADMIN[\s\S]{0,80}ROUTES\.UNAUTHORIZED/);
+    assert.doesNotMatch(redirect, /admin:\s*'manager'|normalized === ROLES\.ADMIN[\s\S]{0,40}MANAGER_DASHBOARD/);
+
+    assert.match(managerRoutes, /allowedRoles=\{\[ROLES\.MANAGER\]\}/);
+    assert.match(managerRoutes, /ROUTES\.MANAGER_DASHBOARD/);
+    assert.doesNotMatch(managerRoutes, /ROUTES\.ADMIN_|path: '\/admin/);
+    assert.match(adminRoutes, /ownerPanelRoutes\(\[ROLES\.ADMIN\]/);
+    assert.match(adminRoutes, /ROUTES\.ADMIN_DASHBOARD/);
+    assert.match(adminRoutes, /path: '\/super-admin\/\*'/);
+    assert.doesNotMatch(adminRoutes, /ownerPanelRoutes\(\[ROLES\.SUPER_ADMIN\]/);
+    assert.doesNotMatch(adminRoutes, /allowedRoles=\{\[ROLES\.ADMIN, ROLES\.SUPER_ADMIN\]\}/);
+    assert.match(guard, /ROLES\.ADMIN[\s\S]{0,120}ROUTES\.ADMIN_DASHBOARD/);
+    assert.match(guard, /ROLES\.MANAGER[\s\S]{0,120}ROUTES\.MANAGER_DASHBOARD/);
+    assert.match(login, /me\.role !== ROLES\.MANAGER/);
+    assert.match(login, /ROUTES\.MANAGER_DASHBOARD/);
+  });
+
+  it('uses the supported /admin API paths and keeps manager profile off the admin-only route', () => {
+    const root = new URL('../../features/manager/api/', import.meta.url);
+    const profile = readFileSync(new URL('profile.js', root), 'utf8');
+    const opd = readFileSync(new URL('opdSettings.js', root), 'utf8');
+    const notes = readFileSync(new URL('notifications.js', root), 'utf8');
+    const workforce = readFileSync(new URL('nurseWorkforce.js', root), 'utf8');
+    const beds = readFileSync(new URL('nurseBedAllocation.js', root), 'utf8');
+    const shared = readFileSync(new URL('manager.js', root), 'utf8');
+    const ownerProfile = readFileSync(new URL('../../features/admin/api/profile.js', import.meta.url), 'utf8');
+    const ownerAudit = readFileSync(new URL('../../features/admin/api/admin.js', import.meta.url), 'utf8');
+
+    assert.match(profile, /\/manager\/profile/);
+    assert.doesNotMatch(profile, /apiClient\('\/admin\/profile'/);
+    assert.match(opd, /apiClient\('\/admin\/settings\/opd'/);
+    assert.doesNotMatch(opd, /\/manager\/settings\/opd/);
+    assert.match(notes, /\/admin\/notifications/);
+    assert.doesNotMatch(notes, /\/manager\/notifications/);
+    assert.match(workforce, /\/admin\/nurse-workforce/);
+    assert.doesNotMatch(workforce, /\/manager\/nurse-workforce/);
+    assert.match(beds, /\/admin\/nurse-bed-allocations/);
+    assert.doesNotMatch(beds, /\/manager\/nurse-bed-allocations/);
+    assert.match(shared, /apiClient\('\/admin\/dashboard'\)/);
+    assert.match(shared, /\/admin\/reports\/overview/);
+    assert.match(shared, /\/admin\/reports\/visits/);
+    assert.doesNotMatch(shared, /\/manager\/dashboard|\/manager\/reports/);
+    assert.match(ownerProfile, /apiClient\('\/admin\/profile'/);
+    assert.doesNotMatch(ownerProfile, /\/super-admin\/profile/);
+    assert.match(ownerAudit, /\/admin\/audit/);
+    assert.doesNotMatch(ownerAudit, /\/super-admin\/audit/);
   });
 });
 

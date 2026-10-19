@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   Activity,
   Briefcase,
@@ -27,7 +27,7 @@ import {
   useUpdateStaffMutation,
 } from '@/shared/hooks/queries/useAdminQuery';
 import { Button, ConfirmDialog, Input, Label, QueryFeedback, Select } from '@/shared/components/common';
-import { ROUTES } from '@/shared/constants';
+import { adminPanelRoutes } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 import { ensureLabTechDepartmentId } from '@/features/manager/utils/ensureLabTechDepartment';
 import {
@@ -123,6 +123,8 @@ export default function SuperAdminStaffDetailPage() {
   const { id } = useParams();
   const userId = Number(id);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const panel = adminPanelRoutes(pathname);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({});
   const [confirm, setConfirm] = useState(null);
@@ -227,7 +229,7 @@ export default function SuperAdminStaffDetailPage() {
       if (confirm.type === 'delete') {
         await deleteMutation.mutateAsync({ id: user.id });
         toast.success('Staff member deleted successfully');
-        navigate(ROUTES.SUPER_ADMIN_STAFF);
+        navigate(panel.staff);
       } else {
         await activateMutation.mutateAsync({
           id: user.id,
@@ -245,7 +247,7 @@ export default function SuperAdminStaffDetailPage() {
   return (
     <SuperAdminLayout pageTitle="Staff Details">
       <div className="admin-page sa-staff-detail-page">
-        <AdminBackBar onBack={() => navigate(ROUTES.SUPER_ADMIN_STAFF)} label="Back to staff">
+        <AdminBackBar onBack={() => navigate(panel.staff)} label="Back to staff">
           {user && !editing ? (
             <div className="sa-staff-detail__toolbar-actions">
               <Button
@@ -307,7 +309,7 @@ export default function SuperAdminStaffDetailPage() {
             <div className="admin-card sa-panel-card sa-staff-detail__empty">
               <div className="admin-empty-state">
                 <p>Staff record not found.</p>
-                <Button variant="outline" onClick={() => navigate(ROUTES.SUPER_ADMIN_STAFF)}>
+                <Button variant="outline" onClick={() => navigate(panel.staff)}>
                   Back to staff list
                 </Button>
               </div>

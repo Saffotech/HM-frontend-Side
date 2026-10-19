@@ -137,7 +137,7 @@ export default function StaffRegisterPage() {
       const result = await registerMutation.mutateAsync({ data: payload });
       toast.success(result?.message || 'Staff registered successfully');
       setForm(EMPTY_FORM);
-      navigate(ROUTES.ADMIN_STAFF);
+      navigate(ROUTES.MANAGER_STAFF);
     } catch (err) {
       const message =
         err?.status === 409
@@ -160,7 +160,7 @@ export default function StaffRegisterPage() {
                 type="button"
                 variant="ghost"
                 className="staff-register-back"
-                onClick={() => navigate(ROUTES.ADMIN_STAFF)}
+                onClick={() => navigate(ROUTES.MANAGER_STAFF)}
               >
                 <ArrowLeft size={16} aria-hidden />
                 Back
@@ -320,7 +320,7 @@ export default function StaffRegisterPage() {
                   <Button
                     type="button"
                     variant="secondary"
-                    onClick={() => navigate(ROUTES.ADMIN_STAFF)}
+                    onClick={() => navigate(ROUTES.MANAGER_STAFF)}
                   >
                     Cancel
                   </Button>

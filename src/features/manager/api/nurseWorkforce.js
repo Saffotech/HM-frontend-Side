@@ -1,4 +1,4 @@
-/** Admin Nurse Workforce API — `/admin/nurse-workforce` (dashboard, shifts, roster). */
+/** Manager Nurse Workforce API — `/admin/nurse-workforce` (dashboard, shifts, roster). */
 
 import { apiClient } from '@/shared/api/client';
 

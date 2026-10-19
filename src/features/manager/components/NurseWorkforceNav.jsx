@@ -3,9 +3,9 @@ import { ROUTES } from '@/shared/constants';
 import '@/features/manager/styles/nurseWorkforce.css';
 
 const LINKS = [
-  { to: ROUTES.ADMIN_NURSE_WORKFORCE, label: 'Dashboard', end: true },
-  { to: ROUTES.ADMIN_NURSE_WORKFORCE_SHIFTS, label: 'Shifts' },
-  { to: ROUTES.ADMIN_NURSE_WORKFORCE_ROSTER, label: 'Roster' },
+  { to: ROUTES.MANAGER_NURSE_WORKFORCE, label: 'Dashboard', end: true },
+  { to: ROUTES.MANAGER_NURSE_WORKFORCE_SHIFTS, label: 'Shifts' },
+  { to: ROUTES.MANAGER_NURSE_WORKFORCE_ROSTER, label: 'Roster' },
 ];
 
 export default function NurseWorkforceNav() {

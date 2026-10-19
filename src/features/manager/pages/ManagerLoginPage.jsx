@@ -28,6 +28,10 @@ export default function AdminLoginPage() {
       navigate(ROUTES.ADMIN_DASHBOARD, { replace: true });
       return;
     }
+    if (user.role === ROLES.MANAGER) {
+      navigate(ROUTES.MANAGER_DASHBOARD, { replace: true });
+      return;
+    }
     navigate(ROUTES.LOGIN, { replace: true });
   }, [authReady, isAuthenticated, user, navigate]);
 
@@ -45,7 +49,7 @@ export default function AdminLoginPage() {
     try {
       const me = await login(trimmed);
 
-      if (me.role !== ROLES.ADMIN) {
+      if (me.role !== ROLES.MANAGER) {
         logout();
         const blocked = 'This portal is for manager accounts only.';
         setFormError(blocked);
@@ -62,7 +66,7 @@ export default function AdminLoginPage() {
       }
 
       toast.success(`Welcome, ${me.full_name}`);
-      navigate(ROUTES.ADMIN_DASHBOARD, { replace: true });
+      navigate(ROUTES.MANAGER_DASHBOARD, { replace: true });
     } catch (err) {
       if (isSupersededSessionError(err)) return;
       const message =

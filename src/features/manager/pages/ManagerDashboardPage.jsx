@@ -44,7 +44,7 @@ function staffListPath({ status, roleId } = {}) {
   if (status === false || status === 'false') params.set('status', 'false');
   if (roleId != null && roleId !== '') params.set('role_id', String(roleId));
   const qs = params.toString();
-  return qs ? `${ROUTES.ADMIN_STAFF}?${qs}` : ROUTES.ADMIN_STAFF;
+  return qs ? `${ROUTES.MANAGER_STAFF}?${qs}` : ROUTES.MANAGER_STAFF;
 }
 
 function buildViewAllLabel({
@@ -407,7 +407,7 @@ export default function AdminDashboardPage() {
         navigate(staffListPath());
         return;
       }
-      navigate(ROUTES.ADMIN_DEPARTMENTS);
+      navigate(ROUTES.MANAGER_DEPARTMENTS);
       return;
     }
     if (focus === FOCUS.ROLES) {
@@ -415,7 +415,7 @@ export default function AdminDashboardPage() {
         navigate(staffListPath({ roleId: selectedRole.role_id }));
         return;
       }
-      navigate(ROUTES.ADMIN_ROLES);
+      navigate(ROUTES.MANAGER_ROLES);
       return;
     }
     navigate(
@@ -635,21 +635,21 @@ export default function AdminDashboardPage() {
                     </div>
                     <div className="admin-card__body admin-quick-actions">
                       <AdminQuickAction
-                        to={ROUTES.ADMIN_STAFF}
+                        to={ROUTES.MANAGER_STAFF}
                         icon={<Users size={18} />}
                         title="Manage staff"
                         description="Search, edit, and activate accounts"
                         tone="primary"
                       />
                       <AdminQuickAction
-                        to={ROUTES.ADMIN_STAFF_NEW}
+                        to={ROUTES.MANAGER_STAFF_NEW}
                         icon={<Plus size={18} />}
                         title="Register staff"
                         description="Create a new hospital account"
                         tone="success"
                       />
                       <AdminQuickAction
-                        to={ROUTES.ADMIN_REPORTS}
+                        to={ROUTES.MANAGER_REPORTS}
                         icon={<BarChart3 size={18} />}
                         title="Reports"
                         description="Visits, revenue, and analytics"
@@ -657,7 +657,7 @@ export default function AdminDashboardPage() {
                       />
                       {canViewAllocations && (
                         <AdminQuickAction
-                          to={ROUTES.ADMIN_BED_ALLOCATION}
+                          to={ROUTES.MANAGER_BED_ALLOCATION}
                           icon={<BedDouble size={18} />}
                           title="Bed allocation"
                           description="Assign nurse shift beds"

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   ClipboardList,
   Settings,
@@ -21,7 +21,7 @@ import {
 } from '@/shared/hooks/queries/useAdminQuery';
 import { useSuperAdminAuditQuery } from '@/features/admin/hooks/useAdminQuery';
 import { QueryFeedback, SearchBar, TablePagination } from '@/shared/components/common';
-import { ROUTES } from '@/shared/constants';
+import { adminPanelRoutes } from '@/shared/constants';
 import { getAuditActionBadgeClass, formatAuditActionLabel } from '@/features/admin/utils/auditActionBadges';
 import {
   DASHBOARD_FILTERS,
@@ -32,36 +32,38 @@ import {
 
 const PAGE_SIZE = 20;
 
-const QUICK_ACTIONS = [
-  {
-    to: ROUTES.SUPER_ADMIN_STAFF_NEW,
-    icon: UserPlus,
-    title: 'Register Staff',
-    description: 'Add a new employee',
-    tone: 'primary',
-  },
-  {
-    to: ROUTES.SUPER_ADMIN_ROLES_NEW,
-    icon: ShieldPlus,
-    title: 'Create Role',
-    description: 'Define a new role',
-    tone: 'success',
-  },
-  {
-    to: ROUTES.SUPER_ADMIN_SETTINGS_OPD,
-    icon: Settings,
-    title: 'Settings',
-    description: 'Module role permissions',
-    tone: 'info',
-  },
-  {
-    to: ROUTES.SUPER_ADMIN_AUDIT,
-    icon: ClipboardList,
-    title: 'Audit Log',
-    description: 'Full activity history',
-    tone: 'warning',
-  },
-];
+function quickActions(panel) {
+  return [
+    {
+      to: panel.staffNew,
+      icon: UserPlus,
+      title: 'Register Staff',
+      description: 'Add a new employee',
+      tone: 'primary',
+    },
+    {
+      to: panel.rolesNew,
+      icon: ShieldPlus,
+      title: 'Create Role',
+      description: 'Define a new role',
+      tone: 'success',
+    },
+    {
+      to: panel.settingsOpd,
+      icon: Settings,
+      title: 'Settings',
+      description: 'Module role permissions',
+      tone: 'info',
+    },
+    {
+      to: panel.audit,
+      icon: ClipboardList,
+      title: 'Audit Log',
+      description: 'Full activity history',
+      tone: 'warning',
+    },
+  ];
+}
 
 function DashboardTableCell({ column, row }) {
   if (column.key === 'role') {
@@ -82,6 +84,8 @@ function DashboardTableCell({ column, row }) {
 }
 
 export default function SuperAdminDashboardPage() {
+  const { pathname } = useLocation();
+  const panel = adminPanelRoutes(pathname);
   const [activeFilter, setActiveFilter] = useState(DASHBOARD_FILTERS.TOTAL_STAFF);
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -338,7 +342,7 @@ export default function SuperAdminDashboardPage() {
               </div>
               <div className="admin-card__body sa-dashboard-quick-body">
                 <div className="sa-dashboard-quick-actions">
-                  {QUICK_ACTIONS.map((action) => {
+                  {quickActions(panel).map((action) => {
                     const Icon = action.icon;
                     return (
                       <Link

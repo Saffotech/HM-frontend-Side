@@ -56,6 +56,8 @@ export const APP_ROLE = 'Billing Counter';
 export const ROLES = {
   SUPER_ADMIN: 'super_admin',
   ADMIN: 'admin',
+  /** Hospital operations manager — separate from the hospital owner admin. */
+  MANAGER: 'manager',
   DOCTOR: 'doctor',
   RECEPTIONIST: 'receptionist',
   LAB_TECHNICIAN: 'lab_technician',
@@ -171,8 +173,11 @@ export const ROUTES = {
   ADMIN_DEPARTMENTS_NEW: '/admin/departments/new',
   ADMIN_DEPARTMENT_DETAIL: '/admin/departments/:id',
   ADMIN_ROLES: '/admin/roles',
+  ADMIN_ROLES_NEW: '/admin/roles/new',
+  ADMIN_ROLES_ASSIGN: '/admin/roles/:roleId/permissions',
   ADMIN_REPORTS: '/admin/reports',
   ADMIN_REPORTS_VISITS: '/admin/reports/visits',
+  ADMIN_AUDIT: '/admin/audit',
   ADMIN_BED_ALLOCATION: '/admin/bed-allocation',
   ADMIN_BED_ALLOCATION_NEW: '/admin/bed-allocation/new',
   ADMIN_BED_ALLOCATION_DETAIL: '/admin/bed-allocation/:id',
@@ -189,6 +194,32 @@ export const ROUTES = {
   ADMIN_SETTINGS_PHARMACY: '/admin/settings/pharmacy',
   ADMIN_PROFILE: '/admin/profile',
   ADMIN_NOTIFICATIONS: '/admin/notifications',
+  MANAGER_DASHBOARD: '/manager/dashboard',
+  MANAGER_STAFF: '/manager/staff',
+  MANAGER_STAFF_NEW: '/manager/staff/new',
+  MANAGER_STAFF_DETAIL: '/manager/staff/:id',
+  MANAGER_DEPARTMENTS: '/manager/departments',
+  MANAGER_DEPARTMENTS_NEW: '/manager/departments/new',
+  MANAGER_DEPARTMENT_DETAIL: '/manager/departments/:id',
+  MANAGER_ROLES: '/manager/roles',
+  MANAGER_REPORTS: '/manager/reports',
+  MANAGER_REPORTS_VISITS: '/manager/reports/visits',
+  MANAGER_BED_ALLOCATION: '/manager/bed-allocation',
+  MANAGER_BED_ALLOCATION_NEW: '/manager/bed-allocation/new',
+  MANAGER_BED_ALLOCATION_DETAIL: '/manager/bed-allocation/:id',
+  MANAGER_BED_ALLOCATION_EDIT: '/manager/bed-allocation/:id/edit',
+  MANAGER_NURSE_WORKFORCE: '/manager/nurse-workforce',
+  MANAGER_NURSE_WORKFORCE_SHIFTS: '/manager/nurse-workforce/shifts',
+  MANAGER_NURSE_WORKFORCE_ROSTER: '/manager/nurse-workforce/roster',
+  MANAGER_SETTINGS: '/manager/settings',
+  MANAGER_SETTINGS_OPD: '/manager/settings/opd',
+  MANAGER_SETTINGS_DOCTOR: '/manager/settings/doctor',
+  MANAGER_SETTINGS_RECEPTIONIST: '/manager/settings/receptionist',
+  MANAGER_SETTINGS_LAB: '/manager/settings/lab',
+  MANAGER_SETTINGS_NURSE: '/manager/settings/nurse',
+  MANAGER_SETTINGS_PHARMACY: '/manager/settings/pharmacy',
+  MANAGER_PROFILE: '/manager/profile',
+  MANAGER_NOTIFICATIONS: '/manager/notifications',
   SUPER_ADMIN_LOGIN: '/super-admin/login',
   SUPER_ADMIN_DASHBOARD: '/super-admin/dashboard',
   SUPER_ADMIN_STAFF: '/super-admin/staff',
@@ -229,6 +260,38 @@ export const ROUTES = {
   // Platform Admin: base path for the SaaS-owner panels (keep in sync with features/Platform Admin/shared/paths.js)
   PLATFORM: '/platform',
 };
+
+/**
+ * Hospital owner screen paths. Always `/admin`.
+ * `/super-admin/...` bookmarks redirect before these screens mount.
+ */
+export function adminPanelRoutes(_pathname = '') {
+  const base = '/admin';
+  const path = (suffix) => `${base}${suffix}`;
+  return {
+    root: base,
+    dashboard: path('/dashboard'),
+    staff: path('/staff'),
+    staffNew: path('/staff/new'),
+    staffDetail: (id) => path(`/staff/${id}`),
+    departments: path('/departments'),
+    departmentsNew: path('/departments/new'),
+    departmentDetail: (id) => path(`/departments/${id}`),
+    roles: path('/roles'),
+    rolesNew: path('/roles/new'),
+    rolesAssign: (roleId) => path(`/roles/${roleId}/permissions`),
+    settings: path('/settings'),
+    settingsOpd: path('/settings/opd'),
+    settingsDoctor: path('/settings/doctor'),
+    settingsReceptionist: path('/settings/receptionist'),
+    settingsLab: path('/settings/lab'),
+    settingsNurse: path('/settings/nurse'),
+    settingsPharmacy: path('/settings/pharmacy'),
+    reports: path('/reports'),
+    audit: path('/audit'),
+    profile: path('/profile'),
+  };
+}
 
 export const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 

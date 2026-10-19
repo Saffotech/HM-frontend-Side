@@ -13,19 +13,19 @@ export default function AdminNotificationsPage() {
   const handleDeepLink = (n) => {
     switch (n?.reference_type) {
       case 'SCHEDULE':
-        navigate(ROUTES.ADMIN_PROFILE, {
+        navigate(ROUTES.MANAGER_PROFILE, {
           state: { adminProfileTab: 'account' },
         });
         break;
       case 'USER':
-        navigate(ROUTES.ADMIN_PROFILE);
+        navigate(ROUTES.MANAGER_PROFILE);
         break;
       case 'ALERT':
       case 'PATIENT':
-        navigate(ROUTES.ADMIN_DASHBOARD);
+        navigate(ROUTES.MANAGER_DASHBOARD);
         break;
       case 'BILL':
-        navigate(ROUTES.ADMIN_REPORTS);
+        navigate(ROUTES.MANAGER_REPORTS);
         break;
       default:
         break;

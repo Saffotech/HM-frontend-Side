@@ -3,12 +3,12 @@ import { ROUTES } from '@/shared/constants';
 import '@/features/manager/styles/nurseWorkforce.css';
 
 const DEFAULT_LINKS = [
-  { to: ROUTES.ADMIN_SETTINGS_OPD, label: 'OPD/IPD', end: true },
-  { to: ROUTES.ADMIN_SETTINGS_DOCTOR, label: 'Doctor' },
-  { to: ROUTES.ADMIN_SETTINGS_RECEPTIONIST, label: 'Receptionist' },
-  { to: ROUTES.ADMIN_SETTINGS_LAB, label: 'LAB' },
-  { to: ROUTES.ADMIN_SETTINGS_NURSE, label: 'NURSE' },
-  { to: ROUTES.ADMIN_SETTINGS_PHARMACY, label: 'Pharmacy' },
+  { to: ROUTES.MANAGER_SETTINGS_OPD, label: 'OPD/IPD', end: true },
+  { to: ROUTES.MANAGER_SETTINGS_DOCTOR, label: 'Doctor' },
+  { to: ROUTES.MANAGER_SETTINGS_RECEPTIONIST, label: 'Receptionist' },
+  { to: ROUTES.MANAGER_SETTINGS_LAB, label: 'LAB' },
+  { to: ROUTES.MANAGER_SETTINGS_NURSE, label: 'NURSE' },
+  { to: ROUTES.MANAGER_SETTINGS_PHARMACY, label: 'Pharmacy' },
 ];
 
 export default function AdminSettingsNav({ links = DEFAULT_LINKS }) {

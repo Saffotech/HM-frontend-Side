@@ -33,12 +33,17 @@ export function getAppEntryForRole(role) {
     return ROUTES.IPD_DASHBOARD;
   }
 
+  // Keep the raw hospital super_admin identity. Owner screens authorize role admin.
   if (normalized === ROLES.SUPER_ADMIN) {
-    return ROUTES.SUPER_ADMIN_DASHBOARD;
+    return ROUTES.UNAUTHORIZED;
   }
 
   if (normalized === ROLES.ADMIN) {
     return ROUTES.ADMIN_DASHBOARD;
+  }
+
+  if (normalized === ROLES.MANAGER) {
+    return ROUTES.MANAGER_DASHBOARD;
   }
 
   if (normalized === ROLES.BILLING || normalized === ROLES.OPD) {

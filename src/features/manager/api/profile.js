@@ -1,5 +1,7 @@
 /**
- * Manager self-service profile API client (GET/PUT /admin/profile + image).
+ * Manager self-service profile client.
+ * No supported backend route exists for role `manager`.
+ * GET/PUT /admin/profile is limited to role `admin`, so this client must not call it.
  */
 
 import { apiClient, apiSessionRequest } from '@/shared/api/client';
@@ -26,11 +28,11 @@ export function resolveAdminProfileImageUrl(profileImageUrl) {
 }
 
 export async function getAdminProfile(token) {
-  return apiClient('/admin/profile', { token });
+  return apiClient('/manager/profile', { token });
 }
 
 export async function updateAdminProfile(payload, token) {
-  return apiClient('/admin/profile', {
+  return apiClient('/manager/profile', {
     method: 'PUT',
     body: JSON.stringify(payload),
     token,
@@ -40,7 +42,7 @@ export async function updateAdminProfile(payload, token) {
 export async function uploadAdminProfileImage(file, token) {
   const formData = new FormData();
   formData.append('file', file);
-  return apiSessionRequest('/admin/profile/image', {
+  return apiSessionRequest('/manager/profile/image', {
     method: 'POST',
     body: formData,
     token,
@@ -49,7 +51,7 @@ export async function uploadAdminProfileImage(file, token) {
 }
 
 export async function deleteAdminProfileImage(token) {
-  return apiClient('/admin/profile/image', {
+  return apiClient('/manager/profile/image', {
     method: 'DELETE',
     token,
   });

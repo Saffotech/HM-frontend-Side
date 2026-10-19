@@ -41,7 +41,7 @@ export default function ReportsOverviewPage() {
           actions={(
             <nav className="admin-subnav" aria-label="Report sections">
               <NavLink
-                to={ROUTES.ADMIN_REPORTS}
+                to={ROUTES.MANAGER_REPORTS}
                 end
                 className={({ isActive }) =>
                   `admin-subnav__link${isActive ? ' admin-subnav__link--active' : ''}`
@@ -50,7 +50,7 @@ export default function ReportsOverviewPage() {
                 Overview
               </NavLink>
               <NavLink
-                to={ROUTES.ADMIN_REPORTS_VISITS}
+                to={ROUTES.MANAGER_REPORTS_VISITS}
                 className={({ isActive }) =>
                   `admin-subnav__link${isActive ? ' admin-subnav__link--active' : ''}`
                 }

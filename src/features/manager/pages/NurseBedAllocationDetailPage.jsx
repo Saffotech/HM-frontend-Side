@@ -112,7 +112,7 @@ export default function NurseBedAllocationDetailPage() {
     <AdminLayout pageTitle="Allocation Details">
       <div className="admin-page nba-page nba-detail-page">
         <AdminBackBar
-          onBack={() => navigate(ROUTES.ADMIN_BED_ALLOCATION)}
+          onBack={() => navigate(ROUTES.MANAGER_BED_ALLOCATION)}
           label="Back to allocations"
         />
 
@@ -163,7 +163,7 @@ export default function NurseBedAllocationDetailPage() {
                       className="nba-detail-hero__edit"
                       onClick={() =>
                         navigate(
-                          ROUTES.ADMIN_BED_ALLOCATION_EDIT.replace(':id', String(group.id)),
+                          ROUTES.MANAGER_BED_ALLOCATION_EDIT.replace(':id', String(group.id)),
                         )
                       }
                     >

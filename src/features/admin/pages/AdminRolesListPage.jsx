@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ShieldPlus } from 'lucide-react';
 import SuperAdminLayout from '@/features/admin/components/AdminLayout';
 import SuperAdminPageHeader from '@/features/admin/components/AdminPageHeader';
@@ -7,7 +7,7 @@ import SuperAdminRoleCard from '@/features/admin/components/AdminRoleCard';
 import AdminEmptyState from '@/features/manager/components/ManagerEmptyState';
 import { useAdminDashboardQuery, useAdminRolesQuery } from '@/shared/hooks/queries/useAdminQuery';
 import { Button, QueryFeedback } from '@/shared/components/common';
-import { ROUTES } from '@/shared/constants';
+import { adminPanelRoutes } from '@/shared/constants';
 
 /** Display order for System roles cards (API may return any order). */
 const ROLE_CARD_ORDER = [
@@ -36,6 +36,8 @@ function buildStaffCounts(staffByRole = []) {
 
 export default function SuperAdminRolesListPage() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const panel = adminPanelRoutes(pathname);
   const apiQuery = useAdminRolesQuery();
   const dashboardQuery = useAdminDashboardQuery();
 
@@ -56,8 +58,7 @@ export default function SuperAdminRolesListPage() {
   const isLoading = apiQuery.isLoading;
   const isError = apiQuery.isError;
   const error = apiQuery.error;
-  const permissionsPath = (roleId) =>
-    ROUTES.SUPER_ADMIN_ROLES_ASSIGN.replace(':roleId', String(roleId));
+  const permissionsPath = (roleId) => panel.rolesAssign(roleId);
 
   return (
     <SuperAdminLayout pageTitle="Roles">
@@ -68,7 +69,7 @@ export default function SuperAdminRolesListPage() {
             <Button
               size="lg"
               className="sa-roles-create-btn"
-              onClick={() => navigate(ROUTES.SUPER_ADMIN_ROLES_NEW)}
+              onClick={() => navigate(panel.rolesNew)}
             >
               <ShieldPlus size={22} aria-hidden />
               Create role

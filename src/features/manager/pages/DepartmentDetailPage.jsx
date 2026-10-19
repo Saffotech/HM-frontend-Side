@@ -14,6 +14,7 @@ import {
   useUpdateDepartmentMutation,
 } from '@/shared/hooks/queries/useAdminQuery';
 import { Button, QueryFeedback } from '@/shared/components/common';
+import { ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 
 export default function DepartmentDetailPage() {
@@ -70,7 +71,7 @@ export default function DepartmentDetailPage() {
   return (
     <AdminLayout pageTitle={department?.name || 'Department'}>
       <div className="admin-page">
-        <AdminBackBar onBack={() => navigate('/admin/departments')}>
+        <AdminBackBar onBack={() => navigate(ROUTES.MANAGER_DEPARTMENTS)}>
           {!isLoading && department && !isEditing && (
             <Button onClick={() => setIsEditing(true)}>
               <Pencil size={16} aria-hidden />
