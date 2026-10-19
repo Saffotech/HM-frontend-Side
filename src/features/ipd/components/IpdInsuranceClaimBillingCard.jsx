@@ -78,6 +78,7 @@ function IpdInsuranceClaimBillingCard({
   patientId,
   insuranceAdmit,
   onClaimSaved,
+  readOnly = false,
 }) {
   const saveClaimMutation = useSaveIpdInsuranceClaimMutation();
   const activeSavedClaim = savedClaim ?? claim;
@@ -227,7 +228,7 @@ function IpdInsuranceClaimBillingCard({
     <div className="ipd-card">
       <div className="ipd-card__head">
         <h2 className="ipd-card__title">Insurance Claim</h2>
-        {claimEditing ? (
+        {claimEditing && !readOnly ? (
           <Button
             type="button"
             size="sm"
@@ -236,7 +237,7 @@ function IpdInsuranceClaimBillingCard({
           >
             {isSaving ? 'Saving…' : 'Save'}
           </Button>
-        ) : (
+        ) : !readOnly ? (
           <Button
             type="button"
             variant="secondary"
@@ -256,7 +257,7 @@ function IpdInsuranceClaimBillingCard({
           >
             Update
           </Button>
-        )}
+        ): null}
       </div>
       <div className="ipd-card__body">
         <dl className="ipd-claim-facts">
@@ -274,7 +275,7 @@ function IpdInsuranceClaimBillingCard({
                 }
                 placeholder="0"
                 inputMode="decimal"
-                disabled={!claimEditing}
+                disabled={!claimEditing || readOnly}
               />
             </dd>
           </div>
@@ -292,7 +293,7 @@ function IpdInsuranceClaimBillingCard({
                 }
                 placeholder="0"
                 inputMode="decimal"
-                disabled={!claimEditing}
+                disabled={!claimEditing || readOnly}
               />
             </dd>
           </div>

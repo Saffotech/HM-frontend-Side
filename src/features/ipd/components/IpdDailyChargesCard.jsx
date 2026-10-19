@@ -55,6 +55,7 @@ const IpdDailyChargeDateGroup = memo(function IpdDailyChargeDateGroup({
   onToggle,
   updateDailyCharge,
   removeDailyCharge,
+  readOnly,
 }) {
   return (
     <div
@@ -93,6 +94,7 @@ const IpdDailyChargeDateGroup = memo(function IpdDailyChargeDateGroup({
             chargeDate={group.charge_date}
             updateDailyCharge={updateDailyCharge}
             removeDailyCharge={removeDailyCharge}
+            readOnly={readOnly}
           />
         </div>
       ) : null}
@@ -103,6 +105,7 @@ const IpdDailyChargeDateGroup = memo(function IpdDailyChargeDateGroup({
   if (prev.onToggle !== next.onToggle) return false;
   if (prev.updateDailyCharge !== next.updateDailyCharge) return false;
   if (prev.removeDailyCharge !== next.removeDailyCharge) return false;
+  if (prev.readOnly !== next.readOnly) return false;
   return dailyChargeGroupEqual(prev.group, next.group);
 });
 
@@ -112,6 +115,7 @@ function IpdDailyChargesCard({
   onSave,
   saving = false,
   subtitle,
+  readOnly = false,
 }) {
   const [newDailyDate, setNewDailyDate] = useState(todayIsoDate);
   const [newDailyHead, setNewDailyHead] = useState('Pharmacy');
@@ -204,9 +208,11 @@ function IpdDailyChargesCard({
             </p>
           ) : null}
         </div>
-        <Button type="button" size="sm" onClick={onSave} disabled={saving}>
-          {saving ? 'Saving…' : 'Save Daily Charges'}
-        </Button>
+        {!readOnly ? (
+          <Button type="button" size="sm" onClick={onSave} disabled={saving}>
+            {saving ? 'Saving…' : 'Save Daily Charges'}
+          </Button>
+        ) : null}
       </div>
       <div className="ipd-card__body">
         {dailyCharges.length === 0 ? (
@@ -223,13 +229,16 @@ function IpdDailyChargesCard({
                 onToggle={toggleDailyDate}
                 updateDailyCharge={updateDailyCharge}
                 removeDailyCharge={removeDailyCharge}
+                readOnly={readOnly}
               />
             ))}
           </div>
         )}
 
-        <p className="ipd-claim-section-label ipd-ins-daily-add-label">Add charge</p>
-        <div className="ipd-ins-daily-add">
+        {!readOnly ? (
+          <>
+            <p className="ipd-claim-section-label ipd-ins-daily-add-label">Add charge</p>
+            <div className="ipd-ins-daily-add">
           <DateInput
             value={newDailyDate}
             onChange={setNewDailyDate}
@@ -272,7 +281,9 @@ function IpdDailyChargesCard({
           <Button type="button" variant="secondary" size="sm" onClick={addDailyCharge}>
             + Add
           </Button>
-        </div>
+            </div>
+          </>
+        ) : null}
 
         <div className="ipd-ins-daily-total">
           <span>
