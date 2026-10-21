@@ -28,6 +28,11 @@ export default function Hospitals() {
     { key: "plan", label: "Plan", render: (row) => `${row.plan || "—"} · ${row.billing_cycle || "—"}` },
     { key: "status", label: "Status", render: (row) => row.subscription_status || row.tenant_status || "—" },
     {
+      key: "activation",
+      label: "Activation",
+      render: (row) => (typeof row.is_active === "boolean" ? (row.is_active ? "Active" : "Suspended") : "—"),
+    },
+    {
       key: "actions",
       label: "Actions",
       render: (row) => (
@@ -44,7 +49,7 @@ export default function Hospitals() {
         actions={<Button onClick={() => navigate(platformPath("/hospitals/register"))}>Register hospital</Button>}
       />
       <p className="hospitals-api-note">
-        This list is every hospital registered on the server, including ones created by the accountant. Suspend and edit are not available yet.
+        This list is every hospital registered on the server, including ones created by the accountant. Open a hospital to suspend or reactivate it. Editing a registration is not available.
       </p>
       {error && <p className="hospitals-api-note" role="alert">{error}</p>}
       <SearchBar value={search} onChange={setSearch} placeholder="Search name or code" />

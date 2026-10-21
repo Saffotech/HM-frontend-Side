@@ -9,6 +9,7 @@ import { isTokenExpired, decodeJwt } from '@/shared/utils/jwtHelper';
 import { currentSessionEpoch, isSessionCurrent } from '@/components/security/sessionEpoch';
 import {
   classifyForbidden,
+  isTerminalSessionError,
   loginRouteForRole,
   messageForSessionError,
   sanitizeRequestHeaders,
@@ -73,6 +74,19 @@ function endHospitalSession(message, role, notifyServer) {
   redirectToHospitalLogin(role ?? sessionUser?.role);
 }
 
+async function refreshOrEndTerminalSession(epochAtStart, authToken) {
+  try {
+    return await refreshSessionTokens();
+  } catch (refreshErr) {
+    if (!isSessionCurrent(epochAtStart)) throw supersededSessionError();
+    if (isTerminalSessionError(refreshErr) && authToken && !isLegacyDemoSession(loadAuthSession()?.user, authToken)) {
+      const sessionUser = loadAuthSession()?.user;
+      endHospitalSession(messageForSessionError(refreshErr), sessionUser?.role, true);
+    }
+    throw refreshErr;
+  }
+}
+
 async function refreshSessionTokens() {
   const epochAtStart = currentSessionEpoch();
   if (refreshInFlight && refreshEpoch === epochAtStart) return refreshInFlight;
@@ -95,7 +109,10 @@ async function refreshSessionTokens() {
       auth.applyTokens?.(accessToken, nextRefresh, epochAtStart);
       return accessToken;
     })
-    .catch(() => null)
+    .catch((err) => {
+      if (isTerminalSessionError(err)) throw err;
+      return null;
+    })
     .finally(() => {
       if (refreshEpoch === epochAtStart) {
         refreshInFlight = null;
@@ -189,7 +206,7 @@ export async function apiClient(endpoint, options = {}) {
       && !_retriedAfterRefresh
       && authToken
     ) {
-      const newToken = await refreshSessionTokens();
+      const newToken = await refreshOrEndTerminalSession(epochAtStart, authToken);
       if (!isSessionCurrent(epochAtStart)) throw supersededSessionError();
       if (newToken) {
         return apiClient(endpoint, {
@@ -291,7 +308,7 @@ export async function apiSessionRequest(endpoint, options = {}) {
     if (!isSessionCurrent(epochAtStart)) throw supersededSessionError();
     const detail = parseDetail(body.detail);
     if (!skipSessionLogout && !_retriedAfterRefresh && authToken) {
-      const newToken = await refreshSessionTokens();
+      const newToken = await refreshOrEndTerminalSession(epochAtStart, authToken);
       if (!isSessionCurrent(epochAtStart)) throw supersededSessionError();
       if (newToken) {
         return apiSessionRequest(endpoint, {

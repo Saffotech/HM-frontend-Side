@@ -22,7 +22,7 @@ export function useUniversalSignIn() {
     const result = await completeUniversalSignIn(credentials, {
       from,
       hospitalLogin: (creds, options) => login(creds, options),
-      hospitalLogout: () => logout({ notifyServer: true }),
+      hospitalLogout: (options = {}) => logout({ notifyServer: true, ...options }),
     });
     if (
       result.realm === 'hospital'

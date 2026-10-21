@@ -1,7 +1,7 @@
 import { useState } from "react";
-import Button from "../../../../shared/components/Button";
 import SearchBar from "../../../../shared/components/SearchBar";
 import Select from "../../../../shared/components/Select";
+import Button from "../../../../shared/components/Button";
 import "./InvoicesPayments.css";
 
 const SUMMARY = [
@@ -21,10 +21,10 @@ export default function InvoicesPayments() {
     <section className="inv-page">
       <header className="page-header">
         <h1>Billing & Revenue</h1>
-        <Button disabled title="There is no invoice API, so a payment cannot be recorded.">Record payment</Button>
+        <Button disabled title="Platform admin cannot record invoice payments.">Record payment</Button>
       </header>
       <p className="panel-copy" style={{ marginTop: -6, marginBottom: 14 }}>
-        Invoice totals stay blank until a billing API is connected. Nothing on this page is estimated.
+        Platform invoices require the accountant permission. This platform admin account cannot list or pay them, so these totals stay blank. Nothing on this page is estimated.
       </p>
 
       <div className="inv-summary">
@@ -37,7 +37,7 @@ export default function InvoicesPayments() {
           >
             <span>{label}</span>
             <strong className={tone}>—</strong>
-            <small>No invoices</small>
+            <small>Not available</small>
           </button>
         ))}
       </div>
@@ -57,7 +57,7 @@ export default function InvoicesPayments() {
           <Button variant="secondary" onClick={() => { setStatus(""); setPeriod(""); setQuery(""); }}>Reset</Button>
         </div>
         <div className="inv-meta">
-          <span>0 invoices</span>
+          <span>Invoices unavailable</span>
           <span>Collected —</span>
         </div>
         <div className="table-wrap">
@@ -76,7 +76,7 @@ export default function InvoicesPayments() {
             <tbody>
               <tr>
                 <td colSpan={7}>
-                  <p className="panel-copy" style={{ margin: "8px 0" }}>No invoices yet. Recording a payment needs a billing API.</p>
+                  <p className="panel-copy" style={{ margin: "8px 0" }}>Open the accountant portal to list invoices and record payments.</p>
                 </td>
               </tr>
             </tbody>

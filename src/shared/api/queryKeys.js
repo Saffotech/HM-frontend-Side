@@ -1,88 +1,69 @@
 /** TanStack Query key factory — shared across OPD and doctor features */
 
+import { getHospitalStorageScope } from '../../components/security/hospitalStorageScope.js';
 
+/** Identity segment for hospital-specific caches. Prefix `all` keys stay unscoped so existing invalidation still matches. */
+export function hospitalQueryScope() {
+  const scope = getHospitalStorageScope();
+  return {
+    tenantId: scope?.tenantId ?? null,
+    userId: scope?.userId ?? null,
+  };
+}
+
+function scoped(key) {
+  return [...key, hospitalQueryScope()];
+}
 
 export const queryKeys = {
-
   patients: {
-
     all: ['patients'],
-
-    list: (filters) => ['patients', 'list', filters],
-
-    detail: (id) => ['patients', id],
-
-    profile: (dbId) => ['patients', 'profile', dbId],
-
-    searchPhone: (phone) => ['patients', 'search-phone', phone],
-
+    list: (filters) => scoped(['patients', 'list', filters]),
+    detail: (id) => scoped(['patients', id]),
+    profile: (dbId) => scoped(['patients', 'profile', dbId]),
+    searchPhone: (phone) => scoped(['patients', 'search-phone', phone]),
   },
 
   appointments: {
-
     all: ['appointments'],
-
-    list: (filters) => ['appointments', 'list', filters],
-
-    today: ['appointments', 'today'],
-
-    doctorSlots: (doctorId, deptId, date) => ['appointments', 'slots', doctorId, deptId, date],
-
-    detail: (id) => ['appointments', id],
-
+    list: (filters) => scoped(['appointments', 'list', filters]),
+    get today() { return scoped(['appointments', 'today']); },
+    doctorSlots: (doctorId, deptId, date) => scoped(['appointments', 'slots', doctorId, deptId, date]),
+    detail: (id) => scoped(['appointments', id]),
   },
 
   bills: {
-
     all: ['bills'],
-
-    list: (filters) => ['bills', 'list', filters],
-
-    detail: (id) => ['bills', id],
-
-    invoice: (visitId) => ['bills', 'invoice', visitId],
-
-    payments: ['bills', 'payments'],
-
-    paymentHistory: (filters) => ['bills', 'payment-history', filters],
-
+    list: (filters) => scoped(['bills', 'list', filters]),
+    detail: (id) => scoped(['bills', id]),
+    invoice: (visitId) => scoped(['bills', 'invoice', visitId]),
+    get payments() { return scoped(['bills', 'payments']); },
+    paymentHistory: (filters) => scoped(['bills', 'payment-history', filters]),
   },
 
   beds: {
-
     all: ['beds'],
-
     list: (filters) => ['beds', 'list', filters],
-
   },
 
   opd: {
-
     departments: ['opd', 'departments'],
     labDepartments: ['opd', 'departments', 'lab-routing'],
-
     doctors: (departmentId) => ['opd', 'doctors', departmentId],
-
     dashboard: ['opd', 'dashboard'],
-
     settings: ['opd', 'settings'],
-
     profile: ['opd', 'profile'],
-
     notifications: ['opd', 'notifications'],
-
     notificationsList: (filters) => ['opd', 'notifications', 'list', filters],
-
     notificationsUnreadCount: ['opd', 'notifications', 'unread-count'],
-
   },
 
   pharmacy: {
     all: ['pharmacy'],
-    prescriptions: (filters) => ['pharmacy', 'prescriptions', filters],
-    prescription: (id) => ['pharmacy', 'prescription', id],
-    history: (params) => ['pharmacy', 'history', params],
-    prescriptionHistory: (id) => ['pharmacy', 'prescription-history', id],
+    prescriptions: (filters) => scoped(['pharmacy', 'prescriptions', filters]),
+    prescription: (id) => scoped(['pharmacy', 'prescription', id]),
+    history: (params) => scoped(['pharmacy', 'history', params]),
+    prescriptionHistory: (id) => scoped(['pharmacy', 'prescription-history', id]),
     profile: ['pharmacy', 'profile'],
     notifications: ['pharmacy', 'notifications'],
     notificationsList: (filters) => ['pharmacy', 'notifications', 'list', filters],
@@ -106,17 +87,16 @@ export const queryKeys = {
     patientMedications: (patientId) => ['nurse', 'patient-medications', patientId],
     medicationHistory: (filters) => ['nurse', 'medication-history', filters],
     patientMedHistory: (patientId) => ['nurse', 'patient-med-history', patientId],
-    handovers: (filters) => ['nurse', 'handovers', filters],
-    handover: (id) => ['nurse', 'handover', id],
+    handovers: (filters) => scoped(['nurse', 'handovers', filters]),
+    handover: (id) => scoped(['nurse', 'handover', id]),
     alerts: (filters) => ['nurse', 'alerts', filters],
     alertSummary: (filters = {}) => ['nurse', 'alert-summary', filters],
     alert: (id) => ['nurse', 'alert', id],
     doctorVisits: (filters) => ['nurse', 'doctor-visits', filters],
     doctorVisitsDoctors: (filters = {}) => ['nurse', 'doctor-visits', 'doctors', filters],
     doctorVisitsDepartments: (filters = {}) => ['nurse', 'doctor-visits', 'departments', filters],
-    labReports: (filters) => ['nurse', 'lab-reports', filters],
-    labReport: (id, filters = {}) => ['nurse', 'lab-reports', 'detail', id, filters],
-    // Nurse Phase 2 by Atharva — profile + notifications cache keys
+    labReports: (filters) => scoped(['nurse', 'lab-reports', filters]),
+    labReport: (id, filters = {}) => scoped(['nurse', 'lab-reports', 'detail', id, filters]),
     profile: ['nurse', 'profile'],
     notifications: ['nurse', 'notifications'],
     notificationsList: (filters) => ['nurse', 'notifications', 'list', filters],
@@ -134,100 +114,71 @@ export const queryKeys = {
     reportsOverview: (filters) => ['admin', 'reports', 'overview', filters],
     reportsVisits: (filters) => ['admin', 'reports', 'visits', filters],
     permissionCatalog: ['admin', 'permission-catalog'],
-    bedAllocations: (filters) => ['admin', 'bed-allocations', filters],
-    bedAllocationDetail: (id) => ['admin', 'bed-allocations', 'detail', id],
-    workforceDashboard: (filters) => ['admin', 'workforce', 'dashboard', filters],
-    workforceShifts: (filters) => ['admin', 'workforce', 'shifts', filters],
-    workforceRoster: (filters) => ['admin', 'workforce', 'roster', filters],
+    bedAllocations: (filters) => scoped(['admin', 'bed-allocations', filters]),
+    bedAllocationDetail: (id) => scoped(['admin', 'bed-allocations', 'detail', id]),
+    workforceDashboard: (filters) => scoped(['admin', 'workforce', 'dashboard', filters]),
+    workforceShifts: (filters) => scoped(['admin', 'workforce', 'shifts', filters]),
+    workforceRoster: (filters) => scoped(['admin', 'workforce', 'roster', filters]),
     profile: ['admin', 'profile'],
     notifications: ['admin', 'notifications'],
     notificationsList: (filters) => ['admin', 'notifications', 'list', filters],
     notificationsUnreadCount: ['admin', 'notifications', 'unread-count'],
     opdSettings: ['admin', 'settings', 'opd'],
-    labCatalog: (filters = {}) => ['admin', 'lab-catalog', filters],
+    labCatalog: (filters = {}) => scoped(['admin', 'lab-catalog', filters]),
   },
 
   doctor: {
-
     records: ['doctor', 'records'],
-
     prescriptions: ['doctor', 'prescriptions'],
-
     prescriptionDetail: (id) => ['doctor', 'prescriptions', 'detail', id],
-
-    labs: ['doctor', 'labs'],
-
-    labCatalog: (filters = {}) => ['doctor', 'lab-catalog', filters],
-
-    labReport: (testId) => ['doctor', 'labs', 'report', testId],
-
+    get labs() { return scoped(['doctor', 'labs']); },
+    labCatalog: (filters = {}) => scoped(['doctor', 'lab-catalog', filters]),
+    labReport: (testId) => scoped(['doctor', 'labs', 'report', testId]),
     notifications: ['doctor', 'notifications'],
-
-    // Doctor Phase 2 by Atharva — cache keys for profile + paginated inbox / unread badge
     profile: ['doctor', 'profile'],
     notificationsList: (filters) => ['doctor', 'notifications', 'list', filters],
     notificationsUnreadCount: ['doctor', 'notifications', 'unread-count'],
 
     appointments: {
-
       all: ['doctor', 'appointments'],
-
-      dashboardStats: ['doctor', 'appointments', 'dashboard-stats'],
-
-      today: ['doctor', 'appointments', 'today'],
-
-      byDate: (date) => ['doctor', 'appointments', 'by-date', date],
-
-      history: ['doctor', 'appointments', 'history'],
-
-      detail: (id) => ['doctor', 'appointments', 'detail', id],
-
+      get dashboardStats() { return scoped(['doctor', 'appointments', 'dashboard-stats']); },
+      get today() { return scoped(['doctor', 'appointments', 'today']); },
+      byDate: (date) => scoped(['doctor', 'appointments', 'by-date', date]),
+      get history() { return scoped(['doctor', 'appointments', 'history']); },
+      detail: (id) => scoped(['doctor', 'appointments', 'detail', id]),
     },
 
     queue: {
-
       all: ['doctor', 'queue'],
-
       today: ['doctor', 'queue', 'today'],
-
       current: ['doctor', 'queue', 'current'],
-
     },
 
     consultations: {
-
       context: (appointmentId) => ['doctor', 'consultations', 'context', appointmentId],
-
     },
 
     patients: {
-
-      visits: ['doctor', 'patients', 'visits'],
-      patientVisits: (params) => ['doctor', 'patients', 'patient-visits', params],
-
-      history: (uhid, params) => ['doctor', 'patients', 'history', uhid, params],
-
-      prescriptions: (patientId) => ['doctor', 'patients', 'prescriptions', patientId],
-
-      vitals: (patientId, filters) => ['doctor', 'patients', 'vitals', patientId, filters],
-
-      notes: (patientId, filters) => ['doctor', 'patients', 'notes', patientId, filters],
-
+      get visits() { return scoped(['doctor', 'patients', 'visits']); },
+      patientVisits: (params) => scoped(['doctor', 'patients', 'patient-visits', params]),
+      history: (uhid, params) => scoped(['doctor', 'patients', 'history', uhid, params]),
+      prescriptions: (patientId) => scoped(['doctor', 'patients', 'prescriptions', patientId]),
+      vitals: (patientId, filters) => scoped(['doctor', 'patients', 'vitals', patientId, filters]),
+      notes: (patientId, filters) => scoped(['doctor', 'patients', 'notes', patientId, filters]),
     },
 
     ipd: {
-      admissions: (filters) => ['doctor', 'ipd', 'admissions', filters],
+      admissions: (filters) => scoped(['doctor', 'ipd', 'admissions', filters]),
     },
-
   },
 
   lab: {
     all: ['lab'],
-    dashboard: ['lab', 'dashboard'],
-    orders: (filters) => ['lab', 'orders', filters],
-    order: (id) => ['lab', 'order', id],
-    reports: (filters) => ['lab', 'reports', filters],
-    report: (id) => ['lab', 'report', id],
+    get dashboard() { return scoped(['lab', 'dashboard']); },
+    orders: (filters) => scoped(['lab', 'orders', filters]),
+    order: (id) => scoped(['lab', 'order', id]),
+    reports: (filters) => scoped(['lab', 'reports', filters]),
+    report: (id) => scoped(['lab', 'report', id]),
     profile: ['lab', 'profile'],
     notifications: ['lab', 'notifications'],
     notificationsList: (filters) => ['lab', 'notifications', 'list', filters],
@@ -245,23 +196,18 @@ export const queryKeys = {
   ipd: {
     all: ['ipd'],
     dashboard: ['ipd', 'dashboard'],
-    patients: (filters) => ['ipd', 'patients', filters],
-    admission: (id) => ['ipd', 'admission', id == null ? id : String(id)],
+    patients: (filters) => scoped(['ipd', 'patients', filters]),
+    admission: (id) => scoped(['ipd', 'admission', id == null ? id : String(id)]),
     beds: (filters) => ['ipd', 'beds', filters],
     wards: ['ipd', 'beds', 'wards'],
-    runningBills: (filters) => ['ipd', 'billing', 'running', filters],
-    billPreview: (admissionId) => ['ipd', 'billing', 'preview', admissionId],
-    billingAdmission: (admissionId) => ['ipd', 'billing', 'admission', admissionId],
-    dailyBilling: (admissionId) => ['ipd', 'billing', 'daily', admissionId],
-    finalBilling: (admissionId) => ['ipd', 'billing', 'final', admissionId],
-    insuranceBillingBundle: (patientId) => [
-      'ipd',
-      'billing',
-      'insurance',
-      patientId,
-    ],
-    billInvoice: (billId) => ['ipd', 'billing', 'invoice', billId],
-    paymentHistory: (filters) => ['ipd', 'payments', 'history', filters],
+    runningBills: (filters) => scoped(['ipd', 'billing', 'running', filters]),
+    billPreview: (admissionId) => scoped(['ipd', 'billing', 'preview', admissionId]),
+    billingAdmission: (admissionId) => scoped(['ipd', 'billing', 'admission', admissionId]),
+    dailyBilling: (admissionId) => scoped(['ipd', 'billing', 'daily', admissionId]),
+    finalBilling: (admissionId) => scoped(['ipd', 'billing', 'final', admissionId]),
+    insuranceBillingBundle: (patientId) => scoped(['ipd', 'billing', 'insurance', patientId]),
+    billInvoice: (billId) => scoped(['ipd', 'billing', 'invoice', billId]),
+    paymentHistory: (filters) => scoped(['ipd', 'payments', 'history', filters]),
     profile: ['ipd', 'profile'],
     departments: ['ipd', 'reference', 'departments'],
     doctors: (departmentId) => ['ipd', 'reference', 'doctors', departmentId],
@@ -270,6 +216,4 @@ export const queryKeys = {
   superAdmin: {
     profile: ['super-admin', 'profile'],
   },
-
 };
-

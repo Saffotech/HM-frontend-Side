@@ -9,15 +9,15 @@ export const PORTAL_BACKEND_ROLE = {
 
 const PORTAL_ACCESS = {
   platform: {
-    permission: "hospitals:create",
+    permissions: ["hospitals:create"],
     denial: "This account cannot register hospitals in this portal.",
   },
   accountant: {
-    permission: "hospitals:create",
-    denial: "This account cannot register hospitals in this portal.",
+    permissions: ["registrations:create", "invoices:manage"],
+    denial: "This account cannot open the accountant portal.",
   },
   crm: {
-    permission: "leads:manage",
+    permissions: ["leads:manage"],
     denial: "This account cannot work CRM leads in this portal.",
   },
 };
@@ -29,7 +29,9 @@ export function sessionFromLogin(portal, email, body) {
   const permissions = Array.isArray(body.permissions) ? body.permissions : [];
   const expectedRole = PORTAL_BACKEND_ROLE[portal];
   const access = PORTAL_ACCESS[portal];
-  if (!expectedRole || !access || body.role !== expectedRole || !permissions.includes(access.permission)) {
+  const required = access?.permissions || [];
+  const allowed = required.some((permission) => permissions.includes(permission));
+  if (!expectedRole || !access || body.role !== expectedRole || !allowed) {
     throw new PlatformApiError(access?.denial || "This account cannot sign in to this portal.", {
       status: 403,
       detail: "Permission denied",

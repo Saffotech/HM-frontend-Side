@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "test": "node --test src/components/security/hospitalSession.test.js src/components/security/hospitalStorage.test.js src/shared/auth/universalLoginPolicy.test.js src/features/pharmacy/utils/pharmacyPricing.test.js \"src/features/Platform Admin/shared/api/hospitalRegistration.test.js\" \"src/features/Platform Admin/shared/api/leadApi.test.js\"",
+    "test": "node --test src/components/security/hospitalSession.test.js src/components/security/hospitalStorage.test.js src/shared/auth/universalLoginPolicy.test.js src/features/pharmacy/utils/pharmacyPricing.test.js \"src/features/Platform Admin/shared/api/hospitalRegistration.test.js\" \"src/features/Platform Admin/shared/api/leadApi.test.js\" \"src/features/Platform Admin/shared/api/invoiceModel.test.js\"",
     "verify:features": "node scripts/verify-feature-boundaries.mjs",
     "test:e2e": "playwright test e2e/dashboards.spec.mjs"
   },

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { interpretPlatformError } from "../../../../shared/api/platformErrors";
-import { getTenant } from "../../../../shared/api/registrationApi";
+import { getTenant, setTenantActive } from "../../../../shared/api/registrationApi";
 import Button from "../../../../shared/components/Button";
 import EmptyState from "../../../../shared/components/EmptyState";
 import { platformPath } from "../../../../shared/paths";
@@ -55,7 +55,13 @@ export default function TenantDetails() {
     );
   }
 
-  return <RegisteredFromApi tenant={tenant} onBack={() => navigate(platformPath("/hospitals"))} />;
+  return (
+    <RegisteredFromApi
+      tenant={tenant}
+      onUpdated={setTenant}
+      onBack={() => navigate(platformPath("/hospitals"))}
+    />
+  );
 }
 
 function showDay(value) {
@@ -64,7 +70,36 @@ function showDay(value) {
   return formatDate(`${day}T00:00:00`);
 }
 
-function RegisteredFromApi({ tenant, onBack }) {
+function RegisteredFromApi({ tenant, onUpdated, onBack }) {
+  const [pending, setPending] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [actionError, setActionError] = useState("");
+  const canToggle = typeof tenant.is_active === "boolean";
+  const nextActive = !tenant.is_active;
+
+  const changeActivation = async () => {
+    if (!canToggle || pending) return;
+    const action = nextActive ? "reactivate" : "suspend";
+    const confirmed = window.confirm(`${nextActive ? "Reactivate" : "Suspend"} ${tenant.name || "this hospital"}?`);
+    if (!confirmed) return;
+    setPending(true);
+    setNotice("");
+    setActionError("");
+    try {
+      const updated = await setTenantActive(tenant.tenant_id, nextActive);
+      if (!updated || typeof updated.is_active !== "boolean") {
+        setActionError("The server did not return the hospital status.");
+        return;
+      }
+      onUpdated(updated);
+      setNotice(nextActive ? "Hospital reactivated." : "Hospital suspended.");
+    } catch (err) {
+      setActionError(interpretPlatformError(err).toast || `Could not ${action} this hospital.`);
+    } finally {
+      setPending(false);
+    }
+  };
+
   return (
     <section className="td-page">
       <button type="button" className="td-back" onClick={onBack}>
@@ -76,6 +111,7 @@ function RegisteredFromApi({ tenant, onBack }) {
           <div>
             <div className="td-title-row">
               <h1>{tenant.name}</h1>
+              <Chip value={typeof tenant.is_active === "boolean" ? (tenant.is_active ? "Active" : "Suspended") : (tenant.tenant_status || "—")} />
               <Chip value={tenant.subscription_status} />
             </div>
             <div className="td-meta">
@@ -85,9 +121,18 @@ function RegisteredFromApi({ tenant, onBack }) {
             </div>
           </div>
         </div>
+        <Button
+          variant={tenant.is_active ? "danger" : "primary"}
+          disabled={!canToggle || pending}
+          onClick={changeActivation}
+        >
+          {pending ? "Saving…" : tenant.is_active ? "Suspend hospital" : "Reactivate hospital"}
+        </Button>
       </header>
+      {notice ? <p className="td-api-note" role="status">{notice}</p> : null}
+      {actionError ? <p className="td-api-note" role="alert">{actionError}</p> : null}
       <p className="td-api-note">
-        This hospital was registered on the server. Suspend, usage, invoices, and activity are unavailable because those APIs do not exist.
+        Activation comes from the server. Usage, invoices, and activity are still unavailable.
       </p>
       <section className="td-panel">
         <div className="td-body">

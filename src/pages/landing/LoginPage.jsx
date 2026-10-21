@@ -38,6 +38,7 @@ export default function LoginPage() {
   const switching = searchParams.get('switch') === '1';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fieldsUnlocked, setFieldsUnlocked] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
@@ -239,7 +240,7 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <form className="staff-login-page__form" onSubmit={handleSubmit}>
+              <form className="staff-login-page__form" onSubmit={handleSubmit} autoComplete="off">
                 <div className="staff-login-page__field">
                   <label htmlFor="staff-email">Work Email</label>
                   <div className="staff-login-page__input">
@@ -248,13 +249,16 @@ export default function LoginPage() {
                     </span>
                     <input
                       id="staff-email"
+                      name="staff-email"
                       type="email"
                       placeholder="you@saffocare.com"
                       value={email}
                       onChange={(e) => setEmail(normalizeEmailInput(e.target.value))}
-                      autoComplete="email"
+                      autoComplete="off"
                       autoCapitalize="none"
                       spellCheck={false}
+                      readOnly={!fieldsUnlocked}
+                      onFocus={() => setFieldsUnlocked(true)}
                       required
                     />
                   </div>
@@ -273,11 +277,14 @@ export default function LoginPage() {
                     </span>
                     <input
                       id="staff-password"
+                      name="staff-password"
                       type={showPassword ? 'text' : 'password'}
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      autoComplete="current-password"
+                      autoComplete="new-password"
+                      readOnly={!fieldsUnlocked}
+                      onFocus={() => setFieldsUnlocked(true)}
                       required
                     />
                     <button

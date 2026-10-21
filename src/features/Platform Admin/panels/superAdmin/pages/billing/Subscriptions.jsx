@@ -14,6 +14,7 @@ import "./Subscriptions.css";
 const FILTERS = { query: "", plan: "", status: "", cycle: "" };
 
 function statusKey(hospital) {
+  if (hospital.is_active === false) return "suspended";
   return String(hospital.subscription_status || hospital.tenant_status || "").toLowerCase();
 }
 
@@ -129,6 +130,9 @@ export default function Subscriptions() {
                 </tr>
               ) : rows.map((hospital) => {
                 const status = statusKey(hospital);
+                const statusLabel = hospital.is_active === false
+                  ? "Suspended"
+                  : (hospital.subscription_status || hospital.tenant_status || "—");
                 return (
                   <tr key={hospital.tenant_id}>
                     <td>
@@ -139,7 +143,7 @@ export default function Subscriptions() {
                     <td>{hospital.billing_cycle || "—"}</td>
                     <td className="subs-amount">—</td>
                     <td className="subs-renewal">{formatDate(hospital.subscription_renews_on)}</td>
-                    <td><span className={chipClass(status)}>{hospital.subscription_status || hospital.tenant_status || "—"}</span></td>
+                    <td><span className={chipClass(status)}>{statusLabel}</span></td>
                     <td>
                       <div className="subs-actions">
                         <button type="button" className="action-link" onClick={() => setOpen(hospital)}>View</button>

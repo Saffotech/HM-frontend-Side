@@ -168,16 +168,25 @@ describe("platform login policy", () => {
     assert.equal(session.profile.role, "platform_admin");
   });
 
-  it("accepts Accountant when the role is accountant and hospitals:create is present", () => {
+  it("accepts Accountant with registrations:create or invoices:manage", () => {
     const session = sessionFromLogin("accountant", "accounts@saffocare.example", {
       ...loginBody,
       user_id: 4,
       first_name: "Priya",
       role: "accountant",
-      permissions: ["hospitals:create"],
+      permissions: ["registrations:create", "invoices:manage"],
     });
     assert.equal(session.profile.role, "accountant");
     assert.equal(session.profile.userId, 4);
+    assert.throws(
+      () => sessionFromLogin("accountant", "accounts@saffocare.example", {
+        ...loginBody,
+        user_id: 4,
+        role: "accountant",
+        permissions: ["hospitals:create"],
+      }),
+      (error) => error.status === 403,
+    );
   });
 
   it("accepts CRM when the role is crm and leads:manage is present, without hospitals:create", () => {
@@ -404,6 +413,16 @@ describe("registration screens stay off the dummy hospital writer", () => {
     assert.doesNotMatch(context, /addHospital/);
     assert.doesNotMatch(client, /shared\/api\/client/);
     assert.doesNotMatch(client, /endHospitalSession/);
+
+    const directory = readSrc("../../panels/superAdmin/pages/tenants/Hospitals.jsx");
+    const detail = readSrc("../../panels/superAdmin/pages/tenants/TenantDetails.jsx");
+    const api = readSrc("./registrationApi.js");
+    assert.match(api, /\/tenants\/\$\{encodeURIComponent\(tenantId\)\}\/active/);
+    assert.match(api, /method:\s*"PATCH"/);
+    assert.match(api, /is_active:\s*Boolean\(isActive\)/);
+    assert.match(detail, /setTenantActive/);
+    assert.match(directory, /is_active/);
+    assert.doesNotMatch(api, /shared\/api\/client/);
   });
 });
 

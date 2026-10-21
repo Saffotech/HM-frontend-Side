@@ -1,6 +1,12 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import RecordPaymentDialog from "../../../shared/components/RecordPaymentDialog";
+import { matchesInvoiceFilters } from "../../../shared/api/invoiceModel";
+import { usePlatformInvoices } from "../../../shared/hooks/usePlatformInvoices";
 import { accountsPath } from "../../../shared/paths";
+import { formatDate, todayInput } from "../../../shared/utils/formatDate";
+import { formatCurrency } from "../../../shared/utils/formatCurrency";
+import { compareCollections, isUnpaid } from "../../../shared/utils/invoices";
 import "../Accountant.css";
 
 const CARDS = [
@@ -11,13 +17,33 @@ const CARDS = [
 ];
 
 export default function Collections() {
+  const today = todayInput();
+  const { invoices, loading, error, reload } = usePlatformInvoices();
   const [active, setActive] = useState("");
+  const [paying, setPaying] = useState(null);
+  const [notice, setNotice] = useState("");
+
+  const counts = useMemo(() => ({
+    today: invoices.filter((invoice) => matchesInvoiceFilters(invoice, { status: "today", today })).length,
+    overdue: invoices.filter((invoice) => invoice.status === "Overdue").length,
+    pending: invoices.filter((invoice) => invoice.status === "Pending").length,
+    collected: invoices.filter((invoice) => invoice.status === "Paid").length,
+  }), [invoices, today]);
+
+  const queue = useMemo(() => {
+    const rows = invoices.filter((invoice) => (active ? matchesInvoiceFilters(invoice, { status: active, today }) : isUnpaid(invoice)));
+    return [...rows].sort(compareCollections);
+  }, [active, invoices, today]);
+  const collected = invoices.filter((invoice) => invoice.status === "Paid").slice(0, 5);
+  const failed = invoices.filter((invoice) => invoice.status === "Failed");
 
   return (
     <section className="portal-page accounts-home">
       <p className="accounts-note">
-        The queue stays empty until an invoice API is connected. Agreed leads are registered from Hospital Registrations.
+        Counts come from platform invoices. Open an unpaid invoice to record the full amount.
       </p>
+      {error && <p className="accounts-note" role="alert">{error}</p>}
+      {notice && <p className="accounts-note" role="status">{notice}</p>}
 
       <div className="portal-stats accounts-stats">
         {CARDS.map((card) => (
@@ -28,8 +54,8 @@ export default function Collections() {
             onClick={() => setActive((current) => (current === card.key ? "" : card.key))}
           >
             <span>{card.label}</span>
-            <strong>—</strong>
-            <span className="accounts-count">0 invoices</span>
+            <strong>{loading || error ? "—" : counts[card.key]}</strong>
+            <span className="accounts-count">{loading ? "Loading" : error ? "Unavailable" : `${counts[card.key]} invoices`}</span>
           </button>
         ))}
       </div>
@@ -38,7 +64,7 @@ export default function Collections() {
         <div className="portal-head">
           <div>
             <h2>Collection queue</h2>
-            <p>Unpaid invoices that need a follow-up.</p>
+            <p>{active ? CARDS.find((card) => card.key === active)?.label : "Unpaid invoices that need a follow-up."}</p>
           </div>
           <Link to={accountsPath("/invoices")}>All invoices</Link>
         </div>
@@ -55,14 +81,26 @@ export default function Collections() {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td colSpan={6}>
-                  <p className="accounts-empty">
-                    <strong>No invoices in this queue.</strong>
-                    <span>Payments are not stored until a billing API exists.</span>
-                  </p>
-                </td>
-              </tr>
+              {loading ? (
+                <tr><td colSpan={6}><p className="accounts-empty"><strong>Loading invoices</strong><span>Fetching the collection queue.</span></p></td></tr>
+              ) : error ? (
+                <tr><td colSpan={6}><p className="accounts-empty"><strong>Invoices could not be loaded</strong><span>{error}</span></p></td></tr>
+              ) : queue.length === 0 ? (
+                <tr><td colSpan={6}><p className="accounts-empty"><strong>No invoices in this queue.</strong><span>Nothing on the server matches this view.</span></p></td></tr>
+              ) : queue.map((invoice) => (
+                <tr key={invoice.id}>
+                  <td><Link to={accountsPath(`/hospitals/${invoice.tenantId}`)}>{invoice.hospitalName || "Hospital"}</Link></td>
+                  <td>{invoice.number || "—"}</td>
+                  <td>{formatDate(invoice.dueDate)}</td>
+                  <td>{formatCurrency(invoice.amount)}</td>
+                  <td>{invoice.status || "—"}</td>
+                  <td>
+                    {isUnpaid(invoice) ? (
+                      <button type="button" className="action-link" onClick={() => setPaying(invoice)}>Record payment</button>
+                    ) : "—"}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -70,24 +108,49 @@ export default function Collections() {
 
       <div className="portal-split accounts-lower">
         <section className="card card-pad">
-          <div className="portal-head">
-            <h2>Recent collections</h2>
-          </div>
-          <p className="accounts-empty">
-            <strong>Nothing collected yet.</strong>
-            <span>Paid invoices will list here.</span>
-          </p>
+          <div className="portal-head"><h2>Recent collections</h2></div>
+          {loading ? (
+            <p className="accounts-empty"><strong>Loading invoices</strong><span>Fetching paid invoices.</span></p>
+          ) : error ? (
+            <p className="accounts-empty"><strong>Invoices could not be loaded</strong><span>{error}</span></p>
+          ) : collected.length === 0 ? (
+            <p className="accounts-empty"><strong>Nothing collected yet.</strong><span>Paid invoices will list here.</span></p>
+          ) : (
+            <ul>
+              {collected.map((invoice) => (
+                <li key={invoice.id}>{invoice.hospitalName || "Hospital"} · {invoice.number} · {formatCurrency(invoice.paymentAmount ?? invoice.amount)}</li>
+              ))}
+            </ul>
+          )}
         </section>
         <section className="card card-pad">
-          <div className="portal-head">
-            <h2>Failed payments</h2>
-          </div>
-          <p className="accounts-empty">
-            <strong>No failed payments.</strong>
-            <span>Failed charges will list here.</span>
-          </p>
+          <div className="portal-head"><h2>Failed payments</h2></div>
+          {loading ? (
+            <p className="accounts-empty"><strong>Loading invoices</strong><span>Fetching failed payments.</span></p>
+          ) : error ? (
+            <p className="accounts-empty"><strong>Invoices could not be loaded</strong><span>{error}</span></p>
+          ) : failed.length === 0 ? (
+            <p className="accounts-empty"><strong>No failed payments.</strong><span>Failed charges will list here.</span></p>
+          ) : (
+            <ul>
+              {failed.map((invoice) => (
+                <li key={invoice.id}>{invoice.hospitalName || "Hospital"} · {invoice.number} · {formatCurrency(invoice.amount)}</li>
+              ))}
+            </ul>
+          )}
         </section>
       </div>
+      {paying && (
+        <RecordPaymentDialog
+          invoice={paying}
+          onClose={() => setPaying(null)}
+          onRecorded={() => {
+            setPaying(null);
+            setNotice("Payment recorded.");
+            reload();
+          }}
+        />
+      )}
     </section>
   );
 }

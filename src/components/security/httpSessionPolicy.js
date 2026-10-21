@@ -1,5 +1,6 @@
 export const PERMISSION_DENIED_MESSAGE = 'You do not have permission to access this.';
 export const HOSPITAL_INACTIVE_MESSAGE = 'This hospital is inactive. Sign in again after it is reactivated.';
+export const HOSPITAL_UNLINKED_MESSAGE = 'This account is not linked to a hospital.';
 export const ACCOUNT_DEACTIVATED_MESSAGE = 'This account has been deactivated.';
 export const INVALID_TENANT_MESSAGE = 'This account is not assigned to a hospital. Sign in with a hospital account.';
 export const SESSION_EXPIRED_MESSAGE = 'Your session has expired. Please sign in again.';
@@ -21,6 +22,7 @@ export function classifyForbidden(detail) {
   const text = String(detail || '').toLowerCase();
   if (text.includes('permission denied')) return 'permission_denied';
   if (text.includes('hospital is inactive')) return 'hospital_inactive';
+  if (text.includes('not linked to a hospital')) return 'hospital_unlinked';
   if (
     text.includes('account is deactivated')
     || text.includes('account has been deactivated')
@@ -32,6 +34,12 @@ export function classifyForbidden(detail) {
   return 'other';
 }
 
+export function sessionCleanupNotifiesServer(kind) {
+  return kind === 'hospital_inactive'
+    || kind === 'hospital_unlinked'
+    || kind === 'account_deactivated';
+}
+
 export function isTerminalSessionError(error) {
   const status = error?.status;
   if (status === 401) return true;
@@ -40,13 +48,14 @@ export function isTerminalSessionError(error) {
   }
   if (status !== 403) return false;
   const kind = classifyForbidden(error?.detail || error?.message);
-  return kind === 'hospital_inactive' || kind === 'account_deactivated';
+  return kind === 'hospital_inactive' || kind === 'hospital_unlinked' || kind === 'account_deactivated';
 }
 
 export function messageForSessionError(error) {
   if (error?.code === 'invalid_tenant') return INVALID_TENANT_MESSAGE;
   const kind = classifyForbidden(error?.detail || error?.message);
   if (kind === 'hospital_inactive') return HOSPITAL_INACTIVE_MESSAGE;
+  if (kind === 'hospital_unlinked') return HOSPITAL_UNLINKED_MESSAGE;
   if (kind === 'account_deactivated') return ACCOUNT_DEACTIVATED_MESSAGE;
   if (kind === 'permission_denied') return PERMISSION_DENIED_MESSAGE;
   return SESSION_EXPIRED_MESSAGE;
@@ -58,6 +67,8 @@ export function resolveSessionFailure(kind) {
       return { cleanup: false, notifyServer: false, message: PERMISSION_DENIED_MESSAGE };
     case 'hospital_inactive':
       return { cleanup: true, notifyServer: true, message: HOSPITAL_INACTIVE_MESSAGE };
+    case 'hospital_unlinked':
+      return { cleanup: true, notifyServer: true, message: HOSPITAL_UNLINKED_MESSAGE };
     case 'account_deactivated':
       return { cleanup: true, notifyServer: true, message: ACCOUNT_DEACTIVATED_MESSAGE };
     case 'invalid_tenant':

@@ -54,7 +54,9 @@ export function statusRows(hospitals) {
     ["Suspended", 0],
   ]);
   hospitals.forEach((hospital) => {
-    const name = hospital.subscription_status || hospital.tenant_status || "Active";
+    const name = hospital.is_active === false
+      ? "Suspended"
+      : (hospital.subscription_status || hospital.tenant_status || "Active");
     counts.set(name, (counts.get(name) || 0) + 1);
   });
   return [...counts.entries()].map(([name, value]) => ({ name, value }));

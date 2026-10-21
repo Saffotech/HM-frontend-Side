@@ -1,5 +1,9 @@
 import { getAppEntryForRole } from '@/shared/utils/authRedirect';
 import {
+  classifyForbidden,
+  messageForSessionError,
+} from '@/components/security/httpSessionPolicy';
+import {
   classifyLoginBody,
   resolvePostLoginDestination,
 } from '@/shared/auth/universalLoginPolicy';
@@ -13,6 +17,19 @@ import { saveActivePortalProfile } from '@/features/Platform Admin/shared/api/pl
 
 function hasOwn(object, key) {
   return Boolean(object) && Object.prototype.hasOwnProperty.call(object, key);
+}
+
+async function clearHospitalSessionIfUnlinked(error, hospitalLogout) {
+  if (classifyForbidden(error?.detail || error?.message) !== 'hospital_unlinked') return;
+  if (typeof hospitalLogout !== 'function') return;
+  try {
+    await hospitalLogout({
+      message: messageForSessionError(error),
+      notifyServer: true,
+    });
+  } catch {
+    /* Hospital cleanup is idempotent. The login error is still reported. */
+  }
 }
 
 /**
@@ -58,15 +75,27 @@ export async function completeUniversalSignIn(credentials, {
   from,
 } = {}) {
   const email = String(credentials?.email || '').trim();
-  const body = await platformApi('/auth/login', {
-    method: 'POST',
-    anonymous: true,
-    body: JSON.stringify({
-      email,
-      password: credentials?.password,
-    }),
-  });
-  const identity = await resolveLoginIdentity(body);
+  let body;
+  try {
+    body = await platformApi('/auth/login', {
+      method: 'POST',
+      anonymous: true,
+      body: JSON.stringify({
+        email,
+        password: credentials?.password,
+      }),
+    });
+  } catch (error) {
+    await clearHospitalSessionIfUnlinked(error, hospitalLogout);
+    throw error;
+  }
+  let identity;
+  try {
+    identity = await resolveLoginIdentity(body);
+  } catch (error) {
+    await clearHospitalSessionIfUnlinked(error, hospitalLogout);
+    throw error;
+  }
   const decision = classifyLoginBody(identity);
 
   if (decision.realm === 'platform') {

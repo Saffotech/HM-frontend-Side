@@ -20,6 +20,14 @@ export function getTenant(tenantId) {
   return platformApi(`/tenants/${encodeURIComponent(tenantId)}`);
 }
 
+/** PATCH /tenants/{tenant_id}/active — response is TenantSummary, including is_active. */
+export function setTenantActive(tenantId, isActive) {
+  return platformApi(`/tenants/${encodeURIComponent(tenantId)}/active`, {
+    method: "PATCH",
+    body: JSON.stringify({ is_active: Boolean(isActive) }),
+  });
+}
+
 export function listRegistrations(status) {
   return platformApi(`/platform/registrations?status=${encodeURIComponent(status)}`);
 }

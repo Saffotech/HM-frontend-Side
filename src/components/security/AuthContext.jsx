@@ -20,6 +20,7 @@ import {
   isTerminalSessionError,
   messageForSessionError,
   resolveSessionFailure,
+  sessionCleanupNotifiesServer,
 } from '@/components/security/httpSessionPolicy';
 import {
   beginNewSessionEpoch,
@@ -248,10 +249,9 @@ export function AuthProvider({ children }) {
       if (!isSessionCurrent(epochAtStart) || isSupersededSessionError(err)) return null;
       if (err?.code === 'invalid_tenant' || err?.code === 'platform_realm') throw err;
       const kind = classifyForbidden(err?.detail || err?.message);
-      const notifyServer = kind === 'hospital_inactive' || kind === 'account_deactivated';
       logout({
         message: isTerminalSessionError(err) ? messageForSessionError(err) : resolveSessionFailure('refresh_failed').message,
-        notifyServer,
+        notifyServer: sessionCleanupNotifiesServer(kind),
       });
       throw err;
     }
@@ -280,7 +280,7 @@ export function AuthProvider({ children }) {
         const kind = classifyForbidden(err?.detail || err?.message);
         logout({
           message: messageForSessionError(err),
-          notifyServer: kind === 'hospital_inactive' || kind === 'account_deactivated',
+          notifyServer: sessionCleanupNotifiesServer(kind),
         });
         throw err;
       }
@@ -349,7 +349,7 @@ export function AuthProvider({ children }) {
         const kind = classifyForbidden(err?.detail || err?.message);
         logout({
           message: messageForSessionError(err),
-          notifyServer: kind === 'hospital_inactive' || kind === 'account_deactivated',
+          notifyServer: sessionCleanupNotifiesServer(kind),
         });
       }
       return null;
@@ -516,7 +516,7 @@ export function AuthProvider({ children }) {
           const kind = classifyForbidden(err?.detail || err?.message);
           logout({
             message: messageForSessionError(err),
-            notifyServer: kind === 'hospital_inactive' || kind === 'account_deactivated',
+            notifyServer: sessionCleanupNotifiesServer(kind),
           });
           return;
         }

@@ -17,9 +17,12 @@ import {
   resolveSessionFailure,
   sanitizeRequestHeaders,
   sessionActionForHttpStatus,
+  sessionCleanupNotifiesServer,
   shouldApplyHospitalSessionGuard,
   shouldRedirectToHospitalLogin,
 } from './httpSessionPolicy.js';
+import { setHospitalStorageScope } from './hospitalStorageScope.js';
+import { queryKeys } from '../../shared/api/queryKeys.js';
 import { beginNewSessionEpoch, currentSessionEpoch, isSessionCurrent } from './sessionEpoch.js';
 import {
   clearAllConsultationDrafts,
@@ -243,7 +246,7 @@ describe('hospital switch in the same tab', () => {
 
 describe('query cache cleanup', () => {
   it('clears stored session, drafts, and queries for every terminal hospital session', () => {
-    ['logout', 'timeout', 'refresh_failed', 'invalid_restore', 'hospital_inactive', 'account_deactivated', 'identity_change'].forEach((kind) => {
+    ['logout', 'timeout', 'refresh_failed', 'invalid_restore', 'hospital_inactive', 'hospital_unlinked', 'account_deactivated', 'identity_change'].forEach((kind) => {
       const calls = [];
       const plan = resolveSessionFailure(kind);
       assert.equal(plan.cleanup, true, kind);
@@ -290,6 +293,14 @@ describe('inactive hospital and deactivated account', () => {
     assert.equal(sessionActionForHttpStatus(403, 'Hospital is inactive'), 'logout');
     assert.equal(resolveSessionFailure('hospital_inactive').cleanup, true);
     assert.match(resolveSessionFailure('hospital_inactive').message, /inactive/i);
+
+    assert.equal(classifyForbidden('This account is not linked to a hospital'), 'hospital_unlinked');
+    assert.equal(sessionActionForHttpStatus(403, 'This account is not linked to a hospital'), 'logout');
+    assert.equal(resolveSessionFailure('hospital_unlinked').cleanup, true);
+    assert.equal(sessionCleanupNotifiesServer('hospital_unlinked'), true);
+    assert.match(resolveSessionFailure('hospital_unlinked').message, /not linked to a hospital/i);
+    assert.notEqual(classifyForbidden('This account is not linked to a hospital'), 'permission_denied');
+    assert.notEqual(classifyForbidden('This account is not linked to a hospital'), 'other');
 
     assert.equal(sessionActionForHttpStatus(403, 'Account is deactivated'), 'logout');
     assert.equal(sessionActionForHttpStatus(403, 'Account is inactive'), 'logout');
@@ -454,6 +465,41 @@ describe('stale responses after an identity change', () => {
     }, null, 'token-a');
     assert.equal(omitted.hospital.name, 'Hospital A');
     assert.equal(omitted.tenant_id, 1);
+  });
+});
+
+describe('hospital query scope', () => {
+  it('keeps one hospital cache key from matching another hospital', () => {
+    setHospitalStorageScope({ tenantId: 1, userId: 11 });
+    const patientsA = queryKeys.patients.list({ page: 1 });
+    const billsA = queryKeys.bills.invoice(9);
+    const fileA = queryKeys.lab.report(4);
+    const handoverA = queryKeys.nurse.handovers({ page: 1 });
+    const rosterA = queryKeys.admin.workforceRoster({ week: 1 });
+    const dispenseA = queryKeys.pharmacy.history({ page: 1 });
+    const visitsA = [...queryKeys.doctor.patients.visits, { limit: 100 }];
+
+    setHospitalStorageScope({ tenantId: 2, userId: 22 });
+    const patientsB = queryKeys.patients.list({ page: 1 });
+    const fileB = queryKeys.lab.report(4);
+
+    assert.deepEqual(patientsA.slice(0, 3), ['patients', 'list', { page: 1 }]);
+    assert.deepEqual(patientsA.at(-1), { tenantId: 1, userId: 11 });
+    assert.deepEqual(patientsB.at(-1), { tenantId: 2, userId: 22 });
+    assert.notDeepEqual(patientsA, patientsB);
+    assert.notDeepEqual(fileA, fileB);
+    assert.equal(queryKeys.patients.all[0], 'patients');
+    assert.equal(queryKeys.patients.all.length, 1);
+    assert.equal(billsA[0], 'bills');
+    assert.equal(handoverA[1], 'handovers');
+    assert.equal(rosterA[2], 'roster');
+    assert.equal(dispenseA[1], 'history');
+    assert.equal(visitsA[2], 'visits');
+    assert.deepEqual(visitsA[3], { tenantId: 1, userId: 11 });
+    assert.deepEqual(visitsA[4], { limit: 100 });
+    assert.deepEqual(queryKeys.opd.settings, ['opd', 'settings']);
+    assert.deepEqual(queryKeys.superAdmin.profile, ['super-admin', 'profile']);
+    setHospitalStorageScope(null);
   });
 });
 
