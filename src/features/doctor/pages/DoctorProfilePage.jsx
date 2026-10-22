@@ -33,6 +33,7 @@ import {
   useUploadDoctorProfileImageMutation,
 } from '@/features/doctor/hooks/useDoctorProfileQuery';
 import { useDoctorPermissionSet } from '@/features/doctor/hooks/useDoctorPermission';
+import { withDoctorSection } from '@/features/doctor/utils/doctorSection';
 import { ROUTES } from '@/shared/constants';
 import { Button, ConfirmDialog, DateInput, EmptyState, ProfilePhoneField, ProfilePhotoCropDialog } from '@/shared/components/common';
 import PageSpinner from '@/shared/components/PageSpinner';
@@ -298,7 +299,14 @@ export default function DoctorProfilePage() {
   );
 
   const handleNav = (id) => {
-    navigate(ROUTES.DOCTOR_DASHBOARD, { state: { doctorSection: id } });
+    const search = withDoctorSection(new URLSearchParams(), id).toString();
+    navigate(
+      {
+        pathname: ROUTES.DOCTOR_DASHBOARD,
+        search: search ? `?${search}` : '',
+      },
+      { state: { doctorSection: id } },
+    );
   };
 
   const setField = (key, value) => {

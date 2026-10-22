@@ -68,7 +68,10 @@ export default function IpdPatientDetailPage() {
       : paymentView.paymentStatusKey === 'partial'
         ? 'Partial'
         : 'Unpaid';
-  const billActionLabel = paymentView.canCollectPayment ? 'Collect / Open bill' : 'View bill';
+  const billActionLabel =
+    !admitted || !paymentView.canCollectPayment
+      ? 'View bill'
+      : 'Collect / Open bill';
 
   return (
     <div className="ipd-page ipd-page--compact">
@@ -187,7 +190,7 @@ export default function IpdPatientDetailPage() {
                   admission={admission}
                   visits={visits}
                   careTeam={data?.care_team ?? []}
-                  canEdit={canAdmit}
+                  canEdit={canAdmit && admitted}
                   compact
                 />
               </div>

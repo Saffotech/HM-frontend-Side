@@ -18,6 +18,7 @@ import {
   useSaveIpdDailyBillingMutation,
   useSaveIpdFinalBillingMutation,
 } from '@/features/ipd/hooks/useIpdBillingQuery';
+import { useIpdAdmissionDetailQuery } from '@/features/ipd/hooks/useIpdQuery';
 import { initChargeHeadsFromClaim } from '@/features/ipd/billing/ipdBillingMapper';
 import { buildInsuranceIpdBillPrintModel } from '@/features/ipd/utils/buildInsuranceIpdBillPrintModel';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
@@ -123,8 +124,12 @@ export default function IpdInsuranceBillingPage() {
 
   const patient = bundleQuery.data?.patient;
   const claim = bundleQuery.data?.claim;
-  const claimRef = useRef(claim);
-  claimRef.current = claim;
+  const admissionId =
+    bundleQuery.data?.admissionId ??
+    claim?.admissionId ??
+    insuranceAdmit?.admission?.id;
+  const admissionQuery = useIpdAdmissionDetailQuery(admissionId);
+  const admissionIsActive = admissionQuery.data?.admission?.status === 'admitted';
 
   const [charges, setCharges] = useState(() => initCharges(claim));
   const [savedClaim, setSavedClaim] = useState(claim);
@@ -209,7 +214,7 @@ export default function IpdInsuranceBillingPage() {
   }, []);
 
   const handleSaveCharges = useCallback((nextCharges) => {
-    if (!claim) return;
+    if (!claim || !admissionIsActive) return;
     const toSave = Array.isArray(nextCharges) ? nextCharges : charges;
     saveFinalBillingMutation.mutate(
       {
@@ -232,6 +237,7 @@ export default function IpdInsuranceBillingPage() {
     );
   }, [
     claim,
+    admissionIsActive,
     charges,
     patientId,
     insuranceAdmit,
@@ -239,7 +245,7 @@ export default function IpdInsuranceBillingPage() {
   ]);
 
   const handleSaveDailyCharges = useCallback(() => {
-    if (!claim) return;
+    if (!claim || !admissionIsActive) return;
     const invalid = dailyCharges.find((row) => !String(row.item_name ?? '').trim());
     if (invalid) {
       toast.error('Every row needs an item name (medicine, treatment, etc.)');
@@ -267,6 +273,7 @@ export default function IpdInsuranceBillingPage() {
     );
   }, [
     claim,
+    admissionIsActive,
     dailyCharges,
     patientId,
     insuranceAdmit,
@@ -315,6 +322,11 @@ export default function IpdInsuranceBillingPage() {
               {claim.patientName} · Patient ID {claim.uhid} · {claim.doctor} ·{' '}
               {claim.wardRoom}
             </p>
+            {!admissionIsActive ? (
+              <p className="ipd-page__subtitle">
+                Billing is view-only unless the admission is active.
+              </p>
+            ) : null}
           </div>
           <div className="ipd-form-actions">
             <Button
@@ -355,6 +367,7 @@ export default function IpdInsuranceBillingPage() {
             onChargesChange={handleChargesChange}
             onSave={handleSaveCharges}
             saving={saveFinalBillingMutation.isPending}
+            readOnly={!admissionIsActive}
             hint="Totals by charge head. Adding a charge saves it."
           />
 
@@ -366,6 +379,7 @@ export default function IpdInsuranceBillingPage() {
               patientId={patientId}
               insuranceAdmit={insuranceAdmit}
               onClaimSaved={handleClaimSaved}
+              readOnly={!admissionIsActive}
             />
 
           </div>
@@ -376,6 +390,7 @@ export default function IpdInsuranceBillingPage() {
           onDailyChargesChange={handleDailyChargesChange}
           onSave={handleSaveDailyCharges}
           saving={saveDailyBillingMutation.isPending}
+          readOnly={!admissionIsActive}
           subtitle={`${claim.ipdId} · each row is one item (medicine, treatment, room, etc.)`}
         />
 

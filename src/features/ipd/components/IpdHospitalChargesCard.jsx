@@ -21,6 +21,7 @@ function IpdHospitalChargesCard({
   onSave,
   saving = false,
   hint = '',
+  readOnly = false,
 }) {
   const [focusHead, setFocusHead] = useState('room');
   const [newHeadLabel, setNewHeadLabel] = useState('');
@@ -129,6 +130,8 @@ function IpdHospitalChargesCard({
                       <td data-label="Charge head">
                         {isDefaultChargeHead(row) ? (
                           <span className="ipd-ins-charge-table__label">{row.label}</span>
+                        ) : readOnly ? (
+                          <span className="ipd-ins-charge-table__label">{row.label}</span>
                         ) : (
                           <input
                             className="ipd-input ipd-ins-charge-table__name-input"
@@ -145,26 +148,30 @@ function IpdHospitalChargesCard({
                         )}
                       </td>
                       <td className="ipd-num" data-label="Amount">
-                        <input
-                          className="ipd-input ipd-ins-charge-input ipd-ins-charge-table__amount-input"
-                          value={row.amount}
-                          disabled={saving}
-                          onFocus={() => {
-                            setFocusHead(row.id);
-                            editStartRef.current = String(row.amount ?? '');
-                          }}
-                          onChange={(e) =>
-                            setAmount(row.id, e.target.value.replace(/[^\d.]/g, ''))
-                          }
-                          onBlur={(e) =>
-                            commitAmount(row.id, e.target.value.replace(/[^\d.]/g, ''))
-                          }
-                          inputMode="decimal"
-                          aria-label={`Amount for ${row.label}`}
-                        />
+                        {readOnly ? (
+                          formatCurrency(row.amount, { empty: '—' })
+                        ) : (
+                          <input
+                            className="ipd-input ipd-ins-charge-input ipd-ins-charge-table__amount-input"
+                            value={row.amount}
+                            disabled={saving}
+                            onFocus={() => {
+                              setFocusHead(row.id);
+                              editStartRef.current = String(row.amount ?? '');
+                            }}
+                            onChange={(e) =>
+                              setAmount(row.id, e.target.value.replace(/[^\d.]/g, ''))
+                            }
+                            onBlur={(e) =>
+                              commitAmount(row.id, e.target.value.replace(/[^\d.]/g, ''))
+                            }
+                            inputMode="decimal"
+                            aria-label={`Amount for ${row.label}`}
+                          />
+                        )}
                       </td>
                       <td className="ipd-ins-charge-table__action" data-label="Actions">
-                        {!isDefaultChargeHead(row) ? (
+                        {!readOnly && !isDefaultChargeHead(row) ? (
                           <button
                             type="button"
                             className="ipd-text-link ipd-ins-charge-remove"
@@ -189,38 +196,40 @@ function IpdHospitalChargesCard({
               <col className="ipd-ins-charge-table__col-action" />
             </colgroup>
             <tbody>
-              <tr className="ipd-ins-charge-table__add-row">
-                <td colSpan={3}>
-                  <div className="ipd-ins-charge-table__add">
-                    <input
-                      className="ipd-input ipd-ins-charge-table__name-input"
-                      value={newHeadLabel}
-                      onChange={(e) => setNewHeadLabel(e.target.value)}
-                      placeholder="New charge head"
-                      aria-label="New charge head"
-                    />
-                    <input
-                      className="ipd-input ipd-ins-charge-input ipd-ins-charge-table__amount-input"
-                      value={newHeadAmount}
-                      onChange={(e) =>
-                        setNewHeadAmount(e.target.value.replace(/[^\d.]/g, ''))
-                      }
-                      placeholder="0"
-                      inputMode="decimal"
-                      aria-label="New charge amount"
-                    />
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={addChargeHead}
-                      disabled={saving}
-                    >
-                      + Add
-                    </Button>
-                  </div>
-                </td>
-              </tr>
+              {!readOnly ? (
+                <tr className="ipd-ins-charge-table__add-row">
+                  <td colSpan={3}>
+                    <div className="ipd-ins-charge-table__add">
+                      <input
+                        className="ipd-input ipd-ins-charge-table__name-input"
+                        value={newHeadLabel}
+                        onChange={(e) => setNewHeadLabel(e.target.value)}
+                        placeholder="New charge head"
+                        aria-label="New charge head"
+                      />
+                      <input
+                        className="ipd-input ipd-ins-charge-input ipd-ins-charge-table__amount-input"
+                        value={newHeadAmount}
+                        onChange={(e) =>
+                          setNewHeadAmount(e.target.value.replace(/[^\d.]/g, ''))
+                        }
+                        placeholder="0"
+                        inputMode="decimal"
+                        aria-label="New charge amount"
+                      />
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={addChargeHead}
+                        disabled={saving}
+                      >
+                        + Add
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ) : null}
               <tr className="ipd-ins-charge-table__total-row">
                 <th scope="row">Gross bill</th>
                 <td className="ipd-num">

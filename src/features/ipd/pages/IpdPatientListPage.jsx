@@ -356,7 +356,7 @@ export default function IpdPatientListPage() {
                 className="ipd-input"
                 value={search}
                 onChange={onFilterChange(setSearch, 'search')}
-                placeholder="Search patient by ID"
+                placeholder="Search patient by name or ID"
               />
             </div>
             <div

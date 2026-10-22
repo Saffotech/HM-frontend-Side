@@ -58,10 +58,15 @@ async function fetchAllPatientHistoryItems(patientUhid, token, params = {}) {
 export async function fetchPatientHistory(patientUhid, token, params = {}) {
   const history = await fetchAllPatientHistoryItems(patientUhid, token, params);
   const visitRows = mapPatientVisitList(history);
+  const first = visitRows[0];
   return {
     patientUid: patientUhid,
-    patientId: visitRows[0]?.patientId ?? null,
-    phone: visitRows[0]?.phone ?? null,
+    patientId: first?.patientId ?? null,
+    name: first?.name ?? null,
+    age: first?.age ?? null,
+    dob: first?.dob ?? null,
+    gender: first?.gender ?? null,
+    phone: first?.phone ?? null,
     visits: mapVisitHistoryList(history),
   };
 }

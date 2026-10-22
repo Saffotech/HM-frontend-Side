@@ -103,6 +103,7 @@ export default function IpdBillPreviewPage() {
   const preview = previewFromBundle ?? previewFallbackQuery.data ?? null;
 
   const admission = detailQuery.data?.admission;
+  const admissionIsActive = admission?.status === 'admitted';
   const doctorVisits = detailQuery.data?.doctor_visits ?? [];
   const admittedAt = admission?.admitted_at ?? null;
 
@@ -239,8 +240,10 @@ export default function IpdBillPreviewPage() {
     || !hasValidPayAmount
     || !preview
     || !canCollectPayment
-    || isFullyPaid;
-  const canCollect = openBill ? canPayBill : canPayBill && canGenerateBill;
+    || isFullyPaid
+    || !admissionIsActive;
+  const canCollect =
+    admissionIsActive && (openBill ? canPayBill : canPayBill && canGenerateBill);
 
   const previewItems = preview?.items ?? [];
   const admissionLabel =
@@ -273,6 +276,7 @@ export default function IpdBillPreviewPage() {
   }, [printLoading, printInvoice, printSheetMounted]);
 
   const handleSaveCharges = (nextCharges) => {
+    if (!admissionIsActive) return;
     const toSave = Array.isArray(nextCharges) ? nextCharges : charges;
     saveFinalBillingMutation.mutate(
       {
@@ -295,6 +299,7 @@ export default function IpdBillPreviewPage() {
   };
 
   const handleSaveDailyCharges = () => {
+    if (!admissionIsActive) return;
     const invalid = dailyCharges.find((row) => !String(row.item_name ?? '').trim());
     if (invalid) {
       toast.error('Every row needs an item name (medicine, treatment, etc.)');
@@ -328,6 +333,7 @@ export default function IpdBillPreviewPage() {
 
 
   const onCollectPayment = async () => {
+    if (!admissionIsActive) return;
     const amount = Math.floor(Number(payAmount));
 
 
@@ -478,6 +484,7 @@ export default function IpdBillPreviewPage() {
             onChargesChange={setCharges}
             onSave={handleSaveCharges}
             saving={saveFinalBillingMutation.isPending}
+            readOnly={!admissionIsActive}
           />
 
           <div className="ipd-ins-billing__side">
@@ -518,7 +525,7 @@ export default function IpdBillPreviewPage() {
                 </dl>
 
                 <div className="no-print">
-                  {canCollectPayment ? (
+                  {canCollectPayment && admissionIsActive ? (
                     <div className="ipd-pay-panel__collect">
                       <div className="ipd-pay-panel__fields">
                         <div className="ipd-toolbar__field">
@@ -581,6 +588,11 @@ export default function IpdBillPreviewPage() {
                             />
                           </div>
                         ) : null}
+                        {!admissionIsActive ? (
+                          <p className="ipd-page__subtitle">
+                            Billing is view-only unless the admission is active.
+                          </p>
+                        ) : null}
                       </div>
 
                       <IpdPermissionButton
@@ -605,6 +617,7 @@ export default function IpdBillPreviewPage() {
           onDailyChargesChange={setDailyCharges}
           onSave={handleSaveDailyCharges}
           saving={saveDailyBillingMutation.isPending}
+          readOnly={!admissionIsActive}
           subtitle={`${admissionLabel} · each row is one item (medicine, treatment, room, etc.)`}
         />
       </div>

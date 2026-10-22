@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQueryClient, useQueries } from '@tanstack/react-query';
 
 import { Users, Filter, ChevronRight, ChevronDown, CalendarDays, RotateCcw, Check, X } from 'lucide-react';
@@ -334,7 +335,8 @@ export default function PatientsEMRSection({
     resolveInitialCategoryFilter(initialCategoryFilter, encounterMode),
   );
 
-  const [view, setView] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const openPatientKey = (searchParams.get('patient') || '').trim();
   const [page, setPage] = useState(1);
 
   const categoryOptions = isIpdMode ? IPD_PATIENT_CATEGORY_OPTIONS : PATIENT_CATEGORY_OPTIONS;
@@ -555,42 +557,70 @@ export default function PatientsEMRSection({
     : categoryEmptyMessage(categoryFilter);
   const tableColumnCount = showPatientActions ? 6 : 5;
 
+  const openPatientSummary = useMemo(() => {
+    if (!openPatientKey) return null;
+    const match = list.find((row) => (
+      String(row.patientUid ?? '') === openPatientKey
+      || String(row.patientId ?? '') === openPatientKey
+    ));
+    if (match) return visitRowToPatientSummary(match);
+    const numericId = Number(openPatientKey);
+    const isNumeric = !Number.isNaN(numericId) && String(numericId) === openPatientKey;
+    return {
+      id: openPatientKey,
+      patientUid: isNumeric ? null : openPatientKey,
+      patientId: isNumeric ? numericId : null,
+      name: '',
+      age: null,
+      gender: '—',
+      phone: '—',
+      bloodGroup: '—',
+    };
+  }, [openPatientKey, list]);
+
   const profilePlaceholderVisits = useMemo(
-    () => (view ? displayList.filter((row) => row.patientUid === view.patientUid) : []),
-    [view, displayList],
+    () => (
+      openPatientSummary
+        ? displayList.filter((row) => row.patientUid === openPatientSummary.patientUid)
+        : []
+    ),
+    [openPatientSummary, displayList],
   );
 
   const openPatient = (row) => {
     const summary = visitRowToPatientSummary(row);
+    const key = summary?.patientUid || (summary?.patientId != null ? String(summary.patientId) : '');
+    if (!key) return;
     void prefetchPatientProfileData(queryClient, token, {
       patientUid: summary?.patientUid,
       patientId: summary?.patientId,
       encounterMode,
     });
-    setView(summary);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('patient', key);
+      return next;
+    }, { replace: true, preventScrollReset: true });
   };
 
+  const closePatient = () => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('patient');
+      return next;
+    }, { replace: true, preventScrollReset: true });
+  };
 
-
-  if (view) {
-
+  if (openPatientSummary) {
     return (
-
       <PatientHistoryProfile
-
-        patient={view}
-
+        patient={openPatientSummary}
         placeholderVisits={profilePlaceholderVisits}
-
-        onBack={() => setView(null)}
-
+        onBack={closePatient}
         backLabel="Back to Patients"
         encounterMode={encounterMode}
-
       />
-
     );
-
   }
 
 

@@ -177,13 +177,13 @@ export default function LabCompletedReportsPage() {
                 <table className="lab-table lab-table--archive lab-table--stack">
                   <thead>
                     <tr>
+                      <th className="lab-archive-col lab-archive-col--report">Lab Report ID</th>
                       <th className="lab-archive-col lab-archive-col--patient">Patient Name</th>
                       <th className="lab-archive-col lab-archive-col--source">Source</th>
                       <th className="lab-archive-col lab-archive-col--location">Ward / Bed</th>
                       <th className="lab-archive-col lab-archive-col--test">Test Name</th>
                       <th className="lab-archive-col lab-archive-col--price">Price</th>
                       <th className="lab-archive-col lab-archive-col--doctor">Doctor</th>
-                      <th className="lab-archive-col lab-archive-col--tech">Lab Technician</th>
                       <th className="lab-archive-col lab-archive-col--date">Uploaded Date</th>
                       <th className="lab-archive-col lab-archive-col--status">Status</th>
                       <th className="lab-archive-col lab-archive-col--actions lab-archive-actions-head">Actions</th>
@@ -194,6 +194,9 @@ export default function LabCompletedReportsPage() {
                       const location = visitLocationLabel(report);
                       return (
                       <tr key={report.reportDbId ?? report.reportId}>
+                        <td className="lab-archive-col lab-archive-col--report" data-label="Lab Report ID">
+                          {report.reportId}
+                        </td>
                         <td className="lab-archive-col lab-archive-col--patient lab-archive-patient" data-label="Patient Name">
                           <span className="lab-archive-patient__name">{report.patientName}</span>
                           <span className="lab-archive-meta lab-archive-patient__id">{report.patientId}</span>
@@ -216,7 +219,6 @@ export default function LabCompletedReportsPage() {
                           {formatOrderPrice(report.price)}
                         </td>
                         <td className="lab-archive-col lab-archive-col--doctor" data-label="Doctor">{report.doctorName}</td>
-                        <td className="lab-archive-col lab-archive-col--tech" data-label="Lab Technician">{report.uploadedByName}</td>
                         <td className="lab-archive-col lab-archive-col--date" data-label="Uploaded Date">{report.uploadedDate}</td>
                         <td className="lab-archive-col lab-archive-col--status" data-label="Status">
                           <span className="lab-badge completed">Completed</span>

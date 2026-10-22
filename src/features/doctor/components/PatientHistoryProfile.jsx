@@ -134,10 +134,12 @@ export default function PatientHistoryProfile({
     const opdPatient = opdProfile?.patient;
     return {
       ...patient,
-      name: patient?.name || opdPatient?.name || '—',
-      age: patient?.age ?? opdPatient?.age ?? null,
-      dob: patient?.dob ?? opdPatient?.dob ?? null,
-      gender: patient?.gender || opdPatient?.gender || '—',
+      name: patient?.name || historyData?.name || opdPatient?.name || '—',
+      age: patient?.age ?? historyData?.age ?? opdPatient?.age ?? null,
+      dob: patient?.dob ?? historyData?.dob ?? opdPatient?.dob ?? null,
+      gender: patient?.gender && patient.gender !== '—'
+        ? patient.gender
+        : historyData?.gender || opdPatient?.gender || '—',
       phone:
         (patient?.phone && patient.phone !== '—' ? patient.phone : null) ??
         historyData?.phone ??
@@ -148,7 +150,7 @@ export default function PatientHistoryProfile({
         opdPatient?.bloodGroup ??
         '—',
     };
-  }, [patient, opdProfile?.patient, historyData?.phone]);
+  }, [patient, opdProfile?.patient, historyData]);
 
   const visits = useMemo(() => {
     // External IPD consult cache updates bump this tick without changing query data.

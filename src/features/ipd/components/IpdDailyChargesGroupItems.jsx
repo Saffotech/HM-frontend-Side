@@ -36,12 +36,14 @@ const DailyChargeRow = memo(function DailyChargeRow({
   chargeDate,
   updateDailyCharge,
   removeDailyCharge,
+  readOnly = false,
 }) {
   return (
     <div className="ipd-ins-daily-detail-row">
       <input
         className="ipd-input"
         value={row.head}
+        readOnly={readOnly}
         onChange={(e) => updateDailyCharge(row.id, { head: e.target.value })}
         placeholder="e.g. Pharmacy"
         aria-label={`Charge head for ${row.item_name}`}
@@ -49,6 +51,7 @@ const DailyChargeRow = memo(function DailyChargeRow({
       <input
         className="ipd-input"
         value={row.item_name}
+        readOnly={readOnly}
         onChange={(e) => updateDailyCharge(row.id, { item_name: e.target.value })}
         placeholder={getDailyChargeItemPlaceholder(row.head)}
         aria-label={`Item for ${formatChargeDate(chargeDate)}`}
@@ -56,6 +59,7 @@ const DailyChargeRow = memo(function DailyChargeRow({
       <input
         className="ipd-input ipd-ins-daily-qty-input"
         value={row.quantity}
+        readOnly={readOnly}
         onChange={(e) =>
           updateDailyCharge(row.id, {
             quantity: e.target.value.replace(/[^\d.]/g, ''),
@@ -67,6 +71,7 @@ const DailyChargeRow = memo(function DailyChargeRow({
       <input
         className="ipd-input ipd-ins-charge-input"
         value={row.amount}
+        readOnly={readOnly}
         onChange={(e) =>
           updateDailyCharge(row.id, {
             amount: e.target.value.replace(/[^\d.]/g, ''),
@@ -75,18 +80,22 @@ const DailyChargeRow = memo(function DailyChargeRow({
         inputMode="decimal"
         aria-label={`Amount for ${row.item_name}`}
       />
-      <button
-        type="button"
-        className="ipd-text-link ipd-ins-charge-remove"
-        onClick={() => removeDailyCharge(row.id)}
-      >
-        Remove
-      </button>
+      {readOnly ? <span aria-hidden /> : (
+        <button
+          type="button"
+          className="ipd-text-link ipd-ins-charge-remove"
+          onClick={() => removeDailyCharge(row.id)}
+        >
+          Remove
+        </button>
+      )}
     </div>
   );
 }, (prev, next) =>
   prev.row === next.row &&
   prev.chargeDate === next.chargeDate &&
+  prev.readOnly === next.readOnly &&
+  prev.readOnly === next.readOnly &&
   prev.updateDailyCharge === next.updateDailyCharge &&
   prev.removeDailyCharge === next.removeDailyCharge,
 );
@@ -96,12 +105,14 @@ const PharmacyChargeRow = memo(function PharmacyChargeRow({
   chargeDate,
   updateDailyCharge,
   removeDailyCharge,
+  readOnly = false,
 }) {
   return (
     <div className="ipd-ins-daily-pharmacy-card__row">
       <input
         className="ipd-input"
         value={row.item_name}
+        readOnly={readOnly}
         onChange={(e) =>
           updateDailyCharge(row.id, { item_name: e.target.value })
         }
@@ -111,6 +122,7 @@ const PharmacyChargeRow = memo(function PharmacyChargeRow({
       <input
         className="ipd-input ipd-ins-daily-qty-input"
         value={row.quantity}
+        readOnly={readOnly}
         onChange={(e) =>
           updateDailyCharge(row.id, {
             quantity: e.target.value.replace(/[^\d.]/g, ''),
@@ -122,6 +134,7 @@ const PharmacyChargeRow = memo(function PharmacyChargeRow({
       <input
         className="ipd-input ipd-ins-charge-input"
         value={row.amount}
+        readOnly={readOnly}
         onChange={(e) =>
           updateDailyCharge(row.id, {
             amount: e.target.value.replace(/[^\d.]/g, ''),
@@ -130,18 +143,22 @@ const PharmacyChargeRow = memo(function PharmacyChargeRow({
         inputMode="decimal"
         aria-label={`Amount for ${row.item_name}`}
       />
-      <button
-        type="button"
-        className="ipd-text-link ipd-ins-charge-remove"
-        onClick={() => removeDailyCharge(row.id)}
-      >
-        Remove
-      </button>
+      {readOnly ? <span aria-hidden /> : (
+        <button
+          type="button"
+          className="ipd-text-link ipd-ins-charge-remove"
+          onClick={() => removeDailyCharge(row.id)}
+        >
+          Remove
+        </button>
+      )}
     </div>
   );
 }, (prev, next) =>
   prev.row === next.row &&
   prev.chargeDate === next.chargeDate &&
+  prev.readOnly === next.readOnly &&
+  prev.readOnly === next.readOnly &&
   prev.updateDailyCharge === next.updateDailyCharge &&
   prev.removeDailyCharge === next.removeDailyCharge,
 );
@@ -151,6 +168,7 @@ function IpdDailyChargesGroupItems({
   chargeDate,
   updateDailyCharge,
   removeDailyCharge,
+  readOnly = false,
 }) {
   const [showPharmacy, setShowPharmacy] = useState(false);
 
@@ -194,6 +212,7 @@ function IpdDailyChargesGroupItems({
           chargeDate={chargeDate}
           updateDailyCharge={updateDailyCharge}
           removeDailyCharge={removeDailyCharge}
+          readOnly={readOnly}
         />
       ))}
 
@@ -203,6 +222,7 @@ function IpdDailyChargesGroupItems({
           chargeDate={chargeDate}
           updateDailyCharge={updateDailyCharge}
           removeDailyCharge={removeDailyCharge}
+          readOnly={readOnly}
         />
       )}
 
@@ -274,6 +294,7 @@ function IpdDailyChargesGroupItems({
                   chargeDate={chargeDate}
                   updateDailyCharge={updateDailyCharge}
                   removeDailyCharge={removeDailyCharge}
+                  readOnly={readOnly}
                 />
               ))}
             </div>
@@ -286,6 +307,7 @@ function IpdDailyChargesGroupItems({
 
 export default memo(IpdDailyChargesGroupItems, (prev, next) => {
   if (prev.chargeDate !== next.chargeDate) return false;
+  if (prev.readOnly !== next.readOnly) return false;
   if (prev.updateDailyCharge !== next.updateDailyCharge) return false;
   if (prev.removeDailyCharge !== next.removeDailyCharge) return false;
   return dailyChargeItemsEqual(prev.items, next.items);
