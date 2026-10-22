@@ -1,69 +1,65 @@
 .landing-features {
-  padding: 4.5rem 0;
-  background: #fff;
+  padding: 5rem 0;
 }
 
 .landing-features__header {
-  max-width: 40rem;
+  max-width: 42rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.landing-badge--primary {
+  background: rgba(29, 111, 164, 0.1);
+  border-color: transparent;
 }
 
 .landing-features__grid {
   display: grid;
-  gap: 1rem;
-  margin-top: 2rem;
+  gap: 1.25rem;
+  margin-top: 3rem;
 }
 
 .landing-features__card {
-  padding: 1.25rem 1.2rem 1.35rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.landing-features__card:nth-child(3n) {
-  background: linear-gradient(180deg, #fff, #f7faf8);
-}
-
-.landing-features__card:hover {
-  transform: translateY(-3px);
-  border-color: #cfe0d6;
-  box-shadow: 0 16px 30px -22px rgba(23, 43, 58, 0.45);
+  position: relative;
+  display: block;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  color: inherit;
+  overflow: hidden;
+  cursor: default;
 }
 
 .landing-features__icon {
   display: grid;
   place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.7rem;
-  background: #e7f8f2;
-  color: #17613f;
-}
-
-.landing-features__card:nth-child(even) .landing-features__icon {
-  background: #17613f;
-  color: #fff;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  background: rgba(29, 111, 164, 0.1);
+  color: var(--color-primary);
 }
 
 .landing-features__card h3 {
-  margin: 0.9rem 0 0.35rem;
-  color: #172b3a;
-  font-size: 1.05rem;
+  margin: 1rem 0 0;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .landing-features__card p {
-  margin: 0;
-  color: #64748b;
-  font-size: 0.92rem;
-  line-height: 1.55;
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
 }
 
-@media (min-width: 720px) {
-  .landing-features__grid {
-    grid-template-columns: 1fr 1fr;
-  }
+@media (min-width: 640px) {
+  .landing-features__grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-@media (min-width: 1100px) {
-  .landing-features__grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+@media (min-width: 1024px) {
+  .landing-features__grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 1280px) {
+  .landing-features__grid { grid-template-columns: repeat(5, 1fr); }
 }
