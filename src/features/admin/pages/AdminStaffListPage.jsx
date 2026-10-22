@@ -21,6 +21,7 @@ import {
   TablePagination,
 } from '@/shared/components/common';
 import { adminPanelRoutes } from '@/shared/constants';
+import { filterHospitalStaffRecords, filterHospitalRoleRecords } from '@/features/manager/utils/hospitalManagerRoles';
 import { toast } from '@/shared/utils/toast';
 
 const PAGE_SIZE = 20;
@@ -60,7 +61,10 @@ export default function SuperAdminStaffListPage() {
 
   const staffQuery = useAdminStaffListQuery(queryParams);
 
-  const staff = staffQuery.data?.staff ?? [];
+  const staff = useMemo(
+    () => filterHospitalStaffRecords(staffQuery.data?.staff ?? []),
+    [staffQuery.data?.staff],
+  );
   const total = staffQuery.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const isLoading = staffQuery.isLoading;
@@ -73,7 +77,7 @@ export default function SuperAdminStaffListPage() {
   const roleOptions = useMemo(
     () => [
       { value: 'all', label: 'All roles' },
-      ...(roles?.map((r) => ({
+      ...(filterHospitalRoleRecords(roles)?.map((r) => ({
         value: String(r.id),
         label: r.name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
       })) ?? []),

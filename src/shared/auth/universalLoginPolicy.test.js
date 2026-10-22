@@ -124,7 +124,7 @@ describe('hospital admin and manager stay separate', () => {
     assert.equal(normalizeRole('platform_admin'), 'platform_admin');
     assert.equal(normalizeRole('crm'), 'crm');
     assert.equal(normalizeRole('accountant'), 'accountant');
-    assert.equal(getRoleLabel({ role: 'admin' }), 'Hospital Admin');
+    assert.equal(getRoleLabel({ role: 'admin' }), 'Admin');
     assert.equal(getRoleLabel({ role: 'manager' }), 'Manager');
   });
 

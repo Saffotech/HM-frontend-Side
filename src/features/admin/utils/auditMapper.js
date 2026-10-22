@@ -1,4 +1,6 @@
-/** Map GET /super-admin/audit entries to UI row shape */
+import { filterHospitalAuditEntries } from '../../manager/utils/hospitalManagerRoles.js';
+
+/** Map GET /admin/audit entries to UI row shape. Organization actors are omitted. */
 
 export function mapAuditEntry(entry) {
   return {
@@ -15,7 +17,7 @@ export function mapAuditEntry(entry) {
 }
 
 export function mapAuditResponse(response) {
-  const entries = response?.entries ?? [];
+  const entries = filterHospitalAuditEntries(response?.entries ?? []);
   return {
     total: response?.total ?? entries.length,
     page: response?.page ?? 1,

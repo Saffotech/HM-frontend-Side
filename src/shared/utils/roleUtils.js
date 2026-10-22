@@ -41,7 +41,7 @@ export const DEPARTMENT_BY_ROLE = {
 /** Short module label shown next to the avatar in every module shell. */
 export const ROLE_LABELS = {
   super_admin: 'Admin',
-  admin: 'Hospital Admin',
+  admin: 'Admin',
   manager: 'Manager',
   doctor: 'Doctor',
   opd: 'OPD Billing',

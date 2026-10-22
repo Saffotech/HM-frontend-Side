@@ -28,6 +28,7 @@ import {
 } from '@/shared/hooks/queries/useAdminQuery';
 import { Button, ConfirmDialog, Input, Label, QueryFeedback, Select } from '@/shared/components/common';
 import { adminPanelRoutes } from '@/shared/constants';
+import { filterHospitalOwnerRegisterRoles } from '@/features/manager/utils/hospitalManagerRoles';
 import { toast } from '@/shared/utils/toast';
 import { ensureLabTechDepartmentId } from '@/features/manager/utils/ensureLabTechDepartment';
 import {
@@ -69,8 +70,7 @@ function staffInitials(u) {
 
 function formatRoleLabel(name) {
   if (!name) return '—';
-  if (name === 'super_admin') return 'Admin';
-  if (name === 'admin') return 'Manager';
+  if (name === 'admin') return 'Admin';
   if (name === 'opd_billing') return 'OPD Billing';
   if (name === 'lab_technician') return 'Lab Technician';
   return name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -153,11 +153,13 @@ export default function SuperAdminStaffDetailPage() {
 
   const roleOptions = useMemo(
     () =>
-      roles?.map((role) => ({
+      filterHospitalOwnerRegisterRoles(roles, {
+        includeRoleId: user?.role_id,
+      })?.map((role) => ({
         value: String(role.id),
         label: formatRoleLabel(role.name),
       })) ?? [],
-    [roles],
+    [roles, user?.role_id],
   );
 
   const departmentOptions = useMemo(

@@ -9,6 +9,7 @@ import {
 } from '@/shared/hooks/queries/useAdminQuery';
 import { Button, Input, Label, QueryFeedback, Select } from '@/shared/components/common';
 import { adminPanelRoutes } from '@/shared/constants';
+import { filterHospitalOwnerRegisterRoles } from '@/features/manager/utils/hospitalManagerRoles';
 import { toast } from '@/shared/utils/toast';
 import { normalizeEmailInput } from '@/shared/utils/credentials';
 import { ensureLabTechDepartmentId } from '@/features/manager/utils/ensureLabTechDepartment';
@@ -31,9 +32,8 @@ const EMPTY_FORM = {
 
 function formatRoleLabel(name) {
   if (!name) return '—';
-  if (name === 'super_admin') return 'Admin';
-  if (name === 'admin') return 'Manager';
-  if (name === 'opd_billing') return 'OPD Billing';
+  if (name === 'admin') return 'Admin';
+  if (name === 'opd_billing') return 'OPD';
   if (name === 'lab_technician') return 'Lab Technician';
   return name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
@@ -75,7 +75,7 @@ export default function SuperAdminStaffRegisterPage() {
 
   const roleOptions = useMemo(
     () =>
-      roles?.map((role) => ({
+      filterHospitalOwnerRegisterRoles(roles)?.map((role) => ({
         value: String(role.id),
         label: formatRoleLabel(role.name),
       })) ?? [],

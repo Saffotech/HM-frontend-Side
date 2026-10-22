@@ -3,11 +3,13 @@ import AdminEmptyState from '@/features/manager/components/ManagerEmptyState';
 import AdminPageHeader from '@/features/manager/components/ManagerPageHeader';
 import AdminRoleBadge from '@/features/manager/components/ManagerRoleBadge';
 import { useAdminRolesQuery } from '@/shared/hooks/queries/useAdminQuery';
+import { filterHospitalRoleRecords } from '@/features/manager/utils/hospitalManagerRoles';
 import { QueryFeedback } from '@/shared/components/common';
 import { ShieldPlus } from 'lucide-react';
 
 export default function RolesListPage() {
-  const { data: roles, isLoading, isError, error } = useAdminRolesQuery();
+  const { data, isLoading, isError, error } = useAdminRolesQuery();
+  const roles = filterHospitalRoleRecords(data);
 
   return (
     <AdminLayout pageTitle="Roles">

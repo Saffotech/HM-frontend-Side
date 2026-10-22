@@ -5,7 +5,6 @@ import { highlightMatch } from '@/shared/utils/highlightMatch';
 import './SearchableSelect.css';
 
 const DROPDOWN_GAP_PX = 4;
-const DROPDOWN_MIN_HEIGHT_PX = 120;
 const DROPDOWN_MAX_HEIGHT_FALLBACK_PX = 256;
 
 function readDropdownMaxHeightPx() {
@@ -105,13 +104,13 @@ function SearchableSelect({
 
     const spaceBelow = window.innerHeight - rect.bottom - DROPDOWN_GAP_PX;
     const spaceAbove = rect.top - DROPDOWN_GAP_PX;
-    const openUp = spaceBelow < DROPDOWN_MIN_HEIGHT_PX && spaceAbove > spaceBelow;
+    // Prefer the side that can show the full dropdown. Checking only the
+    // minimum height leaves a nearly-full menu clipped/scrolling below the
+    // field even when there is plenty of room above it.
+    const openUp = spaceBelow < preferredMax && spaceAbove > spaceBelow;
     setOpensUp(openUp);
     const available = openUp ? spaceAbove : spaceBelow;
-    const maxHeight = Math.max(
-      DROPDOWN_MIN_HEIGHT_PX,
-      Math.min(preferredMax, available - DROPDOWN_GAP_PX)
-    );
+    const maxHeight = Math.max(0, Math.min(preferredMax, available - DROPDOWN_GAP_PX));
 
     setDropdownStyle({
       position: 'fixed',

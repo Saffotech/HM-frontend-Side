@@ -1,3 +1,5 @@
+import { filterHospitalRoleRecords, filterHospitalStaffRecords } from '../../manager/utils/hospitalManagerRoles.js';
+
 export const DASHBOARD_FILTERS = {
   TOTAL_STAFF: 'total_staff',
   ACTIVE_STAFF: 'active_staff',
@@ -81,13 +83,13 @@ function formatAuditTime(value) {
 
 function formatRoleLabel(name) {
   if (!name) return '—';
-  if (name === 'super_admin') return 'Admin';
-  if (name === 'admin') return 'Manager';
+  if (name === 'admin') return 'Admin';
   return name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export function buildStaffRows(staff = [], { activeOnly = false } = {}) {
-  const rows = activeOnly ? staff.filter((s) => s.is_active) : staff;
+  const visible = filterHospitalStaffRecords(staff);
+  const rows = activeOnly ? visible.filter((s) => s.is_active) : visible;
   return rows.map((user) => ({
     id: user.id,
     name: staffDisplayName(user),
@@ -108,7 +110,7 @@ export function buildRoleRows(roles = [], staffByRole = []) {
       }, {})
     : {};
 
-  return roles.map((role) => ({
+  return filterHospitalRoleRecords(roles).map((role) => ({
     id: role.id,
     role: role.name,
     description:

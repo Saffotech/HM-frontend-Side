@@ -33,8 +33,7 @@ const EMPTY_FORM = {
 
 function formatRoleLabel(name) {
   if (!name) return '—';
-  if (name === 'super_admin') return 'Admin';
-  if (name === 'admin') return 'Manager';
+  if (name === 'admin') return 'Admin';
   if (name === 'opd_billing') return 'OPD Billing';
   if (name === 'ipd') return 'IPD';
   if (name === 'lab_technician') return 'Lab Technician';

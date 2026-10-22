@@ -8,10 +8,10 @@ import AdminEmptyState from '@/features/manager/components/ManagerEmptyState';
 import { useAdminDashboardQuery, useAdminRolesQuery } from '@/shared/hooks/queries/useAdminQuery';
 import { Button, QueryFeedback } from '@/shared/components/common';
 import { adminPanelRoutes } from '@/shared/constants';
+import { filterHospitalRoleRecords } from '@/features/manager/utils/hospitalManagerRoles';
 
 /** Display order for System roles cards (API may return any order). */
 const ROLE_CARD_ORDER = [
-  'super_admin',
   'admin',
   'receptionist',
   'opd_billing',
@@ -42,7 +42,7 @@ export default function SuperAdminRolesListPage() {
   const dashboardQuery = useAdminDashboardQuery();
 
   const roles = useMemo(() => {
-    const list = apiQuery.data ?? [];
+    const list = filterHospitalRoleRecords(apiQuery.data ?? []);
     return [...list].sort((a, b) => {
       const byOrder = roleSortIndex(a.name) - roleSortIndex(b.name);
       if (byOrder !== 0) return byOrder;
