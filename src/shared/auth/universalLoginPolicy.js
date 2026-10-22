@@ -72,7 +72,8 @@ export function dashboardForRole(role) {
 
 /**
  * Decide which session store may accept this login body.
- * Platform roles are accepted with a null tenant. Hospital roles are not.
+ * CRM, accountant, and platform admin are organization roles. A hospital id
+ * on the user record does not put them in a hospital session.
  */
 export function classifyLoginBody(body) {
   const role = cleanRole(body?.role);
@@ -81,7 +82,7 @@ export function classifyLoginBody(body) {
       realm: 'platform',
       role,
       portal: portalForRole(role),
-      tenantId: body?.tenant_id ?? null,
+      tenantId: null,
     };
   }
 

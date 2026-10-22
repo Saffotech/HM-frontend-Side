@@ -14,8 +14,8 @@ import AdminLayout from '@/features/manager/components/ManagerLayout';
 import AdminBarChart from '@/features/manager/components/ManagerBarChart';
 import AdminEmptyState from '@/features/manager/components/ManagerEmptyState';
 import AdminQuickAction from '@/features/manager/components/ManagerQuickAction';
-import AdminRoleBadge from '@/features/manager/components/ManagerRoleBadge';
 import { formatRoleLabel } from '@/features/manager/utils/formatRoleLabel';
+import { isPlatformOrganizationRole } from '@/features/manager/utils/hospitalManagerRoles';
 import AdminStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
 import AdminStatCard from '@/features/manager/components/ManagerStatCard';
 import AdminUserCell from '@/features/manager/components/ManagerUserCell';
@@ -23,13 +23,16 @@ import { useAdminBedAllocationPermissions } from '@/features/manager/hooks/useMa
 import {
   useAdminDashboardQuery,
   useAdminDepartmentsQuery,
-  useAdminRolesQuery,
   useAdminStaffListQuery,
 } from '@/shared/hooks/queries/useAdminQuery';
 import { Button, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 
 const PREVIEW_LIMIT = 100;
+
+function hospitalStaffByRole(rows = []) {
+  return rows.filter((item) => !isPlatformOrganizationRole(item.role_name));
+}
 
 /** Main panel focus: staff (default) | departments | roles */
 const FOCUS = {
@@ -59,7 +62,7 @@ function buildViewAllLabel({
   }
   if (focus === FOCUS.ROLES) {
     if (selectedRoleName) return `View ${formatRoleLabel(selectedRoleName)} staff`;
-    return 'View all roles';
+    return 'View all staff';
   }
   const roleLabel = selectedRoleName ? formatRoleLabel(selectedRoleName) : null;
   if (statusFilter === 'true' && roleLabel) return `View active ${roleLabel} staff`;
@@ -196,14 +199,6 @@ export default function AdminDashboardPage() {
     { enabled: Boolean(data) && focus === FOCUS.DEPARTMENTS }
   );
 
-  const {
-    data: roles = [],
-    isLoading: rolesLoading,
-    isError: rolesError,
-  } = useAdminRolesQuery({
-    enabled: Boolean(data) && focus === FOCUS.ROLES,
-  });
-
   const needsStaffQuery =
     focus === FOCUS.STAFF
       ? statusFilter !== 'all' || selectedRole != null
@@ -273,7 +268,7 @@ export default function AdminDashboardPage() {
   const roleChartItems = useMemo(() => {
     if (focus === FOCUS.DEPARTMENTS || focus === FOCUS.ROLES) {
       if (focus === FOCUS.ROLES && !selectedRole) {
-        return (data?.staff_by_role ?? []).map((item) => ({
+        return hospitalStaffByRole(data?.staff_by_role ?? []).map((item) => ({
           ...item,
           display_name: formatRoleLabel(item.role_name),
         }));
@@ -282,7 +277,7 @@ export default function AdminDashboardPage() {
     }
 
     if (statusFilter === 'all' && !selectedRole) {
-      return (data?.staff_by_role ?? [])
+      return hospitalStaffByRole(data?.staff_by_role ?? [])
         .filter((item) => item.count > 0)
         .map((item) => ({
           ...item,
@@ -307,6 +302,7 @@ export default function AdminDashboardPage() {
     }
 
     return Array.from(counts.values())
+      .filter((item) => !isPlatformOrganizationRole(item.role_name))
       .sort((a, b) => String(a.role_name || '').localeCompare(String(b.role_name || '')))
       .map((item) => ({
         ...item,
@@ -316,7 +312,7 @@ export default function AdminDashboardPage() {
 
   const topRoles = useMemo(
     () =>
-      [...(data?.staff_by_role ?? [])]
+      [...hospitalStaffByRole(data?.staff_by_role ?? [])]
         .filter((item) => item.count > 0)
         .sort((a, b) => b.count - a.count)
         .slice(0, 5),
@@ -415,7 +411,7 @@ export default function AdminDashboardPage() {
         navigate(staffListPath({ roleId: selectedRole.role_id }));
         return;
       }
-      navigate(ROUTES.MANAGER_ROLES);
+      navigate(ROUTES.MANAGER_STAFF);
       return;
     }
     navigate(
@@ -444,12 +440,12 @@ export default function AdminDashboardPage() {
 
   const panelLoading =
     (focus === FOCUS.DEPARTMENTS && (departmentsLoading || previewLoading)) ||
-    (focus === FOCUS.ROLES && (rolesLoading || (selectedRole && previewLoading))) ||
+    (focus === FOCUS.ROLES && selectedRole && previewLoading) ||
     (focus === FOCUS.STAFF && needsStaffQuery && previewLoading);
 
   const panelError =
     (focus === FOCUS.DEPARTMENTS && (departmentsError || previewError)) ||
-    (focus === FOCUS.ROLES && (rolesError || (selectedRole && previewError))) ||
+    (focus === FOCUS.ROLES && selectedRole && previewError) ||
     (focus === FOCUS.STAFF && needsStaffQuery && previewError);
 
   return (
@@ -522,8 +518,6 @@ export default function AdminDashboardPage() {
                       <Button variant="outline" size="sm" onClick={openPrimaryAction}>
                         {focus === FOCUS.DEPARTMENTS && !selectedDepartment ? (
                           <Building2 size={14} aria-hidden />
-                        ) : focus === FOCUS.ROLES && !selectedRole ? (
-                          <Shield size={14} aria-hidden />
                         ) : (
                           <Users size={14} aria-hidden />
                         )}
@@ -565,45 +559,20 @@ export default function AdminDashboardPage() {
                         />
                       )
                     ) : showChart && focus === FOCUS.ROLES ? (
-                      <>
-                        {roleChartItems.length ? (
-                          <AdminBarChart
-                            items={roleChartItems}
-                            labelKey="display_name"
-                            valueKey="count"
-                            scale="total"
-                            selectedKey={selectedRole?.role_id}
-                            onItemClick={selectRole}
-                            formatValue={(value, item, { total }) => {
-                              const pct = total > 0 ? Math.round((value / total) * 100) : 0;
-                              return `${value} staff (${pct}%)`;
-                            }}
-                          />
-                        ) : null}
-                        {roles?.length ? (
-                          <div className="admin-role-breakdown">
-                            {roles.map((role) => (
-                              <button
-                                key={role.id}
-                                type="button"
-                                className={`admin-role-breakdown__item admin-role-breakdown__item--clickable${
-                                  selectedRole && Number(selectedRole.role_id) === Number(role.id)
-                                    ? ' is-selected'
-                                    : ''
-                                }`}
-                                onClick={() =>
-                                  selectRole({ role_id: role.id, role_name: role.name })
-                                }
-                              >
-                                <AdminRoleBadge roleName={role.name} />
-                                <span className="admin-role-breakdown__count">
-                                  {role.permissions?.length ?? 0} perms
-                                </span>
-                              </button>
-                            ))}
-                          </div>
-                        ) : null}
-                      </>
+                      roleChartItems.length ? (
+                        <AdminBarChart
+                          items={roleChartItems}
+                          labelKey="display_name"
+                          valueKey="count"
+                          scale="total"
+                          selectedKey={selectedRole?.role_id}
+                          onItemClick={selectRole}
+                          formatValue={(value, item, { total }) => {
+                            const pct = total > 0 ? Math.round((value / total) * 100) : 0;
+                            return `${value} staff (${pct}%)`;
+                          }}
+                        />
+                      ) : null
                     ) : showChart && roleChartItems.length ? (
                       <AdminBarChart
                         items={roleChartItems}
@@ -690,7 +659,7 @@ export default function AdminDashboardPage() {
                       >
                         <span className="admin-dashboard-summary__label">Roles in use</span>
                         <span className="admin-dashboard-summary__value">
-                          {data.staff_by_role?.filter((r) => r.count > 0).length ?? 0}
+                          {hospitalStaffByRole(data.staff_by_role).filter((r) => r.count > 0).length}
                         </span>
                       </button>
                       <button

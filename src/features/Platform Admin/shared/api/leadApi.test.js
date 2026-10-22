@@ -237,8 +237,7 @@ describe("CRM screens use the lead API instead of seed data", () => {
     const adminDashboard = readSrc("../../panels/superAdmin/pages/dashboard/Dashboard.jsx");
     const performanceHook = readSrc("../../panels/superAdmin/pages/tenants/crmPerformance/useCrmPerformance.js");
     const performancePage = readSrc("../../panels/superAdmin/pages/tenants/crmPerformance/CrmPerformance.jsx");
-    assert.match(adminDashboard, /listLeads/);
-    assert.match(adminDashboard, /countLeadList/);
+    assert.doesNotMatch(adminDashboard, /listLeads|countLeadList/);
     assert.match(performanceHook, /parseLeadList/);
     assert.match(performanceHook, /leadStatus/);
     assert.match(performanceHook, /retryLeads/);

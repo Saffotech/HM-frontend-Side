@@ -135,6 +135,8 @@ export default function IpdInsuranceBillingPage() {
   const [savedClaim, setSavedClaim] = useState(claim);
   const [dailyCharges, setDailyCharges] = useState(() => initDailyCharges(claim));
   const [printSheetMounted, setPrintSheetMounted] = useState(false);
+  const claimRef = useRef(claim);
+  claimRef.current = claim;
 
   useEffect(() => {
     const current = claimRef.current;

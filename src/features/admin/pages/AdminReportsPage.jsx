@@ -33,6 +33,7 @@ import {
   TablePagination,
 } from '@/shared/components/common';
 import { formatRoleLabel } from '@/features/admin/utils/permissionPresentation';
+import { isPlatformOrganizationRole } from '@/features/manager/utils/hospitalManagerRoles';
 
 const PAGE_SIZE = 20;
 
@@ -209,7 +210,9 @@ export default function SuperAdminReportsPage() {
   const departments = departmentsQuery.data;
 
   const staffByRole = useMemo(() => {
-    const rows = dashboard?.staff_by_role ?? [];
+    const rows = (dashboard?.staff_by_role ?? []).filter(
+      (row) => !isPlatformOrganizationRole(row.role_name),
+    );
     return rows
       .map((row) => ({
         key: row.role_name,

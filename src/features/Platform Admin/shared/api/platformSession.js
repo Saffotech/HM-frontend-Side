@@ -229,5 +229,6 @@ export function portalSessionIsAuthenticated(portal, session, auth = platformAut
   if (!expectedRole || session.role !== expectedRole) return false;
   const tokenUser = auth.getUser?.();
   if (!tokenUser || tokenUser.userId == null || tokenUser.role !== expectedRole) return false;
+  if (tokenUser.tenantId !== null) return false;
   return String(tokenUser.userId) === String(session.userId);
 }

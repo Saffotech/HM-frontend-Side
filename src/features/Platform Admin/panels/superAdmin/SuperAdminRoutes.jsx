@@ -1,7 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { UNIVERSAL_LOGIN, platformPath } from "../../shared/paths";
 import AppLayout from "./layout/AppLayout";
-import HelpDocumentation from "./pages/account/HelpDocumentation";
 import MyProfile from "./pages/account/MyProfile";
 import PlatformAnalytics from "./pages/analytics/PlatformAnalytics";
 import InvoicesPayments from "./pages/billing/InvoicesPayments";
@@ -31,7 +30,6 @@ export default function SuperAdminRoutes() {
         <Route path="billing/revenue" element={<InvoicesPayments />} />
         <Route path="billing/invoices" element={<Navigate to={platformPath("/billing/revenue")} replace />} />
         <Route path="profile" element={<MyProfile />} />
-        <Route path="help" element={<HelpDocumentation />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

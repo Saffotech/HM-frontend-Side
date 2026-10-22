@@ -13,7 +13,9 @@ export async function commitPlatformSession(portal, email, body) {
   try {
     const me = await platformApi("/auth/me");
     const expectedRole = PORTAL_BACKEND_ROLE[portal];
-    if (expectedRole && me?.role && me.role !== expectedRole) {
+    const sameUser = me?.user_id != null
+      && String(me.user_id) === String(session.profile.userId);
+    if (!expectedRole || !sameUser || me?.role !== expectedRole) {
       platformAuth.clear();
       throw new PlatformApiError("This account cannot sign in to this portal.", {
         status: 403,
@@ -27,6 +29,7 @@ export async function commitPlatformSession(portal, email, body) {
       email: me.email || session.profile.email,
       role: me.role || session.profile.role,
       photoUrl: me.profile_image_url || "",
+      tenantId: null,
     };
     platformAuth.saveSession({
       accessToken: session.accessToken,
@@ -35,12 +38,9 @@ export async function commitPlatformSession(portal, email, body) {
     });
     return profile;
   } catch (error) {
-    if (error?.status === 401 || error?.status === 403) {
-      platformAuth.clear();
-      clearStoredPortalProfiles();
-      throw error;
-    }
-    return session.profile;
+    platformAuth.clear();
+    clearStoredPortalProfiles();
+    throw error;
   }
 }
 
@@ -84,8 +84,8 @@ export function mapPlatformMe(body, session) {
     createdAt: body?.created_at || "",
     photoUrl: body?.profile_image_url || "",
     permissions: Array.isArray(body?.permissions) ? body.permissions : [],
-    tenantId: body?.tenant_id ?? null,
-    hospital: body?.hospital && typeof body.hospital === "object" ? body.hospital : null,
+    tenantId: null,
+    hospital: null,
   };
 }
 

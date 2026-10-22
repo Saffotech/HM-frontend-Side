@@ -46,6 +46,7 @@ export function sessionFromLogin(portal, email, body) {
       name: body.first_name || trimmedEmail,
       email: trimmedEmail,
       role: body.role,
+      tenantId: null,
     },
   };
 }

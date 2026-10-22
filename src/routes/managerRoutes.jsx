@@ -9,7 +9,6 @@ const AdminDashboardPage = lazy(() => import('@/features/manager/pages/ManagerDa
 const StaffListPage = lazy(() => import('@/features/manager/pages/StaffListPage'));
 const StaffDetailPage = lazy(() => import('@/features/manager/pages/StaffDetailPage'));
 const StaffRegisterPage = lazy(() => import('@/features/manager/pages/StaffRegisterPage'));
-const RolesListPage = lazy(() => import('@/features/manager/pages/RolesListPage'));
 const DepartmentListPage = lazy(() => import('@/features/manager/pages/DepartmentListPage'));
 const DepartmentCreatePage = lazy(() => import('@/features/manager/pages/DepartmentCreatePage'));
 const DepartmentDetailPage = lazy(() => import('@/features/manager/pages/DepartmentDetailPage'));
@@ -123,11 +122,7 @@ export const managerRoutes = [
           },
           {
             path: ROUTES.MANAGER_ROLES,
-            element: (
-              <LazyRoute>
-                <RolesListPage />
-              </LazyRoute>
-            ),
+            element: <Navigate to={ROUTES.MANAGER_DASHBOARD} replace />,
           },
           {
             path: ROUTES.MANAGER_DEPARTMENTS,

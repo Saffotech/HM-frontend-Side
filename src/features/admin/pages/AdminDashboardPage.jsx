@@ -22,6 +22,7 @@ import {
 import { useSuperAdminAuditQuery } from '@/features/admin/hooks/useAdminQuery';
 import { QueryFeedback, SearchBar, TablePagination } from '@/shared/components/common';
 import { adminPanelRoutes } from '@/shared/constants';
+import { filterHospitalRoleRecords } from '@/features/manager/utils/hospitalManagerRoles';
 import { getAuditActionBadgeClass, formatAuditActionLabel } from '@/features/admin/utils/auditActionBadges';
 import {
   DASHBOARD_FILTERS,
@@ -144,7 +145,10 @@ export default function SuperAdminDashboardPage() {
   const staff = useMemo(() => staffQuery.data?.staff ?? [], [staffQuery.data?.staff]);
   const staffTotal = staffQuery.data?.total ?? 0;
   const staffTotalPages = Math.max(1, Math.ceil(staffTotal / PAGE_SIZE));
-  const roles = useMemo(() => rolesQuery.data ?? [], [rolesQuery.data]);
+  const roles = useMemo(
+    () => filterHospitalRoleRecords(rolesQuery.data ?? []),
+    [rolesQuery.data],
+  );
   const auditLogs = useMemo(
     () => auditQuery.data?.entries ?? [],
     [auditQuery.data?.entries],
@@ -193,7 +197,7 @@ export default function SuperAdminDashboardPage() {
       {
         key: DASHBOARD_FILTERS.TOTAL_ROLES,
         label: 'Total Roles',
-        value: data?.total_roles ?? roles.length ?? '—',
+        value: rolesQuery.isLoading ? '—' : roles.length,
         sub: 'Defined role types',
         tone: 'warning',
         icon: <Shield size={18} />,
@@ -207,7 +211,7 @@ export default function SuperAdminDashboardPage() {
         icon: <ClipboardList size={18} />,
       },
     ],
-    [data, roles.length, todayEventsTotal],
+    [data, roles.length, rolesQuery.isLoading, todayEventsTotal],
   );
 
   const tableMeta = DASHBOARD_FILTER_META[activeFilter];

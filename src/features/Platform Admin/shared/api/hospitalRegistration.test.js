@@ -162,6 +162,7 @@ describe("platform login policy", () => {
     access_token: "access-1",
     refresh_token: "refresh-1",
     user_id: 3,
+    tenant_id: null,
     first_name: "Saffo",
     role: "platform_admin",
     permissions: ["hospitals:create", "leads:manage"],
@@ -179,6 +180,7 @@ describe("platform login policy", () => {
     const session = sessionFromLogin("accountant", "accounts@saffocare.example", {
       ...loginBody,
       user_id: 4,
+      tenant_id: null,
       first_name: "Priya",
       role: "accountant",
       permissions: ["registrations:create", "invoices:manage"],
@@ -201,6 +203,7 @@ describe("platform login policy", () => {
       access_token: "crm-access",
       refresh_token: "crm-refresh",
       user_id: 5,
+      tenant_id: null,
       first_name: "Meera",
       role: "crm",
       permissions: ["leads:manage"],
@@ -215,6 +218,7 @@ describe("platform login policy", () => {
       () => sessionFromLogin("crm", "crm@saffocare.example", {
         access_token: "access-1",
         user_id: 5,
+        tenant_id: null,
         role: "crm",
         permissions: [],
       }),
@@ -224,6 +228,7 @@ describe("platform login policy", () => {
       () => sessionFromLogin("crm", "accounts@saffocare.example", {
         access_token: "access-1",
         user_id: 4,
+        tenant_id: null,
         role: "accountant",
         permissions: ["hospitals:create"],
       }),
@@ -233,6 +238,7 @@ describe("platform login policy", () => {
       () => sessionFromLogin("accountant", "saffo.admin@saffocare.example", {
         access_token: "access-1",
         user_id: 3,
+        tenant_id: null,
         role: "platform_admin",
         permissions: ["hospitals:create"],
       }),
@@ -242,6 +248,18 @@ describe("platform login policy", () => {
       () => sessionFromLogin("platform", "user@example.com", { role: "platform_admin" }),
       (error) => error instanceof PlatformApiError && error.status === 401,
     );
+  });
+
+  it("keeps CRM on the organization portal when the user record has a hospital id", () => {
+    const session = sessionFromLogin("crm", "crm@saffocare.example", {
+      access_token: "crm-access",
+      user_id: 5,
+      tenant_id: 12,
+      role: "crm",
+      permissions: ["leads:manage"],
+    });
+    assert.equal(session.profile.role, "crm");
+    assert.equal(session.profile.tenantId, null);
   });
 });
 
@@ -254,7 +272,7 @@ describe("platform session guards", () => {
     auth.saveSession({
       accessToken: "crm-access",
       refreshToken: "crm-refresh",
-      user: { userId: 5, name: "Meera", role: "crm" },
+      user: { userId: 5, name: "Meera", role: "crm", tenantId: null },
     });
     assert.equal(portalSessionIsAuthenticated("crm", localSession, auth), true);
     assert.equal(portalSessionIsAuthenticated("platform", { userId: 3, role: "platform_admin" }, auth), false);
@@ -272,6 +290,16 @@ describe("platform session guards", () => {
       portalSessionIsAuthenticated("platform", { userId: 3, role: "platform_admin" }, auth),
       false,
     );
+  });
+
+  it("fails closed for restored platform tokens without a verified null tenant", () => {
+    const auth = createPlatformAuthStore(memoryStorage());
+    auth.saveSession({
+      accessToken: "crm-access",
+      refreshToken: "crm-refresh",
+      user: { userId: 5, role: "crm" },
+    });
+    assert.equal(portalSessionIsAuthenticated("crm", { userId: 5, role: "crm" }, auth), false);
   });
 });
 

@@ -6,7 +6,6 @@ import {
   ArrowRight,
   CalendarCheck,
   CheckCircle2,
-  Cross,
   Eye,
   EyeOff,
   Loader2,
@@ -14,6 +13,7 @@ import {
   Mail,
   ShieldCheck,
 } from 'lucide-react';
+import { BrandLogo, BrandName } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import { useAuthStore } from '@/shared/store/useAuthStore';
 import { isSupersededSessionError } from '@/components/security/httpSessionPolicy';
@@ -86,6 +86,11 @@ function LoginField({
           type={isPassword && visible ? 'text' : type}
           value={value}
           onChange={onChange}
+          readOnly
+          onFocus={(event) => {
+            event.currentTarget.readOnly = false;
+          }}
+          autoComplete="off"
           aria-invalid={Boolean(error)}
           aria-describedby={error ? `${id}-error` : undefined}
           {...inputProps}
@@ -216,12 +221,8 @@ export default function LoginPage() {
       <div className="hlogin-grid">
         <section className="hlogin-form-col">
           <Link to={ROUTES.HOME} className="hlogin-brand">
-            <span className="hlogin-brand-mark">
-              <Cross size={20} aria-hidden />
-            </span>
-            <span className="hlogin-brand-name">
-              Saffo<span>care</span>
-            </span>
+            <BrandLogo size={32} className="hlogin-brand-logo" />
+            <BrandName className="hlogin-brand-name" />
           </Link>
 
           <div className="hlogin-form-wrap">
@@ -291,7 +292,7 @@ export default function LoginPage() {
                     </div>
                   )}
 
-                  <form className="hlogin-form" onSubmit={handleSubmit} noValidate>
+                  <form className="hlogin-form" onSubmit={handleSubmit} autoComplete="off" noValidate>
                     <LoginField
                       id="staff-email"
                       label="Email address"
@@ -300,7 +301,7 @@ export default function LoginPage() {
                       placeholder="you@saffocare.com"
                       value={email}
                       onChange={(event) => setEmail(normalizeEmailInput(event.target.value))}
-                      autoComplete="email"
+                      autoComplete="off"
                       autoCapitalize="none"
                       spellCheck={false}
                       error={fieldErrors.email}
@@ -316,7 +317,7 @@ export default function LoginPage() {
                           placeholder="••••••••"
                           value={password}
                           onChange={(event) => setPassword(event.target.value)}
-                          autoComplete="current-password"
+                          autoComplete="off"
                           error={fieldErrors.password}
                         />
                         <div className="hlogin-row">
@@ -365,7 +366,6 @@ export default function LoginPage() {
 
           <footer className="hlogin-foot">
             <p>© 2026 Saffocare Hospital</p>
-            <p>Need help? Call (800) 555-0199</p>
           </footer>
         </section>
 

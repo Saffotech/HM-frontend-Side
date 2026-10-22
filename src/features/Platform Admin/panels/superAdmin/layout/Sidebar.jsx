@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
-  BookOpen,
   Building2,
   ChartColumn,
   CircleUserRound,
@@ -49,7 +48,6 @@ const groups = [
     label: "Account",
     items: [
       { to: platformPath("/profile"), label: "My Profile", icon: CircleUserRound },
-      { to: platformPath("/help"), label: "Help & Documentation", icon: BookOpen },
     ],
   },
 ];

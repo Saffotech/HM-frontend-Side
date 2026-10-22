@@ -4,10 +4,7 @@
 }
 
 .landing-hero__grid-bg {
-  position: absolute;
-  inset: 0;
-  opacity: 0.4;
-  pointer-events: none;
+  display: none;
 }
 
 .landing-hero__inner {

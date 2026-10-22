@@ -6,7 +6,7 @@ import SuperAdminPageHeader from '@/features/admin/components/AdminPageHeader';
 import SuperAdminRoleCard from '@/features/admin/components/AdminRoleCard';
 import AdminEmptyState from '@/features/manager/components/ManagerEmptyState';
 import { useAdminDashboardQuery, useAdminRolesQuery } from '@/shared/hooks/queries/useAdminQuery';
-import { Button, QueryFeedback } from '@/shared/components/common';
+import { QueryFeedback } from '@/shared/components/common';
 import { adminPanelRoutes } from '@/shared/constants';
 import { filterHospitalRoleRecords } from '@/features/manager/utils/hospitalManagerRoles';
 
@@ -63,19 +63,7 @@ export default function SuperAdminRolesListPage() {
   return (
     <SuperAdminLayout pageTitle="Roles">
       <div className="admin-page sa-roles-page">
-        <SuperAdminPageHeader
-          title="System roles"
-          actions={(
-            <Button
-              size="lg"
-              className="sa-roles-create-btn"
-              onClick={() => navigate(panel.rolesNew)}
-            >
-              <ShieldPlus size={22} aria-hidden />
-              Create role
-            </Button>
-          )}
-        />
+        <SuperAdminPageHeader title="System roles" />
 
         <QueryFeedback
           isLoading={isLoading}

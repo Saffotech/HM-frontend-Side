@@ -59,6 +59,19 @@ describe('universal login classification', () => {
     assert.equal(classifyLoginBody({ role: 'accountant', tenant_id: null }).portal, 'accountant');
   });
 
+  it('keeps organization roles on the platform even when a hospital id is present', () => {
+    ['platform_admin', 'crm', 'accountant'].forEach((role) => {
+      const decision = classifyLoginBody({ role, tenant_id: 12 });
+      assert.equal(decision.realm, 'platform', role);
+      assert.equal(decision.tenantId, null, role);
+      assert.equal(decision.portal, {
+        platform_admin: 'platform',
+        crm: 'crm',
+        accountant: 'accountant',
+      }[role]);
+    });
+  });
+
   it('keeps hospital roles and rejects a missing tenant', () => {
     const doctor = classifyLoginBody({ role: 'doctor', tenant_id: 3 });
     assert.equal(doctor.realm, 'hospital');
@@ -277,7 +290,7 @@ describe('platform session restore', () => {
     auth.saveSession({
       accessToken: 'crm-access',
       refreshToken: 'crm-refresh',
-      user: { userId: 5, role: 'crm' },
+      user: { userId: 5, role: 'crm', tenantId: null },
     });
     const active = readActivePortalSession(storage, auth);
     assert.equal(active.portal, 'crm');

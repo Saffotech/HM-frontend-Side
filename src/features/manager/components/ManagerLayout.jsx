@@ -5,7 +5,6 @@ import {
   LayoutDashboard,
   Settings,
   User,
-  UserCog,
   Users,
 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
@@ -20,7 +19,6 @@ const NAV_LINKS = [
   { href: ROUTES.MANAGER_BED_ALLOCATION, label: 'Nurse Bed Allocation', icon: BedDouble },
   { href: ROUTES.MANAGER_NURSE_WORKFORCE, label: 'Nurse Workforce', icon: CalendarDays },
   { href: ROUTES.MANAGER_REPORTS, label: 'Reports', icon: BarChart3 },
-  { href: ROUTES.MANAGER_ROLES, label: 'Roles', icon: UserCog },
   { href: ROUTES.MANAGER_SETTINGS, label: 'Settings', icon: Settings },
   { href: ROUTES.MANAGER_PROFILE, label: 'Profile', icon: User },
 ];
@@ -40,10 +38,6 @@ function isReportsActive(pathname) {
   return pathname.startsWith(ROUTES.MANAGER_REPORTS);
 }
 
-function isRolesActive(pathname) {
-  return pathname === ROUTES.MANAGER_ROLES;
-}
-
 function isBedAllocationActive(pathname) {
   return pathname === ROUTES.MANAGER_BED_ALLOCATION || pathname.startsWith('/manager/bed-allocation');
 }
@@ -58,9 +52,6 @@ function isNavLinkActive(pathname, link) {
   }
   if (link.href === ROUTES.MANAGER_REPORTS) {
     return isReportsActive(pathname);
-  }
-  if (link.href === ROUTES.MANAGER_ROLES) {
-    return isRolesActive(pathname);
   }
   if (link.href === ROUTES.MANAGER_BED_ALLOCATION) {
     return isBedAllocationActive(pathname);
