@@ -14,6 +14,7 @@ const titles = {
   "/billing/subscriptions": "Subscriptions",
   "/billing/revenue": "Billing & Revenue",
   "/profile": "My Profile",
+  "/staff": "Platform Staff",
 };
 
 export default function Breadcrumbs() {

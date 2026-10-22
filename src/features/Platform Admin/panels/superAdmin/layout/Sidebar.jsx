@@ -4,6 +4,7 @@ import {
   Building2,
   ChartColumn,
   CircleUserRound,
+  ContactRound,
   CreditCard,
   Handshake,
   IndianRupee,
@@ -47,6 +48,7 @@ const groups = [
     id: "account",
     label: "Account",
     items: [
+      { to: platformPath("/staff"), label: "Platform Staff", icon: ContactRound },
       { to: platformPath("/profile"), label: "My Profile", icon: CircleUserRound },
     ],
   },
