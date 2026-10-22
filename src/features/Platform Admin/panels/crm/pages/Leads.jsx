@@ -40,7 +40,7 @@ function matchesTab(lead, tab) {
 }
 
 export default function Leads() {
-  const { me, leads, pool, uncontacted, today, actions, scopeLabel } = useCrm();
+  const { me, leads, pool, uncontacted, today, actions } = useCrm();
   const [params, setParams] = useSearchParams();
   const tab = TABS.some(([key]) => key === params.get("tab")) ? params.get("tab") : "open";
   const inPool = tab === "New";
@@ -108,16 +108,10 @@ export default function Leads() {
   return (
     <div className="crm-page">
       <div className="crm-page-bar">
-        <p className="crm-page-intro">
-          {inPool
-            ? "Unclaimed new enquiries visible to you. Other people's assigned leads are not listed."
-            : "Leads currently assigned to you. Open a lead to see its full history."}
-        </p>
         <div className="crm-page-actions">
           <Button onClick={actions.addLead}><Plus size={16} aria-hidden="true" />Add lead</Button>
         </div>
       </div>
-      {scopeLabel && <p className="crm-callout crm-callout-info">{scopeLabel}</p>}
 
       <section className="crm-card">
         <nav className="crm-tabs" role="tablist" aria-label="Lead status">

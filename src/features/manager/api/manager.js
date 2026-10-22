@@ -15,9 +15,9 @@ function buildQuery(params = {}) {
   return query ? `?${query}` : '';
 }
 
-/** GET /admin/dashboard */
+/** GET /admin-manager/dashboard — the live hospital dashboard route. */
 export async function getAdminDashboard() {
-  return apiClient('/admin/dashboard');
+  return apiClient('/admin-manager/dashboard');
 }
 
 /** GET /users/ */
@@ -106,7 +106,7 @@ export async function updateDepartment(departmentId, body) {
   });
 }
 
-/** GET /admin/reports/overview */
+/** GET /admin-manager/reports/overview */
 export async function getReportsOverview(params = {}) {
   const query = buildQuery({
     from_date: params.from_date,
@@ -114,10 +114,10 @@ export async function getReportsOverview(params = {}) {
     source: params.source,
     department_id: params.department_id,
   });
-  return apiClient(`/admin/reports/overview${query}`);
+  return apiClient(`/admin-manager/reports/overview${query}`);
 }
 
-/** GET /admin/reports/visits */
+/** GET /admin-manager/reports/visits */
 export async function getReportsVisits(params = {}) {
   const query = buildQuery({
     from_date: params.from_date,
@@ -127,7 +127,7 @@ export async function getReportsVisits(params = {}) {
     page: params.page,
     limit: params.limit,
   });
-  return apiClient(`/admin/reports/visits${query}`);
+  return apiClient(`/admin-manager/reports/visits${query}`);
 }
 
 /** POST /roles/ */

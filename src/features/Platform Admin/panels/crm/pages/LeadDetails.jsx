@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, CalendarClock, CheckCircle2, Mail, Pencil, Phone, RotateCcw, SearchX, Send, XCircle } from "lucide-react";
 import { getLead, mapLead } from "../../../shared/api/leadApi";
+import { shouldEndPlatformSession } from "../../../shared/api/platformErrors";
 import { isNumericLeadId } from "../../../shared/api/hospitalRegistration";
 import Button from "../../../shared/components/Button";
 import { usePlatform } from "../../../shared/context/PlatformContext";
@@ -64,7 +65,7 @@ export default function LeadDetails() {
         if (cancelled) return;
         setFetched(null);
         setError(err?.message || "This lead could not be opened.");
-        if (err?.status === 401 && err?.code !== "missing_token") signOutPortal("crm");
+        if (shouldEndPlatformSession(err)) signOutPortal("crm");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -195,7 +196,6 @@ function LeadView({ lead, today, actions, back }) {
             <Fact label="Type" value={lead.type} />
             <Fact label="City" value={lead.city} />
             <Fact label="State" value={lead.state} />
-            <Fact wide label="Hospital email" value={lead.hospitalEmail} />
             {lead.message && <Fact wide label="Requirement" value={lead.message} />}
           </Section>
 

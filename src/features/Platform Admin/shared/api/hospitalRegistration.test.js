@@ -10,6 +10,13 @@ import {
   tenantRegisterBody,
 } from "./hospitalRegistration.js";
 import { interpretPlatformError, PlatformApiError } from "./platformErrors.js";
+import {
+  applyConfirmedTenantActivation,
+  confirmedActivations,
+  reconcileConfirmedActivations,
+  resetConfirmedActivations,
+  withConfirmedActivation,
+} from "../../panels/superAdmin/tenantActivation.js";
 import { executePlatformRequest } from "./platformHttp.js";
 import { sessionFromLogin } from "./platformLoginPolicy.js";
 import { createPlatformAuthStore, portalSessionIsAuthenticated } from "./platformSession.js";
@@ -337,6 +344,23 @@ describe("platform API client", () => {
     assert.equal(storage.store.has("saffocare.platform.v1"), false);
   });
 
+  it("keeps a newer platform session when an older request is rejected", async () => {
+    const auth = createPlatformAuthStore(memoryStorage());
+    auth.saveSession({ accessToken: "expired", refreshToken: "refresh-1", user: { userId: 4 } });
+    const fetchImpl = async (url) => {
+      auth.saveSession({ accessToken: "replacement", refreshToken: "refresh-2", user: { userId: 9, role: "crm" } });
+      if (String(url).endsWith("/auth/refresh")) {
+        return { status: 401, ok: false, json: async () => ({ detail: "Invalid or expired refresh token" }) };
+      }
+      return { status: 401, ok: false, json: async () => ({ detail: "Could not validate credentials" }) };
+    };
+    await assert.rejects(
+      () => executePlatformRequest("/platform/leads", {}, { origin, auth, fetchImpl }),
+      (error) => error.status === 401 && error.code === "session_replaced",
+    );
+    assert.equal(auth.getAccessToken(), "replacement");
+  });
+
   it("maps 409 and 422 responses and does not write a local hospital", async () => {
     const storage = memoryStorage();
     const auth = createPlatformAuthStore(storage);
@@ -421,8 +445,32 @@ describe("registration screens stay off the dummy hospital writer", () => {
     assert.match(api, /method:\s*"PATCH"/);
     assert.match(api, /is_active:\s*Boolean\(isActive\)/);
     assert.match(detail, /setTenantActive/);
+    assert.match(detail, /applyConfirmedTenantActivation/);
     assert.match(directory, /is_active/);
     assert.doesNotMatch(api, /shared\/api\/client/);
+
+    const analytics = readSrc("../../panels/superAdmin/pages/analytics/PlatformAnalytics.jsx");
+    const hospitalsHook = readSrc("../../panels/superAdmin/useRegisteredHospitals.js");
+    assert.match(analytics, /Try again/);
+    assert.match(analytics, /role="alert"/);
+    assert.match(analytics, /data=\{\[\]\}/);
+    assert.match(hospitalsHook, /reloadRegisteredHospitals/);
+    assert.match(hospitalsHook, /withConfirmedActivation/);
+  });
+});
+
+describe("hospital directory activation", () => {
+  it("shows the confirmed is_active and ignores a failed payload", () => {
+    resetConfirmedActivations();
+    const hospitals = [{ tenant_id: 4, name: "City", is_active: true }];
+    assert.equal(applyConfirmedTenantActivation({ name: "City" }), false);
+    assert.equal(applyConfirmedTenantActivation({ tenant_id: 4, is_active: false }), true);
+    assert.equal(withConfirmedActivation(hospitals, confirmedActivations())[0].is_active, false);
+    assert.equal(reconcileConfirmedActivations([{ tenant_id: 4, is_active: true }]), false);
+    assert.equal(withConfirmedActivation(hospitals, confirmedActivations())[0].is_active, false);
+    assert.equal(reconcileConfirmedActivations([{ tenant_id: 4, is_active: false }]), true);
+    assert.equal(withConfirmedActivation([{ tenant_id: 4, is_active: true }], confirmedActivations())[0].is_active, true);
+    resetConfirmedActivations();
   });
 });
 

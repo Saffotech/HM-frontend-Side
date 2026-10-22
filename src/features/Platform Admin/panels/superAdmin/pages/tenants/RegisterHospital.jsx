@@ -12,7 +12,7 @@ import { PLAN_NAMES, billingCycles, hospitalTypes, tenantStatuses, trialPeriods 
 import { usePlatform } from "../../../../shared/context/PlatformContext";
 import { useToast } from "../../../../shared/hooks/useToast";
 import { PLATFORM_BASE, platformPath } from "../../../../shared/paths";
-import { PASSWORD_HINT, isEmail, isPhone, isPostalCode, isTenantCode, passwordIssue, required } from "../../../../shared/utils/validation";
+import { PASSWORD_HINT, isEmail, isPhone, isPostalCode, isTenantCode, passwordIssue, phoneDigits, required } from "../../../../shared/utils/validation";
 import "./RegisterHospital.css";
 
 const blank = {
@@ -76,14 +76,14 @@ export default function RegisterHospital() {
     if (!isTenantCode(values.code)) next.code = "Use 3–12 letters, numbers, or hyphens.";
     if (!required(values.type)) next.type = "Hospital type is required.";
     if (!isEmail(values.email)) next.email = "Enter a valid email address.";
-    if (!isPhone(values.phone)) next.phone = "Enter a valid phone number.";
+    if (!isPhone(values.phone)) next.phone = "Enter a 10-digit phone number.";
     if (!required(values.address)) next.address = "Address is required.";
     if (!required(values.city)) next.city = "City is required.";
     if (!required(values.state)) next.state = "State is required.";
     if (!isPostalCode(values.postalCode)) next.postalCode = "Enter a valid postal code.";
     if (!required(values.adminName)) next.adminName = "Administrator name is required.";
     if (!isEmail(values.adminEmail)) next.adminEmail = "Enter a valid administrator email.";
-    if (!isPhone(values.adminPhone)) next.adminPhone = "Enter a valid administrator phone.";
+    if (!isPhone(values.adminPhone)) next.adminPhone = "Enter a 10-digit phone number.";
     const passwordError = passwordIssue(values.adminPassword);
     if (passwordError) next.adminPassword = passwordError;
     if (!values.adminPasswordConfirm) next.adminPasswordConfirm = "Re-enter the password.";
@@ -150,7 +150,7 @@ export default function RegisterHospital() {
                 {hospitalTypes.map((type) => <option key={type}>{type}</option>)}
               </Select>
               <Input label={<Label text="Email Address" />} type="email" value={values.email} error={errors.email} onChange={(event) => setField("email", event.target.value)} />
-              <Input label={<Label text="Contact Number" />} value={values.phone} error={errors.phone} placeholder="+91 80 4000 2100" onChange={(event) => setField("phone", event.target.value)} />
+              <Input label={<Label text="Contact Number" />} inputMode="numeric" maxLength={10} value={values.phone} error={errors.phone} placeholder="10-digit number" onChange={(event) => setField("phone", phoneDigits(event.target.value))} />
               <Input className="span-3" label={<Label text="Address" />} value={values.address} error={errors.address} onChange={(event) => setField("address", event.target.value)} />
               <Input label={<Label text="City" />} value={values.city} error={errors.city} onChange={(event) => setField("city", event.target.value)} />
               <Input label={<Label text="State" />} value={values.state} error={errors.state} onChange={(event) => setField("state", event.target.value)} />
@@ -163,7 +163,7 @@ export default function RegisterHospital() {
             <div className="reg-grid">
               <Input label={<Label text="Full Name" />} value={values.adminName} error={errors.adminName} onChange={(event) => setField("adminName", event.target.value)} />
               <Input label={<Label text="Email" />} type="email" value={values.adminEmail} error={errors.adminEmail} onChange={(event) => setField("adminEmail", event.target.value)} />
-              <Input label={<Label text="Contact Number" />} value={values.adminPhone} error={errors.adminPhone} onChange={(event) => setField("adminPhone", event.target.value)} />
+              <Input label={<Label text="Contact Number" />} inputMode="numeric" maxLength={10} value={values.adminPhone} error={errors.adminPhone} placeholder="10-digit number" onChange={(event) => setField("adminPhone", phoneDigits(event.target.value))} />
               <PasswordField label={<Label text="Password" />} value={values.adminPassword} error={errors.adminPassword} hint={PASSWORD_HINT} autoComplete="new-password" onChange={(event) => setField("adminPassword", event.target.value)} />
               <PasswordField label={<Label text="Confirm Password" />} value={values.adminPasswordConfirm} error={errors.adminPasswordConfirm} autoComplete="new-password" onChange={(event) => setField("adminPasswordConfirm", event.target.value)} />
             </div>

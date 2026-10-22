@@ -35,7 +35,11 @@ export async function commitPlatformSession(portal, email, body) {
     });
     return profile;
   } catch (error) {
-    if (error?.status === 403) throw error;
+    if (error?.status === 401 || error?.status === 403) {
+      platformAuth.clear();
+      clearStoredPortalProfiles();
+      throw error;
+    }
     return session.profile;
   }
 }
@@ -70,24 +74,36 @@ export function mapPlatformMe(body, session) {
   const name = [body?.first_name, body?.last_name].filter(Boolean).join(" ").trim();
   return {
     userId: body?.user_id ?? session?.userId,
+    firstName: body?.first_name || session?.firstName || "",
+    lastName: body?.last_name || session?.lastName || "",
     name: name || session?.name || "",
     email: body?.email || session?.email || "",
     role: body?.role || session?.role || "",
+    roleId: body?.role_id ?? null,
     isActive: body?.is_active,
     createdAt: body?.created_at || "",
     photoUrl: body?.profile_image_url || "",
     permissions: Array.isArray(body?.permissions) ? body.permissions : [],
+    tenantId: body?.tenant_id ?? null,
+    hospital: body?.hospital && typeof body.hospital === "object" ? body.hospital : null,
   };
 }
 
-export function signOutPlatform() {
+let platformLogoutTask = null;
+
+export function signOutPlatform({ localOnly = false } = {}) {
   const token = platformAuth.getAccessToken();
   platformAuth.clear();
   clearStoredPortalProfiles();
-  if (!token) return Promise.resolve(null);
-  return platformApi("/auth/logout", {
+  if (platformLogoutTask) return platformLogoutTask;
+  if (localOnly || !token) return Promise.resolve(null);
+  const task = platformApi("/auth/logout", {
     method: "POST",
     token,
     skipRefresh: true,
-  }).catch(() => null);
+  }).catch(() => null).finally(() => {
+    if (platformLogoutTask === task) platformLogoutTask = null;
+  });
+  platformLogoutTask = task;
+  return task;
 }

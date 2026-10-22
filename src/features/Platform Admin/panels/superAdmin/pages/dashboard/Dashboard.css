@@ -11,8 +11,14 @@
 }
 
 .dash-page .kpi-grid {
-  gap: 12px;
-  margin-top: 16px;
+  gap: 14px;
+  margin-top: 0;
+}
+
+.dash-page .dash-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: stretch;
 }
 
 .dash-page .dash-kpi.skeleton {
@@ -20,14 +26,23 @@
 }
 
 .dash-page .dash-kpi {
-  min-height: 0;
-  padding: 12px 14px;
+  min-width: 0;
+  min-height: 112px;
+  padding: 16px 17px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   color: inherit;
   text-decoration: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dash-page .dash-kpi-copy {
+  display: block;
+  min-width: 0;
 }
 
 .dash-page .dash-kpi-label {
@@ -58,9 +73,9 @@
 }
 
 .dash-page .dash-kpi-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
   background: var(--color-primary-light);
@@ -68,19 +83,52 @@
   flex: none;
 }
 
-.dash-page a.dash-kpi {
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+.dash-page button.dash-kpi {
+  border: 1px solid var(--color-border);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
-.dash-page a.dash-kpi:hover {
+.dash-page button.dash-kpi:hover {
   border-color: #b7ddd8;
   box-shadow: 0 8px 20px rgba(20, 45, 82, 0.06);
-  text-decoration: none;
-  color: inherit;
+  transform: translateY(-1px);
+}
+
+.dash-page button.dash-kpi:focus-visible {
+  outline: 3px solid rgba(19, 135, 127, 0.3);
+  outline-offset: 2px;
+}
+
+.dash-page button.dash-kpi.is-selected {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(19, 135, 127, 0.12), 0 6px 18px rgba(20, 45, 82, 0.05);
+}
+
+.dash-page button.dash-kpi.is-selected .dash-kpi-icon {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.dash-page .dash-filter-table {
+  min-width: 0;
+  margin-top: 18px;
+  overflow: hidden;
 }
 
 .dash-page .dash-charts {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
   margin-top: 16px;
+}
+
+.dash-page .dash-chart-state {
+  min-width: 0;
+  min-height: 320px;
+}
+
+.dash-page .dash-chart-state > .panel-copy {
+  margin-top: 16px;
+  line-height: 1.5;
 }
 
 .dash-page .chart-card h2 {
@@ -128,6 +176,30 @@
   font-weight: 650;
 }
 
+.dash-page .dash-table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 12px;
+}
+
+.dash-page .dash-updated {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.dash-page .dash-result-count {
+  flex: none;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--color-neutral-bg);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .dash-page .dash-table-wrap {
   overflow-x: auto;
 }
@@ -151,6 +223,19 @@
   padding: 10px 12px 10px 0;
   border-top: 1px solid var(--color-border);
   vertical-align: middle;
+}
+
+.dash-page .dash-table tbody tr:hover {
+  background: #fbfdfd;
+}
+
+.dash-page .dash-table tbody tr.dash-clickable-row {
+  cursor: pointer;
+}
+
+.dash-page .dash-table tbody tr.dash-clickable-row:focus-visible {
+  outline: 2px solid var(--color-primary, #13877f);
+  outline-offset: -2px;
 }
 
 .dash-page .dash-table a {
@@ -201,19 +286,37 @@
 }
 
 @media (max-width: 1100px) {
-  .dash-page .dash-ops {
-    grid-template-columns: 1fr;
+  .dash-page .dash-charts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dash-page .dash-kpi-row {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(180px, 1fr);
+    overflow-x: auto;
+    padding: 2px 2px 8px;
+    scroll-snap-type: x proximity;
+  }
+
+  .dash-page .dash-kpi {
+    scroll-snap-align: start;
   }
 }
 
 @media (max-width: 860px) {
+  .dash-page .dash-charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .dash-page .dash-kpi-value {
     font-size: 20px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dash-page a.dash-kpi {
+  .dash-page button.dash-kpi {
     transition: none;
+    transform: none;
   }
 }

@@ -170,3 +170,21 @@ export function mapLead(lead, session) {
 export function mapLeadList(rows, session) {
   return (Array.isArray(rows) ? rows : []).map((row) => mapLead(row, session));
 }
+
+/** GET /crm/leads is a LeadSummary array, not a paged object. */
+export function parseLeadList(body, session) {
+  if (!Array.isArray(body)) {
+    return { ok: false, rows: [], error: "CRM leads response was not a list." };
+  }
+  const invalid = body.some((row) => !row || typeof row !== "object" || typeof row.id !== "number");
+  if (invalid) {
+    return { ok: false, rows: [], error: "CRM leads response did not match the lead list." };
+  }
+  return { ok: true, rows: mapLeadList(body, session), error: "" };
+}
+
+export function countLeadList(body, session) {
+  const parsed = parseLeadList(body, session);
+  if (!parsed.ok) return { ok: false, count: null, error: parsed.error };
+  return { ok: true, count: parsed.rows.length, error: "" };
+}

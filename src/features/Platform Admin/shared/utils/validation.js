@@ -6,10 +6,13 @@ export function isEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).trim());
 }
 
+/** Keep only digits, and never more than 10. */
+export function phoneDigits(value) {
+  return String(value ?? "").replace(/\D/g, "").slice(0, 10);
+}
+
 export function isPhone(value) {
-  const text = String(value).trim();
-  const digits = text.replace(/\D/g, "");
-  return /^[+]?[\d\s()-]+$/.test(text) && digits.length >= 10 && digits.length <= 15;
+  return /^\d{10}$/.test(String(value ?? "").trim());
 }
 
 export function isTenantCode(value) {

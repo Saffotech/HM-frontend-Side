@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
-import { mapPlatformInvoice, matchesInvoiceFilters, paymentRequestBody } from "./invoiceModel.js";
+import {
+  displayHospitalName,
+  mapPlatformInvoice,
+  matchesInvoiceFilters,
+  paymentRequestBody,
+  readInvoiceList,
+  recentPaidInvoices,
+  sumPaidAmounts,
+} from "./invoiceModel.js";
 
 describe("platform invoice mapping", () => {
   const invoice = mapPlatformInvoice({
@@ -58,5 +66,60 @@ describe("platform invoice mapping", () => {
     assert.match(source, /\/platform\/invoices/);
     assert.match(source, /\/payments/);
     assert.doesNotMatch(source, /quarter/);
+  });
+
+  it("keeps due-soon on the calendar date", () => {
+    const soon = { ...invoice, dueDate: "2026-10-28" };
+    assert.equal(matchesInvoiceFilters(soon, { status: "soon", today: "2026-10-21" }), true);
+    assert.equal(matchesInvoiceFilters(soon, { status: "soon", today: "2026-10-20" }), false);
+    assert.equal(matchesInvoiceFilters({ ...soon, status: "Paid" }, { status: "soon", today: "2026-10-21" }), false);
+  });
+
+  it("sums paid invoices in the filtered list and withholds an incomplete total", () => {
+    const paid = { ...invoice, status: "Paid", paymentAmount: 100, amount: 80, dueDate: "2026-10-01" };
+    const paidByAmount = { ...invoice, id: 10, status: "Paid", paymentAmount: null, amount: 50, dueDate: "2026-10-02" };
+    const pending = { ...invoice, id: 11, status: "Pending", amount: 999, dueDate: "2026-10-03" };
+    const visible = [paid, paidByAmount, pending].filter((row) => matchesInvoiceFilters(row, { status: "Paid" }));
+    assert.equal(visible.length, 2);
+    assert.deepEqual(sumPaidAmounts(visible), { amount: 150, complete: true });
+    assert.deepEqual(sumPaidAmounts([{ ...paid, paymentAmount: "nope", amount: "nope" }]), { amount: null, complete: false });
+  });
+
+  it("orders paid invoices by paid_at and does not invent a missing date", () => {
+    const rows = [
+      { id: 1, status: "Paid", paidAt: "2026-10-01" },
+      { id: 2, status: "Paid", paidAt: "2026-10-20" },
+      { id: 3, status: "Paid", paidAt: "2026-10-03" },
+      { id: 4, status: "Pending", paidAt: "2026-10-21" },
+      { id: 5, status: "Paid", paidAt: "2026-10-20" },
+    ];
+    const recent = recentPaidInvoices(rows, 2);
+    assert.deepEqual(recent.rows.map((row) => row.id), [2, 5]);
+    assert.equal(recent.complete, true);
+
+    const partial = recentPaidInvoices([
+      { id: 1, status: "Paid", paidAt: "2026-10-02" },
+      { id: 2, status: "Paid", paidAt: "" },
+      { id: 3, status: "Paid", paidAt: "not-a-date" },
+    ]);
+    assert.equal(partial.complete, false);
+    assert.equal(partial.unorderedCount, 2);
+    assert.deepEqual(partial.rows.map((row) => row.id), [1]);
+  });
+
+  it("rejects a non-list invoice payload and leaves a blank hospital name unset", () => {
+    assert.equal(readInvoiceList({ items: [] }).ok, false);
+    assert.equal(readInvoiceList([]).ok, true);
+    assert.equal(readInvoiceList([]).rows.length, 0);
+    assert.equal(displayHospitalName("  "), "Hospital name unavailable");
+    assert.equal(displayHospitalName(" City Care "), "City Care");
+    const collections = readFileSync(new URL("../../panels/accountant/pages/Collections.jsx", import.meta.url), "utf8");
+    const invoices = readFileSync(new URL("../../panels/accountant/pages/InvoicesPayments.jsx", import.meta.url), "utf8");
+    const billing = readFileSync(new URL("../../panels/accountant/pages/HospitalBilling.jsx", import.meta.url), "utf8");
+    assert.match(collections, /recentPaidInvoices/);
+    assert.match(invoices, /sumPaidAmounts/);
+    assert.match(invoices, /Collected —/);
+    assert.match(billing, /Hospital name unavailable/);
+    assert.match(billing, /displayHospitalName/);
   });
 });

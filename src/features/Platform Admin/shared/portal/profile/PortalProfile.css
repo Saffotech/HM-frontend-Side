@@ -7,6 +7,7 @@
 
 .pp-card {
   min-width: 0;
+  overflow: hidden;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -42,6 +43,14 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 6px 10px;
+}
+
+.pp-hero-eyebrow {
+  color: var(--color-primary-dark);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .pp-hero h2 {
@@ -135,36 +144,30 @@
 .pp-card-head {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 22px;
+  min-height: 64px;
+  padding: 14px 20px;
   border-bottom: 1px solid #eef2f6;
 }
 
-.pp-card-icon {
-  flex: none;
+.pp-card-heading {
   display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  background: var(--color-primary-light);
-  color: var(--color-primary-dark);
-}
-
-.pp-card-head > div {
+  gap: 3px;
   min-width: 0;
 }
 
 .pp-card-head h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0;
   font-size: 15px;
   font-weight: 650;
 }
 
-.pp-card-head p {
-  margin: 1px 0 0;
+.pp-card-heading > span {
   color: var(--color-text-secondary);
-  font-size: 12.5px;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 /* Personal facts */
@@ -173,7 +176,11 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px 24px;
   margin: 0;
-  padding: 18px 22px 20px;
+  padding: 20px;
+}
+
+.pp-fact {
+  min-width: 0;
 }
 
 .pp-fact dt {
@@ -193,6 +200,15 @@
 .pp-fact dd.is-empty {
   color: #9aa7b8;
   font-weight: 450;
+}
+
+.pp-muted {
+  margin: 0;
+  padding: 0 20px 18px;
+  color: var(--color-text-secondary);
+  font-size: 12.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 /* Label / value rows */
@@ -591,6 +607,135 @@
   color: var(--color-text);
 }
 
+/* CRM profile refinements */
+.pp-page-crm {
+  max-width: 1080px;
+  gap: 18px;
+}
+
+.pp-page-crm .pp-hero {
+  min-height: 128px;
+  padding: 24px 28px;
+  background: linear-gradient(115deg, #fff 0%, #f5fbfa 100%);
+}
+
+.pp-page-crm .pp-avatar-xl {
+  width: 76px;
+  height: 76px;
+  font-size: 25px;
+}
+
+.pp-page-crm .pp-hero h2 {
+  font-size: 24px;
+  letter-spacing: -0.025em;
+}
+
+.pp-page-crm .pp-role-badge {
+  padding: 4px 11px;
+  font-size: 11px;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+
+.pp-page-crm .pp-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+}
+
+.pp-page-crm .pp-col-crm-account {
+  display: contents;
+}
+
+.pp-page-crm .pp-card-head {
+  min-height: 72px;
+  padding: 15px 22px;
+  background: linear-gradient(180deg, #ffffff 0%, #fcfdfd 100%);
+}
+
+.pp-page-crm .pp-card-head h3 svg {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  padding: 7px;
+  border-radius: 9px;
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+.pp-page-crm .pp-facts {
+  gap: 20px 28px;
+  padding: 22px 20px 24px;
+}
+
+.pp-page-crm .pp-fact dt {
+  font-size: 12px;
+  letter-spacing: 0.015em;
+}
+
+.pp-page-crm .pp-fact dd {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.pp-page-crm .pp-rows {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 44px;
+  padding: 8px 26px 14px;
+}
+
+.pp-page-crm .pp-row {
+  min-height: 60px;
+  align-items: center;
+  padding: 15px 0;
+}
+
+.pp-page-crm .pp-row:last-child {
+  grid-column: 1 / -1;
+}
+
+.pp-page-crm .pp-row dt {
+  font-size: 12.5px;
+  letter-spacing: 0.01em;
+}
+
+.pp-page-crm .pp-row dd {
+  color: #17345d;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.pp-account-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--color-neutral-bg);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.pp-account-status.is-active {
+  background: var(--color-success-bg);
+  color: #18734f;
+}
+
+.pp-account-status.is-inactive {
+  background: var(--color-danger-bg);
+  color: #a33a3a;
+}
+
+.pp-page-crm .pp-session {
+  min-height: 96px;
+  padding: 20px 24px;
+}
+
+.pp-page-crm .pp-session-info span {
+  line-height: 1.5;
+}
+
 @media (max-width: 1100px) {
   .pp-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -636,6 +781,36 @@
 
   .pp-card > .pp-alert {
     margin: 14px 16px 0;
+  }
+
+  .pp-page-crm .pp-hero {
+    padding: 20px;
+  }
+
+  .pp-page-crm .pp-hero h2 {
+    font-size: 21px;
+  }
+
+  .pp-page-crm .pp-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pp-page-crm .pp-card-head {
+    padding: 14px 16px;
+  }
+
+  .pp-page-crm .pp-rows {
+    grid-template-columns: minmax(0, 1fr);
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .pp-page-crm .pp-row:last-child {
+    grid-column: auto;
+  }
+
+  .pp-page-crm .pp-session {
+    padding: 16px;
   }
 
   .pp-password-pair,

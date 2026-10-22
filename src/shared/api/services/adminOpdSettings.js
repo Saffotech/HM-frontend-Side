@@ -1,6 +1,6 @@
 /**
  * OPD settings service.
- * Calls the supported GET/PATCH /admin/settings/opd routes.
+ * Calls the supported GET/PATCH /admin-manager/settings/opd routes.
  * Falls back to the current tenant's local cache only when the backend route
  * is unavailable (404 / 405 / 501) or the network fails (status 0).
  * Permission-denied and other invalid responses are not replaced with cache.

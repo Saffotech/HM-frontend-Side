@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { listInvoices } from "../api/invoiceApi";
-import { mapPlatformInvoice } from "../api/invoiceModel";
+import { readInvoiceList } from "../api/invoiceModel";
 import { interpretPlatformError } from "../api/platformErrors";
 
 export function usePlatformInvoices({ tenantId, enabled = true } = {}) {
@@ -19,8 +19,13 @@ export function usePlatformInvoices({ tenantId, enabled = true } = {}) {
     setError("");
     try {
       const body = await listInvoices({ status: "All", due: "All", tenantId });
-      const rows = Array.isArray(body) ? body : [];
-      setInvoices(rows.map(mapPlatformInvoice).filter(Boolean));
+      const parsed = readInvoiceList(body);
+      if (!parsed.ok) {
+        setInvoices([]);
+        setError(parsed.error);
+        return;
+      }
+      setInvoices(parsed.rows);
     } catch (err) {
       setInvoices([]);
       setError(interpretPlatformError(err).toast);

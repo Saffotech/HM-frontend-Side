@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { BellOff, CalendarClock, CalendarX2, CheckCircle2, Phone } from "lucide-react";
+import { CalendarClock, CalendarX2, CheckCircle2, Phone } from "lucide-react";
 import Pagination from "../../../shared/components/Pagination";
 import SearchBar from "../../../shared/components/SearchBar";
 import { usePagination } from "../../../shared/hooks/usePagination";
@@ -31,7 +31,7 @@ const byPriority = (a, b) => (priorityRank[a.priority] ?? 1) - (priorityRank[b.p
 const dueText = (day) => formatDate(`${day}T00:00:00`);
 
 export default function FollowUps() {
-  const { leads, today, actions, scopeLabel } = useCrm();
+  const { leads, today, actions } = useCrm();
   const [params, setParams] = useSearchParams();
   const view = VIEWS.some(([key]) => key === params.get("view")) ? params.get("view") : "today";
   const query = params.get("q") || "";
@@ -71,12 +71,6 @@ export default function FollowUps() {
 
   return (
     <div className="crm-page">
-      {scopeLabel && <p className="crm-callout crm-callout-info">{scopeLabel}</p>}
-      <p className="crm-callout crm-callout-info">
-        <BellOff size={16} aria-hidden="true" />
-        <span>Reminders show in the bell and on this page while you&apos;re signed in. Email, SMS and push reminders aren&apos;t available yet — they need a notification service on the server.</span>
-      </p>
-
       <section className="crm-card">
         <nav className="crm-tabs" role="tablist" aria-label="Follow-up views">
           {VIEWS.map(([key, label]) => (

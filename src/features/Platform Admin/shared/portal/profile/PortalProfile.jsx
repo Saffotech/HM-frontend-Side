@@ -12,6 +12,7 @@ export default function PortalProfile({ portal, panelLabel }) {
   const sessionProfile = portalProfile(portal);
   const { profile, error, loading } = usePlatformMe(portal);
   const view = profile || sessionProfile;
+  const isCrm = portal === "crm";
   useUnsavedChanges(false);
 
   if (loading && !view) {
@@ -42,10 +43,11 @@ export default function PortalProfile({ portal, panelLabel }) {
   };
 
   return (
-    <div className="pp-page">
-      <section className="pp-card pp-hero" aria-label="Profile summary">
+    <div className={`pp-page${isCrm ? " pp-page-crm" : ""}`}>
+      <section className="pp-card pp-hero" aria-label={isCrm ? "Personal information" : "Profile summary"}>
         <div className="pp-avatar pp-avatar-xl"><AvatarImage photo={view.photoUrl} name={view.name} /></div>
         <div className="pp-hero-text">
+          {isCrm && <span className="pp-hero-eyebrow">Personal information</span>}
           <div className="pp-hero-name">
             <h2>{view.name}</h2>
             <span className="pp-role-badge">{view.role}</span>
@@ -61,33 +63,58 @@ export default function PortalProfile({ portal, panelLabel }) {
         </p>
       )}
       <div className="pp-grid">
-        <div className="pp-col">
-          <section className="pp-card" aria-labelledby="pp-personal">
-            <CardHead icon={UserRound} id="pp-personal" title="Personal information">From GET /auth/me</CardHead>
-            <dl className="pp-facts">
-              <Fact label="Full name" value={view.name} />
-              <Fact label="Email address" value={view.email} />
-              <Fact label="Profile photo" value={view.photoUrl ? "On file" : ""} />
-            </dl>
-            <p className="pp-muted">Editing name, phone, job title, department, or photo is unavailable. Those APIs are not provided.</p>
-          </section>
-          <section className="pp-card">
-            <CardHead icon={ShieldCheck} id="pp-password" title="Password">Not connected</CardHead>
-            <p className="pp-muted">There is no change-password API for this portal. The current password cannot be changed here.</p>
-          </section>
-        </div>
-        <div className="pp-col">
+        {!isCrm && (
+          <div className="pp-col">
+            <section className="pp-card" aria-labelledby="pp-personal">
+              <CardHead icon={UserRound} id="pp-personal" title="Personal information">Profile details</CardHead>
+              <dl className="pp-facts">
+                <Fact label="Full name" value={view.name} />
+                <Fact label="Email address" value={view.email} />
+                <Fact label="Profile photo" value={view.photoUrl ? "On file" : ""} />
+              </dl>
+              <p className="pp-muted">Profile editing is not available for this account.</p>
+            </section>
+            <section className="pp-card">
+              <CardHead icon={ShieldCheck} id="pp-password" title="Password">Not connected</CardHead>
+              <p className="pp-muted">Password changes are not available for this account.</p>
+            </section>
+          </div>
+        )}
+        <div className={`pp-col${isCrm ? " pp-col-crm-account" : ""}`}>
           <section className="pp-card" aria-labelledby="pp-account">
-            <CardHead icon={ShieldCheck} id="pp-account" title="Account information">From the server session</CardHead>
+            <CardHead icon={ShieldCheck} id="pp-account" title="Account information">
+              {isCrm ? "Identity, access and organization" : "Role and portal"}
+            </CardHead>
             <dl className="pp-rows">
               <Row label="User ID"><span className="pp-mono">{view.userId}</span></Row>
-              <Row label="Email address">{view.email}</Row>
-              <Row label="Role">{view.role}</Row>
-              <Row label="Panel">{panelLabel}</Row>
+              {isCrm ? (
+                <>
+                  <Row label="Role">{view.role}</Row>
+                  <Row label="Role ID"><span className="pp-mono">{view.roleId ?? "—"}</span></Row>
+                  <Row label="Account status">
+                    <span className={`pp-account-status${view.isActive === true ? " is-active" : view.isActive === false ? " is-inactive" : ""}`}>
+                      {view.isActive == null ? "Unknown" : view.isActive ? "Active" : "Inactive"}
+                    </span>
+                  </Row>
+                  <Row label="Account created">{view.createdAt ? formatDateTime(view.createdAt) : "—"}</Row>
+                  <Row label="Hospital">
+                    {view.hospital
+                      ? [view.hospital.name, view.hospital.code, view.hospital.id != null ? `ID ${view.hospital.id}` : ""].filter(Boolean).join(" · ") || "Assigned hospital"
+                      : "Platform account"}
+                  </Row>
+                  <Row label="Panel">{panelLabel}</Row>
+                </>
+              ) : (
+                <>
+                  <Row label="Email address">{view.email}</Row>
+                  <Row label="Role">{view.role}</Row>
+                  <Row label="Panel">{panelLabel}</Row>
+                </>
+              )}
             </dl>
           </section>
           <section className="pp-card" aria-labelledby="pp-session">
-            <CardHead icon={LogOut} id="pp-session" title="Session">Logging out ends your session in this browser.</CardHead>
+            <CardHead icon={LogOut} id="pp-session" title="Session">Current browser session</CardHead>
             <div className="pp-session">
               <div className="pp-session-info">
                 <span className="pp-session-dot" aria-hidden="true" />
@@ -110,15 +137,17 @@ export default function PortalProfile({ portal, panelLabel }) {
 function CardHead({ icon: Icon, id, title, children }) {
   return (
     <header className="pp-card-head">
-      <h3 id={id}><Icon size={16} aria-hidden="true" />{title}</h3>
-      {children && <span>{children}</span>}
+      <div className="pp-card-heading">
+        <h3 id={id}><Icon size={16} aria-hidden="true" />{title}</h3>
+        {children && <span>{children}</span>}
+      </div>
     </header>
   );
 }
 
 function Fact({ label, value }) {
   return (
-    <div>
+    <div className="pp-fact">
       <dt>{label}</dt>
       <dd>{value || "—"}</dd>
     </div>

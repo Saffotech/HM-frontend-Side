@@ -5,7 +5,7 @@ import PlatformInvoiceTable from "../../../shared/components/PlatformInvoiceTabl
 import SearchBar from "../../../shared/components/SearchBar";
 import Select from "../../../shared/components/Select";
 import Button from "../../../shared/components/Button";
-import { matchesInvoiceFilters } from "../../../shared/api/invoiceModel";
+import { matchesInvoiceFilters, sumPaidAmounts } from "../../../shared/api/invoiceModel";
 import { usePlatformInvoices } from "../../../shared/hooks/usePlatformInvoices";
 import { accountsPath } from "../../../shared/paths";
 import { todayInput } from "../../../shared/utils/formatDate";
@@ -34,15 +34,10 @@ export default function InvoicesPayments() {
     () => invoices.filter((invoice) => matchesInvoiceFilters(invoice, { query, status, period, today })),
     [invoices, period, query, status, today],
   );
-  const collected = visible
-    .filter((invoice) => invoice.status === "Paid")
-    .reduce((sum, invoice) => sum + Number(invoice.paymentAmount ?? invoice.amount) || 0, 0);
+  const collected = useMemo(() => sumPaidAmounts(visible), [visible]);
 
   return (
     <section className="inv-page">
-      <p className="panel-copy">
-        Invoices come from the platform billing API. Quarter is filtered in this list. The server due filter only accepts all, today, and this month.
-      </p>
       {notice && <p className="panel-copy" role="status">{notice}</p>}
       <section className="inv-panel">
         <div className="inv-toolbar">
@@ -58,9 +53,12 @@ export default function InvoicesPayments() {
           <Button variant="secondary" onClick={() => { setStatus(""); setPeriod(""); setQuery(""); }}>Reset</Button>
         </div>
         <div className="inv-meta">
-          <span>{loading ? "Loading invoices" : error ? "Invoices unavailable" : `${visible.length} invoices`}</span>
-          <span>{error ? "Collected —" : `Collected ${formatCurrency(collected)}`}</span>
+          <span>{loading ? "Loading invoices" : error ? "Invoices unavailable" : `${visible.length} invoices in this list`}</span>
+          <span>{loading || error || !collected.complete ? "Collected —" : `Collected in this list ${formatCurrency(collected.amount)}`}</span>
         </div>
+        {!loading && !error && !collected.complete && (
+          <p className="panel-copy">A collected total is not shown because a paid invoice in this list has no usable amount.</p>
+        )}
         <PlatformInvoiceTable
           invoices={visible}
           loading={loading}

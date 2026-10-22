@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchPlatformMe, mapPlatformMe } from "../api/platformAuth";
+import { shouldEndPlatformSession } from "../api/platformErrors";
 import { platformAuth } from "../api/platformSession";
 import { usePlatform } from "../context/PlatformContext";
 
@@ -23,7 +24,7 @@ export function usePlatformMe(portal) {
         if (cancelled) return;
         setProfile(null);
         setError(err?.message || "Your profile could not be loaded.");
-        if (err?.status === 401 && err?.code !== "missing_token") signOutPortal(portal);
+        if (shouldEndPlatformSession(err)) signOutPortal(portal);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

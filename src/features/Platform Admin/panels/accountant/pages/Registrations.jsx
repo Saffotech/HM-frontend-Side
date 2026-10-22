@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Handshake } from "lucide-react";
-import { interpretPlatformError } from "../../../shared/api/platformErrors";
+import { interpretPlatformError, shouldEndPlatformSession } from "../../../shared/api/platformErrors";
 import { mapRegistration } from "../../../shared/api/hospitalRegistration";
 import { platformAuth } from "../../../shared/api/platformSession";
 import { getRegistration, listRegistrations } from "../../../shared/api/registrationApi";
@@ -49,7 +48,7 @@ export default function Registrations() {
       setWaiting([]);
       setRegistered([]);
       setError(result.toast);
-      if (err?.status === 401 && err?.code !== "missing_token") signOutRef.current("accountant");
+      if (shouldEndPlatformSession(err)) signOutRef.current("accountant");
     } finally {
       setLoading(false);
     }
@@ -124,11 +123,6 @@ export default function Registrations() {
 
   return (
     <section className="inv-page hr-page">
-      <section className="hr-flow" aria-label="How registration works">
-        <Handshake size={18} aria-hidden="true" />
-        <p>CRM marks a hospital as <strong>Agreed</strong> once it accepts a plan. It then appears here. Register it to create the hospital account; CRM will see it as converted.</p>
-      </section>
-
       <section className="inv-panel">
         <nav className="hr-tabs" role="tablist" aria-label="Registration status">
           {TABS.map((item) => (

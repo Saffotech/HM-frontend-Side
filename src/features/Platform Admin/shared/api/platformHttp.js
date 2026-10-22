@@ -36,6 +36,7 @@ async function refreshAccessToken(deps) {
     }, deps.timeoutMs ?? DEFAULT_TIMEOUT_MS);
     const body = await readBody(response);
     if (!response.ok || !body?.access_token) return null;
+    if (deps.auth.getRefreshToken() !== refreshToken) return null;
     deps.auth.saveTokens(body.access_token, body.refresh_token);
     return body.access_token;
   } catch {
@@ -77,14 +78,22 @@ export async function executePlatformRequest(endpoint, options = {}, deps) {
   const parsed = await readBody(response);
 
   if (response.status === 401 && !anonymous && !skipRefresh && !_retried) {
+    const failedAccess = access;
     const refreshed = await refreshAccessToken(deps);
-    if (refreshed) {
+    if (refreshed && deps.auth.getAccessToken() === refreshed) {
       return executePlatformRequest(endpoint, { ...options, token: refreshed, _retried: true }, deps);
     }
-    deps.auth.clear();
     const message = typeof parsed.detail === "string" && parsed.detail.trim()
       ? parsed.detail.trim()
       : "Could not validate credentials";
+    if (deps.auth.getAccessToken() !== failedAccess) {
+      throw new PlatformApiError(message, {
+        status: 401,
+        detail: parsed.detail ?? message,
+        code: "session_replaced",
+      });
+    }
+    deps.auth.clear();
     throw new PlatformApiError(message, { status: 401, detail: parsed.detail ?? message });
   }
 

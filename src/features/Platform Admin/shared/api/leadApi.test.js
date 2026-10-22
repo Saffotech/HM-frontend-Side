@@ -6,6 +6,7 @@ import { describe, it } from "node:test";
 import { executePlatformRequest } from "./platformHttp.js";
 import { createPlatformAuthStore } from "./platformSession.js";
 import {
+  countLeadList,
   leadAgreeBody,
   leadCloseBody,
   leadContactBody,
@@ -118,7 +119,7 @@ describe("CRM lead request bodies", () => {
       next_action: "Visit",
       note: null,
     });
-    assert.deepEqual(leadAgreeBody({ plan: "Starter", billingCycle: "Annual", note: " Ready " }), {
+    assert.deepEqual(leadAgreeBody({ plan: "Starter", billingCycle: "Annual", hospitalEmail: " billing@citygen.com ", note: " Ready " }), {
       plan: "Starter",
       billing_cycle: "Annual",
       note: "Ready",
@@ -148,6 +149,19 @@ describe("CRM lead ids and mapping", () => {
     assert.equal(mapped.assignedTo, "Meera");
     assert.doesNotMatch(String(mapped.id), /ONB-/);
     assert.doesNotMatch(String(mapped.hospitalId), /TNT-/);
+  });
+
+  it("counts a LeadSummary list and does not turn a bad payload into zero", () => {
+    const session = { userId: 5, name: "Meera" };
+    const leads = [
+      { id: 8, hospital_name: "City General", status: "New", assigned_to: null, activities: [] },
+      { id: 9, hospital_name: "Hill Clinic", status: "Contacted", assigned_to: 5, activities: [] },
+    ];
+    assert.deepEqual(countLeadList(leads, session), { ok: true, count: 2, error: "" });
+    assert.deepEqual(countLeadList([], session), { ok: true, count: 0, error: "" });
+    assert.equal(countLeadList({ items: leads }, session).ok, false);
+    assert.equal(countLeadList({ items: leads }, session).count, null);
+    assert.equal(countLeadList([{ hospital_name: "Missing id" }], session).ok, false);
   });
 });
 
@@ -219,5 +233,17 @@ describe("CRM screens use the lead API instead of seed data", () => {
     assert.doesNotMatch(context, /hospitalsSeed/);
     assert.doesNotMatch(context, /onboardingSeed/);
     assert.doesNotMatch(context, /invoicesSeed/);
+
+    const adminDashboard = readSrc("../../panels/superAdmin/pages/dashboard/Dashboard.jsx");
+    const performanceHook = readSrc("../../panels/superAdmin/pages/tenants/crmPerformance/useCrmPerformance.js");
+    const performancePage = readSrc("../../panels/superAdmin/pages/tenants/crmPerformance/CrmPerformance.jsx");
+    assert.match(adminDashboard, /listLeads/);
+    assert.match(adminDashboard, /countLeadList/);
+    assert.match(performanceHook, /parseLeadList/);
+    assert.match(performanceHook, /leadStatus/);
+    assert.match(performanceHook, /retryLeads/);
+    assert.doesNotMatch(performanceHook, /body\?\.items/);
+    assert.match(performancePage, /Try again/);
+    assert.match(performancePage, /leadStatus === "ready"/);
   });
 });

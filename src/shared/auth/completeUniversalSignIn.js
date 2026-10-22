@@ -75,6 +75,13 @@ export async function completeUniversalSignIn(credentials, {
   from,
 } = {}) {
   const email = String(credentials?.email || '').trim();
+  // Drop leftover browser sessions without calling /auth/logout. That request
+  // can finish after the new token is issued and sign these portals out again.
+  // An already-started logout is awaited so it cannot land on the new token.
+  if (typeof hospitalLogout === 'function') {
+    await hospitalLogout({ notifyServer: false });
+  }
+  await signOutPlatform({ localOnly: true });
   let body;
   try {
     body = await platformApi('/auth/login', {
@@ -99,8 +106,6 @@ export async function completeUniversalSignIn(credentials, {
   const decision = classifyLoginBody(identity);
 
   if (decision.realm === 'platform') {
-    if (typeof hospitalLogout === 'function') await hospitalLogout();
-    await signOutPlatform();
     let profile;
     try {
       profile = await commitPlatformSession(decision.portal, email, identity);
@@ -119,7 +124,6 @@ export async function completeUniversalSignIn(credentials, {
   }
 
   if (decision.realm === 'hospital') {
-    await signOutPlatform();
     if (typeof hospitalLogin !== 'function') {
       await discardIssuedToken(identity.access_token);
       throw new Error('Hospital sign-in is unavailable.');

@@ -25,7 +25,7 @@ const COLUMNS = {
 };
 
 export default function Conversions() {
-  const { leads, hospitals, invoices, today, actions, billingAvailable, scopeLabel } = useCrm();
+  const { leads, hospitals, invoices, today, actions, billingAvailable } = useCrm();
   const [params, setParams] = useSearchParams();
   const tab = TABS.some(([key]) => key === params.get("tab")) ? params.get("tab") : "pending";
   const query = params.get("q") || "";
@@ -52,11 +52,6 @@ export default function Conversions() {
 
   return (
     <div className="crm-page">
-      {scopeLabel && <p className="crm-callout crm-callout-info">{scopeLabel}</p>}
-      <p className="crm-callout crm-callout-purple">
-        <BadgeCheck size={16} aria-hidden="true" />
-        <span>You hand agreed hospitals to Accounts; Accounts registers them and sets up billing. Registration status here is read-only and updates as soon as Accounts finishes.</span>
-      </p>
       <section className="crm-card">
         <nav className="crm-tabs" role="tablist" aria-label="Conversions">
           {TABS.map(([key, label, Icon]) => (

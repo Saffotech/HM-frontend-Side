@@ -1,6 +1,97 @@
-import { addDays } from "../utils/formatDate.js";
-
 const SERVER_STATUSES = new Set(["Pending", "Overdue", "Paid", "Failed"]);
+const PAID_AT = /^(\d{4})-(\d{2})-(\d{2})(?:[T\s].*)?$/;
+
+function calendarDaysAfter(isoDate, days) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(isoDate || ""));
+  if (!match) return "";
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return "";
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+export function displayHospitalName(value) {
+  const text = String(value ?? "").trim();
+  return text || "Hospital name unavailable";
+}
+
+export function readInvoiceList(body) {
+  if (!Array.isArray(body)) {
+    return { ok: false, rows: [], error: "Invoice list response was not a list, so totals are not shown." };
+  }
+  const rows = [];
+  for (const row of body) {
+    if (!row || typeof row !== "object" || Array.isArray(row)) {
+      return { ok: false, rows: [], error: "Invoice list response did not match the invoice list, so totals are not shown." };
+    }
+    const mapped = mapPlatformInvoice(row);
+    if (!mapped) {
+      return { ok: false, rows: [], error: "Invoice list response did not match the invoice list, so totals are not shown." };
+    }
+    rows.push(mapped);
+  }
+  return { ok: true, rows, error: "" };
+}
+
+function paidInvoiceAmount(invoice) {
+  if (invoice?.paymentAmount != null && invoice.paymentAmount !== "") {
+    const payment = Number(invoice.paymentAmount);
+    return Number.isFinite(payment) ? payment : null;
+  }
+  if (invoice?.amount != null && invoice.amount !== "") {
+    const amount = Number(invoice.amount);
+    return Number.isFinite(amount) ? amount : null;
+  }
+  return null;
+}
+
+/** Sum of paid invoices only. Incomplete means a paid row had no usable amount. */
+export function sumPaidAmounts(invoices) {
+  let amount = 0;
+  let complete = true;
+  (Array.isArray(invoices) ? invoices : []).forEach((invoice) => {
+    if (invoice?.status !== "Paid") return;
+    const value = paidInvoiceAmount(invoice);
+    if (value == null) {
+      complete = false;
+      return;
+    }
+    amount += value;
+  });
+  return { amount: complete ? amount : null, complete };
+}
+
+/** Date-only paid_at. Missing or invalid dates are not given a guessed time. */
+export function paidAtSortValue(value) {
+  const match = PAID_AT.exec(String(value ?? "").trim());
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null;
+  return date.getTime();
+}
+
+export function recentPaidInvoices(invoices, limit = 5) {
+  const paid = (Array.isArray(invoices) ? invoices : []).filter((invoice) => invoice?.status === "Paid");
+  const ordered = [];
+  let unorderedCount = 0;
+  paid.forEach((invoice) => {
+    const time = paidAtSortValue(invoice.paidAt);
+    if (time == null) unorderedCount += 1;
+    else ordered.push({ invoice, time });
+  });
+  ordered.sort((left, right) => right.time - left.time);
+  return {
+    rows: ordered.slice(0, limit).map((item) => item.invoice),
+    unorderedCount,
+    complete: unorderedCount === 0,
+  };
+}
 
 export function mapPlatformInvoice(row) {
   if (!row || typeof row !== "object") return null;
@@ -57,7 +148,8 @@ export function matchesInvoiceFilters(invoice, { query = "", status = "", period
   if (status === "failed" && invoice.status !== "Failed") return false;
   if (status === "soon") {
     if (invoice.status === "Paid" || !today || !invoice.dueDate || invoice.dueDate < today) return false;
-    if (invoice.dueDate > addDays(today, 7)) return false;
+    const end = calendarDaysAfter(today, 7);
+    if (!end || invoice.dueDate > end) return false;
   }
   if (status === "today") {
     if (invoice.status === "Paid" || invoice.dueDate !== today) return false;

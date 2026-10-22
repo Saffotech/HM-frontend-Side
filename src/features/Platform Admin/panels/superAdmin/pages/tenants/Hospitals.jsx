@@ -56,8 +56,8 @@ export default function Hospitals() {
       <DataTable
         rows={rows}
         columns={columns}
-        emptyTitle={loading ? "Loading hospitals" : search.trim() ? "No hospitals match your search." : "No hospitals are registered yet"}
-        emptyMessage={loading ? "Fetching registered hospitals." : search.trim() ? "Try another name or code." : "Register a hospital to add it here."}
+        emptyTitle={loading ? "Loading hospitals" : error ? "Hospitals could not be loaded" : search.trim() ? "No hospitals match your search." : "No hospitals are registered yet"}
+        emptyMessage={loading ? "Fetching registered hospitals." : error ? "This is not an empty directory." : search.trim() ? "Try another name or code." : "Register a hospital to add it here."}
       />
     </section>
   );

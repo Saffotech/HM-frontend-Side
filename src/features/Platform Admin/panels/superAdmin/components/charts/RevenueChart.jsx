@@ -10,7 +10,7 @@ export default function RevenueChart({ data }) {
   return (
     <section className="card card-pad chart-card wide">
       <h2>Revenue trend</h2>
-      <p className="panel-copy">Paid demonstration invoices grouped by month. These are not live collections.</p>
+      <p className="panel-copy">Revenue is unavailable until a billing API is connected.</p>
       <div className="chart-box">
         {rows.length === 0 ? (
           <EmptyState title="No revenue data" message="This chart stays empty until a billing API is connected." />

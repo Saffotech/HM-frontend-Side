@@ -1,4 +1,4 @@
-/** Manager Nurse Workforce API — `/admin/nurse-workforce` (dashboard, shifts, roster). */
+/** Manager Nurse Workforce API — `/admin-manager/nurse-workforce` (dashboard, shifts, roster). */
 
 import { apiClient } from '@/shared/api/client';
 
@@ -11,7 +11,7 @@ function appendQuery(path, params = {}) {
   return qs ? `${path}?${qs}` : path;
 }
 
-const BASE = '/admin/nurse-workforce';
+const BASE = '/admin-manager/nurse-workforce';
 
 export function getWorkforceDashboard(params = {}) {
   return apiClient(appendQuery(`${BASE}/dashboard`, params));

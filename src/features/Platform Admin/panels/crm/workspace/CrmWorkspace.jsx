@@ -19,6 +19,7 @@ import {
   leadUpdateBody,
 } from "../../../shared/api/leadApi";
 import { usePlatform } from "../../../shared/context/PlatformContext";
+import { shouldEndPlatformSession } from "../../../shared/api/platformErrors";
 import { useToast } from "../../../shared/hooks/useToast";
 import { crmPath } from "../../../shared/paths";
 import { todayInput } from "../../../shared/utils/formatDate";
@@ -86,7 +87,7 @@ export default function CrmWorkspace({ children }) {
     } catch (error) {
       setRows([]);
       setLoadError(error?.message || "Leads could not be loaded.");
-      if (error?.status === 401 && error?.code !== "missing_token") signOutPortal("crm");
+      if (shouldEndPlatformSession(error)) signOutPortal("crm");
     } finally {
       setLoading(false);
     }
@@ -104,7 +105,7 @@ export default function CrmWorkspace({ children }) {
   const dialogLead = dialog ? find(dialog.id) : null;
 
   const fail = (error) => {
-    if (error?.status === 401 && error?.code !== "missing_token") signOutPortal("crm");
+    if (shouldEndPlatformSession(error)) signOutPortal("crm");
     push(error?.message || BLOCKED, "error");
     return null;
   };
@@ -183,7 +184,6 @@ export default function CrmWorkspace({ children }) {
     hospitals: [],
     invoices: [],
     billingAvailable: false,
-    scopeLabel: "Your assigned leads and unclaimed new enquiries. Other people's leads are not included.",
     loadError,
     reloadLeads: load,
     planOptions,
@@ -240,7 +240,13 @@ export default function CrmWorkspace({ children }) {
           planOptions={planOptions}
           onCancel={() => setDialog(null)}
           onSubmit={(values) => finish(
-            () => agreeLead(dialogLead.id, values),
+            async () => {
+              const hospitalEmail = String(values.hospitalEmail || "").trim();
+              if (hospitalEmail && hospitalEmail !== String(dialogLead.hospitalEmail || "").trim()) {
+                await updateLead(dialogLead.id, dialogLead, { hospitalEmail });
+              }
+              return agreeLead(dialogLead.id, values);
+            },
             (saved) => `${saved.hospitalName} sent to Accounts for registration.`,
           )}
         />
@@ -298,17 +304,21 @@ export default function CrmWorkspace({ children }) {
           onCreate={async (input, { shared, allowDuplicate }) => {
             try {
               const created = remember(await createLead(input, { shared, allowDuplicate }));
+              const hospitalEmail = String(input.hospitalEmail || "").trim();
+              const saved = !shared && hospitalEmail
+                ? remember(await updateLead(created.id, created, { hospitalEmail }))
+                : created;
               setAdding(false);
               if (shared) {
-                push(`${created.hospitalName} added to New enquiries for the team to claim.`, "success");
+                push(`${saved.hospitalName} added to New enquiries for the team to claim.`, "success");
                 navigate(`${crmPath("/leads")}?tab=New`);
-                return created;
+                return saved;
               }
-              push(`${created.hospitalName} added as a new lead.`, "success");
-              openLead(created.id);
-              return created;
+              push(`${saved.hospitalName} added as a new lead.`, "success");
+              openLead(saved.id);
+              return saved;
             } catch (error) {
-              if (error?.status === 401 && error?.code !== "missing_token") signOutPortal("crm");
+              if (shouldEndPlatformSession(error)) signOutPortal("crm");
               if (error?.status === 409 && error?.detail?.matches) {
                 const duplicate = new Error(error.message);
                 duplicate.matches = conflictMatches(error.detail);

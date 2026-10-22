@@ -30,8 +30,10 @@ export function registrationMonths(hospitals) {
 
 export function planSlices(hospitals) {
   const counts = new Map();
-  hospitals.forEach((hospital) => {
-    const name = hospital.plan || "Unassigned";
+  (Array.isArray(hospitals) ? hospitals : []).forEach((hospital) => {
+    const name = typeof hospital?.plan === "string" && hospital.plan.trim()
+      ? hospital.plan.trim()
+      : "Unassigned";
     counts.set(name, (counts.get(name) || 0) + 1);
   });
   return [...counts.entries()].map(([name, value]) => ({ name, value }));

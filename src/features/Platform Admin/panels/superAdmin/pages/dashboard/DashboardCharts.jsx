@@ -74,8 +74,8 @@ export function RevenueTrendChart({ data }) {
   return (
     <ChartFrame
       title="Revenue trend"
-      label="Paid demonstration revenue by month"
-      description="Paid invoices grouped by invoice month. This chart fills in when a billing API is connected."
+      label="Revenue trend"
+      description="Revenue data is unavailable to the Platform Admin role."
     >
       {ready ? (
         <ResponsiveContainer width="100%" height="100%">
@@ -110,7 +110,7 @@ export function RevenueTrendChart({ data }) {
           </LineChart>
         </ResponsiveContainer>
       ) : (
-        <EmptyState title="No revenue data" message="This chart stays empty until a billing API is connected." />
+        <EmptyState title="Revenue unavailable" message="Revenue reporting is not available to this portal." />
       )}
     </ChartFrame>
   );

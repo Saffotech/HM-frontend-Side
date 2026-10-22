@@ -6,7 +6,7 @@ import Modal from "../../../shared/components/Modal";
 import Select from "../../../shared/components/Select";
 import { CLOSE_REASONS, CONTACT_METHODS, billingCycles, hospitalTypes } from "../../../shared/data/catalog";
 import { formatDate } from "../../../shared/utils/formatDate";
-import { isEmail, isPhone, required } from "../../../shared/utils/validation";
+import { isEmail, isPhone, phoneDigits, required } from "../../../shared/utils/validation";
 import { CONTACT_OUTCOMES, LEAD_SOURCES, PRIORITIES } from "../utils/crmLeads";
 
 const dueLabel = (day) => formatDate(`${day}T00:00:00`);
@@ -121,39 +121,38 @@ export function AgreeDialog({ lead, planOptions, onCancel, onSubmit }) {
   const [form, setForm] = useState({
     plan: planOptions.includes(lead.plan) ? lead.plan : planOptions[0] || "",
     billingCycle: billingCycles.includes(lead.billingCycle) ? lead.billingCycle : billingCycles[0],
+    hospitalEmail: lead.hospitalEmail || "",
     note: "",
   });
-  const [confirming, setConfirming] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const send = () => {
+    const hospitalEmail = form.hospitalEmail.trim();
+    if (!isEmail(hospitalEmail)) {
+      setEmailError("Enter a valid hospital email.");
+      return;
+    }
+    onSubmit({ ...form, hospitalEmail, note: form.note.trim() });
+  };
   return (
-    <>
-      <Modal
-        open={!confirming}
-        title="Hospital agreed to register"
-        subtitle={`${lead.hospitalName} · ${lead.contactPerson}`}
-        onClose={onCancel}
-        footer={<><Button variant="secondary" onClick={onCancel}>Cancel</Button><Button disabled={!form.plan} onClick={() => setConfirming(true)}>Send to Accounts</Button></>}
-      >
-        <p className="crm-callout crm-callout-purple">Accounts registers the hospital and sets up billing. You can follow the registration from My Conversions.</p>
-        <div className="crm-form">
-          <Select label="Agreed plan *" value={form.plan} onChange={(event) => setForm({ ...form, plan: event.target.value })}>
-            {planOptions.map((plan) => <option key={plan}>{plan}</option>)}
-          </Select>
-          <Select label="Billing cycle *" value={form.billingCycle} onChange={(event) => setForm({ ...form, billingCycle: event.target.value })}>
-            {billingCycles.map((cycle) => <option key={cycle}>{cycle}</option>)}
-          </Select>
-          <Input as="textarea" rows={3} className="crm-span" label="Handover note for Accounts" value={form.note} onChange={(event) => setForm({ ...form, note: event.target.value })} placeholder="Billing contact, go-live date, anything Accounts should know" />
-        </div>
-      </Modal>
-      <ConfirmDialog
-        open={confirming}
-        title="Send to Accounts?"
-        message={`${lead.hospitalName} will move to Agreed on ${form.plan} · ${form.billingCycle} and appear in the Accounts registration queue.`}
-        confirmLabel="Send to Accounts"
-        tone="primary"
-        onCancel={() => setConfirming(false)}
-        onConfirm={() => onSubmit({ ...form, note: form.note.trim() })}
-      />
-    </>
+    <Modal
+      open
+      title="Hospital agreed to register"
+      subtitle={`${lead.hospitalName} · ${lead.contactPerson}`}
+      onClose={onCancel}
+      footer={<><Button variant="secondary" onClick={onCancel}>Cancel</Button><Button disabled={!form.plan} onClick={send}>Send to Accounts</Button></>}
+    >
+      <p className="crm-callout crm-callout-purple">Accounts registers the hospital and sets up billing. You can follow the registration from My Conversions.</p>
+      <div className="crm-form">
+        <Select label="Agreed plan *" value={form.plan} onChange={(event) => setForm({ ...form, plan: event.target.value })}>
+          {planOptions.map((plan) => <option key={plan}>{plan}</option>)}
+        </Select>
+        <Select label="Billing cycle *" value={form.billingCycle} onChange={(event) => setForm({ ...form, billingCycle: event.target.value })}>
+          {billingCycles.map((cycle) => <option key={cycle}>{cycle}</option>)}
+        </Select>
+        <Input className="crm-span" label="Hospital email *" type="email" value={form.hospitalEmail} error={emailError} onChange={(event) => { setForm({ ...form, hospitalEmail: event.target.value }); setEmailError(""); }} />
+        <Input as="textarea" rows={3} className="crm-span" label="Handover note for Accounts" value={form.note} onChange={(event) => setForm({ ...form, note: event.target.value })} placeholder="Billing contact, go-live date, anything Accounts should know" />
+      </div>
+    </Modal>
   );
 }
 
@@ -221,13 +220,14 @@ export function EditLeadDialog({ lead, planOptions, onCancel, onSubmit }) {
   });
   const [errors, setErrors] = useState({});
   const set = (key) => (event) => {
-    setForm((current) => ({ ...current, [key]: event.target.value }));
+    const value = key === "contactPhone" ? phoneDigits(event.target.value) : event.target.value;
+    setForm((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: "" }));
   };
   const submit = () => {
     const next = {};
     if (!required(form.contactPerson)) next.contactPerson = "Enter the contact person.";
-    if (!isPhone(form.contactPhone)) next.contactPhone = "Enter a valid phone number.";
+    if (!isPhone(form.contactPhone)) next.contactPhone = "Enter a 10-digit phone number.";
     if (form.contactEmail.trim() && !isEmail(form.contactEmail)) next.contactEmail = "Enter a valid email address.";
     if (form.hospitalEmail.trim() && !isEmail(form.hospitalEmail)) next.hospitalEmail = "Enter a valid email address.";
     setErrors(next);
@@ -274,7 +274,7 @@ export function EditLeadDialog({ lead, planOptions, onCancel, onSubmit }) {
         <h3 className="crm-span crm-form-title">Contact</h3>
         <Input label="Contact person *" value={form.contactPerson} error={errors.contactPerson} onChange={set("contactPerson")} />
         <Input label="Designation" value={form.designation} onChange={set("designation")} />
-        <Input label="Phone *" value={form.contactPhone} error={errors.contactPhone} onChange={set("contactPhone")} />
+        <Input label="Phone *" inputMode="numeric" maxLength={10} value={form.contactPhone} error={errors.contactPhone} onChange={set("contactPhone")} placeholder="10-digit number" />
         <Input label="Contact email" value={form.contactEmail} error={errors.contactEmail} onChange={set("contactEmail")} />
         <h3 className="crm-span crm-form-title">Hospital</h3>
         <Select label="Hospital type" value={form.type} onChange={set("type")}>

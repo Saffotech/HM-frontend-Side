@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import RecordPaymentDialog from "../../../shared/components/RecordPaymentDialog";
-import { matchesInvoiceFilters } from "../../../shared/api/invoiceModel";
+import { matchesInvoiceFilters, recentPaidInvoices } from "../../../shared/api/invoiceModel";
 import { usePlatformInvoices } from "../../../shared/hooks/usePlatformInvoices";
 import { accountsPath } from "../../../shared/paths";
 import { formatDate, todayInput } from "../../../shared/utils/formatDate";
@@ -34,14 +34,11 @@ export default function Collections() {
     const rows = invoices.filter((invoice) => (active ? matchesInvoiceFilters(invoice, { status: active, today }) : isUnpaid(invoice)));
     return [...rows].sort(compareCollections);
   }, [active, invoices, today]);
-  const collected = invoices.filter((invoice) => invoice.status === "Paid").slice(0, 5);
+  const collected = useMemo(() => recentPaidInvoices(invoices, 5), [invoices]);
   const failed = invoices.filter((invoice) => invoice.status === "Failed");
 
   return (
     <section className="portal-page accounts-home">
-      <p className="accounts-note">
-        Counts come from platform invoices. Open an unpaid invoice to record the full amount.
-      </p>
       {error && <p className="accounts-note" role="alert">{error}</p>}
       {notice && <p className="accounts-note" role="status">{notice}</p>}
 
@@ -113,14 +110,23 @@ export default function Collections() {
             <p className="accounts-empty"><strong>Loading invoices</strong><span>Fetching paid invoices.</span></p>
           ) : error ? (
             <p className="accounts-empty"><strong>Invoices could not be loaded</strong><span>{error}</span></p>
-          ) : collected.length === 0 ? (
+          ) : collected.rows.length === 0 && collected.unorderedCount > 0 ? (
+            <p className="accounts-empty"><strong>Payment dates are missing.</strong><span>Paid invoices are in this response, but none has a usable payment date, so they cannot be ordered.</span></p>
+          ) : collected.rows.length === 0 ? (
             <p className="accounts-empty"><strong>Nothing collected yet.</strong><span>Paid invoices will list here.</span></p>
           ) : (
-            <ul>
-              {collected.map((invoice) => (
-                <li key={invoice.id}>{invoice.hospitalName || "Hospital"} · {invoice.number} · {formatCurrency(invoice.paymentAmount ?? invoice.amount)}</li>
-              ))}
-            </ul>
+            <>
+              <ul>
+                {collected.rows.map((invoice) => (
+                  <li key={invoice.id}>{invoice.hospitalName || "Hospital"} · {invoice.number} · {formatCurrency(invoice.paymentAmount ?? invoice.amount)}</li>
+                ))}
+              </ul>
+              <p className="accounts-note">
+                {collected.complete
+                  ? "Newest paid invoices in this response, by payment date. The date has no time of day, so same-day payments stay in the returned order."
+                  : "Some paid invoices have no usable payment date, so this is not a complete newest-five list. Rows that include a payment date are ordered newest first."}
+              </p>
+            </>
           )}
         </section>
         <section className="card card-pad">

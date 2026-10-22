@@ -1,4 +1,4 @@
-/** Manager nurse bed allocation API — `/admin/nurse-bed-allocations`. */
+/** Manager nurse bed allocation API — `/admin-manager/nurse-bed-allocations`. */
 
 import { apiClient } from '@/shared/api/client';
 
@@ -14,42 +14,42 @@ function appendQuery(path, params = {}) {
 }
 
 export function listNurseBedAllocations(params = {}) {
-  return apiClient(appendQuery('/admin/nurse-bed-allocations', params));
+  return apiClient(appendQuery('/admin-manager/nurse-bed-allocations', params));
 }
 
 export function getNurseBedAllocation(allocationId) {
-  return apiClient(`/admin/nurse-bed-allocations/${allocationId}`);
+  return apiClient(`/admin-manager/nurse-bed-allocations/${allocationId}`);
 }
 
 export function createNurseBedAllocation(body) {
-  return apiClient('/admin/nurse-bed-allocations', {
+  return apiClient('/admin-manager/nurse-bed-allocations', {
     method: 'POST',
     body: JSON.stringify(body),
   });
 }
 
 export function bulkCreateNurseBedAllocations(body) {
-  return apiClient('/admin/nurse-bed-allocations/bulk', {
+  return apiClient('/admin-manager/nurse-bed-allocations/bulk', {
     method: 'POST',
     body: JSON.stringify(body),
   });
 }
 
 export function updateNurseBedAllocation(allocationId, body) {
-  return apiClient(`/admin/nurse-bed-allocations/${allocationId}`, {
+  return apiClient(`/admin-manager/nurse-bed-allocations/${allocationId}`, {
     method: 'PUT',
     body: JSON.stringify(body),
   });
 }
 
 export function deactivateNurseBedAllocation(allocationId) {
-  return apiClient(`/admin/nurse-bed-allocations/${allocationId}/deactivate`, {
+  return apiClient(`/admin-manager/nurse-bed-allocations/${allocationId}/deactivate`, {
     method: 'PUT',
   });
 }
 
 export function deleteNurseBedAllocation(allocationId) {
-  return apiClient(`/admin/nurse-bed-allocations/${allocationId}`, {
+  return apiClient(`/admin-manager/nurse-bed-allocations/${allocationId}`, {
     method: 'DELETE',
   });
 }

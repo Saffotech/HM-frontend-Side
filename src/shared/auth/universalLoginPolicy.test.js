@@ -197,18 +197,20 @@ describe('hospital admin and manager stay separate', () => {
 
     assert.match(profile, /\/manager\/profile/);
     assert.doesNotMatch(profile, /apiClient\('\/admin\/profile'/);
-    assert.match(opd, /apiClient\('\/admin\/settings\/opd'/);
+    assert.match(opd, /apiClient\('\/admin-manager\/settings\/opd'/);
+    assert.doesNotMatch(opd, /apiClient\('\/admin\/settings\/opd'/);
     assert.doesNotMatch(opd, /\/manager\/settings\/opd/);
     assert.match(notes, /\/admin\/notifications/);
     assert.doesNotMatch(notes, /\/manager\/notifications/);
-    assert.match(workforce, /\/admin\/nurse-workforce/);
+    assert.match(workforce, /\/admin-manager\/nurse-workforce/);
     assert.doesNotMatch(workforce, /\/manager\/nurse-workforce/);
-    assert.match(beds, /\/admin\/nurse-bed-allocations/);
+    assert.match(beds, /\/admin-manager\/nurse-bed-allocations/);
     assert.doesNotMatch(beds, /\/manager\/nurse-bed-allocations/);
-    assert.match(shared, /apiClient\('\/admin\/dashboard'\)/);
-    assert.match(shared, /\/admin\/reports\/overview/);
-    assert.match(shared, /\/admin\/reports\/visits/);
-    assert.doesNotMatch(shared, /\/manager\/dashboard|\/manager\/reports/);
+    assert.match(shared, /apiClient\('\/admin-manager\/dashboard'\)/);
+    assert.doesNotMatch(shared, /apiClient\('\/manager\/dashboard'\)/);
+    assert.match(shared, /\/admin-manager\/reports\/overview/);
+    assert.match(shared, /\/admin-manager\/reports\/visits/);
+    assert.doesNotMatch(shared, /\/manager\/reports/);
     assert.match(ownerProfile, /apiClient\('\/admin\/profile'/);
     assert.doesNotMatch(ownerProfile, /\/super-admin\/profile/);
     assert.match(ownerAudit, /\/admin\/audit/);

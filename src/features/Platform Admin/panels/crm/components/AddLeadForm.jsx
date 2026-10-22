@@ -4,7 +4,7 @@ import Input from "../../../shared/components/Input";
 import Modal from "../../../shared/components/Modal";
 import Select from "../../../shared/components/Select";
 import { billingCycles, hospitalTypes } from "../../../shared/data/catalog";
-import { isEmail, isPhone, required } from "../../../shared/utils/validation";
+import { isEmail, isPhone, phoneDigits, required } from "../../../shared/utils/validation";
 import { LEAD_SOURCES, PRIORITIES, findLeadDuplicates } from "../utils/crmLeads";
 import { StatusMark } from "./CrmMarks";
 
@@ -19,6 +19,7 @@ const blankLead = {
   email: "",
   city: "",
   state: "",
+  hospitalEmail: "",
   plan: "",
   billingCycle: "",
   message: "",
@@ -29,9 +30,10 @@ function leadErrors(form) {
   if (!required(form.hospitalName)) errors.hospitalName = "Enter the hospital name.";
   else if (form.hospitalName.length < 3) errors.hospitalName = "Use at least 3 characters.";
   if (!required(form.contactPerson)) errors.contactPerson = "Enter the contact person.";
-  if (!isPhone(form.phone)) errors.phone = "Enter a valid phone number (10–15 digits).";
+  if (!isPhone(form.phone)) errors.phone = "Enter a 10-digit phone number.";
   if (!required(form.source)) errors.source = "Choose a source.";
   if (form.email && !isEmail(form.email)) errors.email = "Enter a valid email address.";
+  if (form.hospitalEmail && !isEmail(form.hospitalEmail)) errors.hospitalEmail = "Enter a valid email address.";
   if (!required(form.city)) errors.city = "Enter the city.";
   return errors;
 }
@@ -49,7 +51,8 @@ export default function AddLeadForm({ leads, me, planOptions, onClose, onCreate,
   const [shared, setShared] = useState(false);
   const creatingRef = useRef(false);
   const set = (key) => (event) => {
-    setForm((current) => ({ ...current, [key]: event.target.value }));
+    const value = key === "phone" ? phoneDigits(event.target.value) : event.target.value;
+    setForm((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: "" }));
     setFormError("");
   };
@@ -175,6 +178,7 @@ export default function AddLeadForm({ leads, me, planOptions, onClose, onCreate,
         </Select>
         <Input label="City *" value={form.city} error={errors.city} onChange={set("city")} />
         <Input label="State" value={form.state} onChange={set("state")} />
+        <Input label="Hospital email" type="email" value={form.hospitalEmail} error={errors.hospitalEmail} onChange={set("hospitalEmail")} />
         <Select label="Source *" value={form.source} error={errors.source} onChange={set("source")}>
           <option value="">Select source</option>
           {LEAD_SOURCES.map((item) => <option key={item}>{item}</option>)}
@@ -182,7 +186,7 @@ export default function AddLeadForm({ leads, me, planOptions, onClose, onCreate,
         <h3 className="crm-span crm-form-title">Contact</h3>
         <Input label="Contact person *" value={form.contactPerson} error={errors.contactPerson} onChange={set("contactPerson")} />
         <Input label="Designation" value={form.designation} onChange={set("designation")} />
-        <Input label="Phone *" value={form.phone} error={errors.phone} onChange={set("phone")} placeholder="+91 98xxx xxxxx" />
+        <Input label="Phone *" inputMode="numeric" maxLength={10} value={form.phone} error={errors.phone} onChange={set("phone")} placeholder="10-digit number" />
         <Input label="Email" type="email" value={form.email} error={errors.email} onChange={set("email")} />
         <h3 className="crm-span crm-form-title">Interest</h3>
         <Select label="Priority" value={form.priority} onChange={set("priority")}>

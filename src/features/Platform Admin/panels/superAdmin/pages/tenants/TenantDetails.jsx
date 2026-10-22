@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { interpretPlatformError } from "../../../../shared/api/platformErrors";
 import { getTenant, setTenantActive } from "../../../../shared/api/registrationApi";
+import { applyConfirmedTenantActivation } from "../../tenantActivation";
 import Button from "../../../../shared/components/Button";
 import EmptyState from "../../../../shared/components/EmptyState";
 import { platformPath } from "../../../../shared/paths";
@@ -91,6 +92,7 @@ function RegisteredFromApi({ tenant, onUpdated, onBack }) {
         setActionError("The server did not return the hospital status.");
         return;
       }
+      applyConfirmedTenantActivation(updated);
       onUpdated(updated);
       setNotice(nextActive ? "Hospital reactivated." : "Hospital suspended.");
     } catch (err) {

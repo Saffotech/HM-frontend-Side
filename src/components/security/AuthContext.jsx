@@ -138,12 +138,6 @@ export function AuthProvider({ children }) {
     const existing = getLogoutTask();
     if (existing) return existing;
 
-    let releaseGate = () => {};
-    const gate = new Promise((resolve) => {
-      releaseGate = resolve;
-    });
-    setLogoutTask(gate);
-
     beginNewSessionEpoch();
     const accessToken = tokenRef.current || loadAuthSession()?.token || null;
     const notifyServer = options.notifyServer !== false
@@ -168,12 +162,12 @@ export function AuthProvider({ children }) {
     } catch {
       pending = Promise.resolve(null);
     }
+    const finished = pending.catch(() => null).finally(() => {
+      if (getLogoutTask() === finished) setLogoutTask(null);
+    });
+    setLogoutTask(finished);
     cleanupHospitalState();
-    pending.catch(() => null);
-
-    if (getLogoutTask() === gate) setLogoutTask(null);
-    releaseGate();
-    return gate;
+    return finished;
   }, [cleanupHospitalState]);
 
   const adoptHospitalProfile = useCallback((profile, previous, accessToken, refreshToken) => {

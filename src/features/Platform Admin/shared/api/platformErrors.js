@@ -58,6 +58,13 @@ export function fieldErrorsForForm(fieldErrors, apiToForm = {}) {
   return next;
 }
 
+/** A 401 ends the portal session only when this browser's token was rejected. */
+export function shouldEndPlatformSession(error) {
+  return error?.status === 401
+    && error?.code !== "missing_token"
+    && error?.code !== "session_replaced";
+}
+
 export function interpretPlatformError(error, apiToForm = {}) {
   const message = error?.message || "Request failed";
   const fieldErrors = fieldErrorsForForm(error?.fieldErrors, apiToForm);
@@ -69,6 +76,6 @@ export function interpretPlatformError(error, apiToForm = {}) {
   return {
     toast: message,
     fieldErrors,
-    unauthenticated: error?.status === 401,
+    unauthenticated: shouldEndPlatformSession(error),
   };
 }

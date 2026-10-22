@@ -33,7 +33,7 @@ function ChartTip({ active, payload, label, money = false }) {
 }
 
 export default function Performance() {
-  const { me, today, leads, hospitals, invoices, billingAvailable, scopeLabel } = useCrm();
+  const { me, today, leads, hospitals, invoices, billingAvailable } = useCrm();
   const [params, setParams] = useSearchParams();
   const preset = PRESETS.some(([key]) => key === params.get("period")) ? params.get("period") : "month";
   const custom = { start: params.get("from") || today, end: params.get("to") || today };
@@ -58,7 +58,6 @@ export default function Performance() {
 
   return (
     <div className="crm-page crm-perf-page">
-      {scopeLabel && <p className="crm-callout crm-callout-info">{scopeLabel}</p>}
       <section className="crm-card crm-perf-bar">
         <div className="crm-segment" role="group" aria-label="Period">
           {PRESETS.map(([key, label]) => (

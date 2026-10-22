@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { interpretPlatformError } from "../../../shared/api/platformErrors";
+import { interpretPlatformError, shouldEndPlatformSession } from "../../../shared/api/platformErrors";
 import { isNumericLeadId, LEAD_FIELD_MAP, mapRegistration } from "../../../shared/api/hospitalRegistration";
 import { hasPlatformAccessToken, platformAuth } from "../../../shared/api/platformSession";
 import { getRegistration, registerFromLead } from "../../../shared/api/registrationApi";
@@ -13,7 +13,6 @@ import { PLAN_NAMES, billingCycles, tenantStatuses, trialPeriods } from "../../.
 import { usePlatform } from "../../../shared/context/PlatformContext";
 import { useToast } from "../../../shared/hooks/useToast";
 import { accountsPath } from "../../../shared/paths";
-import { formatDate } from "../../../shared/utils/formatDate";
 import { PASSWORD_HINT, isPostalCode, isTenantCode, passwordIssue, required } from "../../../shared/utils/validation";
 import "./RegisterHospital.css";
 
@@ -111,7 +110,7 @@ export default function RegisterHospital() {
         if (cancelled) return;
         const result = interpretPlatformError(err);
         setError(result.toast);
-        if (err?.status === 401 && err?.code !== "missing_token") signOutRef.current("accountant");
+        if (shouldEndPlatformSession(err)) signOutRef.current("accountant");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -187,7 +186,7 @@ function RegisterForm({ request }) {
       const result = interpretPlatformError(error, LEAD_FIELD_MAP);
       if (Object.keys(result.fieldErrors).length) setErrors((current) => ({ ...current, ...result.fieldErrors }));
       push(result.toast, "error");
-      if (error?.status === 401 && error?.code !== "missing_token") signOutPortal("accountant");
+      if (shouldEndPlatformSession(error)) signOutPortal("accountant");
     } finally {
       setSubmitting(false);
     }
@@ -209,12 +208,6 @@ function RegisterForm({ request }) {
     <section className="register-page">
       <form className="reg-layout" onSubmit={submit} noValidate>
         <div className="reg-panel">
-          <div className="reg-source-bar">
-            <span>Lead <Link to={accountsPath("/registrations")} className="mono">{request.id}</Link></span>
-            <span>Agreed by <strong>{request.agreedBy || "CRM"}</strong> on {formatDate(request.agreedAt)}</span>
-            {request.handoverNote && <span className="reg-source-note">Note from CRM: {request.handoverNote}</span>}
-            <span className="reg-source-note">Name, type, contact, and administrator identity come from the lead. Only the tenant code, address, postal code, password, and subscription are sent.</span>
-          </div>
           {!signedIn && (
             <div className="reg-error-bar" role="alert">
               Log out and sign in with your accountant account before registering. This browser does not have a backend session yet.

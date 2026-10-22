@@ -238,7 +238,6 @@ function CrmShell({ session }) {
                   </div>
                   <footer>
                     <Link to={crmPath("/follow-ups")} onClick={() => setMenu("")}>Open Follow-ups &amp; Tasks</Link>
-                    <small>In-app only, from your follow-up dates. Email/SMS reminders need a notification service that isn&apos;t connected yet.</small>
                   </footer>
                 </div>
               )}

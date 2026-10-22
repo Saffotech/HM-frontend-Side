@@ -22,26 +22,34 @@ const DEFAULT_FILTERS = { preset: "month", start: "", end: "", employee: "all", 
 export default function CrmPerformance() {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [detailName, setDetailName] = useState(null);
-  const options = useCrmFilterOptions();
   const data = useCrmPerformance(filters);
-  const { team, period } = data;
+  const options = useCrmFilterOptions(data.leads, data.leadStatus === "ready");
   const roster = options.employees;
-  const detail = data.employees.find((row) => row.name === detailName) || null;
-  const compare = period.compareLabel;
+  const ready = data.leadStatus === "ready";
+  const team = ready ? data.team : null;
+  const period = ready ? data.period : null;
+  const detail = ready ? (data.employees.find((row) => row.name === detailName) || null) : null;
+  const compare = period?.compareLabel;
 
   return (
     <div className="cp-page">
       <header className="cp-page-head">
         <div>
           <h2>Employee performance</h2>
-          {data.billingNote && <p className="cp-muted">{data.billingNote}</p>}
           {data.hospitalError && <p className="cp-muted" role="alert">{data.hospitalError}</p>}
+          {data.leadStatus === "loading" && <p className="cp-muted">Loading CRM leads.</p>}
+          {data.leadStatus === "error" && (
+            <div role="alert">
+              <p className="cp-muted">{data.leadError}</p>
+              <Button variant="secondary" onClick={data.retryLeads}>Try again</Button>
+            </div>
+          )}
         </div>
       </header>
 
       <FilterBar applied={filters} onApply={setFilters} options={options} />
 
-      <section className="cp-kpis" aria-label="Team summary">
+      {ready && <section className="cp-kpis" aria-label="Team summary">
         <Kpi icon={Users} label="Total leads" value={team.current.leads} change={delta(team.current.leads, team.previous.leads)} compare={compare} />
         <Kpi icon={PhoneCall} label="Contacted" value={team.current.contacted} change={delta(team.current.contacted, team.previous.contacted)} compare={compare} />
         <Kpi icon={BadgeCheck} label="Conversions" value={team.current.conversions} change={delta(team.current.conversions, team.previous.conversions)} compare={compare} />
@@ -50,20 +58,23 @@ export default function CrmPerformance() {
         <Kpi icon={Wallet} label="Avg deal" fullLabel="Average revenue per conversion" value={team.current.conversions ? formatCurrency(team.current.avgRevenue) : "—"} change={team.current.conversions && team.previous.conversions ? delta(team.current.avgRevenue, team.previous.avgRevenue) : null} compare={compare} />
         <Kpi icon={AlarmClock} label="Overdue" fullLabel="Overdue follow-ups" value={team.overdueNow} tone={team.overdueNow ? "late" : ""} note="As of today" hint="Open leads past their follow-up date, as of today" />
         <Kpi icon={UserCheck} label="Employees" fullLabel="Active CRM employees" value={team.current.activeEmployees} change={delta(team.current.activeEmployees, team.previous.activeEmployees)} compare={compare} />
-      </section>
+      </section>}
 
-      <Leaderboard employees={data.employees} onOpen={setDetailName} />
+      {ready && <Leaderboard employees={data.employees} onOpen={setDetailName} />}
 
-      <PerformanceTrend trend={data.trend} employees={data.employees} roster={roster} />
+      {ready && <PerformanceTrend trend={data.trend} employees={data.employees} roster={roster} />}
 
-      <FollowUpTable employees={data.employees} onOpen={setDetailName} />
+      {ready && <FollowUpTable employees={data.employees} onOpen={setDetailName} />}
 
+      {ready && (
       <section className="cp-exec" aria-label="Executive summary">
         <TopPerformer highlights={data.highlights} onOpen={setDetailName} />
         <Highlights highlights={data.highlights} onOpen={setDetailName} />
         <Attention rows={data.attention} onOpen={setDetailName} />
       </section>
+      )}
 
+      {ready && (
       <EmployeeDetail
         row={detail}
         ranked={data.employees.filter((row) => row.rank).length}
@@ -73,6 +84,7 @@ export default function CrmPerformance() {
         today={todayInput()}
         onClose={() => setDetailName(null)}
       />
+      )}
     </div>
   );
 }

@@ -8,7 +8,7 @@ import {
   PROFILE_PHOTO_TYPES,
   profilePhotoIssue,
 } from "../../services/portalAccount";
-import { isPhone } from "../../utils/validation";
+import { isPhone, phoneDigits } from "../../utils/validation";
 import AvatarImage from "./AvatarImage";
 import PhotoCropper from "./PhotoCropper";
 
@@ -19,7 +19,7 @@ const NO_PHOTO_CHANGE = { file: null, preview: "", remove: false, original: null
 /** @param {{ phone: string, jobTitle: string, department: string }} draft */
 function fieldErrors(draft) {
   const errors = {};
-  if (draft.phone.trim() && !isPhone(draft.phone)) errors.phone = "Enter a valid phone number, e.g. +91 98765 43210.";
+  if (draft.phone.trim() && !isPhone(draft.phone)) errors.phone = "Enter a 10-digit phone number.";
   if (draft.jobTitle.trim().length > TEXT_LIMIT) errors.jobTitle = `Use ${TEXT_LIMIT} characters or fewer.`;
   if (draft.department.trim().length > TEXT_LIMIT) errors.department = `Use ${TEXT_LIMIT} characters or fewer.`;
   return errors;
@@ -58,7 +58,8 @@ export default function EditProfileDialog({ profile, onDirtyChange, onClose }) {
   };
 
   const set = (key) => (event) => {
-    setDraft((current) => ({ ...current, [key]: event.target.value }));
+    const value = key === "phone" ? phoneDigits(event.target.value) : event.target.value;
+    setDraft((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: "" }));
     setFormError("");
   };
@@ -187,8 +188,10 @@ export default function EditProfileDialog({ profile, onDirtyChange, onClose }) {
           <Input
             label="Phone number"
             type="tel"
+            inputMode="numeric"
             autoComplete="tel"
-            placeholder="+91 98765 43210"
+            maxLength={10}
+            placeholder="10-digit number"
             value={draft.phone}
             error={errors.phone}
             onChange={set("phone")}

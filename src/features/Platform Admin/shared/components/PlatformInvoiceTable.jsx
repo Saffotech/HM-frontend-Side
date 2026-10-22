@@ -24,15 +24,47 @@ function DueCell({ invoice }) {
   );
 }
 
+const COLUMNS = ["Invoice", "Hospital", "Issued", "Due", "Amount", "Status", "Actions"];
+
+function TableMessage({ children, alert = false }) {
+  return (
+    <tr>
+      <td colSpan={COLUMNS.length}>
+        <p className="panel-copy" role={alert ? "alert" : "status"} style={{ margin: "8px 0" }}>{children}</p>
+      </td>
+    </tr>
+  );
+}
+
 export default function PlatformInvoiceTable({ invoices, loading, error, onPay, hospitalLink }) {
+  let body;
   if (loading) {
-    return <p className="panel-copy">Loading invoices from the server.</p>;
-  }
-  if (error) {
-    return <p className="panel-copy" role="alert">{error}</p>;
-  }
-  if (!invoices.length) {
-    return <p className="panel-copy">No invoices match this view.</p>;
+    body = <TableMessage>Loading invoices from the server.</TableMessage>;
+  } else if (error) {
+    body = <TableMessage alert>{error}</TableMessage>;
+  } else if (!invoices.length) {
+    body = <TableMessage>No invoices match this view.</TableMessage>;
+  } else {
+    body = invoices.map((invoice) => (
+      <tr key={invoice.id}>
+        <td className="inv-mono">{invoice.number || "—"}</td>
+        <td>
+          <div className="inv-name">{hospitalLink ? hospitalLink(invoice) : (invoice.hospitalName || "—")}</div>
+          <div className="inv-sub">{[invoice.hospitalCode, invoice.plan].filter(Boolean).join(" · ") || "—"}</div>
+        </td>
+        <td>{formatDate(invoice.invoiceDate)}</td>
+        <td><DueCell invoice={invoice} /></td>
+        <td className="inv-amount">{formatCurrency(invoice.amount)}</td>
+        <td><StatusChip status={invoice.status} /></td>
+        <td>
+          {isUnpaid(invoice) ? (
+            <button type="button" className="action-link" onClick={() => onPay(invoice)}>Record payment</button>
+          ) : (
+            <span className="inv-sub">{invoice.paidAt ? `Paid ${formatDate(invoice.paidAt)}` : "—"}</span>
+          )}
+        </td>
+      </tr>
+    ));
   }
 
   return (
@@ -40,37 +72,10 @@ export default function PlatformInvoiceTable({ invoices, loading, error, onPay, 
       <table className="data-table">
         <thead>
           <tr>
-            <th>Invoice</th>
-            <th>Hospital</th>
-            <th>Issued</th>
-            <th>Due</th>
-            <th>Amount</th>
-            <th>Status</th>
-            <th>Actions</th>
+            {COLUMNS.map((label) => <th key={label}>{label}</th>)}
           </tr>
         </thead>
-        <tbody>
-          {invoices.map((invoice) => (
-            <tr key={invoice.id}>
-              <td className="inv-mono">{invoice.number || "—"}</td>
-              <td>
-                <div className="inv-name">{hospitalLink ? hospitalLink(invoice) : (invoice.hospitalName || "—")}</div>
-                <div className="inv-sub">{[invoice.hospitalCode, invoice.plan].filter(Boolean).join(" · ") || "—"}</div>
-              </td>
-              <td>{formatDate(invoice.invoiceDate)}</td>
-              <td><DueCell invoice={invoice} /></td>
-              <td className="inv-amount">{formatCurrency(invoice.amount)}</td>
-              <td><StatusChip status={invoice.status} /></td>
-              <td>
-                {isUnpaid(invoice) ? (
-                  <button type="button" className="action-link" onClick={() => onPay(invoice)}>Record payment</button>
-                ) : (
-                  <span className="inv-sub">{invoice.paidAt ? `Paid ${formatDate(invoice.paidAt)}` : "—"}</span>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
+        <tbody>{body}</tbody>
       </table>
     </div>
   );

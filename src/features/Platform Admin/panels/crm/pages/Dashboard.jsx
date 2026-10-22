@@ -40,7 +40,7 @@ function subscriptionTone(status) {
 }
 
 export default function Dashboard() {
-  const { me, today, leads, hospitals, invoices, actions, billingAvailable, scopeLabel } = useCrm();
+  const { me, today, leads, hospitals, invoices, actions, billingAvailable } = useCrm();
   const [params, setParams] = useSearchParams();
   const view = VIEWS.includes(params.get("card")) ? params.get("card") : "due";
   const prepared = useMemo(() => prepareLeads({ onboarding: leads, hospitals, invoices, today }), [leads, hospitals, invoices, today]);
@@ -229,7 +229,6 @@ export default function Dashboard() {
           <Button onClick={actions.addLead}><Plus size={16} aria-hidden="true" />Add lead</Button>
         </div>
       </section>
-      {scopeLabel && <p className="crm-callout crm-callout-info">{scopeLabel}</p>}
 
       <section className="crm-kpis" aria-label="Key numbers">
         <Kpi active={view === "open"} onClick={() => select("open")} icon={Users} label="Open leads" value={open.length} hint={`${fresh} new · ${open.length - fresh} contacted`} />
