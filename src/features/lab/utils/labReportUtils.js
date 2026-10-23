@@ -78,24 +78,44 @@ function blobToDataUrl(blob) {
 }
 
 async function renderPdfPagesToDataUrls(blob) {
-  const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist');
+  const { getDocument, GlobalWorkerOptions, PDFWorker } = await import('pdfjs-dist');
   const pdfjsWorker = (await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default;
   GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
-  const arrayBuffer = await blob.arrayBuffer();
-  const pdf = await getDocument({ data: arrayBuffer }).promise;
+  const worker = new PDFWorker();
+  const data = new Uint8Array(await blob.arrayBuffer());
+  const loadingTask = getDocument({ data, worker });
+  let pdf;
   const pageImages = [];
 
-  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
-    const page = await pdf.getPage(pageNum);
-    const viewport = page.getViewport({ scale: 2 });
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
+  try {
+    pdf = await loadingTask.promise;
 
-    await page.render({ canvasContext: context, viewport }).promise;
-    pageImages.push(canvas.toDataURL('image/jpeg', 0.92));
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
+      const page = await pdf.getPage(pageNum);
+      const viewport = page.getViewport({ scale: 2 });
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Could not render PDF page');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+
+      try {
+        await page.render({ canvasContext: context, viewport }).promise;
+        pageImages.push(canvas.toDataURL('image/jpeg', 0.92));
+      } finally {
+        canvas.width = 0;
+        canvas.height = 0;
+        await page.cleanup();
+      }
+    }
+  } finally {
+    try {
+      if (pdf) await pdf.destroy();
+      else await loadingTask.destroy();
+    } finally {
+      if (!worker.destroyed) worker.destroy();
+    }
   }
 
   return pageImages;
@@ -724,9 +744,11 @@ function openPrintWindow(html) {
     'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none;';
 
   let cleaned = false;
+  let fallbackTimer = 0;
   const cleanup = () => {
     if (cleaned) return;
     cleaned = true;
+    window.clearTimeout(fallbackTimer);
     URL.revokeObjectURL(url);
     iframe.remove();
   };
@@ -741,7 +763,7 @@ function openPrintWindow(html) {
         return;
       }
       win.addEventListener('afterprint', cleanup, { once: true });
-      setTimeout(cleanup, 120_000);
+      fallbackTimer = window.setTimeout(cleanup, 120_000);
       try {
         win.focus();
         win.print();

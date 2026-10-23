@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Modal, Button } from '@/shared/components/common';
+import Button from '@/shared/components/common/Button';
+import Modal from '@/shared/components/common/Modal';
 import { ROUTES } from '@/shared/constants';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { shouldApplyHospitalSessionGuard } from '@/components/security/httpSessionPolicy';

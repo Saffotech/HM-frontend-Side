@@ -14,6 +14,15 @@
   min-width: 0;
 }
 
+.page-transition--enter {
+  animation: hms-page-in 0.28s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+@keyframes hms-page-in {
+  from { transform: translateY(8px); }
+  to { transform: translateY(0); }
+}
+
 /* ── Interactive surfaces ── */
 .ui-interactive {
   transition:

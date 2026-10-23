@@ -264,6 +264,11 @@ export async function prefetchDoctorSection(
   }
 }
 
+/**
+ * Loads the doctor dashboard section as its own chunk.
+ * Callers must keep this dynamic. A static import of the same file makes Rollup
+ * ignore the split (INEFFECTIVE_DYNAMIC_IMPORT) and defeats this preload.
+ */
 export function preloadDashboardSectionChunk() {
   return import('@/features/doctor/components/DashboardSection');
 }

@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Bell } from 'lucide-react';
-import { BrandLogo, BrandName, HospitalName, UserProfileMenu } from '@/shared/components/common';
+import BrandLogo from '@/shared/components/common/BrandLogo';
+import BrandName from '@/shared/components/common/BrandName';
+import HospitalName from '@/shared/components/common/HospitalName';
+import UserProfileMenu from '@/shared/components/common/UserProfileMenu';
 import '@/shared/components/common/Layout.css';
 
 function defaultIsNavLinkActive(pathname, link, homeRoute) {

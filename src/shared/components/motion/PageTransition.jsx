@@ -1,39 +1,27 @@
-import { useEffect } from 'react';
-import { motion, useReducedMotion, useAnimation } from 'framer-motion';
+import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { pageTransition } from '@/shared/motion';
 
 /**
- * Route-level fade + upward motion. Wrap page content once per view.
+ * Route-level upward motion. Opacity stays at 1 so a missed animation cannot blank the page.
+ * CSS keeps this off the framer-motion chunk, which is only needed by screens that animate dialogs.
  */
 export default function PageTransition({ children, className = 'page-transition' }) {
   const { pathname } = useLocation();
-  const reducedMotion = useReducedMotion();
-  const controls = useAnimation();
+  const frameRef = useRef(null);
 
   useEffect(() => {
-    if (reducedMotion) return undefined;
-    controls.set(pageTransition.initial);
-    const animation = controls.start(pageTransition.animate);
-    return () => {
-      controls.stop();
-      void animation;
-    };
-  }, [pathname, controls, reducedMotion]);
-
-  if (reducedMotion) {
-    return <div className={className}>{children}</div>;
-  }
+    const node = frameRef.current;
+    if (!node) return undefined;
+    node.classList.remove('page-transition--enter');
+    const frame = requestAnimationFrame(() => {
+      node.classList.add('page-transition--enter');
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [pathname]);
 
   return (
-    <motion.div
-      className={className}
-      initial={pageTransition.initial}
-      animate={controls}
-      exit={pageTransition.exit}
-      transition={pageTransition.transition}
-    >
+    <div ref={frameRef} className={className}>
       {children}
-    </motion.div>
+    </div>
   );
 }

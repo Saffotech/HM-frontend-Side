@@ -9,7 +9,7 @@
 node_modules/
 
 # Build output (rebuild with: npm run build)
-
+dist/
 dist-ssr/
 build/
 out/

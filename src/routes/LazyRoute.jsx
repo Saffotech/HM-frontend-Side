@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import ErrorBoundary from '@/shared/components/ErrorBoundary';
 import PageSpinner from '@/shared/components/PageSpinner';
-import { PageTransition } from '@/shared/components/motion';
+import PageTransition from '@/shared/components/motion/PageTransition';
 
 export default function LazyRoute({ children }) {
   return (

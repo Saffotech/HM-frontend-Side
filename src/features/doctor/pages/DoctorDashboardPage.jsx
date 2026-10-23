@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -8,11 +8,7 @@ import {
   CalendarDays,
 } from 'lucide-react';
 import DoctorShell from '@/features/doctor/components/DoctorShell';
-import DashboardSection from '@/features/doctor/components/DashboardSection';
-import PatientsEMRSection from '@/features/doctor/components/PatientsEMRSection';
-import LabsSection from '@/features/doctor/components/LabsSection';
-import ScheduleSection from '@/features/doctor/components/ScheduleSection';
-import NotificationsSection from '@/features/doctor/components/NotificationsSection';
+import PageSpinner from '@/shared/components/PageSpinner';
 import { PATIENT_CATEGORY_FILTER } from '@/features/doctor/utils/patientListFilters';
 import { parseDoctorEncounterMode } from '@/features/doctor/utils/encounterType';
 import { parseDoctorSection, withDoctorSection } from '@/features/doctor/utils/doctorSection';
@@ -25,6 +21,12 @@ import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { ROUTES } from '@/shared/constants';
 import '../styles/doctor-ui.css';
 import './DoctorDashboardPage.css';
+
+const DashboardSection = lazy(() => import('@/features/doctor/components/DashboardSection'));
+const PatientsEMRSection = lazy(() => import('@/features/doctor/components/PatientsEMRSection'));
+const LabsSection = lazy(() => import('@/features/doctor/components/LabsSection'));
+const ScheduleSection = lazy(() => import('@/features/doctor/components/ScheduleSection'));
+const NotificationsSection = lazy(() => import('@/features/doctor/components/NotificationsSection'));
 
 export default function DoctorDashboardPage() {
   const queryClient = useQueryClient();
@@ -128,29 +130,31 @@ export default function DoctorDashboardPage() {
       encounterMode={showEncounterToggle ? encounterMode : undefined}
       onEncounterModeChange={showEncounterToggle ? handleEncounterModeChange : undefined}
     >
-      {active === 'dashboard' && (
-        <DashboardSection
-          key={`dashboard-${encounterMode}`}
-          encounterMode={encounterMode}
-          onViewAllPatients={openPatientsWithFilter}
-        />
-      )}
-      {active === 'patients' && (
-        <PatientsEMRSection
-          key={`${patientsCategoryFilter}-${encounterMode}`}
-          initialCategoryFilter={patientsCategoryFilter}
-          encounterMode={encounterMode}
-        />
-      )}
-      {active === 'labs' && (
-        <LabsSection key={`labs-${encounterMode}`} encounterMode={encounterMode} />
-      )}
-      {active === 'schedule' && (
-        <ScheduleSection key={`schedule-${encounterMode}`} encounterMode={encounterMode} />
-      )}
-      {active === 'notifications' && (
-        <NotificationsSection onDeepLink={handleNotificationDeepLink} />
-      )}
+      <Suspense fallback={<PageSpinner />}>
+        {active === 'dashboard' && (
+          <DashboardSection
+            key={`dashboard-${encounterMode}`}
+            encounterMode={encounterMode}
+            onViewAllPatients={openPatientsWithFilter}
+          />
+        )}
+        {active === 'patients' && (
+          <PatientsEMRSection
+            key={`${patientsCategoryFilter}-${encounterMode}`}
+            initialCategoryFilter={patientsCategoryFilter}
+            encounterMode={encounterMode}
+          />
+        )}
+        {active === 'labs' && (
+          <LabsSection key={`labs-${encounterMode}`} encounterMode={encounterMode} />
+        )}
+        {active === 'schedule' && (
+          <ScheduleSection key={`schedule-${encounterMode}`} encounterMode={encounterMode} />
+        )}
+        {active === 'notifications' && (
+          <NotificationsSection onDeepLink={handleNotificationDeepLink} />
+        )}
+      </Suspense>
     </DoctorShell>
   );
 }

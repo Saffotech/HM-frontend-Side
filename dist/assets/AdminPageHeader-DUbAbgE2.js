@@ -1,1 +1,0 @@
-import{a as e}from"./vendor-motion-BaTGBG4A.js";import{N as t,r as n}from"./ui-DjWGxYeI.js";var r=e();function i({eyebrow:e,title:i,subtitle:a,actions:o,mockBadge:s,mockBadgeLabel:c=`Demo preview`}){let l=s?(0,r.jsx)(t,{variant:`info`,children:c}):null;return(0,r.jsx)(n,{eyebrow:e,title:i,subtitle:a,actions:o||l?(0,r.jsxs)(r.Fragment,{children:[o,l]}):null})}export{i as t};

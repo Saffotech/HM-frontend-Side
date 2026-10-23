@@ -1,6 +1,6 @@
 import { lazy } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { ToastContainer } from '@/shared/components/common';
+import ToastContainer from '@/shared/components/common/Toast';
 import ProtectedRoute from '@/components/security/ProtectedRoute';
 import GuestRoute from '@/components/security/GuestRoute';
 import SessionTimeout from '@/components/security/SessionTimeout';

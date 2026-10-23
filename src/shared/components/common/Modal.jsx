@@ -1,6 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { modalOverlay, modalPanel } from '@/shared/motion';
 import './Modal.css';
 
 const FOCUSABLE_SELECTOR =
@@ -22,7 +20,6 @@ export default function Modal({
   panelClassName = '',
   overlayClassName = '',
 }) {
-  const reducedMotion = useReducedMotion();
   const dialogRef = useRef(null);
   const previousFocusRef = useRef(null);
 
@@ -98,42 +95,32 @@ export default function Modal({
     };
   }, [isOpen]);
 
+  if (!isOpen) return null;
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          className={`modal-overlay${overlayClassName ? ` ${overlayClassName}` : ''}`}
-          onClick={onClose}
-          role="presentation"
-          initial={reducedMotion ? false : modalOverlay.initial}
-          animate={reducedMotion ? false : modalOverlay.animate}
-          exit={reducedMotion ? false : modalOverlay.exit}
-          transition={modalOverlay.transition}
-        >
-          <motion.div
-            ref={dialogRef}
-            className={`modal modal--${size} ${panelClassName}`.trim()}
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            initial={reducedMotion ? false : modalPanel.initial}
-            animate={reducedMotion ? false : modalPanel.animate}
-            exit={reducedMotion ? false : modalPanel.exit}
-            transition={modalPanel.transition}
-          >
-            {title && (
-              <header className="modal__header">
-                <h2 className="modal__title">{title}</h2>
-                <button type="button" className="modal__close" onClick={onClose} aria-label="Close">
-                  ×
-                </button>
-              </header>
-            )}
-            <div className="modal__body">{children}</div>
-            {footer && <footer className="modal__footer">{footer}</footer>}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <div
+      className={`modal-overlay${overlayClassName ? ` ${overlayClassName}` : ''}`}
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        ref={dialogRef}
+        className={`modal modal--${size} ${panelClassName}`.trim()}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
+        {title && (
+          <header className="modal__header">
+            <h2 className="modal__title">{title}</h2>
+            <button type="button" className="modal__close" onClick={onClose} aria-label="Close">
+              ×
+            </button>
+          </header>
+        )}
+        <div className="modal__body">{children}</div>
+        {footer && <footer className="modal__footer">{footer}</footer>}
+      </div>
+    </div>
   );
 }

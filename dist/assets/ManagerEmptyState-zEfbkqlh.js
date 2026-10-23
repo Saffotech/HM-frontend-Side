@@ -1,1 +1,0 @@
-import{a as e}from"./vendor-motion-BaTGBG4A.js";import{i as t}from"./ui-DjWGxYeI.js";var n=e();function r({icon:e,title:r,description:i}){return(0,n.jsx)(t,{iconNode:e,title:r,description:i})}export{r as t};
