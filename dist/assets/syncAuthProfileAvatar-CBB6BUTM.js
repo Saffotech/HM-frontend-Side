@@ -1,0 +1,1 @@
+import{M as e}from"./common-DuWBnLge.js";function t(t){let n=t?.profile??t;if(!n||typeof n!=`object`)return;let r=n.profile_image_url===void 0?void 0:n.profile_image_url||null;if(r===void 0)return;let i=e.getState?.();i?.updateUser&&i.user&&(i.user.profile_image_url||null)!==r&&i.updateUser({profile_image_url:r})}export{t};

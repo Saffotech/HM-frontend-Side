@@ -1,0 +1,1 @@
+import{a as e}from"./vendor-motion-BaTGBG4A.js";var t=e();function n({isActive:e}){return(0,t.jsx)(`span`,{className:`nba-status-badge${e?` nba-status-badge--active`:` nba-status-badge--inactive`}`,children:e?`Active`:`Inactive`})}export{n as t};

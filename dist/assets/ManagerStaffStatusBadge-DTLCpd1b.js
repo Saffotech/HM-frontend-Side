@@ -1,0 +1,1 @@
+import{a as e}from"./vendor-motion-BaTGBG4A.js";var t=e();function n({isActive:e}){return(0,t.jsx)(`span`,{className:`admin-staff-badge ${e?`admin-staff-badge--active`:`admin-staff-badge--inactive`}`,children:e?`Active`:`Inactive`})}export{n as t};

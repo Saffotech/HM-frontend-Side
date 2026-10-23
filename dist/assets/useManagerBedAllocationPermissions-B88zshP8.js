@@ -1,0 +1,1 @@
+import{J as e,L as t}from"./common-DuWBnLge.js";var n={view:`bed_allocation:view`,create:`bed_allocation:create`,update:`bed_allocation:update`,delete:`bed_allocation:delete`,assign:`bed_allocation:assign`};function r(){let{user:r}=e();return{canView:t(r,n.view),canCreate:t(r,n.create),canUpdate:t(r,n.update),canDelete:t(r,n.delete),canAssign:t(r,n.assign)}}export{r as t};

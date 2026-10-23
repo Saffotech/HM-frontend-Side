@@ -1,0 +1,1 @@
+import{a as e}from"./vendor-motion-BaTGBG4A.js";import{r as t}from"./ui-DjWGxYeI.js";var n=e();function r({eyebrow:e,title:r,subtitle:i,actions:a}){return(0,n.jsx)(t,{eyebrow:e,title:r,subtitle:i,actions:a})}export{r as t};

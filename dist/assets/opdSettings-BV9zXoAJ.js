@@ -1,0 +1,1 @@
+import{it as e}from"./ui-DjWGxYeI.js";async function t(){return e(`/opd/settings`)}export{t};

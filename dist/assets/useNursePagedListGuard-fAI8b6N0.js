@@ -1,0 +1,1 @@
+import{a as e}from"./rolldown-runtime-B0Z9INg1.js";import{o as t}from"./vendor-motion-BaTGBG4A.js";var n=e(t(),1);function r({isLoading:e,page:t,items:r,onPageChange:i}){(0,n.useEffect)(()=>{!e&&t>1&&(r?.length??0)===0&&i(t-1)},[e,t,r,i])}export{r as t};
