@@ -20,6 +20,14 @@ export function getTenant(tenantId) {
   return platformApi(`/tenants/${encodeURIComponent(tenantId)}`);
 }
 
+/** PATCH /tenants/{tenant_id}. Send only the fields that changed. */
+export function updateTenant(tenantId, body) {
+  return platformApi(`/tenants/${encodeURIComponent(tenantId)}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
 /** PATCH /tenants/{tenant_id}/active — response is TenantSummary, including is_active. */
 export function setTenantActive(tenantId, isActive) {
   return platformApi(`/tenants/${encodeURIComponent(tenantId)}/active`, {

@@ -64,6 +64,16 @@ export function PlatformProvider({ children }) {
     return true;
   }, [setState]);
 
+  const patchPortalSession = useCallback((portal, patch) => {
+    const key = SESSION_KEYS[portal];
+    if (!key || !patch) return;
+    setState((current) => {
+      const session = current[key];
+      if (!session) return current;
+      return { ...current, [key]: { ...session, ...patch } };
+    });
+  }, [setState]);
+
   const signOutPortal = useCallback((portal) => {
     const key = SESSION_KEYS[portal];
     if (!key) return;
@@ -76,8 +86,9 @@ export function PlatformProvider({ children }) {
     sessionFor,
     portalProfile,
     openPortalSession,
+    patchPortalSession,
     signOutPortal,
-  }), [openPortalSession, portalProfile, sessionFor, signOutPortal, state]);
+  }), [openPortalSession, patchPortalSession, portalProfile, sessionFor, signOutPortal, state]);
 
   return <PlatformContext.Provider value={api}>{children}</PlatformContext.Provider>;
 }

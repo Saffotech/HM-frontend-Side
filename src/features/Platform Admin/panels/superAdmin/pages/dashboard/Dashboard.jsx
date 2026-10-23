@@ -3,6 +3,8 @@ import { Building2, CalendarPlus, CreditCard, IndianRupee, Users } from "lucide-
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../../../../shared/components/Button";
 import EmptyState from "../../../../shared/components/EmptyState";
+import { revenueSnapshot } from "../../../../shared/api/platformRevenue";
+import { usePlatformRevenue } from "../../../../shared/hooks/usePlatformRevenue";
 import { formatCurrency } from "../../../../shared/utils/formatCurrency";
 import { formatDate, formatDateTime } from "../../../../shared/utils/formatDate";
 import { PLATFORM_BASE } from "../../../../shared/paths";
@@ -18,8 +20,8 @@ const CARDS = [
   { key: "hospitals", label: "Hospitals", hint: "Registered on the server", icon: Building2 },
   { key: "registrations", label: "New Registration", hint: "Registered this month", icon: CalendarPlus },
   { key: "subscriptions", label: "Subscription", hint: "Active subscriptions", icon: Users },
-  { key: "invoices", label: "Invoice", hint: "Unavailable to this portal", icon: CreditCard },
-  { key: "revenue", label: "Revenue", hint: "Unavailable to this portal", icon: IndianRupee },
+  { key: "invoices", label: "Invoice", hint: "All subscription invoices", icon: CreditCard },
+  { key: "revenue", label: "Revenue", hint: "Collected, paid invoices", icon: IndianRupee },
 ];
 
 function statusClass(status) {
@@ -139,6 +141,12 @@ export default function Dashboard() {
     updatedAt,
     reload,
   } = useRegisteredHospitals();
+  const {
+    revenue,
+    loading: revenueLoading,
+    error: revenueError,
+    reload: reloadRevenue,
+  } = usePlatformRevenue();
   const [selected, setSelected] = useState("hospitals");
   const hospitalsBusy = hospitalsLoading || refreshing;
   const hospitalError = refreshError || hospitalsError;
@@ -160,7 +168,11 @@ export default function Dashboard() {
   const plans = useMemo(() => planSlices(hospitals), [hospitals]);
 
   const metric = (key) => {
-    if (key === "invoices" || key === "revenue") return "—";
+    if (key === "invoices" || key === "revenue") {
+      if (revenueLoading && !revenue) return "…";
+      if (!revenue) return "—";
+      return key === "invoices" ? revenue.invoiceCount : formatCurrency(revenue.collectedAmount);
+    }
     if (hospitalsBusy) return "…";
     if (hospitalError) return "—";
     if (key === "hospitals") return hospitals.length;
@@ -193,23 +205,23 @@ export default function Dashboard() {
       loading: hospitalsBusy,
       error: hospitalError,
     };
-    if (selected === "revenue") return {
-      title: "Revenue Collected This Month",
-      description: "Paid invoices recorded this month.",
-      headers: ["Invoice", "Hospital", "Paid on", "Amount", "Method"],
-      rows: [],
-      loading: false,
-      unavailable: true,
+    if (selected === "revenue" || selected === "invoices") return {
+      title: selected === "revenue" ? "Collected revenue" : "Subscription invoices",
+      description: "Company-wide subscription invoices. Failed invoices are counted and are not included in the amounts.",
+      headers: ["Status", "Count", "Amount"],
+      rows: revenue ? [
+        { id: "collected", label: "Collected", count: revenue.collectedCount, amount: formatCurrency(revenue.collectedAmount) },
+        { id: "pending", label: "Pending", count: revenue.pendingCount, amount: formatCurrency(revenue.pendingAmount) },
+        { id: "overdue", label: "Overdue", count: revenue.overdueCount, amount: formatCurrency(revenue.overdueAmount) },
+        { id: "outstanding", label: "Outstanding", count: "—", amount: formatCurrency(revenue.outstandingAmount) },
+        { id: "failed", label: "Failed", count: revenue.failedCount, amount: "Not included" },
+      ] : [],
+      loading: revenueLoading && !revenue,
+      error: revenueError,
+      summary: true,
     };
-    return {
-      title: "Invoices",
-      description: "Platform billing invoices.",
-      headers: ["Invoice", "Hospital", "Due date", "Amount", "Status"],
-      rows: [],
-      loading: false,
-      unavailable: true,
-    };
-  }, [hospitalError, hospitals, hospitalsBusy, registrations, selected, subscriptions]);
+    return null;
+  }, [hospitalError, hospitals, hospitalsBusy, registrations, revenue, revenueError, revenueLoading, selected, subscriptions]);
 
   return (
     <section className="dash-page">
@@ -245,18 +257,21 @@ export default function Dashboard() {
             <p className="panel-copy">{table.description}</p>
           </div>
           <div className="dash-table-actions">
-            {updatedAt && !table.unavailable && (
+            {updatedAt && !table.summary && (
               <time className="dash-updated" dateTime={new Date(updatedAt).toISOString()}>
                 Updated {formatDateTime(updatedAt)}
               </time>
             )}
-            {!table.unavailable && (
-              <Button variant="secondary" size="sm" disabled={refreshing || hospitalsLoading} onClick={reload}>
-                {refreshing || hospitalsLoading ? "Refreshing…" : "Refresh"}
-              </Button>
-            )}
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={table.summary ? revenueLoading : (refreshing || hospitalsLoading)}
+              onClick={table.summary ? reloadRevenue : reload}
+            >
+              {(table.summary ? revenueLoading : refreshing || hospitalsLoading) ? "Refreshing…" : "Refresh"}
+            </Button>
             <span className="dash-result-count">
-              {table.loading ? "Loading" : table.error || table.unavailable ? "Unavailable" : `${table.rows.length} records`}
+              {table.loading ? "Loading" : table.error ? "Unavailable" : `${table.rows.length} records`}
             </span>
           </div>
         </div>
@@ -266,18 +281,24 @@ export default function Dashboard() {
             <tbody>
               {table.loading ? (
                 <tr><td colSpan={table.headers.length}><p className="dash-empty">Loading {table.title.toLowerCase()}…</p></td></tr>
-              ) : table.unavailable ? (
-                <tr><td colSpan={table.headers.length}><p className="dash-empty">Invoice and revenue data are unavailable to the Platform Admin role.</p></td></tr>
               ) : table.error ? (
                 <tr><td colSpan={table.headers.length}><p className="dash-empty" role="alert">{table.error}</p></td></tr>
               ) : table.rows.length === 0 ? (
                 <tr><td colSpan={table.headers.length}><p className="dash-empty">No {table.title.toLowerCase()} to show.</p></td></tr>
               ) : (
-                <DashboardRows
-                  type={selected}
-                  rows={table.rows}
-                  onOpenHospital={(hospital) => navigate(`${PLATFORM_BASE}/hospitals/${hospital.tenant_id}`)}
-                />
+                table.summary ? table.rows.map((row) => (
+                  <tr key={row.id}>
+                    <td>{row.label}</td>
+                    <td>{row.count}</td>
+                    <td>{row.amount}</td>
+                  </tr>
+                )) : (
+                  <DashboardRows
+                    type={selected}
+                    rows={table.rows}
+                    onOpenHospital={(hospital) => navigate(`${PLATFORM_BASE}/hospitals/${hospital.tenant_id}`)}
+                  />
+                )
               )}
             </tbody>
           </table>
@@ -305,7 +326,11 @@ export default function Dashboard() {
         >
           <PlanChart data={plans} title="Subscription plan distribution" />
         </DashboardChartState>
-        <RevenueTrendChart data={[]} />
+        <RevenueTrendChart
+          data={revenueError ? [] : revenueSnapshot(revenue)}
+          description="Collected, pending, and overdue subscription invoices. Failed invoices are not included in these amounts."
+          emptyMessage={revenueError || (revenueLoading ? "Loading revenue…" : "No subscription invoices yet.")}
+        />
       </div>
     </section>
   );

@@ -71,7 +71,14 @@ export default function RecordPaymentDialog({ invoice, onClose, onRecorded }) {
           </select>
           {errors.method && <span className="field-error">{errors.method}</span>}
         </label>
-        <Input label="Reference" value={form.reference} onChange={set("reference")} error={errors.reference} maxLength={100} />
+        <Input
+          label={form.method === "UPI" ? "UPI ID" : "Reference"}
+          value={form.reference}
+          onChange={set("reference")}
+          error={errors.reference}
+          maxLength={100}
+          placeholder={form.method === "UPI" ? "name@bank" : undefined}
+        />
         <Input label="Paid on" type="date" max={today} value={form.paidAt} onChange={set("paidAt")} error={errors.paidAt} required />
         <Input label="Notes" as="textarea" value={form.notes} onChange={set("notes")} error={errors.notes} maxLength={2000} />
       </form>

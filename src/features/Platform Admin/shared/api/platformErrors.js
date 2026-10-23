@@ -62,7 +62,21 @@ export function fieldErrorsForForm(fieldErrors, apiToForm = {}) {
 export function shouldEndPlatformSession(error) {
   return error?.status === 401
     && error?.code !== "missing_token"
-    && error?.code !== "session_replaced";
+    && error?.code !== "session_replaced"
+    && error?.code !== "invalid_password";
+}
+
+/** 401 asks for a new sign-in. A generic 403 means this role cannot call the API. */
+export function platformCallMessage(error) {
+  if (error?.status === 401) return "Sign in again.";
+  if (error?.status === 403) {
+    const message = String(error?.message || "").trim();
+    if (!message || message === "Request failed" || message === "Permission denied") {
+      return "This role cannot call that API.";
+    }
+    return message;
+  }
+  return interpretPlatformError(error).toast;
 }
 
 export function interpretPlatformError(error, apiToForm = {}) {

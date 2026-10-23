@@ -176,7 +176,12 @@
 .inv-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   white-space: nowrap;
+}
+
+.inv-page .data-table tbody tr.inv-row-link {
+  cursor: pointer;
 }
 
 .inv-actions .action-link {
@@ -187,6 +192,8 @@
   font-size: 12px;
   font-weight: 600;
   line-height: 1.4;
+  cursor: pointer;
+  text-decoration: none;
 }
 
 .inv-actions .action-link:first-child {
@@ -404,5 +411,173 @@
   .inv-hero-side {
     justify-items: start;
     text-align: left;
+  }
+}
+
+.invoice-print-stack {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.invoice-sheet {
+  border: 1px solid var(--classic-border, #c9d3e0);
+  border-radius: 4px;
+  padding: 22px;
+  background: #fff;
+  color: var(--color-text);
+}
+
+.invoice-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--color-primary);
+}
+
+.invoice-top > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.invoice-brand {
+  font-size: 18px;
+  color: var(--color-primary-dark);
+}
+
+.invoice-title {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.invoice-title h3 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 0.12em;
+  color: var(--color-text);
+}
+
+.invoice-title .inv-chip {
+  margin-top: 4px;
+}
+
+.invoice-parties {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.invoice-parties > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+
+.invoice-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5b6b84;
+}
+
+.invoice-parties dl {
+  margin: 0;
+  font-size: 13px;
+}
+
+.invoice-parties dl div {
+  display: grid;
+  grid-template-columns: 70px auto;
+  gap: 10px;
+  padding: 2px 0;
+}
+
+.invoice-parties dt {
+  color: #5b6b84;
+}
+
+.invoice-parties dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.invoice-lines {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.invoice-lines th,
+.invoice-lines td {
+  padding: 9px 10px;
+  border: 1px solid var(--classic-border, #c9d3e0);
+  text-align: left;
+}
+
+.invoice-lines th {
+  background: var(--classic-head, #f0f3f7);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #31415c;
+}
+
+.invoice-lines .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.invoice-lines tfoot td {
+  font-weight: 700;
+  background: #fafbfc;
+}
+
+.invoice-log {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.invoice-log strong {
+  color: var(--color-text);
+  font-size: 12px;
+}
+
+@media print {
+  .platform-root.printing-invoices .app-shell {
+    display: none !important;
+  }
+
+  .platform-root.printing-invoices .invoice-print-stack {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+  }
+
+  .platform-root.printing-invoices .invoice-sheet {
+    border: 0;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .platform-root.printing-invoices .invoice-sheet:last-child {
+    break-after: auto;
+    page-break-after: auto;
   }
 }

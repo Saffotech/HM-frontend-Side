@@ -33,6 +33,30 @@
   padding: 16px 18px;
 }
 
+.cp-company {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.cp-company article {
+  padding: 10px 12px;
+  border: 1px solid var(--cp-border);
+  border-radius: 8px;
+  background: #f7f9fb;
+}
+
+.cp-company span {
+  display: block;
+  font-size: 12px;
+  color: #5b6b84;
+}
+
+.cp-company strong {
+  font-size: 18px;
+}
+
 .cp-card-head {
   display: flex;
   align-items: flex-start;
@@ -856,6 +880,7 @@
 }
 
 @media (max-width: 700px) {
+  .cp-company { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cp-page { padding: 12px; }
   .cp-exec { grid-template-columns: 1fr; }
   .cp-mini-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }

@@ -55,6 +55,7 @@ export async function executePlatformRequest(endpoint, options = {}, deps) {
     anonymous = false,
     token,
     skipRefresh = false,
+    invalidPasswordKeepsSession = false,
     _retried = false,
   } = options;
   const access = token || (anonymous ? null : deps.auth.getAccessToken());
@@ -65,8 +66,9 @@ export async function executePlatformRequest(endpoint, options = {}, deps) {
     );
   }
 
+  const formData = typeof FormData !== "undefined" && body instanceof FormData;
   const headers = { Accept: "application/json" };
-  if (body != null) headers["Content-Type"] = "application/json";
+  if (body != null && !formData) headers["Content-Type"] = "application/json";
   if (access) headers.Authorization = `Bearer ${access}`;
 
   const response = await fetchWithTimeout(
@@ -76,6 +78,19 @@ export async function executePlatformRequest(endpoint, options = {}, deps) {
     deps.timeoutMs ?? DEFAULT_TIMEOUT_MS,
   );
   const parsed = await readBody(response);
+
+  if (response.status === 401 && invalidPasswordKeepsSession) {
+    const message = typeof parsed.detail === "string" && parsed.detail.trim()
+      ? parsed.detail.trim()
+      : "Could not validate credentials";
+    if (/current password is incorrect/i.test(message)) {
+      throw new PlatformApiError(message, {
+        status: 401,
+        detail: message,
+        code: "invalid_password",
+      });
+    }
+  }
 
   if (response.status === 401 && !anonymous && !skipRefresh && !_retried) {
     const failedAccess = access;

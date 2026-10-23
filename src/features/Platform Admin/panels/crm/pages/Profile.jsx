@@ -1,5 +1,5 @@
-import PortalProfile from "../../../shared/portal/profile/PortalProfile";
+import CrmAccountProfile from "./CrmAccountProfile";
 
 export default function Profile() {
-  return <PortalProfile portal="crm" panelLabel="CRM" />;
+  return <CrmAccountProfile />;
 }

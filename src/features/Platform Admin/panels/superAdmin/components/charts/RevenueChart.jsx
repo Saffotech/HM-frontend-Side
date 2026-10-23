@@ -9,11 +9,11 @@ export default function RevenueChart({ data }) {
 
   return (
     <section className="card card-pad chart-card wide">
-      <h2>Revenue trend</h2>
-      <p className="panel-copy">Revenue is unavailable until a billing API is connected.</p>
+      <h2>Subscription invoices</h2>
+      <p className="panel-copy">Collected, pending, and overdue amounts. Failed invoices are not included.</p>
       <div className="chart-box">
         {rows.length === 0 ? (
-          <EmptyState title="No revenue data" message="This chart stays empty until a billing API is connected." />
+          <EmptyState title="No revenue totals" message="Company-wide invoice totals appear here." />
         ) : (
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={rows}>

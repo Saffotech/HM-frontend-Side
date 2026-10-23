@@ -11,7 +11,7 @@ export const METRIC_DEFINITIONS = [
   ["Conversion rate", "Of the leads received in the period, the share that are registered today. Recent periods rise as leads progress."],
   ["Follow-up completion", "Completed ÷ (completed + missed) for follow-ups that fell due in the period. A follow-up is completed by a contact, handover, close or registration; on time means on or before the due date. Follow-ups due today and not yet done, and ones moved before they fell due, aren't counted."],
   ["Overdue now", "Open leads whose follow-up date has passed, as of today."],
-  ["Attributed revenue", "Paid subscription invoices, by invoice date, for hospitals registered from your leads."],
+  ["Attributed revenue", "Paid subscription invoices for hospitals registered from your leads. Pending invoices are not included. The chart is the last 6 months by invoice date."],
   ["Monthly target", "Shows “Not set” until a sales target is configured for you. No target is assumed."],
   ["Open leads", "Your leads that are New or Contacted, as of today. Agreed leads (with Accounts), registered and closed leads aren't counted."],
 ];

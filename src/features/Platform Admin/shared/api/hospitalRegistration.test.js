@@ -481,7 +481,8 @@ describe("registration screens stay off the dummy hospital writer", () => {
     const hospitalsHook = readSrc("../../panels/superAdmin/useRegisteredHospitals.js");
     assert.match(analytics, /Try again/);
     assert.match(analytics, /role="alert"/);
-    assert.match(analytics, /data=\{\[\]\}/);
+    assert.match(analytics, /usePlatformRevenue/);
+    assert.match(analytics, /useCrmAnalytics/);
     assert.match(hospitalsHook, /reloadRegisteredHospitals/);
     assert.match(hospitalsHook, /withConfirmedActivation/);
   });

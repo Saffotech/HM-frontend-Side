@@ -67,15 +67,19 @@ export function RegistrationChart({ data }) {
   );
 }
 
-export function RevenueTrendChart({ data }) {
+export function RevenueTrendChart({
+  data,
+  description = "Collected, pending, and overdue subscription invoices. Failed invoices are not included in these amounts.",
+  emptyMessage = "No subscription invoices yet.",
+}) {
   const reducedMotion = usePrefersReducedMotion();
   const ready = Array.isArray(data) && data.length > 0;
 
   return (
     <ChartFrame
-      title="Revenue trend"
-      label="Revenue trend"
-      description="Revenue data is unavailable to the Platform Admin role."
+      title="Subscription invoices"
+      label="Subscription invoice totals"
+      description={description}
     >
       {ready ? (
         <ResponsiveContainer width="100%" height="100%">
@@ -110,7 +114,7 @@ export function RevenueTrendChart({ data }) {
           </LineChart>
         </ResponsiveContainer>
       ) : (
-        <EmptyState title="Revenue unavailable" message="Revenue reporting is not available to this portal." />
+        <EmptyState title="No revenue totals" message={emptyMessage} />
       )}
     </ChartFrame>
   );

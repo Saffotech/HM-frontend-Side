@@ -253,6 +253,12 @@
   border-radius: var(--classic-radius);
 }
 
+.profile-alert {
+  margin: 12px 0 0;
+  color: var(--color-danger, #9a3412);
+  font-size: 13px;
+}
+
 @media (max-width: 860px) {
   .profile-layout {
     grid-template-columns: 1fr;

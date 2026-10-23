@@ -49,6 +49,12 @@ export function paymentErrors(form) {
   if (String(form.amount ?? "").trim() === "" || Number.isNaN(amount) || amount <= 0) errors.amount = "Enter the payment amount.";
   if (!form.method) errors.method = "Choose a payment method.";
   if (!form.paidAt) errors.paidAt = "Choose the payment date.";
-  if (form.method !== "Card" && !String(form.reference || "").trim()) errors.reference = "Enter the payment reference.";
+  const reference = String(form.reference || "").trim();
+  if (form.method === "UPI") {
+    if (!reference) errors.reference = "Enter the UPI ID.";
+    else if (!reference.includes("@")) errors.reference = "Enter a UPI ID such as name@bank.";
+  } else if (form.method !== "Card" && !reference) {
+    errors.reference = "Enter the payment reference.";
+  }
   return errors;
 }

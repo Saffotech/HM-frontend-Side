@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { hasPlatformAccessToken } from "../../../../shared/api/platformSession";
-import { createPlatformStaff } from "../../../../shared/api/platformStaffApi";
+import { createPlatformStaff, listPlatformStaff } from "../../../../shared/api/platformStaffApi";
 import {
   PLATFORM_STAFF_ROLES,
   createSubmitGuard,
   interpretStaffError,
+  mapStaffDirectory,
   platformStaffRoleLabel,
   staffCreatedNotice,
   validatePlatformStaff,
@@ -49,9 +50,35 @@ export default function PlatformStaff() {
   const [formError, setFormError] = useState("");
   const [retryable, setRetryable] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [created, setCreated] = useState([]);
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [listError, setListError] = useState("");
   const [guard] = useState(() => createSubmitGuard());
   const signedIn = hasPlatformAccessToken();
+
+  const loadStaff = useCallback(async () => {
+    setLoading(true);
+    setListError("");
+    try {
+      const body = await listPlatformStaff();
+      const mapped = mapStaffDirectory(body);
+      if (!mapped.ok) {
+        setListError("Staff directory response was not a list.");
+        return;
+      }
+      setRows(mapped.rows);
+    } catch (error) {
+      const result = interpretStaffError(error);
+      setListError(result.toast);
+      if (result.unauthenticated && signedIn) signOutPortal("platform");
+    } finally {
+      setLoading(false);
+    }
+  }, [signOutPortal, signedIn]);
+
+  useEffect(() => {
+    loadStaff();
+  }, [loadStaff]);
 
   const setField = (key, value) => {
     setValues((current) => ({ ...current, [key]: value }));
@@ -87,11 +114,11 @@ export default function PlatformStaff() {
         setFormError("Registration did not confirm the new account. It was not marked as created.");
         return;
       }
-      setCreated((current) => [notice, ...current.filter((item) => item.userId !== notice.userId)]);
       setValues(blank);
       setErrors({});
       setOpen(false);
       push(`${notice.message}. ${displayName(notice)} (${notice.email}) was created.`, "success");
+      await loadStaff();
     } catch (error) {
       const result = interpretStaffError(error);
       if (Object.keys(result.fieldErrors).length) {
@@ -129,14 +156,20 @@ export default function PlatformStaff() {
       </header>
 
       <p className="platform-staff-note">
-        Accounts registered in this visit are listed below. A platform staff directory is not available from the server.
+        CRM and accountant accounts. The platform admin and hospital staff are not listed, and passwords are never shown.
       </p>
+      {listError && (
+        <div className="platform-staff-alert" role="alert">
+          <p>{listError}</p>
+          <Button onClick={loadStaff} disabled={loading}>{loading ? "Loading…" : "Try again"}</Button>
+        </div>
+      )}
 
       <DataTable
-        rows={created}
+        rows={loading && rows.length === 0 ? [] : rows}
         columns={columns}
-        emptyTitle="No platform staff registered in this visit"
-        emptyMessage="Use Register Staff to create a CRM or Accountant account. Hospital staff are not registered here."
+        emptyTitle={loading ? "Loading platform staff" : "No CRM or accountant accounts"}
+        emptyMessage={loading ? "Fetching the staff directory." : "Use Register Staff to create a CRM or Accountant account. Hospital staff are not registered here."}
       />
 
       <Modal

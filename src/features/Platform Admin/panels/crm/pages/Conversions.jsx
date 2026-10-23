@@ -4,14 +4,23 @@ import { BadgeCheck, Hourglass, RotateCcw, XCircle } from "lucide-react";
 import Pagination from "../../../shared/components/Pagination";
 import SearchBar from "../../../shared/components/SearchBar";
 import { usePagination } from "../../../shared/hooks/usePagination";
+import { useCrmRevenue } from "../../../shared/hooks/useCrmRevenue";
 import { formatCurrency } from "../../../shared/utils/formatCurrency";
 import { formatDate } from "../../../shared/utils/formatDate";
-import { prepareLeads } from "../../../shared/utils/leadMetrics";
 import { daysBetween, localDay } from "../../../shared/utils/periods";
 import { includesQuery } from "../../../shared/utils/table";
 import HandoverSteps from "../components/HandoverSteps";
 import { plural } from "../utils/crmLeads";
 import { useCrm } from "../workspace/workspace-context";
+
+function paidRevenue(attributed, hospitalId, loading, error) {
+  if (loading && !attributed) return <span className="crm-sub">Loading</span>;
+  if (error || !attributed) return <span className="crm-sub">Unavailable</span>;
+  const hospital = attributed.hospitals.find((item) => String(item.tenantId) === String(hospitalId));
+  if (!hospital) return <span className="crm-sub">—</span>;
+  if (!hospital.paidCount) return <span className="crm-sub">No paid invoices</span>;
+  return formatCurrency(hospital.paidAmount);
+}
 
 const TABS = [
   ["pending", "Agreed · pending Accounts", Hourglass],
@@ -25,7 +34,8 @@ const COLUMNS = {
 };
 
 export default function Conversions() {
-  const { leads, hospitals, invoices, today, actions, billingAvailable } = useCrm();
+  const { leads, hospitals, today, actions, billingAvailable } = useCrm();
+  const { revenue: attributed, loading: revenueLoading, error: revenueError } = useCrmRevenue();
   const [params, setParams] = useSearchParams();
   const tab = TABS.some(([key]) => key === params.get("tab")) ? params.get("tab") : "pending";
   const query = params.get("q") || "";
@@ -35,7 +45,6 @@ export default function Conversions() {
     return next;
   }, { replace: true });
 
-  const facts = useMemo(() => new Map(prepareLeads({ onboarding: leads, hospitals, invoices, today }).map((row) => [row.id, row])), [leads, hospitals, invoices, today]);
   const hospitalsById = useMemo(() => new Map(hospitals.map((hospital) => [hospital.id, hospital])), [hospitals]);
   const groups = useMemo(() => ({
     pending: leads.filter((lead) => lead.status === "Agreed").sort((a, b) => String(a.agreedAt).localeCompare(String(b.agreedAt))),
@@ -102,7 +111,6 @@ export default function Conversions() {
                 );
               })}
               {tab === "registered" && pagination.rows.map((lead) => {
-                const fact = facts.get(lead.id);
                 const hospital = hospitalsById.get(lead.hospitalId);
                 const days = lead.registeredAt ? daysBetween(localDay(lead.submittedAt), localDay(lead.registeredAt)) : null;
                 return (
@@ -117,7 +125,7 @@ export default function Conversions() {
                       : <span className="crm-sub">Unavailable</span>}
                     </td>
                     <td>{days === null ? "—" : plural(days, "day")}</td>
-                    <td className="crm-nowrap">{billingAvailable && fact?.paidInvoices.length ? formatCurrency(fact.revenue) : <span className="crm-sub">{billingAvailable ? "No paid invoices" : "Unavailable"}</span>}</td>
+                    <td className="crm-nowrap">{paidRevenue(attributed, lead.hospitalId, revenueLoading, revenueError)}</td>
                     <td><div className="crm-row-actions"><button type="button" className="crm-link" onClick={() => actions.openLead(lead.id)}>View</button></div></td>
                   </tr>
                 );

@@ -72,6 +72,27 @@ export function createSubmitGuard() {
   };
 }
 
+/** GET /platform/staff rows. Passwords are never copied. Other roles are left out. */
+export function mapStaffDirectory(body) {
+  if (!Array.isArray(body)) return { ok: false, rows: [] };
+  return {
+    ok: true,
+    rows: body.flatMap((row) => {
+      if (row?.role !== "crm" && row?.role !== "accountant") return [];
+      if (row?.user_id == null || !row?.email) return [];
+      return [{
+        id: row.user_id,
+        userId: row.user_id,
+        firstName: row.first_name || "",
+        lastName: row.last_name || "",
+        email: row.email,
+        role: row.role,
+        isActive: Boolean(row.is_active),
+      }];
+    }),
+  };
+}
+
 /** Display fields from a 201 body. The password is never copied. */
 export function staffCreatedNotice(body) {
   if (body?.user_id == null || !body?.email || !body?.role) return null;

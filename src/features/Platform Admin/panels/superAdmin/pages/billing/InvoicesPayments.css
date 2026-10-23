@@ -22,7 +22,7 @@
 
 .inv-summary {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   margin-bottom: 16px;
   background: #fff;
   border: 1px solid var(--classic-border);
@@ -40,7 +40,7 @@
   background: transparent;
   font: inherit;
   text-align: left;
-  cursor: pointer;
+  cursor: default;
 }
 
 .inv-summary-item + .inv-summary-item {

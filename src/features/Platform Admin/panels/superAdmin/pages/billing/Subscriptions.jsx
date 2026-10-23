@@ -5,7 +5,10 @@ import Button from "../../../../shared/components/Button";
 import Modal from "../../../../shared/components/Modal";
 import SearchBar from "../../../../shared/components/SearchBar";
 import Select from "../../../../shared/components/Select";
+import { activePlanNames } from "../../../../shared/api/platformPlans";
 import { PLAN_NAMES } from "../../../../shared/data/catalog";
+import { usePlatformPlans } from "../../../../shared/hooks/usePlatformPlans";
+import { formatCurrency } from "../../../../shared/utils/formatCurrency";
 import { PLATFORM_BASE } from "../../../../shared/paths";
 import { formatDate } from "../../../../shared/utils/formatDate";
 import { useRegisteredHospitals } from "../../useRegisteredHospitals";
@@ -28,6 +31,11 @@ function chipClass(status) {
 
 export default function Subscriptions() {
   const { hospitals, loading, error } = useRegisteredHospitals();
+  const { plans } = usePlatformPlans();
+  const planNames = useMemo(() => {
+    const remote = activePlanNames(plans);
+    return remote.length ? remote : PLAN_NAMES;
+  }, [plans]);
   const [filters, setFilters] = useState(FILTERS);
   const [open, setOpen] = useState(null);
   const set = (key, value) => setFilters((current) => ({ ...current, [key]: value }));
@@ -63,7 +71,7 @@ export default function Subscriptions() {
         <h1>Subscriptions</h1>
       </header>
       <p className="panel-copy" style={{ marginTop: -6, marginBottom: 14 }}>
-        Rows are hospitals registered on the server. Renewal changes are not available without a subscriptions API.
+        Rows are hospitals registered on the server. Open a hospital to change its plan, billing cycle, renewal date, or amount.
       </p>
 
       <div className="subs-summary">
@@ -85,7 +93,7 @@ export default function Subscriptions() {
           <SearchBar value={filters.query} onChange={(value) => set("query", value)} placeholder="Search hospital or code" />
           <Select label="Plan" value={filters.plan} onChange={(event) => set("plan", event.target.value)}>
             <option value="">All plans</option>
-            {PLAN_NAMES.map((plan) => <option key={plan} value={plan}>{plan}</option>)}
+            {planNames.map((plan) => <option key={plan} value={plan}>{plan}</option>)}
           </Select>
           <Select label="Status" value={filters.status} onChange={(event) => set("status", event.target.value)}>
             <option value="">All statuses</option>
@@ -141,13 +149,13 @@ export default function Subscriptions() {
                     </td>
                     <td>{hospital.plan || "—"}</td>
                     <td>{hospital.billing_cycle || "—"}</td>
-                    <td className="subs-amount">—</td>
+                    <td className="subs-amount">{hospital.subscription_amount == null || hospital.subscription_amount === "" ? "—" : formatCurrency(hospital.subscription_amount)}</td>
                     <td className="subs-renewal">{formatDate(hospital.subscription_renews_on)}</td>
                     <td><span className={chipClass(status)}>{statusLabel}</span></td>
                     <td>
                       <div className="subs-actions">
                         <button type="button" className="action-link" onClick={() => setOpen(hospital)}>View</button>
-                        <button type="button" className="action-link" disabled>Change plan</button>
+                        <Link className="action-link" to={`${PLATFORM_BASE}/hospitals/${hospital.tenant_id}`}>Edit</Link>
                       </div>
                     </td>
                   </tr>
@@ -174,7 +182,7 @@ export default function Subscriptions() {
             <div className="subs-info-row"><dt>Started</dt><dd>{formatDate(open.subscription_started_on)}</dd></div>
             <div className="subs-info-row"><dt>Renews</dt><dd>{formatDate(open.subscription_renews_on)}</dd></div>
             <div className="subs-info-row"><dt>Status</dt><dd>{open.subscription_status || open.tenant_status || "—"}</dd></div>
-            <div className="subs-info-row"><dt>Amount</dt><dd>—</dd></div>
+            <div className="subs-info-row"><dt>Amount</dt><dd>{open.subscription_amount == null || open.subscription_amount === "" ? "—" : formatCurrency(open.subscription_amount)}</dd></div>
           </dl>
         )}
       </Modal>

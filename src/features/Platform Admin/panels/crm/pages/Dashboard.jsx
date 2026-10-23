@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import Button from "../../../shared/components/Button";
+import { useCrmRevenue } from "../../../shared/hooks/useCrmRevenue";
 import { formatCurrency } from "../../../shared/utils/formatCurrency";
 import { formatDate } from "../../../shared/utils/formatDate";
 import { prepareLeads } from "../../../shared/utils/leadMetrics";
@@ -40,7 +41,8 @@ function subscriptionTone(status) {
 }
 
 export default function Dashboard() {
-  const { me, today, leads, hospitals, invoices, actions, billingAvailable } = useCrm();
+  const { me, today, leads, hospitals, invoices, actions } = useCrm();
+  const { revenue: attributed, loading: revenueLoading, error: revenueError } = useCrmRevenue();
   const [params, setParams] = useSearchParams();
   const view = VIEWS.includes(params.get("card")) ? params.get("card") : "due";
   const prepared = useMemo(() => prepareLeads({ onboarding: leads, hospitals, invoices, today }), [leads, hospitals, invoices, today]);
@@ -57,9 +59,6 @@ export default function Dashboard() {
   const withAccounts = leads.filter((lead) => lead.status === "Agreed");
   const registered = leads.filter((lead) => lead.status === "Registered");
   const registeredThisMonth = registered.filter((lead) => facts.get(lead.id)?.registeredDay.slice(0, 7) === today.slice(0, 7)).length;
-  const earning = registered.filter((lead) => facts.get(lead.id)?.paidInvoices.length);
-  const revenue = earning.reduce((total, lead) => total + facts.get(lead.id).revenue, 0);
-  const paidInvoices = earning.reduce((total, lead) => total + facts.get(lead.id).paidInvoices.length, 0);
 
   const select = (next) => {
     setParams((current) => {
@@ -77,9 +76,8 @@ export default function Dashboard() {
     overdue: [...buckets.overdue].sort(byFollowUp),
     registered: [...registered].sort((a, b) => String(b.registeredAt).localeCompare(String(a.registeredAt))),
     conversion: [...leads].sort((a, b) => String(b.submittedAt).localeCompare(String(a.submittedAt))),
-    revenue: [...earning].sort((a, b) => facts.get(b.id).revenue - facts.get(a.id).revenue),
   };
-  const rows = rowsByView[view];
+  const rows = rowsByView[view] || [];
 
   const hospitalCell = (lead) => (
     <td>
@@ -174,25 +172,14 @@ export default function Dashboard() {
     },
     revenue: {
       title: "Attributed revenue",
-      note: billingAvailable
-        ? (paidInvoices ? `${plural(paidInvoices, "paid invoice")} · ${formatCurrency(revenue)}` : "Paid subscription invoices of your hospitals")
-        : "Platform invoices are not available from the server",
-      empty: billingAvailable
-        ? ["No paid invoices yet", "Revenue shows once hospitals registered from your leads pay."]
-        : ["Revenue unavailable", "There is no platform invoice API yet, so this is not estimated from demo data."],
-      columns: ["Hospital", "Plan", "Registered", "Paid invoices", "Paid revenue"],
-      cells: (lead) => {
-        const fact = facts.get(lead.id);
-        return (
-          <>
-            {hospitalCell(lead)}
-            {planCell(lead)}
-            <td className="crm-nowrap">{formatDate(lead.registeredAt)}</td>
-            <td>{fact.paidInvoices.length}</td>
-            <td className="crm-nowrap"><strong>{formatCurrency(fact.revenue)}</strong></td>
-          </>
-        );
-      },
+      note: attributed
+        ? `${plural(attributed.collectedCount, "paid invoice")} · ${formatCurrency(attributed.collectedAmount)}`
+        : (revenueLoading ? "Loading paid invoices" : "Paid subscription invoices of hospitals from your leads"),
+      empty: revenueError
+        ? [revenueError, "Paid invoices for your hospitals could not be loaded."]
+        : ["No registered hospitals yet", "Paid invoices appear here for hospitals registered from your leads. Pending invoices are not included."],
+      columns: ["Hospital", "Plan", "Paid invoices", "Paid revenue"],
+      cells: null,
     },
   }[view];
 
@@ -249,11 +236,9 @@ export default function Dashboard() {
           onClick={() => select("revenue")}
           icon={CircleDollarSign}
           label="Attributed revenue"
-          value={billingAvailable ? (paidInvoices ? formatCurrency(revenue) : "No paid invoices yet") : "Unavailable"}
-          hint={billingAvailable
-            ? (paidInvoices ? `${plural(paidInvoices, "paid invoice")} from your hospitals` : "Shown once your hospitals pay")
-            : "Platform invoices are not available from the server"}
-          tone={paidInvoices ? "" : "muted"}
+          value={revenueLoading && !attributed ? "…" : attributed ? formatCurrency(attributed.collectedAmount) : "—"}
+          hint={revenueError || (attributed ? `${plural(attributed.collectedCount, "paid invoice")} from your hospitals` : "Paid invoices for hospitals from your leads")}
+          tone={attributed?.collectedCount ? "" : "muted"}
           title="Paid subscription invoices of hospitals registered from your leads"
         />
       </section>
@@ -261,7 +246,7 @@ export default function Dashboard() {
       <section className="crm-card crm-dash-due" aria-live="polite">
         <header className="crm-card-head">
           <div>
-            <h2>{config.title} <span className="crm-dash-count">{rows.length}</span></h2>
+            <h2>{config.title} <span className="crm-dash-count">{view === "revenue" ? (attributed?.hospitals.length ?? 0) : rows.length}</span></h2>
             <p>{config.note}</p>
           </div>
           {view !== "due" && (
@@ -277,7 +262,17 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {rows.length === 0 ? (
+              {view === "revenue" ? (
+                <RevenueRows
+                  hospitals={attributed?.hospitals || []}
+                  loading={revenueLoading && !attributed}
+                  error={revenueError}
+                  empty={config.empty}
+                  columns={config.columns.length}
+                  leads={leads}
+                  onOpen={actions.openLead}
+                />
+              ) : rows.length === 0 ? (
                 <tr className="crm-table-empty">
                   <td colSpan={config.columns.length + 1}>
                     <div className="crm-empty">
@@ -303,6 +298,50 @@ export default function Dashboard() {
       </section>
     </div>
   );
+}
+
+function RevenueRows({ hospitals, loading, error, empty, columns, leads, onOpen }) {
+  if (loading) {
+    return (
+      <tr className="crm-table-empty">
+        <td colSpan={columns + 1}><div className="crm-empty"><strong>Loading paid invoices</strong><span>Fetching revenue for your hospitals.</span></div></td>
+      </tr>
+    );
+  }
+  if (error || hospitals.length === 0) {
+    return (
+      <tr className="crm-table-empty">
+        <td colSpan={columns + 1}>
+          <div className="crm-empty">
+            <strong>{empty[0]}</strong>
+            <span>{empty[1]}</span>
+          </div>
+        </td>
+      </tr>
+    );
+  }
+  return hospitals.map((hospital) => {
+    const lead = leads.find((item) => String(item.hospitalId) === String(hospital.tenantId));
+    return (
+      <tr key={hospital.tenantId}>
+        <td>
+          {lead ? (
+            <button type="button" className="crm-row-link" onClick={() => onOpen(lead.id)}>{hospital.hospitalName || "Hospital"}</button>
+          ) : hospital.hospitalName || "Hospital"}
+        </td>
+        <td>{hospital.plan || "—"}</td>
+        <td>{hospital.paidCount}</td>
+        <td className="crm-nowrap"><strong>{formatCurrency(hospital.paidAmount)}</strong></td>
+        <td>
+          {lead ? (
+            <div className="crm-row-actions">
+              <button type="button" className="crm-link" onClick={() => onOpen(lead.id)}>Open</button>
+            </div>
+          ) : "—"}
+        </td>
+      </tr>
+    );
+  });
 }
 
 function Kpi({ active, onClick, icon: Icon, label, value, hint, tone = "", title }) {

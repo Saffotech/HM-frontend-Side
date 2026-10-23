@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import RecordPaymentDialog from "../../../shared/components/RecordPaymentDialog";
 import PlatformInvoiceTable from "../../../shared/components/PlatformInvoiceTable";
 import SearchBar from "../../../shared/components/SearchBar";
 import Select from "../../../shared/components/Select";
@@ -23,12 +22,10 @@ const STATUSES = [
 
 export default function InvoicesPayments() {
   const today = todayInput();
-  const { invoices, loading, error, reload } = usePlatformInvoices();
+  const { invoices, loading, error } = usePlatformInvoices();
   const [status, setStatus] = useState("");
   const [period, setPeriod] = useState("");
   const [query, setQuery] = useState("");
-  const [paying, setPaying] = useState(null);
-  const [notice, setNotice] = useState("");
 
   const visible = useMemo(
     () => invoices.filter((invoice) => matchesInvoiceFilters(invoice, { query, status, period, today })),
@@ -38,7 +35,6 @@ export default function InvoicesPayments() {
 
   return (
     <section className="inv-page">
-      {notice && <p className="panel-copy" role="status">{notice}</p>}
       <section className="inv-panel">
         <div className="inv-toolbar">
           <SearchBar value={query} onChange={setQuery} placeholder="Search invoice or hospital" />
@@ -63,23 +59,14 @@ export default function InvoicesPayments() {
           invoices={visible}
           loading={loading}
           error={error}
-          onPay={setPaying}
+          viewPath={(invoice) => (invoice.tenantId == null ? "" : accountsPath(`/hospitals/${invoice.tenantId}`))}
           hospitalLink={(invoice) => (
-            <Link to={accountsPath(`/hospitals/${invoice.tenantId}`)}>{invoice.hospitalName || "Hospital"}</Link>
+            invoice.tenantId == null
+              ? (invoice.hospitalName || "Hospital")
+              : <Link to={accountsPath(`/hospitals/${invoice.tenantId}`)} onClick={(event) => event.stopPropagation()}>{invoice.hospitalName || "Hospital"}</Link>
           )}
         />
       </section>
-      {paying && (
-        <RecordPaymentDialog
-          invoice={paying}
-          onClose={() => setPaying(null)}
-          onRecorded={() => {
-            setPaying(null);
-            setNotice("Payment recorded.");
-            reload();
-          }}
-        />
-      )}
     </section>
   );
 }

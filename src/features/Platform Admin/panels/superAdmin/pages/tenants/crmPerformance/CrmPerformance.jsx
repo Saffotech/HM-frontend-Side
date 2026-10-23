@@ -13,6 +13,10 @@ import { PERIOD_PRESETS, toDay } from "../../../../../shared/utils/periods";
 import { PerformanceTrend } from "./PerformanceCharts";
 import { FollowUpTable, Leaderboard, RatingBadge } from "./PerformanceTables";
 import SearchSelect from "./SearchSelect";
+import { activePlanNames } from "../../../../../shared/api/platformPlans";
+import { CRM_ANALYTICS_STATUSES } from "../../../../../shared/api/platformCrmAnalytics";
+import { useCrmAnalytics } from "../../../../../shared/hooks/useCrmAnalytics";
+import { usePlatformPlans } from "../../../../../shared/hooks/usePlatformPlans";
 import { useCrmFilterOptions, useCrmPerformance } from "./useCrmPerformance";
 import "./CrmPerformance.css";
 
@@ -23,7 +27,11 @@ export default function CrmPerformance() {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [detailName, setDetailName] = useState(null);
   const data = useCrmPerformance(filters);
+  const company = useCrmAnalytics();
+  const { plans: catalogPlans } = usePlatformPlans();
   const options = useCrmFilterOptions(data.leads, data.leadStatus === "ready");
+  const catalogNames = activePlanNames(catalogPlans);
+  const filterOptions = catalogNames.length ? { ...options, plans: catalogNames } : options;
   const roster = options.employees;
   const ready = data.leadStatus === "ready";
   const team = ready ? data.team : null;
@@ -47,7 +55,39 @@ export default function CrmPerformance() {
         </div>
       </header>
 
-      <FilterBar applied={filters} onApply={setFilters} options={options} />
+      <section className="cp-card" aria-label="Company-wide leads">
+        <header className="cp-card-head">
+          <div>
+            <h3>Company-wide leads</h3>
+            <p className="cp-muted">Counts for every lead. Employee tables below still use GET /crm/leads.</p>
+          </div>
+          <Button variant="secondary" size="sm" onClick={company.reload} disabled={company.loading}>
+            {company.loading ? "Loading…" : "Refresh"}
+          </Button>
+        </header>
+        {company.error && (
+          <div role="alert">
+            <p className="cp-muted">{company.error}</p>
+            <Button variant="secondary" onClick={company.reload}>Try again</Button>
+          </div>
+        )}
+        {company.statuses && (
+          <div className="cp-company">
+            {CRM_ANALYTICS_STATUSES.map((status) => (
+              <article key={status}>
+                <span>{status}</span>
+                <strong>{company.statuses[status]}</strong>
+              </article>
+            ))}
+            <article>
+              <span>Total</span>
+              <strong>{company.statuses.total}</strong>
+            </article>
+          </div>
+        )}
+      </section>
+
+      <FilterBar applied={filters} onApply={setFilters} options={filterOptions} />
 
       {ready && <section className="cp-kpis" aria-label="Team summary">
         <Kpi icon={Users} label="Total leads" value={team.current.leads} change={delta(team.current.leads, team.previous.leads)} compare={compare} />

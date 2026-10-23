@@ -488,6 +488,35 @@
   }
 }
 
+.td-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.td-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.td-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+}
+
+.td-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.td-span {
+  grid-column: 1 / -1;
+}
+
 @media (max-width: 860px) {
   .td-record {
     flex-direction: column;
@@ -496,7 +525,8 @@
 
   .td-two,
   .td-usage-grid,
-  .td-info-cols {
+  .td-info-cols,
+  .td-form-grid {
     grid-template-columns: 1fr;
   }
 

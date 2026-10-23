@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { interpretPlatformError } from "../../../../shared/api/platformErrors";
 import { TENANT_FIELD_MAP } from "../../../../shared/api/hospitalRegistration";
@@ -8,7 +8,10 @@ import Button from "../../../../shared/components/Button";
 import Input from "../../../../shared/components/Input";
 import PasswordField from "../../../../shared/components/PasswordField";
 import Select from "../../../../shared/components/Select";
-import { PLAN_NAMES, billingCycles, hospitalTypes, tenantStatuses, trialPeriods } from "../../../../shared/data/catalog";
+import { activePlanNames, catalogPrice, cyclesForPlan } from "../../../../shared/api/platformPlans";
+import { PLAN_NAMES, hospitalTypes, tenantStatuses, trialPeriods } from "../../../../shared/data/catalog";
+import { usePlatformPlans } from "../../../../shared/hooks/usePlatformPlans";
+import { formatCurrency } from "../../../../shared/utils/formatCurrency";
 import { usePlatform } from "../../../../shared/context/PlatformContext";
 import { useToast } from "../../../../shared/hooks/useToast";
 import { PLATFORM_BASE, platformPath } from "../../../../shared/paths";
@@ -64,6 +67,27 @@ export default function RegisterHospital() {
   const [submitting, setSubmitting] = useState(false);
   const signedIn = hasPlatformAccessToken();
   const isTrial = values.tenantStatus === "Trial" || values.trialPeriod !== "None";
+  const { plans, error: plansError } = usePlatformPlans();
+  const planNames = useMemo(() => {
+    const remote = activePlanNames(plans);
+    return remote.length ? remote : PLAN_NAMES;
+  }, [plans]);
+  const selectedPlan = plans.find((plan) => plan.name === values.plan);
+  const cycleOptions = cyclesForPlan(selectedPlan);
+  const listedPrice = catalogPrice(selectedPlan, values.billingCycle);
+
+  useEffect(() => {
+    if (planNames.includes(values.plan)) return;
+    setValues((current) => ({
+      ...current,
+      plan: planNames.includes("Professional") ? "Professional" : planNames[0],
+    }));
+  }, [planNames, values.plan]);
+
+  useEffect(() => {
+    if (cycleOptions.includes(values.billingCycle)) return;
+    setValues((current) => ({ ...current, billingCycle: cycleOptions[0] }));
+  }, [cycleOptions, values.billingCycle]);
 
   const setField = (key, value) => {
     setValues((current) => ({ ...current, [key]: value }));
@@ -173,10 +197,10 @@ export default function RegisterHospital() {
             <SectionHead number="3" title="Subscription configuration" />
             <div className="reg-grid reg-grid-4">
               <Select label={<Label text="Subscription Plan" />} value={values.plan} error={errors.plan} onChange={(event) => setField("plan", event.target.value)}>
-                {PLAN_NAMES.map((plan) => <option key={plan}>{plan}</option>)}
+                {planNames.map((plan) => <option key={plan}>{plan}</option>)}
               </Select>
               <Select label={<Label text="Billing Cycle" />} value={values.billingCycle} onChange={(event) => setField("billingCycle", event.target.value)}>
-                {billingCycles.map((cycle) => <option key={cycle}>{cycle}</option>)}
+                {cycleOptions.map((cycle) => <option key={cycle}>{cycle}</option>)}
               </Select>
               <Select label={<Label text="Trial Period" />} value={values.trialPeriod} onChange={(event) => setField("trialPeriod", event.target.value)}>
                 {trialPeriods.map((period) => <option key={period}>{period}</option>)}
@@ -213,7 +237,8 @@ export default function RegisterHospital() {
             </div>
             <span className="reg-plan-sub">
               {isTrial ? `Trial: ${values.trialPeriod === "None" ? "14 days" : values.trialPeriod}` : values.billingCycle}
-              . The server does not publish plan prices.
+              {listedPrice != null ? `. Catalog price ${formatCurrency(listedPrice)}.` : ". Catalog price loads with the plan list."}
+              {plansError ? ` ${plansError}` : ""}
             </span>
           </div>
         </aside>

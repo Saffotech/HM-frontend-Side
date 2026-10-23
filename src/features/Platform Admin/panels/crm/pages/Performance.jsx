@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ArrowDownRight, ArrowUpRight, Info, Target } from "lucide-react";
+import { useCrmRevenue } from "../../../shared/hooks/useCrmRevenue";
 import { formatCompactCurrency, formatCurrency } from "../../../shared/utils/formatCurrency";
 import { prepareLeads } from "../../../shared/utils/leadMetrics";
 import { formatRange, resolvePeriod } from "../../../shared/utils/periods";
@@ -33,7 +34,8 @@ function ChartTip({ active, payload, label, money = false }) {
 }
 
 export default function Performance() {
-  const { me, today, leads, hospitals, invoices, billingAvailable } = useCrm();
+  const { me, today, leads, hospitals, invoices } = useCrm();
+  const { revenue: attributed, loading: revenueLoading, error: revenueError } = useCrmRevenue();
   const [params, setParams] = useSearchParams();
   const preset = PRESETS.some(([key]) => key === params.get("period")) ? params.get("period") : "month";
   const custom = { start: params.get("from") || today, end: params.get("to") || today };
@@ -54,7 +56,7 @@ export default function Performance() {
     ["Agreed", current.cohortAgreed.length],
     ["Registered", current.cohortRegistered.length],
   ];
-  const revenueMonths = data.monthly.some((month) => month.Revenue > 0);
+  const revenueMonths = (attributed?.months || []).map((month) => ({ label: month.label, Revenue: month.amount }));
 
   return (
     <div className="crm-page crm-perf-page">
@@ -89,16 +91,12 @@ export default function Performance() {
             tone={followUps.missed ? "warn" : ""}
           />
           <Metric label="Overdue Now" value={data.overdueNow} hint="Past follow-up date" tone={data.overdueNow ? "alert" : ""} />
-          {billingAvailable && data.hasRevenueData ? (
-            <Metric label="Attributed Revenue" value={formatCurrency(data.revenue)} before={data.previousRevenue} money hint="Paid invoices" />
-          ) : (
-            <Metric
-              label="Attributed Revenue"
-              value="Unavailable"
-              hint={billingAvailable ? "No paid invoices yet" : "Platform invoices are not available from the server"}
-              tone="muted"
-            />
-          )}
+          <Metric
+            label="Attributed Revenue"
+            value={revenueLoading && !attributed ? "…" : attributed ? formatCurrency(attributed.collectedAmount) : "—"}
+            hint={revenueError || (attributed ? `${plural(attributed.collectedCount, "paid invoice")} · pending invoices are not included` : "Paid invoices for hospitals from your leads")}
+            tone={attributed?.collectedCount ? "" : "muted"}
+          />
           <Metric label="Monthly Target" icon={Target} value="Not set" hint="Not configured for you" tone="muted" />
           <Metric
             label="Open Leads"
@@ -164,12 +162,14 @@ export default function Performance() {
           ) : <p className="crm-perf-none">No follow-ups fell due in the last 6 months.</p>}
         </ChartCard>
 
-        <ChartCard title="Attributed revenue" copy="Paid invoices of hospitals from your leads, by invoice date.">
-          {!billingAvailable ? (
-            <p className="crm-perf-none">Revenue unavailable — there is no platform invoice API yet. Dummy invoices are not used.</p>
-          ) : revenueMonths ? (
+        <ChartCard title="Attributed revenue" copy="Last 6 months of paid invoices, oldest first, by invoice date. A month with no payments is zero. Pending invoices are not included.">
+          {revenueError ? (
+            <p className="crm-perf-none" role="alert">{revenueError}</p>
+          ) : revenueLoading && !attributed ? (
+            <p className="crm-perf-none">Loading paid invoices.</p>
+          ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.monthly} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+              <BarChart data={revenueMonths} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                 <CartesianGrid stroke="#e8edf3" vertical={false} />
                 <XAxis dataKey="label" tick={AXIS_TICK} axisLine={false} tickLine={false} />
                 <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} width={64} tickFormatter={formatCompactCurrency} />
@@ -177,8 +177,6 @@ export default function Performance() {
                 <Bar isAnimationActive={false} dataKey="Revenue" fill="#13877f" radius={[3, 3, 0, 0]} barSize={22} />
               </BarChart>
             </ResponsiveContainer>
-          ) : (
-            <p className="crm-perf-none">Revenue unavailable — none of your hospitals has a paid invoice in the last 6 months.</p>
           )}
         </ChartCard>
       </div>
@@ -189,7 +187,7 @@ export default function Performance() {
           {METRIC_DEFINITIONS.map(([term, text]) => (
             <div key={term}><dt>{term}</dt><dd>{text}</dd></div>
           ))}
-          <div><dt>Scope</dt><dd>Only leads currently assigned to you. Numbers are worked out in your browser from the CRM records; no history is estimated or filled in.</dd></div>
+          <div><dt>Scope</dt><dd>Lead counts use the leads assigned to you. Attributed revenue is paid invoices for hospitals registered from those leads. Pending invoices are not included.</dd></div>
         </dl>
       </details>
     </div>

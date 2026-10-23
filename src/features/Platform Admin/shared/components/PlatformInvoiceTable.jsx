@@ -1,3 +1,4 @@
+import { Link, useNavigate } from "react-router-dom";
 import { daysUntil, formatDate } from "../utils/formatDate";
 import { formatCurrency } from "../utils/formatCurrency";
 import { isUnpaid } from "../utils/invoices";
@@ -24,47 +25,82 @@ function DueCell({ invoice }) {
   );
 }
 
-const COLUMNS = ["Invoice", "Hospital", "Issued", "Due", "Amount", "Status", "Actions"];
-
-function TableMessage({ children, alert = false }) {
+function TableMessage({ columns, children, alert = false }) {
   return (
     <tr>
-      <td colSpan={COLUMNS.length}>
+      <td colSpan={columns}>
         <p className="panel-copy" role={alert ? "alert" : "status"} style={{ margin: "8px 0" }}>{children}</p>
       </td>
     </tr>
   );
 }
 
-export default function PlatformInvoiceTable({ invoices, loading, error, onPay, hospitalLink }) {
+const LIST_COLUMNS = ["Invoice", "Hospital", "Issued", "Due", "Amount", "Status", "Actions"];
+const RECORD_COLUMNS = ["Invoice", "Hospital", "Issued", "Due", "Amount", "Status", "Method", "Reference", "Paid on", "Recorded by", "Actions"];
+
+export default function PlatformInvoiceTable({ invoices, loading, error, onPay, onPrint, hospitalLink, viewPath, showRecords = false }) {
+  const navigate = useNavigate();
+  const columns = showRecords ? RECORD_COLUMNS : LIST_COLUMNS;
+
   let body;
   if (loading) {
-    body = <TableMessage>Loading invoices from the server.</TableMessage>;
+    body = <TableMessage columns={columns.length}>Loading invoices from the server.</TableMessage>;
   } else if (error) {
-    body = <TableMessage alert>{error}</TableMessage>;
+    body = <TableMessage columns={columns.length} alert>{error}</TableMessage>;
   } else if (!invoices.length) {
-    body = <TableMessage>No invoices match this view.</TableMessage>;
+    body = <TableMessage columns={columns.length}>No invoices match this view.</TableMessage>;
   } else {
-    body = invoices.map((invoice) => (
-      <tr key={invoice.id}>
-        <td className="inv-mono">{invoice.number || "—"}</td>
-        <td>
-          <div className="inv-name">{hospitalLink ? hospitalLink(invoice) : (invoice.hospitalName || "—")}</div>
-          <div className="inv-sub">{[invoice.hospitalCode, invoice.plan].filter(Boolean).join(" · ") || "—"}</div>
-        </td>
-        <td>{formatDate(invoice.invoiceDate)}</td>
-        <td><DueCell invoice={invoice} /></td>
-        <td className="inv-amount">{formatCurrency(invoice.amount)}</td>
-        <td><StatusChip status={invoice.status} /></td>
-        <td>
-          {isUnpaid(invoice) ? (
-            <button type="button" className="action-link" onClick={() => onPay(invoice)}>Record payment</button>
-          ) : (
-            <span className="inv-sub">{invoice.paidAt ? `Paid ${formatDate(invoice.paidAt)}` : "—"}</span>
+    body = invoices.map((invoice) => {
+      const href = viewPath ? viewPath(invoice) : "";
+      const openHospital = () => {
+        if (href) navigate(href);
+      };
+      return (
+        <tr
+          key={invoice.id}
+          className={href ? "inv-row-link" : undefined}
+          onClick={href ? openHospital : undefined}
+        >
+          <td className="inv-mono">{invoice.number || "—"}</td>
+          <td>
+            <div className="inv-name">{hospitalLink ? hospitalLink(invoice) : (invoice.hospitalName || "—")}</div>
+            <div className="inv-sub">{[invoice.hospitalCode, invoice.plan].filter(Boolean).join(" · ") || "—"}</div>
+          </td>
+          <td>{formatDate(invoice.invoiceDate)}</td>
+          <td><DueCell invoice={invoice} /></td>
+          <td className="inv-amount">{formatCurrency(invoice.amount)}</td>
+          <td><StatusChip status={invoice.status} /></td>
+          {showRecords && (
+            <>
+              <td>{invoice.method || "—"}</td>
+              <td>
+                {invoice.method === "UPI" ? <span className="inv-sub">UPI ID</span> : null}
+                {invoice.reference || "—"}
+              </td>
+              <td>{invoice.paidAt ? formatDate(invoice.paidAt) : "—"}</td>
+              <td>{invoice.recordedByName || "—"}</td>
+            </>
           )}
-        </td>
-      </tr>
-    ));
+          <td onClick={(event) => event.stopPropagation()}>
+            <div className="inv-actions">
+              {onPrint && (
+                <button type="button" className="action-link" onClick={() => onPrint(invoice)}>Print</button>
+              )}
+              {href ? (
+                <Link to={href} className="action-link">View</Link>
+              ) : isUnpaid(invoice) && onPay ? (
+                <button type="button" className="action-link strong" onClick={() => onPay(invoice)}>Record payment</button>
+              ) : !onPrint ? (
+                <span className="inv-sub">{invoice.paidAt ? `Paid ${formatDate(invoice.paidAt)}` : "—"}</span>
+              ) : null}
+            </div>
+            {onPrint && !href && !isUnpaid(invoice) && (
+              <span className="inv-sub">{invoice.paidAt ? `Paid ${formatDate(invoice.paidAt)}` : "Paid"}</span>
+            )}
+          </td>
+        </tr>
+      );
+    });
   }
 
   return (
@@ -72,7 +108,7 @@ export default function PlatformInvoiceTable({ invoices, loading, error, onPay, 
       <table className="data-table">
         <thead>
           <tr>
-            {COLUMNS.map((label) => <th key={label}>{label}</th>)}
+            {columns.map((label) => <th key={label}>{label}</th>)}
           </tr>
         </thead>
         <tbody>{body}</tbody>
