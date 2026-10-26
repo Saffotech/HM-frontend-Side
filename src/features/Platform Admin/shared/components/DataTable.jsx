@@ -14,6 +14,7 @@ export default function DataTable({
   selected = [],
   onToggle,
   onToggleAll,
+  onRowClick,
 }) {
   return (
     <div className="table-wrap">
@@ -49,7 +50,21 @@ export default function DataTable({
               </td>
             </tr>
           ) : rows.map((row) => (
-            <tr key={row[rowKey]}>
+            <tr
+              key={row[rowKey]}
+              className={onRowClick ? "data-table-row-link" : undefined}
+              tabIndex={onRowClick ? 0 : undefined}
+              role={onRowClick ? "link" : undefined}
+              onClick={onRowClick ? (event) => {
+                if (event.target.closest("button, a, input, select, textarea")) return;
+                onRowClick(row);
+              } : undefined}
+              onKeyDown={onRowClick ? (event) => {
+                if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+                event.preventDefault();
+                onRowClick(row);
+              } : undefined}
+            >
               {selectable && (
                 <td>
                   <input

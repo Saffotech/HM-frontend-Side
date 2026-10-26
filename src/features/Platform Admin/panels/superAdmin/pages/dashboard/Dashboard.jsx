@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Building2, CalendarPlus, CreditCard, IndianRupee, Users } from "lucide-react";
+import { Building2, CalendarPlus, IndianRupee, Users } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../../../../shared/components/Button";
 import EmptyState from "../../../../shared/components/EmptyState";
@@ -20,8 +20,7 @@ const CARDS = [
   { key: "hospitals", label: "Hospitals", hint: "Registered on the server", icon: Building2 },
   { key: "registrations", label: "New Registration", hint: "Registered this month", icon: CalendarPlus },
   { key: "subscriptions", label: "Subscription", hint: "Active subscriptions", icon: Users },
-  { key: "invoices", label: "Invoice", hint: "All subscription invoices", icon: CreditCard },
-  { key: "revenue", label: "Revenue", hint: "Collected, paid invoices", icon: IndianRupee },
+  { key: "revenue", label: "Revenue", hint: "Collected hospital payments", icon: IndianRupee },
 ];
 
 function statusClass(status) {
@@ -34,6 +33,16 @@ function statusClass(status) {
 
 function hospitalName(hospital) {
   return <Link to={`${PLATFORM_BASE}/hospitals/${hospital.tenant_id}`}>{hospital.name || "Hospital"}</Link>;
+}
+
+function paymentHospital(payment) {
+  const name = payment.hospitalName || "Hospital";
+  if (payment.tenantId == null) return name;
+  return <Link to={`${PLATFORM_BASE}/hospitals/${payment.tenantId}`}>{name}</Link>;
+}
+
+function paidAmount(payment) {
+  return payment.paymentAmount == null ? payment.amount : payment.paymentAmount;
 }
 
 function DashboardChartState({ title, loading, error, empty, emptyTitle, emptyMessage, children }) {
@@ -107,25 +116,12 @@ function DashboardRows({ type, rows, onOpenHospital }) {
     ));
   }
 
-  if (type === "revenue") {
-    return rows.map((invoice) => (
-      <tr key={invoice.id}>
-        <td>{invoice.number || "—"}</td>
-        <td>{invoice.hospitalName || "Hospital"}</td>
-        <td>{formatDate(invoice.paidAt)}</td>
-        <td>{formatCurrency(invoice.paymentAmount ?? invoice.amount)}</td>
-        <td>{invoice.method || "—"}</td>
-      </tr>
-    ));
-  }
-
-  return rows.map((invoice) => (
-    <tr key={invoice.id}>
-      <td>{invoice.number || "—"}</td>
-      <td>{invoice.hospitalName || "Hospital"}</td>
-      <td>{formatDate(invoice.dueDate)}</td>
-      <td>{formatCurrency(invoice.amount)}</td>
-      <td><span className={statusClass(invoice.status)}>{invoice.status || "—"}</span></td>
+  return rows.map((payment) => (
+    <tr key={payment.id}>
+      <td>{paymentHospital(payment)}</td>
+      <td>{payment.plan || "—"}</td>
+      <td>{formatDate(payment.paidAt)}</td>
+      <td>{formatCurrency(paidAmount(payment))}</td>
     </tr>
   ));
 }
@@ -167,11 +163,16 @@ export default function Dashboard() {
   const growth = useMemo(() => registrationGrowth(hospitals, { now }), [hospitals, now]);
   const plans = useMemo(() => planSlices(hospitals), [hospitals]);
 
+  const payments = useMemo(
+    () => (revenue?.invoices || []).filter((row) => row.bucket === "collected"),
+    [revenue],
+  );
+
   const metric = (key) => {
-    if (key === "invoices" || key === "revenue") {
+    if (key === "revenue") {
       if (revenueLoading && !revenue) return "…";
       if (!revenue) return "—";
-      return key === "invoices" ? revenue.invoiceCount : formatCurrency(revenue.collectedAmount);
+      return formatCurrency(revenue.collectedAmount);
     }
     if (hospitalsBusy) return "…";
     if (hospitalError) return "—";
@@ -188,6 +189,8 @@ export default function Dashboard() {
       rows: hospitals,
       loading: hospitalsBusy,
       error: hospitalError,
+      refreshing: refreshing || hospitalsLoading,
+      refresh: reload,
     };
     if (selected === "registrations") return {
       title: "New Registration",
@@ -196,6 +199,8 @@ export default function Dashboard() {
       rows: registrations,
       loading: hospitalsBusy,
       error: hospitalError,
+      refreshing: refreshing || hospitalsLoading,
+      refresh: reload,
     };
     if (selected === "subscriptions") return {
       title: "Active Subscriptions",
@@ -204,24 +209,20 @@ export default function Dashboard() {
       rows: subscriptions,
       loading: hospitalsBusy,
       error: hospitalError,
+      refreshing: refreshing || hospitalsLoading,
+      refresh: reload,
     };
-    if (selected === "revenue" || selected === "invoices") return {
-      title: selected === "revenue" ? "Collected revenue" : "Subscription invoices",
-      description: "Company-wide subscription invoices. Failed invoices are counted and are not included in the amounts.",
-      headers: ["Status", "Count", "Amount"],
-      rows: revenue ? [
-        { id: "collected", label: "Collected", count: revenue.collectedCount, amount: formatCurrency(revenue.collectedAmount) },
-        { id: "pending", label: "Pending", count: revenue.pendingCount, amount: formatCurrency(revenue.pendingAmount) },
-        { id: "overdue", label: "Overdue", count: revenue.overdueCount, amount: formatCurrency(revenue.overdueAmount) },
-        { id: "outstanding", label: "Outstanding", count: "—", amount: formatCurrency(revenue.outstandingAmount) },
-        { id: "failed", label: "Failed", count: revenue.failedCount, amount: "Not included" },
-      ] : [],
+    return {
+      title: "Hospital payments",
+      // description: "Each collected payment, listed by hospital. Pending and failed invoices are not included.",
+      headers: ["Hospital", "Plan", "Paid on", "Amount"],
+      rows: payments,
       loading: revenueLoading && !revenue,
       error: revenueError,
-      summary: true,
+      refreshing: revenueLoading,
+      refresh: reloadRevenue,
     };
-    return null;
-  }, [hospitalError, hospitals, hospitalsBusy, registrations, revenue, revenueError, revenueLoading, selected, subscriptions]);
+  }, [hospitalError, hospitals, hospitalsBusy, hospitalsLoading, payments, refreshing, registrations, reload, reloadRevenue, revenue, revenueError, revenueLoading, selected, subscriptions]);
 
   return (
     <section className="dash-page">
@@ -257,7 +258,7 @@ export default function Dashboard() {
             <p className="panel-copy">{table.description}</p>
           </div>
           <div className="dash-table-actions">
-            {updatedAt && !table.summary && (
+            {updatedAt && selected !== "revenue" && (
               <time className="dash-updated" dateTime={new Date(updatedAt).toISOString()}>
                 Updated {formatDateTime(updatedAt)}
               </time>
@@ -265,10 +266,10 @@ export default function Dashboard() {
             <Button
               variant="secondary"
               size="sm"
-              disabled={table.summary ? revenueLoading : (refreshing || hospitalsLoading)}
-              onClick={table.summary ? reloadRevenue : reload}
+              disabled={table.refreshing}
+              onClick={table.refresh}
             >
-              {(table.summary ? revenueLoading : refreshing || hospitalsLoading) ? "Refreshing…" : "Refresh"}
+              {table.refreshing ? "Refreshing…" : "Refresh"}
             </Button>
             <span className="dash-result-count">
               {table.loading ? "Loading" : table.error ? "Unavailable" : `${table.rows.length} records`}
@@ -286,19 +287,11 @@ export default function Dashboard() {
               ) : table.rows.length === 0 ? (
                 <tr><td colSpan={table.headers.length}><p className="dash-empty">No {table.title.toLowerCase()} to show.</p></td></tr>
               ) : (
-                table.summary ? table.rows.map((row) => (
-                  <tr key={row.id}>
-                    <td>{row.label}</td>
-                    <td>{row.count}</td>
-                    <td>{row.amount}</td>
-                  </tr>
-                )) : (
-                  <DashboardRows
-                    type={selected}
-                    rows={table.rows}
-                    onOpenHospital={(hospital) => navigate(`${PLATFORM_BASE}/hospitals/${hospital.tenant_id}`)}
-                  />
-                )
+                <DashboardRows
+                  type={selected}
+                  rows={table.rows}
+                  onOpenHospital={(hospital) => navigate(`${PLATFORM_BASE}/hospitals/${hospital.tenant_id}`)}
+                />
               )}
             </tbody>
           </table>

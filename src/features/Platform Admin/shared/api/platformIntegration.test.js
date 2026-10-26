@@ -10,6 +10,7 @@ import {
   platformPasswordBody,
   platformPasswordIssue,
   platformPhotoIssue,
+  profileFieldErrors,
   profileUpdateBody,
 } from "./platformProfileModel.js";
 import { createPlatformAuthStore } from "./platformSession.js";
@@ -151,8 +152,13 @@ describe("platform admin profile payload", () => {
       current_password: "Oldpass1",
       new_password: "Secret123",
     });
+    assert.equal("confirm_password" in platformPasswordBody("Oldpass1", "Secret123"), false);
     assert.equal(platformPasswordIssue("Secret123", "Secret123").new_password.includes("different"), true);
     assert.ok(platformPasswordIssue("Secret123", "short").new_password);
+    assert.equal(platformPasswordIssue("Secret123", "Newpass1").confirm_password, undefined);
+    assert.match(platformPasswordIssue("Secret123", "Newpass1", "Newpass2").confirm_password, /match/);
+    assert.match(profileFieldErrors({ jobTitle: "x".repeat(121) }).jobTitle, /120/);
+    assert.deepEqual(profileFieldErrors({ phone: "9876543210", jobTitle: "Director" }), {});
     assert.equal(platformPhotoIssue({ name: "face.gif", type: "image/gif", size: 100 }).includes("JPG"), true);
     assert.equal(platformPhotoIssue({ name: "face.png", type: "image/png", size: 5 * 1024 * 1024 + 1 }).includes("5 MB"), true);
     assert.equal(platformPhotoIssue({ name: "face.jpg", type: "image/jpeg", size: 1024 }), "");
@@ -243,6 +249,7 @@ describe("platform admin screens use the platform routes", () => {
     const plans = readSrc("./platformPlans.js");
     const revenue = readSrc("./platformRevenue.js");
     const analytics = readSrc("./platformCrmAnalytics.js");
+    const performance = readSrc("./platformCrmPerformance.js");
     const leads = readSrc("../../panels/superAdmin/pages/tenants/crmPerformance/useCrmPerformance.js");
 
     assert.match(profilePage, /getPlatformAdminProfile/);
@@ -259,8 +266,10 @@ describe("platform admin screens use the platform routes", () => {
     assert.match(plans, /\/platform\/plans/);
     assert.match(revenue, /\/platform\/revenue/);
     assert.match(analytics, /\/platform\/crm\/analytics/);
-    assert.match(leads, /listLeads/);
-    assert.doesNotMatch(leads, /getCrmAnalytics/);
+    assert.match(performance, /platformApi\("\/platform\/crm\/performance"\)/);
+    assert.match(leads, /getCrmPerformance/);
+    assert.match(leads, /listTenants/);
+    assert.doesNotMatch(leads, /listLeads|getCrmAnalytics|\/platform\/invoices|\/platform\/revenue/);
   });
 
   it("leaves the multipart content type unset so the browser can set the boundary", async () => {
@@ -281,5 +290,39 @@ describe("platform admin screens use the platform routes", () => {
     assert.equal(calls[0].options.headers["Content-Type"], undefined);
     assert.equal(calls[0].options.headers.Authorization, "Bearer token-1");
     assert.equal(calls[0].options.body, form);
+  });
+});
+
+describe("accountant profile uses the platform account routes", () => {
+  it("connects the accountant page to its own profile service", () => {
+    const api = readSrc("../services/portalAccount.js");
+    const page = readSrc("../../panels/accountant/pages/Profile.jsx");
+    const view = readSrc("../portal/profile/PortalProfile.jsx");
+    const password = readSrc("../portal/profile/ChangePasswordCard.jsx");
+    const editor = readSrc("../portal/profile/EditProfileDialog.jsx");
+    assert.match(api, /platformApi\("\/platform\/account\/profile"/);
+    assert.match(api, /method: "PATCH"/);
+    assert.match(api, /platformApi\("\/platform\/account\/password"/);
+    assert.match(api, /platformApi\("\/platform\/account\/profile\/photo"/);
+    assert.match(api, /method: "DELETE"/);
+    assert.match(api, /formData.append\("file", file\)/);
+    assert.match(api, /invalidPasswordKeepsSession: true/);
+    assert.match(api, /platformPasswordBody/);
+    assert.doesNotMatch(api, /NOT_CONNECTED/);
+    assert.doesNotMatch(api, /\/crm\/account\/profile|\/platform\/admin\/profile/);
+    assert.match(page, /getAccountantProfile/);
+    assert.match(page, /updateAccountantProfile/);
+    assert.match(page, /changePortalPassword/);
+    assert.match(page, /uploadProfilePhoto/);
+    assert.match(page, /removeProfilePhoto/);
+    assert.doesNotMatch(page, /\/crm\/account\/profile|\/platform\/admin\/profile/);
+    assert.doesNotMatch(view, /\/platform\/account\/profile|\/crm\/account\/profile|\/platform\/admin\/profile/);
+    assert.doesNotMatch(view, /not available/i);
+    assert.doesNotMatch(editor, /not available|NOT_CONNECTED/i);
+    assert.doesNotMatch(password, /changePortalPassword|\/platform\/account\/password/);
+    assert.match(view, /Edit profile/);
+    assert.match(view, /ChangePasswordCard/);
+    assert.match(view, /Remove photo/);
+    assert.match(password, /Confirm new password/);
   });
 });

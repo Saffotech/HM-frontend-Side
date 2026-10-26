@@ -1,7 +1,14 @@
 /**
- * Portal account mutations. Identity is GET /auth/me.
- * There is no platform profile PATCH, photo, or change-password route.
+ * Accountant account calls. Identity also comes from GET /auth/me.
+ * These routes are accountant-only. Other panels keep their own profile services.
  */
+import { API_BASE_URL } from "@/shared/constants";
+import { platformApi } from "../api/platformClient.js";
+import {
+  mapPlatformAdminProfile,
+  platformPasswordBody,
+  platformPhotoIssue,
+} from "../api/platformProfileModel.js";
 
 /**
  * @typedef {object} PortalProfileResponse
@@ -11,16 +18,12 @@
  * @property {string} role
  * @property {string} phone
  * @property {string} jobTitle
- * @property {string} department
- * @property {string} photoUrl      Served by the photo service; empty when none is set.
- * @property {string} [createdAt]   ISO date.
- * @property {"Active"|"Suspended"} [status]
- * @property {string} [lastSignInAt] ISO date.
+ * @property {string} photoUrl
+ * @property {string} [createdAt]
+ * @property {boolean|null} [isActive]
  */
 
-/** @typedef {{ photoUrl: string }} PhotoUploadResponse */
-
-/** @typedef {"NOT_CONNECTED"|"INVALID_FILE"|"UNAUTHORIZED"} PortalAccountErrorCode */
+/** @typedef {"INVALID_FILE"|"UNAUTHORIZED"} PortalAccountErrorCode */
 
 export class PortalAccountError extends Error {
   /** @param {PortalAccountErrorCode} code */
@@ -31,39 +34,57 @@ export class PortalAccountError extends Error {
 }
 
 export const PROFILE_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_PROFILE_PHOTO_BYTES = 2 * 1024 * 1024;
 
 /** @returns {string} Why the file can't be a profile photo, or "" when it can. */
 export function profilePhotoIssue(file) {
-  if (!PROFILE_PHOTO_TYPES.includes(file.type)) return "Choose a JPEG, PNG or WebP image.";
-  if (file.size > MAX_PROFILE_PHOTO_BYTES) return "Choose an image smaller than 2 MB.";
-  return "";
+  return platformPhotoIssue(file);
 }
 
-// eslint-disable-next-line no-unused-vars
-export async function changePortalPassword({ currentPassword, newPassword }) {
-  throw new PortalAccountError(
-    "NOT_CONNECTED",
-    "Your password has not been changed. Password changes need the account service, which isn't connected to this portal yet.",
-  );
+export function resolveAccountantImageUrl(url) {
+  if (!url) return "";
+  if (/^(https?:|blob:)/i.test(url)) return url;
+  const base = API_BASE_URL || (import.meta.env.DEV ? "http://127.0.0.1:8000" : "");
+  return `${base}${String(url).startsWith("/") ? url : `/${url}`}`;
+}
+
+export function mapAccountantProfile(body) {
+  return mapPlatformAdminProfile(body, resolveAccountantImageUrl);
+}
+
+export function getAccountantProfile() {
+  return platformApi("/platform/account/profile");
+}
+
+export function updateAccountantProfile(body) {
+  return platformApi("/platform/account/profile", {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export function changePortalPassword(currentPassword, newPassword) {
+  return platformApi("/platform/account/password", {
+    method: "POST",
+    invalidPasswordKeepsSession: true,
+    body: JSON.stringify(platformPasswordBody(currentPassword, newPassword)),
+  });
 }
 
 /**
  * @param {File} file
- * @returns {Promise<PhotoUploadResponse>}
+ * @returns {Promise<object>}
  */
-// eslint-disable-next-line no-unused-vars
-export async function uploadProfilePhoto(file) {
-  throw new PortalAccountError(
-    "NOT_CONNECTED",
-    "Photo uploads need the profile photo service, which isn't connected to this portal yet.",
-  );
+export function uploadProfilePhoto(file) {
+  const issue = profilePhotoIssue(file);
+  if (issue) return Promise.reject(new PortalAccountError("INVALID_FILE", issue));
+  const formData = new FormData();
+  formData.append("file", file);
+  return platformApi("/platform/account/profile/photo", {
+    method: "POST",
+    body: formData,
+  });
 }
 
-/** @returns {Promise<void>} */
-export async function removeProfilePhoto() {
-  throw new PortalAccountError(
-    "NOT_CONNECTED",
-    "Removing a photo needs the profile photo service, which isn't connected to this portal yet.",
-  );
+export function removeProfilePhoto() {
+  return platformApi("/platform/account/profile/photo", { method: "DELETE" });
 }

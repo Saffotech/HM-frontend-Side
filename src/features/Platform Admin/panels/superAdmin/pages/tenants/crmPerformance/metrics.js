@@ -38,7 +38,7 @@
  *   5. Hospitals registered without a lead (older tenants) have no CRM owner and are not attributed to anyone.
  *   6. "Lead created by" only exists for leads added in the CRM panel; website/phone leads have no creator.
  */
-import { prepareLeads } from "../../../../../shared/utils/leadMetrics";
+import { paidAmount, prepareLeads } from "../../../../../shared/utils/leadMetrics";
 import { inRange, localDay, trailingMonths } from "../../../../../shared/utils/periods";
 
 /**
@@ -122,6 +122,50 @@ function matchesFilters(lead, filters) {
     && (filters.status === "all" || lead.status === filters.status)
     && (filters.plan === "all" || lead.plan === filters.plan)
     && (filters.source === "all" || lead.source === filters.source);
+}
+
+const CARD_STATUSES = ["New", "Contacted", "Agreed", "Registered", "Not Interested"];
+
+/** Date, employee, plan, and source only. The status filter highlights a card and does not drop the others. */
+function matchesCardScope(lead, filters) {
+  return (filters.employee === "all" || lead.owner === filters.employee)
+    && (filters.plan === "all" || lead.plan === filters.plan)
+    && (filters.source === "all" || lead.source === filters.source);
+}
+
+function uniquePaidRevenue(leads) {
+  const seen = new Set();
+  return leads.reduce((total, lead) => (lead.paidInvoices || []).reduce((sum, invoice) => {
+    if (!invoice || invoice.status !== "Paid" || seen.has(invoice)) return sum;
+    seen.add(invoice);
+    return sum + paidAmount(invoice);
+  }, total), 0);
+}
+
+/** Current lead status for the summary cards. Contacted here is the status, not a logged call. */
+function performanceCards(leads) {
+  const counts = Object.fromEntries(CARD_STATUSES.map((status) => [status, 0]));
+  const counted = [];
+  leads.forEach((lead) => {
+    if (!Object.prototype.hasOwnProperty.call(counts, lead.status)) return;
+    counts[lead.status] += 1;
+    counted.push(lead);
+  });
+  const total = CARD_STATUSES.reduce((sum, status) => sum + counts[status], 0);
+  const registered = counts.Registered;
+  const revenue = uniquePaidRevenue(counted.filter((lead) => lead.status === "Registered"));
+  return {
+    leads: total,
+    contacted: counts.Contacted,
+    agreed: counts.Agreed,
+    registered,
+    notInterested: counts["Not Interested"],
+    conversionRate: ratio(registered, total),
+    revenue,
+    avgRevenue: registered ? revenue / registered : 0,
+    overdue: counted.filter((lead) => lead.overdueNow).length,
+    total,
+  };
 }
 
 function employeeRow(name, scoped, range, today, activityLog, roleFor) {
@@ -223,6 +267,7 @@ export function buildCrmPerformance({ onboarding, hospitals, invoices, crmUsers,
 
   const cohort = scoped.filter((lead) => inRange(lead.day, period));
   const previousCohort = scoped.filter((lead) => inRange(lead.day, period.previous));
+  const cardLeads = prepared.filter((lead) => matchesCardScope(lead, filters) && inRange(lead.day, period));
   const activeIn = (range) => names.filter((name) => activityLog.some((entry) => entry.by === name && inRange(entry.day, range))).length;
   const ranked = employees.filter((row) => row.rank);
   const pickBest = (pick) => ranked.reduce((best, row) => (!best || pick(row) > pick(best) ? row : best), null);
@@ -242,6 +287,7 @@ export function buildCrmPerformance({ onboarding, hospitals, invoices, crmUsers,
 
   return {
     period,
+    summary: performanceCards(cardLeads),
     team: {
       current: { ...team, activeEmployees: activeIn(period) },
       previous: { ...summarize(previousCohort), activeEmployees: activeIn(period.previous) },

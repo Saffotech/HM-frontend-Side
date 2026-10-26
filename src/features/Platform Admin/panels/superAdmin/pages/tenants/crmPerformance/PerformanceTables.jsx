@@ -1,4 +1,5 @@
 import { Trophy } from "lucide-react";
+import { useState } from "react";
 import { formatCurrency } from "../../../../../shared/utils/formatCurrency";
 import { formatRate, ratio } from "./metrics";
 
@@ -74,25 +75,36 @@ export function Leaderboard({ employees, onOpen }) {
   );
 }
 
-export function FollowUpTable({ employees, onOpen }) {
-  const totals = employees.reduce((sum, row) => ({
+export function FollowUpTable({ employees }) {
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [selectedMetric, setSelectedMetric] = useState(null);
+  const metricMatches = (row) => {
+    if (selectedMetric === "due") return row.follow.due > 0;
+    if (selectedMetric === "completed") return row.follow.completed > 0;
+    if (selectedMetric === "missed") return row.follow.overdue > 0;
+    if (selectedMetric === "completion") return row.follow.due > 0;
+    return true;
+  };
+  const visibleEmployees = employees
+    .filter((row) => !selectedEmployee || row.name === selectedEmployee)
+    .filter(metricMatches);
+  const totals = visibleEmployees.reduce((sum, row) => ({
     due: sum.due + row.follow.due,
     completed: sum.completed + row.follow.completed,
     overdue: sum.overdue + row.follow.overdue,
   }), { due: 0, completed: 0, overdue: 0 });
   return (
-    <section className="cp-card cp-follow">
+    <section className={`cp-card cp-follow${selectedEmployee || selectedMetric ? " is-filtered" : ""}`}>
       <header className="cp-card-head">
         <div>
           <h2>Follow-up discipline</h2>
-          <p>Follow-ups that fell due in this period, and whether the employee acted on them.</p>
         </div>
       </header>
       <div className="cp-mini-stats">
-        <MiniStat label="Follow-ups due" value={totals.due} />
-        <MiniStat label="Completed" value={totals.completed} />
-        <MiniStat label="Missed" value={totals.overdue} tone={totals.overdue ? "late" : ""} />
-        <MiniStat label="Completion rate" value={totals.due ? formatRate(ratio(totals.completed, totals.due)) : "—"} />
+        <MiniStat label="Follow-ups due" value={totals.due} selected={selectedMetric === "due"} onClick={() => setSelectedMetric((current) => current === "due" ? null : "due")} />
+        <MiniStat label="Completed" value={totals.completed} selected={selectedMetric === "completed"} onClick={() => setSelectedMetric((current) => current === "completed" ? null : "completed")} />
+        <MiniStat label="Missed" value={totals.overdue} tone={totals.overdue ? "late" : ""} selected={selectedMetric === "missed"} onClick={() => setSelectedMetric((current) => current === "missed" ? null : "missed")} />
+        <MiniStat label="Completion rate" value={totals.due ? formatRate(ratio(totals.completed, totals.due)) : "—"} selected={selectedMetric === "completion"} onClick={() => setSelectedMetric((current) => current === "completion" ? null : "completion")} />
       </div>
       <div className="cp-table-scroll">
         <table className="cp-table cp-table-compact">
@@ -107,9 +119,24 @@ export function FollowUpTable({ employees, onOpen }) {
             </tr>
           </thead>
           <tbody>
-            {employees.map((row) => (
-              <tr key={row.name} onClick={() => onOpen(row.name)}>
-                <td><button type="button" className="cp-link" onClick={(event) => { event.stopPropagation(); onOpen(row.name); }}>{row.name}</button></td>
+            {visibleEmployees.length === 0 ? (
+              <tr><td colSpan={6} className="cp-empty">No employees available.</td></tr>
+            ) : visibleEmployees.map((row) => (
+              <tr
+                key={row.name}
+                className={selectedEmployee === row.name ? "cp-follow-selected" : ""}
+                tabIndex={0}
+                role="button"
+                aria-pressed={selectedEmployee === row.name}
+                onClick={() => setSelectedEmployee((current) => current === row.name ? null : row.name)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setSelectedEmployee((current) => current === row.name ? null : row.name);
+                  }
+                }}
+              >
+                <td><span className="cp-link">{row.name}</span></td>
                 <td className="num">{row.follow.due}</td>
                 <td className="num">{row.follow.completed}</td>
                 <td className={`num ${row.follow.overdue ? "cp-late" : ""}`}>{row.follow.overdue}</td>
@@ -124,12 +151,12 @@ export function FollowUpTable({ employees, onOpen }) {
   );
 }
 
-export function MiniStat({ label, value, tone = "" }) {
+export function MiniStat({ label, value, tone = "", selected = false, onClick }) {
   return (
-    <div className={`cp-mini ${tone}`}>
+    <button type="button" className={`cp-mini${tone ? ` ${tone}` : ""}${selected ? " is-selected" : ""}`} aria-pressed={selected} onClick={onClick}>
       <span>{label}</span>
       <strong>{value}</strong>
-    </div>
+    </button>
   );
 }
 

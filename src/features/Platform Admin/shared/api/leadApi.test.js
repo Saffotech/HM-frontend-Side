@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
+import { parseCrmPerformance } from "./platformCrmPerformanceModel.js";
 import { executePlatformRequest } from "./platformHttp.js";
 import { createPlatformAuthStore } from "./platformSession.js";
 import {
@@ -151,6 +152,32 @@ describe("CRM lead ids and mapping", () => {
     assert.doesNotMatch(String(mapped.hospitalId), /TNT-/);
   });
 
+  it("uses assignee_name and actor_name when the performance report sends them", () => {
+    const mapped = mapLead({
+      id: 8,
+      assigned_to: 5,
+      assignee_name: "Meera Iyer",
+      activities: [{
+        id: 1,
+        at: "2026-10-02T01:00:00",
+        actor_id: 5,
+        actor_name: "Meera Iyer",
+        method: "Lead created",
+        note: "",
+      }],
+    }, { userId: 1, name: "Platform Admin" });
+    assert.equal(mapped.assignedTo, "Meera Iyer");
+    assert.equal(mapped.activity[0].by, "Meera Iyer");
+
+    const crmLead = mapLead({
+      id: 9,
+      assigned_to: 9,
+      activities: [{ id: 2, actor_id: 9, actor_name: "Asha Rao", method: "Phone call", note: "" }],
+    }, { userId: 5, name: "Meera" });
+    assert.equal(crmLead.assignedTo, "");
+    assert.equal(crmLead.activity[0].by, "Asha Rao");
+  });
+
   it("counts a LeadSummary list and does not turn a bad payload into zero", () => {
     const session = { userId: 5, name: "Meera" };
     const leads = [
@@ -238,11 +265,73 @@ describe("CRM screens use the lead API instead of seed data", () => {
     const performanceHook = readSrc("../../panels/superAdmin/pages/tenants/crmPerformance/useCrmPerformance.js");
     const performancePage = readSrc("../../panels/superAdmin/pages/tenants/crmPerformance/CrmPerformance.jsx");
     assert.doesNotMatch(adminDashboard, /listLeads|countLeadList/);
-    assert.match(performanceHook, /parseLeadList/);
+    assert.match(performanceHook, /getCrmPerformance/);
+    assert.match(performanceHook, /listTenants/);
+    assert.match(performanceHook, /crmUsers/);
+    assert.doesNotMatch(performanceHook, /listLeads|parseLeadList|getCrmAnalytics|invoices:\s*\[\]|crmUsers:\s*\[\]/);
     assert.match(performanceHook, /leadStatus/);
     assert.match(performanceHook, /retryLeads/);
     assert.doesNotMatch(performanceHook, /body\?\.items/);
     assert.match(performancePage, /Try again/);
     assert.match(performancePage, /leadStatus === "ready"/);
+  });
+});
+
+describe("platform CRM performance mapping", () => {
+  it("maps owners, activities, employees, and paid invoices onto the performance input", () => {
+    const parsed = parseCrmPerformance({
+      employees: [
+        { id: 5, name: "Meera Iyer" },
+        { id: 6, name: "Asha Rao" },
+        { id: 7, name: " " },
+      ],
+      leads: [{
+        id: 8,
+        hospital_name: "City Care",
+        hospital_type: "General",
+        city: "Pune",
+        status: "Registered",
+        source: "Call",
+        plan: "Starter",
+        assigned_to: 5,
+        assignee_name: "Meera Iyer",
+        hospital_id: 12,
+        created_at: "2026-10-02T00:00:00",
+        registered_at: "2026-10-03T00:00:00",
+        activities: [{
+          id: 1,
+          at: "2026-10-02T01:00:00",
+          actor_id: 5,
+          actor_name: "Meera Iyer",
+          method: "Lead created",
+          note: "",
+        }],
+      }],
+      paid_invoices: [
+        { tenant_id: 12, amount: 4999, payment_amount: 4999, invoice_date: "2026-10-01", status: "Paid" },
+        { tenant_id: 12, amount: 100, payment_amount: 100, invoice_date: "2026-02-01", status: "Pending" },
+      ],
+    }, { userId: 1, name: "Platform Admin" });
+
+    assert.equal(parsed.ok, true);
+    assert.equal(parsed.onboarding[0].assignedTo, "Meera Iyer");
+    assert.equal(parsed.onboarding[0].activity[0].by, "Meera Iyer");
+    assert.deepEqual(parsed.crmUsers.map((user) => user.name), ["Meera Iyer", "Asha Rao"]);
+    assert.equal(parsed.crmUsers[0].portal, "crm");
+    assert.equal(parsed.crmUsers[0].role, "CRM");
+    assert.equal(parsed.invoices.length, 1);
+    assert.equal(parsed.invoices[0].tenantId, 12);
+    assert.equal(parsed.invoices[0].status, "Paid");
+    assert.equal(parsed.invoices[0].amount, 4999);
+    assert.equal(parsed.invoices[0].paymentAmount, 4999);
+    assert.equal(parsed.invoices[0].invoiceDate, "2026-10-01");
+    assert.equal(parsed.onboarding[0].hospitalId, parsed.invoices[0].tenantId);
+  });
+
+  it("rejects a performance payload that is not the three lists", () => {
+    const parsed = parseCrmPerformance({ leads: [] }, { userId: 1, name: "Platform Admin" });
+    assert.equal(parsed.ok, false);
+    assert.deepEqual(parsed.onboarding, []);
+    assert.deepEqual(parsed.invoices, []);
   });
 });

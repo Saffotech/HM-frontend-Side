@@ -1,9 +1,21 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
+import {
+  canRestoreFocus,
+  focusableElements,
+  isTopModal,
+  lockPageScroll,
+  nextFocusTarget,
+  popModal,
+  pushModal,
+} from "./modalFocus";
 import "./Modal.css";
 
 export default function Modal({ open, title, subtitle, onClose, children, footer, size = "md" }) {
   const dialogRef = useRef(null);
   const onCloseRef = useRef(onClose);
+  const restoreRef = useRef(null);
+  const titleId = useId();
+  const modalId = useId();
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -11,18 +23,40 @@ export default function Modal({ open, title, subtitle, onClose, children, footer
 
   useEffect(() => {
     if (!open) return undefined;
-    const onKey = (event) => {
-      if (event.key === "Escape") onCloseRef.current();
-    };
-    document.addEventListener("keydown", onKey);
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    restoreRef.current = typeof document !== "undefined" ? document.activeElement : null;
+    pushModal(modalId);
+    const releaseScroll = lockPageScroll(document.body);
     dialogRef.current?.focus();
+
+    const onKey = (event) => {
+      if (!isTopModal(modalId)) return;
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        onCloseRef.current?.();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const root = dialogRef.current;
+      if (!root) return;
+      event.preventDefault();
+      const items = focusableElements(root);
+      if (!items.length) {
+        root.focus();
+        return;
+      }
+      nextFocusTarget(items, document.activeElement, event.shiftKey)?.focus();
+    };
+
+    document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = previous;
+      popModal(modalId);
+      releaseScroll();
+      const previous = restoreRef.current;
+      restoreRef.current = null;
+      if (canRestoreFocus(previous)) previous.focus();
     };
-  }, [open]);
+  }, [open, modalId]);
 
   if (!open) return null;
 
@@ -32,14 +66,14 @@ export default function Modal({ open, title, subtitle, onClose, children, footer
         className={`modal modal-${size}`}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="modal-title"
+        aria-labelledby={titleId}
         tabIndex={-1}
         ref={dialogRef}
         onMouseDown={(event) => event.stopPropagation()}
       >
         <header className="modal-header">
           <div>
-            <h2 id="modal-title">{title}</h2>
+            <h2 id={titleId}>{title}</h2>
             {subtitle && <p>{subtitle}</p>}
           </div>
           <button type="button" className="icon-btn" onClick={onClose} aria-label="Close dialog">×</button>

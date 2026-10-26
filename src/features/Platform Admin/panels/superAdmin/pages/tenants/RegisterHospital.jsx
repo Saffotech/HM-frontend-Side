@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { interpretPlatformError } from "../../../../shared/api/platformErrors";
 import { TENANT_FIELD_MAP } from "../../../../shared/api/hospitalRegistration";
 import { hasPlatformAccessToken, platformAuth } from "../../../../shared/api/platformSession";
@@ -14,7 +14,8 @@ import { usePlatformPlans } from "../../../../shared/hooks/usePlatformPlans";
 import { formatCurrency } from "../../../../shared/utils/formatCurrency";
 import { usePlatform } from "../../../../shared/context/PlatformContext";
 import { useToast } from "../../../../shared/hooks/useToast";
-import { PLATFORM_BASE, platformPath } from "../../../../shared/paths";
+import { PLATFORM_BASE, UNIVERSAL_LOGIN, platformPath } from "../../../../shared/paths";
+import { canSubmitRegistration } from "../../../../shared/utils/registrationGate";
 import { PASSWORD_HINT, isEmail, isPhone, isPostalCode, isTenantCode, passwordIssue, phoneDigits, required } from "../../../../shared/utils/validation";
 import "./RegisterHospital.css";
 
@@ -65,7 +66,9 @@ export default function RegisterHospital() {
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const signedIn = hasPlatformAccessToken();
+  const canSubmit = canSubmitRegistration({ signedIn, busy: submitting });
   const isTrial = values.tenantStatus === "Trial" || values.trialPeriod !== "None";
   const { plans, error: plansError } = usePlatformPlans();
   const planNames = useMemo(() => {
@@ -118,6 +121,8 @@ export default function RegisterHospital() {
   };
 
   const finish = async () => {
+    if (!canSubmitRegistration({ signedIn, busy: submittingRef.current })) return;
+    submittingRef.current = true;
     setSubmitting(true);
     try {
       const created = await registerTenant(values);
@@ -134,13 +139,14 @@ export default function RegisterHospital() {
       push(result.toast, "error");
       if (result.unauthenticated && signedIn) signOutPortal("platform");
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
 
   const submit = (event) => {
     event.preventDefault();
-    if (submitting) return;
+    if (!canSubmitRegistration({ signedIn, busy: submittingRef.current })) return;
     if (!validate()) {
       push("Check the highlighted fields before registering.", "error");
       return;
@@ -156,7 +162,8 @@ export default function RegisterHospital() {
         <div className="reg-panel">
           {!signedIn && (
             <div className="reg-error-bar" role="alert">
-              Log out and sign in with your platform account before registering. This browser does not have a backend session yet.
+              Log out and sign in with your platform account before registering. This browser does not have a backend session yet.{" "}
+              <Link to={UNIVERSAL_LOGIN}>Go to sign in</Link>
             </div>
           )}
           {errorCount > 0 && (
@@ -216,7 +223,7 @@ export default function RegisterHospital() {
             <div className="reg-footer-actions">
               <Button variant="secondary" onClick={() => navigate(platformPath("/hospitals"))}>Cancel</Button>
               <Button variant="secondary" onClick={() => { setValues(initialValues); setErrors({}); }}>Reset</Button>
-              <Button type="submit" disabled={submitting}>{submitting ? "Registering…" : "Register Hospital"}</Button>
+              <Button type="submit" disabled={!canSubmit}>{submitting ? "Registering…" : "Register Hospital"}</Button>
             </div>
           </footer>
         </div>

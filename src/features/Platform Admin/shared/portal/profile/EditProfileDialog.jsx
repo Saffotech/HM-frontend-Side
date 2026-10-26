@@ -1,224 +1,140 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { AlertCircle, Camera, Crop, Loader2, Lock, Trash2, Undo2 } from "lucide-react";
+import { AlertCircle, Loader2, Lock } from "lucide-react";
+import { interpretPlatformError, platformCallMessage } from "../../api/platformErrors";
+import {
+  PROFILE_ERROR_FIELDS,
+  profileDraft,
+  profileFieldErrors,
+  profileUpdateBody,
+} from "../../api/platformProfileModel";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
 import Modal from "../../components/Modal";
 import { confirmDiscard } from "../../hooks/useUnsavedChanges";
-import {
-  PROFILE_PHOTO_TYPES,
-  profilePhotoIssue,
-} from "../../services/portalAccount";
-import { isPhone, phoneDigits } from "../../utils/validation";
-import AvatarImage from "./AvatarImage";
-import PhotoCropper from "./PhotoCropper";
 
-const TEXT_FIELDS = ["phone", "jobTitle", "department"];
-const TEXT_LIMIT = 60;
-const NO_PHOTO_CHANGE = { file: null, preview: "", remove: false, original: null };
+const FIELDS = ["jobTitle", "phoneCode", "phone", "address", "city", "state", "postalCode"];
 
-/** @param {{ phone: string, jobTitle: string, department: string }} draft */
-function fieldErrors(draft) {
-  const errors = {};
-  if (draft.phone.trim() && !isPhone(draft.phone)) errors.phone = "Enter a 10-digit phone number.";
-  if (draft.jobTitle.trim().length > TEXT_LIMIT) errors.jobTitle = `Use ${TEXT_LIMIT} characters or fewer.`;
-  if (draft.department.trim().length > TEXT_LIMIT) errors.department = `Use ${TEXT_LIMIT} characters or fewer.`;
-  return errors;
-}
-
-export default function EditProfileDialog({ profile, onDirtyChange, onClose }) {
-  const [draft, setDraft] = useState(() => Object.fromEntries(TEXT_FIELDS.map((key) => [key, profile[key] || ""])));
-  const [photo, setPhoto] = useState(NO_PHOTO_CHANGE);
-  const [crop, setCrop] = useState(null);
+export default function EditProfileDialog({ profile, onDirtyChange, onClose, onSubmit }) {
+  const [draft, setDraft] = useState(() => profileDraft(profile));
   const [errors, setErrors] = useState({});
-  const [photoError, setPhotoError] = useState("");
   const [formError, setFormError] = useState("");
-  const busy = false;
-  const fileRef = useRef(null);
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const formId = useId();
-  const photoHintId = useId();
-
-  const textDirty = TEXT_FIELDS.some((key) => draft[key] !== (profile[key] || ""));
-  const dirty = textDirty || Boolean(photo.file) || photo.remove || Boolean(crop);
+  const dirty = Object.keys(profileUpdateBody(profile, draft)).length > 0;
 
   useEffect(() => {
-    onDirtyChange(dirty);
+    onDirtyChange?.(dirty);
   }, [dirty, onDirtyChange]);
 
-  useEffect(() => () => {
-    if (photo.preview) URL.revokeObjectURL(photo.preview);
-  }, [photo.preview]);
-
-  useEffect(() => () => {
-    if (crop?.url) URL.revokeObjectURL(crop.url);
-  }, [crop?.url]);
-
   const requestClose = () => {
-    if (busy) return;
-    if (confirmDiscard(dirty)) onClose(false);
+    if (savingRef.current) return;
+    if (confirmDiscard(dirty)) onClose();
   };
 
   const set = (key) => (event) => {
-    const value = key === "phone" ? phoneDigits(event.target.value) : event.target.value;
-    setDraft((current) => ({ ...current, [key]: value }));
+    setDraft((current) => ({ ...current, [key]: event.target.value }));
     setErrors((current) => ({ ...current, [key]: "" }));
     setFormError("");
   };
 
-  const choosePhoto = (event) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-    const issue = profilePhotoIssue(file);
-    setFormError("");
-    if (issue) {
-      setPhotoError(issue);
-      return;
-    }
-    setPhotoError("");
-    openCropper(file);
-  };
-
-  const openCropper = (file) => {
-    setCrop({ url: URL.createObjectURL(file), name: file.name, type: file.type, original: file });
-  };
-
-  const applyCrop = (file) => {
-    setPhoto({ file, preview: URL.createObjectURL(file), remove: false, original: crop.original });
-    setCrop(null);
-  };
-
-  const unreadablePhoto = () => {
-    setPhoto(NO_PHOTO_CHANGE);
-    setPhotoError("That image couldn't be read. Choose another file.");
-  };
-
-  const cropFailed = () => {
-    setCrop(null);
-    unreadablePhoto();
-  };
-
-  const shownPhoto = photo.remove ? "" : photo.preview || profile.photoUrl;
-  const photoStatus = busy && (photo.file || photo.remove)
-    ? (photo.file ? "Uploading photo…" : "Removing photo…")
-    : photo.file ? `${photo.file.name} — preview, not saved yet`
-      : photo.remove ? "Photo will be removed when you save"
-        : "JPEG, PNG or WebP, up to 2 MB.";
-
   const submit = async (event) => {
     event.preventDefault();
-    if (busy || !dirty) return;
-    const nextErrors = fieldErrors(draft);
+    if (savingRef.current) return;
+    const nextErrors = profileFieldErrors(draft);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
-    setFormError("Profile updates are not available. There is no portal profile API.");
+    if (!dirty) {
+      setFormError("No changes to save.");
+      return;
+    }
+    savingRef.current = true;
+    setSaving(true);
+    setFormError("");
+    try {
+      await onSubmit(draft);
+      onClose();
+    } catch (error) {
+      const result = interpretPlatformError(error, PROFILE_ERROR_FIELDS);
+      if (Object.keys(result.fieldErrors).length) {
+        setErrors((current) => ({ ...current, ...result.fieldErrors }));
+      }
+      setFormError(error?.status === 422 ? "Check the highlighted fields." : platformCallMessage(error));
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
   };
 
   return (
     <Modal
       open
+      size="lg"
       title="Edit profile"
-      subtitle="Update your photo and contact details."
+      subtitle="Update the contact details this account is allowed to change."
       onClose={requestClose}
       footer={(
         <>
-          <Button variant="secondary" onClick={requestClose} disabled={busy}>Cancel</Button>
-          <Button type="submit" form={formId} disabled={busy || !dirty || Boolean(crop)}>
-            {busy ? <><Loader2 size={15} className="pp-spin" aria-hidden="true" />Saving…</> : "Save changes"}
+          <Button variant="secondary" onClick={requestClose} disabled={saving}>Cancel</Button>
+          <Button type="submit" form={formId} disabled={saving || !dirty}>
+            {saving ? <><Loader2 size={15} className="pp-spin" aria-hidden="true" />Saving…</> : "Save changes"}
           </Button>
         </>
       )}
     >
       <form id={formId} className="pp-edit" noValidate onSubmit={submit}>
-        {formError && <p className="pp-alert pp-alert-error" role="alert"><AlertCircle size={15} aria-hidden="true" />{formError}</p>}
-
-        {crop ? (
-          <div className="pp-photo pp-photo-cropping">
-            <div className="pp-photo-copy">
-              <strong>Adjust your photo</strong>
-              <span>Drag to position it inside the circle and zoom to fit.</span>
-            </div>
-            <PhotoCropper source={crop} onApply={applyCrop} onCancel={() => setCrop(null)} onError={cropFailed} />
-          </div>
-        ) : (
-          <div className="pp-photo">
-            <div className={`pp-avatar pp-avatar-xl${photo.file ? " is-preview" : ""}`}>
-              <AvatarImage photo={shownPhoto} name={profile.name} onError={photo.file ? unreadablePhoto : undefined} />
-            </div>
-            <div className="pp-photo-copy">
-              <strong>Profile photo</strong>
-              <span id={photoHintId} aria-live="polite">{photoStatus}</span>
-              {photoError && <span className="field-error" role="alert">{photoError}</span>}
-              <div className="pp-photo-actions">
-                <Button size="sm" variant="secondary" disabled={busy} onClick={() => fileRef.current?.click()} aria-describedby={photoHintId}>
-                  <Camera size={14} aria-hidden="true" />{shownPhoto ? "Replace photo" : "Upload photo"}
-                </Button>
-                {photo.original && (
-                  <Button size="sm" variant="secondary" disabled={busy} onClick={() => openCropper(photo.original)}>
-                    <Crop size={14} aria-hidden="true" />Adjust
-                  </Button>
-                )}
-                {photo.file && (
-                  <Button size="sm" variant="secondary" disabled={busy} onClick={() => setPhoto(NO_PHOTO_CHANGE)}>
-                    <Undo2 size={14} aria-hidden="true" />Discard
-                  </Button>
-                )}
-                {!photo.file && profile.photoUrl && !photo.remove && (
-                  <Button size="sm" variant="secondary" className="pp-danger-btn" disabled={busy} onClick={() => setPhoto({ ...NO_PHOTO_CHANGE, remove: true })}>
-                    <Trash2 size={14} aria-hidden="true" />Remove
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-        <input
-          ref={fileRef}
-          type="file"
-          accept={PROFILE_PHOTO_TYPES.join(",")}
-          className="pp-file"
-          tabIndex={-1}
-          aria-label="Choose a profile photo"
-          onChange={choosePhoto}
-        />
-
+        {formError ? (
+          <p className="pp-alert pp-alert-error" role="alert">
+            <AlertCircle size={15} aria-hidden="true" />{formError}
+          </p>
+        ) : null}
         <div className="pp-edit-grid">
-          <Input label="Full name" value={profile.name} disabled readOnly className="pp-locked" />
-          <Input label="Email address" type="email" value={profile.email} disabled readOnly className="pp-locked" />
-          <p className="pp-locked-note"><Lock size={12} aria-hidden="true" />Name and email are managed by your administrator.</p>
-          <Input
-            label="Phone number"
-            type="tel"
-            inputMode="numeric"
-            autoComplete="tel"
-            maxLength={10}
-            placeholder="10-digit number"
-            value={draft.phone}
-            error={errors.phone}
-            onChange={set("phone")}
-            disabled={busy}
-            aria-invalid={Boolean(errors.phone)}
-          />
-          <Input
-            label="Job title"
-            placeholder="Your job title"
-            value={draft.jobTitle}
-            error={errors.jobTitle}
-            onChange={set("jobTitle")}
-            disabled={busy}
-            aria-invalid={Boolean(errors.jobTitle)}
-          />
-          <Input
-            label="Department"
-            placeholder="Your team or department"
-            value={draft.department}
-            error={errors.department}
-            onChange={set("department")}
-            disabled={busy}
-            aria-invalid={Boolean(errors.department)}
-            className="pp-span"
-          />
+          <Input label="Full name" value={profile.name || ""} disabled readOnly className="pp-locked" />
+          <Input label="Email address" type="email" value={profile.email || ""} disabled readOnly className="pp-locked" />
+          <p className="pp-locked-note">
+            <Lock size={12} aria-hidden="true" />
+            Name, email, and role are not editable on this form.
+          </p>
+          {FIELDS.map((key) => (
+            <ProfileField
+              key={key}
+              name={key}
+              value={draft[key]}
+              error={errors[key]}
+              disabled={saving}
+              onChange={set(key)}
+            />
+          ))}
         </div>
       </form>
     </Modal>
+  );
+}
+
+function ProfileField({ name, value, error, disabled, onChange }) {
+  const fields = {
+    jobTitle: { label: "Job title", autoComplete: "organization-title", maxLength: 120 },
+    phoneCode: { label: "Phone code", autoComplete: "tel-country-code", maxLength: 10 },
+    phone: { label: "Phone number", type: "tel", inputMode: "tel", autoComplete: "tel", maxLength: 20 },
+    address: { label: "Address", autoComplete: "street-address", className: "pp-span" },
+    city: { label: "City", autoComplete: "address-level2", maxLength: 100 },
+    state: { label: "State", autoComplete: "address-level1", maxLength: 100 },
+    postalCode: { label: "Postal code", autoComplete: "postal-code", maxLength: 20 },
+  };
+  const field = fields[name];
+  return (
+    <Input
+      label={field.label}
+      type={field.type || "text"}
+      inputMode={field.inputMode}
+      autoComplete={field.autoComplete}
+      maxLength={field.maxLength}
+      value={value}
+      error={error}
+      onChange={onChange}
+      disabled={disabled}
+      aria-invalid={Boolean(error)}
+      className={field.className || ""}
+    />
   );
 }

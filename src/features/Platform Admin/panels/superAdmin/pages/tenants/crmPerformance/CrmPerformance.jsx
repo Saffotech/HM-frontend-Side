@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  AlarmClock, ArrowDownRight, ArrowUpRight, BadgeCheck, IndianRupee, Minus, Percent, PhoneCall, TriangleAlert, Trophy, UserCheck, Users, Wallet,
+  AlarmClock, BadgeCheck, Handshake, IndianRupee, Layers, PhoneCall, TriangleAlert, Trophy, UserX, Users,
 } from "lucide-react";
 import Button from "../../../../../shared/components/Button";
 import Input from "../../../../../shared/components/Input";
@@ -15,35 +15,42 @@ import { FollowUpTable, Leaderboard, RatingBadge } from "./PerformanceTables";
 import SearchSelect from "./SearchSelect";
 import { activePlanNames } from "../../../../../shared/api/platformPlans";
 import { CRM_ANALYTICS_STATUSES } from "../../../../../shared/api/platformCrmAnalytics";
-import { useCrmAnalytics } from "../../../../../shared/hooks/useCrmAnalytics";
 import { usePlatformPlans } from "../../../../../shared/hooks/usePlatformPlans";
 import { useCrmFilterOptions, useCrmPerformance } from "./useCrmPerformance";
 import "./CrmPerformance.css";
 
-const REQUEST_STATUSES = ["New", "Contacted", "Registered", "Not Interested"];
 const DEFAULT_FILTERS = { preset: "month", start: "", end: "", employee: "all", status: "all", plan: "all", source: "all" };
+const ACTIVE_PERIOD = {
+  today: "today",
+  week: "this week",
+  month: "this month",
+  lastMonth: "last month",
+  quarter: "this quarter",
+  custom: "in this range",
+};
 
 export default function CrmPerformance() {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [detailName, setDetailName] = useState(null);
   const data = useCrmPerformance(filters);
-  const company = useCrmAnalytics();
   const { plans: catalogPlans } = usePlatformPlans();
-  const options = useCrmFilterOptions(data.leads, data.leadStatus === "ready");
+  const options = useCrmFilterOptions(data.leads, data.leadStatus === "ready", data.employeeNames);
   const catalogNames = activePlanNames(catalogPlans);
   const filterOptions = catalogNames.length ? { ...options, plans: catalogNames } : options;
   const roster = options.employees;
   const ready = data.leadStatus === "ready";
-  const team = ready ? data.team : null;
   const period = ready ? data.period : null;
   const detail = ready ? (data.employees.find((row) => row.name === detailName) || null) : null;
-  const compare = period?.compareLabel;
+  const activeLabel = ready && filters.employee === "all"
+    ? `${data.team.current.activeEmployees} active ${ACTIVE_PERIOD[filters.preset] || "in this range"}`
+    : "";
 
   return (
     <div className="cp-page">
-      <header className="cp-page-head">
-        <div>
-          <h2>Employee performance</h2>
+      <FilterBar applied={filters} onApply={setFilters} options={filterOptions} />
+
+      {!ready && (data.hospitalError || data.leadStatus === "loading" || data.leadStatus === "error") && (
+        <div className="cp-page-status">
           {data.hospitalError && <p className="cp-muted" role="alert">{data.hospitalError}</p>}
           {data.leadStatus === "loading" && <p className="cp-muted">Loading CRM leads.</p>}
           {data.leadStatus === "error" && (
@@ -53,58 +60,22 @@ export default function CrmPerformance() {
             </div>
           )}
         </div>
-      </header>
+      )}
 
-      <section className="cp-card" aria-label="Company-wide leads">
-        <header className="cp-card-head">
-          <div>
-            <h3>Company-wide leads</h3>
-            {/* <p className="cp-muted">Counts for every lead. Employee tables below still use GET /crm/leads.</p> */}
-          </div>
-          <Button variant="secondary" size="sm" onClick={company.reload} disabled={company.loading}>
-            {company.loading ? "Loading…" : "Refresh"}
-          </Button>
-        </header>
-        {company.error && (
-          <div role="alert">
-            <p className="cp-muted">{company.error}</p>
-            <Button variant="secondary" onClick={company.reload}>Try again</Button>
-          </div>
-        )}
-        {company.statuses && (
-          <div className="cp-company">
-            {CRM_ANALYTICS_STATUSES.map((status) => (
-              <article key={status}>
-                <span>{status}</span>
-                <strong>{company.statuses[status]}</strong>
-              </article>
-            ))}
-            <article>
-              <span>Total</span>
-              <strong>{company.statuses.total}</strong>
-            </article>
-          </div>
-        )}
-      </section>
+      {ready && <SummaryCards summary={data.summary} selectedStatus={filters.status} />}
 
-      <FilterBar applied={filters} onApply={setFilters} options={filterOptions} />
+      {ready && data.hospitalError && <p className="cp-muted" role="alert">{data.hospitalError}</p>}
 
-      {ready && <section className="cp-kpis" aria-label="Team summary">
-        <Kpi icon={Users} label="Total leads" value={team.current.leads} change={delta(team.current.leads, team.previous.leads)} compare={compare} />
-        <Kpi icon={PhoneCall} label="Contacted" value={team.current.contacted} change={delta(team.current.contacted, team.previous.contacted)} compare={compare} />
-        <Kpi icon={BadgeCheck} label="Conversions" value={team.current.conversions} change={delta(team.current.conversions, team.previous.conversions)} compare={compare} />
-        <Kpi icon={Percent} label="Conv. rate" fullLabel="Conversion rate" value={formatRate(team.current.conversionRate)} change={pointsDelta(team.current.conversionRate, team.previous.conversionRate, team.current.leads, team.previous.leads)} compare={compare} />
-        <Kpi icon={IndianRupee} label="Revenue" value={formatCurrency(team.current.revenue)} change={delta(team.current.revenue, team.previous.revenue)} compare={compare} />
-        <Kpi icon={Wallet} label="Avg deal" fullLabel="Average revenue per conversion" value={team.current.conversions ? formatCurrency(team.current.avgRevenue) : "—"} change={team.current.conversions && team.previous.conversions ? delta(team.current.avgRevenue, team.previous.avgRevenue) : null} compare={compare} />
-        <Kpi icon={AlarmClock} label="Overdue" fullLabel="Overdue follow-ups" value={team.overdueNow} tone={team.overdueNow ? "late" : ""} note="As of today" hint="Open leads past their follow-up date, as of today" />
-        <Kpi icon={UserCheck} label="Employees" fullLabel="Active CRM employees" value={team.current.activeEmployees} change={delta(team.current.activeEmployees, team.previous.activeEmployees)} compare={compare} />
-      </section>}
-
-      {ready && <Leaderboard employees={data.employees} onOpen={setDetailName} />}
+      {ready && (
+        <div className="cp-leaderboard-block">
+          {activeLabel ? <p className="cp-active-count">{activeLabel}</p> : null}
+          <Leaderboard employees={data.employees} onOpen={setDetailName} />
+        </div>
+      )}
 
       {ready && <PerformanceTrend trend={data.trend} employees={data.employees} roster={roster} />}
 
-      {ready && <FollowUpTable employees={data.employees} onOpen={setDetailName} />}
+      {ready && <FollowUpTable employees={data.employees} />}
 
       {ready && (
       <section className="cp-exec" aria-label="Executive summary">
@@ -150,7 +121,7 @@ function FilterBar({ applied, onApply, options }) {
   };
 
   return (
-    <form className="cp-filters" onSubmit={(event) => { event.preventDefault(); if (!customIncomplete) onApply(draft); }}>
+    <form className={`cp-filters${draft.preset === "custom" ? " is-custom" : ""}`} onSubmit={(event) => { event.preventDefault(); if (!customIncomplete) onApply(draft); }}>
       <Select label="Date range" value={draft.preset} onChange={choosePreset}>
         {PERIOD_PRESETS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </Select>
@@ -170,7 +141,7 @@ function FilterBar({ applied, onApply, options }) {
       />
       <Select label="Lead status" value={draft.status} onChange={set("status")}>
         <option value="all">All</option>
-        {REQUEST_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
+        {CRM_ANALYTICS_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
       </Select>
       <Select label="Plan" value={draft.plan} onChange={set("plan")}>
         <option value="all">All</option>
@@ -188,39 +159,61 @@ function FilterBar({ applied, onApply, options }) {
   );
 }
 
-function delta(current, previous) {
-  if (current === previous) return { dir: "flat", text: "No change" };
-  if (!previous) return { dir: "up", text: "Up from 0" };
-  const change = ((current - previous) / previous) * 100;
-  return { dir: change > 0 ? "up" : "down", text: `${Math.abs(change).toFixed(1)}%` };
-}
-
-function pointsDelta(current, previous, currentLeads, previousLeads) {
-  if (!currentLeads || !previousLeads) return null;
-  const points = (current - previous) * 100;
-  if (Math.abs(points) < 0.05) return { dir: "flat", text: "No change" };
-  return { dir: points > 0 ? "up" : "down", text: `${Math.abs(points).toFixed(1)} pts` };
-}
-
-const ARROWS = { up: ArrowUpRight, down: ArrowDownRight, flat: Minus };
-
-function Kpi({ icon: Icon, label, fullLabel = label, value, change, compare, note, hint, tone = "" }) {
-  const Arrow = change ? ARROWS[change.dir] : null;
-  const detail = hint || (change ? `${change.text} ${compare}` : "not enough data to compare");
+function SummaryCards({ summary, selectedStatus }) {
+  const cards = [
+    { key: "leads", icon: Users, label: "Leads", value: summary.leads, hint: "Leads received in the selected period" },
+    { key: "contacted", icon: PhoneCall, label: "Contacted", value: summary.contacted, status: "Contacted" },
+    { key: "agreed", icon: Handshake, label: "Agreed", value: summary.agreed, status: "Agreed" },
+    {
+      key: "registered",
+      icon: BadgeCheck,
+      label: "Registered",
+      value: summary.registered,
+      status: "Registered",
+      note: `${formatRate(summary.conversionRate)} conversion`,
+      hint: "Registered leads divided by leads received in this period",
+    },
+    { key: "not-interested", icon: UserX, label: "Not interested", value: summary.notInterested, status: "Not Interested" },
+    {
+      key: "revenue",
+      icon: IndianRupee,
+      label: "Revenue",
+      value: formatCurrency(summary.revenue),
+      note: `${formatCurrency(summary.avgRevenue)} avg`,
+      hint: "Paid invoices for registered leads in this period",
+    },
+    {
+      key: "overdue",
+      icon: AlarmClock,
+      label: "Overdue",
+      value: summary.overdue,
+      tone: summary.overdue ? "late" : "",
+      hint: "Open leads past their follow-up date, as of today",
+    },
+    { key: "total", icon: Layers, label: "Total", value: summary.total, hint: "Leads in the filtered dataset" },
+  ];
   return (
-    <article className={`cp-kpi ${tone}`} title={`${fullLabel}: ${detail}`}>
+    <section className="cp-kpis" aria-label="Performance summary">
+      {cards.map((card) => (
+        <Kpi key={card.key} {...card} selected={Boolean(card.status) && card.status === selectedStatus} />
+      ))}
+    </section>
+  );
+}
+
+function Kpi({ icon: Icon, label, value, note, hint, tone = "", selected = false }) {
+  return (
+    <article
+      className={`cp-kpi${tone ? ` ${tone}` : ""}${selected ? " is-selected" : ""}`}
+      title={hint || label}
+      aria-current={selected ? "true" : undefined}
+    >
       <header>
         <Icon size={13} aria-hidden="true" />
         <span>{label}</span>
       </header>
       <strong>{value}</strong>
-      {note ? <small>{note}</small> : change ? (
-        <small className={`cp-delta cp-delta-${change.dir}`}>
-          <Arrow size={12} aria-hidden="true" />
-          {change.text}
-          <span className="cp-sr-only"> {compare}</span>
-        </small>
-      ) : <small>No comparison</small>}
+      <small>{note || "\u00a0"}</small>
     </article>
   );
 }

@@ -10,6 +10,7 @@ import { shiftDays } from "../../../shared/utils/periods";
 import { includesQuery } from "../../../shared/utils/table";
 import { FollowMark, PriorityMark, StatusMark } from "../components/CrmMarks";
 import Filter from "../components/CrmFilter";
+import { crmTabPanelProps, crmTabProps, onCrmTabKeyDown, useCrmTabIds } from "../components/crmTabs";
 import { CLAIM_LIMIT, ORIGINS, POOL_ORIGINS, followBucket, followMeta, isOpen, leadAge, leadOrigin, plural } from "../utils/crmLeads";
 import { useCrm } from "../workspace/workspace-context";
 
@@ -42,6 +43,7 @@ function matchesTab(lead, tab) {
 export default function Leads() {
   const { me, leads, pool, uncontacted, today, actions } = useCrm();
   const [params, setParams] = useSearchParams();
+  const tabIds = useCrmTabIds("leads-");
   const tab = TABS.some(([key]) => key === params.get("tab")) ? params.get("tab") : "open";
   const inPool = tab === "New";
   const query = params.get("q") || "";
@@ -114,14 +116,13 @@ export default function Leads() {
       </div>
 
       <section className="crm-card">
-        <nav className="crm-tabs" role="tablist" aria-label="Lead status">
+        <nav className="crm-tabs" role="tablist" aria-label="Lead status" onKeyDown={onCrmTabKeyDown}>
           {TABS.map(([key, label]) => (
             <button
               key={key}
               type="button"
-              role="tab"
-              aria-selected={tab === key}
               className={`${tab === key ? "active" : ""}${key === "New" && pool.length ? " is-info" : ""}`}
+              {...crmTabProps(tabIds.tabId(key), tab === key, tabIds.panelId)}
               onClick={() => update({
                 tab: key === "open" ? "" : key,
                 follow: key === "New" ? "" : params.get("follow") || "",
@@ -132,6 +133,7 @@ export default function Leads() {
             </button>
           ))}
         </nav>
+        <div {...crmTabPanelProps(tabIds.panelId, tabIds.tabId(tab))}>
         <div className="crm-toolbar">
           <div className="crm-search">
             <SearchBar value={query} onChange={(value) => update({ q: value })} placeholder={inPool ? "Search hospital, city, requirement…" : "Search name, contact, phone…"} />
@@ -231,6 +233,7 @@ export default function Leads() {
             <Pagination {...pagination} onPageChange={pagination.setPage} />
           </div>
         )}
+        </div>
       </section>
     </div>
   );

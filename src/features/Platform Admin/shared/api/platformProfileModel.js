@@ -26,6 +26,25 @@ const PROFILE_KEYS = new Set([
 
 const PHOTO_BYTES = 5 * 1024 * 1024;
 
+const FIELD_LIMITS = {
+  phone: [20, "Phone"],
+  phoneCode: [10, "Phone code"],
+  city: [100, "City"],
+  state: [100, "State"],
+  postalCode: [20, "Postal code"],
+  jobTitle: [120, "Job title"],
+};
+
+export const PROFILE_ERROR_FIELDS = {
+  phone: "phone",
+  phone_code: "phoneCode",
+  address: "address",
+  city: "city",
+  state: "state",
+  postal_code: "postalCode",
+  job_title: "jobTitle",
+};
+
 export function profileDraft(profile) {
   return {
     phone: profile?.phone || "",
@@ -50,6 +69,17 @@ export function profileUpdateBody(current, draft) {
   return body;
 }
 
+/** Client checks that match the profile PATCH field limits. Address has no API max length. */
+export function profileFieldErrors(draft) {
+  const errors = {};
+  Object.entries(FIELD_LIMITS).forEach(([key, [limit, label]]) => {
+    if (String(draft?.[key] ?? "").trim().length > limit) {
+      errors[key] = `${label} must be ${limit} characters or fewer.`;
+    }
+  });
+  return errors;
+}
+
 export function mapPlatformAdminProfile(body, resolveUrl = (url) => url || "") {
   if (!body || typeof body !== "object" || Array.isArray(body)) return null;
   if (![...PROFILE_KEYS].some((key) => key in body)) return null;
@@ -61,6 +91,8 @@ export function mapPlatformAdminProfile(body, resolveUrl = (url) => url || "") {
     role: body.role || "",
     name,
     userId: body.user_id,
+    isActive: typeof body.is_active === "boolean" ? body.is_active : null,
+    createdAt: body.created_at || "",
   };
 }
 
@@ -71,14 +103,18 @@ export function platformPasswordBody(currentPassword, newPassword) {
   };
 }
 
-export function platformPasswordIssue(currentPassword, newPassword) {
+export function platformPasswordIssue(currentPassword, newPassword, confirmPassword) {
   const errors = {};
   if (!currentPassword) errors.current_password = "Enter your current password.";
   if (!newPassword) errors.new_password = "Enter a new password.";
-  else if (newPassword.length < 8 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
-    errors.new_password = "Use at least 8 characters, with one letter and one number.";
+  else if (newPassword.length < 8 || newPassword.length > 128 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
+    errors.new_password = "Use 8 to 128 characters, with one letter and one number.";
   } else if (newPassword === currentPassword) {
     errors.new_password = "Choose a password different from the current password.";
+  }
+  if (confirmPassword !== undefined) {
+    if (!confirmPassword) errors.confirm_password = "Confirm your new password.";
+    else if (confirmPassword !== newPassword) errors.confirm_password = "Passwords don't match.";
   }
   return errors;
 }

@@ -50,6 +50,11 @@
   font-weight: 600;
 }
 
+.reg-error-bar a {
+  color: inherit;
+  font-weight: 700;
+}
+
 .reg-source-bar {
   display: flex;
   flex-wrap: wrap;

@@ -135,7 +135,6 @@ function RegisteredFromApi({ tenant, onUpdated, onBack }) {
             <div className="td-title-row">
               <h1>{tenant.name}</h1>
               <Chip value={typeof tenant.is_active === "boolean" ? (tenant.is_active ? "Active" : "Suspended") : (tenant.tenant_status || "—")} />
-              <Chip value={tenant.subscription_status} />
             </div>
             <div className="td-meta">
               <span className="td-mono">{tenant.tenant_id}</span>
@@ -182,8 +181,6 @@ function RegisteredFromApi({ tenant, onUpdated, onBack }) {
               <Info label="Phone" value={tenant.phone} />
               <Info label="Address" value={tenant.address} />
               <Info label="Administrator" value={tenant.admin_email} />
-              <Info label="Administrator user" value={tenant.admin_user_id} />
-              <Info label="Can sign in" value={tenant.is_active ? "Yes" : "No"} />
             </Box>
             <Box title="Subscription">
               <Info label="Plan" value={`${tenant.plan} · ${tenant.billing_cycle}`} />

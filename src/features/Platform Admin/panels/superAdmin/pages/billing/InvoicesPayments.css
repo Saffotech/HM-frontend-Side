@@ -6,7 +6,7 @@
 }
 
 .inv-page .page-header {
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin-bottom: 14px;
   padding-bottom: 10px;

@@ -1,6 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
-import { platformAuth } from "../../../shared/api/platformSession";
+import { useLocation } from "react-router-dom";
 import { PLATFORM_BASE } from "../../../shared/paths";
 import "./Breadcrumbs.css";
 
@@ -23,12 +21,9 @@ export default function Breadcrumbs() {
   const tenantMatch = pathname.match(/^\/hospitals\/([^/]+)$/);
 
   if (!titles[pathname] && tenantMatch) {
-    const tenant = platformAuth.recallRegisteredTenant(decodeURIComponent(tenantMatch[1]));
     return (
       <nav className="breadcrumbs" aria-label="Breadcrumb">
-        <Link to={`${PLATFORM_BASE}/hospitals`}>{titles["/hospitals"]}</Link>
-        <ChevronRight size={20} aria-hidden="true" />
-        <span className="breadcrumbs-current">{tenant?.name || "Tenant details"}</span>
+        <span className="breadcrumbs-current">Tenant details</span>
       </nav>
     );
   }

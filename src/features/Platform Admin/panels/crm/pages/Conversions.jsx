@@ -10,6 +10,7 @@ import { formatDate } from "../../../shared/utils/formatDate";
 import { daysBetween, localDay } from "../../../shared/utils/periods";
 import { includesQuery } from "../../../shared/utils/table";
 import HandoverSteps from "../components/HandoverSteps";
+import { crmTabPanelProps, crmTabProps, onCrmTabKeyDown, useCrmTabIds } from "../components/crmTabs";
 import { plural } from "../utils/crmLeads";
 import { useCrm } from "../workspace/workspace-context";
 
@@ -37,6 +38,7 @@ export default function Conversions() {
   const { leads, hospitals, today, actions, billingAvailable } = useCrm();
   const { revenue: attributed, loading: revenueLoading, error: revenueError } = useCrmRevenue();
   const [params, setParams] = useSearchParams();
+  const tabIds = useCrmTabIds("conversions-");
   const tab = TABS.some(([key]) => key === params.get("tab")) ? params.get("tab") : "pending";
   const query = params.get("q") || "";
   const update = (changes) => setParams((current) => {
@@ -62,13 +64,20 @@ export default function Conversions() {
   return (
     <div className="crm-page">
       <section className="crm-card">
-        <nav className="crm-tabs" role="tablist" aria-label="Conversions">
+        <nav className="crm-tabs" role="tablist" aria-label="Conversions" onKeyDown={onCrmTabKeyDown}>
           {TABS.map(([key, label, Icon]) => (
-            <button key={key} type="button" role="tab" aria-selected={tab === key} className={tab === key ? "active" : ""} onClick={() => update({ tab: key === "pending" ? "" : key, q: "" })}>
+            <button
+              key={key}
+              type="button"
+              className={tab === key ? "active" : ""}
+              {...crmTabProps(tabIds.tabId(key), tab === key, tabIds.panelId)}
+              onClick={() => update({ tab: key === "pending" ? "" : key, q: "" })}
+            >
               <Icon size={14} aria-hidden="true" />{label}<span>{groups[key].length}</span>
             </button>
           ))}
         </nav>
+        <div {...crmTabPanelProps(tabIds.panelId, tabIds.tabId(tab))}>
         <div className="crm-toolbar">
           <div className="crm-search">
             <SearchBar value={query} onChange={(value) => update({ q: value })} placeholder="Search hospital, contact, hospital ID…" />
@@ -154,6 +163,7 @@ export default function Conversions() {
             <Pagination {...pagination} onPageChange={pagination.setPage} />
           </div>
         )}
+        </div>
       </section>
     </div>
   );

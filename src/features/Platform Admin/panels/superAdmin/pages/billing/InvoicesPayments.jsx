@@ -91,7 +91,7 @@ export default function InvoicesPayments() {
   return (
     <section className="inv-page">
       <header className="page-header">
-        <h1>Billing & Revenue</h1>
+        <h1 className="platform-sr-only">Billing & Revenue</h1>
         <Button variant="secondary" onClick={reload} disabled={loading}>{loading ? "Loading…" : "Refresh"}</Button>
       </header>
 

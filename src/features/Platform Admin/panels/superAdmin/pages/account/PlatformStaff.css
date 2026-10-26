@@ -58,6 +58,11 @@
   margin-bottom: 0;
 }
 
+.platform-staff-alert a {
+  color: inherit;
+  font-weight: 700;
+}
+
 .platform-staff-actions {
   display: flex;
   justify-content: flex-end;

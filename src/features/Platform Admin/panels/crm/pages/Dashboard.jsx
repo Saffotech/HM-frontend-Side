@@ -79,6 +79,17 @@ export default function Dashboard() {
   };
   const rows = rowsByView[view] || [];
 
+  const openRow = (event, leadId) => {
+    if (event.target.closest("button, a, input, select, textarea")) return;
+    actions.openLead(leadId);
+  };
+
+  const openRowFromKeyboard = (event, leadId) => {
+    if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+    event.preventDefault();
+    actions.openLead(leadId);
+  };
+
   const hospitalCell = (lead) => (
     <td>
       <button type="button" className="crm-row-link" onClick={() => actions.openLead(lead.id)}>{lead.hospitalName}</button>
@@ -254,7 +265,7 @@ export default function Dashboard() {
           )}
         </header>
         <div className="crm-table-wrap">
-          <table className="crm-table">
+          <table className="crm-table crm-table-dashboard-actions">
             <thead>
               <tr>
                 {config.columns.map((column) => <th key={column} scope="col">{column}</th>)}
@@ -283,7 +294,15 @@ export default function Dashboard() {
                   </td>
                 </tr>
               ) : rows.map((lead) => (
-                <tr key={lead.id}>
+                <tr
+                  key={lead.id}
+                  className="crm-dash-row-link"
+                  tabIndex={0}
+                  role="link"
+                  aria-label={`Open ${lead.hospitalName || "lead"}`}
+                  onClick={(event) => openRow(event, lead.id)}
+                  onKeyDown={(event) => openRowFromKeyboard(event, lead.id)}
+                >
                   {config.cells(lead)}
                   <td>
                     <div className="crm-row-actions">

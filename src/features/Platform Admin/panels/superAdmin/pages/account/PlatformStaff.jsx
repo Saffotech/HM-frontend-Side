@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { hasPlatformAccessToken } from "../../../../shared/api/platformSession";
 import { createPlatformStaff, listPlatformStaff } from "../../../../shared/api/platformStaffApi";
 import {
@@ -18,6 +19,8 @@ import PasswordField from "../../../../shared/components/PasswordField";
 import Select from "../../../../shared/components/Select";
 import { usePlatform } from "../../../../shared/context/PlatformContext";
 import { useToast } from "../../../../shared/hooks/useToast";
+import { UNIVERSAL_LOGIN } from "../../../../shared/paths";
+import { canSubmitRegistration } from "../../../../shared/utils/registrationGate";
 import "./PlatformStaff.css";
 
 const blank = {
@@ -55,6 +58,7 @@ export default function PlatformStaff() {
   const [listError, setListError] = useState("");
   const [guard] = useState(() => createSubmitGuard());
   const signedIn = hasPlatformAccessToken();
+  const canSubmit = canSubmitRegistration({ signedIn, busy: submitting });
 
   const loadStaff = useCallback(async () => {
     setLoading(true);
@@ -94,6 +98,7 @@ export default function PlatformStaff() {
   };
 
   const register = async (formValues) => {
+    if (!canSubmitRegistration({ signedIn, busy: false })) return;
     if (!guard.tryStart()) return;
     const nextErrors = validatePlatformStaff(formValues);
     if (Object.keys(nextErrors).length) {
@@ -135,6 +140,7 @@ export default function PlatformStaff() {
 
   const submit = (event) => {
     event.preventDefault();
+    if (!canSubmitRegistration({ signedIn, busy: submitting })) return;
     register(values);
   };
 
@@ -149,7 +155,7 @@ export default function PlatformStaff() {
     <section className="platform-staff-page">
       <header className="platform-staff-header">
         <div>
-          <h1>Platform Staff</h1>
+          <h1 className="platform-sr-only">Platform Staff</h1>
           <p>Manage CRM and Accountant accounts for your SaffoCare platform.</p>
         </div>
         <Button onClick={() => setOpen(true)}>Register Staff</Button>
@@ -182,14 +188,15 @@ export default function PlatformStaff() {
         <form className="platform-staff-form" onSubmit={submit} noValidate>
           {!signedIn && (
             <p className="platform-staff-alert" role="alert">
-              Sign in with a platform admin account before registering staff.
+              Sign in with a platform admin account before registering staff.{" "}
+              <Link to={UNIVERSAL_LOGIN}>Go to sign in</Link>
             </p>
           )}
           {formError && (
             <div className="platform-staff-alert" role="alert">
               <p>{formError}</p>
               {retryable && (
-                <Button onClick={() => register(values)} disabled={submitting}>
+                <Button onClick={() => register(values)} disabled={!canSubmit}>
                   {submitting ? "Retrying…" : "Retry"}
                 </Button>
               )}
@@ -244,7 +251,7 @@ export default function PlatformStaff() {
           <p className="platform-staff-required"><span className="req">*</span> Required field</p>
           <div className="platform-staff-actions">
             <Button variant="secondary" onClick={close} disabled={submitting}>Cancel</Button>
-            <Button type="submit" disabled={submitting}>
+            <Button type="submit" disabled={!canSubmit}>
               {submitting ? "Registering…" : "Register Staff"}
             </Button>
           </div>

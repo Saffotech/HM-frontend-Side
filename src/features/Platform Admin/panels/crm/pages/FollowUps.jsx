@@ -9,6 +9,7 @@ import { followUpsFor } from "../../../shared/utils/leadMetrics";
 import { daysBetween } from "../../../shared/utils/periods";
 import { includesQuery } from "../../../shared/utils/table";
 import Filter from "../components/CrmFilter";
+import { crmTabPanelProps, crmTabProps, onCrmTabKeyDown, useCrmTabIds } from "../components/crmTabs";
 import { FollowMark, PriorityMark } from "../components/CrmMarks";
 import { followBucket, followMeta, lastContact, plural, priorityRank } from "../utils/crmLeads";
 import { useCrm } from "../workspace/workspace-context";
@@ -33,6 +34,7 @@ const dueText = (day) => formatDate(`${day}T00:00:00`);
 export default function FollowUps() {
   const { leads, today, actions } = useCrm();
   const [params, setParams] = useSearchParams();
+  const tabIds = useCrmTabIds("follow-ups-");
   const view = VIEWS.some(([key]) => key === params.get("view")) ? params.get("view") : "today";
   const query = params.get("q") || "";
   const priority = params.get("priority") || "";
@@ -72,20 +74,20 @@ export default function FollowUps() {
   return (
     <div className="crm-page">
       <section className="crm-card">
-        <nav className="crm-tabs" role="tablist" aria-label="Follow-up views">
+        <nav className="crm-tabs" role="tablist" aria-label="Follow-up views" onKeyDown={onCrmTabKeyDown}>
           {VIEWS.map(([key, label]) => (
             <button
               key={key}
               type="button"
-              role="tab"
-              aria-selected={view === key}
               className={`${view === key ? "active" : ""}${key === "overdue" && groups.overdue.length ? " is-alert" : ""}`}
+              {...crmTabProps(tabIds.tabId(key), view === key, tabIds.panelId)}
               onClick={() => update({ view: key === "today" ? "" : key })}
             >
               {label}<span>{groups[key].length}</span>
             </button>
           ))}
         </nav>
+        <div {...crmTabPanelProps(tabIds.panelId, tabIds.tabId(view))}>
         <div className="crm-toolbar">
           <div className="crm-search">
             <SearchBar value={query} onChange={(value) => update({ q: value })} placeholder="Search hospital, contact, next action…" />
@@ -188,6 +190,7 @@ export default function FollowUps() {
             <Pagination {...pagination} onPageChange={pagination.setPage} />
           </div>
         )}
+        </div>
       </section>
     </div>
   );

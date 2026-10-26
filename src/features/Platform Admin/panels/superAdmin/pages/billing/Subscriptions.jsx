@@ -67,9 +67,7 @@ export default function Subscriptions() {
 
   return (
     <section className="subs-page">
-      <header className="page-header">
-        <h1>Subscriptions</h1>
-      </header>
+      <h1 className="platform-sr-only">Subscriptions</h1>
      
       <div className="subs-summary">
         {summary.map(([key, label, value, tone]) => (

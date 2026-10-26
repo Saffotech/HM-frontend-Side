@@ -275,13 +275,13 @@ export function EditLeadDialog({ lead, planOptions, onCancel, onSubmit }) {
         <Input label="Contact person *" value={form.contactPerson} error={errors.contactPerson} onChange={set("contactPerson")} />
         <Input label="Designation" value={form.designation} onChange={set("designation")} />
         <Input label="Phone *" inputMode="numeric" maxLength={10} value={form.contactPhone} error={errors.contactPhone} onChange={set("contactPhone")} placeholder="10-digit number" />
-        <Input label="Contact email" value={form.contactEmail} error={errors.contactEmail} onChange={set("contactEmail")} />
+        <Input label="Contact email" type="email" value={form.contactEmail} error={errors.contactEmail} onChange={set("contactEmail")} autoComplete="email" />
         <h3 className="crm-span crm-form-title">Hospital</h3>
         <Select label="Hospital type" value={form.type} onChange={set("type")}>
           <option value="">Not specified</option>
           {types.map((item) => <option key={item}>{item}</option>)}
         </Select>
-        <Input label="Hospital email" value={form.hospitalEmail} error={errors.hospitalEmail} onChange={set("hospitalEmail")} />
+        <Input label="Hospital email" type="email" value={form.hospitalEmail} error={errors.hospitalEmail} onChange={set("hospitalEmail")} autoComplete="email" />
         <Input label="City" value={form.city} onChange={set("city")} />
         <Input label="State" value={form.state} onChange={set("state")} />
       </div>

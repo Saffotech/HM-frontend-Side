@@ -21,9 +21,12 @@ export default function SubscriptionPlans() {
   return (
     <section className="plans-page">
       <header className="page-header">
-        <h1>Subscription Plans</h1>
-        <Button disabled title="This screen reads the catalog. It does not change plan prices.">Add plan</Button>
+        <h1 className="platform-sr-only">Subscription Plans</h1>
+        <Button disabled aria-describedby="plans-catalog-note" title="This screen reads the catalog. It does not change plan prices.">Add plan</Button>
       </header>
+      <p className="plans-readonly" id="plans-catalog-note">
+        This screen shows the active catalog. Adding, editing, and deactivating plans is not available here.
+      </p>
     
       {loading && <p className="panel-copy">Loading plans.</p>}
       {error && (
@@ -61,8 +64,8 @@ export default function SubscriptionPlans() {
             </div>
             <div className="plan-actions">
               <Button variant="outline" size="sm" onClick={() => setOpen(plan)}>View</Button>
-              <Button variant="outline" size="sm" disabled title="Catalog changes are not available from this screen.">Edit</Button>
-              <Button variant="danger" size="sm" disabled title="Catalog changes are not available from this screen.">Deactivate</Button>
+              <Button variant="outline" size="sm" disabled aria-describedby="plans-catalog-note" title="Catalog changes are not available from this screen.">Edit</Button>
+              <Button variant="danger" size="sm" disabled aria-describedby="plans-catalog-note" title="Catalog changes are not available from this screen.">Deactivate</Button>
             </div>
           </article>
         ))}

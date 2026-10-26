@@ -12,7 +12,8 @@ import Select from "../../../shared/components/Select";
 import { PLAN_NAMES, billingCycles, tenantStatuses, trialPeriods } from "../../../shared/data/catalog";
 import { usePlatform } from "../../../shared/context/PlatformContext";
 import { useToast } from "../../../shared/hooks/useToast";
-import { accountsPath } from "../../../shared/paths";
+import { UNIVERSAL_LOGIN, accountsPath } from "../../../shared/paths";
+import { canSubmitRegistration } from "../../../shared/utils/registrationGate";
 import { PASSWORD_HINT, isPostalCode, isTenantCode, passwordIssue, required } from "../../../shared/utils/validation";
 import "./RegisterHospital.css";
 
@@ -147,7 +148,9 @@ function RegisterForm({ request }) {
   const [errors, setErrors] = useState({});
   const [confirming, setConfirming] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const signedIn = hasPlatformAccessToken();
+  const canSubmit = canSubmitRegistration({ signedIn, busy: submitting || confirming });
   const isTrial = values.tenantStatus === "Trial" || values.trialPeriod !== "None";
   const backToList = () => navigate(accountsPath("/registrations"));
 
@@ -171,7 +174,10 @@ function RegisterForm({ request }) {
   };
 
   const finish = async () => {
+    if (!canSubmitRegistration({ signedIn, busy: submittingRef.current })) return;
+    submittingRef.current = true;
     setSubmitting(true);
+    setConfirming(false);
     try {
       const created = await registerFromLead(request.id, values);
       platformAuth.rememberLeadSubmission(created.id, {
@@ -188,13 +194,14 @@ function RegisterForm({ request }) {
       push(result.toast, "error");
       if (shouldEndPlatformSession(error)) signOutPortal("accountant");
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
 
   const submit = (event) => {
     event.preventDefault();
-    if (submitting) return;
+    if (!canSubmitRegistration({ signedIn, busy: submittingRef.current || confirming })) return;
     if (!validate()) {
       push("Check the highlighted fields before registering.", "error");
       return;
@@ -210,7 +217,8 @@ function RegisterForm({ request }) {
         <div className="reg-panel">
           {!signedIn && (
             <div className="reg-error-bar" role="alert">
-              Log out and sign in with your accountant account before registering. This browser does not have a backend session yet.
+              Log out and sign in with your accountant account before registering. This browser does not have a backend session yet.{" "}
+              <Link to={UNIVERSAL_LOGIN}>Go to sign in</Link>
             </div>
           )}
           {errorCount > 0 && (
@@ -270,7 +278,7 @@ function RegisterForm({ request }) {
             <div className="reg-footer-actions">
               <Button variant="secondary" onClick={backToList}>Cancel</Button>
               <Button variant="secondary" onClick={() => { setValues(initialValues); setErrors({}); }}>Reset</Button>
-              <Button type="submit" disabled={submitting}>{submitting ? "Registering…" : "Register Hospital"}</Button>
+              <Button type="submit" disabled={!canSubmit}>{submitting ? "Registering…" : "Register Hospital"}</Button>
             </div>
           </footer>
         </div>
@@ -305,7 +313,7 @@ function RegisterForm({ request }) {
         confirmLabel={submitting ? "Registering…" : "Register hospital"}
         tone="primary"
         onCancel={() => { if (!submitting) setConfirming(false); }}
-        onConfirm={() => { setConfirming(false); finish(); }}
+        onConfirm={() => { if (canSubmitRegistration({ signedIn, busy: submittingRef.current })) finish(); }}
       />
     </section>
   );

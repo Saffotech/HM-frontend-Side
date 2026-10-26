@@ -112,19 +112,25 @@ export const LEAD_CREATE_FIELD_MAP = {
   billing_cycle: "billingCycle",
 };
 
+function displayName(value) {
+  return String(value ?? "").trim();
+}
+
 /**
  * Map a LeadSummary onto the CRM screen shape.
- * Ownership stays a display name only when the lead is assigned to this user,
- * so existing name comparisons keep working. The id stays the numeric backend id.
+ * assignee_name is the owner when the performance report sends it.
+ * CRM lead responses omit that name, so ownership stays the signed-in user
+ * only for leads assigned to them. The id stays the numeric backend id.
  */
 export function mapLead(lead, session) {
   const userId = session?.userId;
   const me = session?.name || "";
   const mine = lead?.assigned_to != null && Number(lead.assigned_to) === Number(userId);
+  const assigneeName = displayName(lead?.assignee_name);
   const activity = (Array.isArray(lead?.activities) ? lead.activities : []).map((entry) => ({
     id: entry.id,
     at: entry.at,
-    by: Number(entry.actor_id) === Number(userId) ? me : (entry.actor_name || ""),
+    by: displayName(entry?.actor_name) || (Number(entry?.actor_id) === Number(userId) ? me : ""),
     method: entry.method,
     note: entry.note || "",
     followUpDate: entry.follow_up_date || "",
@@ -148,7 +154,7 @@ export function mapLead(lead, session) {
     status: lead.status || "",
     priority: lead.priority || "Medium",
     message: lead.message || "",
-    assignedTo: mine ? me : "",
+    assignedTo: assigneeName || (mine ? me : ""),
     claimedAt: lead.claimed_at || "",
     followUpDate: lead.follow_up_date || "",
     nextAction: lead.next_action || "",
