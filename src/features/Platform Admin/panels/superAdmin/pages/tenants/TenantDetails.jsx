@@ -18,6 +18,7 @@ import Select from "../../../../shared/components/Select";
 import { PLAN_NAMES, billingCycles } from "../../../../shared/data/catalog";
 import { usePlatform } from "../../../../shared/context/PlatformContext";
 import { usePlatformPlans } from "../../../../shared/hooks/usePlatformPlans";
+import { usePlatformRevenue } from "../../../../shared/hooks/usePlatformRevenue";
 import { platformPath } from "../../../../shared/paths";
 import { formatCurrency } from "../../../../shared/utils/formatCurrency";
 import { formatDate } from "../../../../shared/utils/formatDate";
@@ -148,7 +149,7 @@ function RegisteredFromApi({ tenant, onUpdated, onBack }) {
             {editing ? "Close edit" : "Edit hospital"}
           </Button>
           <Button
-            variant={tenant.is_active ? "danger" : "primary"}
+            variant={tenant.is_active ? "danger" : "success"}
             disabled={!canToggle || pending}
             onClick={changeActivation}
           >
@@ -171,9 +172,6 @@ function RegisteredFromApi({ tenant, onUpdated, onBack }) {
           }}
         />
       ) : null}
-      <p className="td-api-note">
-        Activation comes from the server. Usage, invoices, and activity are still unavailable.
-      </p>
       <section className="td-panel">
         <div className="td-body">
           <div className="td-two">
@@ -197,8 +195,57 @@ function RegisteredFromApi({ tenant, onUpdated, onBack }) {
               <Info label="Renews" value={showDay(tenant.subscription_renews_on)} />
             </Box>
           </div>
+          <SubscriptionHistory tenantId={tenant.tenant_id} />
         </div>
       </section>
+    </section>
+  );
+}
+
+const invoiceTones = { Paid: "green", Pending: "amber", Overdue: "red", Failed: "grey" };
+
+function SubscriptionHistory({ tenantId }) {
+  const { revenue, loading, error } = usePlatformRevenue();
+  const rows = useMemo(
+    () => (revenue?.invoices || []).filter((invoice) => String(invoice.tenantId) === String(tenantId)),
+    [revenue, tenantId],
+  );
+
+  return (
+    <section className="td-box">
+      <header>
+        <h2>Subscriptions</h2>
+      </header>
+      {loading && !revenue ? (
+        <p className="td-empty">Loading subscriptions.</p>
+      ) : error && !revenue ? (
+        <p className="td-empty">{error}</p>
+      ) : rows.length === 0 ? (
+        <p className="td-empty">This hospital has not taken a subscription yet.</p>
+      ) : (
+        <table className="td-table">
+          <thead>
+            <tr>
+              <th>Taken on</th>
+              <th>Plan</th>
+              <th>Amount</th>
+              <th>Due</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((invoice) => (
+              <tr key={invoice.id}>
+                <td>{showDay(invoice.invoiceDate)}</td>
+                <td>{[invoice.plan, invoice.billingCycle].filter(Boolean).join(" · ") || "—"}</td>
+                <td>{money(invoice.bucket === "collected" && invoice.paymentAmount != null ? invoice.paymentAmount : invoice.amount)}</td>
+                <td>{showDay(invoice.dueDate)}</td>
+                <td><span className={`td-chip td-chip-${invoiceTones[invoice.status] || "grey"}`}>{invoice.status || "—"}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </section>
   );
 }

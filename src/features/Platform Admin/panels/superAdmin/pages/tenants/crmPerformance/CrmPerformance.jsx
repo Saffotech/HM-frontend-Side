@@ -59,7 +59,7 @@ export default function CrmPerformance() {
         <header className="cp-card-head">
           <div>
             <h3>Company-wide leads</h3>
-            <p className="cp-muted">Counts for every lead. Employee tables below still use GET /crm/leads.</p>
+            {/* <p className="cp-muted">Counts for every lead. Employee tables below still use GET /crm/leads.</p> */}
           </div>
           <Button variant="secondary" size="sm" onClick={company.reload} disabled={company.loading}>
             {company.loading ? "Loading…" : "Refresh"}

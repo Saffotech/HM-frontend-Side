@@ -69,8 +69,51 @@ export function mapPlatformRevenue(body) {
       outstandingAmount: amount(body, "outstanding_amount"),
       failedCount: amount(body, "failed_count"),
       invoiceCount: amount(body, "invoice_count"),
+      invoices: mapRevenueInvoices(body.invoices),
     },
   };
+}
+
+const REVENUE_BUCKETS = new Set(["collected", "pending", "overdue", "failed"]);
+
+function mapRevenueInvoice(row) {
+  if (!row || typeof row !== "object" || Array.isArray(row)) return null;
+  const bucket = String(row.bucket || "");
+  if (!REVENUE_BUCKETS.has(bucket) || row.id == null) return null;
+  return {
+    id: row.id,
+    number: row.number || "",
+    tenantId: row.tenant_id,
+    hospitalName: row.hospital_name || "",
+    hospitalCode: row.hospital_code || "",
+    plan: row.plan || "",
+    billingCycle: row.billing_cycle || "",
+    amount: amount(row, "amount"),
+    invoiceDate: row.invoice_date || "",
+    dueDate: row.due_date || "",
+    status: row.status || "",
+    bucket,
+    paidAt: row.paid_at || "",
+    paymentAmount: row.payment_amount == null ? null : amount(row, "payment_amount"),
+  };
+}
+
+function mapRevenueInvoices(rows) {
+  if (!Array.isArray(rows)) return [];
+  return rows.flatMap((row) => {
+    const invoice = mapRevenueInvoice(row);
+    return invoice ? [invoice] : [];
+  });
+}
+
+/** Card filter for the billing table. Outstanding is pending and overdue together. */
+export function invoicesForBucket(invoices, bucket) {
+  const rows = Array.isArray(invoices) ? invoices : [];
+  if (!bucket) return rows;
+  if (bucket === "outstanding") {
+    return rows.filter((row) => row.bucket === "pending" || row.bucket === "overdue");
+  }
+  return rows.filter((row) => row.bucket === bucket);
 }
 
 /** Money buckets only. Failed invoices stay out of the amounts. */

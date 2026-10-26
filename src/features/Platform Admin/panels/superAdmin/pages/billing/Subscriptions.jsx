@@ -70,10 +70,7 @@ export default function Subscriptions() {
       <header className="page-header">
         <h1>Subscriptions</h1>
       </header>
-      <p className="panel-copy" style={{ marginTop: -6, marginBottom: 14 }}>
-        Rows are hospitals registered on the server. Open a hospital to change its plan, billing cycle, renewal date, or amount.
-      </p>
-
+     
       <div className="subs-summary">
         {summary.map(([key, label, value, tone]) => (
           <button
@@ -154,8 +151,8 @@ export default function Subscriptions() {
                     <td><span className={chipClass(status)}>{statusLabel}</span></td>
                     <td>
                       <div className="subs-actions">
-                        <button type="button" className="action-link" onClick={() => setOpen(hospital)}>View</button>
-                        <Link className="action-link" to={`${PLATFORM_BASE}/hospitals/${hospital.tenant_id}`}>Edit</Link>
+                        <Button variant="outline" size="sm" onClick={() => setOpen(hospital)}>View</Button>
+                        <Link className="btn btn-outline btn-sm" to={`${PLATFORM_BASE}/hospitals/${hospital.tenant_id}`}>Edit</Link>
                       </div>
                     </td>
                   </tr>

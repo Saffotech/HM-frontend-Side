@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
 import { mapCrmProfile, mapCrmRevenue } from "./crmAccountModel.js";
-import { mapCrmAnalytics, mapPlatformPlans, mapPlatformRevenue, revenueSnapshot } from "./platformCatalogModel.js";
+import { invoicesForBucket, mapCrmAnalytics, mapPlatformPlans, mapPlatformRevenue, revenueSnapshot } from "./platformCatalogModel.js";
 import { executePlatformRequest } from "./platformHttp.js";
 import {
   platformPasswordBody,
@@ -98,8 +98,27 @@ describe("plan, revenue, and CRM catalog responses", () => {
       invoice_count: 7,
     });
     assert.equal(mapped.revenue.failedCount, 3);
+    assert.deepEqual(mapped.revenue.invoices, []);
     assert.deepEqual(revenueSnapshot(mapped.revenue).map((row) => row.revenue), [100, 40, 10]);
     assert.equal(mapPlatformRevenue([]).ok, false);
+  });
+
+  it("keeps invoice rows so billing cards can filter the table", () => {
+    const mapped = mapPlatformRevenue({
+      collected_amount: 100,
+      invoices: [
+        { id: 1, number: "INV-1", tenant_id: 4, hospital_name: "City", hospital_code: "CTY", plan: "Starter", billing_cycle: "Monthly", amount: 100, invoice_date: "2026-10-01", due_date: "2026-10-15", status: "Paid", bucket: "collected" },
+        { id: 2, number: "INV-2", amount: 40, status: "Pending", bucket: "pending" },
+        { id: 3, number: "INV-3", amount: 10, status: "Overdue", bucket: "overdue" },
+        { id: 9, bucket: "mystery" },
+      ],
+    });
+    assert.equal(mapped.ok, true);
+    assert.equal(mapped.revenue.invoices.length, 3);
+    assert.equal(mapped.revenue.invoices[0].hospitalName, "City");
+    assert.deepEqual(invoicesForBucket(mapped.revenue.invoices, "collected").map((row) => row.number), ["INV-1"]);
+    assert.deepEqual(invoicesForBucket(mapped.revenue.invoices, "outstanding").map((row) => row.number), ["INV-2", "INV-3"]);
+    assert.deepEqual(invoicesForBucket(mapped.revenue.invoices, "").map((row) => row.id), [1, 2, 3]);
   });
 
   it("fills a missing lead status with zero", () => {

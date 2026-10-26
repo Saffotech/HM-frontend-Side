@@ -1,0 +1,313 @@
+/*
+ * Platform Admin button system.
+ * Scoped to the super-admin shell. CRM (.crm-app) and Accountant (.portal-shell)
+ * keep their own controls.
+ */
+
+.app-shell:not(.portal-shell) .btn.btn {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 36px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.app-shell:not(.portal-shell) .btn.btn-sm {
+  min-height: 32px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+}
+
+.app-shell:not(.portal-shell) .btn.btn:focus {
+  outline: none;
+}
+
+.app-shell:not(.portal-shell) .btn.btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.app-shell:not(.portal-shell) .btn.btn:active:not(:disabled) {
+  filter: brightness(0.96);
+}
+
+.app-shell:not(.portal-shell) .btn.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: none;
+  box-shadow: none;
+}
+
+.app-shell:not(.portal-shell) .btn.btn-primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.app-shell:not(.portal-shell) .btn.btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+  color: #fff;
+}
+
+.app-shell:not(.portal-shell) .btn.btn-secondary {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.app-shell:not(.portal-shell) .btn.btn-secondary:hover:not(:disabled) {
+  background: var(--color-primary-light);
+  border-color: #b7ddd8;
+  color: var(--color-primary-dark);
+}
+
+.app-shell:not(.portal-shell) .btn.btn-outline {
+  background: #fff;
+  border-color: #8ecfc8;
+  color: var(--color-primary-dark);
+}
+
+.app-shell:not(.portal-shell) .btn.btn-outline:hover:not(:disabled) {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+}
+
+.app-shell:not(.portal-shell) .btn.btn-danger {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: #fff;
+}
+
+.app-shell:not(.portal-shell) .btn.btn-danger:hover:not(:disabled) {
+  background: #c44545;
+  border-color: #c44545;
+  color: #fff;
+}
+
+.app-shell:not(.portal-shell) .btn.btn-success {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: #fff;
+}
+
+.app-shell:not(.portal-shell) .btn.btn-success:hover:not(:disabled) {
+  background: #176b4e;
+  border-color: #176b4e;
+  color: #fff;
+}
+
+.app-shell:not(.portal-shell) a.btn.btn:hover {
+  text-decoration: none;
+}
+
+.app-shell:not(.portal-shell) .subs-actions,
+.app-shell:not(.portal-shell) .plan-actions,
+.app-shell:not(.portal-shell) .profile-photo-actions {
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.app-shell:not(.portal-shell) .plan-actions .btn-danger {
+  margin-left: auto;
+}
+
+.app-shell:not(.portal-shell) .profile-photo-actions {
+  justify-content: center;
+  padding: 12px;
+}
+
+.app-shell:not(.portal-shell) button.action-link.action-link,
+.app-shell:not(.portal-shell) a.action-link.action-link {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  margin: 0;
+  padding: 6px 12px;
+  border: 1px solid #8ecfc8;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--color-primary-dark);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.app-shell:not(.portal-shell) button.action-link.action-link:hover:not(:disabled),
+.app-shell:not(.portal-shell) a.action-link.action-link:hover {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+  text-decoration: none;
+}
+
+.app-shell:not(.portal-shell) button.action-link.danger,
+.app-shell:not(.portal-shell) a.action-link.danger {
+  background: var(--color-danger-bg);
+  border-color: #f0b4b4;
+  color: #b42323;
+}
+
+.app-shell:not(.portal-shell) button.action-link.danger:hover:not(:disabled),
+.app-shell:not(.portal-shell) a.action-link.danger:hover {
+  background: #fde2e2;
+  border-color: var(--color-danger);
+  color: #9d1c1c;
+}
+
+.app-shell:not(.portal-shell) button.action-link.strong,
+.app-shell:not(.portal-shell) a.action-link.strong {
+  background: var(--color-success-bg);
+  border-color: #9dcebc;
+  color: #14684c;
+}
+
+.app-shell:not(.portal-shell) button.action-link.strong:hover:not(:disabled),
+.app-shell:not(.portal-shell) a.action-link.strong:hover {
+  background: #dff3ea;
+  border-color: var(--color-success);
+  color: #0f5a40;
+}
+
+.app-shell:not(.portal-shell) button.action-link.action-link:focus {
+  outline: none;
+}
+
+.app-shell:not(.portal-shell) button.action-link.action-link:focus-visible,
+.app-shell:not(.portal-shell) a.action-link.action-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.app-shell:not(.portal-shell) button.action-link.action-link:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.app-shell:not(.portal-shell) .icon-btn {
+  appearance: none;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 10px;
+}
+
+.app-shell:not(.portal-shell) .icon-btn:hover:not(:disabled) {
+  background: var(--color-primary-light);
+  border-color: #b7ddd8;
+}
+
+.app-shell:not(.portal-shell) .icon-btn:focus-visible,
+.app-shell:not(.portal-shell) .avatar-btn:focus-visible,
+.app-shell:not(.portal-shell) .profile-avatar-edit:focus-visible,
+.app-shell:not(.portal-shell) .nav-group-label:focus-visible,
+.app-shell:not(.portal-shell) .subs-filter-tag button:focus-visible,
+.app-shell:not(.portal-shell) .sort-btn:focus-visible,
+.app-shell:not(.portal-shell) .dropdown-item:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.app-shell:not(.portal-shell) .icon-btn:disabled,
+.app-shell:not(.portal-shell) .profile-avatar-edit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.app-shell:not(.portal-shell) .avatar-btn {
+  appearance: none;
+  cursor: pointer;
+}
+
+.app-shell:not(.portal-shell) .avatar-btn:hover {
+  border-color: #b7ddd8;
+  background: var(--color-primary-light);
+}
+
+.app-shell:not(.portal-shell) .nav-group-label {
+  appearance: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.app-shell:not(.portal-shell) .nav-group-label:hover {
+  background: var(--color-neutral-bg);
+  color: var(--color-text);
+}
+
+.app-shell:not(.portal-shell) .td-back {
+  appearance: none;
+  min-height: 32px;
+  margin-bottom: 12px;
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.app-shell:not(.portal-shell) .td-back:hover {
+  background: var(--color-primary-light);
+  border-color: #b7ddd8;
+  color: var(--color-primary-dark);
+  text-decoration: none;
+}
+
+.app-shell:not(.portal-shell) .td-back:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.app-shell:not(.portal-shell) .profile-avatar-edit:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+}
+
+.app-shell:not(.portal-shell) .dropdown-item {
+  appearance: none;
+  cursor: pointer;
+}
+
+.app-shell:not(.portal-shell) .subs-filter-tag button {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-shell:not(.portal-shell) .pagination .btn.btn {
+  min-width: 36px;
+}
+
+.app-shell:not(.portal-shell) .cp-link,
+.app-shell:not(.portal-shell) .cp-person,
+.app-shell:not(.portal-shell) .cp-top-name,
+.app-shell:not(.portal-shell) .cp-segment button,
+.app-shell:not(.portal-shell) .cp-chip,
+.app-shell:not(.portal-shell) .dash-kpi,
+.app-shell:not(.portal-shell) .subs-summary-item {
+  appearance: none;
+}

@@ -6,6 +6,7 @@ import Header from "./Header";
 import Sidebar from "./Sidebar";
 import "../../../shared/layout/AppShell.css";
 import "./AppLayout.css";
+import "./platformButtons.css";
 
 export default function AppLayout() {
   const { sessionFor } = usePlatform();

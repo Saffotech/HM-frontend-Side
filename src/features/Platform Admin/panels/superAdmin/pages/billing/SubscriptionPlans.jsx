@@ -24,9 +24,7 @@ export default function SubscriptionPlans() {
         <h1>Subscription Plans</h1>
         <Button disabled title="This screen reads the catalog. It does not change plan prices.">Add plan</Button>
       </header>
-      <p className="panel-copy" style={{ marginTop: -6, marginBottom: 14 }}>
-        Prices come from the plan catalog. Annual price is the catalog annual price. Changing a catalog price later does not rewrite old invoices or a hospital that already has a subscription amount.
-      </p>
+    
       {loading && <p className="panel-copy">Loading plans.</p>}
       {error && (
         <div role="alert">
@@ -62,9 +60,9 @@ export default function SubscriptionPlans() {
               <div><span>Monthly</span><strong>{money(plan.monthlyPrice)}</strong></div>
             </div>
             <div className="plan-actions">
-              <button type="button" className="action-link" onClick={() => setOpen(plan)}>View</button>
-              <button type="button" className="action-link" disabled title="Catalog changes are not available from this screen.">Edit</button>
-              <button type="button" className="action-link danger" disabled title="Catalog changes are not available from this screen.">Deactivate</button>
+              <Button variant="outline" size="sm" onClick={() => setOpen(plan)}>View</Button>
+              <Button variant="outline" size="sm" disabled title="Catalog changes are not available from this screen.">Edit</Button>
+              <Button variant="danger" size="sm" disabled title="Catalog changes are not available from this screen.">Deactivate</Button>
             </div>
           </article>
         ))}

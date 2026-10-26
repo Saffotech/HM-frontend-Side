@@ -255,12 +255,12 @@ export default function MyProfile() {
             <li><span>User {identity.userId ?? "—"}</span></li>
           </ul>
           <div className="profile-photo-actions">
-            <button type="button" className="action-link" disabled={photoBusy} onClick={() => fileRef.current?.click()}>
+            <Button variant="outline" size="sm" disabled={photoBusy} onClick={() => fileRef.current?.click()}>
               {photoBusy ? "Working…" : "Upload photo"}
-            </button>
-            <button type="button" className="action-link danger" disabled={photoBusy || !photoUrl} onClick={removePhoto}>
+            </Button>
+            <Button variant="danger" size="sm" disabled={photoBusy || !photoUrl} onClick={removePhoto}>
               <Trash2 size={12} aria-hidden="true" /> Remove
-            </button>
+            </Button>
           </div>
           <input ref={fileRef} type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" hidden onChange={uploadPhoto} />
         </aside>

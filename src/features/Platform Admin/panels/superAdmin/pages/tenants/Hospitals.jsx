@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import Button from "../../../../shared/components/Button";
 import DataTable from "../../../../shared/components/DataTable";
 import SearchBar from "../../../../shared/components/SearchBar";
-import PageHeader from "../../layout/PageHeader";
 import { useRegisteredHospitals } from "../../useRegisteredHospitals";
 import { PLATFORM_BASE, platformPath } from "../../../../shared/paths";
 import { includesQuery } from "../../../../shared/utils/table";
@@ -36,23 +35,20 @@ export default function Hospitals() {
       key: "actions",
       label: "Actions",
       render: (row) => (
-        <button type="button" className="action-link" onClick={() => navigate(`${PLATFORM_BASE}/hospitals/${row.tenant_id}`)}>
+        <Button variant="outline" size="sm" onClick={() => navigate(`${PLATFORM_BASE}/hospitals/${row.tenant_id}`)}>
           View
-        </button>
+        </Button>
       ),
     },
   ];
 
   return (
     <section className="hospitals-page">
-      <PageHeader
-        actions={<Button onClick={() => navigate(platformPath("/hospitals/register"))}>Register hospital</Button>}
-      />
-      <p className="hospitals-api-note">
-        This list is every hospital registered on the server, including ones created by the accountant. Open a hospital to suspend or reactivate it. Editing a registration is not available.
-      </p>
+      <div className="hospitals-list-bar">
+        <SearchBar value={search} onChange={setSearch} placeholder="Search name or code" />
+        <Button onClick={() => navigate(platformPath("/hospitals/register"))}>Register hospital</Button>
+      </div>
       {error && <p className="hospitals-api-note" role="alert">{error}</p>}
-      <SearchBar value={search} onChange={setSearch} placeholder="Search name or code" />
       <DataTable
         rows={rows}
         columns={columns}

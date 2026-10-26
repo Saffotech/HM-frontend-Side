@@ -141,13 +141,17 @@
 }
 
 .cp-filters .field {
-  flex: 1 1 120px;
+  flex: 1 1 140px;
   margin: 0;
 }
 
 .cp-filters select,
-.cp-filters input {
+.cp-filters input,
+.cp-filters .cp-combo-box input {
   width: 100%;
+  height: 40px;
+  min-height: 40px;
+  box-sizing: border-box;
 }
 
 .cp-combo-box {
@@ -209,11 +213,14 @@
 .cp-filter-actions {
   display: flex;
   flex: 0 0 auto;
+  align-items: center;
   gap: 8px;
-  margin-left: auto;
 }
 
-.cp-filter-actions .btn {
+.app-shell:not(.portal-shell) .cp-filter-actions .btn.btn {
+  height: 40px;
+  min-height: 40px;
+  padding: 0 14px;
   white-space: nowrap;
 }
 

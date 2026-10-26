@@ -40,7 +40,13 @@
   background: transparent;
   font: inherit;
   text-align: left;
-  cursor: default;
+  cursor: pointer;
+  width: 100%;
+}
+
+.inv-summary-item:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
 
 .inv-summary-item + .inv-summary-item {
@@ -193,6 +199,10 @@
 
 .inv-page .data-table tbody tr:hover {
   background: #f3f8f7;
+}
+
+.inv-page .data-table tbody tr.inv-row-link {
+  cursor: pointer;
 }
 
 .inv-page .sort-btn {
