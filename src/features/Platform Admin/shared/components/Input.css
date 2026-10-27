@@ -12,13 +12,18 @@
 
 .field input,
 .field textarea,
-.field select {
+.field select,
+.field .admin-select {
+  box-sizing: border-box;
   width: 100%;
   border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  border-radius: 10px;
+  background-color: var(--color-surface);
+  border-radius: 11px;
   padding: 10px 12px;
+  color: var(--color-text);
+  font: inherit;
   outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
 }
 
 .field textarea {
@@ -28,15 +33,37 @@
 
 .field input:hover,
 .field textarea:hover,
-.field select:hover {
-  border-color: #c5d0de;
+.field select:hover,
+.field .admin-select:hover {
+  border-color: #9db1c5;
+  background-color: #fff;
 }
 
 .field input:focus,
 .field textarea:focus,
-.field select:focus {
+.field select:focus,
+.field .admin-select:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(19, 135, 127, 0.15);
+  box-shadow: 0 0 0 3px rgba(19, 135, 127, 0.13), 0 2px 6px rgba(19, 48, 76, 0.06);
+}
+
+.field select {
+  min-height: 42px;
+  padding-right: 40px;
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.field select:disabled {
+  background-color: #f3f6f9;
+  color: #8492a6;
+  cursor: not-allowed;
+  opacity: 0.82;
+}
+
+.field select option {
+  background: #fff;
+  color: var(--color-text);
 }
 
 .field-error {
@@ -46,6 +73,7 @@
 
 .field.has-error input,
 .field.has-error textarea,
-.field.has-error select {
+.field.has-error select,
+.field.has-error .admin-select {
   border-color: var(--color-danger);
 }

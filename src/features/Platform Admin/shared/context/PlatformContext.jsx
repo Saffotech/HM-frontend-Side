@@ -23,6 +23,19 @@ function createDefaultState() {
   };
 }
 
+/** React state can be older than another tab's write. Keep that tab's profile. */
+function latestPortalState(fallback) {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.version !== PLATFORM_PORTAL_STATE_VERSION) return fallback;
+    return { ...fallback, ...parsed, version: PLATFORM_PORTAL_STATE_VERSION };
+  } catch {
+    return fallback;
+  }
+}
+
 export function PlatformProvider({ children }) {
   const [state, setState] = useLocalStorage(STORAGE_KEY, createDefaultState);
 
@@ -51,7 +64,7 @@ export function PlatformProvider({ children }) {
     const key = SESSION_KEYS[portal];
     if (!key || profile?.userId == null) return false;
     setState((current) => ({
-      ...current,
+      ...latestPortalState(current),
       [key]: {
         userId: profile.userId,
         name: profile.name,
@@ -68,17 +81,18 @@ export function PlatformProvider({ children }) {
     const key = SESSION_KEYS[portal];
     if (!key || !patch) return;
     setState((current) => {
-      const session = current[key];
-      if (!session) return current;
-      return { ...current, [key]: { ...session, ...patch } };
+      const base = latestPortalState(current);
+      const session = base[key];
+      if (!session) return base;
+      return { ...base, [key]: { ...session, ...patch } };
     });
   }, [setState]);
 
   const signOutPortal = useCallback((portal) => {
     const key = SESSION_KEYS[portal];
     if (!key) return;
-    if (portal === "platform" || portal === "accountant" || portal === "crm") void signOutPlatform();
-    setState((current) => ({ ...current, [key]: null }));
+    void signOutPlatform({ portal });
+    setState((current) => ({ ...latestPortalState(current), [key]: null }));
   }, [setState]);
 
   const api = useMemo(() => ({

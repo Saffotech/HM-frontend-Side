@@ -34,6 +34,17 @@ const COLUMNS = {
   lost: ["Hospital", "Plan", "Reason", "Note", "Closed", "Closed by"],
 };
 
+function openRow(event, open) {
+  if (event.target.closest("button, a, input, select, textarea")) return;
+  open();
+}
+
+function openRowFromKeyboard(event, open) {
+  if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+  event.preventDefault();
+  open();
+}
+
 export default function Conversions() {
   const { leads, hospitals, today, actions, billingAvailable } = useCrm();
   const { revenue: attributed, loading: revenueLoading, error: revenueError } = useCrmRevenue();
@@ -107,7 +118,7 @@ export default function Conversions() {
               {tab === "pending" && pagination.rows.map((lead) => {
                 const waiting = daysBetween(localDay(lead.agreedAt), today);
                 return (
-                  <tr key={lead.id}>
+                  <tr key={lead.id} className="crm-row-click" tabIndex={0} role="link" aria-label={`Open ${lead.hospitalName || "lead"}`} onClick={(event) => openRow(event, () => actions.openLead(lead.id))} onKeyDown={(event) => openRowFromKeyboard(event, () => actions.openLead(lead.id))}>
                     <td><button type="button" className="crm-row-link" onClick={() => actions.openLead(lead.id)}>{lead.hospitalName}</button><span className="crm-sub">{lead.city || "—"}</span></td>
                     <td>{lead.plan || "—"}<span className="crm-sub">{lead.billingCycle || "—"}</span></td>
                     <td className="crm-nowrap">{formatDate(lead.agreedAt)}<span className="crm-sub">{lead.agreedBy || "—"}</span></td>
@@ -123,7 +134,7 @@ export default function Conversions() {
                 const hospital = hospitalsById.get(lead.hospitalId);
                 const days = lead.registeredAt ? daysBetween(localDay(lead.submittedAt), localDay(lead.registeredAt)) : null;
                 return (
-                  <tr key={lead.id}>
+                  <tr key={lead.id} className="crm-row-click" tabIndex={0} role="link" aria-label={`Open ${lead.hospitalName || "lead"}`} onClick={(event) => openRow(event, () => actions.openLead(lead.id))} onKeyDown={(event) => openRowFromKeyboard(event, () => actions.openLead(lead.id))}>
                     <td><button type="button" className="crm-row-link" onClick={() => actions.openLead(lead.id)}>{lead.hospitalName}</button><span className="crm-sub">{lead.city || "—"}</span></td>
                     <td className="crm-mono">{lead.hospitalId || "—"}</td>
                     <td>{hospital?.plan || lead.plan || "—"}<span className="crm-sub">{hospital?.billingCycle || lead.billingCycle || "—"}</span></td>
@@ -140,7 +151,7 @@ export default function Conversions() {
                 );
               })}
               {tab === "lost" && pagination.rows.map((lead) => (
-                <tr key={lead.id}>
+                <tr key={lead.id} className="crm-row-click" tabIndex={0} role="link" aria-label={`Open ${lead.hospitalName || "lead"}`} onClick={(event) => openRow(event, () => actions.openLead(lead.id))} onKeyDown={(event) => openRowFromKeyboard(event, () => actions.openLead(lead.id))}>
                   <td><button type="button" className="crm-row-link" onClick={() => actions.openLead(lead.id)}>{lead.hospitalName}</button><span className="crm-sub">{lead.city || "—"}</span></td>
                   <td>{lead.plan || "—"}</td>
                   <td>{lead.closeReason || "—"}</td>

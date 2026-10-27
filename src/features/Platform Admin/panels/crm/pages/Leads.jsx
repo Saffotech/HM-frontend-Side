@@ -34,6 +34,17 @@ const FILTER_KEYS = ["q", "priority", "plan", "follow", "origin"];
 const LEAD_COLUMNS = ["Hospital", "Contact", "Phone", "City", "Plan", "Priority", "Status", "", "Created"];
 const NEXT_HEADERS = { "Not Interested": "Not interested reason", all: "Next follow-up / reason" };
 
+function openRow(event, open) {
+  if (event.target.closest("button, a, input, select, textarea")) return;
+  open();
+}
+
+function openRowFromKeyboard(event, open) {
+  if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+  event.preventDefault();
+  open();
+}
+
 function matchesTab(lead, tab) {
   if (tab === "all") return true;
   if (tab === "open") return isOpen(lead);
@@ -53,6 +64,8 @@ export default function Leads() {
   const origins = inPool ? POOL_ORIGINS : ORIGINS;
   const origin = origins[params.get("origin")] ? params.get("origin") : "";
   const focus = params.get("focus");
+  const showNextStep = !["Contacted", "Agreed", "Registered", "all"].includes(tab);
+  const leadColumns = showNextStep ? LEAD_COLUMNS : LEAD_COLUMNS.filter(Boolean);
 
   useEffect(() => {
     if (!focus) return;
@@ -175,7 +188,7 @@ export default function Leads() {
             <table className="crm-table crm-leads-table">
               <thead>
                 <tr>
-                  {LEAD_COLUMNS.map((column) => (
+                  {leadColumns.map((column) => (
                     <th key={column} scope="col">{column || NEXT_HEADERS[tab] || "Next follow-up"}</th>
                   ))}
                   <th scope="col" className="is-end">Action</th>
@@ -184,7 +197,7 @@ export default function Leads() {
               <tbody>
                 {rows.length === 0 && (
                   <tr className="crm-table-empty">
-                    <td colSpan={LEAD_COLUMNS.length + 1}>
+                    <td colSpan={leadColumns.length + 1}>
                       {leads.length === 0 ? (
                         <div className="crm-empty">
                           <Inbox size={28} aria-hidden="true" />
@@ -204,7 +217,7 @@ export default function Leads() {
                   </tr>
                 )}
                 {pagination.rows.map((lead) => (
-                  <tr key={lead.id}>
+                  <tr key={lead.id} className="crm-row-click" tabIndex={0} role="link" aria-label={`Open ${lead.hospitalName || "lead"}`} onClick={(event) => openRow(event, () => actions.openLead(lead.id))} onKeyDown={(event) => openRowFromKeyboard(event, () => actions.openLead(lead.id))}>
                     <td>
                       <button type="button" className="crm-row-link" onClick={() => actions.openLead(lead.id)}>{lead.hospitalName}</button>
                       {lead.type && <span className="crm-sub">{lead.type}</span>}
@@ -215,7 +228,7 @@ export default function Leads() {
                     <td>{lead.plan || "—"}{lead.billingCycle && <span className="crm-sub">{lead.billingCycle}</span>}</td>
                     <td><PriorityMark value={lead.priority} /></td>
                     <td><StatusMark status={lead.status} /></td>
-                    <td><NextStep lead={lead} today={today} /></td>
+                    {showNextStep && <td><NextStep lead={lead} today={today} /></td>}
                     <td className="crm-nowrap">{formatDate(lead.submittedAt)}<span className="crm-sub">{ORIGINS[leadOrigin(lead, me)]}</span></td>
                     <td>
                       <div className="crm-row-actions">

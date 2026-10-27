@@ -8,6 +8,7 @@ import { PAYMENT_METHODS, paymentErrors } from "../utils/invoices";
 import Button from "./Button";
 import Input from "./Input";
 import Modal from "./Modal";
+import Select from "./Select";
 
 const FIELD_MAP = { paid_at: "paidAt" };
 
@@ -63,14 +64,10 @@ export default function RecordPaymentDialog({ invoice, onClose, onRecorded }) {
       <form id="record-platform-payment" onSubmit={submit}>
         {errors.form && <p role="alert">{errors.form}</p>}
         <Input label="Amount" type="number" min="1" step="1" value={form.amount} onChange={set("amount")} error={errors.amount} required />
-        <label className={`field ${errors.method ? "has-error" : ""}`}>
-          <span className="field-label">Method</span>
-          <select value={form.method} onChange={set("method")} required>
-            <option value="">Choose</option>
-            {PAYMENT_METHODS.map((method) => <option key={method} value={method}>{method}</option>)}
-          </select>
-          {errors.method && <span className="field-error">{errors.method}</span>}
-        </label>
+        <Select label="Method" value={form.method} onChange={set("method")} error={errors.method} required>
+          <option value="">Choose</option>
+          {PAYMENT_METHODS.map((method) => <option key={method} value={method}>{method}</option>)}
+        </Select>
         <Input
           label={form.method === "UPI" ? "UPI ID" : "Reference"}
           value={form.reference}

@@ -280,12 +280,13 @@ button.crm-kpi:focus-visible {
   border-radius: 8px;
 }
 
-.crm-select {
+.field.crm-select {
   display: grid;
   gap: 3px;
 }
 
-.crm-select > span {
+.crm-select > span,
+.field.crm-select .field-label {
   color: var(--color-text-secondary);
   font-size: 11px;
   font-weight: 650;
@@ -294,22 +295,52 @@ button.crm-kpi:focus-visible {
 }
 
 .crm-select select,
+.field.crm-select .admin-select,
 .crm-select input {
+  box-sizing: border-box;
   height: 36px;
   min-width: 120px;
   padding: 0 10px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fff;
   color: var(--color-text);
   font-size: 13px;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+.crm-select select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 34px;
+  background-image: linear-gradient(45deg, transparent 50%, #60758e 50%), linear-gradient(135deg, #60758e 50%, transparent 50%);
+  background-position: calc(100% - 15px) 50%, calc(100% - 10px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.crm-select select:hover,
+.field.crm-select .admin-select:hover,
+.crm-select input:hover {
+  border-color: #9db1c5;
+  background-color: #fff;
 }
 
 .crm-select select:focus,
+.field.crm-select .admin-select:focus,
+.crm-select .admin-select.is-open,
 .crm-select input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(19, 135, 127, 0.12);
+  box-shadow: 0 0 0 3px rgba(19, 135, 127, 0.13), 0 2px 6px rgba(19, 48, 76, 0.06);
+}
+
+.crm-select select:disabled,
+.field.crm-select .admin-select:disabled {
+  background-color: #f3f6f9;
+  color: #8492a6;
+  cursor: not-allowed;
 }
 
 .crm-toolbar-end {
@@ -425,6 +456,15 @@ button.crm-kpi:focus-visible {
 
 .crm-table tbody tr:hover td {
   background: #f8fbfb;
+}
+
+.crm-table tbody tr.crm-row-click {
+  cursor: pointer;
+}
+
+.crm-table tbody tr.crm-row-click:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
 
 .crm-table td strong {

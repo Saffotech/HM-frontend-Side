@@ -186,7 +186,8 @@
 
 .hospitals-toolbar .search-bar,
 .hospitals-toolbar .field input,
-.hospitals-toolbar .field select {
+.hospitals-toolbar .field select,
+.hospitals-toolbar .field .admin-select {
   border-radius: var(--classic-radius);
   border-color: var(--classic-border);
   background-color: #fff;

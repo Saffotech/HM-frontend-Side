@@ -11,6 +11,7 @@ import {
 } from './universalLoginPolicy.js';
 import { getRoleLabel, hospitalEntryPath, normalizeRole } from '../utils/roleUtils.js';
 import {
+  clearStoredPortalProfile,
   createPlatformAuthStore,
   readActivePortalSession,
   saveActivePortalProfile,
@@ -296,6 +297,49 @@ describe('platform session restore', () => {
     assert.equal(active.portal, 'crm');
     assert.equal(active.role, 'crm');
     assert.equal(readActivePortalSession(storage, createPlatformAuthStore(memoryStorage())), null);
+  });
+
+  it('keeps the other portal profiles when one portal signs in or out', () => {
+    const storage = memoryStorage();
+    saveActivePortalProfile('platform', {
+      userId: 3,
+      name: 'Ada',
+      email: 'admin@saffocare.example',
+      role: 'platform_admin',
+    }, storage);
+    saveActivePortalProfile('crm', {
+      userId: 5,
+      name: 'Meera',
+      email: 'crm@saffocare.example',
+      role: 'crm',
+    }, storage);
+
+    const saved = JSON.parse(storage.getItem('saffocare.platform.v1'));
+    assert.equal(saved.platformSession.userId, 3);
+    assert.equal(saved.crmSession.userId, 5);
+    assert.equal(saved.accountsSession, null);
+
+    const platformTab = createPlatformAuthStore(memoryStorage());
+    platformTab.saveSession({
+      accessToken: 'platform-access',
+      refreshToken: 'platform-refresh',
+      user: { userId: 3, role: 'platform_admin', tenantId: null },
+    });
+    const crmTab = createPlatformAuthStore(memoryStorage());
+    crmTab.saveSession({
+      accessToken: 'crm-access',
+      refreshToken: 'crm-refresh',
+      user: { userId: 5, role: 'crm', tenantId: null },
+    });
+    assert.equal(readActivePortalSession(storage, platformTab).portal, 'platform');
+    assert.equal(readActivePortalSession(storage, crmTab).portal, 'crm');
+
+    assert.equal(clearStoredPortalProfile('platform', storage), true);
+    const after = JSON.parse(storage.getItem('saffocare.platform.v1'));
+    assert.equal(after.platformSession, null);
+    assert.equal(after.crmSession.userId, 5);
+    assert.equal(readActivePortalSession(storage, platformTab), null);
+    assert.equal(readActivePortalSession(storage, crmTab).portal, 'crm');
   });
 });
 

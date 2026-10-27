@@ -4,7 +4,7 @@ import { CalendarClock, CalendarX2, CheckCircle2, Phone } from "lucide-react";
 import Pagination from "../../../shared/components/Pagination";
 import SearchBar from "../../../shared/components/SearchBar";
 import { usePagination } from "../../../shared/hooks/usePagination";
-import { formatDate, formatDateTime } from "../../../shared/utils/formatDate";
+import { formatDate } from "../../../shared/utils/formatDate";
 import { followUpsFor } from "../../../shared/utils/leadMetrics";
 import { daysBetween } from "../../../shared/utils/periods";
 import { includesQuery } from "../../../shared/utils/table";
@@ -30,6 +30,17 @@ const EMPTY = {
 };
 const byPriority = (a, b) => (priorityRank[a.priority] ?? 1) - (priorityRank[b.priority] ?? 1);
 const dueText = (day) => formatDate(`${day}T00:00:00`);
+
+function openRow(event, open) {
+  if (event.target.closest("button, a, input, select, textarea")) return;
+  open();
+}
+
+function openRowFromKeyboard(event, open) {
+  if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+  event.preventDefault();
+  open();
+}
 
 export default function FollowUps() {
   const { leads, today, actions } = useCrm();
@@ -121,13 +132,13 @@ export default function FollowUps() {
                 pagination.rows.map((row) => {
                   const late = daysBetween(row.due, row.completedDay);
                   return (
-                    <tr key={`${row.lead.id}-${row.due}-${row.completedAt}`}>
+                    <tr key={`${row.lead.id}-${row.due}-${row.completedAt}`} className="crm-row-click" tabIndex={0} role="link" aria-label={`Open ${row.lead.hospitalName || "lead"}`} onClick={(event) => openRow(event, () => actions.openLead(row.lead.id))} onKeyDown={(event) => openRowFromKeyboard(event, () => actions.openLead(row.lead.id))}>
                       <td>
                         <button type="button" className="crm-row-link" onClick={() => actions.openLead(row.lead.id)}>{row.lead.hospitalName}</button>
                         <span className="crm-sub">{row.lead.city || "—"}</span>
                       </td>
                       <td className="crm-nowrap">{dueText(row.due)}</td>
-                      <td className="crm-nowrap">{formatDateTime(row.completedAt)}<span className="crm-sub">{row.entry?.by || "—"}</span></td>
+                      <td className="crm-nowrap">{formatDate(row.completedAt)}<span className="crm-sub">{row.entry?.by || "—"}</span></td>
                       <td>
                         <span className={`crm-due ${late > 0 ? "crm-due-overdue" : "crm-due-today"}`}>
                           {late > 0 ? `${plural(late, "day")} late` : late < 0 ? "Early" : "On time"}
@@ -144,7 +155,7 @@ export default function FollowUps() {
                   const contact = lastContact(lead);
                   const overdueBy = view === "overdue" ? daysBetween(lead.followUpDate, today) : 0;
                   return (
-                    <tr key={lead.id}>
+                    <tr key={lead.id} className="crm-row-click" tabIndex={0} role="link" aria-label={`Open ${lead.hospitalName || "lead"}`} onClick={(event) => openRow(event, () => actions.openLead(lead.id))} onKeyDown={(event) => openRowFromKeyboard(event, () => actions.openLead(lead.id))}>
                       <td>
                         <button type="button" className="crm-row-link" onClick={() => actions.openLead(lead.id)}>{lead.hospitalName}</button>
                         <span className="crm-sub">{lead.city || "—"}</span>

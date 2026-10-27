@@ -1,8 +1,99 @@
-.field select {
-  appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, #667895 50%), linear-gradient(135deg, #667895 50%, transparent 50%);
-  background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
-  background-size: 5px 5px, 5px 5px;
-  background-repeat: no-repeat;
-  padding-right: 32px;
+.field .admin-select {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 550;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+.field .admin-select span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-select-chevron {
+  flex-shrink: 0;
+  color: #60758e;
+}
+
+.field .admin-select:hover {
+  border-color: #9db1c5;
+  background-color: #fff;
+}
+
+.field .admin-select:focus,
+.field .admin-select.is-open {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(19, 135, 127, 0.13), 0 2px 6px rgba(19, 48, 76, 0.06);
+}
+
+.field .admin-select.is-open .admin-select-chevron {
+  color: var(--color-primary);
+}
+
+.field .admin-select:disabled {
+  background-color: #f3f6f9;
+  color: #8492a6;
+  cursor: not-allowed;
+  opacity: 0.82;
+}
+
+.field.has-error .admin-select {
+  border-color: var(--color-danger);
+}
+
+.admin-menu {
+  position: fixed;
+  z-index: 60;
+  margin: 0;
+  padding: 5px;
+  overflow-y: auto;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #d7e2eb;
+  border-radius: 11px;
+  box-shadow: 0 14px 30px rgba(15, 35, 60, 0.16), 0 2px 6px rgba(15, 35, 60, 0.05);
+}
+
+.admin-menu li {
+  padding: 8px 10px;
+  border-radius: 7px;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.admin-menu li.is-active:not(.is-selected) {
+  background: #f3f6f8;
+}
+
+.admin-menu li.is-selected {
+  background: #e5f4f2;
+  color: var(--color-primary-dark);
+  font-weight: 700;
+}
+
+.admin-menu li.is-disabled {
+  color: #8492a6;
+  cursor: default;
+  background: transparent;
 }

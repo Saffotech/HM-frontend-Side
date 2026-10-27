@@ -163,7 +163,8 @@
 }
 
 .register-page .field input,
-.register-page .field select {
+.register-page .field select,
+.register-page .field .admin-select {
   border-radius: var(--classic-radius);
   border-color: var(--classic-border);
   min-height: 36px;
@@ -176,7 +177,8 @@
 }
 
 .register-page .field.has-error input,
-.register-page .field.has-error select {
+.register-page .field.has-error select,
+.register-page .field.has-error .admin-select {
   background: #fffafa;
 }
 

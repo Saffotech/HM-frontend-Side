@@ -342,7 +342,7 @@ function RevenueRows({ hospitals, loading, error, empty, columns, leads, onOpen 
   return hospitals.map((hospital) => {
     const lead = leads.find((item) => String(item.hospitalId) === String(hospital.tenantId));
     return (
-      <tr key={hospital.tenantId}>
+      <tr key={hospital.tenantId} className={lead ? "crm-row-click" : undefined} tabIndex={lead ? 0 : undefined} role={lead ? "link" : undefined} aria-label={lead ? `Open ${hospital.hospitalName || "lead"}` : undefined} onClick={lead ? (event) => openRow(event, lead.id) : undefined} onKeyDown={lead ? (event) => openRowFromKeyboard(event, lead.id) : undefined}>
         <td>
           {lead ? (
             <button type="button" className="crm-row-link" onClick={() => onOpen(lead.id)}>{hospital.hospitalName || "Hospital"}</button>

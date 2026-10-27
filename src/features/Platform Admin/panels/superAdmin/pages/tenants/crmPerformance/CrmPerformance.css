@@ -125,6 +125,7 @@
 
 .cp-filters select,
 .cp-filters input,
+.cp-filters .admin-select,
 .cp-filters .cp-combo-box input {
   width: 100%;
   height: 40px;
@@ -154,18 +155,18 @@
   z-index: 30;
   max-height: 240px;
   margin: 0;
-  padding: 4px;
+  padding: 5px;
   overflow-y: auto;
   list-style: none;
   background: #fff;
-  border: 1px solid var(--cp-border);
-  border-radius: 8px;
-  box-shadow: 0 10px 24px rgba(15, 35, 60, 0.14);
+  border: 1px solid #d7e2eb;
+  border-radius: 11px;
+  box-shadow: 0 14px 30px rgba(15, 35, 60, 0.16), 0 2px 6px rgba(15, 35, 60, 0.05);
 }
 
 .cp-combo-list li {
-  padding: 7px 10px;
-  border-radius: 6px;
+  padding: 8px 10px;
+  border-radius: 7px;
   font-size: 13.5px;
   white-space: nowrap;
   overflow: hidden;
@@ -174,13 +175,14 @@
   color: var(--color-text);
 }
 
-.cp-combo-list li.active {
-  background: var(--color-primary-light);
+.cp-combo-list li.active:not([aria-selected="true"]) {
+  background: #f3f6f8;
 }
 
 .cp-combo-list li[aria-selected="true"] {
   font-weight: 650;
   color: var(--color-primary-dark);
+  background: #e5f4f2;
 }
 
 .cp-combo-list .cp-combo-empty {

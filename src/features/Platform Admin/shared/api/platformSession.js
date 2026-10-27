@@ -174,19 +174,16 @@ function readPortalState(storage) {
   }
 }
 
-/** Persist the one portal profile that matches the platform access token. */
-export function saveActivePortalProfile(portal, profile, storage = browserLocalStorage()) {
-  const key = PORTAL_SESSION_KEYS[portal];
-  if (!storage || !key || profile?.userId == null) return false;
-  const next = emptyPortalState();
-  next[key] = {
-    userId: profile.userId,
-    name: profile.name || "",
-    email: profile.email || "",
-    role: profile.role || PORTAL_BACKEND_ROLE[portal] || "",
-    signedInAt: profile.signedInAt || new Date().toISOString(),
-    photoUrl: profile.photoUrl || "",
+function portalStateFrom(storage) {
+  const existing = storage ? readPortalState(storage) : null;
+  return {
+    ...emptyPortalState(),
+    ...(existing || {}),
+    version: PLATFORM_PORTAL_STATE_VERSION,
   };
+}
+
+function writePortalState(storage, next) {
   try {
     storage.setItem(PLATFORM_PORTAL_STORAGE_KEY, JSON.stringify(next));
     return true;
@@ -195,13 +192,34 @@ export function saveActivePortalProfile(portal, profile, storage = browserLocalS
   }
 }
 
+/** Update one portal profile and leave the other portals signed in. */
+export function saveActivePortalProfile(portal, profile, storage = browserLocalStorage()) {
+  const key = PORTAL_SESSION_KEYS[portal];
+  if (!storage || !key || profile?.userId == null) return false;
+  const next = portalStateFrom(storage);
+  next[key] = {
+    userId: profile.userId,
+    name: profile.name || "",
+    email: profile.email || "",
+    role: profile.role || PORTAL_BACKEND_ROLE[portal] || "",
+    signedInAt: profile.signedInAt || new Date().toISOString(),
+    photoUrl: profile.photoUrl || "",
+  };
+  return writePortalState(storage, next);
+}
+
+/** Drop one portal profile. The other portals stay in the shared record. */
+export function clearStoredPortalProfile(portal, storage = browserLocalStorage()) {
+  const key = PORTAL_SESSION_KEYS[portal];
+  if (!storage || !key) return false;
+  const next = portalStateFrom(storage);
+  next[key] = null;
+  return writePortalState(storage, next);
+}
+
 export function clearStoredPortalProfiles(storage = browserLocalStorage()) {
   if (!storage) return;
-  try {
-    storage.setItem(PLATFORM_PORTAL_STORAGE_KEY, JSON.stringify(emptyPortalState()));
-  } catch {
-    /* storage unavailable */
-  }
+  writePortalState(storage, emptyPortalState());
 }
 
 /**

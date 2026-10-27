@@ -1,7 +1,12 @@
 import { platformApi } from "./platformClient.js";
 import { PlatformApiError } from "./platformErrors.js";
 import { PORTAL_BACKEND_ROLE, sessionFromLogin } from "./platformLoginPolicy.js";
-import { clearStoredPortalProfiles, platformAuth } from "./platformSession.js";
+import {
+  PORTAL_SESSION_KEYS,
+  clearStoredPortalProfile,
+  clearStoredPortalProfiles,
+  platformAuth,
+} from "./platformSession.js";
 
 export async function commitPlatformSession(portal, email, body) {
   const session = sessionFromLogin(portal, email, body);
@@ -39,7 +44,6 @@ export async function commitPlatformSession(portal, email, body) {
     return profile;
   } catch (error) {
     platformAuth.clear();
-    clearStoredPortalProfiles();
     throw error;
   }
 }
@@ -91,10 +95,13 @@ export function mapPlatformMe(body, session) {
 
 let platformLogoutTask = null;
 
-export function signOutPlatform({ localOnly = false } = {}) {
+export function signOutPlatform({ localOnly = false, portal = "" } = {}) {
   const token = platformAuth.getAccessToken();
   platformAuth.clear();
-  clearStoredPortalProfiles();
+  if (!localOnly) {
+    if (PORTAL_SESSION_KEYS[portal]) clearStoredPortalProfile(portal);
+    else clearStoredPortalProfiles();
+  }
   if (platformLogoutTask) return platformLogoutTask;
   if (localOnly || !token) return Promise.resolve(null);
   const task = platformApi("/auth/logout", {

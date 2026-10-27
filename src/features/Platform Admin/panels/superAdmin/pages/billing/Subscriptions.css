@@ -107,7 +107,8 @@
 }
 
 .subs-toolbar .search-bar,
-.subs-toolbar .field select {
+.subs-toolbar .field select,
+.subs-toolbar .field .admin-select {
   min-height: 34px;
   border-radius: var(--classic-radius);
   border-color: var(--classic-border);
@@ -115,7 +116,8 @@
   box-shadow: none;
 }
 
-.subs-toolbar .field select {
+.subs-toolbar .field select,
+.subs-toolbar .field .admin-select {
   padding-top: 6px;
   padding-bottom: 6px;
 }

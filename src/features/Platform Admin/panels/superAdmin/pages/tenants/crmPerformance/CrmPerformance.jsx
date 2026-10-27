@@ -101,59 +101,51 @@ export default function CrmPerformance() {
 }
 
 function FilterBar({ applied, onApply, options }) {
-  const [draft, setDraft] = useState(applied);
-  const set = (key) => (event) => setDraft((current) => ({ ...current, [key]: event.target.value }));
-  const customIncomplete = draft.preset === "custom" && (!draft.start || !draft.end);
-  const dirty = JSON.stringify(draft) !== JSON.stringify(applied);
+  const set = (key) => (event) => onApply({ ...applied, [key]: event.target.value });
 
   const choosePreset = (event) => {
     const preset = event.target.value;
-    setDraft((current) => {
-      if (preset !== "custom" || (current.start && current.end)) return { ...current, preset };
-      const today = todayInput();
-      return { ...current, preset, start: `${today.slice(0, 8)}01`, end: today };
-    });
-  };
-
-  const reset = () => {
-    setDraft(DEFAULT_FILTERS);
-    onApply(DEFAULT_FILTERS);
+    if (preset !== "custom" || (applied.start && applied.end)) {
+      onApply({ ...applied, preset });
+      return;
+    }
+    const today = todayInput();
+    onApply({ ...applied, preset, start: `${today.slice(0, 8)}01`, end: today });
   };
 
   return (
-    <form className={`cp-filters${draft.preset === "custom" ? " is-custom" : ""}`} onSubmit={(event) => { event.preventDefault(); if (!customIncomplete) onApply(draft); }}>
-      <Select label="Date range" value={draft.preset} onChange={choosePreset}>
+    <form className={`cp-filters${applied.preset === "custom" ? " is-custom" : ""}`} onSubmit={(event) => event.preventDefault()}>
+      <Select label="Date range" value={applied.preset} onChange={choosePreset}>
         {PERIOD_PRESETS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </Select>
-      {draft.preset === "custom" && (
+      {applied.preset === "custom" && (
         <>
-          <Input type="date" label="From" value={draft.start} max={draft.end || toDay(new Date())} onChange={set("start")} />
-          <Input type="date" label="To" value={draft.end} min={draft.start} onChange={set("end")} />
+          <Input type="date" label="From" value={applied.start} max={applied.end || toDay(new Date())} onChange={set("start")} />
+          <Input type="date" label="To" value={applied.end} min={applied.start} onChange={set("end")} />
         </>
       )}
       <SearchSelect
         label="CRM employee"
-        value={draft.employee}
-        onChange={(employee) => setDraft((current) => ({ ...current, employee }))}
+        value={applied.employee}
+        onChange={(employee) => onApply({ ...applied, employee })}
         options={options.employees}
         allLabel="All Employees"
         emptyText="No employee found"
       />
-      <Select label="Lead status" value={draft.status} onChange={set("status")}>
+      <Select label="Lead status" value={applied.status} onChange={set("status")}>
         <option value="all">All</option>
         {CRM_ANALYTICS_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
       </Select>
-      <Select label="Plan" value={draft.plan} onChange={set("plan")}>
+      <Select label="Plan" value={applied.plan} onChange={set("plan")}>
         <option value="all">All</option>
         {options.plans.map((plan) => <option key={plan} value={plan}>{plan}</option>)}
       </Select>
-      <Select label="Lead source" value={draft.source} onChange={set("source")}>
+      <Select label="Lead source" value={applied.source} onChange={set("source")}>
         <option value="all">All</option>
         {options.sources.map((source) => <option key={source} value={source}>{source}</option>)}
       </Select>
       <div className="cp-filter-actions">
-        <Button type="submit" disabled={!dirty || customIncomplete}>Apply Filters</Button>
-        <Button variant="secondary" onClick={reset}>Reset</Button>
+        <Button variant="secondary" onClick={() => onApply(DEFAULT_FILTERS)}>Reset</Button>
       </div>
     </form>
   );

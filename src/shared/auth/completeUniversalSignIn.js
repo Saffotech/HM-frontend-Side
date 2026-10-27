@@ -111,7 +111,7 @@ export async function completeUniversalSignIn(credentials, {
       profile = await commitPlatformSession(decision.portal, email, identity);
     } catch (error) {
       await discardIssuedToken(identity.access_token);
-      await signOutPlatform();
+      await signOutPlatform({ localOnly: true });
       throw error;
     }
     saveActivePortalProfile(decision.portal, profile);

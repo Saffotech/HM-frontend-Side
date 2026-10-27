@@ -1,37 +1,351 @@
-.analytics-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 16px;
-}
-
-.status-list {
-  list-style: none;
-  margin: 20px 0 0;
-  padding: 0;
-  display: grid;
-  gap: 0;
-}
-
-.status-list li {
+.pa {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 0;
-  border-top: 1px solid var(--color-border);
-  font-size: 14px;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  max-width: 100%;
 }
 
-.status-list strong {
+.pa-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.pa-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+  padding: 18px 18px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.pa-head {
+  margin-bottom: 14px;
+}
+
+.pa-head h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+}
+
+.pa-head p,
+.pa-inline,
+.pa-banner,
+.pa-alert p,
+.pa-empty p {
+  margin: 4px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.pa-head p {
+  max-width: 68ch;
+}
+
+.pa-split .pa-head p {
+  min-height: 2.9em;
+}
+
+.pa-banner,
+.pa-alert {
+  margin: 0;
+  padding: 12px 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.pa-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+}
+
+.pa-alert p {
+  margin: 0;
+  color: var(--color-text);
+}
+
+.pa-alert .btn {
+  flex: none;
+}
+
+.pa-card .pa-alert {
+  margin-top: 2px;
+}
+
+.pa-inline {
+  margin: 0 0 12px;
+}
+
+.pa-inline:last-child {
+  margin-bottom: 0;
+}
+
+.pa-plot {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  height: 252px;
+}
+
+.pa-plot.is-invoices {
+  height: 272px;
+}
+
+.pa-plot-fill {
+  position: absolute;
+  inset: 0;
+  min-width: 0;
+}
+
+.pa-plot-fill .recharts-responsive-container {
+  min-width: 0 !important;
+}
+
+.pa-measure {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.pa-plot text {
+  font-variant-numeric: tabular-nums;
+}
+
+.pa-plan {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(168px, 0.95fr);
+  align-items: center;
+  gap: 8px 18px;
+  flex: 1;
+  min-height: 252px;
+  min-width: 0;
+}
+
+.pa-plan .pa-plot {
+  height: 252px;
+}
+
+.pa-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 252px;
+  margin: 0;
+  padding: 0 2px 0 0;
+  overflow: auto;
+  list-style: none;
+  min-width: 0;
+}
+
+.pa-legend li {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-height: 28px;
+  color: var(--color-text);
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.pa-swatch,
+.pa-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.pa-legend-name,
+.pa-metric-label,
+.pa-lead span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pa-legend-count,
+.pa-metric strong,
+.pa-lead strong,
+.pa-tip strong {
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  color: var(--color-text);
+}
+
+.pa-empty {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  min-height: 180px;
+  padding: 20px 12px;
+  text-align: center;
+}
+
+.pa-empty h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 15px;
   font-weight: 650;
 }
 
-.analytics-grid .wide {
-  grid-column: 1 / -1;
+.pa-metrics,
+.pa-leads {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
 }
 
-@media (max-width: 900px) {
-  .analytics-grid {
+.pa-metrics {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.pa-leads {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.pa-metric,
+.pa-lead {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  min-height: 84px;
+  padding: 12px 14px;
+  background: #fbfcfd;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+}
+
+.pa-metric-label,
+.pa-lead span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.pa-metric strong {
+  font-size: 24px;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.pa-lead strong {
+  font-size: 22px;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.pa-dot.is-active { background: #13877f; }
+.pa-dot.is-trial { background: #4778dc; }
+.pa-dot.is-suspended { background: #d0893a; }
+.pa-dot.is-other { background: #8b97a8; }
+
+.pa-lead.is-total {
+  background: var(--color-primary-light);
+  border-color: #d3ebe7;
+}
+
+.pa-lead.is-total span,
+.pa-lead.is-total strong {
+  color: var(--color-primary-dark);
+}
+
+.pa-tip {
+  min-width: 140px;
+  padding: 8px 10px;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(20, 45, 82, 0.12);
+}
+
+.pa-tip-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12.5px;
+  line-height: 1.3;
+}
+
+.pa-tip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 12.5px;
+  line-height: 1.3;
+}
+
+.pa-tip-row span {
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 1199px) {
+  .pa-split {
     grid-template-columns: 1fr;
+  }
+
+  .pa-split .pa-head p {
+    min-height: 0;
+  }
+
+  .pa-leads {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .pa-card {
+    padding: 16px;
+  }
+
+  .pa-plan {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .pa-plan .pa-plot,
+  .pa-plot.is-growth {
+    height: 220px;
+    min-height: 220px;
+  }
+
+  .pa-plot.is-invoices {
+    height: 240px;
+  }
+
+  .pa-legend {
+    max-height: none;
+  }
+
+  .pa-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .pa-leads {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pa-lead.is-total {
+    grid-column: 1 / -1;
   }
 }
