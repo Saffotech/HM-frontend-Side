@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useId, useMemo } from 'react';
+import { forwardRef, useState, useRef, useEffect, useCallback, useId, useMemo, useImperativeHandle } from 'react';
 import { createPortal } from 'react-dom';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import './DateInput.css';
@@ -331,7 +331,7 @@ function YearPickerSelect({ years, value, onChange }) {
   );
 }
 
-export default function DateInput({
+const DateInput = forwardRef(function DateInput({
   label,
   id,
   value = '',
@@ -344,8 +344,9 @@ export default function DateInput({
   min,
   max,
   withTime = false,
+  showCalendarButton = true,
   'aria-label': ariaLabel,
-}) {
+}, ref) {
   const autoId = useId();
   const inputId =
     id || (typeof label === 'string' ? label.toLowerCase().replace(/\s/g, '-') : autoId);
@@ -610,11 +611,19 @@ export default function DateInput({
     }
   };
 
+  const openCalendar = useCallback(() => {
+    if (disabled) return;
+    setOpen(true);
+    inputRef.current?.focus();
+  }, [disabled]);
+
   const toggleCalendar = () => {
     if (disabled) return;
     setOpen((o) => !o);
     inputRef.current?.focus();
   };
+
+  useImperativeHandle(ref, () => ({ openCalendar }), [openCalendar]);
 
   const goPrevMonth = () => {
     if (viewMonth === 0) {
@@ -665,7 +674,7 @@ export default function DateInput({
   const minuteOptions = useMemo(() => Array.from({ length: 60 }, (_, i) => i), []);
 
   return (
-    <div className={`field date-input ${className}`}>
+    <div className={`field date-input${showCalendarButton ? '' : ' date-input--no-calendar-button'} ${className}`}>
       {label && (
         <label htmlFor={inputId} className="field__label">
           {label}
@@ -694,17 +703,19 @@ export default function DateInput({
           aria-describedby={error ? errorId : undefined}
           aria-label={ariaLabel || (typeof label === 'string' ? label : undefined)}
         />
-        <button
-          type="button"
-          className="date-input__calendar-btn"
-          disabled={disabled}
-          aria-label="Open calendar"
-          aria-expanded={open}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={toggleCalendar}
-        >
-          <CalendarDays size={16} aria-hidden />
-        </button>
+        {showCalendarButton ? (
+          <button
+            type="button"
+            className="date-input__calendar-btn"
+            disabled={disabled}
+            aria-label="Open calendar"
+            aria-expanded={open}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={toggleCalendar}
+          >
+            <CalendarDays size={16} aria-hidden />
+          </button>
+        ) : null}
       </div>
 
       {open && !disabled && popoverStyle && createPortal(
@@ -871,4 +882,6 @@ export default function DateInput({
       )}
     </div>
   );
-}
+});
+
+export default DateInput;

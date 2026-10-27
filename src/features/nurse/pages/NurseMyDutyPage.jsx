@@ -85,12 +85,13 @@ function ShiftIcon({ tone, size = 16 }) {
   return <Sun size={size} aria-hidden />;
 }
 
-function groupConsecutiveRosterDays(items = []) {
+function groupConsecutiveRosterDays(items = [], currentShiftName) {
   const today = todayIso();
-  // Upcoming = today + future only (never show past dates).
+  const currentShiftKey = String(currentShiftName ?? '').trim().toLowerCase();
   const upcoming = (items ?? []).filter((row) => {
     const d = String(row?.roster_date ?? '').slice(0, 10);
-    return d && d >= today;
+    const rowShiftKey = String(row?.shift_name ?? '').trim().toLowerCase();
+    return d && d >= today && !(d === today && currentShiftKey && rowShiftKey === currentShiftKey);
   });
 
   const sorted = [...upcoming].sort((a, b) => {
@@ -134,15 +135,33 @@ export default function NurseMyDutyPage() {
   const currentShift = data?.current_shift ?? {};
   const rosterPeriod = data?.roster_period ?? {};
   const myBeds = data?.my_beds ?? [];
+  const todayRosterShift = useMemo(() => {
+    const todayRows = (data?.roster_items ?? []).filter(
+      (row) => String(row?.roster_date ?? '').slice(0, 10) === todayIso(),
+    );
+    if (!todayRows.length) return null;
 
+    return (
+      todayRows.find(
+        (row) =>
+          currentShift.shift_name
+          && String(row.shift_name ?? '').toLowerCase()
+            === String(currentShift.shift_name).toLowerCase(),
+      ) ?? todayRows[0]
+    );
+  }, [data?.roster_items, currentShift.shift_name]);
+
+  const shiftName = currentShift.shift_name || todayRosterShift?.shift_name || '—';
   const rosterGroups = useMemo(
-    () => groupConsecutiveRosterDays(data?.roster_items ?? []),
-    [data?.roster_items],
+    () => groupConsecutiveRosterDays(data?.roster_items ?? [], shiftName),
+    [data?.roster_items, shiftName],
   );
 
-  const shiftName = currentShift?.shift_name || '—';
   const tone = shiftTone(shiftName);
-  const shiftTime = formatShiftTime(currentShift.shift_start, currentShift.shift_end);
+  const shiftTime = formatShiftTime(
+    currentShift.shift_start ?? todayRosterShift?.shift_start ?? todayRosterShift?.start_time,
+    currentShift.shift_end ?? todayRosterShift?.shift_end ?? todayRosterShift?.end_time,
+  );
   const hasRosterPeriod = Boolean(rosterPeriod?.from_date || rosterPeriod?.to_date);
   const rosterLabel = hasRosterPeriod
     ? formatDateRange(rosterPeriod?.from_date, rosterPeriod?.to_date)

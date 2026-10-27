@@ -36,10 +36,16 @@ const DailyChargeRow = memo(function DailyChargeRow({
   chargeDate,
   updateDailyCharge,
   removeDailyCharge,
+  saveDailyCharges,
   readOnly = false,
 }) {
   return (
-    <div className="ipd-ins-daily-detail-row">
+    <div
+      className="ipd-ins-daily-detail-row"
+      onBlur={(event) => {
+        if (!readOnly && !event.currentTarget.contains(event.relatedTarget)) saveDailyCharges?.();
+      }}
+    >
       <input
         className="ipd-input"
         value={row.head}
@@ -97,7 +103,8 @@ const DailyChargeRow = memo(function DailyChargeRow({
   prev.readOnly === next.readOnly &&
   prev.readOnly === next.readOnly &&
   prev.updateDailyCharge === next.updateDailyCharge &&
-  prev.removeDailyCharge === next.removeDailyCharge,
+  prev.removeDailyCharge === next.removeDailyCharge &&
+  prev.saveDailyCharges === next.saveDailyCharges,
 );
 
 const PharmacyChargeRow = memo(function PharmacyChargeRow({
@@ -105,10 +112,16 @@ const PharmacyChargeRow = memo(function PharmacyChargeRow({
   chargeDate,
   updateDailyCharge,
   removeDailyCharge,
+  saveDailyCharges,
   readOnly = false,
 }) {
   return (
-    <div className="ipd-ins-daily-pharmacy-card__row">
+    <div
+      className="ipd-ins-daily-pharmacy-card__row"
+      onBlur={(event) => {
+        if (!readOnly && !event.currentTarget.contains(event.relatedTarget)) saveDailyCharges?.();
+      }}
+    >
       <input
         className="ipd-input"
         value={row.item_name}
@@ -160,7 +173,8 @@ const PharmacyChargeRow = memo(function PharmacyChargeRow({
   prev.readOnly === next.readOnly &&
   prev.readOnly === next.readOnly &&
   prev.updateDailyCharge === next.updateDailyCharge &&
-  prev.removeDailyCharge === next.removeDailyCharge,
+  prev.removeDailyCharge === next.removeDailyCharge &&
+  prev.saveDailyCharges === next.saveDailyCharges,
 );
 
 function IpdDailyChargesGroupItems({
@@ -168,6 +182,7 @@ function IpdDailyChargesGroupItems({
   chargeDate,
   updateDailyCharge,
   removeDailyCharge,
+  saveDailyCharges,
   readOnly = false,
 }) {
   const [showPharmacy, setShowPharmacy] = useState(false);
@@ -212,6 +227,7 @@ function IpdDailyChargesGroupItems({
           chargeDate={chargeDate}
           updateDailyCharge={updateDailyCharge}
           removeDailyCharge={removeDailyCharge}
+          saveDailyCharges={saveDailyCharges}
           readOnly={readOnly}
         />
       ))}
@@ -222,6 +238,7 @@ function IpdDailyChargesGroupItems({
           chargeDate={chargeDate}
           updateDailyCharge={updateDailyCharge}
           removeDailyCharge={removeDailyCharge}
+          saveDailyCharges={saveDailyCharges}
           readOnly={readOnly}
         />
       )}
@@ -294,6 +311,7 @@ function IpdDailyChargesGroupItems({
                   chargeDate={chargeDate}
                   updateDailyCharge={updateDailyCharge}
                   removeDailyCharge={removeDailyCharge}
+                  saveDailyCharges={saveDailyCharges}
                   readOnly={readOnly}
                 />
               ))}

@@ -216,11 +216,13 @@ function formatVisitDateCompact(row) {
 
 
 
-function PatientDateFilters({ filters, onChange, onReset, disabled }) {
+function PatientDateFilters({ filters, onChange, onReset, disabled, dateInputRef }) {
   return (
     <div className="doc-patient-filters doc-patient-filters--pill" role="group" aria-label="Visit date filters">
       <DateInput
+        ref={dateInputRef}
         className="doc-patient-filters__calendar"
+        showCalendarButton={false}
         ariaLabel="Visit date"
         placeholder="DD/MM/YYYY"
         value={filters.visitDate || ''}
@@ -330,6 +332,7 @@ export default function PatientsEMRSection({
   const [q, setQ] = useState('');
 
   const [dateFilters, setDateFilters] = useState(DEFAULT_DATE_FILTERS);
+  const dateInputRef = useRef(null);
 
   const [categoryFilter, setCategoryFilter] = useState(() =>
     resolveInitialCategoryFilter(initialCategoryFilter, encounterMode),
@@ -684,15 +687,22 @@ export default function PatientsEMRSection({
           <div
             className={`doc-patients-page__date-strip${dateFiltersDisabled ? ' doc-patients-page__date-strip--disabled' : ''}`}
           >
-            <span className="doc-patients-page__date-label">
+            <button
+              type="button"
+              className="doc-patients-page__date-label"
+              onClick={() => dateInputRef.current?.openCalendar()}
+              disabled={dateFiltersDisabled}
+              aria-label="Open visit date calendar"
+            >
               <CalendarDays size={15} aria-hidden />
               Visit date
-            </span>
+            </button>
             <PatientDateFilters
               filters={dateFilters}
               onChange={setDateFilters}
               onReset={() => setDateFilters(DEFAULT_DATE_FILTERS)}
               disabled={dateFiltersDisabled}
+              dateInputRef={dateInputRef}
             />
           </div>
         </div>
@@ -807,5 +817,3 @@ export default function PatientsEMRSection({
   );
 
 }
-
-

@@ -9,9 +9,18 @@ import { Button, EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import IpdInsuranceBillPrintSheet from '@/features/ipd/components/IpdInsuranceBillPrintSheet';
 import IpdInsuranceClaimBillingCard from '@/features/ipd/components/IpdInsuranceClaimBillingCard';
+<<<<<<< Updated upstream
 import IpdHospitalChargesCard, {
   calculateInsuranceChargeTotals,
 } from '@/features/ipd/components/IpdHospitalChargesCard';
+=======
+import IpdHospitalChargesCard from '@/features/ipd/components/IpdHospitalChargesCard';
+import {
+  calculateInsuranceChargeTotals,
+  normalizeInsuranceChargeHeads,
+  sortInsuranceChargeHeads,
+} from '@/features/ipd/utils/insuranceChargeHeads';
+>>>>>>> Stashed changes
 import IpdDailyChargesCard from '@/features/ipd/components/IpdDailyChargesCard';
 import useIpdBackNavigation from '@/features/ipd/hooks/useIpdBackNavigation';
 import {
@@ -239,9 +248,9 @@ export default function IpdInsuranceBillingPage() {
     saveFinalBillingMutation,
   ]);
 
-  const handleSaveDailyCharges = useCallback(() => {
+  const handleSaveDailyCharges = useCallback((nextDailyCharges = dailyCharges) => {
     if (!claim || !admissionIsActive) return;
-    const invalid = dailyCharges.find((row) => !String(row.item_name ?? '').trim());
+    const invalid = nextDailyCharges.find((row) => !String(row.item_name ?? '').trim());
     if (invalid) {
       toast.error('Every row needs an item name (medicine, treatment, etc.)');
       return;
@@ -249,7 +258,7 @@ export default function IpdInsuranceBillingPage() {
     saveDailyBillingMutation.mutate(
       {
         claimId: claim.id,
-        dailyCharges,
+        dailyCharges: nextDailyCharges,
         patientId,
         insuranceAdmit,
       },
@@ -261,6 +270,13 @@ export default function IpdInsuranceBillingPage() {
           }
           setSavedClaim(bundle.claim);
           setDailyCharges(initDailyCharges(bundle.claim));
+          if (Array.isArray(bundle.finalBilling?.chargeHeads)) {
+            setCharges(
+              sortInsuranceChargeHeads(
+                normalizeInsuranceChargeHeads(bundle.finalBilling.chargeHeads),
+              ),
+            );
+          }
           toast.success('Daily charges saved');
         },
         onError: () => toast.error('Unable to save daily charges'),

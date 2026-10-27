@@ -55,6 +55,7 @@ const IpdDailyChargeDateGroup = memo(function IpdDailyChargeDateGroup({
   onToggle,
   updateDailyCharge,
   removeDailyCharge,
+  saveDailyCharges,
   readOnly,
 }) {
   return (
@@ -94,6 +95,7 @@ const IpdDailyChargeDateGroup = memo(function IpdDailyChargeDateGroup({
             chargeDate={group.charge_date}
             updateDailyCharge={updateDailyCharge}
             removeDailyCharge={removeDailyCharge}
+            saveDailyCharges={saveDailyCharges}
             readOnly={readOnly}
           />
         </div>
@@ -105,6 +107,7 @@ const IpdDailyChargeDateGroup = memo(function IpdDailyChargeDateGroup({
   if (prev.onToggle !== next.onToggle) return false;
   if (prev.updateDailyCharge !== next.updateDailyCharge) return false;
   if (prev.removeDailyCharge !== next.removeDailyCharge) return false;
+  if (prev.saveDailyCharges !== next.saveDailyCharges) return false;
   if (prev.readOnly !== next.readOnly) return false;
   return dailyChargeGroupEqual(prev.group, next.group);
 });
@@ -126,6 +129,7 @@ function IpdDailyChargesCard({
 
   const dailyChargesRef = useRef(dailyCharges);
   dailyChargesRef.current = dailyCharges;
+  const dirtyDailyChargeIds = useRef(new Set());
 
   const dailyChargeGroups = useMemo(
     () => groupDailyChargesByDate(dailyCharges),
@@ -137,20 +141,30 @@ function IpdDailyChargesCard({
   );
 
   const updateDailyCharge = useCallback((id, patch) => {
-    onDailyChargesChange(
-      sortDailyCharges(
-        dailyChargesRef.current.map((row) =>
-          row.id === id ? patchDailyCharge(row, patch) : row,
-        ),
-      ),
-    );
+    const current = dailyChargesRef.current;
+    const row = current.find((item) => item.id === id);
+    if (!row || Object.entries(patch).every(([key, value]) => row[key] === value)) return;
+    const next = sortDailyCharges(current.map((item) =>
+      item.id === id ? patchDailyCharge(item, patch) : item,
+    ));
+    dirtyDailyChargeIds.current.add(id);
+    dailyChargesRef.current = next;
+    onDailyChargesChange(next);
   }, [onDailyChargesChange]);
 
   const removeDailyCharge = useCallback((id) => {
-    onDailyChargesChange(
-      dailyChargesRef.current.filter((row) => row.id !== id),
-    );
-  }, [onDailyChargesChange]);
+    const next = dailyChargesRef.current.filter((row) => row.id !== id);
+    dirtyDailyChargeIds.current.clear();
+    dailyChargesRef.current = next;
+    onDailyChargesChange(next);
+    onSave?.(next);
+  }, [onDailyChargesChange, onSave]);
+
+  const saveCurrentDailyCharges = useCallback(() => {
+    if (dirtyDailyChargeIds.current.size === 0) return;
+    dirtyDailyChargeIds.current.clear();
+    onSave?.(dailyChargesRef.current);
+  }, [onSave]);
 
   const toggleDailyDate = useCallback((chargeDate) => {
     setExpandedDailyDate((prev) => (prev === chargeDate ? null : chargeDate));
@@ -187,14 +201,15 @@ function IpdDailyChargesCard({
       toast.error('Unable to add daily charge');
       return;
     }
-    onDailyChargesChange(
-      sortDailyCharges([...dailyChargesRef.current, created]),
-    );
+    const next = sortDailyCharges([...dailyChargesRef.current, created]);
+    dirtyDailyChargeIds.current.clear();
+    dailyChargesRef.current = next;
+    onDailyChargesChange(next);
+    onSave?.(next);
     setNewDailyItem('');
     setNewDailyQty('1');
     setNewDailyAmount('');
     setExpandedDailyDate(newDailyDate);
-    toast.success('Daily charge added — save to keep');
   };
 
   return (
@@ -208,10 +223,8 @@ function IpdDailyChargesCard({
             </p>
           ) : null}
         </div>
-        {!readOnly ? (
-          <Button type="button" size="sm" onClick={onSave} disabled={saving}>
-            {saving ? 'Saving…' : 'Save Daily Charges'}
-          </Button>
+        {!readOnly && saving ? (
+          <span className="ipd-page__subtitle" role="status">Saving daily charges…</span>
         ) : null}
       </div>
       <div className="ipd-card__body">
@@ -229,7 +242,8 @@ function IpdDailyChargesCard({
                 onToggle={toggleDailyDate}
                 updateDailyCharge={updateDailyCharge}
                 removeDailyCharge={removeDailyCharge}
-                readOnly={readOnly}
+                saveDailyCharges={saveCurrentDailyCharges}
+                readOnly={readOnly || saving}
               />
             ))}
           </div>
@@ -278,8 +292,8 @@ function IpdDailyChargesCard({
             inputMode="decimal"
             aria-label="New daily charge amount"
           />
-          <Button type="button" variant="secondary" size="sm" onClick={addDailyCharge}>
-            + Add
+          <Button type="button" variant="secondary" size="sm" onClick={addDailyCharge} disabled={saving}>
+            {saving ? 'Saving…' : '+ Add'}
           </Button>
             </div>
           </>

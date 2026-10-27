@@ -37,7 +37,7 @@ const PRIORITY_FILTER_VALUES = new Set(
 /** Nurse Phase 2 by Atharva — debounce live search so typing does not spam the API */
 const SEARCH_DEBOUNCE_MS = 300;
 
-export default function NurseNotificationsSection({ onDeepLink }) {
+export default function NurseNotificationsSection() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -129,10 +129,9 @@ export default function NurseNotificationsSection({ onDeepLink }) {
       try {
         await markOne.mutateAsync(n.id);
       } catch {
-        return;
+        // The mutation displays the error toast.
       }
     }
-    onDeepLink?.(n);
   };
 
   return (
@@ -262,7 +261,7 @@ export default function NurseNotificationsSection({ onDeepLink }) {
               <NurseNotificationRow
                 key={n.id}
                 notification={n}
-                onClick={() => handleRowClick(n)}
+                onClick={isNurseNotificationUnread(n) ? () => handleRowClick(n) : undefined}
               />
             ))
           )}
