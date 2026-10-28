@@ -507,11 +507,11 @@
   white-space: nowrap;
 }
 
-.cp-rating-excellent { background: #e5f5ee; color: #17704c; }
-.cp-rating-good { background: #e9f1fd; color: #2f5fb8; }
-.cp-rating-average { background: #fff4dc; color: #8a6312; }
-.cp-rating-attention { background: #fdecec; color: #b23b3b; }
-.cp-rating-none { background: #f1f4f8; color: #667895; }
+.cp-rating-excellent { background: transparent; color: #17704c; }
+.cp-rating-good { background: transparent; color: #2f5fb8; }
+.cp-rating-average { background: transparent; color: #8a6312; }
+.cp-rating-attention { background: transparent; color: #b23b3b; }
+.cp-rating-none { background: transparent; color: #667895; }
 
 .cp-meter {
   display: inline-flex;

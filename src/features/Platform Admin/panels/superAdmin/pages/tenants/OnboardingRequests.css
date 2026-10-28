@@ -170,10 +170,10 @@
   white-space: nowrap;
 }
 
-.onb-chip-new { background: #eef4ff; border-color: #c3d4f5; color: #2f5fb8; }
-.onb-chip-contacted { background: #fff7e8; border-color: #efd5a0; color: #9a6b12; }
-.onb-chip-registered { background: #edf8f2; border-color: #b7dfc9; color: #1c7a55; }
-.onb-chip-closed { background: #f4f6f9; border-color: #d5dde8; color: #667895; }
+.onb-chip-new { background: transparent; border-color: transparent; color: #2f5fb8; }
+.onb-chip-contacted { background: transparent; border-color: transparent; color: #9a6b12; }
+.onb-chip-registered { background: transparent; border-color: transparent; color: #1c7a55; }
+.onb-chip-closed { background: transparent; border-color: transparent; color: #667895; }
 
 .onb-due {
   font-size: 12px;

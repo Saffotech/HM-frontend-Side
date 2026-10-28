@@ -118,8 +118,32 @@ describe("plan, revenue, and CRM catalog responses", () => {
     assert.match(api, /platformApi\(`\/platform\/plans\/\$\{encodeURIComponent\(planId\)\}`, \{\s*method: "PATCH"/);
     assert.match(api, /\/deactivate`, \{\s*method: "POST"/);
     assert.match(api, /\/activate`, \{\s*method: "POST"/);
+    assert.match(api, /platformApi\(`\/platform\/plans\/\$\{encodeURIComponent\(planId\)\}`, \{\s*method: "DELETE"/);
     assert.match(api, /JSON\.stringify\(createPlanBody\(values\)\)/);
     assert.match(api, /JSON\.stringify\(updatePlanBody\(current, values\)\)/);
+  });
+
+  it("treats a 204 plan delete as success and keeps a 409 message", async () => {
+    const auth = createPlatformAuthStore();
+    auth.saveTokens("token-1", "refresh-1");
+    const deleted = await executePlatformRequest("/platform/plans/15", { method: "DELETE" }, {
+      origin: "http://platform.test",
+      auth,
+      fetchImpl: async () => ({ status: 204, ok: true, json: async () => { throw new Error("no body"); } }),
+    });
+    assert.deepEqual(deleted, {});
+    await assert.rejects(
+      () => executePlatformRequest("/platform/plans/15", { method: "DELETE" }, {
+        origin: "http://platform.test",
+        auth,
+        fetchImpl: async () => ({
+          status: 409,
+          ok: false,
+          json: async () => ({ detail: "This plan is still used by a hospital." }),
+        }),
+      }),
+      (error) => error.status === 409 && error.message === "This plan is still used by a hospital.",
+    );
   });
 
   it("does not turn missing catalog prices into zero", () => {

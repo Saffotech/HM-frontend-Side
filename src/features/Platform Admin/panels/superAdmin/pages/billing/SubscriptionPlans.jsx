@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import Button from "../../../../shared/components/Button";
 import Modal from "../../../../shared/components/Modal";
-import { activatePlatformPlan, createPlatformPlan, deactivatePlatformPlan, updatePlatformPlan } from "../../../../shared/api/platformPlans";
+import { activatePlatformPlan, createPlatformPlan, deactivatePlatformPlan, deletePlatformPlan, updatePlatformPlan } from "../../../../shared/api/platformPlans";
 import { platformCallMessage, shouldEndPlatformSession } from "../../../../shared/api/platformErrors";
 import { usePlatform } from "../../../../shared/context/PlatformContext";
 import { usePlatformPlans } from "../../../../shared/hooks/usePlatformPlans";
@@ -59,6 +59,7 @@ export default function SubscriptionPlans() {
   const [mutationError, setMutationError] = useState("");
   const [feedback, setFeedback] = useState("");
   const [deactivating, setDeactivating] = useState(null);
+  const [deleting, setDeleting] = useState(null);
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const hospitalCount = (name) => hospitals.filter((hospital) => hospital.plan === name).length;
@@ -88,6 +89,7 @@ export default function SubscriptionPlans() {
     setMutationError(platformCallMessage(err));
     setFormErrors(formErrorsFromApi(err?.fieldErrors));
     if (shouldEndPlatformSession(err)) signOutPortal("platform");
+    if (err?.status === 404) reload();
   };
 
   const submitPlan = async (event) => {
@@ -168,6 +170,25 @@ export default function SubscriptionPlans() {
     }
   };
 
+  const confirmDelete = async () => {
+    if (!deleting || deleting.id == null || busyRef.current) return;
+    busyRef.current = true;
+    setBusy(true);
+    setMutationError("");
+    setFeedback("");
+    try {
+      await deletePlatformPlan(deleting.id);
+      setDeleting(null);
+      reload();
+    } catch (err) {
+      setDeleting(null);
+      handleApiError(err);
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
+    }
+  };
+
   return (
     <section className="plans-page">
       <div className="plans-toolbar">
@@ -212,9 +233,13 @@ export default function SubscriptionPlans() {
             <div className="plan-actions">
               <Button variant="outline" size="sm" onClick={() => setOpen(plan)}>View</Button>
               <Button variant="outline" size="sm" onClick={() => beginEdit(plan)} disabled={busy || plan.id == null} title={plan.id == null ? "This plan has no server ID." : "Edit plan"}>Edit</Button>
-              {plan.isActive && <Button variant="danger" size="sm" onClick={() => { setMutationError(""); setFeedback(""); setDeactivating(plan); }} disabled={busy || plan.id == null} title={plan.id == null ? "This plan has no server ID." : "Deactivate plan"}>Deactivate</Button>}
-              {!plan.isActive && (
-                <Button variant="outline" size="sm" className="plan-activate-action" onClick={() => activatePlan(plan)} disabled={busy || plan.id == null} title={plan.id == null ? "This plan has no server ID." : "Activate plan"}>Activate</Button>
+              {plan.isActive ? (
+                <Button variant="danger" size="sm" onClick={() => { setMutationError(""); setFeedback(""); setDeleting(null); setDeactivating(plan); }} disabled={busy || plan.id == null} title={plan.id == null ? "This plan has no server ID." : "Deactivate plan"}>Deactivate</Button>
+              ) : (
+                <>
+                  <Button variant="outline" size="sm" className="plan-activate-action" onClick={() => activatePlan(plan)} disabled={busy || plan.id == null} title={plan.id == null ? "This plan has no server ID." : "Activate plan"}>Activate</Button>
+                  <Button variant="danger" size="sm" className="plan-delete-action" onClick={() => { setMutationError(""); setFeedback(""); setDeactivating(null); setDeleting(plan); }} disabled={busy || plan.id == null} title={plan.id == null ? "This plan has no server ID." : "Delete plan"}>Delete</Button>
+                </>
               )}
             </div>
           </article>
@@ -316,6 +341,20 @@ export default function SubscriptionPlans() {
         </>}
       >
         <p className="panel-copy">Hospitals and invoices already using this plan stay unchanged.</p>
+      </Modal>
+
+      <Modal
+        open={Boolean(deleting)}
+        title="Delete plan?"
+        subtitle={deleting ? `${deleting.name} will be removed from the catalog.` : ""}
+        onClose={() => { if (!busy) setDeleting(null); }}
+        size="sm"
+        footer={<>
+          <Button variant="secondary" onClick={() => setDeleting(null)} disabled={busy}>Cancel</Button>
+          <Button variant="danger" onClick={confirmDelete} disabled={busy}>{busy ? "Deleting…" : "Delete plan"}</Button>
+        </>}
+      >
+        <p className="panel-copy">The plan stays in the list if a hospital, lead, or invoice still uses it.</p>
       </Modal>
     </section>
   );

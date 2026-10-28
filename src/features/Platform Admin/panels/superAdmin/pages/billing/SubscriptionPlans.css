@@ -175,8 +175,8 @@
   letter-spacing: 0.04em;
 }
 
-.plan-status.on { background: #edf8f2; border-color: #b7dfc9; color: #1c7a55; }
-.plan-status.off { background: #f4f6f9; border-color: #d5dde8; color: #667895; }
+.plan-status.on { background: transparent; border-color: transparent; color: #1c7a55; }
+.plan-status.off { background: transparent; border-color: transparent; color: #667895; }
 
 .plan-desc {
   margin: 0;
@@ -334,8 +334,6 @@
   border-top: 1px solid var(--classic-border);
   background: var(--classic-head);
 }
-
-.plan-actions .plan-activate-action { margin-left: auto; }
 
 .plan-actions .action-link {
   border: 0;

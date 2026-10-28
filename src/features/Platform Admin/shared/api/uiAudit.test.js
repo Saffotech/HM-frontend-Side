@@ -254,7 +254,10 @@ describe("panel page titles", () => {
     assert.match(plans, /updatePlatformPlan/);
     assert.match(plans, /deactivatePlatformPlan/);
     assert.match(plans, /activatePlatformPlan/);
+    assert.match(plans, /deletePlatformPlan/);
+    assert.match(plans, /plan\.isActive \?/);
     assert.match(plans, /Deactivate plan\?/);
+    assert.match(plans, /Delete plan\?/);
     assert.match(plans, /onClick=\{\(\) => activatePlan\(plan\)\}/);
     assert.match(plans, /disabled=\{busy \|\| plan\.id == null\}/);
     assert.match(planApi, /platformApi\("\/platform\/plans"/);

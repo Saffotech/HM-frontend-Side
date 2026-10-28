@@ -217,71 +217,42 @@ function LeadView({ lead, today, actions, back, userId }) {
       </section>
 
       <div className="crm-lead-layout">
-        <Section title="Hospital Details" icon={Building2} className="crm-lead-hospital">
-          <Fact label="Hospital" value={lead.hospitalName} />
-          <Fact label="Type" value={lead.type} />
-          <Fact label="City" value={lead.city} />
-          <Fact label="State" value={lead.state} />
-          {lead.message && <Fact wide label="Requirement" value={lead.message} />}
-        </Section>
-
-        <Section title="Contact Details" icon={UserRound} className="crm-lead-contact">
-          <Fact label="Contact person" value={lead.contactPerson} />
-          <Fact label="Designation" value={lead.designation} />
-          <Fact wide label="Phone" value={lead.contactPhone ? <a href={`tel:${formatPhoneDisplay(lead.contactPhone).replace(/\s/g, "")}`}><Phone size={13} aria-hidden="true" />{formatPhoneDisplay(lead.contactPhone)}</a> : ""} />
-          <Fact wide label="Email" value={lead.contactEmail ? <a href={`mailto:${lead.contactEmail}`}><Mail size={13} aria-hidden="true" />{lead.contactEmail}</a> : ""} />
-        </Section>
-
-        <Section title="Sales & Plan" icon={WalletCards} className="crm-lead-sales">
-          <Fact label="Interested plan" value={lead.plan} />
-          <Fact label="Billing cycle" value={lead.billingCycle} />
-          <Fact label="Source" value={lead.source} />
-          <Fact label="Priority" value={<PriorityMark value={lead.priority} />} />
-          <Fact label="Received" value={formatDateTime(lead.submittedAt)} />
-          <Fact label="Created by" value={createdBy || "Inbound request"} />
-        </Section>
-
-        <Section title="Follow-up Details" icon={CalendarCheck2} className="crm-lead-followup">
-          {lead.status === "Not Interested" ? (
-            <>
-              <Fact label="Not interested reason" value={<span className="crm-close-reason"><strong>{lead.closeReason || "No reason recorded"}</strong></span>} />
-              <Fact label="Closed" value={formatDateTime(lead.closedAt)} />
-            </>
-          ) : (
-            <>
-              <Fact label="Next follow-up" value={open ? <FollowMark meta={followMeta(lead.followUpDate, today)} /> : "—"} />
-              <Fact label="Next action" value={open ? lead.nextAction : ""} />
-            </>
-          )}
-          <Fact wide label="Last contact" value={contact ? `${contact.method} · ${formatDateTime(contact.at)}` : "No contact logged yet"} />
-          <Fact wide label="Follow-ups completed" value={followUps.length ? `${completed} of ${followUps.length}` : "None scheduled yet"} />
-        </Section>
-
-        <Section title="Agreement & Registration" icon={Send} className="crm-lead-agreement">
-          <div className="crm-lead-wide">
-            <HandoverSteps lead={lead} today={today} />
-          </div>
-          {lead.agreedAt && (
-            <>
-              <Fact label="Agreed plan" value={`${lead.plan || "—"} · ${lead.billingCycle || "—"}`} />
-              <Fact label="Sent to Accounts" value={`${formatDateTime(lead.agreedAt)} · ${lead.agreedBy || "—"}`} />
-              <Fact wide label="Handover note" value={lead.handoverNote} />
-            </>
-          )}
-          {lead.status === "Registered" && (
-            <>
-              <Fact label="Hospital ID" value={lead.hospitalId} />
-              <Fact label="Registered" value={`${formatDateTime(lead.registeredAt)} · ${lead.registeredBy || "—"}`} />
-            </>
-          )}
-          {lead.status === "Not Interested" && (
-            <>
-              <Fact label="Close reason" value={lead.closeReason} />
-              <Fact label="Closed" value={`${formatDateTime(lead.closedAt)} · ${lead.closedBy || "—"}`} />
-              {lead.closeNote && <Fact wide label="Close note" value={lead.closeNote} />}
-            </>
-          )}
-        </Section>
+          <Section title="Hospital Details" icon={Building2} className="crm-lead-hospital">
+            <Fact label="Hospital" value={lead.hospitalName} />
+            <Fact label="Type" value={lead.type} />
+            <Fact label="City" value={lead.city} />
+            <Fact label="State" value={lead.state} />
+            {lead.message && <Fact wide label="Requirement" value={lead.message} />}
+          </Section>
+          <Section title="Contact Details" icon={UserRound} className="crm-lead-contact">
+            <Fact label="Contact person" value={lead.contactPerson} />
+            <Fact label="Designation" value={lead.designation} />
+            <Fact wide label="Phone" value={lead.contactPhone ? <a href={`tel:${formatPhoneDisplay(lead.contactPhone).replace(/\s/g, "")}`}><Phone size={13} aria-hidden="true" />{formatPhoneDisplay(lead.contactPhone)}</a> : ""} />
+            <Fact wide label="Email" value={lead.contactEmail ? <a href={`mailto:${lead.contactEmail}`}><Mail size={13} aria-hidden="true" />{lead.contactEmail}</a> : ""} />
+          </Section>
+          <Section title="Sales & Plan" icon={WalletCards} className="crm-lead-sales">
+            <Fact label="Interested plan" value={lead.plan} />
+            <Fact label="Billing cycle" value={lead.billingCycle} />
+            <Fact label="Source" value={lead.source} />
+            <Fact label="Priority" value={<PriorityMark value={lead.priority} />} />
+            <Fact label="Received" value={formatDateTime(lead.submittedAt)} />
+            <Fact label="Created by" value={createdBy || "Inbound request"} />
+          </Section>
+          <Section title="Follow-up Details" icon={CalendarCheck2} className="crm-lead-followup">
+            {lead.status === "Not Interested" ? (
+              <>
+                <Fact label="Not interested reason" value={<span className="crm-close-reason"><strong>{lead.closeReason || "No reason recorded"}</strong></span>} />
+                <Fact label="Closed" value={formatDateTime(lead.closedAt)} />
+              </>
+            ) : (
+              <>
+                <Fact label="Next follow-up" value={open ? <FollowMark meta={followMeta(lead.followUpDate, today)} /> : "—"} />
+                <Fact label="Next action" value={open ? lead.nextAction : ""} />
+              </>
+            )}
+            <Fact wide label="Last contact" value={contact ? `${contact.method} · ${formatDateTime(contact.at)}` : "No contact logged yet"} />
+            <Fact wide label="Follow-ups completed" value={followUps.length ? `${completed} of ${followUps.length}` : "None scheduled yet"} />
+          </Section>
 
         <section className="crm-lead-section crm-lead-activity">
           <h3><Clock3 size={16} aria-hidden="true" />Activity Timeline</h3>
@@ -315,6 +286,32 @@ function LeadView({ lead, today, actions, back, userId }) {
           </ol>
         </section>
       </div>
+
+      <Section title="Agreement & Registration" icon={Send} className="crm-lead-agreement">
+          <div className="crm-lead-wide">
+            <HandoverSteps lead={lead} today={today} />
+          </div>
+          {lead.agreedAt && (
+            <>
+              <Fact label="Agreed plan" value={`${lead.plan || "—"} · ${lead.billingCycle || "—"}`} />
+              <Fact label="Sent to Accounts" value={`${formatDateTime(lead.agreedAt)} · ${lead.agreedBy || "—"}`} />
+              <Fact wide label="Handover note" value={lead.handoverNote} />
+            </>
+          )}
+          {lead.status === "Registered" && (
+            <>
+              <Fact label="Hospital ID" value={lead.hospitalId} />
+              <Fact label="Registered" value={`${formatDateTime(lead.registeredAt)} · ${lead.registeredBy || "—"}`} />
+            </>
+          )}
+          {lead.status === "Not Interested" && (
+            <>
+              <Fact label="Close reason" value={lead.closeReason} />
+              <Fact label="Closed" value={`${formatDateTime(lead.closedAt)} · ${lead.closedBy || "—"}`} />
+              {lead.closeNote && <Fact wide label="Close note" value={lead.closeNote} />}
+            </>
+          )}
+        </Section>
     </div>
   );
 }

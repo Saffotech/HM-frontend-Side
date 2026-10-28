@@ -162,10 +162,10 @@
   font-weight: 650;
 }
 
-.accounts-chip-pending { background: #fff7e8; border-color: #efd5a0; color: #9a6b12; }
-.accounts-chip-overdue { background: #fdf0f0; border-color: #f0c4c4; color: #b23b3b; }
-.accounts-chip-failed { background: #f9eff5; border-color: #e6c3d7; color: #8a3b6b; }
-.accounts-chip-paid { background: #edf8f2; border-color: #b7dfc9; color: #1c7a55; }
+.accounts-chip-pending { background: transparent; border-color: transparent; color: #9a6b12; }
+.accounts-chip-overdue { background: transparent; border-color: transparent; color: #b23b3b; }
+.accounts-chip-failed { background: transparent; border-color: transparent; color: #8a3b6b; }
+.accounts-chip-paid { background: transparent; border-color: transparent; color: #1c7a55; }
 
 .accounts-actions {
   display: flex;

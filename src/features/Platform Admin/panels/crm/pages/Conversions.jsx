@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { BadgeCheck, Hourglass, RotateCcw, XCircle } from "lucide-react";
+import { BadgeCheck, Hourglass, XCircle } from "lucide-react";
 import Pagination from "../../../shared/components/Pagination";
 import SearchBar from "../../../shared/components/SearchBar";
 import { usePagination } from "../../../shared/hooks/usePagination";
@@ -101,13 +101,12 @@ export default function Conversions() {
             <thead>
               <tr>
                 {COLUMNS[tab].map((column) => <th key={column} scope="col">{column}</th>)}
-                <th scope="col" className="is-end">Action</th>
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 && (
                 <tr className="crm-table-empty">
-                  <td colSpan={COLUMNS[tab].length + 1}>
+                  <td colSpan={COLUMNS[tab].length}>
                     <div className="crm-empty">
                       <strong>{query ? "Nothing matches your search" : empty[0]}</strong>
                       <span>{query ? "Try a different name or ID." : empty[1]}</span>
@@ -126,7 +125,6 @@ export default function Conversions() {
                     <td><span className="crm-badge crm-badge-agreed">Waiting for Accounts</span></td>
                     <td><HandoverSteps lead={lead} today={today} compact /></td>
                     <td><span className="crm-clip" title={lead.handoverNote}>{lead.handoverNote || "—"}</span></td>
-                    <td><div className="crm-row-actions"><button type="button" className="crm-link" onClick={() => actions.openLead(lead.id)}>View</button></div></td>
                   </tr>
                 );
               })}
@@ -146,7 +144,6 @@ export default function Conversions() {
                     </td>
                     <td>{days === null ? "—" : plural(days, "day")}</td>
                     <td className="crm-nowrap">{paidRevenue(attributed, lead.hospitalId, revenueLoading, revenueError)}</td>
-                    <td><div className="crm-row-actions"><button type="button" className="crm-link" onClick={() => actions.openLead(lead.id)}>View</button></div></td>
                   </tr>
                 );
               })}
@@ -158,12 +155,6 @@ export default function Conversions() {
                   <td><span className="crm-clip" title={lead.closeNote}>{lead.closeNote || "—"}</span></td>
                   <td className="crm-nowrap">{formatDate(lead.closedAt)}</td>
                   <td>{lead.closedBy || "—"}</td>
-                  <td>
-                    <div className="crm-row-actions">
-                      <button type="button" className="crm-link" onClick={() => actions.openLead(lead.id)}>View</button>
-                      <button type="button" className="crm-link is-outline" onClick={() => actions.reopen(lead)}><RotateCcw size={13} aria-hidden="true" />Reopen</button>
-                    </div>
-                  </td>
                 </tr>
               ))}
             </tbody>

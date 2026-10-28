@@ -31,7 +31,7 @@ export function updatePlatformPlan(planId, current, values) {
   });
 }
 
-/** POST /platform/plans/{plan_id}/deactivate. Plans are never deleted from the catalog. */
+/** POST /platform/plans/{plan_id}/deactivate. Hides the plan from new subscriptions. */
 export function deactivatePlatformPlan(planId) {
   return platformApi(`/platform/plans/${encodeURIComponent(planId)}/deactivate`, {
     method: "POST",
@@ -42,5 +42,12 @@ export function deactivatePlatformPlan(planId) {
 export function activatePlatformPlan(planId) {
   return platformApi(`/platform/plans/${encodeURIComponent(planId)}/activate`, {
     method: "POST",
+  });
+}
+
+/** DELETE /platform/plans/{plan_id}. Success is 204 with no plan body. */
+export function deletePlatformPlan(planId) {
+  return platformApi(`/platform/plans/${encodeURIComponent(planId)}`, {
+    method: "DELETE",
   });
 }

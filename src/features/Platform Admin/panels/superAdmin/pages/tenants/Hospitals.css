@@ -347,8 +347,8 @@
 }
 
 .hospitals-page .status-trial {
-  background: #eef3fb;
-  border-color: #c5d4f2;
+  background: transparent;
+  border-color: transparent;
   color: #2f5fb8;
 }
 
@@ -399,20 +399,20 @@
 }
 
 .hospitals-page .status-active {
-  background: #edf8f2;
-  border-color: #b7dfc9;
+  background: transparent;
+  border-color: transparent;
   color: #1c7a55;
 }
 
 .hospitals-page .status-suspended {
-  background: #fff7e8;
-  border-color: #efd5a0;
+  background: transparent;
+  border-color: transparent;
   color: #9a6b12;
 }
 
 .hospitals-page .status-closed {
-  background: #f4f6f9;
-  border-color: #d5dde8;
+  background: transparent;
+  border-color: transparent;
   color: #667895;
 }
 

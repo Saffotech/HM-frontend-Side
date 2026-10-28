@@ -17,19 +17,19 @@
   font-weight: 550;
 }
 
-.crm-priority-high { color: #8a4b12; background: #fff4e8; }
-.crm-priority-medium { color: #3d4d63; background: #f1f4f8; }
-.crm-priority-low { color: #667895; background: #f7f8fa; }
+.crm-priority-high { color: #8a4b12; background: transparent; }
+.crm-priority-medium { color: #3d4d63; background: transparent; }
+.crm-priority-low { color: #667895; background: transparent; }
 
-.crm-badge-new { color: #1d4e89; background: #e8f1fb; }
-.crm-badge-ready { color: #0c716a; background: #e7f6f4; }
-.crm-badge-closed { color: #5c6b82; background: #f1f4f8; }
-.crm-badge-converted { color: #1f6b45; background: #e8f6ee; }
-.crm-badge-agreed { color: #5b3fa0; background: #f1ecfb; }
-.crm-badge-muted { color: #5c6b82; background: #f1f4f8; }
+.crm-badge-new { color: #1d4e89; background: transparent; }
+.crm-badge-ready { color: #0c716a; background: transparent; }
+.crm-badge-closed { color: #5c6b82; background: transparent; }
+.crm-badge-converted { color: #1f6b45; background: transparent; }
+.crm-badge-agreed { color: #5b3fa0; background: transparent; }
+.crm-badge-muted { color: #5c6b82; background: transparent; }
 
-.crm-due-overdue { color: #8a4b12; background: #fff4e8; }
-.crm-due-today { color: #0c716a; background: #e7f6f4; }
+.crm-due-overdue { color: #8a4b12; background: transparent; }
+.crm-due-today { color: #0c716a; background: transparent; }
 .crm-due-soon,
 .crm-due-later,
-.crm-due-none { color: #41536d; background: #f4f6f9; }
+.crm-due-none { color: #41536d; background: transparent; }

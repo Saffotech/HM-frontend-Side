@@ -9,6 +9,6 @@
   white-space: nowrap;
 }
 
-.badge-success { background: var(--color-success-bg); color: var(--color-success); }
-.badge-danger { background: var(--color-danger-bg); color: var(--color-danger); }
-.badge-neutral { background: var(--color-neutral-bg); color: var(--color-text-secondary); }
+.badge-success { background: transparent; color: var(--color-success); }
+.badge-danger { background: transparent; color: var(--color-danger); }
+.badge-neutral { background: transparent; color: var(--color-text-secondary); }
