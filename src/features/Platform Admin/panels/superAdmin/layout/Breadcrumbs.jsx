@@ -21,16 +21,8 @@ export default function Breadcrumbs() {
   const tenantMatch = pathname.match(/^\/hospitals\/([^/]+)$/);
 
   if (!titles[pathname] && tenantMatch) {
-    return (
-      <nav className="breadcrumbs" aria-label="Breadcrumb">
-        <span className="breadcrumbs-current">Tenant details</span>
-      </nav>
-    );
+    return <h1 className="breadcrumbs-current">Tenant details</h1>;
   }
 
-  return (
-    <nav className="breadcrumbs" aria-label="Breadcrumb">
-      <span className="breadcrumbs-current">{titles[pathname] || "Not found"}</span>
-    </nav>
-  );
+  return <h1 className="breadcrumbs-current">{titles[pathname] || "Not found"}</h1>;
 }

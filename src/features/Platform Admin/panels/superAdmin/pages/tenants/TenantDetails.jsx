@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { interpretPlatformError, platformCallMessage, shouldEndPlatformSession } from "../../../../shared/api/platformErrors";
 import { getTenant, setTenantActive, updateTenant } from "../../../../shared/api/registrationApi";
@@ -9,24 +9,31 @@ import {
   tenantUpdateBody,
   validateTenantUpdate,
 } from "../../../../shared/api/tenantUpdate";
-import { catalogPrice } from "../../../../shared/api/platformPlans";
 import { applyConfirmedTenantActivation } from "../../tenantActivation";
 import Button from "../../../../shared/components/Button";
 import EmptyState from "../../../../shared/components/EmptyState";
 import Input from "../../../../shared/components/Input";
+import PhoneInput from "../../../../shared/components/PhoneInput";
 import Select from "../../../../shared/components/Select";
 import { PLAN_NAMES, billingCycles } from "../../../../shared/data/catalog";
 import { usePlatform } from "../../../../shared/context/PlatformContext";
 import { usePlatformPlans } from "../../../../shared/hooks/usePlatformPlans";
 import { usePlatformRevenue } from "../../../../shared/hooks/usePlatformRevenue";
+import { isPlatformAdminLocation, platformBackTitle } from "../../../../shared/navigation/inAppHistory";
+import { useInAppBack, useInAppPrevious } from "../../../../shared/navigation/InAppHistoryTracker";
 import { platformPath } from "../../../../shared/paths";
 import { formatCurrency } from "../../../../shared/utils/formatCurrency";
 import { formatDate } from "../../../../shared/utils/formatDate";
+import { formatPhoneDisplay } from "../../../../shared/utils/phoneNumbers";
 import "./TenantDetails.css";
 
 export default function TenantDetails() {
   const { tenantId } = useParams();
-  const navigate = useNavigate();
+  const previous = useInAppPrevious(isPlatformAdminLocation);
+  const goBack = useInAppBack(platformPath("/hospitals"), isPlatformAdminLocation);
+  const backLabel = previous
+    ? `Back to ${platformBackTitle(previous.pathname) || "the previous page"}`
+    : "Back to hospitals";
   const [tenant, setTenant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -64,7 +71,7 @@ export default function TenantDetails() {
         <EmptyState
           title="Hospital not found"
           message={error || "This hospital is not on the server."}
-          action={<Button onClick={() => navigate(platformPath("/hospitals"))}>Back to hospitals</Button>}
+          action={<Button onClick={goBack}>{backLabel}</Button>}
         />
       </section>
     );
@@ -74,7 +81,8 @@ export default function TenantDetails() {
     <RegisteredFromApi
       tenant={tenant}
       onUpdated={setTenant}
-      onBack={() => navigate(platformPath("/hospitals"))}
+      onBack={goBack}
+      backLabel={backLabel}
     />
   );
 }
@@ -90,7 +98,7 @@ function money(value) {
   return formatCurrency(value);
 }
 
-function RegisteredFromApi({ tenant, onUpdated, onBack }) {
+function RegisteredFromApi({ tenant, onUpdated, onBack, backLabel }) {
   const [pending, setPending] = useState(false);
   const [editing, setEditing] = useState(false);
   const [notice, setNotice] = useState("");
@@ -126,14 +134,14 @@ function RegisteredFromApi({ tenant, onUpdated, onBack }) {
   return (
     <section className="td-page">
       <button type="button" className="td-back" onClick={onBack}>
-        <ArrowLeft size={14} aria-hidden="true" />Back to hospitals
+        <ArrowLeft size={14} aria-hidden="true" />{backLabel}
       </button>
       <header className="td-record">
         <div className="td-identity">
           <div className="td-logo" aria-hidden="true">{(tenant.name || "H").split(" ").slice(0, 2).map((word) => word[0]).join("")}</div>
           <div>
             <div className="td-title-row">
-              <h1>{tenant.name}</h1>
+              <h2>{tenant.name}</h2>
               <Chip value={typeof tenant.is_active === "boolean" ? (tenant.is_active ? "Active" : "Suspended") : (tenant.tenant_status || "—")} />
             </div>
             <div className="td-meta">
@@ -178,7 +186,7 @@ function RegisteredFromApi({ tenant, onUpdated, onBack }) {
               <Info label="Tenant id" value={<span className="td-mono">{tenant.tenant_id}</span>} />
               <Info label="Code" value={<span className="td-mono">{tenant.code}</span>} />
               <Info label="Type" value={tenant.hospital_type} />
-              <Info label="Phone" value={tenant.phone} />
+              <Info label="Phone" value={formatPhoneDisplay(tenant.phone)} />
               <Info label="Address" value={tenant.address} />
               <Info label="Administrator" value={tenant.admin_email} />
             </Box>
@@ -267,10 +275,6 @@ function HospitalEditForm({ tenant, disabled, onCancel, onSaved }) {
   const cycleOptions = draft.billingCycle && !cycles.includes(draft.billingCycle)
     ? [draft.billingCycle, ...cycles]
     : cycles;
-  const price = catalogPrice(selectedPlan, draft.billingCycle);
-  const planOrCycleChanged = draft.plan !== original.plan || draft.billingCycle !== original.billingCycle;
-  const amountChanged = String(draft.amount).trim() !== original.amount;
-
   const setField = (key, value) => {
     setDraft((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: "" }));
@@ -317,7 +321,7 @@ function HospitalEditForm({ tenant, disabled, onCancel, onSaved }) {
     <form className="td-panel td-form" onSubmit={save} noValidate>
       <div className="td-form-grid">
         <Input label="Hospital name" value={draft.name} error={errors.name} onChange={(event) => setField("name", event.target.value)} />
-        <Input label="Phone" value={draft.phone} error={errors.phone} onChange={(event) => setField("phone", event.target.value)} />
+        <PhoneInput label="Phone" required value={draft.phone} countryCode={draft.phoneCode} error={errors.phone} onChange={(event) => setField("phone", event.target.value)} onCountryCodeChange={(event) => setField("phoneCode", event.target.value)} />
         <Input className="td-span" label="Address" value={draft.address} error={errors.address} onChange={(event) => setField("address", event.target.value)} />
         <Select label="Plan" value={draft.plan} error={errors.plan} onChange={(event) => setField("plan", event.target.value)}>
           {planNames.map((plan) => <option key={plan} value={plan}>{plan}</option>)}
@@ -334,14 +338,6 @@ function HospitalEditForm({ tenant, disabled, onCancel, onSaved }) {
           onChange={(event) => setField("amount", event.target.value.replace(/[^\d]/g, ""))}
         />
       </div>
-      <p className="td-api-note">
-        Only changed fields are sent.
-        {planOrCycleChanged && !amountChanged
-          ? " The plan or billing cycle changed and the amount was left as it is, so the server will set the amount from the current catalog."
-          : " Leave the amount unchanged to keep it, unless the plan or billing cycle is changing."}
-        {price != null ? ` Catalog price for this selection: ${formatCurrency(price)}.` : ""}
-        {" "}Already issued invoices stay as they were.
-      </p>
       {formError ? <p className="td-api-note" role="alert">{formError}</p> : null}
       <div className="td-form-actions">
         <Button variant="secondary" onClick={onCancel} disabled={saving}>Cancel</Button>

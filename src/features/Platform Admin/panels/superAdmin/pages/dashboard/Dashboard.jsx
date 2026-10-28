@@ -2,18 +2,12 @@ import { useMemo, useState } from "react";
 import { Building2, CalendarPlus, IndianRupee, Users } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../../../../shared/components/Button";
-import EmptyState from "../../../../shared/components/EmptyState";
-import { revenueSnapshot } from "../../../../shared/api/platformRevenue";
 import { usePlatformRevenue } from "../../../../shared/hooks/usePlatformRevenue";
 import { formatCurrency } from "../../../../shared/utils/formatCurrency";
 import { formatDate, formatDateTime } from "../../../../shared/utils/formatDate";
 import { PLATFORM_BASE } from "../../../../shared/paths";
-import { planSlices, registrationsThisMonth } from "../../sessionHospitals";
+import { registrationsThisMonth } from "../../sessionHospitals";
 import { useRegisteredHospitals } from "../../useRegisteredHospitals";
-import PlanChart from "../../components/charts/PlanChart";
-import TenantGrowthChart from "../../components/charts/TenantGrowthChart";
-import { RevenueTrendChart } from "./DashboardCharts";
-import { registrationGrowth } from "./dashboardData";
 import "./Dashboard.css";
 
 const CARDS = [
@@ -43,24 +37,6 @@ function paymentHospital(payment) {
 
 function paidAmount(payment) {
   return payment.paymentAmount == null ? payment.amount : payment.paymentAmount;
-}
-
-function DashboardChartState({ title, loading, error, empty, emptyTitle, emptyMessage, children }) {
-  if (loading || error || empty) {
-    return (
-      <section className="card card-pad chart-card dash-chart-state">
-        <h2>{title}</h2>
-        {loading ? (
-          <p className="panel-copy" role="status">Loading chart data…</p>
-        ) : error ? (
-          <p className="panel-copy" role="alert">{error}</p>
-        ) : (
-          <EmptyState title={emptyTitle} message={emptyMessage} />
-        )}
-      </section>
-    );
-  }
-  return children;
 }
 
 function DashboardRows({ type, rows, onOpenHospital }) {
@@ -117,7 +93,23 @@ function DashboardRows({ type, rows, onOpenHospital }) {
   }
 
   return rows.map((payment) => (
-    <tr key={payment.id}>
+    <tr
+      key={payment.id}
+      className={payment.tenantId == null ? undefined : "dash-clickable-row"}
+      tabIndex={payment.tenantId == null ? undefined : 0}
+      aria-label={payment.tenantId == null ? undefined : `Open ${payment.hospitalName || "hospital"}`}
+      onClick={(event) => {
+        if (payment.tenantId != null && !event.target.closest("a, button")) {
+          onOpenHospital({ tenant_id: payment.tenantId });
+        }
+      }}
+      onKeyDown={(event) => {
+        if (payment.tenantId != null && event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
+          event.preventDefault();
+          onOpenHospital({ tenant_id: payment.tenantId });
+        }
+      }}
+    >
       <td>{paymentHospital(payment)}</td>
       <td>{payment.plan || "—"}</td>
       <td>{formatDate(payment.paidAt)}</td>
@@ -160,9 +152,6 @@ export default function Dashboard() {
     () => hospitals.filter((hospital) => String(hospital.subscription_status || "").toLowerCase() === "active"),
     [hospitals],
   );
-  const growth = useMemo(() => registrationGrowth(hospitals, { now }), [hospitals, now]);
-  const plans = useMemo(() => planSlices(hospitals), [hospitals]);
-
   const payments = useMemo(
     () => (revenue?.invoices || []).filter((row) => row.bucket === "collected"),
     [revenue],
@@ -226,7 +215,6 @@ export default function Dashboard() {
 
   return (
     <section className="dash-page">
-      <h1 className="dash-sr">Dashboard</h1>
 
       <div className="kpi-grid dash-kpi-row" role="group" aria-label="Dashboard data filters">
         {CARDS.map((card) => {
@@ -298,33 +286,6 @@ export default function Dashboard() {
         </div>
       </section>
 
-      <div className="dash-charts chart-grid">
-        <DashboardChartState
-          title="Hospital registration growth"
-          loading={hospitalsBusy}
-          error={hospitalError || (!growth.ok ? growth.error : "")}
-          empty={hospitals.length === 0 && !hospitalError}
-          emptyTitle="No registration history"
-          emptyMessage="Registration history appears after hospitals are registered."
-        >
-          <TenantGrowthChart data={growth.rows} title="Hospital registration growth" />
-        </DashboardChartState>
-        <DashboardChartState
-          title="Subscription plan distribution"
-          loading={hospitalsBusy}
-          error={hospitalError}
-          empty={plans.length === 0 && !hospitalError}
-          emptyTitle="No subscription data"
-          emptyMessage="Plan distribution appears after hospitals are registered."
-        >
-          <PlanChart data={plans} title="Subscription plan distribution" />
-        </DashboardChartState>
-        <RevenueTrendChart
-          data={revenueError ? [] : revenueSnapshot(revenue)}
-          description="Collected, pending, and overdue subscription invoices. Failed invoices are not included in these amounts."
-          emptyMessage={revenueError || (revenueLoading ? "Loading revenue…" : "No subscription invoices yet.")}
-        />
-      </div>
     </section>
   );
 }

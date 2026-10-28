@@ -11,6 +11,7 @@ import SearchBar from "../../../shared/components/SearchBar";
 import { usePlatform } from "../../../shared/context/PlatformContext";
 import { accountsPath } from "../../../shared/paths";
 import { formatDate, formatDateTime } from "../../../shared/utils/formatDate";
+import { formatPhoneDisplay } from "../../../shared/utils/phoneNumbers";
 import { includesQuery } from "../../../shared/utils/table";
 import { InfoBox, InfoRow } from "../components/InvoiceParts";
 import "../Accountant.css";
@@ -88,7 +89,7 @@ export default function Registrations() {
 
   const waitingColumns = [
     { key: "hospital", label: "Hospital", render: hospitalCell },
-    { key: "contact", label: "Contact", render: (row) => <><span className="inv-name">{row.contactPerson}</span><span className="inv-sub">{row.contactPhone}</span></> },
+    { key: "contact", label: "Contact", render: (row) => <><span className="inv-name">{row.contactPerson}</span><span className="inv-sub">{formatPhoneDisplay(row.contactPhone)}</span></> },
     { key: "plan", label: "Agreed plan", render: (row) => <span className="inv-name">{row.plan || "—"} · {row.billingCycle || "—"}</span> },
     { key: "agreed", label: "Sent by CRM", render: (row) => <><span className="inv-name">{row.agreedBy || "—"}</span><span className="inv-sub">{formatDate(row.agreedAt)}</span></> },
     { key: "note", label: "Note from CRM", render: (row) => <span className="hr-note" title={row.handoverNote}>{row.handoverNote || "—"}</span> },
@@ -190,7 +191,7 @@ export default function Registrations() {
               <InfoBox title="Contact">
                 <InfoRow label="Contact person" value={viewing.contactPerson} />
                 <InfoRow label="Designation" value={viewing.designation} />
-                <InfoRow label="Phone" value={viewing.contactPhone} />
+                <InfoRow label="Phone" value={formatPhoneDisplay(viewing.contactPhone)} />
                 <InfoRow label="Email" value={viewing.contactEmail} />
               </InfoBox>
             </div>

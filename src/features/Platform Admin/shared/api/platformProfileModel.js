@@ -1,3 +1,5 @@
+import { DEFAULT_PHONE_CODE, parseProfilePhone } from "../utils/phoneNumbers.js";
+
 const PROFILE_FIELDS = [
   ["phone", "phone"],
   ["phone_code", "phoneCode"],
@@ -46,9 +48,12 @@ export const PROFILE_ERROR_FIELDS = {
 };
 
 export function profileDraft(profile) {
+  const phoneCode = profile?.phoneCode || profile?.phone_code || "";
+  const savedPhone = String(profile?.phone || "").trim();
+  const parsedPhone = parseProfilePhone(savedPhone, phoneCode);
   return {
-    phone: profile?.phone || "",
-    phoneCode: profile?.phoneCode || profile?.phone_code || "",
+    phone: parsedPhone.phone,
+    phoneCode: phoneCode || savedPhone.startsWith("+") || savedPhone.startsWith("00") ? parsedPhone.phoneCode : "",
     address: profile?.address || "",
     city: profile?.city || "",
     state: profile?.state || "",
@@ -66,6 +71,12 @@ export function profileUpdateBody(current, draft) {
     const previous = String(base[formField] ?? "").trim();
     if (next !== previous) body[apiField] = next;
   });
+  const currentPhone = String(current?.phone || "").trim();
+  const storedPhoneCode = current?.phoneCode || current?.phone_code || "";
+  const changedEmbeddedPhone = !storedPhoneCode
+    && (currentPhone.startsWith("+") || currentPhone.startsWith("00"))
+    && String(draft?.phone ?? "").trim() !== String(base.phone || "").trim();
+  if (changedEmbeddedPhone && draft?.phoneCode) body.phone_code = String(draft.phoneCode).trim();
   return body;
 }
 
@@ -77,6 +88,12 @@ export function profileFieldErrors(draft) {
       errors[key] = `${label} must be ${limit} characters or fewer.`;
     }
   });
+  const phone = String(draft?.phone ?? "");
+  const phoneCode = draft?.phoneCode || DEFAULT_PHONE_CODE;
+  if (!errors.phone && phone) {
+    if (!/^\d+$/.test(phone)) errors.phone = "Use digits only.";
+    else if (phoneCode === DEFAULT_PHONE_CODE && phone.length !== 10) errors.phone = "Enter a 10-digit phone number.";
+  }
   return errors;
 }
 

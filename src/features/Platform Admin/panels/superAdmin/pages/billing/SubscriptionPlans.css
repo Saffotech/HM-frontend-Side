@@ -4,31 +4,57 @@
   --classic-head: #f0f3f7;
 }
 
-.plans-page .page-header {
-  justify-content: flex-end;
+.plans-toolbar {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  margin-bottom: 8px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--classic-border);
+  gap: 10px 14px;
 }
 
-.plans-readonly {
-  margin: 0 0 14px;
-  color: #5b6b84;
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.plans-page .page-header h1 {
+.plans-feedback,
+.plans-mutation-error {
   margin: 0;
-  font-size: 22px;
-  letter-spacing: 0;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
 }
 
-.plans-page .page-header .btn {
-  border-radius: var(--classic-radius);
+.plans-feedback { color: #1c7a55; }
+.plans-mutation-error { color: var(--color-danger); }
+
+.plan-form {
+  display: grid;
+  gap: 14px;
 }
+
+.plan-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.plan-form input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 400;
+}
+
+.plan-form input:focus {
+  outline: 2px solid rgba(19, 135, 127, 0.18);
+  border-color: var(--color-primary);
+}
+
+.plan-form input[aria-invalid="true"] { border-color: var(--color-danger); }
+.plan-optional { color: var(--color-text-secondary); font-size: 12px; font-weight: 400; }
+.plan-field-error { color: var(--color-danger); font-size: 12px; font-weight: 500; }
 
 .plans-summary {
   display: grid;
@@ -195,7 +221,7 @@
 
 .plan-limits {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   align-self: start;
   margin: 20px 20px 0;
   border: 1px solid var(--classic-border);
@@ -204,8 +230,12 @@
 }
 
 .plan-limits div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 8px 10px;
-  text-align: center;
+  text-align: left;
 }
 
 .plan-limits div + div {
@@ -221,10 +251,11 @@
 }
 
 .plan-limits dd {
-  margin: 2px 0 0;
+  margin: 0;
   font-size: 14px;
   font-weight: 700;
   color: var(--color-text);
+  white-space: nowrap;
 }
 
 .plan-features {
@@ -297,10 +328,14 @@
 .plan-actions {
   display: flex;
   align-items: center;
+  flex-wrap: nowrap;
+  gap: 6px;
   padding: 10px 18px;
   border-top: 1px solid var(--classic-border);
   background: var(--classic-head);
 }
+
+.plan-actions .plan-activate-action { margin-left: auto; }
 
 .plan-actions .action-link {
   border: 0;

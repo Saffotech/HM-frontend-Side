@@ -3,19 +3,25 @@ import Button from "../../../shared/components/Button";
 import ConfirmDialog from "../../../shared/components/ConfirmDialog";
 import Input from "../../../shared/components/Input";
 import Modal from "../../../shared/components/Modal";
+import PhoneInput from "../../../shared/components/PhoneInput";
 import Select from "../../../shared/components/Select";
+import { DEFAULT_PHONE_CODE, formatPhoneDisplay, parsePhoneNumber, validPhoneForCode } from "../../../shared/utils/phoneNumbers";
 import { CLOSE_REASONS, CONTACT_METHODS, billingCycles, hospitalTypes } from "../../../shared/data/catalog";
 import { formatDate } from "../../../shared/utils/formatDate";
-import { isEmail, isPhone, phoneDigits, required } from "../../../shared/utils/validation";
-import { CONTACT_OUTCOMES, LEAD_SOURCES, PRIORITIES } from "../utils/crmLeads";
+import { isEmail, required } from "../../../shared/utils/validation";
+import { CONTACT_OUTCOMES, OUTCOME_TONE, LEAD_SOURCES, PRIORITIES } from "../utils/crmLeads";
 
 const dueLabel = (day) => formatDate(`${day}T00:00:00`);
 
-export function ContactDialog({ lead, mode, today, onCancel, onSubmit }) {
+export function ContactDialog({ lead, mode, today, onCancel, onSubmit, initialOutcome = "" }) {
   const completing = mode === "complete";
+  const startingOutcome = CONTACT_OUTCOMES.some(([value]) => value === initialOutcome) ? initialOutcome : "";
+  const outcomes = startingOutcome
+    ? CONTACT_OUTCOMES.filter(([value]) => value === startingOutcome)
+    : CONTACT_OUTCOMES;
   const [form, setForm] = useState({
     method: CONTACT_METHODS[0],
-    outcome: "",
+    outcome: startingOutcome,
     note: "",
     followUpDate: "",
     nextAction: "",
@@ -25,6 +31,10 @@ export function ContactDialog({ lead, mode, today, onCancel, onSubmit }) {
   const set = (key) => (event) => {
     setForm((current) => ({ ...current, [key]: event.target.value }));
     setErrors((current) => ({ ...current, [key]: "" }));
+  };
+  const chooseOutcome = (outcome) => {
+    setForm((current) => ({ ...current, outcome }));
+    setErrors((current) => ({ ...current, outcome: "" }));
   };
   const needsDate = form.outcome === "interested" || form.outcome === "callback";
 
@@ -43,7 +53,7 @@ export function ContactDialog({ lead, mode, today, onCancel, onSubmit }) {
     <Modal
       open
       title={completing ? "Complete follow-up" : "Log contact"}
-      subtitle={`${lead.hospitalName} · ${lead.contactPerson}${lead.contactPhone ? ` · ${lead.contactPhone}` : ""}`}
+      subtitle={`${lead.hospitalName} · ${lead.contactPerson}${lead.contactPhone ? ` · ${formatPhoneDisplay(lead.contactPhone)}` : ""}`}
       onClose={onCancel}
       footer={(
         <>
@@ -64,10 +74,24 @@ export function ContactDialog({ lead, mode, today, onCancel, onSubmit }) {
         <Select label="Contact method *" value={form.method} onChange={set("method")}>
           {CONTACT_METHODS.map((method) => <option key={method}>{method}</option>)}
         </Select>
-        <Select label="Outcome *" value={form.outcome} error={errors.outcome} onChange={set("outcome")}>
-          <option value="">Select outcome</option>
-          {CONTACT_OUTCOMES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-        </Select>
+        <fieldset className={`crm-span crm-outcomes${errors.outcome ? " has-error" : ""}`}>
+          <legend>Outcome *</legend>
+          <div className="crm-outcome-list" role="radiogroup" aria-label="Outcome">
+            {outcomes.map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={form.outcome === value}
+                className={`crm-outcome ${OUTCOME_TONE[value] || ""}${form.outcome === value ? " is-on" : ""}`}
+                onClick={() => chooseOutcome(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {errors.outcome ? <p className="field-error">{errors.outcome}</p> : null}
+        </fieldset>
         <Input as="textarea" rows={3} className="crm-span" label="Notes *" value={form.note} error={errors.note} onChange={set("note")} placeholder="What was discussed?" />
         {needsDate && (
           <>
@@ -204,13 +228,15 @@ export function ReopenDialog({ lead, onCancel, onConfirm }) {
 
 export function EditLeadDialog({ lead, planOptions, onCancel, onSubmit }) {
   const lockedPlan = lead.status === "Agreed";
+  const existingPhone = parsePhoneNumber(lead.contactPhone || "");
   const [form, setForm] = useState({
     priority: lead.priority || "Medium",
     source: lead.source || "",
     type: lead.type || "",
     contactPerson: lead.contactPerson || "",
     designation: lead.designation || "",
-    contactPhone: lead.contactPhone || "",
+    phoneCode: existingPhone.phoneCode,
+    contactPhone: existingPhone.phone,
     contactEmail: lead.contactEmail || "",
     hospitalEmail: lead.hospitalEmail || "",
     city: lead.city || "",
@@ -220,14 +246,16 @@ export function EditLeadDialog({ lead, planOptions, onCancel, onSubmit }) {
   });
   const [errors, setErrors] = useState({});
   const set = (key) => (event) => {
-    const value = key === "contactPhone" ? phoneDigits(event.target.value) : event.target.value;
+    const value = event.target.value;
     setForm((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: "" }));
   };
   const submit = () => {
     const next = {};
     if (!required(form.contactPerson)) next.contactPerson = "Enter the contact person.";
-    if (!isPhone(form.contactPhone)) next.contactPhone = "Enter a 10-digit phone number.";
+    if (!validPhoneForCode(form.contactPhone, form.phoneCode || DEFAULT_PHONE_CODE)) next.contactPhone = (form.phoneCode || DEFAULT_PHONE_CODE) === DEFAULT_PHONE_CODE
+      ? "Enter a 10-digit phone number."
+      : "Enter a valid phone number for the selected country code.";
     if (form.contactEmail.trim() && !isEmail(form.contactEmail)) next.contactEmail = "Enter a valid email address.";
     if (form.hospitalEmail.trim() && !isEmail(form.hospitalEmail)) next.hospitalEmail = "Enter a valid email address.";
     setErrors(next);
@@ -253,7 +281,6 @@ export function EditLeadDialog({ lead, planOptions, onCancel, onSubmit }) {
       footer={<><Button variant="secondary" onClick={onCancel}>Cancel</Button><Button onClick={submit}>Save changes</Button></>}
     >
       <div className="crm-form">
-        <p className="crm-span crm-hint">The hospital name and lead owner can only be changed by a Super Admin. Every change is written to the activity timeline.</p>
         <h3 className="crm-span crm-form-title">Sales</h3>
         <Select label="Priority" value={form.priority} onChange={set("priority")}>
           {PRIORITIES.map((item) => <option key={item}>{item}</option>)}
@@ -274,7 +301,7 @@ export function EditLeadDialog({ lead, planOptions, onCancel, onSubmit }) {
         <h3 className="crm-span crm-form-title">Contact</h3>
         <Input label="Contact person *" value={form.contactPerson} error={errors.contactPerson} onChange={set("contactPerson")} />
         <Input label="Designation" value={form.designation} onChange={set("designation")} />
-        <Input label="Phone *" inputMode="numeric" maxLength={10} value={form.contactPhone} error={errors.contactPhone} onChange={set("contactPhone")} placeholder="10-digit number" />
+        <PhoneInput label="Phone" required value={form.contactPhone} countryCode={form.phoneCode} error={errors.contactPhone} onChange={set("contactPhone")} onCountryCodeChange={set("phoneCode")} />
         <Input label="Contact email" type="email" value={form.contactEmail} error={errors.contactEmail} onChange={set("contactEmail")} autoComplete="email" />
         <h3 className="crm-span crm-form-title">Hospital</h3>
         <Select label="Hospital type" value={form.type} onChange={set("type")}>

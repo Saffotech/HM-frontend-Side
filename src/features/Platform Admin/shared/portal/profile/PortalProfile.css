@@ -297,16 +297,6 @@
   box-shadow: 0 0 0 3px var(--color-success-bg);
 }
 
-.pp-danger-btn {
-  flex: none;
-  color: #b23b3b;
-}
-
-.pp-danger-btn:hover {
-  border-color: #f0c9c9;
-  background: #fdf3f3;
-}
-
 /* Inputs shared by the password card and the edit dialog */
 .pp-password-form .field input,
 .pp-edit .field input {
@@ -837,25 +827,33 @@
     align-items: stretch;
   }
 
-  .pp-title {
-    font-size: 20px;
-  }
-
   .pp-hero-actions .btn {
     flex: 1 1 calc(50% - 8px);
   }
 }
 
-.pp-title {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  line-height: 1.25;
-}
-
 .pp-avatar-frame {
   position: relative;
   flex: none;
+}
+
+.pp-avatar-trigger {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.pp-avatar-trigger:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 5px;
+}
+
+.pp-avatar-trigger:disabled {
+  cursor: wait;
 }
 
 .pp-avatar-btn {
@@ -876,6 +874,49 @@
 
 .pp-avatar-btn:hover:not(:disabled) {
   background: var(--color-primary-dark);
+}
+
+.pp-photo-menu {
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  left: calc(100% + 10px);
+  display: grid;
+  min-width: 150px;
+  padding: 5px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  box-shadow: 0 8px 24px rgba(20, 45, 82, 0.16);
+}
+
+.pp-photo-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pp-photo-menu button:hover:not(:disabled) {
+  background: var(--color-primary-light);
+}
+
+.pp-photo-menu button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pp-photo-menu button.pp-photo-remove {
+  color: #b23b3b;
 }
 
 .pp-hero-actions {

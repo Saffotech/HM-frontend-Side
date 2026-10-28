@@ -8,10 +8,17 @@
   align-items: center;
   gap: 6px;
   justify-self: start;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--color-primary-dark);
+  font: inherit;
   font-size: 13px;
   font-weight: 600;
+  text-align: left;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .hb-back:hover {
@@ -30,7 +37,7 @@
   background: #fff;
 }
 
-.hb-hero h1 {
+.hb-hero h2 {
   margin: 0;
   color: var(--color-text);
   font-size: 20px;

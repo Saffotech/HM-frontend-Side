@@ -7,6 +7,10 @@ import { parseCrmPerformance } from "./platformCrmPerformanceModel.js";
 import { executePlatformRequest } from "./platformHttp.js";
 import { createPlatformAuthStore } from "./platformSession.js";
 import {
+  isAutoCreatedHospitalEmailActivity,
+  rememberAutoCreatedHospitalEmailActivity,
+} from "../../panels/crm/utils/autoCreatedEmailActivity.js";
+import {
   countLeadList,
   leadAgreeBody,
   leadCloseBody,
@@ -99,6 +103,17 @@ describe("CRM lead request bodies", () => {
     assert.deepEqual(body, { priority: "High", plan: "Professional" });
   });
 
+  it("keeps international lead phone data in the existing contact_phone API field", () => {
+    const created = leadCreateBody({ ...form, phone: "4155550132", phoneCode: "+1" });
+    assert.equal(created.contact_phone, "+1 4155550132");
+    const updated = leadUpdateBody(
+      { contactPhone: "9876543210" },
+      { contactPhone: "4155550132", phoneCode: "+1" },
+    );
+    assert.deepEqual(updated, { contact_phone: "+1 4155550132" });
+    assert.equal("phone_code" in updated, false);
+  });
+
   it("maps contact, follow-up, agree, and close bodies", () => {
     assert.deepEqual(leadContactBody({
       method: "Phone call",
@@ -129,6 +144,61 @@ describe("CRM lead request bodies", () => {
       reason: "Budget constraints",
       note: null,
     });
+  });
+});
+
+describe("initial hospital email activity", () => {
+  it("saves Hospital email and hides only its automatic post-create activity", () => {
+    const storage = memoryStorage();
+    const input = { ...form, hospitalEmail: " billing@citygen.com " };
+    const createBody = leadCreateBody(input);
+    assert.equal(Object.hasOwn(createBody, "hospital_email"), false);
+
+    const created = mapLead({
+      id: 700,
+      hospital_name: "City General",
+      created_at: "2026-10-27T09:03:01Z",
+      activities: [{ id: 901, method: "Lead created", note: "Source: Phone enquiry." }],
+    }, { userId: 4, name: "Meera Iyer" });
+    const emailUpdateBody = leadUpdateBody(created, { hospitalEmail: input.hospitalEmail });
+    assert.deepEqual(emailUpdateBody, { hospital_email: "billing@citygen.com" });
+
+    const updated = mapLead({
+      id: 700,
+      hospital_name: "City General",
+      hospital_email: "billing@citygen.com",
+      created_at: "2026-10-27T09:03:01Z",
+      activities: [
+        { id: 902, method: "Details updated", note: "Updated hospital email." },
+        { id: 901, method: "Lead created", note: "Source: Phone enquiry." },
+      ],
+    }, { userId: 4, name: "Meera Iyer" });
+    assert.equal(updated.hospitalEmail, "billing@citygen.com");
+    assert.equal(rememberAutoCreatedHospitalEmailActivity(700, created, updated, 4, storage), true);
+
+    const laterEdits = [
+      { id: 903, method: "Details updated", note: "Updated city." },
+      { id: 904, method: "Details updated", note: "Updated hospital email." },
+    ];
+    const visibleMethods = [...updated.activity, ...laterEdits]
+      .filter((entry) => !isAutoCreatedHospitalEmailActivity(700, entry.id, 4, storage))
+      .map((entry) => entry.method);
+    assert.deepEqual(visibleMethods, ["Lead created", "Details updated", "Details updated"]);
+    assert.equal(isAutoCreatedHospitalEmailActivity(700, 901, 4, storage), false);
+    assert.equal(isAutoCreatedHospitalEmailActivity(700, 903, 4, storage), false);
+    assert.equal(isAutoCreatedHospitalEmailActivity(700, 904, 4, storage), false);
+    assert.equal(isAutoCreatedHospitalEmailActivity(700, 902, 4, storage), true);
+  });
+
+  it("does not hide unrelated or later Details updated events", () => {
+    const storage = memoryStorage();
+    const created = { activity: [{ id: 1, method: "Lead created" }] };
+    const updated = { activity: [
+      { id: 2, method: "Details updated", note: "Updated hospital email." },
+      { id: 3, method: "Details updated", note: "Updated city." },
+    ] };
+    assert.equal(rememberAutoCreatedHospitalEmailActivity(77, created, updated, 4, storage), false);
+    assert.equal(isAutoCreatedHospitalEmailActivity(77, 3, 4, storage), false);
   });
 });
 
@@ -241,6 +311,8 @@ describe("CRM screens use the lead API instead of seed data", () => {
     assert.doesNotMatch(client, /shared\/api\/client/);
     assert.match(workspace, /listLeads/);
     assert.match(workspace, /createLead/);
+    assert.match(workspace, /rememberAutoCreatedHospitalEmailActivity\(created\.id, created, saved, crmSession\?\.userId\)/);
+    assert.match(details, /isAutoCreatedHospitalEmailActivity\(lead\.id, entry\.id, userId\)/);
     assert.match(workspace, /claimLead/);
     assert.match(workspace, /agreeLead/);
     assert.doesNotMatch(workspace, /onboardingSeed/);

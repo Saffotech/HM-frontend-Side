@@ -4,6 +4,7 @@ import { Hand, Inbox, Lock, Plus, SearchX } from "lucide-react";
 import Button from "../../../shared/components/Button";
 import Pagination from "../../../shared/components/Pagination";
 import SearchBar from "../../../shared/components/SearchBar";
+import { formatPhoneDisplay } from "../../../shared/utils/phoneNumbers";
 import { usePagination } from "../../../shared/hooks/usePagination";
 import { formatDate } from "../../../shared/utils/formatDate";
 import { shiftDays } from "../../../shared/utils/periods";
@@ -223,7 +224,7 @@ export default function Leads() {
                       {lead.type && <span className="crm-sub">{lead.type}</span>}
                     </td>
                     <td>{lead.contactPerson || "—"}{lead.designation && <span className="crm-sub">{lead.designation}</span>}</td>
-                    <td className="crm-nowrap">{lead.contactPhone || "—"}</td>
+                    <td className="crm-nowrap">{formatPhoneDisplay(lead.contactPhone) || "—"}</td>
                     <td>{lead.city || "—"}</td>
                     <td>{lead.plan || "—"}{lead.billingCycle && <span className="crm-sub">{lead.billingCycle}</span>}</td>
                     <td><PriorityMark value={lead.priority} /></td>

@@ -5,6 +5,7 @@ import Pagination from "../../../shared/components/Pagination";
 import SearchBar from "../../../shared/components/SearchBar";
 import { usePagination } from "../../../shared/hooks/usePagination";
 import { formatDate } from "../../../shared/utils/formatDate";
+import { formatPhoneDisplay } from "../../../shared/utils/phoneNumbers";
 import { followUpsFor } from "../../../shared/utils/leadMetrics";
 import { daysBetween } from "../../../shared/utils/periods";
 import { includesQuery } from "../../../shared/utils/table";
@@ -103,10 +104,7 @@ export default function FollowUps() {
           <div className="crm-search">
             <SearchBar value={query} onChange={(value) => update({ q: value })} placeholder="Search hospital, contact, next action…" />
           </div>
-          <Filter label="Priority" value={priority} onChange={(value) => update({ priority: value })} options={["High", "Medium", "Low"]} />
-          <div className="crm-toolbar-end">
-            <span className="crm-count" aria-live="polite">{plural(rows.length, view === "completed" ? "completed follow-up" : "lead")}</span>
-          </div>
+          <Filter label="" ariaLabel="Filter by priority" allLabel="All priorities" value={priority} onChange={(value) => update({ priority: value })} options={["High", "Medium", "Low"]} />
         </div>
 
         <div className="crm-table-wrap">
@@ -114,13 +112,13 @@ export default function FollowUps() {
             <thead>
               <tr>
                 {columns.map((column) => <th key={column} scope="col">{column}</th>)}
-                <th scope="col" className="is-end">Action</th>
+                {view !== "completed" && <th scope="col" className="crm-followup-action-head">Action</th>}
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 ? (
                 <tr className="crm-table-empty">
-                  <td colSpan={columns.length + 1}>
+                  <td colSpan={columns.length + (view === "completed" ? 0 : 1)}>
                     <div className="crm-empty">
                       {view === "unscheduled" || view === "overdue" ? <CheckCircle2 size={28} aria-hidden="true" /> : <CalendarX2 size={28} aria-hidden="true" />}
                       <strong>{query || priority ? "Nothing matches these filters" : emptyTitle}</strong>
@@ -146,7 +144,6 @@ export default function FollowUps() {
                       </td>
                       <td>{row.entry?.method || "—"}{row.entry?.outcome && <span className="crm-sub">{row.entry.outcome}</span>}</td>
                       <td><span className="crm-clip" title={row.entry?.note}>{row.entry?.note || "—"}</span></td>
-                      <td><div className="crm-row-actions"><button type="button" className="crm-link" onClick={() => actions.openLead(row.lead.id)}>Open</button></div></td>
                     </tr>
                   );
                 })
@@ -160,7 +157,7 @@ export default function FollowUps() {
                         <button type="button" className="crm-row-link" onClick={() => actions.openLead(lead.id)}>{lead.hospitalName}</button>
                         <span className="crm-sub">{lead.city || "—"}</span>
                       </td>
-                      <td>{lead.contactPerson}<span className="crm-sub">{lead.contactPhone}</span></td>
+                      <td>{lead.contactPerson}<span className="crm-sub">{formatPhoneDisplay(lead.contactPhone)}</span></td>
                       <td><PriorityMark value={lead.priority} /></td>
                       <td>
                         {view === "unscheduled" ? (
@@ -174,7 +171,7 @@ export default function FollowUps() {
                       <td><span className="crm-clip" title={lead.nextAction}>{lead.nextAction || "—"}</span></td>
                       <td className="crm-nowrap">{contact ? <>{contact.method}<span className="crm-sub">{formatDate(contact.at)}</span></> : <span className="crm-sub">Never</span>}</td>
                       <td>
-                        <div className="crm-row-actions">
+                        <div className="crm-row-actions crm-followup-actions">
                           {view === "unscheduled" ? (
                             <>
                               <button type="button" className="crm-link is-outline" onClick={() => actions.schedule(lead)}><CalendarClock size={13} aria-hidden="true" />Schedule</button>
@@ -186,7 +183,6 @@ export default function FollowUps() {
                               <button type="button" className="crm-link" onClick={() => actions.schedule(lead)}><CalendarClock size={13} aria-hidden="true" />Reschedule</button>
                             </>
                           )}
-                          <button type="button" className="crm-link" onClick={() => actions.openLead(lead.id)}>Open</button>
                         </div>
                       </td>
                     </tr>

@@ -146,12 +146,28 @@ describe("registration submit gate", () => {
   });
 });
 
-describe("accountant plan catalog limitation", () => {
-  it("keeps the static plan list because the plan endpoint is limited to platform admins", () => {
+describe("accountant registration plan pricing", () => {
+  it("uses the shared live catalog and updates pricing from the selected plan and billing cycle", () => {
     const accountant = readSrc("../../panels/accountant/pages/RegisterHospital.jsx");
     const platform = readSrc("../../panels/superAdmin/pages/tenants/RegisterHospital.jsx");
-    assert.match(accountant, /PLAN_NAMES\.map/);
-    assert.doesNotMatch(accountant, /usePlatformPlans|listPlatformPlans/);
+    const plansApi = readSrc("./platformPlans.js");
+    const plansHook = readSrc("../hooks/usePlatformPlans.js");
+    assert.match(accountant, /planNames\.map/);
+    assert.match(accountant, /usePlatformPlans/);
+    assert.match(accountant, /activePlanNames/);
+    assert.match(accountant, /const selectedPlan = plans\.find\(\(plan\) => plan\.name === values\.plan\)/);
+    assert.match(accountant, /catalogPrice\(selectedPlan, values\.billingCycle\)/);
+    assert.match(accountant, /formatCurrency\(listedPrice\)/);
+    assert.match(accountant, /Subscription pricing does not apply during a trial/);
+    assert.match(accountant, /plansLoading/);
+    assert.match(accountant, /plansError/);
+    assert.match(accountant, /listedPrice == null/);
+    assert.doesNotMatch(accountant, /Subscription price is unavailable to Accountant users/);
+    assert.match(accountant, /setField\("plan", event\.target\.value\)/);
+    assert.match(accountant, /setField\("billingCycle", event\.target\.value\)/);
+    assert.match(plansApi, /platformApi\("\/platform\/plans"\)/);
+    assert.match(plansHook, /listPlatformPlans\(\)/);
+    assert.match(plansHook, /setError\(platformCallMessage\(err\)\)/);
     assert.match(platform, /usePlatformPlans/);
     assert.match(platform, /activePlanNames/);
   });
@@ -191,31 +207,66 @@ describe("CRM lead email fields and tabs", () => {
   });
 });
 
-describe("platform page headings", () => {
-  it("keeps one accessible heading and hides the duplicate visible title", () => {
-    const pages = [
-      ["../../panels/superAdmin/pages/tenants/Hospitals.jsx", "Hospitals"],
-      ["../../panels/superAdmin/pages/billing/SubscriptionPlans.jsx", "Subscription Plans"],
-      ["../../panels/superAdmin/pages/billing/Subscriptions.jsx", "Subscriptions"],
-      ["../../panels/superAdmin/pages/billing/InvoicesPayments.jsx", "Billing & Revenue"],
-      ["../../panels/superAdmin/pages/account/PlatformStaff.jsx", "Platform Staff"],
-    ];
-    for (const [file, title] of pages) {
-      const source = readSrc(file);
-      assert.match(source, new RegExp(`<h1 className="platform-sr-only">${title}</h1>`));
-      assert.doesNotMatch(source, new RegExp(`<h1>${title}</h1>`));
+describe("panel page titles", () => {
+  it("renders the active route title in each panel header without repeating it in page content", () => {
+    const platformHeader = readSrc("../../panels/superAdmin/layout/Breadcrumbs.jsx");
+    for (const title of [
+      "Dashboard",
+      "Platform Analytics",
+      "Hospitals / Tenants",
+      "Register Hospital",
+      "CRM & Performance",
+      "Subscription Plans",
+      "Subscriptions",
+      "Billing & Revenue",
+      "My Profile",
+      "Platform Staff",
+    ]) {
+      assert.ok(platformHeader.includes(`"${title}"`), `Platform header title is mapped: ${title}`);
     }
+    assert.match(platformHeader, /return <h1 className="breadcrumbs-current">/);
+    assert.match(platformHeader, /Tenant details/);
+
+    const portalLayout = readSrc("../portal/PortalLayout.jsx");
+    assert.match(portalLayout, /<h1 className="portal-title">\{title\}<\/h1>/);
+    const crmLayout = readSrc("../../panels/crm/CrmLayout.jsx");
+    assert.match(crmLayout, /<h1>\{title\}<\/h1>/);
+    assert.match(crmLayout, /leadPage \? "Lead details" : current\.label/);
+
+    const pages = [
+      "../../panels/superAdmin/pages/dashboard/Dashboard.jsx",
+      "../../panels/superAdmin/pages/tenants/Hospitals.jsx",
+      "../../panels/superAdmin/pages/billing/SubscriptionPlans.jsx",
+      "../../panels/superAdmin/pages/billing/Subscriptions.jsx",
+    ];
+    for (const file of pages) assert.doesNotMatch(readSrc(file), /<h1\b/);
+
+    const accountantLayout = readSrc("../../panels/accountant/AccountantLayout.jsx");
+    for (const title of ["Collections", "Invoices & Payments", "Hospital Registrations", "Register Hospital", "Hospital Billing", "Profile"]) {
+      assert.ok(accountantLayout.includes(`"${title}"`), `Accountant header title is mapped: ${title}`);
+    }
+
     const plans = readSrc("../../panels/superAdmin/pages/billing/SubscriptionPlans.jsx");
-    assert.match(plans, /id="plans-catalog-note"/);
-    assert.match(plans, /Adding, editing, and deactivating plans is not available here/);
-    assert.match(plans, /disabled aria-describedby="plans-catalog-note"/);
-    assert.doesNotMatch(plans, /createPlan|updatePlan|deactivatePlan/);
+    const planApi = readSrc("./platformPlans.js");
+    assert.doesNotMatch(plans, /This screen shows the active catalog/);
+    assert.match(plans, /Add plan/);
+    assert.match(plans, /createPlatformPlan/);
+    assert.match(plans, /updatePlatformPlan/);
+    assert.match(plans, /deactivatePlatformPlan/);
+    assert.match(plans, /activatePlatformPlan/);
+    assert.match(plans, /Deactivate plan\?/);
+    assert.match(plans, /onClick=\{\(\) => activatePlan\(plan\)\}/);
+    assert.match(plans, /disabled=\{busy \|\| plan\.id == null\}/);
+    assert.match(planApi, /platformApi\("\/platform\/plans"/);
+    assert.match(planApi, /method: "PATCH"/);
+    assert.match(planApi, /method: "POST"/);
   });
 });
 
 describe("profile phone code contract", () => {
-  it("accepts an existing calling code and does not force a 10-digit phone number", () => {
-    assert.deepEqual(profileFieldErrors({ phoneCode: "+91", phone: "12345" }), {});
+  it("requires ten digits for Indian numbers and keeps the supported calling code limit", () => {
+    assert.match(profileFieldErrors({ phoneCode: "+91", phone: "12345" }).phone, /10-digit/);
+    assert.deepEqual(profileFieldErrors({ phoneCode: "+91", phone: "9876543210" }), {});
     assert.match(profileFieldErrors({ phoneCode: "12345678901" }).phoneCode, /10/);
     assert.equal(profileFieldErrors({ phone: "123456789012345678901" }).phone.includes("20"), true);
   });

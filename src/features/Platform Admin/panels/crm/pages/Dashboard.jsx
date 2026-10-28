@@ -17,6 +17,7 @@ import {
 import Button from "../../../shared/components/Button";
 import { useCrmRevenue } from "../../../shared/hooks/useCrmRevenue";
 import { formatCurrency } from "../../../shared/utils/formatCurrency";
+import { formatPhoneDisplay } from "../../../shared/utils/phoneNumbers";
 import { formatDate } from "../../../shared/utils/formatDate";
 import { prepareLeads } from "../../../shared/utils/leadMetrics";
 import { FollowMark, PriorityMark, StatusMark } from "../components/CrmMarks";
@@ -97,7 +98,7 @@ export default function Dashboard() {
     </td>
   );
   const contactCell = (lead) => <td>{lead.contactPerson || "—"}{lead.designation && <span className="crm-sub">{lead.designation}</span>}</td>;
-  const phoneCell = (lead) => <td className="crm-nowrap">{lead.contactPhone || "—"}</td>;
+  const phoneCell = (lead) => <td className="crm-nowrap">{formatPhoneDisplay(lead.contactPhone) || "—"}</td>;
   const planCell = (lead) => <td>{lead.plan || "—"}{lead.billingCycle && <span className="crm-sub">{lead.billingCycle}</span>}</td>;
   const followUpTable = {
     columns: ["Hospital", "Contact", "Phone", "Priority", "Due", "Next action"],
@@ -229,17 +230,16 @@ export default function Dashboard() {
       </section>
 
       <section className="crm-kpis" aria-label="Key numbers">
-        <Kpi active={view === "open"} onClick={() => select("open")} icon={Users} label="Open leads" value={open.length} hint={`${fresh} new · ${open.length - fresh} contacted`} />
-        <Kpi active={view === "today"} onClick={() => select("today")} icon={CalendarCheck} label="Due today" value={buckets.today.length} hint={buckets.upcoming.length ? `${buckets.upcoming.length} upcoming` : "Nothing scheduled ahead"} tone={buckets.today.length ? "warn" : ""} />
-        <Kpi active={view === "overdue"} onClick={() => select("overdue")} icon={AlarmClock} label="Overdue" value={buckets.overdue.length} hint={buckets.overdue.length ? "Oldest first" : "You're on schedule"} tone={buckets.overdue.length ? "alert" : ""} />
-        <Kpi active={view === "registered"} onClick={() => select("registered")} icon={BadgeCheck} label="Hospitals registered" value={registered.length} hint={`${registeredThisMonth} this month · ${withAccounts.length} with Accounts`} tone="good" />
+        <Kpi active={view === "open"} onClick={() => select("open")} icon={Users} label="Open leads" value={open.length} />
+        <Kpi active={view === "today"} onClick={() => select("today")} icon={CalendarCheck} label="Due today" value={buckets.today.length} tone={buckets.today.length ? "warn" : ""} />
+        <Kpi active={view === "overdue"} onClick={() => select("overdue")} icon={AlarmClock} label="Overdue" value={buckets.overdue.length} tone={buckets.overdue.length ? "alert" : ""} />
+        <Kpi active={view === "registered"} onClick={() => select("registered")} icon={BadgeCheck} label="Hospitals registered" value={registered.length} tone="good" />
         <Kpi
           active={view === "conversion"}
           onClick={() => select("conversion")}
           icon={Percent}
           label="Conversion rate"
           value={percent(registered.length, leads.length)}
-          hint={`${registered.length} of ${plural(leads.length, "assigned lead")}`}
           title="Registered hospitals ÷ all leads assigned to you (all time)"
         />
         <Kpi
@@ -248,7 +248,6 @@ export default function Dashboard() {
           icon={CircleDollarSign}
           label="Attributed revenue"
           value={revenueLoading && !attributed ? "…" : attributed ? formatCurrency(attributed.collectedAmount) : "—"}
-          hint={revenueError || (attributed ? `${plural(attributed.collectedCount, "paid invoice")} from your hospitals` : "Paid invoices for hospitals from your leads")}
           tone={attributed?.collectedCount ? "" : "muted"}
           title="Paid subscription invoices of hospitals registered from your leads"
         />
@@ -265,11 +264,10 @@ export default function Dashboard() {
           )}
         </header>
         <div className="crm-table-wrap">
-          <table className="crm-table crm-table-dashboard-actions">
+          <table className="crm-table">
             <thead>
               <tr>
                 {config.columns.map((column) => <th key={column} scope="col">{column}</th>)}
-                <th scope="col" className="is-end">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -285,7 +283,7 @@ export default function Dashboard() {
                 />
               ) : rows.length === 0 ? (
                 <tr className="crm-table-empty">
-                  <td colSpan={config.columns.length + 1}>
+                  <td colSpan={config.columns.length}>
                     <div className="crm-empty">
                       <CheckCircle2 size={26} aria-hidden="true" />
                       <strong>{config.empty[0]}</strong>
@@ -304,11 +302,6 @@ export default function Dashboard() {
                   onKeyDown={(event) => openRowFromKeyboard(event, lead.id)}
                 >
                   {config.cells(lead)}
-                  <td>
-                    <div className="crm-row-actions">
-                      <button type="button" className="crm-link" onClick={() => actions.openLead(lead.id)}>Open</button>
-                    </div>
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -320,17 +313,28 @@ export default function Dashboard() {
 }
 
 function RevenueRows({ hospitals, loading, error, empty, columns, leads, onOpen }) {
+  const openRow = (event, leadId) => {
+    if (event.target.closest("button, a, input, select, textarea")) return;
+    onOpen(leadId);
+  };
+
+  const openRowFromKeyboard = (event, leadId) => {
+    if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+    event.preventDefault();
+    onOpen(leadId);
+  };
+
   if (loading) {
     return (
       <tr className="crm-table-empty">
-        <td colSpan={columns + 1}><div className="crm-empty"><strong>Loading paid invoices</strong><span>Fetching revenue for your hospitals.</span></div></td>
+        <td colSpan={columns}><div className="crm-empty"><strong>Loading paid invoices</strong><span>Fetching revenue for your hospitals.</span></div></td>
       </tr>
     );
   }
   if (error || hospitals.length === 0) {
     return (
       <tr className="crm-table-empty">
-        <td colSpan={columns + 1}>
+        <td colSpan={columns}>
           <div className="crm-empty">
             <strong>{empty[0]}</strong>
             <span>{empty[1]}</span>
@@ -351,19 +355,12 @@ function RevenueRows({ hospitals, loading, error, empty, columns, leads, onOpen 
         <td>{hospital.plan || "—"}</td>
         <td>{hospital.paidCount}</td>
         <td className="crm-nowrap"><strong>{formatCurrency(hospital.paidAmount)}</strong></td>
-        <td>
-          {lead ? (
-            <div className="crm-row-actions">
-              <button type="button" className="crm-link" onClick={() => onOpen(lead.id)}>Open</button>
-            </div>
-          ) : "—"}
-        </td>
       </tr>
     );
   });
 }
 
-function Kpi({ active, onClick, icon: Icon, label, value, hint, tone = "", title }) {
+function Kpi({ active, onClick, icon: Icon, label, value, tone = "", title }) {
   return (
     <button
       type="button"
@@ -374,7 +371,6 @@ function Kpi({ active, onClick, icon: Icon, label, value, hint, tone = "", title
     >
       <span className="crm-kpi-label"><Icon size={15} aria-hidden="true" />{label}</span>
       <strong>{value}</strong>
-      <small>{hint}</small>
     </button>
   );
 }

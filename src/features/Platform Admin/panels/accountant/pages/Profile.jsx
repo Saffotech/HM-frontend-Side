@@ -14,7 +14,6 @@ export default function Profile() {
     <PortalProfile
       portal="accountant"
       panelLabel="Accounts"
-      title="Profile"
       loadProfile={getAccountantProfile}
       updateProfile={updateAccountantProfile}
       changePassword={changePortalPassword}

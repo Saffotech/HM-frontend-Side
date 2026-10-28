@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../../../../shared/components/Button";
-import { invoicesForBucket } from "../../../../shared/api/platformRevenue";
+import { invoiceListCountLabel, invoiceListErrorMessage, matchesInvoiceFilters } from "../../../../shared/api/invoiceModel";
+import { usePlatformInvoices } from "../../../../shared/hooks/usePlatformInvoices";
 import { usePlatformRevenue } from "../../../../shared/hooks/usePlatformRevenue";
 import { formatDate } from "../../../../shared/utils/formatDate";
 import { formatCurrency } from "../../../../shared/utils/formatCurrency";
@@ -78,27 +79,84 @@ function HospitalCell({ invoice }) {
   );
 }
 
+function invoiceAmount(invoice) {
+  if (invoice.status === "Paid" && invoice.paymentAmount != null && invoice.paymentAmount !== "") {
+    return invoice.paymentAmount;
+  }
+  return invoice.amount;
+}
+
 export default function InvoicesPayments() {
   const navigate = useNavigate();
-  const { revenue, loading, error, reload } = usePlatformRevenue();
+  const { revenue, loading: revenueLoading, error: revenueError, reload: reloadRevenue } = usePlatformRevenue();
+  const {
+    invoices,
+    loading: invoicesLoading,
+    error: invoicesError,
+    errorStatus: invoicesErrorStatus,
+    reload: reloadInvoices,
+  } = usePlatformInvoices();
   const [filter, setFilter] = useState("");
   const active = CARDS.find((card) => card.key === filter) || null;
   const visible = useMemo(
-    () => invoicesForBucket(revenue?.invoices, filter),
-    [filter, revenue],
+    () => invoices.filter((invoice) => matchesInvoiceFilters(invoice, { status: filter })),
+    [filter, invoices],
   );
+  let tableBody;
+  if (invoicesLoading) {
+    tableBody = (
+      <tr>
+        <td colSpan={6}><p className="panel-copy" style={{ margin: "8px 0" }}>Loading invoices.</p></td>
+      </tr>
+    );
+  } else if (invoicesError) {
+    tableBody = (
+      <tr>
+        <td colSpan={6}>
+          <p className="panel-copy" role="alert" style={{ margin: "8px 0" }}>
+            {invoiceListErrorMessage(invoicesError, invoicesErrorStatus)}
+          </p>
+          <Button variant="secondary" onClick={reloadInvoices}>Try again</Button>
+        </td>
+      </tr>
+    );
+  } else if (visible.length === 0) {
+    tableBody = (
+      <tr>
+        <td colSpan={6}>
+          <p className="panel-copy" style={{ margin: "8px 0" }}>
+            {active ? `No ${active.label.toLowerCase()} invoices.` : "No invoices yet."}
+          </p>
+        </td>
+      </tr>
+    );
+  } else {
+    tableBody = visible.map((invoice) => {
+      const hospitalPath = invoice.tenantId == null ? "" : platformPath(`/hospitals/${invoice.tenantId}`);
+      const invoiceLabel = invoice.number || (invoice.id != null ? String(invoice.id) : "—");
+      return (
+        <tr
+          key={invoice.id ?? invoiceLabel}
+          className={hospitalPath ? "inv-row-link" : undefined}
+          onClick={hospitalPath ? () => navigate(hospitalPath) : undefined}
+        >
+          <td className="inv-mono">{invoiceLabel}</td>
+          <td><HospitalCell invoice={invoice} /></td>
+          <td>{formatDate(invoice.invoiceDate)}</td>
+          <td>{formatDate(invoice.dueDate)}</td>
+          <td className="inv-amount">{formatCurrency(invoiceAmount(invoice))}</td>
+          <td><StatusChip status={invoice.status} /></td>
+        </tr>
+      );
+    });
+  }
 
   return (
     <section className="inv-page">
-      <header className="page-header">
-        <h1 className="platform-sr-only">Billing & Revenue</h1>
-        <Button variant="secondary" onClick={reload} disabled={loading}>{loading ? "Loading…" : "Refresh"}</Button>
-      </header>
-
-      {error && (
+      {revenueError && (
         <div role="alert">
-          <p className="panel-copy">{error}</p>
-          <Button variant="secondary" onClick={reload}>Try again</Button>
+          <p className="panel-copy">{revenueError}</p>
+          <Button variant="secondary" onClick={reloadRevenue}>Try again</Button>
         </div>
       )}
 
@@ -114,7 +172,7 @@ export default function InvoicesPayments() {
               onClick={() => setFilter((current) => (current === card.key ? "" : card.key))}
             >
               <span>{card.label}</span>
-              <strong className={card.tone}>{loading && !revenue ? "…" : revenue ? card.value(revenue) : "—"}</strong>
+              <strong className={card.tone}>{revenueLoading && !revenue ? "…" : revenue ? card.value(revenue) : "—"}</strong>
               <small>{revenue ? card.detail(revenue) : card.empty}</small>
             </button>
           );
@@ -124,20 +182,13 @@ export default function InvoicesPayments() {
       <section className="inv-panel">
         <div className="inv-meta">
           <span>
-            {loading && !revenue
-              ? "Loading invoices"
-              : active
-                ? `${visible.length} ${active.label.toLowerCase()} invoices`
-                : `${visible.length} invoices`}
-          </span>
-          <span>
-            {!revenue
-              ? "Collected —"
-              : !active
-                ? `Collected ${formatCurrency(revenue.collectedAmount)}`
-                : active.key === "failed"
-                  ? "Not included in the money"
-                  : `${active.label} ${active.total(revenue)}`}
+            {invoiceListCountLabel({
+              loading: invoicesLoading,
+              error: invoicesError,
+              total: invoices.length,
+              filtered: visible.length,
+              filterLabel: active?.label || "",
+            })}
           </span>
         </div>
         <div className="table-wrap">
@@ -152,43 +203,7 @@ export default function InvoicesPayments() {
                 <th>Status</th>
               </tr>
             </thead>
-            <tbody>
-              {loading && !revenue ? (
-                <tr>
-                  <td colSpan={6}><p className="panel-copy" style={{ margin: "8px 0" }}>Loading invoices.</p></td>
-                </tr>
-              ) : !revenue ? (
-                <tr>
-                  <td colSpan={6}><p className="panel-copy" style={{ margin: "8px 0" }}>{error || "No revenue totals yet."}</p></td>
-                </tr>
-              ) : visible.length === 0 ? (
-                <tr>
-                  <td colSpan={6}>
-                    <p className="panel-copy" style={{ margin: "8px 0" }}>
-                      {active ? `No ${active.label.toLowerCase()} invoices.` : "No invoices yet."}
-                    </p>
-                  </td>
-                </tr>
-              ) : visible.map((invoice) => {
-                const hospitalPath = invoice.tenantId == null ? "" : platformPath(`/hospitals/${invoice.tenantId}`);
-                return (
-                  <tr
-                    key={invoice.id}
-                    className={hospitalPath ? "inv-row-link" : undefined}
-                    onClick={hospitalPath ? () => navigate(hospitalPath) : undefined}
-                  >
-                    <td className="inv-mono">{invoice.number || "—"}</td>
-                    <td><HospitalCell invoice={invoice} /></td>
-                    <td>{formatDate(invoice.invoiceDate)}</td>
-                    <td>{formatDate(invoice.dueDate)}</td>
-                    <td className="inv-amount">
-                      {formatCurrency(invoice.bucket === "collected" && invoice.paymentAmount != null ? invoice.paymentAmount : invoice.amount)}
-                    </td>
-                    <td><StatusChip status={invoice.status} /></td>
-                  </tr>
-                );
-              })}
-            </tbody>
+            <tbody>{tableBody}</tbody>
           </table>
         </div>
       </section>

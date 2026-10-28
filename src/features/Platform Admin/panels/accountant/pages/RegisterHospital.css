@@ -84,10 +84,16 @@
   color: var(--color-text-secondary);
 }
 
-.reg-missing a {
+.reg-missing a,
+.reg-missing button {
   margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--color-primary-dark);
+  font: inherit;
   font-weight: 600;
+  cursor: pointer;
 }
 
 .reg-source-bar a {

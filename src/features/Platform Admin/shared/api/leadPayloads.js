@@ -1,4 +1,5 @@
 import { isNumericLeadId } from "./hospitalRegistration.js";
+import { DEFAULT_PHONE_CODE, parsePhoneNumber, serializePhoneNumber } from "../utils/phoneNumbers.js";
 
 export function rejectNonNumericLeadId() {
   return Promise.reject(Object.assign(new Error("This lead link is not a CRM lead."), { status: 404 }));
@@ -23,7 +24,7 @@ export function leadCreateBody(values, { shared = false, allowDuplicate = false 
     priority: values.priority || "Medium",
     contact_person: String(values.contactPerson || "").trim(),
     designation: emptyToNull(values.designation),
-    contact_phone: String(values.phone || "").trim(),
+    contact_phone: serializePhoneNumber(values.phone, values.phoneCode || DEFAULT_PHONE_CODE),
     contact_email: emptyToNull(values.email),
     city: String(values.city || "").trim(),
     state: emptyToNull(values.state),
@@ -55,11 +56,20 @@ export function leadUpdateBody(current, values) {
   const body = {};
   Object.entries(UPDATE_FIELDS).forEach(([formKey, apiKey]) => {
     if (!Object.prototype.hasOwnProperty.call(values, formKey)) return;
+    if (formKey === "contactPhone") return;
     const next = String(values[formKey] ?? "").trim();
     const previous = String(current?.[formKey] ?? "").trim();
     if (next === previous) return;
     body[apiKey] = next || null;
   });
+  if (Object.prototype.hasOwnProperty.call(values, "contactPhone")) {
+    const currentPhone = parsePhoneNumber(current?.contactPhone || "");
+    const nextPhone = String(values.contactPhone ?? "").trim();
+    const nextCode = values.phoneCode || DEFAULT_PHONE_CODE;
+    if (currentPhone.phone !== nextPhone || currentPhone.phoneCode !== nextCode) {
+      body.contact_phone = serializePhoneNumber(nextPhone, nextCode) || null;
+    }
+  }
   return body;
 }
 

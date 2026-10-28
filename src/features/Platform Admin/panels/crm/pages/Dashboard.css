@@ -103,16 +103,6 @@ button.crm-hello-pill:focus-visible {
   vertical-align: 2px;
 }
 
-.crm-table-dashboard-actions th:last-child,
-.crm-table-dashboard-actions tbody tr:not(.crm-table-empty) td:last-child {
-  width: 10%;
-  text-align: center;
-}
-
-.crm-table-dashboard-actions .crm-row-actions {
-  justify-content: center;
-}
-
 .crm-dash-row-link {
   cursor: pointer;
 }

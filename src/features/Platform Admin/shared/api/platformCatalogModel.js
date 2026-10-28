@@ -1,5 +1,29 @@
 import { billingCycles } from "../data/catalog.js";
 
+export function createPlanBody(values) {
+  const body = {
+    name: String(values?.name || "").trim(),
+    monthly_price: Number(values?.monthlyPrice),
+  };
+  if (values?.annualMonthsCharged !== "" && values?.annualMonthsCharged != null) {
+    body.annual_months_charged = Number(values.annualMonthsCharged);
+  }
+  return body;
+}
+
+export function updatePlanBody(current, values) {
+  const body = {};
+  const name = String(values?.name || "").trim();
+  const monthlyPrice = Number(values?.monthlyPrice);
+  const annualMonthsCharged = Number(values?.annualMonthsCharged);
+  if (name !== String(current?.name || "")) body.name = name;
+  if (monthlyPrice !== Number(current?.monthlyPrice)) body.monthly_price = monthlyPrice;
+  if (annualMonthsCharged !== Number(current?.annualMonthsCharged)) {
+    body.annual_months_charged = annualMonthsCharged;
+  }
+  return body;
+}
+
 export function mapPlatformPlans(body) {
   if (!Array.isArray(body)) return { ok: false, plans: [] };
   return {
@@ -11,9 +35,11 @@ export function mapPlatformPlans(body) {
         ? row.billing_cycles.filter((cycle) => billingCycles.includes(cycle))
         : [];
       return [{
+        id: row.id ?? null,
         name,
         monthlyPrice: row.monthly_price,
         annualPrice: row.annual_price,
+        annualMonthsCharged: row.annual_months_charged == null ? 10 : Number(row.annual_months_charged),
         billingCycles: cycles,
         isActive: row.is_active !== false,
       }];
@@ -33,8 +59,9 @@ export function cyclesForPlan(plan) {
 export function catalogPrice(plan, cycle) {
   if (!plan) return null;
   const value = cycle === "Annual" ? plan.annualPrice : plan.monthlyPrice;
+  if (value == null || (typeof value === "string" && value.trim() === "")) return null;
   const amount = Number(value);
-  return Number.isFinite(amount) ? amount : null;
+  return Number.isFinite(amount) && amount >= 0 ? amount : null;
 }
 
 const REVENUE_KEYS = [

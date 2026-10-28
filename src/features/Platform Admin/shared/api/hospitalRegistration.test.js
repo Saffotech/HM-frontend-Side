@@ -122,6 +122,13 @@ describe("hospital registration payloads", () => {
     assert.equal(Object.hasOwn(body, "adminPasswordConfirm"), false);
   });
 
+  it("keeps selected calling codes in existing phone fields for international registrations", () => {
+    const body = tenantRegisterBody({ ...form, phoneCode: "+1", adminPhoneCode: "+44", phone: "4155550132", adminPhone: "2071234567" });
+    assert.equal(body.phone, "+1 4155550132");
+    assert.equal(body.admin_phone, "+44 2071234567");
+    assert.equal("phone_code" in body, false);
+  });
+
   it("keeps the numeric lead id and does not invent a demo request id", () => {
     const lead = mapRegistration({
       id: 8,

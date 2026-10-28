@@ -1,0 +1,132 @@
+.phone-field-controls {
+  display: flex;
+  align-items: stretch;
+  min-height: 44px;
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  overflow: hidden;
+  background: var(--color-surface);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+  min-width: 0;
+}
+
+.phone-field-controls:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(19, 135, 127, 0.13), 0 2px 6px rgba(19, 48, 76, 0.06);
+}
+
+.phone-field-controls input,
+.phone-field-controls .phone-country-trigger {
+  box-sizing: border-box;
+  min-width: 0;
+  color: var(--color-text);
+  font: inherit;
+  outline: none;
+}
+
+.phone-field-controls .phone-country-trigger {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  white-space: nowrap;
+  min-height: 42px;
+  border: 0;
+  border-right: 1px solid var(--color-border);
+  border-radius: 0;
+  padding: 0 10px;
+  background: var(--color-surface);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.phone-country-trigger:hover,
+.phone-country-trigger.is-open {
+  background: #f6fafb;
+}
+
+.phone-country-trigger-iso {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.phone-country-trigger svg {
+  flex: 0 0 auto;
+  color: var(--color-text-secondary);
+}
+
+.phone-field-controls input {
+  flex: 1 1 auto;
+  width: 0;
+  min-height: 42px;
+  border: 0;
+  border-radius: 0;
+  padding: 9px 12px;
+  background: transparent;
+}
+
+.phone-field-controls input:focus {
+  box-shadow: none;
+}
+
+.phone-field-controls input::placeholder {
+  color: #8492a6;
+  opacity: 1;
+}
+
+.phone-field.has-error .phone-field-controls input,
+.phone-field.has-error .phone-country-trigger {
+  border-color: var(--color-danger);
+}
+
+.phone-field.has-error .phone-field-controls {
+  border-color: var(--color-danger);
+}
+
+.phone-country-menu {
+  position: fixed;
+  z-index: 1000;
+  box-sizing: border-box;
+  overflow-y: auto;
+  margin: 0;
+  padding: 5px;
+  list-style: none;
+  border: 1px solid #d7e0e9;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(20, 45, 82, 0.18);
+  color: var(--color-text);
+  overscroll-behavior: contain;
+}
+
+.phone-country-menu li {
+  display: grid;
+  grid-template-columns: 58px 38px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 9px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.phone-country-menu li.is-active { background: #f4f8fa; }
+.phone-country-menu li.is-selected { background: #e8f5f3; color: #087e76; font-weight: 650; }
+.phone-country-dial { font-variant-numeric: tabular-nums; }
+.phone-country-iso { color: #62748a; font-size: 11px; font-weight: 650; letter-spacing: 0.04em; }
+.phone-country-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.phone-country-check { visibility: hidden; }
+.phone-country-menu li.is-selected .phone-country-check { visibility: visible; }
+
+@media (max-width: 480px) {
+  .phone-field-controls .phone-country-trigger {
+    gap: 7px;
+    padding: 0 9px;
+  }
+  .phone-field-controls input {
+    padding: 9px 10px;
+  }
+}

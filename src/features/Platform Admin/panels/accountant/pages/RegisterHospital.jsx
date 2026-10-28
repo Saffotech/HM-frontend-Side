@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { interpretPlatformError, shouldEndPlatformSession } from "../../../shared/api/platformErrors";
 import { isNumericLeadId, LEAD_FIELD_MAP, mapRegistration } from "../../../shared/api/hospitalRegistration";
@@ -7,11 +7,18 @@ import { getRegistration, registerFromLead } from "../../../shared/api/registrat
 import Button from "../../../shared/components/Button";
 import ConfirmDialog from "../../../shared/components/ConfirmDialog";
 import Input from "../../../shared/components/Input";
+import PhoneInput from "../../../shared/components/PhoneInput";
 import PasswordField from "../../../shared/components/PasswordField";
 import Select from "../../../shared/components/Select";
-import { PLAN_NAMES, billingCycles, tenantStatuses, trialPeriods } from "../../../shared/data/catalog";
+import { activePlanNames, catalogPrice, cyclesForPlan } from "../../../shared/api/platformPlans";
+import { PLAN_NAMES, tenantStatuses, trialPeriods } from "../../../shared/data/catalog";
+import { usePlatformPlans } from "../../../shared/hooks/usePlatformPlans";
+import { formatCurrency } from "../../../shared/utils/formatCurrency";
+import { DEFAULT_PHONE_CODE, parsePhoneNumber } from "../../../shared/utils/phoneNumbers";
 import { usePlatform } from "../../../shared/context/PlatformContext";
 import { useToast } from "../../../shared/hooks/useToast";
+import { accountantBackTitle, isAccountantLocation } from "../../../shared/navigation/inAppHistory";
+import { useInAppBack, useInAppPrevious } from "../../../shared/navigation/InAppHistoryTracker";
 import { UNIVERSAL_LOGIN, accountsPath } from "../../../shared/paths";
 import { canSubmitRegistration } from "../../../shared/utils/registrationGate";
 import { PASSWORD_HINT, isPostalCode, isTenantCode, passwordIssue, required } from "../../../shared/utils/validation";
@@ -39,17 +46,20 @@ const blank = {
 };
 
 function valuesFromRequest(request) {
+  const contact = parsePhoneNumber(request.contactPhone || "");
   return {
     ...blank,
     name: request.hospitalName,
     type: request.type || blank.type,
     email: request.hospitalEmail || "",
-    phone: request.contactPhone || "",
+    phone: contact.phone,
+    phoneCode: contact.phoneCode || DEFAULT_PHONE_CODE,
     city: request.city || "",
     state: request.state || "",
     adminName: request.contactPerson || "",
     adminEmail: request.contactEmail || "",
-    adminPhone: request.contactPhone || "",
+    adminPhone: contact.phone,
+    adminPhoneCode: contact.phoneCode || DEFAULT_PHONE_CODE,
     plan: request.plan || blank.plan,
     billingCycle: request.billingCycle || blank.billingCycle,
   };
@@ -74,12 +84,17 @@ function SectionHead({ number, title }) {
 }
 
 function Missing({ message, detail }) {
+  const previous = useInAppPrevious(isAccountantLocation);
+  const goBack = useInAppBack(accountsPath("/registrations"), isAccountantLocation);
+  const label = previous
+    ? `Back to ${accountantBackTitle(previous.pathname) || "the previous page"}`
+    : "Back to Hospital Registrations";
   return (
     <section className="register-page">
       <div className="reg-panel reg-missing">
         <strong>{message}</strong>
         <span>{detail}</span>
-        <Link to={accountsPath("/registrations")}>Back to Hospital Registrations</Link>
+        <button type="button" onClick={goBack}>{label}</button>
       </div>
     </section>
   );
@@ -141,6 +156,7 @@ export default function RegisterHospital() {
 
 function RegisterForm({ request }) {
   const navigate = useNavigate();
+  const goBack = useInAppBack(accountsPath("/registrations"), isAccountantLocation);
   const { signOutPortal } = usePlatform();
   const { push } = useToast();
   const initialValues = valuesFromRequest(request);
@@ -152,7 +168,28 @@ function RegisterForm({ request }) {
   const signedIn = hasPlatformAccessToken();
   const canSubmit = canSubmitRegistration({ signedIn, busy: submitting || confirming });
   const isTrial = values.tenantStatus === "Trial" || values.trialPeriod !== "None";
-  const backToList = () => navigate(accountsPath("/registrations"));
+  const { plans, loading: plansLoading, error: plansError } = usePlatformPlans();
+  const planNames = useMemo(() => {
+    const remote = activePlanNames(plans);
+    return remote.length ? remote : PLAN_NAMES;
+  }, [plans]);
+  const selectedPlan = plans.find((plan) => plan.name === values.plan);
+  const cycleOptions = cyclesForPlan(selectedPlan);
+  const listedPrice = catalogPrice(selectedPlan, values.billingCycle);
+
+  useEffect(() => {
+    if (plansLoading || plansError) return;
+    if (planNames.includes(values.plan)) return;
+    setValues((current) => ({
+      ...current,
+      plan: planNames.includes("Professional") ? "Professional" : planNames[0],
+    }));
+  }, [planNames, plansError, plansLoading, values.plan]);
+
+  useEffect(() => {
+    if (cycleOptions.includes(values.billingCycle)) return;
+    setValues((current) => ({ ...current, billingCycle: cycleOptions[0] }));
+  }, [cycleOptions, values.billingCycle]);
 
   const setField = (key, value) => {
     setValues((current) => ({ ...current, [key]: value }));
@@ -236,7 +273,7 @@ function RegisterForm({ request }) {
                 <option>{values.type}</option>
               </Select>
               <Input label={<Label text="Email Address" />} type="email" value={values.email} error={errors.email} readOnly />
-              <Input label={<Label text="Contact Number" />} value={values.phone} readOnly />
+              <PhoneInput label="Contact Number" value={values.phone} countryCode={values.phoneCode} disabled readOnly />
               <Input className="span-3" label={<Label text="Address" />} value={values.address} error={errors.address} onChange={(event) => setField("address", event.target.value)} />
               <Input label={<Label text="City" />} value={values.city} readOnly />
               <Input label={<Label text="State" />} value={values.state} readOnly />
@@ -249,7 +286,7 @@ function RegisterForm({ request }) {
             <div className="reg-grid">
               <Input label={<Label text="Full Name" />} value={values.adminName} readOnly />
               <Input label={<Label text="Email" />} type="email" value={values.adminEmail} error={errors.adminEmail} readOnly />
-              <Input label={<Label text="Contact Number" />} value={values.adminPhone} readOnly />
+              <PhoneInput label="Contact Number" value={values.adminPhone} countryCode={values.adminPhoneCode} disabled readOnly />
               <PasswordField label={<Label text="Password" />} value={values.adminPassword} error={errors.adminPassword} hint={PASSWORD_HINT} autoComplete="new-password" onChange={(event) => setField("adminPassword", event.target.value)} />
               <PasswordField label={<Label text="Confirm Password" />} value={values.adminPasswordConfirm} error={errors.adminPasswordConfirm} autoComplete="new-password" onChange={(event) => setField("adminPasswordConfirm", event.target.value)} />
             </div>
@@ -259,10 +296,10 @@ function RegisterForm({ request }) {
             <SectionHead number="3" title="Subscription configuration" />
             <div className="reg-grid reg-grid-4">
               <Select label={<Label text="Subscription Plan" />} value={values.plan} error={errors.plan} onChange={(event) => setField("plan", event.target.value)}>
-                {PLAN_NAMES.map((plan) => <option key={plan}>{plan}</option>)}
+                {planNames.map((plan) => <option key={plan}>{plan}</option>)}
               </Select>
               <Select label={<Label text="Billing Cycle" />} value={values.billingCycle} onChange={(event) => setField("billingCycle", event.target.value)}>
-                {billingCycles.map((cycle) => <option key={cycle}>{cycle}</option>)}
+                {cycleOptions.map((cycle) => <option key={cycle}>{cycle}</option>)}
               </Select>
               <Select label={<Label text="Trial Period" />} value={values.trialPeriod} onChange={(event) => setField("trialPeriod", event.target.value)}>
                 {trialPeriods.map((period) => <option key={period}>{period}</option>)}
@@ -276,7 +313,7 @@ function RegisterForm({ request }) {
           <footer className="reg-footer">
             <span className="reg-footnote"><span className="req">*</span> Required field</span>
             <div className="reg-footer-actions">
-              <Button variant="secondary" onClick={backToList}>Cancel</Button>
+              <Button variant="secondary" onClick={goBack}>Cancel</Button>
               <Button variant="secondary" onClick={() => { setValues(initialValues); setErrors({}); }}>Reset</Button>
               <Button type="submit" disabled={!canSubmit}>{submitting ? "Registering…" : "Register Hospital"}</Button>
             </div>
@@ -300,8 +337,15 @@ function RegisterForm({ request }) {
               <span>{values.billingCycle}</span>
             </div>
             <span className="reg-plan-sub">
-              {isTrial ? `Trial: ${values.trialPeriod === "None" ? "14 days" : values.trialPeriod}` : values.billingCycle}
-              . The server does not publish plan prices.
+              {isTrial
+                ? `Trial: ${values.trialPeriod === "None" ? "14 days" : values.trialPeriod}. Subscription pricing does not apply during a trial.`
+                : plansLoading
+                  ? "Loading subscription price…"
+                  : plansError
+                    ? `Subscription price unavailable. ${plansError}`
+                    : listedPrice == null
+                      ? `Price unavailable for ${values.billingCycle} billing.`
+                      : `${formatCurrency(listedPrice)}/${values.billingCycle === "Annual" ? "year" : "month"}`}
             </span>
           </div>
         </aside>

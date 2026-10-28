@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import {
   displayHospitalName,
+  invoiceListCountLabel,
+  invoiceListErrorMessage,
   mapPlatformInvoice,
   matchesInvoiceFilters,
   paymentRequestBody,
@@ -105,6 +107,79 @@ describe("platform invoice mapping", () => {
     assert.equal(partial.complete, false);
     assert.equal(partial.unorderedCount, 2);
     assert.deepEqual(partial.rows.map((row) => row.id), [1]);
+  });
+
+  it("counts every invoice from the list and keeps a 403 out of the empty state", () => {
+    const rows = [
+      { ...invoice, id: 1, status: "Paid", number: "A" },
+      { ...invoice, id: 2, status: "Pending", number: "B" },
+      { ...invoice, id: 3, status: "Overdue", number: "C" },
+      { ...invoice, id: 4, status: "Failed", number: "D" },
+    ];
+    const pick = (status) => rows.filter((row) => matchesInvoiceFilters(row, { status })).map((row) => row.number);
+    assert.deepEqual(pick(""), ["A", "B", "C", "D"]);
+    assert.deepEqual(pick("collected"), ["A"]);
+    assert.deepEqual(pick("pending"), ["B"]);
+    assert.deepEqual(pick("overdue"), ["C"]);
+    assert.deepEqual(pick("outstanding"), ["B", "C"]);
+    assert.deepEqual(pick("failed"), ["D"]);
+    assert.equal(invoiceListCountLabel({
+      loading: false,
+      error: "",
+      total: rows.length,
+      filtered: pick("collected").length,
+      filterLabel: "",
+    }), "4 invoices");
+    assert.equal(invoiceListCountLabel({
+      loading: false,
+      error: "",
+      total: rows.length,
+      filtered: pick("collected").length,
+      filterLabel: "Collected",
+    }), "1 collected invoices");
+    assert.equal(invoiceListCountLabel({
+      loading: false,
+      error: "Permission denied: invoices:manage required",
+      total: 0,
+      filtered: 0,
+    }), "Invoices unavailable");
+    assert.equal(invoiceListCountLabel({ loading: true, error: "", total: 0, filtered: 0 }), "Loading invoices");
+    assert.equal(
+      invoiceListErrorMessage("Permission denied: invoices:manage required", 403),
+      "403 Forbidden. Permission denied: invoices:manage required",
+    );
+    assert.equal(
+      invoiceListErrorMessage("Request failed", 403),
+      "403 Forbidden. This account is not authorized to view invoices.",
+    );
+    assert.equal(invoiceListErrorMessage("Could not reach the server.", 0), "Could not reach the server.");
+
+    const listed = readInvoiceList([
+      {
+        id: 9,
+        number: "INV-9",
+        tenant_id: 4,
+        hospital_name: "City Care",
+        hospital_code: "CITY",
+        plan: "Professional",
+        billing_cycle: "Monthly",
+        amount: 8999,
+        invoice_date: "2026-10-01",
+        due_date: "2026-10-15",
+        status: "Pending",
+      },
+    ]);
+    assert.equal(listed.ok, true);
+    assert.equal(listed.rows.length, 1);
+    assert.equal(listed.rows[0].number, "INV-9");
+    assert.equal(readInvoiceList({ items: [], total: 0 }).ok, false);
+
+    const billing = readFileSync(new URL("../../panels/superAdmin/pages/billing/InvoicesPayments.jsx", import.meta.url), "utf8");
+    assert.match(billing, /usePlatformRevenue/);
+    assert.match(billing, /usePlatformInvoices/);
+    assert.match(billing, /invoiceListErrorMessage/);
+    assert.match(billing, /No invoices yet/);
+    assert.doesNotMatch(billing, /revenue\?\.invoices|revenue\.invoices|invoicesForBucket/);
   });
 
   it("rejects a non-list invoice payload and leaves a blank hospital name unset", () => {

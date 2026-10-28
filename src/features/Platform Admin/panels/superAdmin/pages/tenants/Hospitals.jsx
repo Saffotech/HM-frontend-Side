@@ -110,7 +110,7 @@ export default function Hospitals() {
 
   const counts = useMemo(() => ({
     all: hospitals.length,
-    active: hospitals.filter((hospital) => activationKey(hospital) === "active").length,
+    active: hospitals.filter((hospital) => subscriptionKey(hospital) === "active").length,
     trial: hospitals.filter((hospital) => subscriptionKey(hospital) === "trial").length,
     suspended: hospitals.filter((hospital) => activationKey(hospital) === "suspended").length,
   }), [hospitals]);
@@ -127,10 +127,10 @@ export default function Hospitals() {
   const currentPage = Math.min(page, totalPages);
   const pageRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
   const filtersActive = Object.values(filters).some(Boolean);
-  const summaryKey = filters.status === "trial" && !filters.activation
+  const summaryKey = filters.status === "active" && !filters.activation
+    ? "active"
+    : filters.status === "trial" && !filters.activation
     ? "trial"
-    : filters.activation === "active" && !filters.status
-      ? "active"
       : filters.activation === "suspended" && !filters.status
         ? "suspended"
         : !filters.status && !filters.activation
@@ -148,6 +148,10 @@ export default function Hospitals() {
     }
     if (key === "trial") {
       setFilters((current) => ({ ...current, status: "trial", activation: "" }));
+      return;
+    }
+    if (key === "active") {
+      setFilters((current) => ({ ...current, status: "active", activation: "" }));
       return;
     }
     setFilters((current) => ({ ...current, status: "", activation: key }));
@@ -169,7 +173,6 @@ export default function Hospitals() {
     <section className="hospitals-page">
       <header className="hospitals-head">
         <div>
-          <h1 className="platform-sr-only">Hospitals</h1>
          
         </div>
         <div className="hospitals-head-actions">
@@ -183,7 +186,7 @@ export default function Hospitals() {
       <div className="hospitals-summary" role="group" aria-label="Filter hospitals by status">
         {[
           ["all", "All hospitals", counts.all, ""],
-          ["active", "Active", counts.active, "tone-active"],
+          ["active", "Subscription Active", counts.active, "tone-active"],
           ["trial", "Trial", counts.trial, "tone-trial"],
           ["suspended", "Suspended", counts.suspended, "tone-suspended"],
         ].map(([key, label, value, tone]) => (
@@ -220,11 +223,6 @@ export default function Hospitals() {
           <Select label="Type" value={filters.type} onChange={(event) => setFilter("type", event.target.value)}>
             <option value="">All types</option>
             {types.map((type) => <option key={type} value={type}>{type}</option>)}
-          </Select>
-          <Select label="Activation" value={filters.activation} onChange={(event) => setFilter("activation", event.target.value)}>
-            <option value="">All</option>
-            <option value="active">Active</option>
-            <option value="suspended">Suspended</option>
           </Select>
         </div>
 

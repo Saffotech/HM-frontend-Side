@@ -65,6 +65,7 @@ export default function PlatformStaff() {
   const [retryable, setRetryable] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [rows, setRows] = useState([]);
+  const [statusOverrides, setStatusOverrides] = useState({});
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState("");
   const [query, setQuery] = useState("");
@@ -162,6 +163,18 @@ export default function PlatformStaff() {
     register(values);
   };
 
+  const staffRows = rows.map((row) =>
+    Object.hasOwn(statusOverrides, row.email)
+      ? { ...row, isActive: statusOverrides[row.email] }
+      : row,
+  );
+  const toggleStaffStatus = (row) => {
+    setStatusOverrides((current) => ({
+      ...current,
+      [row.email]: !row.isActive,
+    }));
+  };
+
   const columns = [
     {
       key: "name",
@@ -178,7 +191,6 @@ export default function PlatformStaff() {
           </span>
           <span>
             <strong>{displayName(row)}</strong>
-            <small>Platform account</small>
           </span>
         </span>
       ),
@@ -207,15 +219,29 @@ export default function PlatformStaff() {
         </span>
       ),
     },
+    {
+      key: "actions",
+      label: "Actions",
+      render: (row) => (
+        <button
+          type="button"
+          className={`platform-staff-toggle ${row.isActive ? "is-deactivate" : "is-activate"}`}
+          onClick={() => toggleStaffStatus(row)}
+          aria-label={`${row.isActive ? "Deactivate" : "Activate"} ${displayName(row)}`}
+        >
+          {row.isActive ? "Deactivate" : "Activate"}
+        </button>
+      ),
+    },
   ];
-  const activeCount = rows.filter((row) => row.isActive).length;
-  const crmCount = rows.filter(
+  const activeCount = staffRows.filter((row) => row.isActive).length;
+  const crmCount = staffRows.filter(
     (row) => String(row.role).toLowerCase() === "crm",
   ).length;
-  const accountantCount = rows.filter(
+  const accountantCount = staffRows.filter(
     (row) => String(row.role).toLowerCase() === "accountant",
   ).length;
-  const filteredRows = rows.filter((row) => {
+  const filteredRows = staffRows.filter((row) => {
     const role = String(row.role).toLowerCase();
     const matchesFilter =
       staffFilter === "all" ||
@@ -239,7 +265,7 @@ export default function PlatformStaff() {
           <span className="summary-icon summary-icon--total">✦</span>
           <div>
             <small>Total staff</small>
-            <strong>{loading ? "—" : rows.length}</strong>
+            <strong>{loading ? "—" : staffRows.length}</strong>
           </div>
         </button>
         <button className={`platform-staff-filter-card${staffFilter === "active" ? " is-selected" : ""}`} onClick={() => setStaffFilter("active")} aria-pressed={staffFilter === "active"}>
@@ -308,10 +334,6 @@ export default function PlatformStaff() {
                 : "Use Register Staff to create a CRM or Accountant account. Hospital staff are not registered here."
           }
         />
-        <p className="platform-staff-footnote">
-          Platform admins and hospital staff are not included. Passwords are
-          never displayed.
-        </p>
       </section>
 
       <Modal

@@ -1,4 +1,5 @@
 /** Request bodies accepted by the current FastAPI registration schemas. */
+import { DEFAULT_PHONE_CODE, serializePhoneNumber } from "../utils/phoneNumbers.js";
 
 export const TENANT_FIELD_MAP = {
   name: "name",
@@ -43,14 +44,14 @@ export function tenantRegisterBody(values) {
     code: text(values.code),
     hospital_type: values.type,
     email: text(values.email),
-    phone: text(values.phone),
+    phone: serializePhoneNumber(values.phone, values.phoneCode || DEFAULT_PHONE_CODE),
     address: text(values.address),
     city: text(values.city),
     state: text(values.state),
     pincode: text(values.postalCode),
     admin_full_name: text(values.adminName),
     admin_email: text(values.adminEmail),
-    admin_phone: text(values.adminPhone),
+    admin_phone: serializePhoneNumber(values.adminPhone, values.adminPhoneCode || DEFAULT_PHONE_CODE),
     admin_password: values.adminPassword,
     plan: values.plan,
     billing_cycle: values.billingCycle,

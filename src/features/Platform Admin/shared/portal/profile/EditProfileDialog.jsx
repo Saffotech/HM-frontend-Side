@@ -9,10 +9,11 @@ import {
 } from "../../api/platformProfileModel";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
+import PhoneInput from "../../components/PhoneInput";
 import Modal from "../../components/Modal";
 import { confirmDiscard } from "../../hooks/useUnsavedChanges";
 
-const FIELDS = ["jobTitle", "phoneCode", "phone", "address", "city", "state", "postalCode"];
+const FIELDS = ["jobTitle", "phone", "address", "city", "state", "postalCode"];
 
 export default function EditProfileDialog({ profile, onDirtyChange, onClose, onSubmit }) {
   const [draft, setDraft] = useState(() => profileDraft(profile));
@@ -33,7 +34,11 @@ export default function EditProfileDialog({ profile, onDirtyChange, onClose, onS
   };
 
   const set = (key) => (event) => {
-    setDraft((current) => ({ ...current, [key]: event.target.value }));
+    setDraft((current) => ({
+      ...current,
+      [key]: event.target.value,
+      ...(key === "phone" && !current.phoneCode ? { phoneCode: "+91" } : {}),
+    }));
     setErrors((current) => ({ ...current, [key]: "" }));
     setFormError("");
   };
@@ -102,6 +107,8 @@ export default function EditProfileDialog({ profile, onDirtyChange, onClose, onS
               value={draft[key]}
               error={errors[key]}
               disabled={saving}
+              countryCode={draft.phoneCode || "+91"}
+              onCountryCodeChange={set("phoneCode")}
               onChange={set(key)}
             />
           ))}
@@ -111,11 +118,12 @@ export default function EditProfileDialog({ profile, onDirtyChange, onClose, onS
   );
 }
 
-function ProfileField({ name, value, error, disabled, onChange }) {
+function ProfileField({ name, value, error, disabled, onChange, countryCode, onCountryCodeChange }) {
+  if (name === "phone") {
+    return <PhoneInput label="Phone number" value={value} error={error} disabled={disabled} countryCode={countryCode} maxDigits={countryCode === "+91" ? 10 : 20} onCountryCodeChange={onCountryCodeChange} onChange={onChange} />;
+  }
   const fields = {
     jobTitle: { label: "Job title", autoComplete: "organization-title", maxLength: 120 },
-    phoneCode: { label: "Phone code", autoComplete: "tel-country-code", maxLength: 10 },
-    phone: { label: "Phone number", type: "tel", inputMode: "tel", autoComplete: "tel", maxLength: 20 },
     address: { label: "Address", autoComplete: "street-address", className: "pp-span" },
     city: { label: "City", autoComplete: "address-level2", maxLength: 100 },
     state: { label: "State", autoComplete: "address-level1", maxLength: 100 },

@@ -36,6 +36,25 @@ export function readInvoiceList(body) {
   return { ok: true, rows, error: "" };
 }
 
+/** 403 stays a permission error. Other failures keep the message from the client. */
+export function invoiceListErrorMessage(error, status) {
+  if (Number(status) !== 403) return String(error || "");
+  const detail = String(error || "").trim();
+  const specific = detail && detail !== "Request failed" && detail !== "Permission denied";
+  return specific
+    ? `403 Forbidden. ${detail}`
+    : "403 Forbidden. This account is not authorized to view invoices.";
+}
+
+/** Count rows from the invoice list. A failed request is not reported as zero invoices. */
+export function invoiceListCountLabel({ loading, error, total, filtered, filterLabel = "" } = {}) {
+  if (loading) return "Loading invoices";
+  if (error) return "Invoices unavailable";
+  const count = Number(filterLabel ? filtered : total);
+  const shown = Number.isFinite(count) ? count : 0;
+  return filterLabel ? `${shown} ${String(filterLabel).toLowerCase()} invoices` : `${shown} invoices`;
+}
+
 function paidInvoiceAmount(invoice) {
   if (invoice?.paymentAmount != null && invoice.paymentAmount !== "") {
     const payment = Number(invoice.paymentAmount);
@@ -145,6 +164,7 @@ export function matchesInvoiceFilters(invoice, { query = "", status = "", period
   if (status === "collected" && invoice.status !== "Paid") return false;
   if (status === "pending" && invoice.status !== "Pending") return false;
   if (status === "overdue" && invoice.status !== "Overdue") return false;
+  if (status === "outstanding" && invoice.status !== "Pending" && invoice.status !== "Overdue") return false;
   if (status === "failed" && invoice.status !== "Failed") return false;
   if (status === "soon") {
     if (invoice.status === "Paid" || !today || !invoice.dueDate || invoice.dueDate < today) return false;

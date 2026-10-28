@@ -13,6 +13,13 @@ export const CONTACT_OUTCOMES = [
   ["not-interested", "Not interested"],
 ];
 
+export const OUTCOME_TONE = {
+  interested: "crm-tone-interested",
+  callback: "crm-tone-callback",
+  agreed: "crm-tone-agreed",
+  "not-interested": "crm-tone-close",
+};
+
 const followRank = { overdue: 0, today: 1, soon: 2, later: 3, none: 4 };
 export const priorityRank = { High: 0, Medium: 1, Low: 2 };
 

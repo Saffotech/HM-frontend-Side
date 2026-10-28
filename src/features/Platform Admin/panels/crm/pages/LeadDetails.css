@@ -25,43 +25,98 @@
 
 .crm-lead-hero {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 14px 24px;
-  padding: 18px 20px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  min-height: 78px;
+  padding: 16px 18px;
+  background: linear-gradient(90deg, #f3fbf8 0%, #f4f7ff 52%, #fff6f3 100%);
 }
 
-.crm-lead-heading {
-  min-width: 0;
-}
-
-.crm-lead-meta {
+.crm-lead-top {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 6px;
-  margin: 0 0 6px;
+  justify-content: space-between;
+  gap: 12px 16px;
 }
 
 .crm-lead-hero h2 {
   margin: 0;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 700;
   letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 
-.crm-lead-sub {
-  margin: 4px 0 0;
+.crm-lead-metadata {
+  display: inline-grid;
+  align-self: flex-start;
+  grid-template-columns: repeat(2, max-content);
+  column-gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  overflow: hidden;
+  border: 1px solid rgba(210, 222, 232, 0.9);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.crm-lead-metadata-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 16px;
+}
+
+.crm-lead-metadata-item + .crm-lead-metadata-item {
+  border-left: 1px solid #e4ebf1;
+}
+
+.crm-lead-metadata-item > svg {
+  flex: none;
+  color: var(--color-primary-dark);
+}
+
+.crm-lead-metadata-item > span {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.crm-lead-metadata-item strong,
+.crm-lead-metadata-item small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crm-lead-metadata-item strong {
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.crm-lead-metadata-item small {
   color: var(--color-text-secondary);
-  font-size: 13px;
+  font-size: 11px;
 }
 
 .crm-lead-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
+}
+
+.crm-lead-actions .btn {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .crm-lead-readonly {
@@ -76,36 +131,58 @@
 
 .crm-lead-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
-  gap: 16px;
-  align-items: start;
-}
-
-.crm-lead-sections {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(300px, 0.9fr);
+  grid-template-areas:
+    "hospital contact activity"
+    "sales followup activity"
+    "agreement agreement agreement";
+  grid-template-rows: auto auto auto;
   gap: 16px;
   align-items: start;
 }
 
 .crm-lead-section {
+  min-width: 0;
   padding: 16px 18px;
   background: #fff;
   border: 1px solid var(--color-border);
   border-radius: 12px;
+  box-shadow: 0 3px 12px rgba(20, 45, 82, 0.035);
 }
 
 .crm-lead-section h3 {
-  margin: 0 0 12px;
-  color: #31415c;
-  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  color: #243b5e;
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
-.crm-lead-wide {
-  grid-column: 1 / -1;
+.crm-lead-section h3 svg {
+  flex: none;
+  color: var(--color-primary);
+}
+
+.crm-lead-wide { grid-column: 1 / -1; }
+
+.crm-lead-agreement { grid-area: agreement; align-self: start; }
+.crm-lead-hospital { grid-area: hospital; }
+.crm-lead-contact { grid-area: contact; }
+.crm-lead-sales { grid-area: sales; }
+.crm-lead-followup { grid-area: followup; }
+.crm-lead-sales,
+.crm-lead-followup { align-self: stretch; }
+
+.crm-lead-activity {
+  grid-area: activity;
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  position: sticky;
+  top: 80px;
 }
 
 .crm-facts-grid {
@@ -134,11 +211,6 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-}
-
-.crm-lead-activity {
-  position: sticky;
-  top: 80px;
 }
 
 .crm-note-box {
@@ -234,22 +306,56 @@
 
 @media (max-width: 1180px) {
   .crm-lead-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "hospital contact"
+      "sales followup"
+      "activity activity"
+      "agreement agreement";
+    grid-template-rows: auto auto auto auto;
   }
 
   .crm-lead-activity {
     position: static;
+    grid-column: 1 / -1;
+    grid-row: 3;
   }
 }
 
 @media (max-width: 760px) {
-  .crm-lead-sections,
   .crm-facts-grid {
     grid-template-columns: 1fr;
   }
 
-  .crm-lead-hero {
+  .crm-lead-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "hospital"
+      "contact"
+      "sales"
+      "followup"
+      "activity"
+      "agreement";
+    grid-template-rows: auto auto auto auto auto auto;
+  }
+
+  .crm-lead-top,
+  .crm-lead-actions {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .crm-lead-top {
     align-items: flex-start;
+  }
+
+  .crm-lead-metadata {
+    grid-template-columns: max-content;
+  }
+
+  .crm-lead-metadata-item + .crm-lead-metadata-item {
+    border-top: 1px solid #e4ebf1;
+    border-left: 0;
   }
 
   .crm-steps {
@@ -257,3 +363,5 @@
     row-gap: 12px;
   }
 }
+
+

@@ -26,6 +26,7 @@ import { todayInput } from "../../../shared/utils/formatDate";
 import Button from "../../../shared/components/Button";
 import AddLeadForm from "../components/AddLeadForm";
 import { CLAIM_LIMIT, isUnclaimed } from "../utils/crmLeads";
+import { rememberAutoCreatedHospitalEmailActivity } from "../utils/autoCreatedEmailActivity";
 import { AgreeDialog, CloseDialog, ContactDialog, EditLeadDialog, ReopenDialog, ScheduleDialog } from "./CrmDialogs";
 import { WorkspaceContext } from "./workspace-context";
 
@@ -140,7 +141,7 @@ export default function CrmWorkspace({ children }) {
   const actions = {
     openLead,
     claim,
-    logContact: (lead, mode = "log") => setDialog({ type: "contact", id: lead.id, mode }),
+    logContact: (lead, mode = "log", outcome = "") => setDialog({ type: "contact", id: lead.id, mode, outcome }),
     schedule: (lead) => setDialog({ type: "schedule", id: lead.id }),
     agree: (lead) => setDialog({ type: "agree", id: lead.id }),
     close: (lead) => setDialog({ type: "close", id: lead.id }),
@@ -221,7 +222,7 @@ export default function CrmWorkspace({ children }) {
     <WorkspaceContext.Provider value={value}>
       {children}
       {dialogLead && dialog.type === "contact" && (
-        <ContactDialog key={`${dialogLead.id}-contact`} lead={dialogLead} mode={dialog.mode} today={today} onCancel={() => setDialog(null)} onSubmit={saveContact} />
+        <ContactDialog key={`${dialogLead.id}-contact`} lead={dialogLead} mode={dialog.mode} today={today} initialOutcome={dialog.outcome || ""} onCancel={() => setDialog(null)} onSubmit={saveContact} />
       )}
       {dialogLead && dialog.type === "schedule" && (
         <ScheduleDialog
@@ -305,9 +306,11 @@ export default function CrmWorkspace({ children }) {
             try {
               const created = remember(await createLead(input, { shared, allowDuplicate }));
               const hospitalEmail = String(input.hospitalEmail || "").trim();
-              const saved = !shared && hospitalEmail
-                ? remember(await updateLead(created.id, created, { hospitalEmail }))
-                : created;
+              let saved = created;
+              if (!shared && hospitalEmail) {
+                saved = remember(await updateLead(created.id, created, { hospitalEmail }));
+                rememberAutoCreatedHospitalEmailActivity(created.id, created, saved, crmSession?.userId);
+              }
               setAdding(false);
               if (shared) {
                 push(`${saved.hospitalName} added to New enquiries for the team to claim.`, "success");

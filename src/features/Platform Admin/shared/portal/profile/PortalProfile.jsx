@@ -13,6 +13,7 @@ import { formatDate, formatDateTime } from "../../utils/formatDate";
 import AvatarImage from "./AvatarImage";
 import ChangePasswordCard from "./ChangePasswordCard";
 import EditProfileDialog from "./EditProfileDialog";
+import { parseProfilePhone } from "../../utils/phoneNumbers";
 import "./PortalProfile.css";
 
 const PHOTO_ACCEPT = ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp";
@@ -30,7 +31,9 @@ function rememberPhoto(photoUrl, portal, patchPortalSession) {
 }
 
 function displayPhone(profile) {
-  return [profile?.phoneCode, profile?.phone].map((part) => String(part || "").trim()).filter(Boolean).join(" ");
+  if (!profile?.phone) return "";
+  const parsed = parseProfilePhone(profile.phone, profile.phoneCode || profile.phone_code || "");
+  return `${parsed.phoneCode} ${parsed.phone}`.trim();
 }
 
 function showCreated(value) {
@@ -48,7 +51,6 @@ function statusLabel(isActive) {
 export default function PortalProfile({
   portal,
   panelLabel,
-  title = "Profile",
   loadProfile,
   updateProfile,
   changePassword,
@@ -71,9 +73,11 @@ export default function PortalProfile({
   const [editDirty, setEditDirty] = useState(false);
   const [passwordDirty, setPasswordDirty] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoActionsOpen, setPhotoActionsOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const fileRef = useRef(null);
+  const photoFrameRef = useRef(null);
   const photoLock = useRef(false);
   const loadErrorId = useId();
   useUnsavedChanges(editDirty || passwordDirty);
@@ -109,6 +113,15 @@ export default function PortalProfile({
       cancelled = true;
     };
   }, [applyBody, loadProfile, portal, reloadKey, signOutPortal]);
+
+  useEffect(() => {
+    if (!photoActionsOpen) return undefined;
+    const closeMenu = (event) => {
+      if (!photoFrameRef.current?.contains(event.target)) setPhotoActionsOpen(false);
+    };
+    document.addEventListener("mousedown", closeMenu);
+    return () => document.removeEventListener("mousedown", closeMenu);
+  }, [photoActionsOpen]);
 
   const identity = {
     name: account?.name || liveProfile?.name || sessionProfile?.name || "",
@@ -209,7 +222,6 @@ export default function PortalProfile({
   if ((loading || sessionLoading) && !account && !loadError) {
     return (
       <div className="pp-page">
-        <h1 className="pp-title">{title}</h1>
         <section className="pp-card pp-state" role="status">
           <Loader2 size={22} className="pp-spin" aria-hidden="true" />
           <strong>Loading your profile</strong>
@@ -224,21 +236,53 @@ export default function PortalProfile({
 
   return (
     <div className="pp-page">
-      <h1 className="pp-title">{title}</h1>
-        <section className="pp-card pp-hero" aria-label="Profile summary" aria-busy={photoBusy}>
-        <div className="pp-avatar-frame">
-          <div className="pp-avatar pp-avatar-xl" aria-hidden={shownPhoto ? undefined : true}>
-            <AvatarImage photo={shownPhoto} name={identity.name} />
-          </div>
+      <section className="pp-card pp-hero" aria-label="Profile summary" aria-busy={photoBusy}>
+        <div className="pp-avatar-frame" ref={photoFrameRef}>
           <button
             type="button"
-            className="pp-avatar-btn"
-            aria-label={shownPhoto ? "Change photo" : "Upload photo"}
+            className="pp-avatar-trigger"
+            aria-label="Profile photo actions"
+            aria-haspopup="menu"
+            aria-expanded={photoActionsOpen}
             disabled={photoBusy}
-            onClick={() => fileRef.current?.click()}
+            onClick={() => setPhotoActionsOpen((open) => !open)}
           >
-            {photoBusy ? <Loader2 size={14} className="pp-spin" aria-hidden="true" /> : <Camera size={14} aria-hidden="true" />}
+            <span className="pp-avatar pp-avatar-xl" aria-hidden="true">
+              <AvatarImage photo={shownPhoto} name={identity.name} />
+            </span>
+            <span className="pp-avatar-btn" aria-hidden="true">
+              {photoBusy ? <Loader2 size={14} className="pp-spin" /> : <Camera size={14} />}
+            </span>
           </button>
+          {photoActionsOpen && (
+            <div className="pp-photo-menu" role="menu" aria-label="Profile photo actions">
+              <button
+                type="button"
+                role="menuitem"
+                disabled={photoBusy}
+                onClick={() => {
+                  setPhotoActionsOpen(false);
+                  fileRef.current?.click();
+                }}
+              >
+                {shownPhoto ? "Change photo" : "Upload photo"}
+              </button>
+              {shownPhoto && (
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="pp-photo-remove"
+                  disabled={photoBusy}
+                  onClick={() => {
+                    setPhotoActionsOpen(false);
+                    setRemoveOpen(true);
+                  }}
+                >
+                  <Trash2 size={14} aria-hidden="true" /> Remove photo
+                </button>
+              )}
+            </div>
+          )}
         </div>
         <div className="pp-hero-text">
           <div className="pp-hero-name">
@@ -250,21 +294,8 @@ export default function PortalProfile({
             {account ? <li><Phone size={14} aria-hidden="true" />{displayPhone(account) || "—"}</li> : null}
           </ul>
           {account?.jobTitle ? <p className="pp-hero-title">{account.jobTitle}</p> : null}
-          <p className="pp-hero-note">JPG, JPEG, PNG, or WEBP. 5 MB or smaller.</p>
         </div>
         <div className="pp-hero-actions">
-          <Button variant="secondary" size="sm" disabled={photoBusy} onClick={() => fileRef.current?.click()}>
-            {photoBusy ? "Working…" : shownPhoto ? "Change photo" : "Upload photo"}
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            className="pp-danger-btn"
-            disabled={photoBusy || !shownPhoto}
-            onClick={() => setRemoveOpen(true)}
-          >
-            <Trash2 size={14} aria-hidden="true" /> Remove photo
-          </Button>
           <Button
             size="sm"
             disabled={!account || editing}

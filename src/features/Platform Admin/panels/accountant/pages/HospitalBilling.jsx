@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import InvoicePrintSheets from "../../../shared/components/InvoicePrintSheets";
 import PlatformInvoiceTable from "../../../shared/components/PlatformInvoiceTable";
@@ -10,6 +10,8 @@ import Select from "../../../shared/components/Select";
 import Button from "../../../shared/components/Button";
 import { displayHospitalName, matchesInvoiceFilters, sumPaidAmounts } from "../../../shared/api/invoiceModel";
 import { usePlatformInvoices } from "../../../shared/hooks/usePlatformInvoices";
+import { accountantBackTitle, isAccountantLocation } from "../../../shared/navigation/inAppHistory";
+import { useInAppBack, useInAppPrevious } from "../../../shared/navigation/InAppHistoryTracker";
 import { accountsPath } from "../../../shared/paths";
 import { todayInput } from "../../../shared/utils/formatDate";
 import { formatCurrency } from "../../../shared/utils/formatCurrency";
@@ -36,6 +38,11 @@ function tagTone(status) {
 
 export default function HospitalBilling() {
   const { id } = useParams();
+  const previous = useInAppPrevious(isAccountantLocation);
+  const goBack = useInAppBack(accountsPath("/invoices"), isAccountantLocation);
+  const backLabel = previous
+    ? (accountantBackTitle(previous.pathname) || "Back")
+    : "Invoices & Payments";
   const today = todayInput();
   const { invoices, loading, error, reload } = usePlatformInvoices({ tenantId: id, enabled: Boolean(id) });
   const [status, setStatus] = useState("");
@@ -90,14 +97,14 @@ export default function HospitalBilling() {
 
   return (
     <section className="inv-page hb-page">
-      <Link to={accountsPath("/invoices")} className="hb-back">
+      <button type="button" className="hb-back" onClick={goBack}>
         <ArrowLeft size={14} aria-hidden="true" />
-        Invoices & Payments
-      </Link>
+        {backLabel}
+      </button>
 
       <section className="hb-hero">
         <div>
-          <h1>{title}</h1>
+          <h2>{title}</h2>
           <p>
             {profile?.hospitalCode ? <span>{profile.hospitalCode}</span> : null}
             {profile?.plan ? <span>{profile.plan}</span> : null}

@@ -56,7 +56,7 @@ export default function PortalLayout({ portal, name, profilePath, items, titles,
       </aside>
       <div className="main-column">
         <header className="header">
-          <strong className="portal-title">{title}</strong>
+          <h1 className="portal-title">{title}</h1>
           <div className="header-right">
             {profilePath ? (
               <Link to={profilePath} className="portal-user-link" aria-label={`Open my profile (${session.name})`}>

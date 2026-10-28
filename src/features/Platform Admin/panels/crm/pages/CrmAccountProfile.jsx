@@ -20,7 +20,6 @@ export default function CrmAccountProfile() {
     <PortalProfile
       portal="crm"
       panelLabel="CRM"
-      title="Profile"
       loadProfile={getCrmProfile}
       updateProfile={updateCrmProfile}
       changePassword={changeCrmPassword}

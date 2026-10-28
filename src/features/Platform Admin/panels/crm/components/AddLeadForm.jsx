@@ -2,9 +2,11 @@ import { useRef, useState } from "react";
 import Button from "../../../shared/components/Button";
 import Input from "../../../shared/components/Input";
 import Modal from "../../../shared/components/Modal";
+import PhoneInput from "../../../shared/components/PhoneInput";
 import Select from "../../../shared/components/Select";
 import { billingCycles, hospitalTypes } from "../../../shared/data/catalog";
-import { isEmail, isPhone, phoneDigits, required } from "../../../shared/utils/validation";
+import { DEFAULT_PHONE_CODE, validPhoneForCode } from "../../../shared/utils/phoneNumbers";
+import { isEmail, required } from "../../../shared/utils/validation";
 import { LEAD_SOURCES, PRIORITIES, findLeadDuplicates } from "../utils/crmLeads";
 import { StatusMark } from "./CrmMarks";
 
@@ -16,6 +18,7 @@ const blankLead = {
   contactPerson: "",
   designation: "",
   phone: "",
+  phoneCode: DEFAULT_PHONE_CODE,
   email: "",
   city: "",
   state: "",
@@ -30,7 +33,9 @@ function leadErrors(form) {
   if (!required(form.hospitalName)) errors.hospitalName = "Enter the hospital name.";
   else if (form.hospitalName.length < 3) errors.hospitalName = "Use at least 3 characters.";
   if (!required(form.contactPerson)) errors.contactPerson = "Enter the contact person.";
-  if (!isPhone(form.phone)) errors.phone = "Enter a 10-digit phone number.";
+  if (!validPhoneForCode(form.phone, form.phoneCode)) errors.phone = form.phoneCode === DEFAULT_PHONE_CODE
+    ? "Enter a 10-digit phone number."
+    : "Enter a valid phone number for the selected country code.";
   if (!required(form.source)) errors.source = "Choose a source.";
   if (form.email && !isEmail(form.email)) errors.email = "Enter a valid email address.";
   if (form.hospitalEmail && !isEmail(form.hospitalEmail)) errors.hospitalEmail = "Enter a valid email address.";
@@ -51,7 +56,7 @@ export default function AddLeadForm({ leads, me, planOptions, onClose, onCreate,
   const [shared, setShared] = useState(false);
   const creatingRef = useRef(false);
   const set = (key) => (event) => {
-    const value = key === "phone" ? phoneDigits(event.target.value) : event.target.value;
+    const value = event.target.value;
     setForm((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: "" }));
     setFormError("");
@@ -186,7 +191,7 @@ export default function AddLeadForm({ leads, me, planOptions, onClose, onCreate,
         <h3 className="crm-span crm-form-title">Contact</h3>
         <Input label="Contact person *" value={form.contactPerson} error={errors.contactPerson} onChange={set("contactPerson")} />
         <Input label="Designation" value={form.designation} onChange={set("designation")} />
-        <Input label="Phone *" inputMode="numeric" maxLength={10} value={form.phone} error={errors.phone} onChange={set("phone")} placeholder="10-digit number" />
+        <PhoneInput label="Phone" required value={form.phone} countryCode={form.phoneCode} error={errors.phone} onChange={set("phone")} onCountryCodeChange={set("phoneCode")} />
         <Input label="Email" type="email" value={form.email} error={errors.email} onChange={set("email")} />
         <h3 className="crm-span crm-form-title">Interest</h3>
         <Select label="Priority" value={form.priority} onChange={set("priority")}>

@@ -1,4 +1,5 @@
 import { PLAN_NAMES, billingCycles } from "../data/catalog.js";
+import { DEFAULT_PHONE_CODE, normalizePhoneCode, parsePhoneNumber, phoneDigits, serializePhoneNumber, validPhoneForCode } from "../utils/phoneNumbers.js";
 
 const AMOUNT_MAX = 10000000;
 
@@ -12,7 +13,7 @@ export function tenantEditDraft(tenant) {
   return {
     name: tenant?.name || "",
     address: tenant?.address || "",
-    phone: tenant?.phone || "",
+    ...parsePhoneNumber(tenant?.phone || ""),
     plan: tenant?.plan || "",
     billingCycle: tenant?.billing_cycle || "",
     renewsOn: String(tenant?.subscription_renews_on || "").slice(0, 10),
@@ -26,7 +27,11 @@ export function tenantUpdateBody(tenant, draft) {
   const body = {};
   if (text(draft?.name) !== text(current.name)) body.name = text(draft?.name);
   if (text(draft?.address) !== text(current.address)) body.address = text(draft?.address);
-  if (text(draft?.phone) !== text(current.phone)) body.phone = text(draft?.phone);
+  const phoneCode = draft?.phoneCode || DEFAULT_PHONE_CODE;
+  const savedPhone = parsePhoneNumber(tenant?.phone || "");
+  if (phoneDigits(draft?.phone) !== savedPhone.phone || normalizePhoneCode(phoneCode) !== normalizePhoneCode(savedPhone.phoneCode)) {
+    body.phone = serializePhoneNumber(draft?.phone, phoneCode);
+  }
   if (draft?.plan !== current.plan) body.plan = draft?.plan;
   if (draft?.billingCycle !== current.billingCycle) body.billing_cycle = draft?.billingCycle;
   if (text(draft?.renewsOn) !== current.renewsOn) body.subscription_renews_on = text(draft?.renewsOn);
@@ -62,7 +67,9 @@ export function validateTenantUpdate(body, now = new Date()) {
   const errors = {};
   if ("name" in body && !text(body.name)) errors.name = "Hospital name is required.";
   if ("address" in body && !text(body.address)) errors.address = "Address is required.";
-  if ("phone" in body && !text(body.phone)) errors.phone = "Phone is required.";
+  if ("phone" in body && !validPhoneForCode(parsePhoneNumber(body.phone).phone, parsePhoneNumber(body.phone).phoneCode)) {
+    errors.phone = "Enter a valid phone number for the selected country code.";
+  }
   if ("plan" in body && !PLAN_NAMES.includes(body.plan)) errors.plan = "Choose Starter, Professional, or Enterprise.";
   if ("billing_cycle" in body && !billingCycles.includes(body.billing_cycle)) {
     errors.billing_cycle = "Choose Monthly or Annual.";

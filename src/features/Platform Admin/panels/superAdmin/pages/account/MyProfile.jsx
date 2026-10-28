@@ -14,7 +14,6 @@ export default function MyProfile() {
     <PortalProfile
       portal="platform"
       panelLabel="Platform"
-      title="My Profile"
       loadProfile={getPlatformAdminProfile}
       updateProfile={updatePlatformAdminProfile}
       changePassword={changePlatformAdminPassword}

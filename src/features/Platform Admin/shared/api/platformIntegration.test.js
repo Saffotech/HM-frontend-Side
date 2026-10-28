@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
 import { mapCrmProfile, mapCrmRevenue } from "./crmAccountModel.js";
-import { invoicesForBucket, mapCrmAnalytics, mapPlatformPlans, mapPlatformRevenue, revenueSnapshot } from "./platformCatalogModel.js";
+import { catalogPrice, createPlanBody, invoicesForBucket, mapCrmAnalytics, mapPlatformPlans, mapPlatformRevenue, revenueSnapshot, updatePlanBody } from "./platformCatalogModel.js";
 import { executePlatformRequest } from "./platformHttp.js";
 import {
   platformPasswordBody,
@@ -57,6 +57,7 @@ describe("hospital edit payload", () => {
     assert.deepEqual(planChange, { plan: "Enterprise", billing_cycle: "Annual" });
     assert.equal("subscription_amount" in planChange, false);
     assert.equal("admin_email" in planChange, false);
+    assert.deepEqual(tenantUpdateBody(hospital, { ...draft, phone: "4155550132", phoneCode: "+1" }), { phone: "+1 4155550132" });
     const priced = tenantUpdateBody(hospital, { ...draft, plan: "Enterprise", amount: "8000" });
     assert.deepEqual(priced, { plan: "Enterprise", subscription_amount: 8000 });
   });
@@ -78,12 +79,52 @@ describe("plan, revenue, and CRM catalog responses", () => {
   it("maps plan rows and leaves annual price as the server value", () => {
     const mapped = mapPlatformPlans([
       { name: "Starter", monthly_price: 1000, annual_price: 10000, billing_cycles: ["Monthly", "Annual"], is_active: true },
-      { name: "Legacy", monthly_price: 1, annual_price: 10, billing_cycles: ["Weekly"], is_active: false },
+      { id: 15, name: "Legacy", monthly_price: 1, annual_price: 10, annual_months_charged: 10, billing_cycles: ["Weekly"], is_active: false },
     ]);
     assert.equal(mapped.ok, true);
     assert.equal(mapped.plans[0].annualPrice, 10000);
+    assert.equal(catalogPrice(mapped.plans[0], "Monthly"), 1000);
+    assert.equal(catalogPrice(mapped.plans[0], "Annual"), 10000);
     assert.deepEqual(mapped.plans[1].billingCycles, []);
+    assert.equal(mapped.plans[1].id, 15);
+    assert.equal(mapped.plans[1].annualMonthsCharged, 10);
     assert.equal(mapped.plans[1].isActive, false);
+  });
+
+  it("builds the supported plan create and changed-field update payloads", () => {
+    assert.deepEqual(createPlanBody({ name: "  Growth  ", monthlyPrice: "2500", annualMonthsCharged: "" }), {
+      name: "Growth",
+      monthly_price: 2500,
+    });
+    assert.deepEqual(createPlanBody({ name: "Growth", monthlyPrice: "2500", annualMonthsCharged: "12" }), {
+      name: "Growth",
+      monthly_price: 2500,
+      annual_months_charged: 12,
+    });
+    const current = { name: "Growth", monthlyPrice: 2500, annualMonthsCharged: 10 };
+    assert.deepEqual(updatePlanBody(current, { name: "Growth", monthlyPrice: "3000", annualMonthsCharged: "10" }), {
+      monthly_price: 3000,
+    });
+    assert.deepEqual(updatePlanBody(current, { name: " Growth Plus ", monthlyPrice: "2500", annualMonthsCharged: "12" }), {
+      name: "Growth Plus",
+      annual_months_charged: 12,
+    });
+  });
+
+  it("wires plan management to the platform API methods and routes", () => {
+    const api = readSrc("./platformPlans.js");
+    assert.match(api, /platformApi\("\/platform\/plans"\)/);
+    assert.match(api, /platformApi\("\/platform\/plans", \{\s*method: "POST"/);
+    assert.match(api, /platformApi\(`\/platform\/plans\/\$\{encodeURIComponent\(planId\)\}`, \{\s*method: "PATCH"/);
+    assert.match(api, /\/deactivate`, \{\s*method: "POST"/);
+    assert.match(api, /\/activate`, \{\s*method: "POST"/);
+    assert.match(api, /JSON\.stringify\(createPlanBody\(values\)\)/);
+    assert.match(api, /JSON\.stringify\(updatePlanBody\(current, values\)\)/);
+  });
+
+  it("does not turn missing catalog prices into zero", () => {
+    assert.equal(catalogPrice({ monthlyPrice: null, annualPrice: undefined }, "Monthly"), null);
+    assert.equal(catalogPrice({ monthlyPrice: "", annualPrice: "not-a-price" }, "Annual"), null);
   });
 
   it("counts failed invoices without adding them into the money buckets", () => {
@@ -159,6 +200,7 @@ describe("platform admin profile payload", () => {
     assert.match(platformPasswordIssue("Secret123", "Newpass1", "Newpass2").confirm_password, /match/);
     assert.match(profileFieldErrors({ jobTitle: "x".repeat(121) }).jobTitle, /120/);
     assert.deepEqual(profileFieldErrors({ phone: "9876543210", jobTitle: "Director" }), {});
+    assert.deepEqual(profileFieldErrors({ phoneCode: "+1", phone: "12345" }), {});
     assert.equal(platformPhotoIssue({ name: "face.gif", type: "image/gif", size: 100 }).includes("JPG"), true);
     assert.equal(platformPhotoIssue({ name: "face.png", type: "image/png", size: 5 * 1024 * 1024 + 1 }).includes("5 MB"), true);
     assert.equal(platformPhotoIssue({ name: "face.jpg", type: "image/jpeg", size: 1024 }), "");

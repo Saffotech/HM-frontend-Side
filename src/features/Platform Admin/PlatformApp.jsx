@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 import { PlatformProvider } from "./shared/context/PlatformContext";
+import { InAppHistoryTracker } from "./shared/navigation/InAppHistoryTracker";
 import ToastProvider from "./shared/components/ToastProvider";
 import "./shared/styles/global.css";
 
@@ -18,13 +19,15 @@ export default function PlatformApp() {
     <div className="platform-root">
       <PlatformProvider>
         <ToastProvider>
-          <Suspense fallback={<p className="panel-copy" role="status">Loading…</p>}>
-            <Routes>
-              <Route path="crm/*" element={<CrmRoutes />} />
-              <Route path="accounts/*" element={<AccountantRoutes />} />
-              <Route path="*" element={<SuperAdminRoutes />} />
-            </Routes>
-          </Suspense>
+          <InAppHistoryTracker>
+            <Suspense fallback={<p className="panel-copy" role="status">Loading…</p>}>
+              <Routes>
+                <Route path="crm/*" element={<CrmRoutes />} />
+                <Route path="accounts/*" element={<AccountantRoutes />} />
+                <Route path="*" element={<SuperAdminRoutes />} />
+              </Routes>
+            </Suspense>
+          </InAppHistoryTracker>
         </ToastProvider>
       </PlatformProvider>
     </div>

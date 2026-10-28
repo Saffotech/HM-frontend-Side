@@ -6,6 +6,7 @@ import { hasPlatformAccessToken, platformAuth } from "../../../../shared/api/pla
 import { registerTenant } from "../../../../shared/api/registrationApi";
 import Button from "../../../../shared/components/Button";
 import Input from "../../../../shared/components/Input";
+import PhoneInput from "../../../../shared/components/PhoneInput";
 import PasswordField from "../../../../shared/components/PasswordField";
 import Select from "../../../../shared/components/Select";
 import { activePlanNames, catalogPrice, cyclesForPlan } from "../../../../shared/api/platformPlans";
@@ -14,9 +15,12 @@ import { usePlatformPlans } from "../../../../shared/hooks/usePlatformPlans";
 import { formatCurrency } from "../../../../shared/utils/formatCurrency";
 import { usePlatform } from "../../../../shared/context/PlatformContext";
 import { useToast } from "../../../../shared/hooks/useToast";
+import { isPlatformAdminLocation } from "../../../../shared/navigation/inAppHistory";
+import { useInAppBack } from "../../../../shared/navigation/InAppHistoryTracker";
 import { PLATFORM_BASE, UNIVERSAL_LOGIN, platformPath } from "../../../../shared/paths";
 import { canSubmitRegistration } from "../../../../shared/utils/registrationGate";
-import { PASSWORD_HINT, isEmail, isPhone, isPostalCode, isTenantCode, passwordIssue, phoneDigits, required } from "../../../../shared/utils/validation";
+import { DEFAULT_PHONE_CODE, validPhoneForCode } from "../../../../shared/utils/phoneNumbers";
+import { PASSWORD_HINT, isEmail, isPostalCode, isTenantCode, passwordIssue, required } from "../../../../shared/utils/validation";
 import "./RegisterHospital.css";
 
 const blank = {
@@ -25,6 +29,7 @@ const blank = {
   type: "General",
   email: "",
   phone: "",
+  phoneCode: DEFAULT_PHONE_CODE,
   address: "",
   city: "",
   state: "",
@@ -32,6 +37,7 @@ const blank = {
   adminName: "",
   adminEmail: "",
   adminPhone: "",
+  adminPhoneCode: DEFAULT_PHONE_CODE,
   adminPassword: "",
   adminPasswordConfirm: "",
   plan: "Professional",
@@ -60,6 +66,7 @@ function SectionHead({ number, title }) {
 
 export default function RegisterHospital() {
   const navigate = useNavigate();
+  const cancel = useInAppBack(platformPath("/hospitals"), isPlatformAdminLocation);
   const { signOutPortal } = usePlatform();
   const { push } = useToast();
   const initialValues = blank;
@@ -103,14 +110,14 @@ export default function RegisterHospital() {
     if (!isTenantCode(values.code)) next.code = "Use 3–12 letters, numbers, or hyphens.";
     if (!required(values.type)) next.type = "Hospital type is required.";
     if (!isEmail(values.email)) next.email = "Enter a valid email address.";
-    if (!isPhone(values.phone)) next.phone = "Enter a 10-digit phone number.";
+    if (!validPhoneForCode(values.phone, values.phoneCode)) next.phone = values.phoneCode === DEFAULT_PHONE_CODE ? "Enter a 10-digit phone number." : "Enter a valid phone number for the selected country code.";
     if (!required(values.address)) next.address = "Address is required.";
     if (!required(values.city)) next.city = "City is required.";
     if (!required(values.state)) next.state = "State is required.";
     if (!isPostalCode(values.postalCode)) next.postalCode = "Enter a valid postal code.";
     if (!required(values.adminName)) next.adminName = "Administrator name is required.";
     if (!isEmail(values.adminEmail)) next.adminEmail = "Enter a valid administrator email.";
-    if (!isPhone(values.adminPhone)) next.adminPhone = "Enter a 10-digit phone number.";
+    if (!validPhoneForCode(values.adminPhone, values.adminPhoneCode)) next.adminPhone = values.adminPhoneCode === DEFAULT_PHONE_CODE ? "Enter a 10-digit phone number." : "Enter a valid phone number for the selected country code.";
     const passwordError = passwordIssue(values.adminPassword);
     if (passwordError) next.adminPassword = passwordError;
     if (!values.adminPasswordConfirm) next.adminPasswordConfirm = "Re-enter the password.";
@@ -181,7 +188,7 @@ export default function RegisterHospital() {
                 {hospitalTypes.map((type) => <option key={type}>{type}</option>)}
               </Select>
               <Input label={<Label text="Email Address" />} type="email" value={values.email} error={errors.email} onChange={(event) => setField("email", event.target.value)} />
-              <Input label={<Label text="Contact Number" />} inputMode="numeric" maxLength={10} value={values.phone} error={errors.phone} placeholder="10-digit number" onChange={(event) => setField("phone", phoneDigits(event.target.value))} />
+              <PhoneInput label="Contact Number" required value={values.phone} countryCode={values.phoneCode} error={errors.phone} onChange={(event) => setField("phone", event.target.value)} onCountryCodeChange={(event) => setField("phoneCode", event.target.value)} />
               <Input className="span-3" label={<Label text="Address" />} value={values.address} error={errors.address} onChange={(event) => setField("address", event.target.value)} />
               <Input label={<Label text="City" />} value={values.city} error={errors.city} onChange={(event) => setField("city", event.target.value)} />
               <Input label={<Label text="State" />} value={values.state} error={errors.state} onChange={(event) => setField("state", event.target.value)} />
@@ -194,7 +201,7 @@ export default function RegisterHospital() {
             <div className="reg-grid">
               <Input label={<Label text="Full Name" />} value={values.adminName} error={errors.adminName} onChange={(event) => setField("adminName", event.target.value)} />
               <Input label={<Label text="Email" />} type="email" value={values.adminEmail} error={errors.adminEmail} onChange={(event) => setField("adminEmail", event.target.value)} />
-              <Input label={<Label text="Contact Number" />} inputMode="numeric" maxLength={10} value={values.adminPhone} error={errors.adminPhone} placeholder="10-digit number" onChange={(event) => setField("adminPhone", phoneDigits(event.target.value))} />
+              <PhoneInput label="Contact Number" required value={values.adminPhone} countryCode={values.adminPhoneCode} error={errors.adminPhone} onChange={(event) => setField("adminPhone", event.target.value)} onCountryCodeChange={(event) => setField("adminPhoneCode", event.target.value)} />
               <PasswordField label={<Label text="Password" />} value={values.adminPassword} error={errors.adminPassword} hint={PASSWORD_HINT} autoComplete="new-password" onChange={(event) => setField("adminPassword", event.target.value)} />
               <PasswordField label={<Label text="Confirm Password" />} value={values.adminPasswordConfirm} error={errors.adminPasswordConfirm} autoComplete="new-password" onChange={(event) => setField("adminPasswordConfirm", event.target.value)} />
             </div>
@@ -221,7 +228,7 @@ export default function RegisterHospital() {
           <footer className="reg-footer">
             <span className="reg-footnote"><span className="req">*</span> Required field</span>
             <div className="reg-footer-actions">
-              <Button variant="secondary" onClick={() => navigate(platformPath("/hospitals"))}>Cancel</Button>
+              <Button variant="secondary" onClick={cancel}>Cancel</Button>
               <Button variant="secondary" onClick={() => { setValues(initialValues); setErrors({}); }}>Reset</Button>
               <Button type="submit" disabled={!canSubmit}>{submitting ? "Registering…" : "Register Hospital"}</Button>
             </div>
