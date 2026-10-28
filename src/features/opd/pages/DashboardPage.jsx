@@ -203,7 +203,14 @@ export default function DashboardPage() {
                       <Link key={p.id} to={`/patients/${p.id}/profile`} className="recent-patient">
                         <Avatar name={p.name ?? 'Patient'} size={40} />
                         <div className="recent-patient__info">
-                          <strong>{p.name}</strong>
+                          <div className="recent-patient__name">
+                            <strong>{p.name}</strong>
+                            {p.registrationSource && (
+                              <span className={`recent-patient__source recent-patient__source--${p.registrationSource.toLowerCase()}`}>
+                                {p.registrationSource}
+                              </span>
+                            )}
+                          </div>
                           <span>{p.phone}</span>
                         </div>
                         <div className="recent-patient__meta">
