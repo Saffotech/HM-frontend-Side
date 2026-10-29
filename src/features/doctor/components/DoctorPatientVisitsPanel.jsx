@@ -41,6 +41,10 @@ export default function DoctorPatientVisitsPanel({
   const [page, setPage] = useState(1);
 
   const visits = useMemo(() => data?.visits ?? [], [data?.visits]);
+  const visitedCount = useMemo(
+    () => visits.filter((visit) => !visit.is_voided).length,
+    [visits],
+  );
 
   useEffect(() => {
     setPage(1);
@@ -64,8 +68,8 @@ export default function DoctorPatientVisitsPanel({
         <h3 className="doc-profile-panel__title">
           <Stethoscope size={16} aria-hidden />
           Doctor Visits
-          {visits.length > 0 ? (
-            <span className="doc-profile-panel__count">{visits.length}</span>
+          {visitedCount > 0 ? (
+            <span className="doc-profile-panel__count">{visitedCount}</span>
           ) : null}
         </h3>
       </div>
@@ -86,6 +90,7 @@ export default function DoctorPatientVisitsPanel({
                   <th scope="col">Doctor</th>
                   <th scope="col">Department</th>
                   <th scope="col">Visit #</th>
+                  <th scope="col">Status / cancellation reason</th>
                   <th scope="col">Recorded by</th>
                   <th scope="col">Notes</th>
                 </tr>
@@ -97,6 +102,17 @@ export default function DoctorPatientVisitsPanel({
                     <td data-label="Doctor">{visit.doctor_name || '—'}</td>
                     <td data-label="Department">{visitDepartment(visit)}</td>
                     <td data-label="Visit #">{visit.visit_number ?? '—'}</td>
+                    <td data-label="Status / cancellation reason">
+                      {visit.is_voided ? (
+                        <div className="doc-profile-visits-table__cancellation">
+                          <strong>Cancelled</strong>
+                          <span>{visit.void_reason || 'No cancellation reason recorded.'}</span>
+                          {visit.voided_by_name ? <span>Cancelled by {visit.voided_by_name}</span> : null}
+                        </div>
+                      ) : (
+                        'Recorded'
+                      )}
+                    </td>
                     <td data-label="Recorded by">{visit.recorded_by_name || '—'}</td>
                     <td className="doc-profile-visits-table__notes" data-label="Notes">{visit.notes || '—'}</td>
                   </tr>

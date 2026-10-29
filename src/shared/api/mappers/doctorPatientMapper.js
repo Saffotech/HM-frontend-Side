@@ -259,6 +259,9 @@ export function mapDoctorPatientVisitItem(row) {
     updated_by_name: row.updated_by_name ?? null,
     updated_at: row.updated_at ?? null,
     is_voided: Boolean(row.is_voided),
+    voided_by_name: row.voided_by_name ?? null,
+    voided_at: row.voided_at ?? null,
+    void_reason: row.void_reason ?? null,
   };
 }
 
