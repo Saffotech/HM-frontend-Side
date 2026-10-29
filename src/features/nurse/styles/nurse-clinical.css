@@ -102,6 +102,7 @@
 }
 
 @media (max-width: 768px) {
+
   .nurse-clinical-fields--grid,
   .nurse-clinical-fields--vitals,
   .nurse-clinical-fields--notes {
@@ -181,15 +182,41 @@
   margin: 0.15rem 0;
 }
 
-.nurse-clinical-panel .nurse-clinical-field--rose { border-left-color: #f43f5e; }
-.nurse-clinical-panel .nurse-clinical-field--blue { border-left-color: var(--color-info, #2563eb); }
-.nurse-clinical-panel .nurse-clinical-field--green { border-left-color: #22c55e; }
-.nurse-clinical-panel .nurse-clinical-field--red { border-left-color: #dc2626; }
-.nurse-clinical-panel .nurse-clinical-field--teal { border-left-color: var(--color-primary, #0d9488); }
-.nurse-clinical-panel .nurse-clinical-field--sky { border-left-color: #0284c7; }
-.nurse-clinical-panel .nurse-clinical-field--amber { border-left-color: #d97706; }
-.nurse-clinical-panel .nurse-clinical-field--slate { border-left-color: #64748b; }
-.nurse-clinical-panel .nurse-clinical-field--purple { border-left-color: #7c3aed; }
+.nurse-clinical-panel .nurse-clinical-field--rose {
+  border-left-color: #f43f5e;
+}
+
+.nurse-clinical-panel .nurse-clinical-field--blue {
+  border-left-color: var(--color-info, #2563eb);
+}
+
+.nurse-clinical-panel .nurse-clinical-field--green {
+  border-left-color: #22c55e;
+}
+
+.nurse-clinical-panel .nurse-clinical-field--red {
+  border-left-color: #dc2626;
+}
+
+.nurse-clinical-panel .nurse-clinical-field--teal {
+  border-left-color: var(--color-primary, #0d9488);
+}
+
+.nurse-clinical-panel .nurse-clinical-field--sky {
+  border-left-color: #0284c7;
+}
+
+.nurse-clinical-panel .nurse-clinical-field--amber {
+  border-left-color: #d97706;
+}
+
+.nurse-clinical-panel .nurse-clinical-field--slate {
+  border-left-color: #64748b;
+}
+
+.nurse-clinical-panel .nurse-clinical-field--purple {
+  border-left-color: #7c3aed;
+}
 
 .nurse-clinical-field__top {
   display: flex;
@@ -215,15 +242,50 @@
   flex-shrink: 0;
 }
 
-.nurse-clinical-field__icon--rose { background: #ffe4e6; color: #e11d48; }
-.nurse-clinical-field__icon--blue { background: var(--color-info-bg, #dbeafe); color: var(--color-info, #2563eb); }
-.nurse-clinical-field__icon--green { background: #dcfce7; color: #16a34a; }
-.nurse-clinical-field__icon--red { background: #fee2e2; color: #dc2626; }
-.nurse-clinical-field__icon--teal { background: var(--color-primary-light, #ccfbf1); color: var(--color-primary, #0d9488); }
-.nurse-clinical-field__icon--sky { background: #e0f2fe; color: #0284c7; }
-.nurse-clinical-field__icon--amber { background: #fef3c7; color: #d97706; }
-.nurse-clinical-field__icon--slate { background: #f1f5f9; color: #475569; }
-.nurse-clinical-field__icon--purple { background: #ede9fe; color: #7c3aed; }
+.nurse-clinical-field__icon--rose {
+  background: #ffe4e6;
+  color: #e11d48;
+}
+
+.nurse-clinical-field__icon--blue {
+  background: var(--color-info-bg, #dbeafe);
+  color: var(--color-info, #2563eb);
+}
+
+.nurse-clinical-field__icon--green {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.nurse-clinical-field__icon--red {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.nurse-clinical-field__icon--teal {
+  background: var(--color-primary-light, #ccfbf1);
+  color: var(--color-primary, #0d9488);
+}
+
+.nurse-clinical-field__icon--sky {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.nurse-clinical-field__icon--amber {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.nurse-clinical-field__icon--slate {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.nurse-clinical-field__icon--purple {
+  background: #ede9fe;
+  color: #7c3aed;
+}
 
 .nurse-clinical-field__title {
   font-size: 0.9375rem;
@@ -294,9 +356,16 @@
 }
 
 .nurse-clinical-field__inline {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 0.625rem;
+  width: 100%;
+}
+
+.nurse-clinical-field__inline .nurse-clinical-field__input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 @media (max-width: 640px) {

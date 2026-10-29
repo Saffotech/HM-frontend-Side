@@ -173,12 +173,12 @@ export default function NurseMyDutyPage() {
         <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
           <section
             className={`nurse-my-duty__hero nurse-my-duty__hero--${tone}`}
-            aria-label="Current shift"
+            aria-label="Today's shift"
           >
             <div className="nurse-my-duty__hero-main">
               <p className="nurse-my-duty__hero-label">
                 <ShiftIcon tone={tone} size={13} />
-                Current shift
+                Today&apos;s shift
               </p>
               <div className="nurse-my-duty__hero-shift">
                 <h2 className="nurse-my-duty__shift-name">{shiftName}</h2>
