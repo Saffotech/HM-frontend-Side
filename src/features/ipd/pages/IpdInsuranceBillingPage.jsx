@@ -9,18 +9,12 @@ import { Button, EmptyState, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import IpdInsuranceBillPrintSheet from '@/features/ipd/components/IpdInsuranceBillPrintSheet';
 import IpdInsuranceClaimBillingCard from '@/features/ipd/components/IpdInsuranceClaimBillingCard';
-<<<<<<< Updated upstream
-import IpdHospitalChargesCard, {
-  calculateInsuranceChargeTotals,
-} from '@/features/ipd/components/IpdHospitalChargesCard';
-=======
 import IpdHospitalChargesCard from '@/features/ipd/components/IpdHospitalChargesCard';
 import {
   calculateInsuranceChargeTotals,
   normalizeInsuranceChargeHeads,
   sortInsuranceChargeHeads,
 } from '@/features/ipd/utils/insuranceChargeHeads';
->>>>>>> Stashed changes
 import IpdDailyChargesCard from '@/features/ipd/components/IpdDailyChargesCard';
 import useIpdBackNavigation from '@/features/ipd/hooks/useIpdBackNavigation';
 import {
