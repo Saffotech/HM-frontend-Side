@@ -49,12 +49,12 @@ export default function NotificationRow({ notification: n, compact, onClick }) {
   const kind = TYPE_ICON[n.notification_type] || { icon: Bell, tint: 'doc-notif-icon--muted' };
   const Icon = kind.icon;
   const priorityClass = PRIORITY_CLASS[n.priority] || PRIORITY_CLASS.NORMAL;
+  const Row = onClick ? 'button' : 'div';
 
   return (
-    <button
-      type="button"
+    <Row
+      {...(onClick ? { type: 'button', onClick } : {})}
       className={`doc-notif ${unread ? '' : 'doc-notif--read'} ${priorityClass}`}
-      onClick={onClick}
     >
       <div className={`doc-stat__icon ${kind.tint}`} style={{ width: '2rem', height: '2rem' }}>
         <Icon size={16} />
@@ -93,6 +93,6 @@ export default function NotificationRow({ notification: n, compact, onClick }) {
           <span>{formatRelativeTime(createdAt)}</span>
         </div>
       </div>
-    </button>
+    </Row>
   );
 }

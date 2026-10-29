@@ -10,11 +10,15 @@ import { mapOpdVisitList } from '@/shared/api/mappers/visitMapper';
 function mapRecentPatient(row) {
   if (!row) return null;
   const uid = row.patient_uid ?? row.patientUid ?? null;
+  const source = String(row.registration_source ?? row.registrationSource ?? '')
+    .trim()
+    .toUpperCase();
   return {
     id: uid ?? String(row.id ?? ''),
     dbId: row.id ?? null,
     name: row.name ?? '',
     phone: row.phone ?? '',
+    registrationSource: source === 'IPD' || source === 'OPD' ? source : null,
     registeredDate: formatPatientRegisteredDate(row.created_at ?? row.createdAt),
   };
 }

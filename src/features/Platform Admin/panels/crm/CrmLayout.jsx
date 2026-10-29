@@ -22,6 +22,7 @@ import PortalEntryFallback from "../../shared/portal/PortalEntryFallback";
 import { formatDate } from "../../shared/utils/formatDate";
 import { localDay, shiftDays } from "../../shared/utils/periods";
 import { includesQuery } from "../../shared/utils/table";
+import useLogoutConfirmation from "@/shared/hooks/useLogoutConfirmation";
 import AvatarImage from "../../shared/portal/profile/AvatarImage";
 import { StatusMark } from "./components/CrmMarks";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -53,6 +54,7 @@ export default function CrmLayout() {
 
 function CrmShell({ session }) {
   const { signOutPortal, portalProfile } = usePlatform();
+  const logoutConfirmation = useLogoutConfirmation(() => signOutPortal("crm"));
   const photo = portalProfile("crm")?.photoUrl || "";
   const { leads, pool, today, actions } = useCrm();
   const { pathname } = useLocation();
@@ -261,12 +263,13 @@ function CrmShell({ session }) {
                   </div>
                   <Link role="menuitem" className="crm-pop-item" to={crmPath("/profile")} onClick={() => setMenu("")}><UserRound size={15} aria-hidden="true" />My profile</Link>
                   <Link role="menuitem" className="crm-pop-item" to={crmPath("/performance")} onClick={() => setMenu("")}><TrendingUp size={15} aria-hidden="true" />My Performance</Link>
-                  <button role="menuitem" type="button" className="crm-pop-item crm-danger-text" onClick={() => { setMenu(""); signOutPortal("crm"); }}><LogOut size={15} aria-hidden="true" />Log out</button>
+                  <button role="menuitem" type="button" className="crm-pop-item crm-danger-text" onClick={() => { setMenu(""); logoutConfirmation.requestLogout(); }}><LogOut size={15} aria-hidden="true" />Log out</button>
                 </div>
               )}
             </div>
           </div>
         </header>
+        {logoutConfirmation.dialog}
         <main className="crm-content">
           <ErrorBoundary key={pathname}>
             <Outlet />

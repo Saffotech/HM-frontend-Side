@@ -298,9 +298,9 @@ export default function IpdBillPreviewPage() {
     );
   };
 
-  const handleSaveDailyCharges = () => {
+  const handleSaveDailyCharges = (nextDailyCharges = dailyCharges) => {
     if (!admissionIsActive) return;
-    const invalid = dailyCharges.find((row) => !String(row.item_name ?? '').trim());
+    const invalid = nextDailyCharges.find((row) => !String(row.item_name ?? '').trim());
     if (invalid) {
       toast.error('Every row needs an item name (medicine, treatment, etc.)');
       return;
@@ -308,7 +308,7 @@ export default function IpdBillPreviewPage() {
     saveDailyBillingMutation.mutate(
       {
         admissionId,
-        dailyCharges,
+        dailyCharges: nextDailyCharges,
         previewItems,
         ...billingContext,
       },

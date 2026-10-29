@@ -706,9 +706,7 @@ export default function IpdProfilePage() {
                 <h3 className="opd-profile-section__title">
                   <Shield size={16} aria-hidden /> Account
                 </h3>
-                <p className="opd-profile-hint">
-                  Employee ID is managed by a manager.
-                </p>
+
                 <div className="opd-profile-grid">
                   <ReadField label="First name" value={profile.first_name} />
                   <ReadField label="Last name" value={profile.last_name} />

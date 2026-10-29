@@ -1440,11 +1440,20 @@
   gap: 0.35rem;
   padding-right: 0.65rem;
   border-right: 1px solid var(--color-border-light);
+  border-top: 0;
+  border-bottom: 0;
+  border-left: 0;
+  background: transparent;
+  cursor: pointer;
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   color: #64748b;
   white-space: nowrap;
+}
+
+.doc-patients-page__date-label:disabled{
+  cursor: not-allowed;
 }
 
 .doc-patient-filters--pill{
@@ -1476,6 +1485,10 @@
   border-right: 1px solid var(--color-border-light);
   background: transparent;
   font-size: 0.8125rem;
+}
+
+.doc-patient-filters--pill .doc-patient-filters__calendar.date-input--no-calendar-button .date-input__text{
+  border-right: 0;
 }
 
 .doc-patient-filters--pill .doc-patient-filters__calendar .date-input__calendar-btn{

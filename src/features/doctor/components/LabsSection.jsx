@@ -351,8 +351,16 @@ function LabTestsList({
   );
 }
 
-export default function LabsSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD }) {
-  const { data: tests = [], isLoading } = useDoctorLabTestsQuery();
+export default function LabsSection({
+  encounterMode = DOCTOR_ENCOUNTER_MODE.OPD,
+  requestedReport = null,
+  onReportRequestHandled,
+}) {
+  const {
+    data: tests = [],
+    isLoading,
+    isFetching,
+  } = useDoctorLabTestsQuery();
   const updateLab = useUpdateLabTestMutation();
   const cancelLab = useCancelLabTestMutation();
   const { data: patientVisitsData } = useDoctorPatientVisitsQuery({
@@ -387,6 +395,35 @@ export default function LabsSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD 
   const [profilePatient, setProfilePatient] = useState(null);
   const [editTest, setEditTest] = useState(null);
   const [reportTest, setReportTest] = useState(null);
+
+  useEffect(() => {
+    if (requestedReport?.reference_id == null || isLoading || isFetching) return;
+
+    const requestedId = String(requestedReport.reference_id).trim();
+    const requestedTest = tests.find((test) => String(test.id) === requestedId);
+    if (requestedTest) {
+      setReportTest(requestedTest);
+    } else {
+      const message = String(requestedReport.message ?? requestedReport.body ?? '');
+      const [testName, patientName] = message.split(/\s+[—–]\s+/, 2);
+      setReportTest({
+        id: requestedReport.reference_id,
+        testName: testName || requestedReport.title || 'Lab report',
+        patientName: patientName || undefined,
+        status: 'Completed',
+        apiStatus: 'completed',
+        doctorStatus: 'Completed',
+        reportAvailable: true,
+      });
+    }
+    onReportRequestHandled?.();
+  }, [
+    requestedReport,
+    isLoading,
+    isFetching,
+    tests,
+    onReportRequestHandled,
+  ]);
 
   const handleCancel = async (test) => {
     if (!window.confirm(`Cancel lab order "${test.testName}"?`)) return;

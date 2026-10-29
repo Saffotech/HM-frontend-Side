@@ -3,6 +3,7 @@ import { LogOut } from "lucide-react";
 import logo from "../assets/images/logo.svg";
 import { portalSessionIsAuthenticated } from "../api/platformSession";
 import { usePlatform } from "../context/PlatformContext";
+import useLogoutConfirmation from "@/shared/hooks/useLogoutConfirmation";
 import PortalEntryFallback from "./PortalEntryFallback";
 import AvatarImage from "./profile/AvatarImage";
 import "../layout/AppShell.css";
@@ -12,6 +13,7 @@ import "./PortalLayout.css";
 
 export default function PortalLayout({ portal, name, profilePath, items, titles, className = "" }) {
   const { sessionFor, signOutPortal, portalProfile } = usePlatform();
+  const logoutConfirmation = useLogoutConfirmation(() => signOutPortal(portal));
   const session = sessionFor(portal);
   const { pathname } = useLocation();
   // Keys ending in "/" title every page below that path.
@@ -63,12 +65,13 @@ export default function PortalLayout({ portal, name, profilePath, items, titles,
                 {user}
               </Link>
             ) : user}
-            <button type="button" className="portal-logout" aria-label="Logout" onClick={() => signOutPortal(portal)}>
+            <button type="button" className="portal-logout" aria-label="Logout" onClick={logoutConfirmation.requestLogout}>
               <LogOut size={16} aria-hidden="true" />
               <span className="portal-logout-label">Logout</span>
             </button>
           </div>
         </header>
+        {logoutConfirmation.dialog}
         <div className="content">
           <Outlet />
         </div>

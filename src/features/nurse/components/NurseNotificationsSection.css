@@ -100,7 +100,7 @@
 }
 
 .nurse-notif-search__input::-webkit-search-cancel-button {
-  cursor: pointer;
+  cursor: default;
 }
 
 .nurse-notif-filters__row {
@@ -286,6 +286,15 @@
 }
 
 .nurse-notif-page .nurse-notif:hover {
+  background: #fff;
+  border-color: #e0ecea;
+}
+
+.nurse-notif-page button.nurse-notif {
+  cursor: pointer;
+}
+
+.nurse-notif-page button.nurse-notif:hover {
   background: var(--nn-teal-wash);
   border-color: #b8ddd8;
 }

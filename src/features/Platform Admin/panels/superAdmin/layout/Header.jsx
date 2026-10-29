@@ -4,11 +4,13 @@ import { Link } from "react-router-dom";
 import { usePlatform } from "../../../shared/context/PlatformContext";
 import { initials } from "../../../shared/utils/validation";
 import { platformPath } from "../../../shared/paths";
+import useLogoutConfirmation from "@/shared/hooks/useLogoutConfirmation";
 import Breadcrumbs from "./Breadcrumbs";
 import "../../../shared/layout/Header.css";
 
 export default function Header() {
   const { sessionFor, signOutPortal } = usePlatform();
+  const logoutConfirmation = useLogoutConfirmation(() => signOutPortal("platform"));
   const session = sessionFor("platform");
   const [userOpen, setUserOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
@@ -51,11 +53,12 @@ export default function Header() {
           {userOpen && (
             <div className="dropdown">
               <Link className="dropdown-item" to={platformPath("/profile")} onClick={() => setUserOpen(false)}>Profile</Link>
-              <button type="button" className="dropdown-item" onClick={() => { setUserOpen(false); signOutPortal("platform"); }}>Logout</button>
+              <button type="button" className="dropdown-item" onClick={() => { setUserOpen(false); logoutConfirmation.requestLogout(); }}>Logout</button>
             </div>
           )}
         </div>
       </div>
+      {logoutConfirmation.dialog}
     </header>
   );
 }

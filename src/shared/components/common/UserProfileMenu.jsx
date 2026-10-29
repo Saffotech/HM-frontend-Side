@@ -5,6 +5,7 @@ import { useAuthStore } from '@/shared/store/useAuthStore';
 import { ROUTES } from '@/shared/constants';
 import { resolveMediaUrl } from '@/shared/utils/resolveMediaUrl';
 import { getRoleLabel, toTitleCase } from '@/shared/utils/roleUtils';
+import useLogoutConfirmation from '@/shared/hooks/useLogoutConfirmation';
 import Avatar from './Avatar';
 import './UserProfileMenu.css';
 
@@ -24,6 +25,10 @@ export default function UserProfileMenu({
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+  const logoutConfirmation = useLogoutConfirmation(() => {
+    logout();
+    navigate(ROUTES.HOME);
+  });
 
   const displayName = toTitleCase(user?.full_name) || user?.email || 'User';
   const email = user?.email || '';
@@ -42,11 +47,6 @@ export default function UserProfileMenu({
     document.addEventListener('mousedown', onDocClick);
     return () => document.removeEventListener('mousedown', onDocClick);
   }, []);
-
-  const handleLogout = () => {
-    logout();
-    navigate(ROUTES.HOME);
-  };
 
   const handleTriggerClick = () => {
     // Doctor Phase 2 by Atharva — name click opens profile; on profile page show logout menu
@@ -108,13 +108,14 @@ export default function UserProfileMenu({
             <span className="user-profile-menu__info-role">{roleLabel}</span>
           </div>
           <div className="user-profile-menu__footer">
-            <button type="button" className="user-profile-menu__logout" onClick={handleLogout} role="menuitem">
+            <button type="button" className="user-profile-menu__logout" onClick={logoutConfirmation.requestLogout} role="menuitem">
               <LogOut size={16} aria-hidden />
               Log out
             </button>
           </div>
         </div>
       )}
+      {logoutConfirmation.dialog}
     </div>
   );
 }

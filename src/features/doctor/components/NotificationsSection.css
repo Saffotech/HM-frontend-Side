@@ -313,7 +313,7 @@
   border-radius: 0.7rem;
   background: #fff;
   text-align: left;
-  cursor: pointer;
+  cursor: default;
   font: inherit;
   color: inherit;
   transition:
@@ -322,9 +322,18 @@
     transform 0.15s ease;
 }
 
-.doc-notif-page .doc-notif:hover {
+.doc-notif-page button.doc-notif {
+  cursor: pointer;
+}
+
+.doc-notif-page button.doc-notif:hover {
   background: var(--dn-green-wash);
   border-color: #c5dfcf;
+}
+
+.doc-notif-page .doc-notif:hover {
+  background: #fff;
+  border-color: #e7eee9;
 }
 
 .doc-notif-page .doc-notif--read {

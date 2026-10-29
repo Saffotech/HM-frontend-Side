@@ -38,6 +38,7 @@ export default function DoctorDashboardPage() {
   const [patientsCategoryFilter, setPatientsCategoryFilter] = useState(
     PATIENT_CATEGORY_FILTER.COMPLETED
   );
+  const [pendingLabReport, setPendingLabReport] = useState(null);
 
   const showEncounterToggle = ['dashboard', 'patients', 'labs', 'schedule'].includes(active);
 
@@ -101,25 +102,14 @@ export default function DoctorDashboardPage() {
     selectSection('patients');
   };
 
-  /** Doctor Phase 2 by Atharva — deep-link by reference_type (+ reference_id in state) */
-  const handleNotificationDeepLink = (n) => {
-    switch (n?.reference_type) {
-      case 'LAB_ORDER':
-        selectSection('labs');
-        break;
-      case 'PATIENT':
-        selectSection('patients');
-        break;
-      case 'APPOINTMENT':
-        selectSection('dashboard');
-        break;
-      case 'USER':
-        navigate(ROUTES.DOCTOR_PROFILE);
-        break;
-      default:
-        break;
-    }
-  };
+  const openLabReport = useCallback((notification) => {
+    setPendingLabReport(notification);
+    selectSection('labs');
+  }, [selectSection]);
+
+  const clearPendingLabReport = useCallback(() => {
+    setPendingLabReport(null);
+  }, []);
 
   return (
     <DoctorShell
@@ -130,31 +120,34 @@ export default function DoctorDashboardPage() {
       encounterMode={showEncounterToggle ? encounterMode : undefined}
       onEncounterModeChange={showEncounterToggle ? handleEncounterModeChange : undefined}
     >
-      <Suspense fallback={<PageSpinner />}>
-        {active === 'dashboard' && (
-          <DashboardSection
-            key={`dashboard-${encounterMode}`}
-            encounterMode={encounterMode}
-            onViewAllPatients={openPatientsWithFilter}
-          />
-        )}
-        {active === 'patients' && (
-          <PatientsEMRSection
-            key={`${patientsCategoryFilter}-${encounterMode}`}
-            initialCategoryFilter={patientsCategoryFilter}
-            encounterMode={encounterMode}
-          />
-        )}
-        {active === 'labs' && (
-          <LabsSection key={`labs-${encounterMode}`} encounterMode={encounterMode} />
-        )}
-        {active === 'schedule' && (
-          <ScheduleSection key={`schedule-${encounterMode}`} encounterMode={encounterMode} />
-        )}
-        {active === 'notifications' && (
-          <NotificationsSection onDeepLink={handleNotificationDeepLink} />
-        )}
-      </Suspense>
+      {active === 'dashboard' && (
+        <DashboardSection
+          key={`dashboard-${encounterMode}`}
+          encounterMode={encounterMode}
+          onViewAllPatients={openPatientsWithFilter}
+        />
+      )}
+      {active === 'patients' && (
+        <PatientsEMRSection
+          key={`${patientsCategoryFilter}-${encounterMode}`}
+          initialCategoryFilter={patientsCategoryFilter}
+          encounterMode={encounterMode}
+        />
+      )}
+      {active === 'labs' && (
+        <LabsSection
+          key={`labs-${encounterMode}`}
+          encounterMode={encounterMode}
+          requestedReport={pendingLabReport}
+          onReportRequestHandled={clearPendingLabReport}
+        />
+      )}
+      {active === 'schedule' && (
+        <ScheduleSection key={`schedule-${encounterMode}`} encounterMode={encounterMode} />
+      )}
+      {active === 'notifications' && (
+        <NotificationsSection onLabReportClick={openLabReport} />
+      )}
     </DoctorShell>
   );
 }

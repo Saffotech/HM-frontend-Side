@@ -42,7 +42,7 @@ const PRIORITY_FILTER_VALUES = new Set(
 /** Doctor Phase 2 by Atharva — debounce live search so typing does not spam the API */
 const SEARCH_DEBOUNCE_MS = 300;
 
-export default function NotificationsSection({ onDeepLink }) {
+export default function NotificationsSection({ onLabReportClick }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -113,6 +113,24 @@ export default function NotificationsSection({ onDeepLink }) {
     }
   };
 
+  const handleNotificationClick = async (notification) => {
+    if (isDoctorNotificationUnread(notification)) {
+      try {
+        await markOne.mutateAsync(notification.id);
+      } catch {
+        // The mutation displays the error toast.
+        return;
+      }
+    }
+    if (
+      notification.notification_type === 'LAB_REPORT_READY'
+      && notification.reference_type === 'LAB_ORDER'
+      && notification.reference_id != null
+    ) {
+      onLabReportClick?.(notification);
+    }
+  };
+
   // Doctor Phase 2 by Atharva — Clear filters for search + type + date range
   const hasActiveFilters =
     Boolean(search.trim()) ||
@@ -128,17 +146,6 @@ export default function NotificationsSection({ onDeepLink }) {
     setStartDate('');
     setEndDate('');
     setPage(1);
-  };
-
-  const handleRowClick = async (n) => {
-    if (isDoctorNotificationUnread(n)) {
-      try {
-        await markOne.mutateAsync(n.id);
-      } catch {
-        return;
-      }
-    }
-    onDeepLink?.(n);
   };
 
   return (
@@ -265,7 +272,18 @@ export default function NotificationsSection({ onDeepLink }) {
             />
           ) : (
             items.map((n) => (
-              <NotificationRow key={n.id} notification={n} onClick={() => handleRowClick(n)} />
+              <NotificationRow
+                key={n.id}
+                notification={n}
+                onClick={
+                  isDoctorNotificationUnread(n)
+                    || (n.notification_type === 'LAB_REPORT_READY'
+                      && n.reference_type === 'LAB_ORDER'
+                      && n.reference_id != null)
+                    ? () => handleNotificationClick(n)
+                    : undefined
+                }
+              />
             ))
           )}
           {isError ? (

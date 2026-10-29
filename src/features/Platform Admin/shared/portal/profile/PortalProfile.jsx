@@ -9,6 +9,7 @@ import { usePlatform } from "../../context/PlatformContext";
 import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
 import { usePlatformMe } from "../../hooks/usePlatformMe";
 import { useToast } from "../../hooks/useToast";
+import useLogoutConfirmation from "@/shared/hooks/useLogoutConfirmation";
 import { formatDate, formatDateTime } from "../../utils/formatDate";
 import AvatarImage from "./AvatarImage";
 import ChangePasswordCard from "./ChangePasswordCard";
@@ -60,6 +61,7 @@ export default function PortalProfile({
   resolveImageUrl = (url) => url || "",
 }) {
   const { signOutPortal, patchPortalSession, portalProfile } = usePlatform();
+  const logoutConfirmation = useLogoutConfirmation(() => signOutPortal(portal));
   const sessionProfile = portalProfile(portal);
   const { profile: liveProfile, loading: sessionLoading } = usePlatformMe(portal);
   const { push } = useToast();
@@ -390,7 +392,7 @@ export default function PortalProfile({
                   <span>{sessionProfile?.signedInAt ? `Signed in ${formatDateTime(sessionProfile.signedInAt)}` : "Current session"}</span>
                 </div>
               </div>
-              <Button variant="secondary" size="sm" className="pp-danger-btn" onClick={() => signOutPortal(portal)}>
+              <Button variant="secondary" size="sm" className="pp-danger-btn" onClick={logoutConfirmation.requestLogout}>
                 <LogOut size={14} aria-hidden="true" />Log out
               </Button>
             </div>
@@ -415,6 +417,7 @@ export default function PortalProfile({
         onCancel={() => { if (!photoBusy) setRemoveOpen(false); }}
         onConfirm={confirmRemove}
       />
+      {logoutConfirmation.dialog}
     </div>
   );
 }
