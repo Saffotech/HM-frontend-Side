@@ -16,6 +16,8 @@ import {
 } from "../../../../shared/api/platformStaff";
 import Button from "../../../../shared/components/Button";
 import DataTable from "../../../../shared/components/DataTable";
+import Pagination from "../../../../shared/components/Pagination";
+import { LIST_PAGE_SIZE, usePagination } from "../../../../shared/hooks/usePagination";
 import Input from "../../../../shared/components/Input";
 import Modal from "../../../../shared/components/Modal";
 import PasswordField from "../../../../shared/components/PasswordField";
@@ -252,6 +254,7 @@ export default function PlatformStaff() {
       (!term || `${displayName(row)} ${row.email}`.toLowerCase().includes(term))
     );
   });
+  const pagination = usePagination(filteredRows, LIST_PAGE_SIZE, `${query}|${staffFilter}`);
 
   return (
     <section className="platform-staff-page">
@@ -321,7 +324,7 @@ export default function PlatformStaff() {
           </label>
         </div>
         <DataTable
-          rows={loading && rows.length === 0 ? [] : filteredRows}
+          rows={loading && rows.length === 0 ? [] : pagination.rows}
           columns={columns}
           emptyTitle={
             loading ? "Loading platform staff" : "No CRM or accountant accounts"
@@ -334,6 +337,7 @@ export default function PlatformStaff() {
                 : "Use Register Staff to create a CRM or Accountant account. Hospital staff are not registered here."
           }
         />
+        <Pagination {...pagination} onPageChange={pagination.setPage} />
       </section>
 
       <Modal

@@ -90,6 +90,7 @@ export default function CrmPerformance() {
         row={detail}
         ranked={data.employees.filter((row) => row.rank).length}
         leads={detail ? data.leadsByEmployee[detail.name] || [] : []}
+        listKey={[filters.preset, filters.start, filters.end, filters.employee, filters.status, filters.plan, filters.source].join("|")}
         trend={data.trend}
         period={period}
         today={todayInput()}

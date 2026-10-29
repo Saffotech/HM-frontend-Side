@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../../../../shared/components/Button";
 import Pagination from "../../../../shared/components/Pagination";
+import { usePagination } from "../../../../shared/hooks/usePagination";
 import SearchBar from "../../../../shared/components/SearchBar";
 import Select from "../../../../shared/components/Select";
 import { billingCycles } from "../../../../shared/data/catalog";
@@ -98,7 +99,6 @@ export default function Hospitals() {
   } = useRegisteredHospitals();
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [sort, setSort] = useState({ key: "created", direction: "desc" });
-  const [page, setPage] = useState(1);
   const setFilter = (key, value) => setFilters((current) => ({ ...current, [key]: value }));
 
   const plans = useMemo(() => uniqueValues(hospitals, (hospital) => hospital.plan), [hospitals]);
@@ -123,9 +123,12 @@ export default function Hospitals() {
     ));
   }, [filters, hospitals, sort]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const currentPage = Math.min(page, totalPages);
-  const pageRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const pagination = usePagination(
+    filtered,
+    PAGE_SIZE,
+    [filters.query, filters.plan, filters.cycle, filters.type, filters.status, filters.activation, sort.key, sort.direction].join("|"),
+  );
+  const pageRows = pagination.rows;
   const filtersActive = Object.values(filters).some(Boolean);
   const summaryKey = filters.status === "active" && !filters.activation
     ? "active"
@@ -136,10 +139,6 @@ export default function Hospitals() {
         : !filters.status && !filters.activation
           ? "all"
           : "";
-
-  useEffect(() => {
-    setPage(1);
-  }, [filters, sort]);
 
   const applySummary = (key) => {
     if (key === "all") {
@@ -314,14 +313,7 @@ export default function Hospitals() {
             </tbody>
           </table>
         </div>
-        <Pagination
-          page={currentPage}
-          totalPages={totalPages}
-          total={filtered.length}
-          from={filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}
-          to={Math.min(currentPage * PAGE_SIZE, filtered.length)}
-          onPageChange={setPage}
-        />
+        <Pagination {...pagination} onPageChange={pagination.setPage} />
       </section>
     </section>
   );

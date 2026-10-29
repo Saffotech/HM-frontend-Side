@@ -1,4 +1,6 @@
 import Modal from "../../../../../shared/components/Modal";
+import Pagination from "../../../../../shared/components/Pagination";
+import { LIST_PAGE_SIZE, usePagination } from "../../../../../shared/hooks/usePagination";
 import { formatCurrency } from "../../../../../shared/utils/formatCurrency";
 import { formatDate } from "../../../../../shared/utils/formatDate";
 import { SCORE_WEIGHTS, formatRate } from "./metrics";
@@ -6,7 +8,6 @@ import { formatRange, inRange } from "../../../../../shared/utils/periods";
 import { EmployeeTrend } from "./PerformanceCharts";
 import { RatingBadge } from "./PerformanceTables";
 
-const RECENT_LIMIT = 12;
 const PART_LABELS = {
   conversionRate: "Conversion rate",
   revenue: "Revenue",
@@ -17,9 +18,10 @@ const PART_LABELS = {
 };
 const STATUS_TONES = { New: "new", Contacted: "contacted", Registered: "registered", "Not Interested": "closed" };
 
-export default function EmployeeDetail({ row, ranked, leads, trend, period, today, onClose }) {
+export default function EmployeeDetail({ row, ranked, leads, trend, period, today, onClose, listKey = "" }) {
+  const pagination = usePagination(leads, LIST_PAGE_SIZE, `${row?.name || ""}|${listKey}`);
   if (!row) return null;
-  const recent = leads.slice(0, RECENT_LIMIT);
+  const recent = pagination.rows;
   return (
     <Modal open title={row.name} subtitle={`${row.role} · ${formatRange(period)}`} onClose={onClose} size="xl">
       <div className="cp-detail">
@@ -121,8 +123,9 @@ export default function EmployeeDetail({ row, ranked, leads, trend, period, toda
               </tbody>
             </table>
           </div>
+          <Pagination {...pagination} onPageChange={pagination.setPage} />
           <p className="cp-card-note">
-            Showing the {Math.min(RECENT_LIMIT, leads.length)} most recent of {leads.length} leads. Leads received outside the selected period are dimmed.
+            {leads.length} {leads.length === 1 ? "lead" : "leads"}, most recent first. Leads received outside the selected period are dimmed.
           </p>
         </section>
       </div>

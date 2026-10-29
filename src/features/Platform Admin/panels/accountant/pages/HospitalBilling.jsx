@@ -3,7 +3,9 @@ import { createPortal } from "react-dom";
 import { useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import InvoicePrintSheets from "../../../shared/components/InvoicePrintSheets";
+import Pagination from "../../../shared/components/Pagination";
 import PlatformInvoiceTable from "../../../shared/components/PlatformInvoiceTable";
+import { LIST_PAGE_SIZE, usePagination } from "../../../shared/hooks/usePagination";
 import RecordPaymentDialog from "../../../shared/components/RecordPaymentDialog";
 import SearchBar from "../../../shared/components/SearchBar";
 import Select from "../../../shared/components/Select";
@@ -82,6 +84,7 @@ export default function HospitalBilling() {
     () => invoices.filter((invoice) => matchesInvoiceFilters(invoice, { query, status, period, today })),
     [invoices, period, query, status, today],
   );
+  const pagination = usePagination(visible, LIST_PAGE_SIZE, `${id}|${query}|${status}|${period}`);
   const collected = useMemo(() => sumPaidAmounts(invoices), [invoices]);
   const listCollected = useMemo(() => sumPaidAmounts(visible), [visible]);
   const pending = invoices.filter((invoice) => invoice.status === "Pending").length;
@@ -165,7 +168,7 @@ export default function HospitalBilling() {
           <p className="panel-copy">A collected total is not shown because a paid invoice in this list has no usable amount.</p>
         )}
         <PlatformInvoiceTable
-          invoices={visible}
+          invoices={loading || error ? visible : pagination.rows}
           loading={loading}
           error={error}
           showRecords
@@ -173,6 +176,7 @@ export default function HospitalBilling() {
           onPrint={(invoice) => setPrintJob({ key: Date.now(), invoices: [invoice] })}
           hospitalLink={(invoice) => displayHospitalName(invoice.hospitalName)}
         />
+        {!loading && !error ? <Pagination {...pagination} onPageChange={pagination.setPage} /> : null}
       </section>
       {paying && (
         <RecordPaymentDialog

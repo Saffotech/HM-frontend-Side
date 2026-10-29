@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import Pagination from "../../../shared/components/Pagination";
 import RecordPaymentDialog from "../../../shared/components/RecordPaymentDialog";
+import { LIST_PAGE_SIZE, usePagination } from "../../../shared/hooks/usePagination";
 import { matchesInvoiceFilters, recentPaidInvoices } from "../../../shared/api/invoiceModel";
 import { usePlatformInvoices } from "../../../shared/hooks/usePlatformInvoices";
 import { accountsPath } from "../../../shared/paths";
@@ -35,7 +37,9 @@ export default function Collections() {
     return [...rows].sort(compareCollections);
   }, [active, invoices, today]);
   const collected = useMemo(() => recentPaidInvoices(invoices, 5), [invoices]);
-  const failed = invoices.filter((invoice) => invoice.status === "Failed");
+  const failed = useMemo(() => invoices.filter((invoice) => invoice.status === "Failed"), [invoices]);
+  const queuePagination = usePagination(queue, LIST_PAGE_SIZE, active);
+  const failedPagination = usePagination(failed, LIST_PAGE_SIZE);
 
   return (
     <section className="portal-page accounts-home">
@@ -84,7 +88,7 @@ export default function Collections() {
                 <tr><td colSpan={6}><p className="accounts-empty"><strong>Invoices could not be loaded</strong><span>{error}</span></p></td></tr>
               ) : queue.length === 0 ? (
                 <tr><td colSpan={6}><p className="accounts-empty"><strong>No invoices in this queue.</strong><span>Nothing on the server matches this view.</span></p></td></tr>
-              ) : queue.map((invoice) => (
+              ) : queuePagination.rows.map((invoice) => (
                 <tr key={invoice.id}>
                   <td><Link to={accountsPath(`/hospitals/${invoice.tenantId}`)}>{invoice.hospitalName || "Hospital"}</Link></td>
                   <td>{invoice.number || "—"}</td>
@@ -101,6 +105,7 @@ export default function Collections() {
             </tbody>
           </table>
         </div>
+        {!loading && !error ? <Pagination {...queuePagination} onPageChange={queuePagination.setPage} /> : null}
       </section>
 
       <div className="portal-split accounts-lower">
@@ -138,11 +143,14 @@ export default function Collections() {
           ) : failed.length === 0 ? (
             <p className="accounts-empty"><strong>No failed payments.</strong><span>Failed charges will list here.</span></p>
           ) : (
-            <ul>
-              {failed.map((invoice) => (
-                <li key={invoice.id}>{invoice.hospitalName || "Hospital"} · {invoice.number} · {formatCurrency(invoice.amount)}</li>
-              ))}
-            </ul>
+            <>
+              <ul>
+                {failedPagination.rows.map((invoice) => (
+                  <li key={invoice.id}>{invoice.hospitalName || "Hospital"} · {invoice.number} · {formatCurrency(invoice.amount)}</li>
+                ))}
+              </ul>
+              <Pagination {...failedPagination} onPageChange={failedPagination.setPage} />
+            </>
           )}
         </section>
       </div>

@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import Pagination from "../../../shared/components/Pagination";
 import PlatformInvoiceTable from "../../../shared/components/PlatformInvoiceTable";
+import { LIST_PAGE_SIZE, usePagination } from "../../../shared/hooks/usePagination";
 import SearchBar from "../../../shared/components/SearchBar";
 import Select from "../../../shared/components/Select";
 import Button from "../../../shared/components/Button";
@@ -31,6 +33,7 @@ export default function InvoicesPayments() {
     () => invoices.filter((invoice) => matchesInvoiceFilters(invoice, { query, status, period, today })),
     [invoices, period, query, status, today],
   );
+  const pagination = usePagination(visible, LIST_PAGE_SIZE, `${query}|${status}|${period}`);
   const collected = useMemo(() => sumPaidAmounts(visible), [visible]);
 
   return (
@@ -56,7 +59,7 @@ export default function InvoicesPayments() {
           <p className="panel-copy">A collected total is not shown because a paid invoice in this list has no usable amount.</p>
         )}
         <PlatformInvoiceTable
-          invoices={visible}
+          invoices={loading || error ? visible : pagination.rows}
           loading={loading}
           error={error}
           viewPath={(invoice) => (invoice.tenantId == null ? "" : accountsPath(`/hospitals/${invoice.tenantId}`))}
@@ -66,6 +69,7 @@ export default function InvoicesPayments() {
               : <Link to={accountsPath(`/hospitals/${invoice.tenantId}`)} onClick={(event) => event.stopPropagation()}>{invoice.hospitalName || "Hospital"}</Link>
           )}
         />
+        {!loading && !error ? <Pagination {...pagination} onPageChange={pagination.setPage} /> : null}
       </section>
     </section>
   );

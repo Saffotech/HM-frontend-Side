@@ -306,7 +306,7 @@ button.crm-kpi:focus-visible {
 .crm-select input {
   box-sizing: border-box;
   height: 36px;
-  min-width: 120px;
+  min-width: 148px;
   padding: 0 10px;
   border: 1px solid var(--color-border);
   border-radius: 10px;

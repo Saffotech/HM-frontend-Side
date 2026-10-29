@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { Building2, CalendarPlus, IndianRupee, Users } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../../../../shared/components/Button";
+import Pagination from "../../../../shared/components/Pagination";
+import { LIST_PAGE_SIZE, usePagination } from "../../../../shared/hooks/usePagination";
 import { usePlatformRevenue } from "../../../../shared/hooks/usePlatformRevenue";
 import { formatCurrency } from "../../../../shared/utils/formatCurrency";
 import { formatDate, formatDateTime } from "../../../../shared/utils/formatDate";
@@ -212,6 +214,7 @@ export default function Dashboard() {
       refresh: reloadRevenue,
     };
   }, [hospitalError, hospitals, hospitalsBusy, hospitalsLoading, payments, refreshing, registrations, reload, reloadRevenue, revenue, revenueError, revenueLoading, selected, subscriptions]);
+  const pagination = usePagination(table.rows, LIST_PAGE_SIZE, selected);
 
   return (
     <section className="dash-page">
@@ -277,13 +280,14 @@ export default function Dashboard() {
               ) : (
                 <DashboardRows
                   type={selected}
-                  rows={table.rows}
+                  rows={pagination.rows}
                   onOpenHospital={(hospital) => navigate(`${PLATFORM_BASE}/hospitals/${hospital.tenant_id}`)}
                 />
               )}
             </tbody>
           </table>
         </div>
+        {!table.loading && !table.error ? <Pagination {...pagination} onPageChange={pagination.setPage} /> : null}
       </section>
 
     </section>

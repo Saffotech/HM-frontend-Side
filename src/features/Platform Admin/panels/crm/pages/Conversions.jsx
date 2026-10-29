@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { BadgeCheck, Hourglass, XCircle } from "lucide-react";
 import Pagination from "../../../shared/components/Pagination";
 import SearchBar from "../../../shared/components/SearchBar";
-import { usePagination } from "../../../shared/hooks/usePagination";
+import { LIST_PAGE_SIZE, usePagination } from "../../../shared/hooks/usePagination";
 import { useCrmRevenue } from "../../../shared/hooks/useCrmRevenue";
 import { formatCurrency } from "../../../shared/utils/formatCurrency";
 import { formatDate } from "../../../shared/utils/formatDate";
@@ -65,7 +65,7 @@ export default function Conversions() {
     lost: leads.filter((lead) => lead.status === "Not Interested").sort((a, b) => String(b.closedAt).localeCompare(String(a.closedAt))),
   }), [leads]);
   const rows = useMemo(() => groups[tab].filter((lead) => includesQuery([lead.hospitalName, lead.contactPerson, lead.hospitalId, lead.city, lead.closeReason], query)), [groups, query, tab]);
-  const pagination = usePagination(rows, 10, `${tab}|${query}`);
+  const pagination = usePagination(rows, LIST_PAGE_SIZE, `${tab}|${query}`);
   const empty = {
     pending: ["Nothing waiting on Accounts", "When a hospital agrees, mark the lead as agreed to hand it over."],
     registered: ["No registered hospitals yet", "Hospitals appear here after Accounts registers them."],
@@ -160,7 +160,7 @@ export default function Conversions() {
             </tbody>
           </table>
         </div>
-        {rows.length > 0 && (
+        {pagination.total > pagination.pageSize && (
           <div className="crm-pager">
             <Pagination {...pagination} onPageChange={pagination.setPage} />
           </div>

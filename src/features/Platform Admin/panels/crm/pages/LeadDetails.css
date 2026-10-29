@@ -94,13 +94,13 @@
 
 .crm-lead-metadata-item strong {
   color: var(--color-text);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 650;
 }
 
 .crm-lead-metadata-item small {
   color: var(--color-text-secondary);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .crm-lead-actions {
@@ -150,9 +150,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 0 0 14px;
+  margin: 0 0 12px;
   color: #243b5e;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: 0;
   text-transform: none;
@@ -208,29 +208,39 @@
 .crm-facts-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px 16px;
+  gap: 10px 16px;
   margin: 0;
+}
+
+.crm-facts-grid > div {
+  min-width: 0;
 }
 
 .crm-facts-grid dt {
   color: var(--color-text-secondary);
-  font-size: 11.5px;
+  font-size: 14px;
   font-weight: 600;
+  line-height: 1.3;
 }
 
 .crm-facts-grid dd {
   margin: 2px 0 0;
   color: var(--color-text);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 550;
-  line-height: 1.45;
+  line-height: 1.35;
   overflow-wrap: anywhere;
 }
 
 .crm-facts-grid dd a {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+  display: inline;
+  overflow-wrap: anywhere;
+}
+
+.crm-facts-grid dd a svg {
+  display: inline-block;
+  margin-right: 5px;
+  vertical-align: -2px;
 }
 
 .crm-note-box {

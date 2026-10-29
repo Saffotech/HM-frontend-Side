@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { CalendarClock, CalendarX2, CheckCircle2, Phone } from "lucide-react";
 import Pagination from "../../../shared/components/Pagination";
 import SearchBar from "../../../shared/components/SearchBar";
-import { usePagination } from "../../../shared/hooks/usePagination";
+import { LIST_PAGE_SIZE, usePagination } from "../../../shared/hooks/usePagination";
 import { formatDate } from "../../../shared/utils/formatDate";
 import { formatPhoneDisplay } from "../../../shared/utils/phoneNumbers";
 import { followUpsFor } from "../../../shared/utils/leadMetrics";
@@ -77,8 +77,9 @@ export default function FollowUps() {
     if (priority && (lead.priority || "Medium") !== priority) return false;
     return includesQuery([lead.hospitalName, lead.contactPerson, lead.contactPhone, lead.nextAction], query);
   }), [groups, priority, query, view]);
-  const pagination = usePagination(rows, 10, `${view}|${query}|${priority}`);
+  const pagination = usePagination(rows, LIST_PAGE_SIZE, `${view}|${query}|${priority}`);
   const [emptyTitle, emptyCopy] = EMPTY[view];
+  const showActions = view === "overdue" || view === "unscheduled";
   const columns = view === "completed"
     ? ["Hospital", "Was due", "Completed", "Timing", "How", "Notes"]
     : ["Hospital", "Contact", "Priority", view === "unscheduled" ? "Status" : "Due", "Next action", "Last contact"];
@@ -112,13 +113,13 @@ export default function FollowUps() {
             <thead>
               <tr>
                 {columns.map((column) => <th key={column} scope="col">{column}</th>)}
-                {view !== "completed" && <th scope="col" className="crm-followup-action-head">Action</th>}
+                {showActions && <th scope="col" className="crm-followup-action-head">Action</th>}
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 ? (
                 <tr className="crm-table-empty">
-                  <td colSpan={columns.length + (view === "completed" ? 0 : 1)}>
+                  <td colSpan={columns.length + (showActions ? 1 : 0)}>
                     <div className="crm-empty">
                       {view === "unscheduled" || view === "overdue" ? <CheckCircle2 size={28} aria-hidden="true" /> : <CalendarX2 size={28} aria-hidden="true" />}
                       <strong>{query || priority ? "Nothing matches these filters" : emptyTitle}</strong>
@@ -170,21 +171,23 @@ export default function FollowUps() {
                       </td>
                       <td><span className="crm-clip" title={lead.nextAction}>{lead.nextAction || "—"}</span></td>
                       <td className="crm-nowrap">{contact ? <>{contact.method}<span className="crm-sub">{formatDate(contact.at)}</span></> : <span className="crm-sub">Never</span>}</td>
-                      <td>
-                        <div className="crm-row-actions crm-followup-actions">
-                          {view === "unscheduled" ? (
-                            <>
-                              <button type="button" className="crm-link is-outline" onClick={() => actions.schedule(lead)}><CalendarClock size={13} aria-hidden="true" />Schedule</button>
-                              <button type="button" className="crm-link" onClick={() => actions.logContact(lead)}><Phone size={13} aria-hidden="true" />Log contact</button>
-                            </>
-                          ) : (
-                            <>
-                              <button type="button" className="crm-link is-outline" onClick={() => actions.logContact(lead, "complete")}><CheckCircle2 size={13} aria-hidden="true" />Complete</button>
-                              <button type="button" className="crm-link" onClick={() => actions.schedule(lead)}><CalendarClock size={13} aria-hidden="true" />Reschedule</button>
-                            </>
-                          )}
-                        </div>
-                      </td>
+                      {showActions && (
+                        <td>
+                          <div className="crm-row-actions crm-followup-actions">
+                            {view === "unscheduled" ? (
+                              <>
+                                <button type="button" className="crm-link is-outline" onClick={() => actions.schedule(lead)}><CalendarClock size={13} aria-hidden="true" />Schedule</button>
+                                <button type="button" className="crm-link" onClick={() => actions.logContact(lead)}><Phone size={13} aria-hidden="true" />Log contact</button>
+                              </>
+                            ) : (
+                              <>
+                                <button type="button" className="crm-link is-outline" onClick={() => actions.logContact(lead, "complete")}><CheckCircle2 size={13} aria-hidden="true" />Complete</button>
+                                <button type="button" className="crm-link" onClick={() => actions.schedule(lead)}><CalendarClock size={13} aria-hidden="true" />Reschedule</button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })
@@ -192,7 +195,7 @@ export default function FollowUps() {
             </tbody>
           </table>
         </div>
-        {rows.length > 0 && (
+        {pagination.total > pagination.pageSize && (
           <div className="crm-pager">
             <Pagination {...pagination} onPageChange={pagination.setPage} />
           </div>

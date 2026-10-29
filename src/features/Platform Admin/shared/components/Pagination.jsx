@@ -1,28 +1,52 @@
-import Button from "./Button";
+import { ChevronsLeft, ChevronsRight } from "lucide-react";
+import { shouldShowPagination, visiblePageNumbers } from "../hooks/paginationMath";
 import "./Pagination.css";
 
-function windowPages(page, total) {
-  const size = 5;
-  let start = Math.max(1, page - 2);
-  const end = Math.min(total, start + size - 1);
-  start = Math.max(1, end - size + 1);
-  return Array.from({ length: end - start + 1 }, (_, index) => start + index);
-}
+export default function Pagination({ page, totalPages, total, pageSize, onPageChange }) {
+  if (!shouldShowPagination(total, pageSize) || totalPages <= 1) return null;
 
-export default function Pagination({ page, totalPages, total, from, to, onPageChange }) {
-  if (total === 0) return null;
+  const pages = visiblePageNumbers(page, totalPages, 5);
+  const go = (next) => {
+    const target = Math.min(Math.max(1, next), totalPages);
+    if (target !== page) onPageChange(target);
+  };
+
   return (
-    <div className="pagination">
-      <span className="muted">Showing {from}–{to} of {total}</span>
-      <div className="pagination-pages">
-        <Button variant="secondary" size="sm" disabled={page === 1} onClick={() => onPageChange(page - 1)}>Previous</Button>
-        {windowPages(page, totalPages).map((number) => (
-          <Button key={number} variant="secondary" size="sm" className={number === page ? "page-active" : ""} onClick={() => onPageChange(number)}>
+    <nav className="pagination" aria-label={`Pagination, page ${page} of ${totalPages}`}>
+      <div className="pagination-pages" role="group" aria-label="Page navigation">
+        <button
+          type="button"
+          className="pagination-btn"
+          disabled={page <= 1}
+          onClick={() => go(1)}
+          aria-label="First page"
+          title="First page"
+        >
+          <ChevronsLeft size={16} aria-hidden="true" />
+        </button>
+        {pages.map((number) => (
+          <button
+            key={number}
+            type="button"
+            className={`pagination-btn${number === page ? " is-active" : ""}`}
+            onClick={() => go(number)}
+            aria-label={`Page ${number}`}
+            aria-current={number === page ? "page" : undefined}
+          >
             {number}
-          </Button>
+          </button>
         ))}
-        <Button variant="secondary" size="sm" disabled={page === totalPages} onClick={() => onPageChange(page + 1)}>Next</Button>
+        <button
+          type="button"
+          className="pagination-btn"
+          disabled={page >= totalPages}
+          onClick={() => go(totalPages)}
+          aria-label="Last page"
+          title="Last page"
+        >
+          <ChevronsRight size={16} aria-hidden="true" />
+        </button>
       </div>
-    </div>
+    </nav>
   );
 }

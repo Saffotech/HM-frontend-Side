@@ -6,6 +6,8 @@ import { platformAuth } from "../../../shared/api/platformSession";
 import { getRegistration, listRegistrations } from "../../../shared/api/registrationApi";
 import Button from "../../../shared/components/Button";
 import DataTable from "../../../shared/components/DataTable";
+import Pagination from "../../../shared/components/Pagination";
+import { LIST_PAGE_SIZE, usePagination } from "../../../shared/hooks/usePagination";
 import Modal from "../../../shared/components/Modal";
 import SearchBar from "../../../shared/components/SearchBar";
 import { usePlatform } from "../../../shared/context/PlatformContext";
@@ -59,8 +61,16 @@ export default function Registrations() {
     load();
   }, [load]);
 
-  const source = tab === "To register" ? waiting : registered;
-  const rows = source.filter((item) => includesQuery([item.hospitalName, item.city, item.contactPerson, item.agreedBy, item.plan, item.hospitalCode], search));
+  const waitingRows = useMemo(
+    () => waiting.filter((item) => includesQuery([item.hospitalName, item.city, item.contactPerson, item.agreedBy, item.plan, item.hospitalCode], search)),
+    [search, waiting],
+  );
+  const registeredRows = useMemo(
+    () => registered.filter((item) => includesQuery([item.hospitalName, item.city, item.contactPerson, item.agreedBy, item.plan, item.hospitalCode], search)),
+    [registered, search],
+  );
+  const rows = tab === "To register" ? waitingRows : registeredRows;
+  const pagination = usePagination(rows, LIST_PAGE_SIZE, `${tab}|${search}`);
   const viewing = useMemo(
     () => waiting.find((item) => item.id === viewId) || registered.find((item) => item.id === viewId) || null,
     [registered, viewId, waiting],
@@ -143,11 +153,12 @@ export default function Registrations() {
           </div>
         )}
         <DataTable
-          rows={loading ? [] : rows}
+          rows={loading ? [] : pagination.rows}
           columns={tab === "To register" ? waitingColumns : registeredColumns}
           emptyTitle={loading ? "Loading registrations" : error ? "Registrations could not be loaded" : search.trim() ? "No hospitals match your search." : tab === "To register" ? "Nothing to register" : "No registrations yet"}
           emptyMessage={loading ? "Fetching the registration queue." : error ? "Retry the request. Nothing was saved in this browser." : search.trim() ? "Try a hospital name, city or contact." : tab === "To register" ? "Hospitals appear here when CRM marks them as agreed." : "Hospitals you register will appear here."}
         />
+        {!loading && !error ? <Pagination {...pagination} onPageChange={pagination.setPage} /> : null}
       </section>
 
       <Modal

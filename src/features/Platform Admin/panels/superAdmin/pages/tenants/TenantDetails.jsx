@@ -18,6 +18,8 @@ import Select from "../../../../shared/components/Select";
 import { PLAN_NAMES, billingCycles } from "../../../../shared/data/catalog";
 import { usePlatform } from "../../../../shared/context/PlatformContext";
 import { usePlatformPlans } from "../../../../shared/hooks/usePlatformPlans";
+import Pagination from "../../../../shared/components/Pagination";
+import { LIST_PAGE_SIZE, usePagination } from "../../../../shared/hooks/usePagination";
 import { usePlatformRevenue } from "../../../../shared/hooks/usePlatformRevenue";
 import { isPlatformAdminLocation, platformBackTitle } from "../../../../shared/navigation/inAppHistory";
 import { useInAppBack, useInAppPrevious } from "../../../../shared/navigation/InAppHistoryTracker";
@@ -215,6 +217,7 @@ function SubscriptionHistory({ tenantId }) {
     () => (revenue?.invoices || []).filter((invoice) => String(invoice.tenantId) === String(tenantId)),
     [revenue, tenantId],
   );
+  const pagination = usePagination(rows, LIST_PAGE_SIZE, String(tenantId || ""));
 
   return (
     <section className="td-box">
@@ -228,28 +231,31 @@ function SubscriptionHistory({ tenantId }) {
       ) : rows.length === 0 ? (
         <p className="td-empty">This hospital has not taken a subscription yet.</p>
       ) : (
-        <table className="td-table">
-          <thead>
-            <tr>
-              <th>Taken on</th>
-              <th>Plan</th>
-              <th>Amount</th>
-              <th>Due</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((invoice) => (
-              <tr key={invoice.id}>
-                <td>{showDay(invoice.invoiceDate)}</td>
-                <td>{[invoice.plan, invoice.billingCycle].filter(Boolean).join(" · ") || "—"}</td>
-                <td>{money(invoice.bucket === "collected" && invoice.paymentAmount != null ? invoice.paymentAmount : invoice.amount)}</td>
-                <td>{showDay(invoice.dueDate)}</td>
-                <td><span className={`td-chip td-chip-${invoiceTones[invoice.status] || "grey"}`}>{invoice.status || "—"}</span></td>
+        <>
+          <table className="td-table">
+            <thead>
+              <tr>
+                <th>Taken on</th>
+                <th>Plan</th>
+                <th>Amount</th>
+                <th>Due</th>
+                <th>Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {pagination.rows.map((invoice) => (
+                <tr key={invoice.id}>
+                  <td>{showDay(invoice.invoiceDate)}</td>
+                  <td>{[invoice.plan, invoice.billingCycle].filter(Boolean).join(" · ") || "—"}</td>
+                  <td>{money(invoice.bucket === "collected" && invoice.paymentAmount != null ? invoice.paymentAmount : invoice.amount)}</td>
+                  <td>{showDay(invoice.dueDate)}</td>
+                  <td><span className={`td-chip td-chip-${invoiceTones[invoice.status] || "grey"}`}>{invoice.status || "—"}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <Pagination {...pagination} onPageChange={pagination.setPage} />
+        </>
       )}
     </section>
   );

@@ -2,7 +2,9 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
 import Button from "../../../../shared/components/Button";
+import Pagination from "../../../../shared/components/Pagination";
 import SearchBar from "../../../../shared/components/SearchBar";
+import { LIST_PAGE_SIZE, usePagination } from "../../../../shared/hooks/usePagination";
 import Select from "../../../../shared/components/Select";
 import { activePlanNames } from "../../../../shared/api/platformPlans";
 import { PLAN_NAMES } from "../../../../shared/data/catalog";
@@ -55,6 +57,7 @@ export default function Subscriptions() {
     if (filters.cycle && hospital.billing_cycle !== filters.cycle) return false;
     return true;
   }), [hospitals, filters]);
+  const pagination = usePagination(rows, LIST_PAGE_SIZE, [filters.query, filters.plan, filters.status, filters.cycle].join("|"));
 
   const summary = [
     ["all", "All", counts.all, ""],
@@ -120,7 +123,7 @@ export default function Subscriptions() {
                 <tr>
                   <td colSpan={6}><p className="subs-muted" style={{ margin: "14px 0" }}>{loading ? "Loading hospitals." : error || "No hospitals are registered yet."}</p></td>
                 </tr>
-              ) : rows.map((hospital) => {
+              ) : pagination.rows.map((hospital) => {
                 const status = statusKey(hospital);
                 const statusLabel = hospital.is_active === false
                   ? "Suspended"
@@ -153,6 +156,7 @@ export default function Subscriptions() {
             </tbody>
           </table>
         </div>
+        <Pagination {...pagination} onPageChange={pagination.setPage} />
       </section>
 
     </section>

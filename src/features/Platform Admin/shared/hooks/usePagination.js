@@ -1,31 +1,26 @@
 import { useState } from "react";
+import { paginate } from "./paginationMath";
 
+export { LIST_PAGE_SIZE, paginate, shouldShowPagination, visiblePageNumbers } from "./paginationMath";
+
+/**
+ * Paginate an in-memory array. `resetKey` returns to page 1 when search,
+ * filters, sorting, or the relevant tab change. A shrinking result set
+ * clamps the current page instead of leaving it past the last page.
+ */
 export function usePagination(items, pageSize = 8, resetKey = "") {
   const [page, setPage] = useState(1);
   const [seenKey, setSeenKey] = useState(resetKey);
-  let currentPage = page;
+  let current = page;
 
   if (seenKey !== resetKey) {
     setSeenKey(resetKey);
     setPage(1);
-    currentPage = 1;
+    current = 1;
   }
 
-  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
-  if (currentPage > totalPages) {
-    setPage(totalPages);
-    currentPage = totalPages;
-  }
+  const result = paginate(items, current, pageSize);
+  if (result.page !== current) setPage(result.page);
 
-  const start = (currentPage - 1) * pageSize;
-  return {
-    page: currentPage,
-    setPage,
-    pageSize,
-    totalPages,
-    total: items.length,
-    from: items.length === 0 ? 0 : start + 1,
-    to: Math.min(start + pageSize, items.length),
-    rows: items.slice(start, start + pageSize),
-  };
+  return { ...result, setPage };
 }

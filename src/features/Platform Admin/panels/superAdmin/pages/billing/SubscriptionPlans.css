@@ -4,6 +4,26 @@
   --classic-head: #f0f3f7;
 }
 
+.plan-confirm {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.plan-confirm li {
+  margin: 0;
+  padding: 8px 10px;
+  color: #243b5e;
+  background: #eef5fb;
+  border: 1px solid #d3e2f0;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
 .plans-toolbar {
   display: flex;
   flex-wrap: wrap;

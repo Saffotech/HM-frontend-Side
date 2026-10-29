@@ -15,6 +15,8 @@ import {
   X,
 } from "lucide-react";
 import Button from "../../../shared/components/Button";
+import Pagination from "../../../shared/components/Pagination";
+import { LIST_PAGE_SIZE, usePagination } from "../../../shared/hooks/usePagination";
 import { useCrmRevenue } from "../../../shared/hooks/useCrmRevenue";
 import { formatCurrency } from "../../../shared/utils/formatCurrency";
 import { formatPhoneDisplay } from "../../../shared/utils/phoneNumbers";
@@ -79,6 +81,8 @@ export default function Dashboard() {
     conversion: [...leads].sort((a, b) => String(b.submittedAt).localeCompare(String(a.submittedAt))),
   };
   const rows = rowsByView[view] || [];
+  const revenueHospitals = attributed?.hospitals || [];
+  const pagination = usePagination(view === "revenue" ? revenueHospitals : rows, LIST_PAGE_SIZE, view);
 
   const openRow = (event, leadId) => {
     if (event.target.closest("button, a, input, select, textarea")) return;
@@ -273,7 +277,7 @@ export default function Dashboard() {
             <tbody>
               {view === "revenue" ? (
                 <RevenueRows
-                  hospitals={attributed?.hospitals || []}
+                  hospitals={pagination.rows}
                   loading={revenueLoading && !attributed}
                   error={revenueError}
                   empty={config.empty}
@@ -291,7 +295,7 @@ export default function Dashboard() {
                     </div>
                   </td>
                 </tr>
-              ) : rows.map((lead) => (
+              ) : pagination.rows.map((lead) => (
                 <tr
                   key={lead.id}
                   className="crm-dash-row-link"
@@ -307,6 +311,11 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
+        {pagination.total > pagination.pageSize && (
+          <div className="crm-pager">
+            <Pagination {...pagination} onPageChange={pagination.setPage} />
+          </div>
+        )}
       </section>
     </div>
   );

@@ -250,6 +250,8 @@ describe("panel page titles", () => {
     const planApi = readSrc("./platformPlans.js");
     assert.doesNotMatch(plans, /This screen shows the active catalog/);
     assert.match(plans, /Add plan/);
+    assert.doesNotMatch(plans, /onClick=\{beginAdd\}/);
+    assert.doesNotMatch(plans, />Delete</);
     assert.match(plans, /createPlatformPlan/);
     assert.match(plans, /updatePlatformPlan/);
     assert.match(plans, /deactivatePlatformPlan/);

@@ -1,18 +1,18 @@
 import { useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Hand, Inbox, Lock, Plus, SearchX } from "lucide-react";
+import { Hand, Inbox, Plus, SearchX } from "lucide-react";
 import Button from "../../../shared/components/Button";
 import Pagination from "../../../shared/components/Pagination";
 import SearchBar from "../../../shared/components/SearchBar";
 import { formatPhoneDisplay } from "../../../shared/utils/phoneNumbers";
-import { usePagination } from "../../../shared/hooks/usePagination";
+import { LIST_PAGE_SIZE, usePagination } from "../../../shared/hooks/usePagination";
 import { formatDate } from "../../../shared/utils/formatDate";
 import { shiftDays } from "../../../shared/utils/periods";
 import { includesQuery } from "../../../shared/utils/table";
 import { FollowMark, PriorityMark, StatusMark } from "../components/CrmMarks";
 import Filter from "../components/CrmFilter";
 import { crmTabPanelProps, crmTabProps, onCrmTabKeyDown, useCrmTabIds } from "../components/crmTabs";
-import { CLAIM_LIMIT, ORIGINS, POOL_ORIGINS, followBucket, followMeta, isOpen, leadAge, leadOrigin, plural } from "../utils/crmLeads";
+import { CLAIM_LIMIT, ORIGINS, followBucket, followMeta, isOpen, leadAge, leadOrigin, plural } from "../utils/crmLeads";
 import { useCrm } from "../workspace/workspace-context";
 
 const TABS = [
@@ -30,7 +30,7 @@ const FOLLOW_FILTERS = [
   ["week", "Next 7 days"],
   ["unscheduled", "Not scheduled"],
 ];
-const FILTER_KEYS = ["q", "priority", "plan", "follow", "origin"];
+const FILTER_KEYS = ["q", "priority", "plan", "follow"];
 // The empty slot is the tab-dependent follow-up / reason column.
 const LEAD_COLUMNS = ["Hospital", "Contact", "Phone", "City", "Plan", "Priority", "Status", "", "Created"];
 const NEXT_HEADERS = { "Not Interested": "Not interested reason", all: "Next follow-up / reason" };
@@ -62,8 +62,6 @@ export default function Leads() {
   const priority = params.get("priority") || "";
   const plan = params.get("plan") || "";
   const follow = inPool ? "" : params.get("follow") || "";
-  const origins = inPool ? POOL_ORIGINS : ORIGINS;
-  const origin = origins[params.get("origin")] ? params.get("origin") : "";
   const focus = params.get("focus");
   const showNextStep = !["Contacted", "Agreed", "Registered", "all"].includes(tab);
   const leadColumns = showNextStep ? LEAD_COLUMNS : LEAD_COLUMNS.filter(Boolean);
@@ -103,7 +101,6 @@ export default function Leads() {
     const filtered = source.filter((lead) => {
       if (priority && (lead.priority || "Medium") !== priority) return false;
       if (plan && lead.plan !== plan) return false;
-      if (origin && leadOrigin(lead, me) !== origin) return false;
       if (follow) {
         const bucket = followBucket(lead, today);
         if (follow === "week" ? !(isOpen(lead) && lead.followUpDate >= today && lead.followUpDate <= weekEnd) : bucket !== follow) return false;
@@ -114,10 +111,10 @@ export default function Leads() {
       return includesQuery(searchable, query);
     });
     return filtered.sort((a, b) => String(b.submittedAt).localeCompare(String(a.submittedAt)));
-  }, [follow, inPool, leads, me, origin, plan, pool, priority, query, tab, today]);
+  }, [follow, inPool, leads, plan, pool, priority, query, tab, today]);
 
   const filtersOn = FILTER_KEYS.some((key) => params.get(key));
-  const pagination = usePagination(rows, 10, params.toString());
+  const pagination = usePagination(rows, LIST_PAGE_SIZE, [tab, query, priority, plan, follow].join("|"));
   const clearFilters = () => update(Object.fromEntries(FILTER_KEYS.map((key) => [key, ""])));
   const atLimit = uncontacted >= CLAIM_LIMIT;
 
@@ -140,7 +137,6 @@ export default function Leads() {
               onClick={() => update({
                 tab: key === "open" ? "" : key,
                 follow: key === "New" ? "" : params.get("follow") || "",
-                origin: (key === "New") === inPool ? origin : "",
               })}
             >
               {label}<span>{counts[key]}</span>
@@ -152,24 +148,19 @@ export default function Leads() {
           <div className="crm-search">
             <SearchBar value={query} onChange={(value) => update({ q: value })} placeholder={inPool ? "Search hospital, city, requirement…" : "Search name, contact, phone…"} />
           </div>
-          <Filter label="Priority" value={priority} onChange={(value) => update({ priority: value })} options={["High", "Medium", "Low"]} />
-          <Filter label="Plan" value={plan} onChange={(value) => update({ plan: value })} options={plans} />
-          {!inPool && <Filter label="Follow-up" value={follow} onChange={(value) => update({ follow: value })} options={FOLLOW_FILTERS} />}
-          <Filter label="Lead origin" value={origin} onChange={(value) => update({ origin: value })} options={Object.entries(origins)} />
+          <Filter label="" ariaLabel="Priority" allLabel="All Priority" value={priority} onChange={(value) => update({ priority: value })} options={["High", "Medium", "Low"]} />
+          <Filter label="" ariaLabel="Plan" allLabel="All Plan" value={plan} onChange={(value) => update({ plan: value })} options={plans} />
+          {!inPool && <Filter label="" ariaLabel="Follow-up" allLabel="All Follow-up" value={follow} onChange={(value) => update({ follow: value })} options={FOLLOW_FILTERS} />}
           <div className="crm-toolbar-end">
             <span className="crm-count" aria-live="polite">{inPool ? `${rows.length} ${rows.length === 1 ? "enquiry" : "enquiries"}` : plural(rows.length, "lead")}</span>
             <button type="button" className="crm-clear" disabled={!filtersOn} onClick={clearFilters}>Clear filters</button>
           </div>
         </div>
 
-        {inPool && (
-          <p className={`crm-callout ${atLimit ? "crm-callout-warn" : "crm-callout-info"} crm-pool-note`}>
-            {atLimit ? <Hand size={16} aria-hidden="true" /> : <Lock size={16} aria-hidden="true" />}
-            <span>
-              {atLimit
-                ? `You have ${CLAIM_LIMIT} new leads you haven't contacted yet. Contact one of them before claiming more.`
-                : `Claim an enquiry to unlock its contact details. It moves to your Open list and no one else can claim it. You can hold up to ${CLAIM_LIMIT} new leads you haven't contacted (you have ${uncontacted}).`}
-            </span>
+        {inPool && atLimit && (
+          <p className="crm-callout crm-callout-warn crm-pool-note">
+            <Hand size={16} aria-hidden="true" />
+            <span>You have {CLAIM_LIMIT} new leads you haven't contacted yet. Contact one of them before claiming more.</span>
           </p>
         )}
 
@@ -192,13 +183,12 @@ export default function Leads() {
                   {leadColumns.map((column) => (
                     <th key={column} scope="col">{column || NEXT_HEADERS[tab] || "Next follow-up"}</th>
                   ))}
-                  <th scope="col" className="is-end">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.length === 0 && (
                   <tr className="crm-table-empty">
-                    <td colSpan={leadColumns.length + 1}>
+                    <td colSpan={leadColumns.length}>
                       {leads.length === 0 ? (
                         <div className="crm-empty">
                           <Inbox size={28} aria-hidden="true" />
@@ -231,18 +221,13 @@ export default function Leads() {
                     <td><StatusMark status={lead.status} /></td>
                     {showNextStep && <td><NextStep lead={lead} today={today} /></td>}
                     <td className="crm-nowrap">{formatDate(lead.submittedAt)}<span className="crm-sub">{ORIGINS[leadOrigin(lead, me)]}</span></td>
-                    <td>
-                      <div className="crm-row-actions">
-                        <button type="button" className="crm-link" onClick={() => actions.openLead(lead.id)}>View</button>
-                      </div>
-                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
-        {rows.length > 0 && (
+        {pagination.total > pagination.pageSize && (
           <div className="crm-pager">
             <Pagination {...pagination} onPageChange={pagination.setPage} />
           </div>

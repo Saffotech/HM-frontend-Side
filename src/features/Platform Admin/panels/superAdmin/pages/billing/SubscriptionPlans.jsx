@@ -47,6 +47,12 @@ function money(value) {
   return formatCurrency(value);
 }
 
+function hospitalsKeepingPlan(name, count) {
+  if (count === 1) return `1 hospital already on ${name} keeps this plan.`;
+  if (count === 0) return `No hospital is currently on ${name}.`;
+  return `${count} hospitals already on ${name} keep this plan.`;
+}
+
 export default function SubscriptionPlans() {
   const { hospitals } = useRegisteredHospitals();
   const { plans, loading, error, reload } = usePlatformPlans();
@@ -65,6 +71,8 @@ export default function SubscriptionPlans() {
   const hospitalCount = (name) => hospitals.filter((hospital) => hospital.plan === name).length;
   const activeCount = plans.filter((plan) => plan.isActive).length;
 
+  // The page no longer shows an Add plan control. This handler stays for the existing create form.
+  // eslint-disable-next-line no-unused-vars
   const beginAdd = () => {
     setOpen(null);
     setEditingPlan(null);
@@ -141,7 +149,6 @@ export default function SubscriptionPlans() {
     setFeedback("");
     try {
       await deactivatePlatformPlan(deactivating.id);
-      setFeedback(`${deactivating.name} was deactivated.`);
       setDeactivating(null);
       reload();
     } catch (err) {
@@ -192,7 +199,6 @@ export default function SubscriptionPlans() {
   return (
     <section className="plans-page">
       <div className="plans-toolbar">
-        <Button onClick={beginAdd} disabled={busy}>Add plan</Button>
         {feedback && <p className="plans-feedback" role="status">{feedback}</p>}
         {mutationError && <p className="plans-mutation-error" role="alert">{mutationError}</p>}
       </div>
@@ -236,10 +242,7 @@ export default function SubscriptionPlans() {
               {plan.isActive ? (
                 <Button variant="danger" size="sm" onClick={() => { setMutationError(""); setFeedback(""); setDeleting(null); setDeactivating(plan); }} disabled={busy || plan.id == null} title={plan.id == null ? "This plan has no server ID." : "Deactivate plan"}>Deactivate</Button>
               ) : (
-                <>
-                  <Button variant="outline" size="sm" className="plan-activate-action" onClick={() => activatePlan(plan)} disabled={busy || plan.id == null} title={plan.id == null ? "This plan has no server ID." : "Activate plan"}>Activate</Button>
-                  <Button variant="danger" size="sm" className="plan-delete-action" onClick={() => { setMutationError(""); setFeedback(""); setDeactivating(null); setDeleting(plan); }} disabled={busy || plan.id == null} title={plan.id == null ? "This plan has no server ID." : "Delete plan"}>Delete</Button>
-                </>
+                <Button variant="outline" size="sm" className="plan-activate-action" onClick={() => activatePlan(plan)} disabled={busy || plan.id == null} title={plan.id == null ? "This plan has no server ID." : "Activate plan"}>Activate</Button>
               )}
             </div>
           </article>
@@ -332,7 +335,7 @@ export default function SubscriptionPlans() {
       <Modal
         open={Boolean(deactivating)}
         title="Deactivate plan?"
-        subtitle={deactivating ? `${deactivating.name} will no longer be available for new subscriptions.` : ""}
+        subtitle={deactivating ? `New hospitals cannot select ${deactivating.name}.` : ""}
         onClose={() => { if (!busy) setDeactivating(null); }}
         size="sm"
         footer={<>
@@ -340,7 +343,12 @@ export default function SubscriptionPlans() {
           <Button variant="danger" onClick={confirmDeactivation} disabled={busy}>{busy ? "Deactivating…" : "Deactivate plan"}</Button>
         </>}
       >
-        <p className="panel-copy">Hospitals and invoices already using this plan stay unchanged.</p>
+        {deactivating && (
+          <ul className="plan-confirm">
+            <li>{hospitalsKeepingPlan(deactivating.name, hospitalCount(deactivating.name))}</li>
+            <li>Invoices already issued for {deactivating.name} keep their amount.</li>
+          </ul>
+        )}
       </Modal>
 
       <Modal
