@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Building2, Eye, Plus, RotateCcw } from 'lucide-react';
-import SuperAdminLayout from '@/features/admin/components/AdminLayout';
-import SuperAdminPageHeader from '@/features/admin/components/AdminPageHeader';
-import AdminStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
+import AdminLayout from '@/features/admin/components/AdminLayout';
+import AdminPageHeader from '@/features/admin/components/AdminPageHeader';
+import ManagerStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
 import { useDepartmentDoctorsData } from '@/features/admin/hooks/useDepartmentDoctors';
 import { useAdminDepartmentsQuery } from '@/shared/hooks/queries/useAdminQuery';
 import { isLabOrRadDepartment } from '@/shared/utils/labDepartments';
@@ -15,7 +15,8 @@ import {
 } from '@/shared/components/common';
 import { adminPanelRoutes } from '@/shared/constants';
 
-export default function SuperAdminDepartmentsListPage() {
+/* Legacy identifier preserved: SuperAdminDepartmentsListPage. Active name: AdminDepartmentsListPage. */
+export default function AdminDepartmentsListPage() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const panel = adminPanelRoutes(pathname);
@@ -75,9 +76,9 @@ export default function SuperAdminDepartmentsListPage() {
   };
 
   return (
-    <SuperAdminLayout compact>
-      <div className="admin-page sa-dept-list-page admin-page--compact">
-        <SuperAdminPageHeader
+    <AdminLayout compact>
+      <div className="admin-page admin-panel-dept-list-page admin-page--compact">
+        <AdminPageHeader
           title="Departments"
           actions={(
             <Button onClick={() => navigate(panel.departmentsNew)}>
@@ -87,7 +88,7 @@ export default function SuperAdminDepartmentsListPage() {
           )}
         />
 
-        <div className="admin-card sa-panel-card admin-card--flat admin-datatable">
+        <div className="admin-card admin-panel-panel-card admin-card--flat admin-datatable">
           <div className="admin-datatable__toolbar">
             <SearchBar
               value={search}
@@ -173,25 +174,25 @@ export default function SuperAdminDepartmentsListPage() {
                           </td>
                           <td data-label="Type">
                             {isLabOrRadDepartment(dept) ? (
-                              <span className="sa-dept-type sa-dept-type--lab">Lab</span>
+                              <span className="admin-panel-dept-type admin-panel-dept-type--lab">Lab</span>
                             ) : (
-                              <span className="sa-dept-type sa-dept-type--doctor">Doctor</span>
+                              <span className="admin-panel-dept-type admin-panel-dept-type--doctor">Doctor</span>
                             )}
                           </td>
                           <td data-label="Assigned">
-                            <span className="sa-dept-list__doctor-count">
+                            <span className="admin-panel-dept-list__doctor-count">
                               {isLabOrRadDepartment(dept)
                                 ? (labTechCountByDepartment[dept.id] ?? 0)
                                 : (doctorCountByDepartment[dept.id] ?? 0)}
                             </span>
                           </td>
                           <td data-label="Status">
-                            <AdminStaffStatusBadge isActive={dept.is_active} />
+                            <ManagerStaffStatusBadge isActive={dept.is_active} />
                           </td>
                           <td className="admin-table__actions" data-label="Actions">
                             <button
                               type="button"
-                              className="sa-staff-list__action sa-staff-list__action--view"
+                              className="admin-panel-staff-list__action admin-panel-staff-list__action--view"
                               onClick={() =>
                                 navigate(panel.departmentDetail(dept.id))
                               }
@@ -210,6 +211,6 @@ export default function SuperAdminDepartmentsListPage() {
           </div>
         </div>
       </div>
-    </SuperAdminLayout>
+    </AdminLayout>
   );
 }

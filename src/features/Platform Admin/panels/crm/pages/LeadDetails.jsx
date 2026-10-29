@@ -7,7 +7,7 @@ import { isNumericLeadId } from "../../../shared/api/hospitalRegistration";
 import Button from "../../../shared/components/Button";
 import { usePlatform } from "../../../shared/context/PlatformContext";
 import { isCrmLocation } from "../../../shared/navigation/inAppHistory";
-import { useInAppBack, useInAppPrevious } from "../../../shared/navigation/InAppHistoryTracker";
+import { useInAppBack, useInAppPrevious } from "../../../shared/navigation/useInAppHistory";
 import { CRM_BASE, crmPath } from "../../../shared/paths";
 import { formatDate, formatDateTime } from "../../../shared/utils/formatDate";
 import { formatPhoneDisplay } from "../../../shared/utils/phoneNumbers";

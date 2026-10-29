@@ -30,7 +30,8 @@ function fallbackCatalog(roles = []) {
  * Load permission catalog for assign-permissions UI.
  * Prefers live IDs from GET /roles/permissions; falls back to cached/seed data.
  */
-export async function loadSuperAdminPermissionCatalog() {
+/* Legacy identifier preserved: loadSuperAdminPermissionCatalog. Active name: loadAdminPermissionCatalog. */
+export async function loadAdminPermissionCatalog() {
   let roles = [];
   try {
     roles = await listRoles();

@@ -14,10 +14,10 @@ import {
   UserX,
   X,
 } from 'lucide-react';
-import SuperAdminLayout from '@/features/admin/components/AdminLayout';
-import AdminBackBar from '@/features/manager/components/ManagerBackBar';
-import AdminRoleBadge from '@/features/manager/components/ManagerRoleBadge';
-import AdminStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
+import AdminLayout from '@/features/admin/components/AdminLayout';
+import ManagerBackBar from '@/features/manager/components/ManagerBackBar';
+import ManagerRoleBadge from '@/features/manager/components/ManagerRoleBadge';
+import ManagerStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
 import {
   useActivateStaffMutation,
   useAdminDepartmentsQuery,
@@ -94,10 +94,10 @@ function digitsOnlyMax10(value) {
 function DetailField({ label, value, empty = '—' }) {
   const isEmpty = value == null || String(value).trim() === '';
   return (
-    <div className={`sa-staff-detail__field${isEmpty ? ' sa-staff-detail__field--empty' : ''}`}>
-      <dt className="sa-staff-detail__field-label">{label}</dt>
+    <div className={`admin-panel-staff-detail__field${isEmpty ? ' admin-panel-staff-detail__field--empty' : ''}`}>
+      <dt className="admin-panel-staff-detail__field-label">{label}</dt>
       <dd
-        className={`sa-staff-detail__field-value${isEmpty ? ' sa-staff-detail__field-value--empty' : ''}`}
+        className={`admin-panel-staff-detail__field-value${isEmpty ? ' admin-panel-staff-detail__field-value--empty' : ''}`}
       >
         {isEmpty ? empty : value}
       </dd>
@@ -119,7 +119,8 @@ function userToForm(user) {
   };
 }
 
-export default function SuperAdminStaffDetailPage() {
+/* Legacy identifier preserved: SuperAdminStaffDetailPage. Active name: AdminStaffDetailPage. */
+export default function AdminStaffDetailPage() {
   const { id } = useParams();
   const userId = Number(id);
   const navigate = useNavigate();
@@ -247,14 +248,14 @@ export default function SuperAdminStaffDetailPage() {
   }
 
   return (
-    <SuperAdminLayout pageTitle="Staff Details">
-      <div className="admin-page sa-staff-detail-page">
-        <AdminBackBar onBack={() => navigate(panel.staff)} label="Back to staff">
+    <AdminLayout pageTitle="Staff Details">
+      <div className="admin-page admin-panel-staff-detail-page">
+        <ManagerBackBar onBack={() => navigate(panel.staff)} label="Back to staff">
           {user && !editing ? (
-            <div className="sa-staff-detail__toolbar-actions">
+            <div className="admin-panel-staff-detail__toolbar-actions">
               <Button
                 size="sm"
-                className="sa-staff-detail__btn sa-staff-detail__btn--edit"
+                className="admin-panel-staff-detail__btn admin-panel-staff-detail__btn--edit"
                 onClick={() => setEditing(true)}
               >
                 <Pencil size={14} aria-hidden />
@@ -262,10 +263,10 @@ export default function SuperAdminStaffDetailPage() {
               </Button>
               <Button
                 size="sm"
-                className={`sa-staff-detail__btn ${
+                className={`admin-panel-staff-detail__btn ${
                   isActive
-                    ? 'sa-staff-detail__btn--deactivate'
-                    : 'sa-staff-detail__btn--activate'
+                    ? 'admin-panel-staff-detail__btn--deactivate'
+                    : 'admin-panel-staff-detail__btn--activate'
                 }`}
                 onClick={() => setConfirm({ type: 'activate' })}
               >
@@ -284,10 +285,10 @@ export default function SuperAdminStaffDetailPage() {
             </div>
           ) : null}
           {editing ? (
-            <div className="sa-staff-detail__toolbar-actions">
+            <div className="admin-panel-staff-detail__toolbar-actions">
               <Button
                 size="sm"
-                className="sa-staff-detail__btn sa-staff-detail__btn--cancel"
+                className="admin-panel-staff-detail__btn admin-panel-staff-detail__btn--cancel"
                 onClick={cancelEdit}
               >
                 <X size={14} aria-hidden />
@@ -295,7 +296,7 @@ export default function SuperAdminStaffDetailPage() {
               </Button>
               <Button
                 size="sm"
-                className="sa-staff-detail__btn sa-staff-detail__btn--save"
+                className="admin-panel-staff-detail__btn admin-panel-staff-detail__btn--save"
                 onClick={handleSave}
                 disabled={updateMutation.isPending}
               >
@@ -304,11 +305,11 @@ export default function SuperAdminStaffDetailPage() {
               </Button>
             </div>
           ) : null}
-        </AdminBackBar>
+        </ManagerBackBar>
 
         <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={apiQuery.refetch}>
           {!user ? (
-            <div className="admin-card sa-panel-card sa-staff-detail__empty">
+            <div className="admin-card admin-panel-panel-card admin-panel-staff-detail__empty">
               <div className="admin-empty-state">
                 <p>Staff record not found.</p>
                 <Button variant="outline" onClick={() => navigate(panel.staff)}>
@@ -317,64 +318,64 @@ export default function SuperAdminStaffDetailPage() {
               </div>
             </div>
           ) : (
-            <div className="sa-staff-detail">
-              <header className="sa-staff-detail__hero">
-                <div className="sa-staff-detail__hero-main">
-                  <div className="sa-staff-detail__avatar" aria-hidden>
+            <div className="admin-panel-staff-detail">
+              <header className="admin-panel-staff-detail__hero">
+                <div className="admin-panel-staff-detail__hero-main">
+                  <div className="admin-panel-staff-detail__avatar" aria-hidden>
                     {staffInitials(user)}
                   </div>
-                  <div className="sa-staff-detail__identity">
-                    <div className="sa-staff-detail__title-row">
-                      <h1 className="sa-staff-detail__name">{displayName}</h1>
-                      <AdminRoleBadge roleName={user.role_name || user.role} />
-                      <AdminStaffStatusBadge isActive={isActive} />
+                  <div className="admin-panel-staff-detail__identity">
+                    <div className="admin-panel-staff-detail__title-row">
+                      <h1 className="admin-panel-staff-detail__name">{displayName}</h1>
+                      <ManagerRoleBadge roleName={user.role_name || user.role} />
+                      <ManagerStaffStatusBadge isActive={isActive} />
                     </div>
-                    <p className="sa-staff-detail__email">
+                    <p className="admin-panel-staff-detail__email">
                       <Mail size={14} aria-hidden />
                       <a href={`mailto:${user.email}`}>{user.email}</a>
                     </p>
                   </div>
                 </div>
-                <div className="sa-staff-detail__hero-footer" role="list">
-                  <div className="sa-staff-detail__stat sa-staff-detail__stat--logins" role="listitem">
-                    <span className="sa-staff-detail__stat-icon" aria-hidden>
+                <div className="admin-panel-staff-detail__hero-footer" role="list">
+                  <div className="admin-panel-staff-detail__stat admin-panel-staff-detail__stat--logins" role="listitem">
+                    <span className="admin-panel-staff-detail__stat-icon" aria-hidden>
                       <Activity size={16} />
                     </span>
                     <div>
-                      <span className="sa-staff-detail__stat-value">{user.login_count ?? 0}</span>
-                      <span className="sa-staff-detail__stat-label">Total logins</span>
+                      <span className="admin-panel-staff-detail__stat-value">{user.login_count ?? 0}</span>
+                      <span className="admin-panel-staff-detail__stat-label">Total logins</span>
                     </div>
                   </div>
-                  <div className="sa-staff-detail__stat sa-staff-detail__stat--last" role="listitem">
-                    <span className="sa-staff-detail__stat-icon" aria-hidden>
+                  <div className="admin-panel-staff-detail__stat admin-panel-staff-detail__stat--last" role="listitem">
+                    <span className="admin-panel-staff-detail__stat-icon" aria-hidden>
                       <Calendar size={16} />
                     </span>
                     <div>
-                      <span className="sa-staff-detail__stat-value">
+                      <span className="admin-panel-staff-detail__stat-value">
                         {formatDate(user.last_login) || 'Never'}
                       </span>
-                      <span className="sa-staff-detail__stat-label">Last login</span>
+                      <span className="admin-panel-staff-detail__stat-label">Last login</span>
                     </div>
                   </div>
-                  <div className="sa-staff-detail__stat sa-staff-detail__stat--since" role="listitem">
-                    <span className="sa-staff-detail__stat-icon" aria-hidden>
+                  <div className="admin-panel-staff-detail__stat admin-panel-staff-detail__stat--since" role="listitem">
+                    <span className="admin-panel-staff-detail__stat-icon" aria-hidden>
                       <User size={16} />
                     </span>
                     <div>
-                      <span className="sa-staff-detail__stat-value">
+                      <span className="admin-panel-staff-detail__stat-value">
                         {formatDate(user.created_at) || '—'}
                       </span>
-                      <span className="sa-staff-detail__stat-label">Member since</span>
+                      <span className="admin-panel-staff-detail__stat-label">Member since</span>
                     </div>
                   </div>
                 </div>
               </header>
 
               {editing ? (
-                <section className="sa-staff-detail__panel sa-staff-detail__panel--edit sa-staff-detail__panel--personal">
-                  <div className="sa-staff-detail__panel-head">
-                    <div className="sa-staff-detail__panel-title">
-                      <span className="sa-staff-detail__panel-icon" aria-hidden>
+                <section className="admin-panel-staff-detail__panel admin-panel-staff-detail__panel--edit admin-panel-staff-detail__panel--personal">
+                  <div className="admin-panel-staff-detail__panel-head">
+                    <div className="admin-panel-staff-detail__panel-title">
+                      <span className="admin-panel-staff-detail__panel-icon" aria-hidden>
                         <Briefcase size={18} />
                       </span>
                       <div>
@@ -383,10 +384,10 @@ export default function SuperAdminStaffDetailPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="sa-staff-detail__form-grid">
-                    <div className="sa-staff-detail__form-section">
+                  <div className="admin-panel-staff-detail__form-grid">
+                    <div className="admin-panel-staff-detail__form-section">
                       <h3>Personal details</h3>
-                      <div className="sa-staff-detail__fields sa-staff-detail__fields--2">
+                      <div className="admin-panel-staff-detail__fields admin-panel-staff-detail__fields--2">
                         <div>
                           <Label htmlFor="sa_staff_first">First name</Label>
                           <Input
@@ -423,9 +424,9 @@ export default function SuperAdminStaffDetailPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="sa-staff-detail__form-section">
+                    <div className="admin-panel-staff-detail__form-section">
                       <h3>Role &amp; department</h3>
-                      <div className="sa-staff-detail__fields sa-staff-detail__fields--2">
+                      <div className="admin-panel-staff-detail__fields admin-panel-staff-detail__fields--2">
                         <div>
                           <Label>Role</Label>
                           <Select
@@ -447,7 +448,7 @@ export default function SuperAdminStaffDetailPage() {
                           <Label>
                             Department
                             {departmentRequired ? (
-                              <span className="sa-register-field__req" aria-hidden> *</span>
+                              <span className="admin-panel-register-field__req" aria-hidden> *</span>
                             ) : null}
                           </Label>
                           <Select
@@ -471,9 +472,9 @@ export default function SuperAdminStaffDetailPage() {
                       </div>
                     </div>
                     {isDoctorStaffRole(selectedRoleName) ? (
-                      <div className="sa-staff-detail__form-section">
+                      <div className="admin-panel-staff-detail__form-section">
                         <h3>Doctor credentials</h3>
-                        <div className="sa-staff-detail__fields sa-staff-detail__fields--2">
+                        <div className="admin-panel-staff-detail__fields admin-panel-staff-detail__fields--2">
                           <div>
                             <Label htmlFor="sa_staff_specialization">Specialization</Label>
                             <Input
@@ -501,9 +502,9 @@ export default function SuperAdminStaffDetailPage() {
                         </div>
                       </div>
                     ) : null}
-                    <div className="sa-staff-detail__form-section">
+                    <div className="admin-panel-staff-detail__form-section">
                       <h3>Employment</h3>
-                      <div className="sa-staff-detail__fields sa-staff-detail__fields--2">
+                      <div className="admin-panel-staff-detail__fields admin-panel-staff-detail__fields--2">
                         <div>
                           <Label htmlFor="sa_staff_emp">Employee ID</Label>
                           <Input
@@ -527,11 +528,11 @@ export default function SuperAdminStaffDetailPage() {
                   </div>
                 </section>
               ) : (
-                <div className="sa-staff-detail__grid">
-                  <section className="sa-staff-detail__panel sa-staff-detail__panel--personal">
-                    <div className="sa-staff-detail__panel-head">
-                      <div className="sa-staff-detail__panel-title">
-                        <span className="sa-staff-detail__panel-icon" aria-hidden>
+                <div className="admin-panel-staff-detail__grid">
+                  <section className="admin-panel-staff-detail__panel admin-panel-staff-detail__panel--personal">
+                    <div className="admin-panel-staff-detail__panel-head">
+                      <div className="admin-panel-staff-detail__panel-title">
+                        <span className="admin-panel-staff-detail__panel-icon" aria-hidden>
                           <User size={18} />
                         </span>
                         <div>
@@ -540,7 +541,7 @@ export default function SuperAdminStaffDetailPage() {
                         </div>
                       </div>
                     </div>
-                    <dl className="sa-staff-detail__fields-grid">
+                    <dl className="admin-panel-staff-detail__fields-grid">
                       <DetailField label="Full name" value={displayName} />
                       <DetailField label="Email" value={user.email} />
                       <DetailField label="Phone" value={user.phone} />
@@ -551,10 +552,10 @@ export default function SuperAdminStaffDetailPage() {
                     </dl>
                   </section>
 
-                  <section className="sa-staff-detail__panel sa-staff-detail__panel--employment">
-                    <div className="sa-staff-detail__panel-head">
-                      <div className="sa-staff-detail__panel-title">
-                        <span className="sa-staff-detail__panel-icon" aria-hidden>
+                  <section className="admin-panel-staff-detail__panel admin-panel-staff-detail__panel--employment">
+                    <div className="admin-panel-staff-detail__panel-head">
+                      <div className="admin-panel-staff-detail__panel-title">
+                        <span className="admin-panel-staff-detail__panel-icon" aria-hidden>
                           <IdCard size={18} />
                         </span>
                         <div>
@@ -563,7 +564,7 @@ export default function SuperAdminStaffDetailPage() {
                         </div>
                       </div>
                     </div>
-                    <dl className="sa-staff-detail__fields-grid">
+                    <dl className="admin-panel-staff-detail__fields-grid">
                       <DetailField
                         label="System role"
                         value={formatRoleLabel(user.role_name || user.role)}
@@ -597,8 +598,8 @@ export default function SuperAdminStaffDetailPage() {
               )}
 
               {!editing ? (
-                <section className="sa-staff-detail__danger">
-                  <div className="sa-staff-detail__danger-copy">
+                <section className="admin-panel-staff-detail__danger">
+                  <div className="admin-panel-staff-detail__danger-copy">
                     <h3>Delete staff account</h3>
                     <p>
                       Permanently removes access for {displayName}. This cannot be undone.
@@ -606,7 +607,7 @@ export default function SuperAdminStaffDetailPage() {
                   </div>
                   <Button
                     variant="outline"
-                    className="sa-staff-detail__danger-btn"
+                    className="admin-panel-staff-detail__danger-btn"
                     onClick={() => setConfirm({ type: 'delete' })}
                   >
                     <Trash2 size={14} aria-hidden />
@@ -631,6 +632,6 @@ export default function SuperAdminStaffDetailPage() {
         onConfirm={handleConfirm}
         onCancel={() => setConfirm(null)}
       />
-    </SuperAdminLayout>
+    </AdminLayout>
   );
 }

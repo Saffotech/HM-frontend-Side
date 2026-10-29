@@ -13,7 +13,7 @@ import Button from "../../../shared/components/Button";
 import { displayHospitalName, matchesInvoiceFilters, sumPaidAmounts } from "../../../shared/api/invoiceModel";
 import { usePlatformInvoices } from "../../../shared/hooks/usePlatformInvoices";
 import { accountantBackTitle, isAccountantLocation } from "../../../shared/navigation/inAppHistory";
-import { useInAppBack, useInAppPrevious } from "../../../shared/navigation/InAppHistoryTracker";
+import { useInAppBack, useInAppPrevious } from "../../../shared/navigation/useInAppHistory";
 import { accountsPath } from "../../../shared/paths";
 import { todayInput } from "../../../shared/utils/formatDate";
 import { formatCurrency } from "../../../shared/utils/formatCurrency";

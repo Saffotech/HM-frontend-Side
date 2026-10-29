@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Download, FileText, RotateCcw } from 'lucide-react';
-import AdminLayout from '@/features/manager/components/ManagerLayout';
-import AdminEmptyState from '@/features/manager/components/ManagerEmptyState';
-import AdminPageHeader from '@/features/manager/components/ManagerPageHeader';
-import AdminReportFilters from '@/features/manager/components/ManagerReportFilters';
-import AdminStatusPill from '@/features/manager/components/ManagerStatusPill';
+import ManagerLayout from '@/features/manager/components/ManagerLayout';
+import ManagerEmptyState from '@/features/manager/components/ManagerEmptyState';
+import ManagerPageHeader from '@/features/manager/components/ManagerPageHeader';
+import ManagerReportFilters from '@/features/manager/components/ManagerReportFilters';
+import ManagerStatusPill from '@/features/manager/components/ManagerStatusPill';
 import {
   defaultReportDateRange,
   formatReportDate,
@@ -76,9 +76,9 @@ export default function VisitsReportPage() {
   };
 
   return (
-    <AdminLayout pageTitle="Visit reports">
+    <ManagerLayout pageTitle="Visit reports">
       <div className="admin-page admin-page--compact">
-        <AdminPageHeader
+        <ManagerPageHeader
           title="Visit reports"
           actions={(
             <nav className="admin-subnav" aria-label="Report sections">
@@ -108,7 +108,7 @@ export default function VisitsReportPage() {
         </p>
 
         <div className="admin-visits-filter-row">
-          <AdminReportFilters
+          <ManagerReportFilters
             inline
             fromDate={range.from_date}
             toDate={range.to_date}
@@ -130,7 +130,7 @@ export default function VisitsReportPage() {
               <RotateCcw size={14} aria-hidden />
               Reset
             </Button>
-          </AdminReportFilters>
+          </ManagerReportFilters>
         </div>
 
         <QueryFeedback
@@ -144,7 +144,7 @@ export default function VisitsReportPage() {
               <div className="admin-card admin-card--flat">
                 <div className="admin-card__body admin-card__body--flush-top">
                   {!visits.length ? (
-                    <AdminEmptyState
+                    <ManagerEmptyState
                       icon={<FileText size={22} />}
                       title="No visits found"
                       description="Adjust the date range or department filter to see visit records."
@@ -185,10 +185,10 @@ export default function VisitsReportPage() {
                                   </span>
                                 </td>
                                 <td data-label="Payment">
-                                  <AdminStatusPill label={visit.payment_status} />
+                                  <ManagerStatusPill label={visit.payment_status} />
                                 </td>
                                 <td data-label="Status">
-                                  <AdminStatusPill label={visit.status} />
+                                  <ManagerStatusPill label={visit.status} />
                                 </td>
                               </tr>
                             ))}
@@ -211,6 +211,6 @@ export default function VisitsReportPage() {
           )}
         </QueryFeedback>
       </div>
-    </AdminLayout>
+    </ManagerLayout>
   );
 }

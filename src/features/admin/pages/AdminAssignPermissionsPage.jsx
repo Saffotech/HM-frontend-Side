@@ -1,20 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Save } from 'lucide-react';
-import SuperAdminLayout from '@/features/admin/components/AdminLayout';
-import SuperAdminPermissionPicker from '@/features/admin/components/AdminPermissionPicker';
-import AdminBackBar from '@/features/manager/components/ManagerBackBar';
+import AdminLayout from '@/features/admin/components/AdminLayout';
+import AdminPermissionPicker from '@/features/admin/components/AdminPermissionPicker';
+import ManagerBackBar from '@/features/manager/components/ManagerBackBar';
 import {
   useAdminRolesQuery,
   useAssignRolePermissionsMutation,
 } from '@/shared/hooks/queries/useAdminQuery';
-import { useSuperAdminPermissionCatalogQuery } from '@/features/admin/hooks/useAdminQuery';
+import { useAdminPermissionCatalogQuery } from '@/features/admin/hooks/useAdminQuery';
 import { Button, QueryFeedback } from '@/shared/components/common';
 import { adminPanelRoutes } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 import { formatRoleLabel } from '@/features/admin/utils/permissionPresentation';
 
-export default function SuperAdminAssignPermissionsPage() {
+/* Legacy identifier preserved: SuperAdminAssignPermissionsPage. Active name: AdminAssignPermissionsPage. */
+export default function AdminAssignPermissionsPage() {
   const { roleId } = useParams();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -22,7 +23,7 @@ export default function SuperAdminAssignPermissionsPage() {
   const [selectedIds, setSelectedIds] = useState([]);
 
   const apiRolesQuery = useAdminRolesQuery();
-  const apiCatalogQuery = useSuperAdminPermissionCatalogQuery();
+  const apiCatalogQuery = useAdminPermissionCatalogQuery();
   const assignMutation = useAssignRolePermissionsMutation();
 
   const roles = apiRolesQuery.data;
@@ -99,13 +100,13 @@ export default function SuperAdminAssignPermissionsPage() {
   const roleLabel = formatRoleLabel(selectedRole?.name);
 
   return (
-    <SuperAdminLayout pageTitle="Assign Permissions">
-      <div className="admin-page sa-perm-page">
-        <AdminBackBar onBack={() => navigate(panel.roles)} />
+    <AdminLayout pageTitle="Assign Permissions">
+      <div className="admin-page admin-panel-perm-page">
+        <ManagerBackBar onBack={() => navigate(panel.roles)} />
 
         <QueryFeedback isLoading={isLoading} isError={isError} error={error}>
           {!selectedRole ? (
-            <div className="admin-card sa-panel-card">
+            <div className="admin-card admin-panel-panel-card">
               <div className="admin-empty-state">
                 <p>Role not found. Choose a role from the list.</p>
                 <Button variant="outline" onClick={() => navigate(panel.roles)}>
@@ -114,12 +115,12 @@ export default function SuperAdminAssignPermissionsPage() {
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="sa-perm-form">
-              <div className="admin-card sa-panel-card sa-perm-card">
-                <div className="sa-perm-card__toolbar">
-                  <div className="sa-perm-card__intro">
-                    <h1 className="sa-perm-card__title">Permissions for {roleLabel}</h1>
-                    <p className="sa-perm-card__sub">{summaryText}</p>
+            <form onSubmit={handleSubmit} className="admin-panel-perm-form">
+              <div className="admin-card admin-panel-panel-card admin-panel-perm-card">
+                <div className="admin-panel-perm-card__toolbar">
+                  <div className="admin-panel-perm-card__intro">
+                    <h1 className="admin-panel-perm-card__title">Permissions for {roleLabel}</h1>
+                    <p className="admin-panel-perm-card__sub">{summaryText}</p>
                   </div>
                   <Button type="submit" disabled={assignMutation.isPending || !totalPermissions}>
                     <Save size={16} aria-hidden />
@@ -128,11 +129,11 @@ export default function SuperAdminAssignPermissionsPage() {
                 </div>
 
                 {!totalPermissions ? (
-                  <p className="sa-settings-unsupported" role="note">
+                  <p className="admin-panel-settings-unsupported" role="note">
                     Permission catalog is unavailable. Re-run database seed or assign permissions via API.
                   </p>
                 ) : (
-                  <SuperAdminPermissionPicker
+                  <AdminPermissionPicker
                     catalog={assignableCatalog}
                     selectedIds={selectedIds}
                     onToggle={togglePermission}
@@ -144,6 +145,6 @@ export default function SuperAdminAssignPermissionsPage() {
           )}
         </QueryFeedback>
       </div>
-    </SuperAdminLayout>
+    </AdminLayout>
   );
 }

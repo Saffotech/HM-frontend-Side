@@ -10,15 +10,15 @@ import {
   Users,
   UserX,
 } from 'lucide-react';
-import AdminLayout from '@/features/manager/components/ManagerLayout';
-import AdminBarChart from '@/features/manager/components/ManagerBarChart';
-import AdminEmptyState from '@/features/manager/components/ManagerEmptyState';
-import AdminQuickAction from '@/features/manager/components/ManagerQuickAction';
+import ManagerLayout from '@/features/manager/components/ManagerLayout';
+import ManagerBarChart from '@/features/manager/components/ManagerBarChart';
+import ManagerEmptyState from '@/features/manager/components/ManagerEmptyState';
+import ManagerQuickAction from '@/features/manager/components/ManagerQuickAction';
 import { formatRoleLabel } from '@/features/manager/utils/formatRoleLabel';
 import { isPlatformOrganizationRole } from '@/features/manager/utils/hospitalManagerRoles';
-import AdminStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
-import AdminStatCard from '@/features/manager/components/ManagerStatCard';
-import AdminUserCell from '@/features/manager/components/ManagerUserCell';
+import ManagerStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
+import ManagerStatCard from '@/features/manager/components/ManagerStatCard';
+import ManagerUserCell from '@/features/manager/components/ManagerUserCell';
 import { useAdminBedAllocationPermissions } from '@/features/manager/hooks/useManagerBedAllocationPermissions';
 import {
   useAdminDashboardQuery,
@@ -146,7 +146,7 @@ function buildCardCopy({
 function StaffPreviewList({ items }) {
   if (!items.length) {
     return (
-      <AdminEmptyState
+      <ManagerEmptyState
         icon={<Users size={22} />}
         title="No staff in this selection"
         description="Try another filter or clear the current selection."
@@ -163,7 +163,7 @@ function StaffPreviewList({ items }) {
           .trim();
         return (
           <li key={member.id} className="admin-dashboard-staff-preview__item">
-            <AdminUserCell
+            <ManagerUserCell
               name={fullName || member.email}
               email={member.email}
               subtitle={
@@ -172,7 +172,7 @@ function StaffPreviewList({ items }) {
                   : formatRoleLabel(member.role_name)
               }
             />
-            <AdminStaffStatusBadge isActive={member.is_active} />
+            <ManagerStaffStatusBadge isActive={member.is_active} />
           </li>
         );
       })}
@@ -180,7 +180,8 @@ function StaffPreviewList({ items }) {
   );
 }
 
-export default function AdminDashboardPage() {
+/* Legacy identifier preserved: AdminDashboardPage. Active name: ManagerDashboardPage. */
+export default function ManagerDashboardPage() {
   const navigate = useNavigate();
   const { data, isLoading, isError, error, refetch } = useAdminDashboardQuery();
   const { canView: canViewAllocations } = useAdminBedAllocationPermissions();
@@ -449,7 +450,7 @@ export default function AdminDashboardPage() {
     (focus === FOCUS.STAFF && needsStaffQuery && previewError);
 
   return (
-    <AdminLayout pageTitle="Dashboard">
+    <ManagerLayout pageTitle="Dashboard">
       <div className="admin-page admin-page--dashboard">
         <QueryFeedback
           isLoading={isLoading}
@@ -460,7 +461,7 @@ export default function AdminDashboardPage() {
           {data && (
             <>
               <div className="admin-stats admin-stats--dashboard">
-                <AdminStatCard
+                <ManagerStatCard
                   title="Active staff"
                   value={data.active_staff}
                   subtitle={`${data.total_staff ? Math.round((data.active_staff / data.total_staff) * 100) : 0}% of total`}
@@ -470,7 +471,7 @@ export default function AdminDashboardPage() {
                   isActive={focus === FOCUS.STAFF && statusFilter === 'true'}
                   onClick={() => selectStatus('true')}
                 />
-                <AdminStatCard
+                <ManagerStatCard
                   title="Inactive staff"
                   value={data.inactive_staff}
                   subtitle="Accounts disabled"
@@ -480,7 +481,7 @@ export default function AdminDashboardPage() {
                   isActive={focus === FOCUS.STAFF && statusFilter === 'false'}
                   onClick={() => selectStatus('false')}
                 />
-                <AdminStatCard
+                <ManagerStatCard
                   title="Departments"
                   value={data.total_departments}
                   subtitle="Active clinical units"
@@ -490,7 +491,7 @@ export default function AdminDashboardPage() {
                   isActive={focus === FOCUS.DEPARTMENTS}
                   onClick={selectDepartmentsFocus}
                 />
-                <AdminStatCard
+                <ManagerStatCard
                   title="System roles"
                   value={data.total_roles}
                   subtitle="Permission groups"
@@ -529,7 +530,7 @@ export default function AdminDashboardPage() {
                     {panelLoading ? (
                       <div className="admin-dashboard-preview-loading">Loading…</div>
                     ) : panelError ? (
-                      <AdminEmptyState
+                      <ManagerEmptyState
                         icon={<Users size={22} />}
                         title="Could not load data"
                         description="Try clearing the filter or open the full list."
@@ -538,7 +539,7 @@ export default function AdminDashboardPage() {
                       <StaffPreviewList items={staffPreviewSource} />
                     ) : showChart && focus === FOCUS.DEPARTMENTS ? (
                       departmentChartItems.length ? (
-                        <AdminBarChart
+                        <ManagerBarChart
                           items={departmentChartItems}
                           labelKey="display_name"
                           valueKey="count"
@@ -552,7 +553,7 @@ export default function AdminDashboardPage() {
                           }}
                         />
                       ) : (
-                        <AdminEmptyState
+                        <ManagerEmptyState
                           icon={<Building2 size={22} />}
                           title="No departments found"
                           description="Active departments will appear here once configured."
@@ -560,7 +561,7 @@ export default function AdminDashboardPage() {
                       )
                     ) : showChart && focus === FOCUS.ROLES ? (
                       roleChartItems.length ? (
-                        <AdminBarChart
+                        <ManagerBarChart
                           items={roleChartItems}
                           labelKey="display_name"
                           valueKey="count"
@@ -574,7 +575,7 @@ export default function AdminDashboardPage() {
                         />
                       ) : null
                     ) : showChart && roleChartItems.length ? (
-                      <AdminBarChart
+                      <ManagerBarChart
                         items={roleChartItems}
                         labelKey="display_name"
                         valueKey="count"
@@ -587,7 +588,7 @@ export default function AdminDashboardPage() {
                         }}
                       />
                     ) : (
-                      <AdminEmptyState
+                      <ManagerEmptyState
                         icon={<Users size={22} />}
                         title="No data for this filter"
                         description="Try another card or clear the current selection."
@@ -603,21 +604,21 @@ export default function AdminDashboardPage() {
                       <p className="admin-card__desc">Common administration tasks.</p>
                     </div>
                     <div className="admin-card__body admin-quick-actions">
-                      <AdminQuickAction
+                      <ManagerQuickAction
                         to={ROUTES.MANAGER_STAFF}
                         icon={<Users size={18} />}
                         title="Manage staff"
                         description="Search, edit, and activate accounts"
                         tone="primary"
                       />
-                      <AdminQuickAction
+                      <ManagerQuickAction
                         to={ROUTES.MANAGER_STAFF_NEW}
                         icon={<Plus size={18} />}
                         title="Register staff"
                         description="Create a new hospital account"
                         tone="success"
                       />
-                      <AdminQuickAction
+                      <ManagerQuickAction
                         to={ROUTES.MANAGER_REPORTS}
                         icon={<BarChart3 size={18} />}
                         title="Reports"
@@ -625,7 +626,7 @@ export default function AdminDashboardPage() {
                         tone="neutral"
                       />
                       {canViewAllocations && (
-                        <AdminQuickAction
+                        <ManagerQuickAction
                           to={ROUTES.MANAGER_BED_ALLOCATION}
                           icon={<BedDouble size={18} />}
                           title="Bed allocation"
@@ -694,6 +695,6 @@ export default function AdminDashboardPage() {
           )}
         </QueryFeedback>
       </div>
-    </AdminLayout>
+    </ManagerLayout>
   );
 }

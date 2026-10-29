@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import AdminLayout from '@/features/manager/components/ManagerLayout';
-import AdminEmptyState from '@/features/manager/components/ManagerEmptyState';
+import ManagerLayout from '@/features/manager/components/ManagerLayout';
+import ManagerEmptyState from '@/features/manager/components/ManagerEmptyState';
 import NurseWorkforceNav from '@/features/manager/components/NurseWorkforceNav';
 import { useAdminWorkforcePermissions } from '@/features/manager/hooks/useManagerWorkforcePermissions';
 import {
@@ -56,14 +56,14 @@ export default function NurseWorkforceShiftsPage() {
 
   if (!canView) {
     return (
-      <AdminLayout pageTitle="Shifts">
-        <AdminEmptyState title="Access denied" description="workforce:view required." />
-      </AdminLayout>
+      <ManagerLayout pageTitle="Shifts">
+        <ManagerEmptyState title="Access denied" description="workforce:view required." />
+      </ManagerLayout>
     );
   }
 
   return (
-    <AdminLayout pageTitle="Shifts">
+    <ManagerLayout pageTitle="Shifts">
       <div className="admin-page nwf-page">
         <NurseWorkforceNav />
 
@@ -134,6 +134,6 @@ export default function NurseWorkforceShiftsPage() {
           </div>
         </QueryFeedback>
       </div>
-    </AdminLayout>
+    </ManagerLayout>
   );
 }

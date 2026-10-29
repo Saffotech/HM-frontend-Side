@@ -1,11 +1,11 @@
 import { lazy } from 'react';
 import { Navigate } from 'react-router-dom';
 import ProtectedRoute from '@/components/security/ProtectedRoute';
-import AdminAppShell from '@/features/manager/components/ManagerAppShell';
+import ManagerAppShell from '@/features/manager/components/ManagerAppShell';
 import { ROUTES, ROLES } from '@/shared/constants';
 import LazyRoute from '@/routes/LazyRoute';
 
-const AdminDashboardPage = lazy(() => import('@/features/manager/pages/ManagerDashboardPage'));
+const ManagerDashboardPage = lazy(() => import('@/features/manager/pages/ManagerDashboardPage'));
 const StaffListPage = lazy(() => import('@/features/manager/pages/StaffListPage'));
 const StaffDetailPage = lazy(() => import('@/features/manager/pages/StaffDetailPage'));
 const StaffRegisterPage = lazy(() => import('@/features/manager/pages/StaffRegisterPage'));
@@ -21,8 +21,8 @@ const NurseBedAllocationEditPage = lazy(() => import('@/features/manager/pages/N
 const NurseWorkforceDashboardPage = lazy(() => import('@/features/manager/pages/NurseWorkforceDashboardPage'));
 const NurseWorkforceShiftsPage = lazy(() => import('@/features/manager/pages/NurseWorkforceShiftsPage'));
 const NurseWorkforceRosterPage = lazy(() => import('@/features/manager/pages/NurseWorkforceRosterPage'));
-const AdminSettingsPage = lazy(() => import('@/features/manager/pages/ManagerSettingsPage'));
-const AdminProfilePage = lazy(() => import('@/features/manager/pages/ManagerProfilePage'));
+const ManagerSettingsPage = lazy(() => import('@/features/manager/pages/ManagerSettingsPage'));
+const ManagerProfilePage = lazy(() => import('@/features/manager/pages/ManagerProfilePage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 export const managerRoutes = [
@@ -30,13 +30,13 @@ export const managerRoutes = [
     element: <ProtectedRoute allowedRoles={[ROLES.MANAGER]} />,
     children: [
       {
-        element: <AdminAppShell />,
+        element: <ManagerAppShell />,
         children: [
           {
             path: ROUTES.MANAGER_DASHBOARD,
             element: (
               <LazyRoute>
-                <AdminDashboardPage />
+                <ManagerDashboardPage />
               </LazyRoute>
             ),
           },
@@ -172,7 +172,7 @@ export const managerRoutes = [
             path: ROUTES.MANAGER_SETTINGS_OPD,
             element: (
               <LazyRoute>
-                <AdminSettingsPage />
+                <ManagerSettingsPage />
               </LazyRoute>
             ),
           },
@@ -180,7 +180,7 @@ export const managerRoutes = [
             path: ROUTES.MANAGER_SETTINGS_DOCTOR,
             element: (
               <LazyRoute>
-                <AdminSettingsPage />
+                <ManagerSettingsPage />
               </LazyRoute>
             ),
           },
@@ -188,7 +188,7 @@ export const managerRoutes = [
             path: ROUTES.MANAGER_SETTINGS_RECEPTIONIST,
             element: (
               <LazyRoute>
-                <AdminSettingsPage />
+                <ManagerSettingsPage />
               </LazyRoute>
             ),
           },
@@ -196,7 +196,7 @@ export const managerRoutes = [
             path: ROUTES.MANAGER_SETTINGS_LAB,
             element: (
               <LazyRoute>
-                <AdminSettingsPage />
+                <ManagerSettingsPage />
               </LazyRoute>
             ),
           },
@@ -204,7 +204,7 @@ export const managerRoutes = [
             path: ROUTES.MANAGER_SETTINGS_NURSE,
             element: (
               <LazyRoute>
-                <AdminSettingsPage />
+                <ManagerSettingsPage />
               </LazyRoute>
             ),
           },
@@ -212,7 +212,7 @@ export const managerRoutes = [
             path: ROUTES.MANAGER_SETTINGS_PHARMACY,
             element: (
               <LazyRoute>
-                <AdminSettingsPage />
+                <ManagerSettingsPage />
               </LazyRoute>
             ),
           },
@@ -220,7 +220,7 @@ export const managerRoutes = [
             path: ROUTES.MANAGER_PROFILE,
             element: (
               <LazyRoute>
-                <AdminProfilePage />
+                <ManagerProfilePage />
               </LazyRoute>
             ),
           },

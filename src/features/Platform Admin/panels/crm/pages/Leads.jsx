@@ -160,7 +160,7 @@ export default function Leads() {
         {inPool && atLimit && (
           <p className="crm-callout crm-callout-warn crm-pool-note">
             <Hand size={16} aria-hidden="true" />
-            <span>You have {CLAIM_LIMIT} new leads you haven't contacted yet. Contact one of them before claiming more.</span>
+            <span>You have {CLAIM_LIMIT} new leads you haven&apos;t contacted yet. Contact one of them before claiming more.</span>
           </p>
         )}
 

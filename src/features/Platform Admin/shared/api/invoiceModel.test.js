@@ -174,7 +174,7 @@ describe("platform invoice mapping", () => {
     assert.equal(listed.rows[0].number, "INV-9");
     assert.equal(readInvoiceList({ items: [], total: 0 }).ok, false);
 
-    const billing = readFileSync(new URL("../../panels/superAdmin/pages/billing/InvoicesPayments.jsx", import.meta.url), "utf8");
+    const billing = readFileSync(new URL("../../panels/platformAdmin/pages/billing/InvoicesPayments.jsx", import.meta.url), "utf8");
     assert.match(billing, /usePlatformRevenue/);
     assert.match(billing, /usePlatformInvoices/);
     assert.match(billing, /invoiceListErrorMessage/);

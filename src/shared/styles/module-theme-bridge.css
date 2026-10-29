@@ -1,3 +1,4 @@
+/* Legacy class prefix sa- is now admin-panel-. */
 /**
  * Bridge: remap every module-local CSS variable → shared design tokens.
  * Keeps existing class names working while forcing one visual language.
@@ -51,7 +52,7 @@
 
   /* Admin / Super Admin */
   --admin-primary: var(--color-primary);
-  --sa-primary: var(--color-primary);
+  --admin-panel-primary: var(--color-primary);
 
   /* Doctor shell */
   --doc-primary: var(--color-primary);
@@ -70,7 +71,7 @@
 .lab-role-label,
 .opd-role-label,
 .super-admin-role-label,
-.sa-role-label,
+.admin-panel-role-label,
 [class$='-role-label'] {
   margin: 0.5rem 1rem 0.35rem !important;
   padding: 0 0.125rem;
@@ -207,7 +208,7 @@ textarea {
 }
 
 .admin-page__title,
-.sa-page-header__title,
+.admin-panel-page-header__title,
 .rec-page__title,
 .nurse-page-header__title,
 .doc-page-title,
@@ -225,7 +226,7 @@ textarea {
 }
 
 .admin-page__eyebrow,
-.sa-page-header__eyebrow {
+.admin-panel-page-header__eyebrow {
   font-size: var(--text-label) !important;
   font-weight: var(--text-label-weight) !important;
   line-height: var(--text-label-leading) !important;
@@ -234,7 +235,7 @@ textarea {
 }
 
 .admin-card__title,
-.sa-card__title,
+.admin-panel-card__title,
 .rec-card__title,
 .nurse-card__title,
 .doc-card__title,
@@ -252,7 +253,7 @@ textarea {
 .nurse-kpi__value,
 .doc-stat__value,
 .lab-stat-card__value,
-.sa-dashboard-stat-btn .admin-stat-card__value,
+.admin-panel-dashboard-stat-btn .admin-stat-card__value,
 [class*='stat-card__value'],
 [class*='kpi__value'],
 [class*='stat__value'] {
@@ -291,7 +292,7 @@ label,
 .nurse-badge,
 .doc-badge,
 .admin-badge,
-.sa-badge {
+.admin-panel-badge {
   font-size: var(--text-badge) !important;
   font-weight: var(--text-badge-weight) !important;
   text-transform: none !important;
@@ -372,6 +373,6 @@ label,
 [class*='-kpi'],
 [class*='stat-card'],
 .admin-card__head,
-.sa-card__head {
+.admin-panel-card__head {
   background-image: none;
 }

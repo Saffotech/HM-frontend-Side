@@ -6,7 +6,7 @@ import {
   createPermission,
   createRole,
   deleteStaff,
-  getAdminDashboard,
+  getManagerDashboard,
   getDepartmentById,
   getReportsOverview,
   getReportsVisits,
@@ -46,7 +46,7 @@ export function useAdminDashboardQuery(options = {}) {
   return useQuery({
     queryKey: queryKeys.admin.dashboard,
     enabled,
-    queryFn: () => getAdminDashboard(),
+    queryFn: () => getManagerDashboard(),
   });
 }
 

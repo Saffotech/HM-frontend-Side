@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ShieldPlus } from 'lucide-react';
-import SuperAdminLayout from '@/features/admin/components/AdminLayout';
-import AdminBackBar from '@/features/manager/components/ManagerBackBar';
+import AdminLayout from '@/features/admin/components/AdminLayout';
+import ManagerBackBar from '@/features/manager/components/ManagerBackBar';
 import { useCreateRoleMutation } from '@/shared/hooks/queries/useAdminQuery';
 import { Button, Input, Label } from '@/shared/components/common';
 import { adminPanelRoutes } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 
-export default function SuperAdminRoleCreatePage() {
+/* Legacy identifier preserved: SuperAdminRoleCreatePage. Active name: AdminRoleCreatePage. */
+export default function AdminRoleCreatePage() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const panel = adminPanelRoutes(pathname);
@@ -40,9 +41,9 @@ export default function SuperAdminRoleCreatePage() {
   };
 
   return (
-    <SuperAdminLayout pageTitle="Create Role">
+    <AdminLayout pageTitle="Create Role">
       <div className="admin-page">
-        <AdminBackBar onBack={() => navigate(panel.roles)} />
+        <ManagerBackBar onBack={() => navigate(panel.roles)} />
         <div className="admin-card admin-card--narrow">
           <div className="admin-card__header">
             <h2 className="admin-card__title">New role</h2>
@@ -79,6 +80,6 @@ export default function SuperAdminRoleCreatePage() {
           </div>
         </div>
       </div>
-    </SuperAdminLayout>
+    </AdminLayout>
   );
 }

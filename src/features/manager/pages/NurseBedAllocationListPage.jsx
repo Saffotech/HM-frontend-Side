@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Plus, RotateCcw, UserX } from 'lucide-react';
-import AdminLayout from '@/features/manager/components/ManagerLayout';
-import AdminEmptyState from '@/features/manager/components/ManagerEmptyState';
-import AdminAllocationStatusBadge from '@/features/manager/components/ManagerAllocationStatusBadge';
+import ManagerLayout from '@/features/manager/components/ManagerLayout';
+import ManagerEmptyState from '@/features/manager/components/ManagerEmptyState';
+import ManagerAllocationStatusBadge from '@/features/manager/components/ManagerAllocationStatusBadge';
 import { useAdminBedAllocationPermissions } from '@/features/manager/hooks/useManagerBedAllocationPermissions';
 import {
   useAdminBedAllocationsQuery,
@@ -124,17 +124,17 @@ export default function NurseBedAllocationListPage() {
 
   if (!canView) {
     return (
-      <AdminLayout pageTitle="Nurse Bed Allocation">
+      <ManagerLayout pageTitle="Nurse Bed Allocation">
         <div className="admin-card nba-denied">
           <h2>Access denied</h2>
           <p className="nba-muted">You do not have permission to view bed allocations.</p>
         </div>
-      </AdminLayout>
+      </ManagerLayout>
     );
   }
 
   return (
-    <AdminLayout pageTitle="Nurse Bed Allocation">
+    <ManagerLayout pageTitle="Nurse Bed Allocation">
       <div className="admin-page nba-page">
         <div className="nba-header-actions nba-list-actions">
           <div className="nba-list-heading">
@@ -221,7 +221,7 @@ export default function NurseBedAllocationListPage() {
             onRetry={refetch}
           >
             {!isLoading && items.length === 0 ? (
-              <AdminEmptyState
+              <ManagerEmptyState
                 title="No allocations found"
                 description={
                   hasFilters
@@ -281,7 +281,7 @@ export default function NurseBedAllocationListPage() {
                             </Button>
                           </td>
                           <td data-label="Status">
-                            <AdminAllocationStatusBadge isActive={row.isActive} />
+                            <ManagerAllocationStatusBadge isActive={row.isActive} />
                           </td>
                           <td data-label="Assigned By"><span>{row.assignedByName}</span></td>
                           <td data-label="Created"><span>{formatAllocationDate(row.createdAt)}</span></td>
@@ -395,6 +395,6 @@ export default function NurseBedAllocationListPage() {
         onConfirm={confirmDeactivate}
         onCancel={() => setDeactivateIds(null)}
       />
-    </AdminLayout>
+    </ManagerLayout>
   );
 }

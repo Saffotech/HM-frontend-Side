@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -8,7 +8,6 @@ import {
   CalendarDays,
 } from 'lucide-react';
 import DoctorShell from '@/features/doctor/components/DoctorShell';
-import PageSpinner from '@/shared/components/PageSpinner';
 import { PATIENT_CATEGORY_FILTER } from '@/features/doctor/utils/patientListFilters';
 import { parseDoctorEncounterMode } from '@/features/doctor/utils/encounterType';
 import { parseDoctorSection, withDoctorSection } from '@/features/doctor/utils/doctorSection';

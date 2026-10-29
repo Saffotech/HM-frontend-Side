@@ -13,7 +13,7 @@ import {
 } from '@/features/manager/hooks/useManagerNotificationsQuery';
 import { Button, EmptyState } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
-import AdminNotificationRow from './ManagerNotificationRow';
+import ManagerNotificationRow from './ManagerNotificationRow';
 import './ManagerNotificationsBell.css';
 import './ManagerNotificationsSection.css';
 
@@ -34,7 +34,8 @@ const PRIORITY_FILTER_VALUES = new Set(
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-export default function AdminNotificationsSection({ onDeepLink }) {
+/* Legacy identifier preserved: AdminNotificationsSection. Active name: ManagerNotificationsSection. */
+export default function ManagerNotificationsSection({ onDeepLink }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -250,7 +251,7 @@ export default function AdminNotificationsSection({ onDeepLink }) {
             />
           ) : (
             items.map((n) => (
-              <AdminNotificationRow
+              <ManagerNotificationRow
                 key={n.id}
                 notification={n}
                 onClick={() => handleRowClick(n)}

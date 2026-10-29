@@ -1,4 +1,3 @@
-/* eslint-disable import/no-unresolved -- Node's test runner resolves node: imports. */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
@@ -333,9 +332,9 @@ describe("CRM screens use the lead API instead of seed data", () => {
     assert.doesNotMatch(context, /onboardingSeed/);
     assert.doesNotMatch(context, /invoicesSeed/);
 
-    const adminDashboard = readSrc("../../panels/superAdmin/pages/dashboard/Dashboard.jsx");
-    const performanceHook = readSrc("../../panels/superAdmin/pages/tenants/crmPerformance/useCrmPerformance.js");
-    const performancePage = readSrc("../../panels/superAdmin/pages/tenants/crmPerformance/CrmPerformance.jsx");
+    const adminDashboard = readSrc("../../panels/platformAdmin/pages/dashboard/Dashboard.jsx");
+    const performanceHook = readSrc("../../panels/platformAdmin/pages/tenants/crmPerformance/useCrmPerformance.js");
+    const performancePage = readSrc("../../panels/platformAdmin/pages/tenants/crmPerformance/CrmPerformance.jsx");
     assert.doesNotMatch(adminDashboard, /listLeads|countLeadList/);
     assert.match(performanceHook, /getCrmPerformance/);
     assert.match(performanceHook, /listTenants/);

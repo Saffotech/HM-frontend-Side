@@ -4,17 +4,17 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Eye, Plus, RotateCcw, Search } from 'lucide-react';
 
-import AdminLayout from '@/features/manager/components/ManagerLayout';
+import ManagerLayout from '@/features/manager/components/ManagerLayout';
 
-import AdminEmptyState from '@/features/manager/components/ManagerEmptyState';
+import ManagerEmptyState from '@/features/manager/components/ManagerEmptyState';
 
-import AdminPageHeader from '@/features/manager/components/ManagerPageHeader';
+import ManagerPageHeader from '@/features/manager/components/ManagerPageHeader';
 
-import AdminRoleBadge from '@/features/manager/components/ManagerRoleBadge';
+import ManagerRoleBadge from '@/features/manager/components/ManagerRoleBadge';
 
-import AdminStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
+import ManagerStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
 
-import AdminUserCell from '@/features/manager/components/ManagerUserCell';
+import ManagerUserCell from '@/features/manager/components/ManagerUserCell';
 
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 
@@ -206,11 +206,11 @@ export default function StaffListPage() {
 
   return (
 
-    <AdminLayout pageTitle="Staff" compact>
+    <ManagerLayout pageTitle="Staff" compact>
 
       <div className="admin-page admin-page--compact">
 
-        <AdminPageHeader
+        <ManagerPageHeader
 
           title="Staff management"
 
@@ -328,7 +328,7 @@ export default function StaffListPage() {
 
               {staff.length === 0 ? (
 
-                <AdminEmptyState
+                <ManagerEmptyState
 
                   icon={<Search size={22} />}
 
@@ -376,13 +376,13 @@ export default function StaffListPage() {
 
                               <td data-label="Staff member">
 
-                                <AdminUserCell name={fullName} email={member.email} />
+                                <ManagerUserCell name={fullName} email={member.email} />
 
                               </td>
 
                               <td data-label="Role">
 
-                                <AdminRoleBadge roleName={member.role_name} />
+                                <ManagerRoleBadge roleName={member.role_name} />
 
                               </td>
 
@@ -398,7 +398,7 @@ export default function StaffListPage() {
 
                               <td data-label="Status">
 
-                                <AdminStaffStatusBadge isActive={member.is_active} />
+                                <ManagerStaffStatusBadge isActive={member.is_active} />
 
                               </td>
 
@@ -466,7 +466,7 @@ export default function StaffListPage() {
 
       </div>
 
-    </AdminLayout>
+    </ManagerLayout>
 
   );
 

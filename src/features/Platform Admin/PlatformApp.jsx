@@ -5,7 +5,11 @@ import { InAppHistoryTracker } from "./shared/navigation/InAppHistoryTracker";
 import ToastProvider from "./shared/components/ToastProvider";
 import "./shared/styles/global.css";
 
-const SuperAdminRoutes = lazy(() => import("./panels/superAdmin/SuperAdminRoutes"));
+// Legacy reference: this panel was lazy-loaded as SuperAdminRoutes from
+// ./panels/superAdmin/SuperAdminRoutes. Retained so it can be removed after verification.
+// Do not register both route trees.
+// const SuperAdminRoutes = lazy(() => import("./panels/superAdmin/SuperAdminRoutes"));
+const PlatformAdminRoutes = lazy(() => import("./panels/platformAdmin/PlatformAdminRoutes"));
 const CrmRoutes = lazy(() => import("./panels/crm/CrmRoutes"));
 const AccountantRoutes = lazy(() => import("./panels/accountant/AccountantRoutes"));
 
@@ -24,7 +28,9 @@ export default function PlatformApp() {
               <Routes>
                 <Route path="crm/*" element={<CrmRoutes />} />
                 <Route path="accounts/*" element={<AccountantRoutes />} />
-                <Route path="*" element={<SuperAdminRoutes />} />
+                {/* Previous registration, retained for reference. Remove after verification.
+                    <Route path="*" element={<SuperAdminRoutes />} /> */}
+                <Route path="*" element={<PlatformAdminRoutes />} />
               </Routes>
             </Suspense>
           </InAppHistoryTracker>

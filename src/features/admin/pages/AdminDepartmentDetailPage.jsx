@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Mail, Pencil, Save, User, X } from 'lucide-react';
-import SuperAdminLayout from '@/features/admin/components/AdminLayout';
-import AdminBackBar from '@/features/manager/components/ManagerBackBar';
-import AdminStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
+import AdminLayout from '@/features/admin/components/AdminLayout';
+import ManagerBackBar from '@/features/manager/components/ManagerBackBar';
+import ManagerStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
 import DepartmentForm from '@/features/manager/components/DepartmentForm';
 import {
   buildDepartmentPayload,
@@ -23,7 +23,8 @@ import { Button, QueryFeedback } from '@/shared/components/common';
 import { adminPanelRoutes } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 
-export default function SuperAdminDepartmentDetailPage() {
+/* Legacy identifier preserved: SuperAdminDepartmentDetailPage. Active name: AdminDepartmentDetailPage. */
+export default function AdminDepartmentDetailPage() {
   const { id } = useParams();
   const departmentId = Number(id);
   const navigate = useNavigate();
@@ -83,11 +84,11 @@ export default function SuperAdminDepartmentDetailPage() {
 
   if (!Number.isFinite(departmentId) || departmentId <= 0) {
     return (
-      <SuperAdminLayout pageTitle="Department">
+      <AdminLayout pageTitle="Department">
         <div className="admin-alert">
           <p className="admin-alert__title">Invalid department ID</p>
         </div>
-      </SuperAdminLayout>
+      </AdminLayout>
     );
   }
 
@@ -96,9 +97,9 @@ export default function SuperAdminDepartmentDetailPage() {
   const pageErrorObj = error || doctorsErrorObj;
 
   return (
-    <SuperAdminLayout pageTitle={department?.name || 'Department'}>
-      <div className="admin-page sa-dept-detail-page">
-        <AdminBackBar onBack={() => navigate(panel.departments)}>
+    <AdminLayout pageTitle={department?.name || 'Department'}>
+      <div className="admin-page admin-panel-dept-detail-page">
+        <ManagerBackBar onBack={() => navigate(panel.departments)}>
           {!pageLoading && department && !isEditing && (
             <Button onClick={() => setIsEditing(true)}>
               <Pencil size={16} aria-hidden />
@@ -117,7 +118,7 @@ export default function SuperAdminDepartmentDetailPage() {
               Cancel
             </Button>
           )}
-        </AdminBackBar>
+        </ManagerBackBar>
 
         <QueryFeedback
           isLoading={pageLoading}
@@ -129,8 +130,8 @@ export default function SuperAdminDepartmentDetailPage() {
           }}
         >
           {department && (
-            <div className="sa-dept-detail__grid">
-              <div className="admin-card sa-panel-card">
+            <div className="admin-panel-dept-detail__grid">
+              <div className="admin-card admin-panel-panel-card">
                 <div className="admin-card__header">
                   <h2 className="admin-card__title">Department details</h2>
                   <p className="admin-card__desc">Core information for this hospital unit.</p>
@@ -143,7 +144,7 @@ export default function SuperAdminDepartmentDetailPage() {
                         onChange={setForm}
                         showStatus
                         hideDescription
-                        idPrefix="sa-detail"
+                        idPrefix="admin-panel-detail"
                       />
                       <div className="admin-form-actions">
                         <Button type="submit" disabled={updateMutation.isPending}>
@@ -165,7 +166,7 @@ export default function SuperAdminDepartmentDetailPage() {
                       <div className="admin-meta-item">
                         <div className="admin-meta-list__label">Status</div>
                         <div className="admin-meta-list__value">
-                          <AdminStaffStatusBadge isActive={department.is_active} />
+                          <ManagerStaffStatusBadge isActive={department.is_active} />
                         </div>
                       </div>
                       <div className="admin-meta-item">
@@ -179,7 +180,7 @@ export default function SuperAdminDepartmentDetailPage() {
                 </div>
               </div>
 
-              <div className="admin-card sa-panel-card">
+              <div className="admin-card admin-panel-panel-card">
                 <div className="admin-card__header">
                   <h2 className="admin-card__title">
                     {isLabDept
@@ -194,7 +195,7 @@ export default function SuperAdminDepartmentDetailPage() {
                 </div>
                 <div className="admin-card__body">
                   {!assignedStaff.length ? (
-                    <div className="admin-empty-state sa-dept-detail__empty-doctors">
+                    <div className="admin-empty-state admin-panel-dept-detail__empty-doctors">
                       <User size={22} aria-hidden />
                       <p>
                         {isLabDept
@@ -204,7 +205,7 @@ export default function SuperAdminDepartmentDetailPage() {
                     </div>
                   ) : (
                     <div className="admin-table-wrap">
-                      <table className="admin-table sa-dept-detail__doctors-table admin-table--stack">
+                      <table className="admin-table admin-panel-dept-detail__doctors-table admin-table--stack">
                         <thead>
                           <tr>
                             <th>Name</th>
@@ -220,7 +221,7 @@ export default function SuperAdminDepartmentDetailPage() {
                               <td data-label="Email">
                                 <a
                                   href={`mailto:${member.email}`}
-                                  className="sa-dept-detail__doctor-email"
+                                  className="admin-panel-dept-detail__doctor-email"
                                 >
                                   <Mail size={14} aria-hidden />
                                   {member.email}
@@ -238,6 +239,6 @@ export default function SuperAdminDepartmentDetailPage() {
           )}
         </QueryFeedback>
       </div>
-    </SuperAdminLayout>
+    </AdminLayout>
   );
 }

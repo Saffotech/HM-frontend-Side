@@ -1,7 +1,8 @@
 /**
  * Admin only — ON/OFF gate for whether Manager may edit a card.
  */
-export default function AdminEditLockToggle({
+/* Legacy identifier preserved: AdminEditLockToggle. Active name: ManagerEditLockToggle. */
+export default function ManagerEditLockToggle({
   id,
   checked,
   onChange,

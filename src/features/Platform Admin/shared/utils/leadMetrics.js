@@ -1,6 +1,7 @@
 /**
- * Per-lead facts shared by the Super Admin CRM performance report and the CRM employee portal,
+ * Per-lead facts shared by the Platform Admin CRM performance report and the CRM employee portal,
  * so both show the same numbers for the same lead.
+ * Legacy reference: this report was previously described as the Super Admin CRM performance report.
  */
 import { CONTACT_METHODS } from "../data/catalog";
 import { subscriptionIdFromTenant } from "./invoices";

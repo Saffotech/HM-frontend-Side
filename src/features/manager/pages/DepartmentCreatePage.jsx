@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Building2, Save } from 'lucide-react';
-import AdminLayout from '@/features/manager/components/ManagerLayout';
+import ManagerLayout from '@/features/manager/components/ManagerLayout';
 import DepartmentForm from '@/features/manager/components/DepartmentForm';
 import {
   buildDepartmentPayload,
@@ -49,7 +49,7 @@ export default function DepartmentCreatePage() {
   };
 
   return (
-    <AdminLayout compact>
+    <ManagerLayout compact>
       <div className="admin-page dept-create-page">
         <div className="admin-card dept-create-shell">
           <header className="dept-create-shell__toolbar">
@@ -98,6 +98,6 @@ export default function DepartmentCreatePage() {
           </form>
         </div>
       </div>
-    </AdminLayout>
+    </ManagerLayout>
   );
 }

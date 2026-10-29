@@ -12,10 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import Button from "../../../../shared/components/Button";
-import {
-  formatCompactCurrency,
-  formatCurrency,
-} from "../../../../shared/utils/formatCurrency";
+import { formatCurrency } from "../../../../shared/utils/formatCurrency";
 
 const PLAN_COLORS = ["#168a83", "#5278cb", "#d7a33f", "#8872b5", "#8493a5"];
 const AXIS = { fill: "#718096", fontSize: 11 };

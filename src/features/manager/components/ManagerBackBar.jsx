@@ -1,7 +1,8 @@
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/shared/components/common';
 
-export default function AdminBackBar({ onBack, label = 'Back', children }) {
+/* Legacy identifier preserved: AdminBackBar. Active name: ManagerBackBar. */
+export default function ManagerBackBar({ onBack, label = 'Back', children }) {
   return (
     <div className="admin-back-row">
       <Button variant="ghost" className="admin-back-btn" onClick={onBack}>

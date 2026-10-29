@@ -9,7 +9,8 @@ import { trimCredentials, hasCredentials, normalizeEmailInput } from '@/shared/u
 import { toast } from '@/shared/utils/toast';
 import '@/features/admin/styles/admin-login.css';
 
-export default function SuperAdminLoginPage() {
+/* Legacy identifier preserved: SuperAdminLoginPage. Active name: AdminLoginPage. */
+export default function AdminLoginPage() {
   const { login, logout, error, isAuthenticated, user, authReady } = useAuthStore();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');

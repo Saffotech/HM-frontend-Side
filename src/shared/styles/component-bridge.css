@@ -1,3 +1,4 @@
+/* Legacy class prefix sa- is now admin-panel-. */
 /**
  * Visual bridge: module-local button/table/badge classes → shared DS look.
  * Keeps existing class names working without rewriting every template.
@@ -138,7 +139,7 @@
 .lab-card,
 .admin-card,
 .pharmacy-card,
-.sa-card {
+.admin-panel-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);

@@ -16,7 +16,7 @@ import { formatCurrency } from "../../../../shared/utils/formatCurrency";
 import { usePlatform } from "../../../../shared/context/PlatformContext";
 import { useToast } from "../../../../shared/hooks/useToast";
 import { isPlatformAdminLocation } from "../../../../shared/navigation/inAppHistory";
-import { useInAppBack } from "../../../../shared/navigation/InAppHistoryTracker";
+import { useInAppBack } from "../../../../shared/navigation/useInAppHistory";
 import { PLATFORM_BASE, UNIVERSAL_LOGIN, platformPath } from "../../../../shared/paths";
 import { canSubmitRegistration } from "../../../../shared/utils/registrationGate";
 import { DEFAULT_PHONE_CODE, validPhoneForCode } from "../../../../shared/utils/phoneNumbers";

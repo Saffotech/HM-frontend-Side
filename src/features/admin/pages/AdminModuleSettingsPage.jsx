@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom';
-import SuperAdminLayout from '@/features/admin/components/AdminLayout';
+import AdminLayout from '@/features/admin/components/AdminLayout';
 import ModuleSettingsShell from '@/features/manager/components/ModuleSettingsShell';
 import { adminPanelRoutes } from '@/shared/constants';
 import '@/features/manager/styles/manager.css';
@@ -8,7 +8,8 @@ import '@/features/manager/styles/manager.css';
  * Same module settings as Manager (shared panels + shared APIs).
  * Permission ON/OFF here updates the same role rows Admin uses.
  */
-export default function SuperAdminModuleSettingsPage() {
+/* Legacy identifier preserved: SuperAdminModuleSettingsPage. Active name: AdminModuleSettingsPage. */
+export default function AdminModuleSettingsPage() {
   const { pathname } = useLocation();
   const panel = adminPanelRoutes(pathname);
   const settingsRoutes = {
@@ -30,12 +31,12 @@ export default function SuperAdminModuleSettingsPage() {
   ];
 
   return (
-    <SuperAdminLayout pageTitle="Settings">
+    <AdminLayout pageTitle="Settings">
       <ModuleSettingsShell
         routes={settingsRoutes}
         navLinks={settingsNav}
         manageAdminEditLocks
       />
-    </SuperAdminLayout>
+    </AdminLayout>
   );
 }

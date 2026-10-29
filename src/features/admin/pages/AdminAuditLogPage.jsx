@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import SuperAdminLayout from '@/features/admin/components/AdminLayout';
-import SuperAdminPageHeader from '@/features/admin/components/AdminPageHeader';
+import AdminLayout from '@/features/admin/components/AdminLayout';
+import AdminPageHeader from '@/features/admin/components/AdminPageHeader';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
-import { useSuperAdminAuditQuery } from '@/features/admin/hooks/useAdminQuery';
+import { useAdminAuditQuery } from '@/features/admin/hooks/useAdminQuery';
 import {
   AUDIT_ACTION_OPTIONS,
   formatAuditActionLabel,
@@ -23,7 +23,8 @@ const PAGE_SIZE_OPTIONS = [
   { value: '100', label: '100 per page' },
 ];
 
-export default function SuperAdminAuditLogPage() {
+/* Legacy identifier preserved: SuperAdminAuditLogPage. Active name: AdminAuditLogPage. */
+export default function AdminAuditLogPage() {
   const [filters, setFilters] = useState({
     actor: '',
     action: 'all',
@@ -38,7 +39,7 @@ export default function SuperAdminAuditLogPage() {
     setPage(1);
   }, [debouncedActor, filters.action, filters.dateFrom, filters.dateTo, pageSize]);
 
-  const auditQuery = useSuperAdminAuditQuery({
+  const auditQuery = useAdminAuditQuery({
     actor: debouncedActor,
     action: filters.action,
     dateFrom: filters.dateFrom,
@@ -66,17 +67,17 @@ export default function SuperAdminAuditLogPage() {
   );
 
   return (
-    <SuperAdminLayout pageTitle="Audit Log">
-      <div className="admin-page admin-page--compact sa-audit-log-page">
-        <SuperAdminPageHeader
+    <AdminLayout pageTitle="Audit Log">
+      <div className="admin-page admin-page--compact admin-panel-audit-log-page">
+        <AdminPageHeader
           title="Audit log"
           subtitle="System activity and change history"
         />
 
-        <div className="admin-card sa-panel-card sa-audit-filters-card">
-          <div className="admin-card__body sa-audit-filters-card__body">
-            <div className="sa-audit-filters">
-              <div className="sa-audit-filters__field sa-audit-filters__field--actor">
+        <div className="admin-card admin-panel-panel-card admin-panel-audit-filters-card">
+          <div className="admin-card__body admin-panel-audit-filters-card__body">
+            <div className="admin-panel-audit-filters">
+              <div className="admin-panel-audit-filters__field admin-panel-audit-filters__field--actor">
                 <Label htmlFor="audit-actor">Filter by actor</Label>
                 <Input
                   id="audit-actor"
@@ -85,7 +86,7 @@ export default function SuperAdminAuditLogPage() {
                   placeholder="admin@hospital.org"
                 />
               </div>
-              <div className="sa-audit-filters__field sa-audit-filters__field--action">
+              <div className="admin-panel-audit-filters__field admin-panel-audit-filters__field--action">
                 <Label htmlFor="audit-action">Action</Label>
                 <Select
                   value={filters.action}
@@ -94,7 +95,7 @@ export default function SuperAdminAuditLogPage() {
                   placeholder="All actions"
                 />
               </div>
-              <div className="sa-audit-filters__field sa-audit-filters__field--date">
+              <div className="admin-panel-audit-filters__field admin-panel-audit-filters__field--date">
                 <DateInput
                   id="audit-from"
                   label="From"
@@ -102,7 +103,7 @@ export default function SuperAdminAuditLogPage() {
                   onChange={(e) => setFilters((f) => ({ ...f, dateFrom: e.target.value }))}
                 />
               </div>
-              <div className="sa-audit-filters__field sa-audit-filters__field--date">
+              <div className="admin-panel-audit-filters__field admin-panel-audit-filters__field--date">
                 <DateInput
                   id="audit-to"
                   label="To"
@@ -110,7 +111,7 @@ export default function SuperAdminAuditLogPage() {
                   onChange={(e) => setFilters((f) => ({ ...f, dateTo: e.target.value }))}
                 />
               </div>
-              <div className="sa-audit-filters__field sa-audit-filters__field--size">
+              <div className="admin-panel-audit-filters__field admin-panel-audit-filters__field--size">
                 <Label htmlFor="audit-page-size">Page size</Label>
                 <Select
                   value={String(pageSize)}
@@ -122,7 +123,7 @@ export default function SuperAdminAuditLogPage() {
           </div>
         </div>
 
-        <div className="admin-card sa-panel-card admin-card--flat sa-audit-table-card">
+        <div className="admin-card admin-panel-panel-card admin-card--flat admin-panel-audit-table-card">
           <QueryFeedback
             isLoading={auditQuery.isLoading}
             isError={auditQuery.isError}
@@ -148,7 +149,7 @@ export default function SuperAdminAuditLogPage() {
                     <tbody>
                       {displayLogs.map((log) => (
                         <tr key={log.id}>
-                          <td className="sa-audit-time" data-label="Timestamp">
+                          <td className="admin-panel-audit-time" data-label="Timestamp">
                             <span>{new Date(log.timestamp).toLocaleString()}</span>
                           </td>
                           <td data-label="Actor"><span>{log.actor}</span></td>
@@ -178,6 +179,6 @@ export default function SuperAdminAuditLogPage() {
           </QueryFeedback>
         </div>
       </div>
-    </SuperAdminLayout>
+    </AdminLayout>
   );
 }

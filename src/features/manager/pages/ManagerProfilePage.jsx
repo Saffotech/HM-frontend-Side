@@ -17,16 +17,16 @@ import {
   X,
 } from 'lucide-react';
 import {
-  ADMIN_PROFILE_EDITABLE_TOP_KEYS,
+  MANAGER_PROFILE_EDITABLE_TOP_KEYS,
   resolveAdminProfileImageUrl,
 } from '@/features/manager/api/profile';
 import {
   useDeleteAdminProfileImageMutation,
-  useAdminProfileQuery,
+  useManagerProfileQuery,
   useUpdateAdminProfileMutation,
   useUploadAdminProfileImageMutation,
 } from '@/features/manager/hooks/useManagerProfileQuery';
-import AdminLayout from '@/features/manager/components/ManagerLayout';
+import ManagerLayout from '@/features/manager/components/ManagerLayout';
 import { formatRoleLabel } from '@/features/manager/utils/formatRoleLabel';
 import { ROUTES } from '@/shared/constants';
 import {
@@ -125,7 +125,7 @@ function buildEditableForm(profile) {
 function buildDirtyPayload(form, baseline) {
   const payload = {};
 
-  ADMIN_PROFILE_EDITABLE_TOP_KEYS.forEach((key) => {
+  MANAGER_PROFILE_EDITABLE_TOP_KEYS.forEach((key) => {
     if (key === 'languages') {
       const next = parseProfileLanguages(form.languages);
       const prev = Array.isArray(baseline.languages) ? baseline.languages : [];
@@ -202,10 +202,11 @@ function ReadField({ label, value }) {
   );
 }
 
-export default function AdminProfilePage() {
+/* Legacy identifier preserved: AdminProfilePage. Active name: ManagerProfilePage. */
+export default function ManagerProfilePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { data, isLoading, isError, error, refetch } = useAdminProfileQuery();
+  const { data, isLoading, isError, error, refetch } = useManagerProfileQuery();
   const profile = data?.profile;
   const updateProfile = useUpdateAdminProfileMutation();
   const uploadImage = useUploadAdminProfileImageMutation();
@@ -412,15 +413,15 @@ export default function AdminProfilePage() {
 
   if (isLoading) {
     return (
-      <AdminLayout pageTitle="My Profile">
+      <ManagerLayout pageTitle="My Profile">
         <PageSpinner />
-      </AdminLayout>
+      </ManagerLayout>
     );
   }
 
   if (isError) {
     return (
-      <AdminLayout pageTitle="My Profile">
+      <ManagerLayout pageTitle="My Profile">
         <EmptyState
           icon={User}
           title="Could not load profile"
@@ -441,13 +442,13 @@ export default function AdminProfilePage() {
             <ArrowLeft size={16} /> Back to dashboard
           </Button>
         </div>
-      </AdminLayout>
+      </ManagerLayout>
     );
   }
 
   if (!profile) {
     return (
-      <AdminLayout pageTitle="My Profile">
+      <ManagerLayout pageTitle="My Profile">
         <EmptyState
           icon={User}
           title="Manager profile not found"
@@ -458,7 +459,7 @@ export default function AdminProfilePage() {
             <ArrowLeft size={16} /> Back to dashboard
           </Button>
         </div>
-      </AdminLayout>
+      </ManagerLayout>
     );
   }
 
@@ -468,7 +469,7 @@ export default function AdminProfilePage() {
   const roleName = roleId ? formatRoleLabel(roleId) : '';
 
   return (
-    <AdminLayout pageTitle="My Profile">
+    <ManagerLayout pageTitle="My Profile">
       <div className="admin-profile-page">
         <div className="admin-profile-card">
           <div className="admin-profile-hero">
@@ -909,6 +910,6 @@ export default function AdminProfilePage() {
         }}
         onConfirm={handleDeleteImage}
       />
-    </AdminLayout>
+    </ManagerLayout>
   );
 }

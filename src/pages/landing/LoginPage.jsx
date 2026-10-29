@@ -21,7 +21,6 @@ import { getAppEntryForUser } from '@/shared/utils/authRedirect';
 import { useUniversalSignIn } from '@/shared/auth/useUniversalSignIn';
 import { trimCredentials, hasCredentials, normalizeEmailInput } from '@/shared/utils/credentials';
 import { toast } from '@/shared/utils/toast';
-import { isStaffModuleLive } from '@/shared/constants/moduleAvailability';
 import './LoginPage.design.css';
 
 const HERO_IMAGE = '/images/hospital-login.png';
@@ -117,7 +116,7 @@ function LoginField({
 
 export default function LoginPage() {
   const { error, isAuthenticated, user, authReady } = useAuthStore();
-  const { signIn, signOutEverywhere, activePortal } = useUniversalSignIn();
+  const { signIn, signOutEverywhere } = useUniversalSignIn();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [mode, setMode] = useState('signin');

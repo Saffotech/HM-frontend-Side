@@ -147,7 +147,8 @@ function buildBulkIds(form) {
   return Array.from({ length: count }, (_, i) => formatBedId(prefix, start + i, pad));
 }
 
-export default function AdminOpdBedsSection({
+/* Legacy identifier preserved: AdminOpdBedsSection. Active name: ManagerOpdBedsSection. */
+export default function ManagerOpdBedsSection({
   canEditBedInventory = true,
   canEditWards = true,
   canEditAllBeds = true,

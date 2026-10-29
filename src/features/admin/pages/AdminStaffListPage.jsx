@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Eye, Plus, Trash2, UserCheck, UserX } from 'lucide-react';
-import SuperAdminLayout from '@/features/admin/components/AdminLayout';
-import SuperAdminPageHeader from '@/features/admin/components/AdminPageHeader';
-import AdminRoleBadge from '@/features/manager/components/ManagerRoleBadge';
-import AdminStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
+import AdminLayout from '@/features/admin/components/AdminLayout';
+import AdminPageHeader from '@/features/admin/components/AdminPageHeader';
+import ManagerRoleBadge from '@/features/manager/components/ManagerRoleBadge';
+import ManagerStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import {
   useActivateStaffMutation,
@@ -32,7 +32,8 @@ function staffName(u) {
   return `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || 'this user';
 }
 
-export default function SuperAdminStaffListPage() {
+/* Legacy identifier preserved: SuperAdminStaffListPage. Active name: AdminStaffListPage. */
+export default function AdminStaffListPage() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const panel = adminPanelRoutes(pathname);
@@ -113,9 +114,9 @@ export default function SuperAdminStaffListPage() {
   }
 
   return (
-    <SuperAdminLayout pageTitle="Staff" compact>
-      <div className="admin-page admin-page--compact sa-staff-list-page">
-        <SuperAdminPageHeader
+    <AdminLayout pageTitle="Staff" compact>
+      <div className="admin-page admin-page--compact admin-panel-staff-list-page">
+        <AdminPageHeader
           title="Staff Member"
           actions={(
             <Button onClick={() => navigate(panel.staffNew)}>
@@ -125,7 +126,7 @@ export default function SuperAdminStaffListPage() {
           )}
         />
 
-        <div className="admin-card sa-panel-card sa-filters-card">
+        <div className="admin-card admin-panel-panel-card admin-panel-filters-card">
           <div className="admin-card__body">
             <div className="admin-filters">
               <SearchBar
@@ -149,7 +150,7 @@ export default function SuperAdminStaffListPage() {
           </div>
         </div>
 
-        <div className="admin-card sa-panel-card admin-card--flat admin-datatable">
+        <div className="admin-card admin-panel-panel-card admin-card--flat admin-datatable">
           <QueryFeedback
             isLoading={isLoading}
             isError={isError}
@@ -178,15 +179,15 @@ export default function SuperAdminStaffListPage() {
                         <tr key={u.id}>
                           <td data-label="Name"><span>{staffName(u)}</span></td>
                           <td data-label="Email"><span>{u.email}</span></td>
-                          <td data-label="Role"><AdminRoleBadge roleName={u.role || u.role_name} /></td>
+                          <td data-label="Role"><ManagerRoleBadge roleName={u.role || u.role_name} /></td>
                           <td data-label="Status">
-                            <AdminStaffStatusBadge isActive={u.is_active !== false} />
+                            <ManagerStaffStatusBadge isActive={u.is_active !== false} />
                           </td>
                           <td className="admin-table__actions" data-label="Actions">
-                            <div className="admin-table__actions-inner sa-staff-list__actions">
+                            <div className="admin-table__actions-inner admin-panel-staff-list__actions">
                               <button
                                 type="button"
-                                className="sa-staff-list__action sa-staff-list__action--view"
+                                className="admin-panel-staff-list__action admin-panel-staff-list__action--view"
                                 onClick={() => navigate(panel.staffDetail(u.id))}
                               >
                                 <Eye size={14} aria-hidden />
@@ -194,10 +195,10 @@ export default function SuperAdminStaffListPage() {
                               </button>
                               <button
                                 type="button"
-                                className={`sa-staff-list__action ${
+                                className={`admin-panel-staff-list__action ${
                                   u.is_active === false
-                                    ? 'sa-staff-list__action--activate'
-                                    : 'sa-staff-list__action--deactivate'
+                                    ? 'admin-panel-staff-list__action--activate'
+                                    : 'admin-panel-staff-list__action--deactivate'
                                 }`}
                                 onClick={() => setConfirm({ type: 'activate', user: u })}
                               >
@@ -210,7 +211,7 @@ export default function SuperAdminStaffListPage() {
                               </button>
                               <button
                                 type="button"
-                                className="sa-staff-list__action sa-staff-list__action--delete"
+                                className="admin-panel-staff-list__action admin-panel-staff-list__action--delete"
                                 onClick={() => setConfirm({ type: 'delete', user: u })}
                               >
                                 <Trash2 size={14} aria-hidden />
@@ -251,6 +252,6 @@ export default function SuperAdminStaffListPage() {
         onConfirm={handleConfirm}
         onCancel={() => setConfirm(null)}
       />
-    </SuperAdminLayout>
+    </AdminLayout>
   );
 }

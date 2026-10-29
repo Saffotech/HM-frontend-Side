@@ -54,7 +54,8 @@ function deptLabel(depts, departmentId) {
  * Admin Lab Catalog CRUD — current catalog config only.
  * Does not affect historical order prices (lab_test_orders.price).
  */
-export default function AdminLabCatalogSection({ locked = false }) {
+/* Legacy identifier preserved: AdminLabCatalogSection. Active name: ManagerLabCatalogSection. */
+export default function ManagerLabCatalogSection({ locked = false }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [search, setSearch] = useState('');

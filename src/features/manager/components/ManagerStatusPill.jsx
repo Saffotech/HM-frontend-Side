@@ -20,7 +20,8 @@ function normalizeKey(value) {
     .replace(/\s+/g, '_');
 }
 
-export default function AdminStatusPill({ label, tone }) {
+/* Legacy identifier preserved: AdminStatusPill. Active name: ManagerStatusPill. */
+export default function ManagerStatusPill({ label, tone }) {
   const key = normalizeKey(label);
   const resolved = tone || STATUS_MAP[key] || 'neutral';
   const display = label

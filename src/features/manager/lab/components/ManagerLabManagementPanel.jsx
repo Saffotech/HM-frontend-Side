@@ -14,7 +14,7 @@ import {
 import { useRolePermissionsCatalogQuery } from '@/features/manager/nurse/hooks/useNurseManagerQueries';
 import { useAdminEditLocks } from '@/features/manager/hooks/useManagerEditLocks';
 import { PERMISSION_GROUPS } from '@/features/manager/lab/constants/labManagementConfig';
-import AdminLabCatalogSection from '@/features/manager/lab/components/ManagerLabCatalogSection';
+import ManagerLabCatalogSection from '@/features/manager/lab/components/ManagerLabCatalogSection';
 import { Button, QueryFeedback } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
 import { writeHospitalBump } from '@/components/security/hospitalBrowserStorage';
@@ -118,7 +118,8 @@ function PermissionModuleList({
   ));
 }
 
-export default function AdminLabManagementPanel({ manageAdminEditLocks = false }) {
+/* Legacy identifier preserved: AdminLabManagementPanel. Active name: ManagerLabManagementPanel. */
+export default function ManagerLabManagementPanel({ manageAdminEditLocks = false }) {
   const [activeSection, setActiveSection] = useState(SECTION_TABS[0].id);
   const [selectedByRole, setSelectedByRole] = useState({});
   const [isDirty, setIsDirty] = useState(false);
@@ -329,7 +330,7 @@ export default function AdminLabManagementPanel({ manageAdminEditLocks = false }
             action={lockToggle('lab_catalog')}
             locked={!canEdit('lab_catalog')}
           >
-            <AdminLabCatalogSection locked={!canEdit('lab_catalog')} />
+            <ManagerLabCatalogSection locked={!canEdit('lab_catalog')} />
           </SectionCard>
         ) : null}
 

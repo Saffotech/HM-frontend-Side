@@ -8,7 +8,8 @@
 import { apiClient, apiSessionRequest } from '@/shared/api/client';
 import { API_BASE_URL } from '@/shared/constants';
 
-export const SUPER_ADMIN_PROFILE_EDITABLE_TOP_KEYS = [
+/* Legacy identifier preserved: SUPER_ADMIN_PROFILE_EDITABLE_TOP_KEYS. Active name: ADMIN_PROFILE_EDITABLE_TOP_KEYS. */
+export const ADMIN_PROFILE_EDITABLE_TOP_KEYS = [
   'bio',
   'languages',
   'phone',
@@ -26,7 +27,8 @@ export function resolveSuperAdminProfileImageUrl(profileImageUrl) {
   return `${base}${profileImageUrl}`;
 }
 
-export async function getSuperAdminProfile(token) {
+/* Legacy identifier preserved: getSuperAdminProfile. Active name: getAdminProfile. */
+export async function getAdminProfile(token) {
   return apiClient('/admin/profile', { token });
 }
 

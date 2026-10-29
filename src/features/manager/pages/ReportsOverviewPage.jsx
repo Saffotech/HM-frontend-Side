@@ -8,11 +8,11 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
-import AdminLayout from '@/features/manager/components/ManagerLayout';
-import AdminBarChart from '@/features/manager/components/ManagerBarChart';
-import AdminPageHeader from '@/features/manager/components/ManagerPageHeader';
-import AdminReportFilters from '@/features/manager/components/ManagerReportFilters';
-import AdminStatCard from '@/features/manager/components/ManagerStatCard';
+import ManagerLayout from '@/features/manager/components/ManagerLayout';
+import ManagerBarChart from '@/features/manager/components/ManagerBarChart';
+import ManagerPageHeader from '@/features/manager/components/ManagerPageHeader';
+import ManagerReportFilters from '@/features/manager/components/ManagerReportFilters';
+import ManagerStatCard from '@/features/manager/components/ManagerStatCard';
 import {
   defaultReportDateRange,
   normalizeReportsOverviewPayments,
@@ -34,9 +34,9 @@ export default function ReportsOverviewPage() {
   const data = useMemo(() => normalizeReportsOverviewPayments(rawData), [rawData]);
 
   return (
-    <AdminLayout pageTitle="Reports">
+    <ManagerLayout pageTitle="Reports">
       <div className="admin-page admin-page--compact">
-        <AdminPageHeader
+        <ManagerPageHeader
           title="Reports overview"
           actions={(
             <nav className="admin-subnav" aria-label="Report sections">
@@ -61,7 +61,7 @@ export default function ReportsOverviewPage() {
           )}
         />
 
-        <AdminReportFilters
+        <ManagerReportFilters
           inline
           fromDate={range.from_date}
           toDate={range.to_date}
@@ -78,49 +78,49 @@ export default function ReportsOverviewPage() {
           {data && (
             <>
               <div className="admin-stats admin-stats--reports">
-                <AdminStatCard
+                <ManagerStatCard
                   title="Total patients"
                   value={data.total_patients}
                   icon={<Users size={18} />}
                   isLoading={isLoading}
                   tone="primary"
                 />
-                <AdminStatCard
+                <ManagerStatCard
                   title="New patients"
                   value={data.new_patients_in_period}
                   icon={<Users size={18} />}
                   isLoading={isLoading}
                   tone="info"
                 />
-                <AdminStatCard
+                <ManagerStatCard
                   title="Total visits"
                   value={data.total_visits}
                   icon={<Stethoscope size={18} />}
                   isLoading={isLoading}
                   tone="neutral"
                 />
-                <AdminStatCard
+                <ManagerStatCard
                   title="Completed visits"
                   value={data.completed_visits}
                   icon={<Activity size={18} />}
                   isLoading={isLoading}
                   tone="success"
                 />
-                <AdminStatCard
+                <ManagerStatCard
                   title="Pending payments"
                   value={data.pending_payments}
                   icon={<Wallet size={18} />}
                   isLoading={isLoading}
                   tone="warning"
                 />
-                <AdminStatCard
+                <ManagerStatCard
                   title="Total revenue"
                   value={formatCurrency(data.total_revenue)}
                   icon={<CircleDollarSign size={18} />}
                   isLoading={isLoading}
                   tone="primary"
                 />
-                <AdminStatCard
+                <ManagerStatCard
                   title="Collected"
                   value={formatCurrency(data.collected_revenue)}
                   icon={<Banknote size={18} />}
@@ -136,7 +136,7 @@ export default function ReportsOverviewPage() {
                     <p className="admin-card__desc">Distribution of visits across clinical units.</p>
                   </div>
                   <div className="admin-card__body">
-                    <AdminBarChart
+                    <ManagerBarChart
                       items={data.visits_by_department}
                       labelKey="department_name"
                       valueKey="visit_count"
@@ -150,7 +150,7 @@ export default function ReportsOverviewPage() {
                     <p className="admin-card__desc">Collected amounts grouped by payment channel.</p>
                   </div>
                   <div className="admin-card__body">
-                    <AdminBarChart
+                    <ManagerBarChart
                       items={data.revenue_by_payment_mode}
                       labelKey="payment_mode"
                       valueKey="total_amount"
@@ -165,6 +165,6 @@ export default function ReportsOverviewPage() {
           )}
         </QueryFeedback>
       </div>
-    </AdminLayout>
+    </ManagerLayout>
   );
 }

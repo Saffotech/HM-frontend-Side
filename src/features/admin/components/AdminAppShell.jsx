@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom';
 
-export default function SuperAdminAppShell() {
+/* Legacy identifier preserved: SuperAdminAppShell. Active name: AdminAppShell. */
+export default function AdminAppShell() {
   return <Outlet />;
 }

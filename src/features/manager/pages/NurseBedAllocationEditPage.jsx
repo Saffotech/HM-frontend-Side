@@ -7,10 +7,10 @@ import {
   Save,
   UserRound,
 } from 'lucide-react';
-import AdminLayout from '@/features/manager/components/ManagerLayout';
-import AdminBackBar from '@/features/manager/components/ManagerBackBar';
-import AdminAllocationStatusBadge from '@/features/manager/components/ManagerAllocationStatusBadge';
-import AdminBedMultiSelect from '@/features/manager/components/ManagerBedMultiSelect';
+import ManagerLayout from '@/features/manager/components/ManagerLayout';
+import ManagerBackBar from '@/features/manager/components/ManagerBackBar';
+import ManagerAllocationStatusBadge from '@/features/manager/components/ManagerAllocationStatusBadge';
+import ManagerBedMultiSelect from '@/features/manager/components/ManagerBedMultiSelect';
 import { useAdminBedAllocationPermissions } from '@/features/manager/hooks/useManagerBedAllocationPermissions';
 import {
   useAdminBedAllocationDetailQuery,
@@ -264,19 +264,19 @@ export default function NurseBedAllocationEditPage() {
 
   if (!canView || !canUpdate) {
     return (
-      <AdminLayout pageTitle="Edit Bed Allocation">
+      <ManagerLayout pageTitle="Edit Bed Allocation">
         <div className="admin-card nba-denied">
           <h2>Access denied</h2>
           <p className="nba-muted">You do not have permission to edit bed allocations.</p>
         </div>
-      </AdminLayout>
+      </ManagerLayout>
     );
   }
 
   return (
-    <AdminLayout pageTitle="Edit Bed Allocation">
+    <ManagerLayout pageTitle="Edit Bed Allocation">
       <div className="admin-page nba-page nba-detail-page nba-edit-page">
-        <AdminBackBar
+        <ManagerBackBar
           onBack={() => navigate(ROUTES.MANAGER_BED_ALLOCATION)}
           label="Back to allocations"
         />
@@ -303,7 +303,7 @@ export default function NurseBedAllocationEditPage() {
                       <Pencil size={12} aria-hidden />
                       Edit allocation #{groupMeta?.idLabel ?? id}
                     </span>
-                    <AdminAllocationStatusBadge isActive={isActive} />
+                    <ManagerAllocationStatusBadge isActive={isActive} />
                   </div>
                   <h1 className="nba-detail-hero__title">{selectedNurseLabel}</h1>
                   <p className="nba-detail-hero__subtitle">
@@ -411,7 +411,7 @@ export default function NurseBedAllocationEditPage() {
                     </p>
                   </div>
                 </header>
-                <AdminBedMultiSelect
+                <ManagerBedMultiSelect
                   beds={beds}
                   selectedIds={bedIds}
                   onChange={setBedIds}
@@ -443,6 +443,6 @@ export default function NurseBedAllocationEditPage() {
           )}
         </QueryFeedback>
       </div>
-    </AdminLayout>
+    </ManagerLayout>
   );
 }

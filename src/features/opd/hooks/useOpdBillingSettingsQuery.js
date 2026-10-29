@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { getOpdBillingSettings } from '@/features/opd/api/opdSettings';
-import { opdSettingsApiToForm } from '@/features/manager/utils/opdSettingsMapper';
+import { mapOpdSettingsApiResponse } from '@/shared/api/services/adminOpdSettings';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { QUICK_BILL_ITEMS } from '@/shared/constants/billing';
 import { TAX_RATE } from '@/shared/constants';
@@ -15,7 +15,7 @@ export function useOpdBillingSettingsQuery(options = {}) {
     enabled,
     queryFn: async () => {
       const data = await getOpdBillingSettings();
-      return opdSettingsApiToForm({ ...data, _source: 'api' });
+      return mapOpdSettingsApiResponse(data);
     },
     staleTime: 30_000,
   });

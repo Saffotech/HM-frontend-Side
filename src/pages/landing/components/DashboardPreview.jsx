@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import dashboardAdmin from '@/assets/Manager1.png';
+import dashboardManager from '@/assets/Manager1.png';
 import dashboardDoctor from '@/assets/Doctor2.png';
 import dashboardReception from '@/assets/Receptionist1.png';
-import dashboardSuperAdmin from '@/assets/Admin1.png';
+import dashboardAdmin from '@/assets/Admin1.png';
 import dashboardOpd from '@/assets/OPD1.png';
 import dashboardNurse from '@/assets/Nurse1.png';
 import dashboardLab from '@/assets/Lab1.png';
@@ -10,8 +10,8 @@ import dashboardPharmacy from '@/assets/Pharmacy1.png';
 import './DashboardPreview.css';
 
 const TABS = [
-  { id: 'super-admin', label: 'Admin', img: dashboardSuperAdmin },
-  { id: 'admin', label: 'Manager', img: dashboardAdmin },
+  { id: 'admin', label: 'Admin', img: dashboardAdmin },
+  { id: 'manager', label: 'Manager', img: dashboardManager },
   { id: 'opd', label: 'OPD', img: dashboardOpd },
   { id: 'doctor', label: 'Doctor', img: dashboardDoctor },
   { id: 'nurse', label: 'Nurse', img: dashboardNurse },
@@ -20,8 +20,9 @@ const TABS = [
   { id: 'pharmacy', label: 'Pharmacy', img: dashboardPharmacy },
 ];
 
+/* Legacy tab ids: super-admin (Admin) and admin (Manager). Active ids: admin and manager. DashboardPreview.css does not select on these ids. */
 export default function DashboardPreview() {
-  const [active, setActive] = useState('admin');
+  const [active, setActive] = useState('manager');
   const current = TABS.find((t) => t.id === active) ?? TABS[0];
 
   return (

@@ -8,10 +8,11 @@ import {
   useAdminNotificationsListQuery,
   useAdminNotificationsUnreadCountQuery,
 } from '@/features/manager/hooks/useManagerNotificationsQuery';
-import AdminNotificationRow from './ManagerNotificationRow';
+import ManagerNotificationRow from './ManagerNotificationRow';
 import './ManagerNotificationsBell.css';
 
-export default function AdminNotificationsBell({ onViewAll }) {
+/* Legacy identifier preserved: AdminNotificationsBell. Active name: ManagerNotificationsBell. */
+export default function ManagerNotificationsBell({ onViewAll }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
   const { data: unread = 0 } = useAdminNotificationsUnreadCountQuery();
@@ -75,7 +76,7 @@ export default function AdminNotificationsBell({ onViewAll }) {
               <p className="admin-notif-bell__empty">No unread notifications.</p>
             ) : (
               notifications.map((n) => (
-                <AdminNotificationRow
+                <ManagerNotificationRow
                   key={n.id}
                   notification={n}
                   compact

@@ -1,4 +1,3 @@
-/* eslint-disable import/no-unresolved -- Node's test runner resolves node: imports. */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
@@ -16,7 +15,7 @@ import {
   reconcileConfirmedActivations,
   resetConfirmedActivations,
   withConfirmedActivation,
-} from "../../panels/superAdmin/tenantActivation.js";
+} from "../../panels/platformAdmin/tenantActivation.js";
 import { executePlatformRequest } from "./platformHttp.js";
 import { sessionFromLogin } from "./platformLoginPolicy.js";
 import { createPlatformAuthStore, portalSessionIsAuthenticated } from "./platformSession.js";
@@ -450,7 +449,7 @@ describe("platform API client", () => {
 
 describe("registration screens stay off the dummy hospital writer", () => {
   it("does not call addHospital, and does not keep a demo hospital store", () => {
-    const platformForm = readSrc("../../panels/superAdmin/pages/tenants/RegisterHospital.jsx");
+    const platformForm = readSrc("../../panels/platformAdmin/pages/tenants/RegisterHospital.jsx");
     const accountantForm = readSrc("../../panels/accountant/pages/RegisterHospital.jsx");
     const queue = readSrc("../../panels/accountant/pages/Registrations.jsx");
     const context = readSrc("../context/PlatformContext.jsx");
@@ -473,8 +472,8 @@ describe("registration screens stay off the dummy hospital writer", () => {
     assert.doesNotMatch(client, /shared\/api\/client/);
     assert.doesNotMatch(client, /endHospitalSession/);
 
-    const directory = readSrc("../../panels/superAdmin/pages/tenants/Hospitals.jsx");
-    const detail = readSrc("../../panels/superAdmin/pages/tenants/TenantDetails.jsx");
+    const directory = readSrc("../../panels/platformAdmin/pages/tenants/Hospitals.jsx");
+    const detail = readSrc("../../panels/platformAdmin/pages/tenants/TenantDetails.jsx");
     const api = readSrc("./registrationApi.js");
     assert.match(api, /\/tenants\/\$\{encodeURIComponent\(tenantId\)\}\/active/);
     assert.match(api, /method:\s*"PATCH"/);
@@ -484,8 +483,8 @@ describe("registration screens stay off the dummy hospital writer", () => {
     assert.match(directory, /is_active/);
     assert.doesNotMatch(api, /shared\/api\/client/);
 
-    const analytics = readSrc("../../panels/superAdmin/pages/analytics/PlatformAnalytics.jsx");
-    const hospitalsHook = readSrc("../../panels/superAdmin/useRegisteredHospitals.js");
+    const analytics = readSrc("../../panels/platformAdmin/pages/analytics/PlatformAnalytics.jsx");
+    const hospitalsHook = readSrc("../../panels/platformAdmin/useRegisteredHospitals.js");
     assert.match(analytics, /Try again/);
     assert.match(analytics, /role="alert"/);
     assert.match(analytics, /usePlatformRevenue/);
@@ -515,7 +514,7 @@ describe("CRM and portal login screens use the platform backend session", () => 
     const login = readSrc("../portal/PortalLogin.jsx");
     const policy = readSrc("./platformLoginPolicy.js");
     const auth = readSrc("./platformAuth.js");
-    const platformLayout = readSrc("../../panels/superAdmin/layout/AppLayout.jsx");
+    const platformLayout = readSrc("../../panels/platformAdmin/layout/AppLayout.jsx");
     const crmLayout = readSrc("../../panels/crm/CrmLayout.jsx");
     const portalLayout = readSrc("../portal/PortalLayout.jsx");
 

@@ -1,7 +1,8 @@
 import { Filter, RotateCcw } from 'lucide-react';
 import { Button } from '@/shared/components/common';
 
-export default function AdminFilterPanel({
+/* Legacy identifier preserved: AdminFilterPanel. Active name: ManagerFilterPanel. */
+export default function ManagerFilterPanel({
   children,
   onReset,
   showReset = false,

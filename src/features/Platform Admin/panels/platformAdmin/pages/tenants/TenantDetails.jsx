@@ -22,7 +22,7 @@ import Pagination from "../../../../shared/components/Pagination";
 import { LIST_PAGE_SIZE, usePagination } from "../../../../shared/hooks/usePagination";
 import { usePlatformRevenue } from "../../../../shared/hooks/usePlatformRevenue";
 import { isPlatformAdminLocation, platformBackTitle } from "../../../../shared/navigation/inAppHistory";
-import { useInAppBack, useInAppPrevious } from "../../../../shared/navigation/InAppHistoryTracker";
+import { useInAppBack, useInAppPrevious } from "../../../../shared/navigation/useInAppHistory";
 import { platformPath } from "../../../../shared/paths";
 import { formatCurrency } from "../../../../shared/utils/formatCurrency";
 import { formatDate } from "../../../../shared/utils/formatDate";

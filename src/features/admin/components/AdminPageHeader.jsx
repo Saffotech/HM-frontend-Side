@@ -1,6 +1,7 @@
 import { PageHeader, Badge } from '@/components/ui';
 
-export default function SuperAdminPageHeader({
+/* Legacy identifier preserved: SuperAdminPageHeader. Active name: AdminPageHeader. */
+export default function AdminPageHeader({
   eyebrow,
   title,
   subtitle,

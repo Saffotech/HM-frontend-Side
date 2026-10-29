@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { CalendarDays, Plus, UserRound } from 'lucide-react';
-import AdminLayout from '@/features/manager/components/ManagerLayout';
-import AdminEmptyState from '@/features/manager/components/ManagerEmptyState';
+import ManagerLayout from '@/features/manager/components/ManagerLayout';
+import ManagerEmptyState from '@/features/manager/components/ManagerEmptyState';
 import NurseWorkforceNav from '@/features/manager/components/NurseWorkforceNav';
 import { useAdminWorkforcePermissions } from '@/features/manager/hooks/useManagerWorkforcePermissions';
 import {
@@ -311,9 +311,9 @@ export default function NurseWorkforceRosterPage() {
 
   if (!canManageRoster) {
     return (
-      <AdminLayout pageTitle="Roster">
-        <AdminEmptyState title="Access denied" description="roster:manage required." />
-      </AdminLayout>
+      <ManagerLayout pageTitle="Roster">
+        <ManagerEmptyState title="Access denied" description="roster:manage required." />
+      </ManagerLayout>
     );
   }
 
@@ -323,7 +323,7 @@ export default function NurseWorkforceRosterPage() {
       : `${formatDateLabel(dateFrom)} – ${formatDateLabel(dateTo)}`;
 
   return (
-    <AdminLayout pageTitle="Roster">
+    <ManagerLayout pageTitle="Roster">
       <div className="admin-page nwf-page nwf-roster-page">
         <NurseWorkforceNav />
 
@@ -653,6 +653,6 @@ export default function NurseWorkforceRosterPage() {
           </section>
         </div>
       </div>
-    </AdminLayout>
+    </ManagerLayout>
   );
 }

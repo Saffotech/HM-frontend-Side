@@ -1,4 +1,4 @@
-import AdminLayout from '@/features/manager/components/ManagerLayout';
+import ManagerLayout from '@/features/manager/components/ManagerLayout';
 import ModuleSettingsShell from '@/features/manager/components/ModuleSettingsShell';
 import { ROUTES } from '@/shared/constants';
 
@@ -21,10 +21,11 @@ const ADMIN_SETTINGS_NAV = [
   { to: ROUTES.MANAGER_SETTINGS_PHARMACY, label: 'Pharmacy' },
 ];
 
-export default function AdminSettingsPage() {
+/* Legacy identifier preserved: AdminSettingsPage. Active name: ManagerSettingsPage. */
+export default function ManagerSettingsPage() {
   return (
-    <AdminLayout pageTitle="Settings">
+    <ManagerLayout pageTitle="Settings">
       <ModuleSettingsShell routes={ADMIN_SETTINGS_ROUTES} navLinks={ADMIN_SETTINGS_NAV} />
-    </AdminLayout>
+    </ManagerLayout>
   );
 }

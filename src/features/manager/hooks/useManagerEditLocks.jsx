@@ -3,7 +3,7 @@ import {
   useAdminOpdSettingsQuery,
   useUpdateAdminEditControlsMutation,
 } from '@/features/manager/hooks/useOpdSettingsQuery';
-import AdminEditLockToggle from '@/features/manager/components/ManagerEditLockToggle';
+import ManagerEditLockToggle from '@/features/manager/components/ManagerEditLockToggle';
 import { normalizeAdminEdit } from '@/features/manager/constants/managerEditLocks';
 import { toast } from '@/shared/utils/toast';
 
@@ -48,7 +48,7 @@ export function useAdminEditLocks(manageAdminEditLocks = false) {
   const lockToggle = useCallback(
     (key) =>
       manageAdminEditLocks ? (
-        <AdminEditLockToggle
+        <ManagerEditLockToggle
           id={`admin-edit-${key}`}
           checked={Boolean(adminEdit[key])}
           disabled={mutation.isPending}

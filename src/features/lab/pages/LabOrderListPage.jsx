@@ -24,8 +24,7 @@ import {
   LAB_DEPT_CODE,
 } from '@/shared/utils/labDepartments';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
-import { EmptyState, QueryFeedback, TablePagination } from '@/shared/components/common';
-import { DateInput } from '@/shared/components/common';
+import { DateInput, EmptyState, QueryFeedback, TablePagination } from '@/shared/components/common';
 import { ClipboardList } from 'lucide-react';
 import LabEncounterBadge from '@/features/lab/components/LabEncounterBadge';
 import LabReportDetailModal from '@/features/lab/components/LabReportDetailModal';

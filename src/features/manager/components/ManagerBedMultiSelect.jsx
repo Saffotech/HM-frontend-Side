@@ -49,7 +49,8 @@ function statusLabel(status, fallback) {
  * @param {number[]} [assignedBedIds] — beds with an active nurse allocation
  * @param {number[]} [allowAssignedIds] — assigned beds still selectable (e.g. current edit group)
  */
-export default function AdminBedMultiSelect({
+/* Legacy identifier preserved: AdminBedMultiSelect. Active name: ManagerBedMultiSelect. */
+export default function ManagerBedMultiSelect({
   beds = [],
   selectedIds = [],
   onChange,

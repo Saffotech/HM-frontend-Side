@@ -8,9 +8,9 @@ import {
   UserRound,
   Users,
 } from 'lucide-react';
-import AdminLayout from '@/features/manager/components/ManagerLayout';
-import AdminBackBar from '@/features/manager/components/ManagerBackBar';
-import AdminAllocationStatusBadge from '@/features/manager/components/ManagerAllocationStatusBadge';
+import ManagerLayout from '@/features/manager/components/ManagerLayout';
+import ManagerBackBar from '@/features/manager/components/ManagerBackBar';
+import ManagerAllocationStatusBadge from '@/features/manager/components/ManagerAllocationStatusBadge';
 import { useAdminBedAllocationPermissions } from '@/features/manager/hooks/useManagerBedAllocationPermissions';
 import {
   useAdminBedAllocationDetailQuery,
@@ -99,19 +99,19 @@ export default function NurseBedAllocationDetailPage() {
 
   if (!canView) {
     return (
-      <AdminLayout pageTitle="Allocation Details">
+      <ManagerLayout pageTitle="Allocation Details">
         <div className="admin-card nba-denied">
           <h2>Access denied</h2>
           <p className="nba-muted">You do not have permission to view bed allocations.</p>
         </div>
-      </AdminLayout>
+      </ManagerLayout>
     );
   }
 
   return (
-    <AdminLayout pageTitle="Allocation Details">
+    <ManagerLayout pageTitle="Allocation Details">
       <div className="admin-page nba-page nba-detail-page">
-        <AdminBackBar
+        <ManagerBackBar
           onBack={() => navigate(ROUTES.MANAGER_BED_ALLOCATION)}
           label="Back to allocations"
         />
@@ -134,7 +134,7 @@ export default function NurseBedAllocationDetailPage() {
                     <span className="nba-detail-hero__id">
                       Allocation #{group.idLabel ?? group.id}
                     </span>
-                    <AdminAllocationStatusBadge isActive={group.isActive} />
+                    <ManagerAllocationStatusBadge isActive={group.isActive} />
                   </div>
                   <h1 className="nba-detail-hero__title">{group.nurseName}</h1>
                   <p className="nba-detail-hero__subtitle">
@@ -220,7 +220,7 @@ export default function NurseBedAllocationDetailPage() {
                     <div className="nba-detail-fact">
                       <dt>Status</dt>
                       <dd>
-                        <AdminAllocationStatusBadge isActive={group.isActive} />
+                        <ManagerAllocationStatusBadge isActive={group.isActive} />
                       </dd>
                     </div>
                     <div className="nba-detail-fact">
@@ -250,6 +250,6 @@ export default function NurseBedAllocationDetailPage() {
           )}
         </QueryFeedback>
       </div>
-    </AdminLayout>
+    </ManagerLayout>
   );
 }

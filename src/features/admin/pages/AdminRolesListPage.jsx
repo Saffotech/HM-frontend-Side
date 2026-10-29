@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ShieldPlus } from 'lucide-react';
-import SuperAdminLayout from '@/features/admin/components/AdminLayout';
-import SuperAdminPageHeader from '@/features/admin/components/AdminPageHeader';
-import SuperAdminRoleCard from '@/features/admin/components/AdminRoleCard';
-import AdminEmptyState from '@/features/manager/components/ManagerEmptyState';
+import AdminLayout from '@/features/admin/components/AdminLayout';
+import AdminPageHeader from '@/features/admin/components/AdminPageHeader';
+import AdminRoleCard from '@/features/admin/components/AdminRoleCard';
+import ManagerEmptyState from '@/features/manager/components/ManagerEmptyState';
 import { useAdminDashboardQuery, useAdminRolesQuery } from '@/shared/hooks/queries/useAdminQuery';
 import { QueryFeedback } from '@/shared/components/common';
 import { adminPanelRoutes } from '@/shared/constants';
@@ -34,7 +34,8 @@ function buildStaffCounts(staffByRole = []) {
   }, {});
 }
 
-export default function SuperAdminRolesListPage() {
+/* Legacy identifier preserved: SuperAdminRolesListPage. Active name: AdminRolesListPage. */
+export default function AdminRolesListPage() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const panel = adminPanelRoutes(pathname);
@@ -61,9 +62,9 @@ export default function SuperAdminRolesListPage() {
   const permissionsPath = (roleId) => panel.rolesAssign(roleId);
 
   return (
-    <SuperAdminLayout pageTitle="Roles">
-      <div className="admin-page sa-roles-page">
-        <SuperAdminPageHeader title="System roles" />
+    <AdminLayout pageTitle="Roles">
+      <div className="admin-page admin-panel-roles-page">
+        <AdminPageHeader title="System roles" />
 
         <QueryFeedback
           isLoading={isLoading}
@@ -75,17 +76,17 @@ export default function SuperAdminRolesListPage() {
           }}
         >
           {!roles?.length ? (
-            <div className="admin-card sa-panel-card">
-              <AdminEmptyState
+            <div className="admin-card admin-panel-panel-card">
+              <ManagerEmptyState
                 icon={<ShieldPlus size={22} />}
                 title="No roles found"
                 description="Create a role to begin assigning permissions."
               />
             </div>
           ) : (
-            <div className="sa-role-cards-grid">
+            <div className="admin-panel-role-cards-grid">
               {roles.map((role) => (
-                <SuperAdminRoleCard
+                <AdminRoleCard
                   key={role.id}
                   role={role}
                   staffCount={staffCounts[role.name] ?? 0}
@@ -96,6 +97,6 @@ export default function SuperAdminRolesListPage() {
           )}
         </QueryFeedback>
       </div>
-    </SuperAdminLayout>
+    </AdminLayout>
   );
 }

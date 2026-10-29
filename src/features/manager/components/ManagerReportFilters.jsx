@@ -1,7 +1,8 @@
 import { DateInput } from '@/shared/components/common';
-import AdminFilterPanel from '@/features/manager/components/ManagerFilterPanel';
+import ManagerFilterPanel from '@/features/manager/components/ManagerFilterPanel';
 
-export default function AdminReportFilters({
+/* Legacy identifier preserved: AdminReportFilters. Active name: ManagerReportFilters. */
+export default function ManagerReportFilters({
   fromDate,
   toDate,
   onFromChange,
@@ -35,8 +36,8 @@ export default function AdminReportFilters({
   }
 
   return (
-    <AdminFilterPanel onReset={onReset} showReset={showReset} hideLabel>
+    <ManagerFilterPanel onReset={onReset} showReset={showReset} hideLabel>
       {fields}
-    </AdminFilterPanel>
+    </ManagerFilterPanel>
   );
 }

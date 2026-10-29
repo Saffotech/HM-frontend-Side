@@ -19,6 +19,11 @@ import {
   writeLocalOpdSettings,
 } from '@/features/manager/utils/opdSettingsMapper';
 
+/** Form shape shared with manager settings, for a settings payload that is already loaded. */
+export function mapOpdSettingsApiResponse(data) {
+  return opdSettingsApiToForm({ ...data, _source: 'api' });
+}
+
 export async function fetchAdminOpdSettings() {
   try {
     const data = await getOpdSettingsApi();

@@ -3,11 +3,12 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import AdminLayout from '@/features/manager/components/ManagerLayout';
-import AdminNotificationsSection from '@/features/manager/components/ManagerNotificationsSection';
+import ManagerLayout from '@/features/manager/components/ManagerLayout';
+import ManagerNotificationsSection from '@/features/manager/components/ManagerNotificationsSection';
 import { ROUTES } from '@/shared/constants';
 
-export default function AdminNotificationsPage() {
+/* Legacy identifier preserved: AdminNotificationsPage. Active name: ManagerNotificationsPage. */
+export default function ManagerNotificationsPage() {
   const navigate = useNavigate();
 
   const handleDeepLink = (n) => {
@@ -33,8 +34,8 @@ export default function AdminNotificationsPage() {
   };
 
   return (
-    <AdminLayout pageTitle="Notifications">
-      <AdminNotificationsSection onDeepLink={handleDeepLink} />
-    </AdminLayout>
+    <ManagerLayout pageTitle="Notifications">
+      <ManagerNotificationsSection onDeepLink={handleDeepLink} />
+    </ManagerLayout>
   );
 }

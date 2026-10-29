@@ -1,7 +1,9 @@
 /*
  * Platform Admin button system.
- * Scoped to the super-admin shell. CRM (.crm-app) and Accountant (.portal-shell)
+ * Scoped to the platform admin shell. CRM (.crm-app) and Accountant (.portal-shell)
  * keep their own controls.
+ * Legacy reference: this comment previously said "super-admin shell".
+ * Class names in this file were already platform-scoped and were left unchanged.
  */
 
 .app-shell:not(.portal-shell) .btn.btn {

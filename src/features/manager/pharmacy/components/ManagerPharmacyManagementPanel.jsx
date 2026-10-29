@@ -114,7 +114,8 @@ function PermissionModuleList({
   ));
 }
 
-export default function AdminPharmacyManagementPanel({ manageAdminEditLocks = false }) {
+/* Legacy identifier preserved: AdminPharmacyManagementPanel. Active name: ManagerPharmacyManagementPanel. */
+export default function ManagerPharmacyManagementPanel({ manageAdminEditLocks = false }) {
   const [activeSection, setActiveSection] = useState(SECTION_TABS[0].id);
   const [selectedByRole, setSelectedByRole] = useState({});
   const [isDirty, setIsDirty] = useState(false);

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, KeyRound, Shield, User, UserPlus } from 'lucide-react';
-import AdminLayout from '@/features/manager/components/ManagerLayout';
+import ManagerLayout from '@/features/manager/components/ManagerLayout';
 import './StaffRegisterPage.css';
 import {
   useAdminDepartmentsQuery,
@@ -150,7 +150,7 @@ export default function StaffRegisterPage() {
   const roleLabel = selectedRole ? formatRoleLabel(selectedRole.name) : '';
 
   return (
-    <AdminLayout pageTitle="Register Staff">
+    <ManagerLayout pageTitle="Register Staff">
       <div className="admin-page staff-register-page">
         <div className="staff-register-layout">
           <form className="admin-card staff-register-shell" onSubmit={handleSubmit} autoComplete="off">
@@ -368,6 +368,6 @@ export default function StaffRegisterPage() {
           </aside>
         </div>
       </div>
-    </AdminLayout>
+    </ManagerLayout>
   );
 }
