@@ -26,9 +26,16 @@ export function formatPatientRegisteredDate(raw) {
 
 export function apiToUiPatient(apiPatient) {
   if (!apiPatient) return null;
+  const registrationSource =
+    String(apiPatient.registration_source ?? apiPatient.registrationSource ?? 'OPD')
+      .trim()
+      .toUpperCase() === 'IPD'
+      ? 'IPD'
+      : 'OPD';
   return {
     id: apiPatient.patient_uid ?? apiPatient.id,
     dbId: apiPatient.id,
+    registrationSource,
     name:
       apiPatient.full_name ??
       `${apiPatient.first_name ?? ''} ${apiPatient.last_name ?? ''}`.trim() ??

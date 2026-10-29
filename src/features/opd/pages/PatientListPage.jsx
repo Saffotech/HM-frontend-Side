@@ -162,7 +162,12 @@ export default function PatientListPage() {
                     <div className="patient-cell">
                       <Avatar name={p.name} size={32} />
                       <div className="patient-cell__meta">
-                        <strong>{p.name}</strong>
+                        <div className="patient-cell__name">
+                          <strong>{p.name}</strong>
+                          <span className={`patient-cell__source patient-cell__source--${p.registrationSource.toLowerCase()}`}>
+                            {p.registrationSource}
+                          </span>
+                        </div>
                         <span className="id-badge">{p.id}</span>
                         <span className="patient-cell__phone">{p.phone}</span>
                         <span className="patient-cell__gender">{p.gender}</span>
