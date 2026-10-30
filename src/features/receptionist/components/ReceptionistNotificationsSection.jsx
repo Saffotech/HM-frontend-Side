@@ -12,6 +12,8 @@ import {
   useMarkReceptionistNotificationReadMutation,
 } from '@/features/receptionist/hooks/useReceptionistNotificationsQuery';
 import { Button, EmptyState } from '@/shared/components/common';
+import { NOTIFICATION_MODULE } from '@/shared/notifications/notificationModules';
+import { useNotificationNavigation } from '@/shared/notifications/useNotificationNavigation';
 import { toast } from '@/shared/utils/toast';
 import ReceptionistNotificationRow from './ReceptionistNotificationRow';
 import { useReceptionistPermissionSet } from '@/features/receptionist/hooks/useReceptionistPermission';
@@ -34,7 +36,7 @@ const PRIORITY_FILTER_VALUES = new Set(
 /** Nurse Phase 2 by Atharva — debounce live search so typing does not spam the API */
 const SEARCH_DEBOUNCE_MS = 300;
 
-export default function ReceptionistNotificationsSection({ onDeepLink }) {
+export default function ReceptionistNotificationsSection() {
   const { canViewNotifications, canUpdateNotifications } = useReceptionistPermissionSet();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -73,6 +75,7 @@ export default function ReceptionistNotificationsSection({ onDeepLink }) {
   }, [page, debouncedSearch, readFilter, notificationType, startDate, endDate]);
 
   const { data, isLoading, isError, error, refetch } = useReceptionistNotificationsListQuery(filters);
+  const openNotification = useNotificationNavigation(NOTIFICATION_MODULE.RECEPTIONIST);
   const markOne = useMarkReceptionistNotificationReadMutation();
   const markAll = useMarkAllReceptionistNotificationsReadMutation();
 
@@ -126,19 +129,11 @@ export default function ReceptionistNotificationsSection({ onDeepLink }) {
     setPage(1);
   };
 
-  const handleRowClick = async (n) => {
-    if (isReceptionistNotificationUnread(n)) {
-      if (!canUpdateNotifications) {
-        toast.error('You do not have permission to update notifications');
-        return;
-      }
-      try {
-        await markOne.mutateAsync(n.id);
-      } catch {
-        return;
-      }
-    }
-    onDeepLink?.(n);
+  const handleRowClick = (n) => {
+    void openNotification(n, {
+      markRead: canUpdateNotifications ? (id) => markOne.mutateAsync(id) : undefined,
+      isUnread: isReceptionistNotificationUnread,
+    });
   };
 
   if (!canViewNotifications) {

@@ -6,15 +6,21 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import {
+  isDoctorNotificationUnread,
   useDoctorNotificationsListQuery,
   useDoctorNotificationsUnreadCountQuery,
+  useMarkDoctorNotificationReadMutation,
 } from '@/features/doctor/hooks/useDoctorNotificationsQuery';
+import { NOTIFICATION_MODULE } from '@/shared/notifications/notificationModules';
+import { useNotificationNavigation } from '@/shared/notifications/useNotificationNavigation';
 import NotificationRow from './NotificationRow';
 import './DoctorNotificationsBell.css';
 
 export default function DoctorNotificationsBell({ onViewAll }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
+  const openNotification = useNotificationNavigation(NOTIFICATION_MODULE.DOCTOR);
+  const markOne = useMarkDoctorNotificationReadMutation();
   const { data: unread = 0 } = useDoctorNotificationsUnreadCountQuery();
   const { data: preview } = useDoctorNotificationsListQuery({
     page: 1,
@@ -47,6 +53,14 @@ export default function DoctorNotificationsBell({ onViewAll }) {
     onViewAll?.();
   };
 
+  const handleOpen = (notification) => {
+    setOpen(false);
+    void openNotification(notification, {
+      markRead: (id) => markOne.mutateAsync(id),
+      isUnread: isDoctorNotificationUnread,
+    });
+  };
+
   return (
     <div className="doctor-notif-bell" ref={wrapRef}>
       <button
@@ -76,7 +90,7 @@ export default function DoctorNotificationsBell({ onViewAll }) {
               <p className="doctor-notif-bell__empty">No unread notifications.</p>
             ) : (
               notifications.map((n) => (
-                <NotificationRow key={n.id} notification={n} compact onClick={handleViewAll} />
+                <NotificationRow key={n.id} notification={n} compact onClick={() => handleOpen(n)} />
               ))
             )}
           </div>

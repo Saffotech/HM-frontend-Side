@@ -5,15 +5,21 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import {
+  isOpdBillingNotificationUnread,
+  useMarkOpdBillingNotificationReadMutation,
   useOpdBillingNotificationsListQuery,
   useOpdBillingNotificationsUnreadCountQuery,
 } from '@/features/opd/hooks/useOpdBillingNotificationsQuery';
+import { NOTIFICATION_MODULE } from '@/shared/notifications/notificationModules';
+import { useNotificationNavigation } from '@/shared/notifications/useNotificationNavigation';
 import OpdNotificationRow from './OpdNotificationRow';
 import './OpdNotificationsBell.css';
 
 export default function OpdNotificationsBell({ onViewAll }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
+  const openNotification = useNotificationNavigation(NOTIFICATION_MODULE.OPD);
+  const markOne = useMarkOpdBillingNotificationReadMutation();
   const { data: unread = 0 } = useOpdBillingNotificationsUnreadCountQuery();
   const { data: preview } = useOpdBillingNotificationsListQuery({
     page: 1,
@@ -44,6 +50,14 @@ export default function OpdNotificationsBell({ onViewAll }) {
   const handleViewAll = () => {
     setOpen(false);
     onViewAll?.();
+  };
+
+  const handleOpen = (notification) => {
+    setOpen(false);
+    void openNotification(notification, {
+      markRead: (id) => markOne.mutateAsync(id),
+      isUnread: isOpdBillingNotificationUnread,
+    });
   };
 
   return (
@@ -79,7 +93,7 @@ export default function OpdNotificationsBell({ onViewAll }) {
                   key={n.id}
                   notification={n}
                   compact
-                  onClick={handleViewAll}
+                  onClick={() => handleOpen(n)}
                 />
               ))
             )}

@@ -1,4 +1,4 @@
-import { lazy, useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -8,6 +8,8 @@ import {
   CalendarDays,
 } from 'lucide-react';
 import DoctorShell from '@/features/doctor/components/DoctorShell';
+import ErrorBoundary from '@/shared/components/ErrorBoundary';
+import PageSpinner from '@/shared/components/PageSpinner';
 import { PATIENT_CATEGORY_FILTER } from '@/features/doctor/utils/patientListFilters';
 import { parseDoctorEncounterMode } from '@/features/doctor/utils/encounterType';
 import { parseDoctorSection, withDoctorSection } from '@/features/doctor/utils/doctorSection';
@@ -37,7 +39,6 @@ export default function DoctorDashboardPage() {
   const [patientsCategoryFilter, setPatientsCategoryFilter] = useState(
     PATIENT_CATEGORY_FILTER.COMPLETED
   );
-  const [pendingLabReport, setPendingLabReport] = useState(null);
 
   const showEncounterToggle = ['dashboard', 'patients', 'labs', 'schedule'].includes(active);
 
@@ -101,15 +102,6 @@ export default function DoctorDashboardPage() {
     selectSection('patients');
   };
 
-  const openLabReport = useCallback((notification) => {
-    setPendingLabReport(notification);
-    selectSection('labs');
-  }, [selectSection]);
-
-  const clearPendingLabReport = useCallback(() => {
-    setPendingLabReport(null);
-  }, []);
-
   return (
     <DoctorShell
       title="Doctor"
@@ -119,6 +111,8 @@ export default function DoctorDashboardPage() {
       encounterMode={showEncounterToggle ? encounterMode : undefined}
       onEncounterModeChange={showEncounterToggle ? handleEncounterModeChange : undefined}
     >
+      <Suspense fallback={<PageSpinner />}>
+      <ErrorBoundary variant="route">
       {active === 'dashboard' && (
         <DashboardSection
           key={`dashboard-${encounterMode}`}
@@ -137,16 +131,16 @@ export default function DoctorDashboardPage() {
         <LabsSection
           key={`labs-${encounterMode}`}
           encounterMode={encounterMode}
-          requestedReport={pendingLabReport}
-          onReportRequestHandled={clearPendingLabReport}
         />
       )}
       {active === 'schedule' && (
         <ScheduleSection key={`schedule-${encounterMode}`} encounterMode={encounterMode} />
       )}
       {active === 'notifications' && (
-        <NotificationsSection onLabReportClick={openLabReport} />
+        <NotificationsSection />
       )}
+      </ErrorBoundary>
+      </Suspense>
     </DoctorShell>
   );
 }

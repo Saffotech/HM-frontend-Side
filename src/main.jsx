@@ -2,7 +2,13 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ErrorBoundary from '@/shared/components/ErrorBoundary';
+import ApplicationErrorPage from '@/shared/components/errors/ApplicationErrorPage';
 import { AuthProvider } from '@/shared/hooks/useAuth';
+import { loadAuthSession } from '@/components/security/authSession';
+import { getAppEntryForRole } from '@/shared/utils/authRedirect';
+import { ROUTES } from '@/shared/constants';
+import { isChunkLoadError, queryRetryDelay, shouldRetryMutation, shouldRetryQuery } from '@/shared/errors/errorClassification';
+import { claimAutomaticChunkReload } from '@/shared/errors/chunkRecovery';
 import App from './App';
 import './index.css';
 
@@ -10,30 +16,47 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5,
-      retry: 1,
+      retry: shouldRetryQuery,
+      retryDelay: queryRetryDelay,
+      throwOnError: false,
+    },
+    mutations: {
+      retry: shouldRetryMutation,
     },
   },
 });
 
-function appErrorFallback(error, reset) {
+if (typeof window !== 'undefined') {
+  window.addEventListener('vite:preloadError', (event) => {
+    if (claimAutomaticChunkReload(window.sessionStorage)) {
+      event.preventDefault();
+      window.location.reload();
+    }
+  });
+}
+
+function openAuthorizedHome() {
+  try {
+    const role = loadAuthSession()?.user?.role;
+    window.location.replace(role ? getAppEntryForRole(role) : ROUTES.LOGIN);
+  } catch {
+    window.location.replace(ROUTES.LOGIN);
+  }
+}
+
+function appErrorFallback(error, reset, recovering) {
+  const chunk = isChunkLoadError(error);
   return (
-    <div className="app-error-fallback">
-      <h2>Application error</h2>
-      <p>Something went wrong. Please refresh the page.</p>
-      {import.meta.env.DEV && error?.message ? (
-        <pre style={{ maxWidth: '40rem', whiteSpace: 'pre-wrap', textAlign: 'left' }}>
-          {error.message}
-        </pre>
-      ) : null}
-      <button type="button" onClick={() => window.location.reload()}>
-        Refresh
-      </button>
-      {import.meta.env.DEV ? (
-        <button type="button" onClick={reset} style={{ marginLeft: '0.5rem' }}>
-          Try again
-        </button>
-      ) : null}
-    </div>
+    <ApplicationErrorPage
+      title={chunk ? 'This page needs a refresh' : 'Something went wrong'}
+      message={chunk
+        ? 'The latest version of this page could not be loaded. Refresh to continue. You will stay signed in.'
+        : 'SaffoCare ran into a problem. You can try again, or return to your dashboard.'}
+      onRetry={chunk ? () => window.location.reload() : reset}
+      onHome={openAuthorizedHome}
+      recovering={Boolean(recovering)}
+      tone={chunk ? 'warning' : 'critical'}
+    />
   );
 }
 

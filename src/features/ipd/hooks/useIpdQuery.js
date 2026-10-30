@@ -89,7 +89,6 @@ export function useIpdDashboardQuery() {
   return useQuery({
     queryKey: queryKeys.ipd.dashboard,
     queryFn: () => getIpdDashboardStats(token),
-    retry: 1,
     staleTime: 30_000,
   });
 }
@@ -122,7 +121,6 @@ export function useIpdAdmissionDetailQuery(admissionId) {
     queryKey: queryKeys.ipd.admission(admissionId),
     queryFn: () => getIpdPatientDetail(admissionId, token),
     enabled: Boolean(admissionId),
-    retry: 1,
   });
 }
 
@@ -214,7 +212,6 @@ export function useIpdProfileQuery(options = {}) {
     queryKey: queryKeys.ipd.profile,
     queryFn: () => fetchIpdProfile(token),
     enabled: options.enabled !== false && Boolean(token),
-    retry: 1,
   });
 }
 

@@ -6,9 +6,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import {
+  isPharmacistNotificationUnread,
+  useMarkPharmacistNotificationReadMutation,
   usePharmacistNotificationsListQuery,
   usePharmacistNotificationsUnreadCountQuery,
 } from '@/features/pharmacy/hooks/usePharmacistNotificationsQuery';
+import { NOTIFICATION_MODULE } from '@/shared/notifications/notificationModules';
+import { useNotificationNavigation } from '@/shared/notifications/useNotificationNavigation';
 import { usePharmacyPermissionSet } from '@/features/pharmacy/hooks/usePharmacyPermission';
 import PharmacyNotificationRow from './PharmacyNotificationRow';
 import './PharmacyNotificationsBell.css';
@@ -16,7 +20,9 @@ import './PharmacyNotificationsBell.css';
 export default function PharmacyNotificationsBell({ onViewAll }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
-  const { canViewNotifications } = usePharmacyPermissionSet();
+  const { canViewNotifications, canUpdateNotifications } = usePharmacyPermissionSet();
+  const openNotification = useNotificationNavigation(NOTIFICATION_MODULE.PHARMACY);
+  const markOne = useMarkPharmacistNotificationReadMutation();
   const { data: unread = 0 } = usePharmacistNotificationsUnreadCountQuery({
     enabled: canViewNotifications,
   });
@@ -54,6 +60,14 @@ export default function PharmacyNotificationsBell({ onViewAll }) {
     onViewAll?.();
   };
 
+  const handleOpen = (notification) => {
+    setOpen(false);
+    void openNotification(notification, {
+      markRead: canUpdateNotifications ? (id) => markOne.mutateAsync(id) : undefined,
+      isUnread: isPharmacistNotificationUnread,
+    });
+  };
+
   return (
     <div className="pharmacy-notif-bell" ref={wrapRef}>
       <button
@@ -87,7 +101,7 @@ export default function PharmacyNotificationsBell({ onViewAll }) {
                   key={n.id}
                   notification={n}
                   compact
-                  onClick={handleViewAll}
+                  onClick={() => handleOpen(n)}
                 />
               ))
             )}

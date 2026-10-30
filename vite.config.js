@@ -18,6 +18,26 @@ function scopePlatformSelector(prefix, selector, prefixedSelector) {
 
 
 
+function spaAssetPolicy() {
+  const setHtmlNoStore = (req, res, next) => {
+    const pathOnly = (req.url || '').split('?')[0];
+    if (pathOnly === '/' || pathOnly === '/index.html' || pathOnly.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-store');
+    }
+    next();
+  };
+
+  return {
+    name: 'saffo-spa-asset-policy',
+    configureServer(server) {
+      server.middlewares.use(setHtmlNoStore);
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use(setHtmlNoStore);
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
 
   const env = loadEnv(mode, process.cwd(), '');
@@ -28,7 +48,7 @@ export default defineConfig(({ mode }) => {
 
   return {
 
-    plugins: [react()],
+    plugins: [react(), spaAssetPolicy()],
 
     // Platform Admin: keeps platform styles from leaking into the hospital app
     css: {

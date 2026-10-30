@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Beaker, Eye, Scan, X } from 'lucide-react';
 import {
   useDoctorLabTestsQuery,
@@ -356,6 +357,8 @@ export default function LabsSection({
   requestedReport = null,
   onReportRequestHandled,
 }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const labOrderId = searchParams.get('labOrder');
   const {
     data: tests = [],
     isLoading,
@@ -396,33 +399,54 @@ export default function LabsSection({
   const [editTest, setEditTest] = useState(null);
   const [reportTest, setReportTest] = useState(null);
 
-  useEffect(() => {
-    if (requestedReport?.reference_id == null || isLoading || isFetching) return;
+  const activeReportRequest = useMemo(() => {
+    if (requestedReport?.reference_id != null) return requestedReport;
+    if (!labOrderId) return null;
+    return { reference_id: labOrderId, title: 'Lab report', message: '' };
+  }, [requestedReport, labOrderId]);
 
-    const requestedId = String(requestedReport.reference_id).trim();
+  const closeReport = () => {
+    setReportTest(null);
+    onReportRequestHandled?.();
+    setSearchParams((prev) => {
+      if (!prev.get('labOrder')) return prev;
+      const next = new URLSearchParams(prev);
+      next.delete('labOrder');
+      return next;
+    }, { replace: true });
+  };
+
+  useEffect(() => {
+    if (activeReportRequest?.reference_id == null || isLoading || isFetching) return;
+
+    const requestedId = String(activeReportRequest.reference_id).trim();
     const requestedTest = tests.find((test) => String(test.id) === requestedId);
     if (requestedTest) {
-      setReportTest(requestedTest);
-    } else {
-      const message = String(requestedReport.message ?? requestedReport.body ?? '');
-      const [testName, patientName] = message.split(/\s+[—–]\s+/, 2);
-      setReportTest({
-        id: requestedReport.reference_id,
-        testName: testName || requestedReport.title || 'Lab report',
-        patientName: patientName || undefined,
-        status: 'Completed',
-        apiStatus: 'completed',
-        doctorStatus: 'Completed',
-        reportAvailable: true,
-      });
+      setReportTest((current) => (
+        current && String(current.id) === requestedId ? current : requestedTest
+      ));
+      return;
     }
-    onReportRequestHandled?.();
+    const message = String(activeReportRequest.message ?? activeReportRequest.body ?? '');
+    const [testName, patientName] = message.split(/\s+[—–]\s+/, 2);
+    setReportTest((current) => (
+      current && String(current.id) === requestedId
+        ? current
+        : {
+          id: activeReportRequest.reference_id,
+          testName: testName || activeReportRequest.title || 'Lab report',
+          patientName: patientName || undefined,
+          status: 'Completed',
+          apiStatus: 'completed',
+          doctorStatus: 'Completed',
+          reportAvailable: true,
+        }
+    ));
   }, [
-    requestedReport,
+    activeReportRequest,
     isLoading,
     isFetching,
     tests,
-    onReportRequestHandled,
   ]);
 
   const handleCancel = async (test) => {
@@ -483,7 +507,7 @@ export default function LabsSection({
       <DoctorLabReportModal
         test={reportTest}
         open={reportTest != null}
-        onClose={() => setReportTest(null)}
+        onClose={closeReport}
       />
     </div>
   );

@@ -5,6 +5,7 @@
 
 import { apiClient } from './client';
 import { trimCredentials } from '@/shared/utils/credentials';
+import { TIMEOUT_MESSAGE } from '@/shared/errors/errorClassification';
 
 const LOGIN_TIMEOUT_MS = 8000;
 
@@ -29,7 +30,7 @@ export async function login(credentials) {
       body: JSON.stringify(trimmed),
     }),
     LOGIN_TIMEOUT_MS,
-    'Server is not responding. Start the backend (port 8000) and try again.'
+    TIMEOUT_MESSAGE
   );
 }
 

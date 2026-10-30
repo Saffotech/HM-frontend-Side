@@ -6,10 +6,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import {
+  isLabTechnicianNotificationUnread,
   sortLabNotificationsNewestFirst,
   useLabTechnicianNotificationsListQuery,
   useLabTechnicianNotificationsUnreadCountQuery,
+  useMarkLabTechnicianNotificationReadMutation,
 } from '@/features/lab/hooks/useLabTechnicianNotificationsQuery';
+import { NOTIFICATION_MODULE } from '@/shared/notifications/notificationModules';
+import { useNotificationNavigation } from '@/shared/notifications/useNotificationNavigation';
 import { useLabPermissionSet } from '@/features/lab/hooks/useLabPermission';
 import LabNotificationRow from './LabNotificationRow';
 import './LabNotificationsBell.css';
@@ -17,7 +21,9 @@ import './LabNotificationsBell.css';
 export default function LabNotificationsBell({ onViewAll }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
-  const { canViewNotifications } = useLabPermissionSet();
+  const { canViewNotifications, canUpdateNotifications } = useLabPermissionSet();
+  const openNotification = useNotificationNavigation(NOTIFICATION_MODULE.LAB);
+  const markOne = useMarkLabTechnicianNotificationReadMutation();
   const { data: unread = 0 } = useLabTechnicianNotificationsUnreadCountQuery({
     enabled: canViewNotifications,
   });
@@ -55,6 +61,14 @@ export default function LabNotificationsBell({ onViewAll }) {
     onViewAll?.();
   };
 
+  const handleOpen = (notification) => {
+    setOpen(false);
+    void openNotification(notification, {
+      markRead: canUpdateNotifications ? (id) => markOne.mutateAsync(id) : undefined,
+      isUnread: isLabTechnicianNotificationUnread,
+    });
+  };
+
   return (
     <div className="lab-notif-bell" ref={wrapRef}>
       <button
@@ -88,7 +102,7 @@ export default function LabNotificationsBell({ onViewAll }) {
                   key={n.id}
                   notification={n}
                   compact
-                  onClick={handleViewAll}
+                  onClick={() => handleOpen(n)}
                 />
               ))
             )}

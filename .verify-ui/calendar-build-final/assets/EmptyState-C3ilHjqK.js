@@ -1,0 +1,1 @@
+import{o as e}from"./vendor-query-O0VAyrto.js";var t=e();function n({title:e=`Nothing to show`,message:n,action:r}){return(0,t.jsxs)(`div`,{className:`empty-state`,children:[(0,t.jsx)(`h3`,{children:e}),n&&(0,t.jsx)(`p`,{children:n}),r]})}export{n as t};

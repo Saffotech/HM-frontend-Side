@@ -17,6 +17,14 @@ import {
   shouldRedirectToHospitalLogin,
   supersededSessionError,
 } from '@/components/security/httpSessionPolicy';
+import {
+  NETWORK_MESSAGE,
+  NETWORK_MUTATION_MESSAGE,
+  TIMEOUT_MESSAGE,
+  TIMEOUT_MUTATION_MESSAGE,
+  userFacingMessage,
+} from '@/shared/errors/errorClassification';
+import { recordClientDiagnostic, sanitizeRequestId, scrubRoute } from '@/shared/errors/errorDiagnostics';
 
 function isLegacyDemoSession(user, token) {
   if (user?.isDemoSession) return true;
@@ -123,25 +131,91 @@ async function refreshSessionTokens() {
   return refreshInFlight;
 }
 
+function requestMethod(options) {
+  return String(options?.method || 'GET').toUpperCase();
+}
+
+function readRequestId(response) {
+  if (!response?.headers?.get) return null;
+  return sanitizeRequestId(
+    response.headers.get('x-request-id') || response.headers.get('x-correlation-id')
+  );
+}
+
+function readRetryAfterSeconds(response) {
+  if (!response?.headers?.get) return null;
+  const raw = response.headers.get('retry-after');
+  if (!raw) return null;
+  const seconds = Number(raw);
+  if (Number.isFinite(seconds) && seconds >= 0) return seconds;
+  const when = Date.parse(raw);
+  if (!Number.isFinite(when)) return null;
+  return Math.max(0, Math.round((when - Date.now()) / 1000));
+}
+
+function noteFailure(err, response) {
+  const requestId = readRequestId(response);
+  if (requestId) err.requestId = requestId;
+  const retryAfter = readRetryAfterSeconds(response);
+  if (retryAfter != null) err.retryAfterSeconds = retryAfter;
+  try {
+    recordClientDiagnostic({
+      category: err.category || 'unexpected',
+      status: err.status,
+      requestId,
+      network: err.category === 'network' || err.category === 'timeout',
+      chunk: false,
+      route: typeof window !== 'undefined' ? scrubRoute(window.location.pathname) : null,
+    });
+  } catch {
+    /* Diagnostics must not change the request result. */
+  }
+  return err;
+}
+
+function transportFailure(kind, method) {
+  const unsafe = method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS';
+  const err = new Error(
+    kind === 'timeout'
+      ? (unsafe ? TIMEOUT_MUTATION_MESSAGE : TIMEOUT_MESSAGE)
+      : (unsafe ? NETWORK_MUTATION_MESSAGE : NETWORK_MESSAGE)
+  );
+  err.status = 0;
+  err.code = kind;
+  err.category = kind;
+  err.method = method;
+  return noteFailure(err, null);
+}
+
+function httpFailure(response, body, method, fallbackMessage) {
+  const detail = parseDetail(body?.detail);
+  const err = new Error(fallbackMessage || 'Request failed');
+  err.status = response.status;
+  err.detail = detail;
+  err.method = method;
+  if (response.status === 429) err.category = 'rate_limit';
+  else if (response.status === 404) err.category = 'not_found';
+  else if (response.status >= 500) err.category = 'server';
+  else if (response.status === 400 || response.status === 409 || response.status === 422) {
+    err.category = 'validation';
+    err.message = detail || body?.message || err.message;
+  }
+  const retryAfter = readRetryAfterSeconds(response);
+  if (retryAfter != null) err.retryAfterSeconds = retryAfter;
+  err.message = userFacingMessage(err) || err.message;
+  return noteFailure(err, response);
+}
+
 async function fetchWithTimeout(url, options, timeoutMs = DEFAULT_TIMEOUT_MS) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const method = requestMethod(options);
 
   try {
     return await fetch(url, { ...options, signal: controller.signal });
   } catch (err) {
-    if (err?.name === 'AbortError') {
-      const timeoutErr = new Error(
-        'Server is not responding. Start the backend (port 8000) and try again.'
-      );
-      timeoutErr.status = 0;
-      throw timeoutErr;
-    }
-    const networkErr = new Error(
-      'Could not reach the server. Check that the backend is running and try again.'
-    );
-    networkErr.status = 0;
-    throw networkErr;
+    if (err?.name === 'AbortError') throw transportFailure('timeout', method);
+    throw transportFailure('network', method);
   } finally {
     clearTimeout(timer);
   }
@@ -255,18 +329,7 @@ export async function apiClient(endpoint, options = {}) {
   }
 
   if (!response.ok) {
-    const detail = parseDetail(body.detail);
-    const method = String(rest.method || 'GET').toUpperCase();
-    const fallback =
-      response.status >= 500
-        ? method === 'GET'
-          ? 'Server error — could not load data. Try again in a moment.'
-          : 'Server error — the request may have partially saved. Refresh and check before retrying.'
-        : 'Request failed';
-    const err = new Error(detail || body.message || fallback);
-    err.status = response.status;
-    err.detail = detail;
-    throw err;
+    throw httpFailure(response, body, requestMethod(rest), 'Request failed');
   }
 
   return body;
@@ -362,11 +425,7 @@ export async function apiSessionRequest(endpoint, options = {}) {
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
     if (!isSessionCurrent(epochAtStart)) throw supersededSessionError();
-    const detail = parseDetail(body.detail);
-    const err = new Error(detail || body.message || fallbackMessage);
-    err.status = response.status;
-    err.detail = detail;
-    throw err;
+    throw httpFailure(response, body, requestMethod(rest), fallbackMessage);
   }
 
   if (responseType === 'blob') {

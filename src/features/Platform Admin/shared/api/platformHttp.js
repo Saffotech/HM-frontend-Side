@@ -17,9 +17,9 @@ async function fetchWithTimeout(fetchImpl, url, options, timeoutMs) {
     return await fetchImpl(url, { ...options, signal: controller.signal });
   } catch (error) {
     if (error?.name === "AbortError") {
-      throw new PlatformApiError("The server did not respond. Nothing was saved in this browser.", { status: 0 });
+      throw new PlatformApiError("This request timed out. Nothing was saved in this browser.", { status: 0, code: "timeout" });
     }
-    throw new PlatformApiError("Could not reach the server. Nothing was saved in this browser.", { status: 0 });
+    throw new PlatformApiError("We couldn't connect just now. Nothing was saved in this browser.", { status: 0, code: "network" });
   } finally {
     clearTimeout(timer);
   }

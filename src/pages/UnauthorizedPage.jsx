@@ -10,6 +10,7 @@ export default function UnauthorizedPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const home = user?.role ? getAppEntryForRole(user.role) : ROUTES.LOGIN;
+  const goToAuthorizedHome = () => navigate(home, { replace: true });
 
   return (
     <div className="unauthorized-page">
@@ -22,8 +23,8 @@ export default function UnauthorizedPage() {
         Contact your administrator if you believe this is an error.
       </p>
       <div className="unauthorized-page__actions">
-        <Button onClick={() => navigate(home)}>Go to my dashboard</Button>
-        <Button variant="outline" onClick={() => navigate(-1)}>
+        <Button onClick={goToAuthorizedHome}>Go to my dashboard</Button>
+        <Button variant="outline" onClick={goToAuthorizedHome}>
           <ArrowLeft size={16} />
           Go back
         </Button>

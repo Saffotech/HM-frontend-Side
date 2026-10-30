@@ -6,11 +6,11 @@ import { LIST_PAGE_SIZE, usePagination } from "../../../shared/hooks/usePaginati
 import SearchBar from "../../../shared/components/SearchBar";
 import Select from "../../../shared/components/Select";
 import Button from "../../../shared/components/Button";
-import { matchesInvoiceFilters, sumPaidAmounts } from "../../../shared/api/invoiceModel";
+import { matchesInvoiceFilters } from "../../../shared/api/invoiceModel";
 import { usePlatformInvoices } from "../../../shared/hooks/usePlatformInvoices";
 import { accountsPath } from "../../../shared/paths";
 import { todayInput } from "../../../shared/utils/formatDate";
-import { formatCurrency } from "../../../shared/utils/formatCurrency";
+import { DateInput } from "@/shared/components/common";
 import "./InvoicesPayments.css";
 
 const STATUSES = [
@@ -18,7 +18,6 @@ const STATUSES = [
   ["Pending", "Pending"],
   ["Overdue", "Overdue"],
   ["Paid", "Paid"],
-  ["Failed", "Failed"],
   ["soon", "Due soon"],
 ];
 
@@ -28,13 +27,14 @@ export default function InvoicesPayments() {
   const [status, setStatus] = useState("");
   const [period, setPeriod] = useState("");
   const [query, setQuery] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   const visible = useMemo(
-    () => invoices.filter((invoice) => matchesInvoiceFilters(invoice, { query, status, period, today })),
-    [invoices, period, query, status, today],
+    () => invoices.filter((invoice) => matchesInvoiceFilters(invoice, { query, status, period, today, dateFrom, dateTo })),
+    [invoices, period, query, status, today, dateFrom, dateTo],
   );
   const pagination = usePagination(visible, LIST_PAGE_SIZE, `${query}|${status}|${period}`);
-  const collected = useMemo(() => sumPaidAmounts(visible), [visible]);
 
   return (
     <section className="inv-page">
@@ -48,16 +48,16 @@ export default function InvoicesPayments() {
             <option value="">All dates</option>
             <option value="month">This month</option>
             <option value="quarter">This quarter</option>
+            <option value="custom">Custom date</option>
           </Select>
-          <Button variant="secondary" onClick={() => { setStatus(""); setPeriod(""); setQuery(""); }}>Reset</Button>
+          {period === "custom" && (
+            <div className="inv-date-range">
+              <DateInput label="From" value={dateFrom} max={dateTo || undefined} onChange={(event) => setDateFrom(event.target.value)} />
+              <DateInput label="To" value={dateTo} min={dateFrom || undefined} onChange={(event) => setDateTo(event.target.value)} />
+            </div>
+          )}
+          <Button variant="secondary" onClick={() => { setStatus(""); setPeriod(""); setQuery(""); setDateFrom(""); setDateTo(""); }}>Reset</Button>
         </div>
-        <div className="inv-meta">
-          <span>{loading ? "Loading invoices" : error ? "Invoices unavailable" : `${visible.length} invoices in this list`}</span>
-          <span>{loading || error || !collected.complete ? "Collected —" : `Collected in this list ${formatCurrency(collected.amount)}`}</span>
-        </div>
-        {!loading && !error && !collected.complete && (
-          <p className="panel-copy">A collected total is not shown because a paid invoice in this list has no usable amount.</p>
-        )}
         <PlatformInvoiceTable
           invoices={loading || error ? visible : pagination.rows}
           loading={loading}

@@ -6,15 +6,21 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import {
+  isNurseNotificationUnread,
+  useMarkNurseNotificationReadMutation,
   useNurseNotificationsListQuery,
   useNurseNotificationsUnreadCountQuery,
 } from '@/features/nurse/hooks/useNurseNotificationsQuery';
+import { NOTIFICATION_MODULE } from '@/shared/notifications/notificationModules';
+import { useNotificationNavigation } from '@/shared/notifications/useNotificationNavigation';
 import NurseNotificationRow from './NurseNotificationRow';
 import './NurseNotificationsBell.css';
 
 export default function NurseNotificationsBell({ onViewAll }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
+  const openNotification = useNotificationNavigation(NOTIFICATION_MODULE.NURSE);
+  const markOne = useMarkNurseNotificationReadMutation();
   const { data: unread = 0 } = useNurseNotificationsUnreadCountQuery();
   const { data: preview } = useNurseNotificationsListQuery({
     page: 1,
@@ -45,6 +51,14 @@ export default function NurseNotificationsBell({ onViewAll }) {
   const handleViewAll = () => {
     setOpen(false);
     onViewAll?.();
+  };
+
+  const handleOpen = (notification) => {
+    setOpen(false);
+    void openNotification(notification, {
+      markRead: (id) => markOne.mutateAsync(id),
+      isUnread: isNurseNotificationUnread,
+    });
   };
 
   return (
@@ -80,7 +94,7 @@ export default function NurseNotificationsBell({ onViewAll }) {
                   key={n.id}
                   notification={n}
                   compact
-                  onClick={handleViewAll}
+                  onClick={() => handleOpen(n)}
                 />
               ))
             )}

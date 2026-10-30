@@ -1,3 +1,5 @@
+import { shouldShowErrorToast } from '@/shared/errors/notificationDedupe';
+
 let listeners = [];
 
 export function subscribeToast(listener) {
@@ -14,6 +16,7 @@ function notify(toast) {
 let toastSeq = 0;
 
 export function showToast(message, type = 'success') {
+  if (type === 'error' && !shouldShowErrorToast(message, Date.now())) return;
   const id = `${Date.now()}-${++toastSeq}`;
   notify({ id, message, type });
   setTimeout(() => notify({ id, dismiss: true }), 3500);

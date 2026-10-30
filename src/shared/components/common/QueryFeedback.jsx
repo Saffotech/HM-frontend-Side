@@ -1,5 +1,7 @@
 import { PageSkeleton } from './Skeleton';
-import Button from './Button';
+import PageDataError from '@/shared/components/errors/PageDataError';
+import InlineApiError from '@/shared/components/errors/InlineApiError';
+import { userFacingMessage, feedbackPhase } from '@/shared/errors/errorClassification';
 import {
   isLabDepartmentUnassignedError,
   LAB_DEPT_UNASSIGNED_MESSAGE,
@@ -9,44 +11,45 @@ function getErrorMessage(error) {
   if (!error) return 'Something went wrong. Please try again.';
   if (error.code === 'session_superseded') return '';
   if (isLabDepartmentUnassignedError(error)) return LAB_DEPT_UNASSIGNED_MESSAGE;
-  const status = error.status;
-  if (status === 404) return 'Record not found';
-  if (status === 403) {
-    const detail = `${error.detail || ''} ${error.message || ''}`;
-    if (error.code === 'permission_denied' || /permission denied/i.test(detail)) {
-      return "You don't have permission to view this";
-    }
-    return error.message || 'Request forbidden';
-  }
-  if (status === 0) {
-    return (
-      error.message ||
-      'Could not reach the server. Start the backend on port 8000 and try again.'
-    );
-  }
-  return error.message || 'Something went wrong. Please try again.';
+  return userFacingMessage(error);
 }
 
-/** Standard loading / error UI for data pages */
-export default function QueryFeedback({ isLoading, isError, error, onRetry, children }) {
-  if (isLoading) {
+/** Standard loading / error UI for data pages and sections. */
+export default function QueryFeedback({
+  isLoading,
+  isError,
+  error,
+  onRetry,
+  children,
+  variant,
+}) {
+  const phase = feedbackPhase({ isLoading, isError });
+  if (phase === 'loading') {
     return (
       <div className="query-feedback query-feedback--loading">
         <PageSkeleton />
       </div>
     );
   }
-  if (isError) {
+  if (phase === 'error') {
     if (error?.code === 'session_superseded') return null;
+    const message = getErrorMessage(error);
+    const surface = variant || (children ? 'page' : 'inline');
+    if (surface === 'inline') {
+      return (
+        <InlineApiError
+          error={error}
+          message={message}
+          onRetry={onRetry}
+        />
+      );
+    }
     return (
-      <div className="query-feedback query-feedback--error" role="alert">
-        <p>{getErrorMessage(error)}</p>
-        {onRetry && (
-          <Button type="button" variant="secondary" size="sm" onClick={onRetry}>
-            Try again
-          </Button>
-        )}
-      </div>
+      <PageDataError
+        error={error}
+        message={message}
+        onRetry={onRetry}
+      />
     );
   }
   return children;

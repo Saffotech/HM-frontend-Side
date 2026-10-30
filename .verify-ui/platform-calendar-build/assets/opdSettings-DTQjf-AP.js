@@ -1,0 +1,1 @@
+import{j as e}from"./labDepartments-BJdAbv-p.js";async function t(){return e(`/opd/settings`)}export{t};

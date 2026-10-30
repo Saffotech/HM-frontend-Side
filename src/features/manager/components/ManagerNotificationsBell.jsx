@@ -5,9 +5,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import {
+  isAdminNotificationUnread,
   useAdminNotificationsListQuery,
   useAdminNotificationsUnreadCountQuery,
+  useMarkAdminNotificationReadMutation,
 } from '@/features/manager/hooks/useManagerNotificationsQuery';
+import { NOTIFICATION_MODULE } from '@/shared/notifications/notificationModules';
+import { useNotificationNavigation } from '@/shared/notifications/useNotificationNavigation';
 import ManagerNotificationRow from './ManagerNotificationRow';
 import './ManagerNotificationsBell.css';
 
@@ -15,6 +19,8 @@ import './ManagerNotificationsBell.css';
 export default function ManagerNotificationsBell({ onViewAll }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
+  const openNotification = useNotificationNavigation(NOTIFICATION_MODULE.MANAGER);
+  const markOne = useMarkAdminNotificationReadMutation();
   const { data: unread = 0 } = useAdminNotificationsUnreadCountQuery();
   const { data: preview } = useAdminNotificationsListQuery({
     page: 1,
@@ -45,6 +51,14 @@ export default function ManagerNotificationsBell({ onViewAll }) {
   const handleViewAll = () => {
     setOpen(false);
     onViewAll?.();
+  };
+
+  const handleOpen = (notification) => {
+    setOpen(false);
+    void openNotification(notification, {
+      markRead: (id) => markOne.mutateAsync(id),
+      isUnread: isAdminNotificationUnread,
+    });
   };
 
   return (
@@ -80,7 +94,7 @@ export default function ManagerNotificationsBell({ onViewAll }) {
                   key={n.id}
                   notification={n}
                   compact
-                  onClick={handleViewAll}
+                  onClick={() => handleOpen(n)}
                 />
               ))
             )}

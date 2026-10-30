@@ -40,9 +40,19 @@ export function parseErrorBody(status, body) {
   if (status === 401) {
     return { message: "Could not validate credentials", detail: detail ?? null, fieldErrors: null };
   }
+  if (status === 404) {
+    return { message: "We couldn't find that information.", detail: detail ?? null, fieldErrors: null };
+  }
+  if (status === 429) {
+    return {
+      message: "Too many requests. Please wait a moment and try again.",
+      detail: detail ?? null,
+      fieldErrors: null,
+    };
+  }
   if (status >= 500) {
     return {
-      message: "Server error. Nothing was saved in this browser. Try again.",
+      message: "We couldn't complete this request. Nothing was saved in this browser. Try again.",
       detail: detail ?? null,
       fieldErrors: null,
     };

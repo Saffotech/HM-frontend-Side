@@ -23,6 +23,7 @@ const NurseWorkforceShiftsPage = lazy(() => import('@/features/manager/pages/Nur
 const NurseWorkforceRosterPage = lazy(() => import('@/features/manager/pages/NurseWorkforceRosterPage'));
 const ManagerSettingsPage = lazy(() => import('@/features/manager/pages/ManagerSettingsPage'));
 const ManagerProfilePage = lazy(() => import('@/features/manager/pages/ManagerProfilePage'));
+const ManagerNotificationsPage = lazy(() => import('@/features/manager/pages/ManagerNotificationsPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 export const managerRoutes = [
@@ -213,6 +214,14 @@ export const managerRoutes = [
             element: (
               <LazyRoute>
                 <ManagerSettingsPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.MANAGER_NOTIFICATIONS,
+            element: (
+              <LazyRoute>
+                <ManagerNotificationsPage />
               </LazyRoute>
             ),
           },

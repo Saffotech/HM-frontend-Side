@@ -1,0 +1,1 @@
+import{a as e}from"./rolldown-runtime-B0Z9INg1.js";import{C as t}from"./vendor-query-O0VAyrto.js";import{n}from"./PlatformApp-DB-HFvta.js";var r=e(t(),1);function i(){let e=(0,r.useContext)(n);if(!e)throw Error(`useToast must be used within ToastProvider`);return e}export{i as t};

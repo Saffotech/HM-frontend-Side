@@ -12,6 +12,8 @@ import {
   useMarkAdminNotificationReadMutation,
 } from '@/features/manager/hooks/useManagerNotificationsQuery';
 import { Button, EmptyState } from '@/shared/components/common';
+import { NOTIFICATION_MODULE } from '@/shared/notifications/notificationModules';
+import { useNotificationNavigation } from '@/shared/notifications/useNotificationNavigation';
 import { toast } from '@/shared/utils/toast';
 import ManagerNotificationRow from './ManagerNotificationRow';
 import './ManagerNotificationsBell.css';
@@ -35,7 +37,7 @@ const PRIORITY_FILTER_VALUES = new Set(
 const SEARCH_DEBOUNCE_MS = 300;
 
 /* Legacy identifier preserved: AdminNotificationsSection. Active name: ManagerNotificationsSection. */
-export default function ManagerNotificationsSection({ onDeepLink }) {
+export default function ManagerNotificationsSection() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -71,6 +73,7 @@ export default function ManagerNotificationsSection({ onDeepLink }) {
   }, [page, debouncedSearch, readFilter, notificationType, startDate, endDate]);
 
   const { data, isLoading, isError, error, refetch } = useAdminNotificationsListQuery(filters);
+  const openNotification = useNotificationNavigation(NOTIFICATION_MODULE.MANAGER);
   const markOne = useMarkAdminNotificationReadMutation();
   const markAll = useMarkAllAdminNotificationsReadMutation();
 
@@ -118,15 +121,11 @@ export default function ManagerNotificationsSection({ onDeepLink }) {
     setPage(1);
   };
 
-  const handleRowClick = async (n) => {
-    if (isAdminNotificationUnread(n)) {
-      try {
-        await markOne.mutateAsync(n.id);
-      } catch {
-        return;
-      }
-    }
-    onDeepLink?.(n);
+  const handleRowClick = (n) => {
+    void openNotification(n, {
+      markRead: (id) => markOne.mutateAsync(id),
+      isUnread: isAdminNotificationUnread,
+    });
   };
 
   return (

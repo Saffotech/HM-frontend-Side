@@ -1,9 +1,29 @@
+<IfModule mod_headers.c>
+    # The SPA shell must be revalidated after every deploy.
+    # Do not apply no-store to hashed files under /assets/.
+    <Files "index.html">
+        Header set Cache-Control "no-store"
+    </Files>
+</IfModule>
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /
 
+    # A missing fingerprinted asset must 404. Returning index.html with 200
+    # makes the browser treat HTML as JavaScript after a deploy.
+    RewriteCond %{REQUEST_URI} ^/assets/ [NC]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ - [R=404,L]
+
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-
     RewriteRule ^ index.html [L]
+</IfModule>
+
+<IfModule mod_setenvif.c>
+    SetEnvIf Request_URI "^/assets/.+\.(js|css|woff2?)$" saffo_hashed_asset
+</IfModule>
+<IfModule mod_headers.c>
+    Header set Cache-Control "public, max-age=31536000, immutable" env=saffo_hashed_asset
 </IfModule>

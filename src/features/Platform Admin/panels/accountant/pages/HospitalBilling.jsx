@@ -17,25 +17,33 @@ import { useInAppBack, useInAppPrevious } from "../../../shared/navigation/useIn
 import { accountsPath } from "../../../shared/paths";
 import { todayInput } from "../../../shared/utils/formatDate";
 import { formatCurrency } from "../../../shared/utils/formatCurrency";
+import { isUnpaid } from "../../../shared/utils/invoices";
 import "../Accountant.css";
 import "./HospitalBilling.css";
 import "./InvoicesPayments.css";
 
-const STATUSES = [
-  ["", "All statuses"],
-  ["Pending", "Pending"],
-  ["Overdue", "Overdue"],
-  ["Paid", "Paid"],
-  ["Failed", "Failed"],
-  ["soon", "Due soon"],
+const STATUS_FILTERS = [
+  { key: "", label: "All" },
+  { key: "Pending", label: "Pending" },
+  { key: "Overdue", label: "Overdue" },
+  { key: "Paid", label: "Paid" },
+  { key: "Failed", label: "Failed" },
+  { key: "soon", label: "Due soon" },
 ];
 
-function tagTone(status) {
-  const text = String(status || "").toLowerCase();
-  if (text.includes("active")) return "hb-tag-ok";
-  if (text.includes("trial")) return "hb-tag-info";
-  if (text.includes("overdue") || text.includes("expired") || text.includes("fail")) return "hb-tag-warn";
-  return "hb-tag-muted";
+function sumUnpaidAmounts(invoices) {
+  let amount = 0;
+  let complete = true;
+  (Array.isArray(invoices) ? invoices : []).forEach((invoice) => {
+    if (!isUnpaid(invoice)) return;
+    const value = Number(invoice?.amount);
+    if (!Number.isFinite(value)) {
+      complete = false;
+      return;
+    }
+    amount += value;
+  });
+  return { amount: complete ? amount : null, complete };
 }
 
 export default function HospitalBilling() {
@@ -86,10 +94,19 @@ export default function HospitalBilling() {
   );
   const pagination = usePagination(visible, LIST_PAGE_SIZE, `${id}|${query}|${status}|${period}`);
   const collected = useMemo(() => sumPaidAmounts(invoices), [invoices]);
-  const listCollected = useMemo(() => sumPaidAmounts(visible), [visible]);
-  const pending = invoices.filter((invoice) => invoice.status === "Pending").length;
-  const overdue = invoices.filter((invoice) => invoice.status === "Overdue").length;
-  const paidCount = invoices.filter((invoice) => invoice.status === "Paid").length;
+  const outstanding = useMemo(() => sumUnpaidAmounts(invoices), [invoices]);
+  const statusCounts = useMemo(() => {
+    const scoped = invoices.filter((invoice) => matchesInvoiceFilters(invoice, { query, period, today }));
+    return {
+      "": scoped.length,
+      Pending: scoped.filter((invoice) => invoice.status === "Pending").length,
+      Overdue: scoped.filter((invoice) => invoice.status === "Overdue").length,
+      Paid: scoped.filter((invoice) => invoice.status === "Paid").length,
+      Failed: scoped.filter((invoice) => invoice.status === "Failed").length,
+      soon: scoped.filter((invoice) => matchesInvoiceFilters(invoice, { status: "soon", today })).length,
+    };
+  }, [invoices, period, query, today]);
+  const filtersActive = Boolean(query || status || period);
   const title = loading
     ? "Loading hospital invoices"
     : error
@@ -108,73 +125,72 @@ export default function HospitalBilling() {
       <section className="hb-hero">
         <div>
           <h2>{title}</h2>
-          <p>
-            {profile?.hospitalCode ? <span>{profile.hospitalCode}</span> : null}
-            {profile?.plan ? <span>{profile.plan}</span> : null}
-            {profile?.billingCycle ? <span>{profile.billingCycle}</span> : null}
-            {!profile?.hospitalCode && !profile?.plan && !profile?.billingCycle ? <span>Payment records for this hospital</span> : null}
+          <p className="hb-hero-meta">
+            {profile?.hospitalCode ? <span className="hb-chip hb-chip-code">{profile.hospitalCode}</span> : null}
+            {profile?.plan ? <span className="hb-chip hb-chip-plan">{profile.plan}</span> : null}
+            {profile?.billingCycle ? <span className="hb-chip hb-chip-cycle">{profile.billingCycle}</span> : null}
+            {!profile?.hospitalCode && !profile?.plan && !profile?.billingCycle ? <span className="hb-chip hb-chip-code">Payment records for this hospital</span> : null}
           </p>
         </div>
         <div className="hb-hero-tags">
-          {profile?.subscriptionStatus ? (
-            <span className={`hb-tag ${tagTone(profile.subscriptionStatus)}`}>{profile.subscriptionStatus}</span>
-          ) : null}
           <Button className="no-print" variant="secondary" onClick={() => setPrintJob({ key: Date.now(), invoices })} disabled={loading || Boolean(error) || !invoices.length}>Print all</Button>
         </div>
       </section>
 
-      <div className="hb-kpis">
-        <div className="hb-kpi">
+      <div className="hb-money-row">
+        <div className="hb-money">
           <span>Collected</span>
           <strong>{loading || error || !collected.complete ? "—" : formatCurrency(collected.amount)}</strong>
-          <small className="ok">{loading || error ? "Loading" : `${paidCount} paid`}</small>
         </div>
-        <div className="hb-kpi">
-          <span>Pending</span>
-          <strong>{loading || error ? "—" : pending}</strong>
-          <small>{loading || error ? "Loading" : "Waiting for payment"}</small>
-        </div>
-        <div className="hb-kpi">
-          <span>Overdue</span>
-          <strong>{loading || error ? "—" : overdue}</strong>
-          <small className={overdue ? "late" : ""}>{loading || error ? "Loading" : overdue ? "Needs a follow-up" : "None overdue"}</small>
-        </div>
-        <div className="hb-kpi">
-          <span>Invoices</span>
-          <strong>{loading || error ? "—" : invoices.length}</strong>
-          <small>{loading || error ? "Loading" : "All records for this hospital"}</small>
+        <div className="hb-money">
+          <span>Outstanding</span>
+          <strong>{loading || error || !outstanding.complete ? "—" : formatCurrency(outstanding.amount)}</strong>
         </div>
       </div>
+      {!loading && !error && !collected.complete && (
+        <p className="hb-note">A collected total is not shown because a paid invoice has no usable amount.</p>
+      )}
+      {!loading && !error && !outstanding.complete && (
+        <p className="hb-note">An outstanding total is not shown because an unpaid invoice has no usable amount.</p>
+      )}
 
       {notice && <p className="panel-copy" role="status">{notice}</p>}
       <section className="inv-panel">
+        <div className="hb-status" role="group" aria-label="Filter invoices by status">
+          {STATUS_FILTERS.map((item) => {
+            const active = status === item.key;
+            const count = statusCounts[item.key];
+            return (
+              <button
+                key={item.label}
+                type="button"
+                className={`hb-status__item${active ? " is-active" : ""}${item.key === "Overdue" && count ? " is-late" : ""}`}
+                aria-pressed={active}
+                onClick={() => setStatus(item.key)}
+              >
+                <span>{item.label}</span>
+                <strong>{loading || error ? "—" : count}</strong>
+              </button>
+            );
+          })}
+        </div>
         <div className="inv-toolbar">
-          <SearchBar value={query} onChange={setQuery} placeholder="Search invoice or hospital" />
-          <Select label="Status" value={status} onChange={(event) => setStatus(event.target.value)}>
-            {STATUSES.map(([value, label]) => <option key={value || "all"} value={value}>{label}</option>)}
-          </Select>
+          <SearchBar value={query} onChange={setQuery} placeholder="Search invoice number" />
           <Select label="Period" value={period} onChange={(event) => setPeriod(event.target.value)}>
             <option value="">All dates</option>
             <option value="month">This month</option>
             <option value="quarter">This quarter</option>
           </Select>
-          <Button variant="secondary" onClick={() => { setStatus(""); setPeriod(""); setQuery(""); }}>Reset</Button>
+          <Button variant="secondary" onClick={() => { setStatus(""); setPeriod(""); setQuery(""); }} disabled={!filtersActive}>Reset</Button>
         </div>
-        <div className="inv-meta">
-          <span>{loading ? "Loading invoices" : error ? "Invoices unavailable" : `${visible.length} invoices in this list`}</span>
-          <span>{loading || error || !listCollected.complete ? "Collected —" : `Collected in this list ${formatCurrency(listCollected.amount)}`}</span>
-        </div>
-        {!loading && !error && !listCollected.complete && (
-          <p className="panel-copy">A collected total is not shown because a paid invoice in this list has no usable amount.</p>
-        )}
         <PlatformInvoiceTable
           invoices={loading || error ? visible : pagination.rows}
           loading={loading}
           error={error}
           showRecords
+          hideHospital
           onPay={setPaying}
           onPrint={(invoice) => setPrintJob({ key: Date.now(), invoices: [invoice] })}
-          hospitalLink={(invoice) => displayHospitalName(invoice.hospitalName)}
         />
         {!loading && !error ? <Pagination {...pagination} onPageChange={pagination.setPage} /> : null}
       </section>

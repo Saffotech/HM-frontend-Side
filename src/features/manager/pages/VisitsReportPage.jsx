@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useSearchParams } from 'react-router-dom';
 import { Download, FileText, RotateCcw } from 'lucide-react';
 import ManagerLayout from '@/features/manager/components/ManagerLayout';
 import ManagerEmptyState from '@/features/manager/components/ManagerEmptyState';
@@ -27,6 +27,8 @@ import { toast } from '@/shared/utils/toast';
 const PAGE_SIZE = 10;
 
 export default function VisitsReportPage() {
+  const [searchParams] = useSearchParams();
+  const focusVisitId = searchParams.get('visit');
   const [range, setRange] = useState(defaultReportDateRange);
   const [departmentId, setDepartmentId] = useState('all');
   const [page, setPage] = useState(1);
@@ -51,6 +53,9 @@ export default function VisitsReportPage() {
   const { data, isLoading, isError, error, refetch } = useAdminReportsVisitsQuery(filters);
 
   const visits = data?.visits ?? [];
+  const focusVisible = focusVisitId != null && visits.some(
+    (visit) => String(visit.visit_id) === String(focusVisitId),
+  );
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -133,6 +138,12 @@ export default function VisitsReportPage() {
           </ManagerReportFilters>
         </div>
 
+        {focusVisitId && data && !focusVisible ? (
+          <p className="admin-reports-toolbar__subtitle">
+            Visit {focusVisitId} is not on this page. The visits report cannot search by visit id, so no other visit was selected.
+          </p>
+        ) : null}
+
         <QueryFeedback
           isLoading={isLoading}
           isError={isError}
@@ -168,7 +179,14 @@ export default function VisitsReportPage() {
                           </thead>
                           <tbody>
                             {visits.map((visit) => (
-                              <tr key={visit.visit_id}>
+                              <tr
+                                key={visit.visit_id}
+                                className={
+                                  focusVisitId != null && String(visit.visit_id) === String(focusVisitId)
+                                    ? 'admin-visits-row--focus'
+                                    : undefined
+                                }
+                              >
                                 <td data-label="Bill #"><span>{visit.bill_number}</span></td>
                                 <td data-label="Token"><span>{visit.token_number}</span></td>
                                 <td data-label="Patient"><span>#{visit.patient_id}</span></td>

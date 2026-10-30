@@ -38,9 +38,9 @@ function TableMessage({ columns, children, alert = false }) {
 const LIST_COLUMNS = ["Invoice", "Hospital", "Issued", "Due", "Amount", "Status", "Actions"];
 const RECORD_COLUMNS = ["Invoice", "Hospital", "Issued", "Due", "Amount", "Status", "Method", "Reference", "Paid on", "Recorded by", "Actions"];
 
-export default function PlatformInvoiceTable({ invoices, loading, error, onPay, onPrint, hospitalLink, viewPath, showRecords = false }) {
+export default function PlatformInvoiceTable({ invoices, loading, error, onPay, onPrint, hospitalLink, viewPath, showRecords = false, hideHospital = false }) {
   const navigate = useNavigate();
-  const columns = showRecords ? RECORD_COLUMNS : LIST_COLUMNS;
+  const columns = (showRecords ? RECORD_COLUMNS : LIST_COLUMNS).filter((label) => !(hideHospital && label === "Hospital"));
 
   let body;
   if (loading) {
@@ -62,10 +62,12 @@ export default function PlatformInvoiceTable({ invoices, loading, error, onPay, 
           onClick={href ? openHospital : undefined}
         >
           <td className="inv-mono">{invoice.number || "—"}</td>
-          <td>
-            <div className="inv-name">{hospitalLink ? hospitalLink(invoice) : (invoice.hospitalName || "—")}</div>
-            <div className="inv-sub">{[invoice.hospitalCode, invoice.plan].filter(Boolean).join(" · ") || "—"}</div>
-          </td>
+          {!hideHospital && (
+            <td>
+              <div className="inv-name">{hospitalLink ? hospitalLink(invoice) : (invoice.hospitalName || "—")}</div>
+              <div className="inv-sub">{[invoice.hospitalCode, invoice.plan].filter(Boolean).join(" · ") || "—"}</div>
+            </td>
+          )}
           <td>{formatDate(invoice.invoiceDate)}</td>
           <td><DueCell invoice={invoice} /></td>
           <td className="inv-amount">{formatCurrency(invoice.amount)}</td>

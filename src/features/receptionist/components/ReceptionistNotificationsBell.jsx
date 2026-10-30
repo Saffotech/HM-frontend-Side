@@ -5,15 +5,23 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import {
+  isReceptionistNotificationUnread,
+  useMarkReceptionistNotificationReadMutation,
   useReceptionistNotificationsListQuery,
   useReceptionistNotificationsUnreadCountQuery,
 } from '@/features/receptionist/hooks/useReceptionistNotificationsQuery';
+import { useReceptionistPermissionSet } from '@/features/receptionist/hooks/useReceptionistPermission';
+import { NOTIFICATION_MODULE } from '@/shared/notifications/notificationModules';
+import { useNotificationNavigation } from '@/shared/notifications/useNotificationNavigation';
 import ReceptionistNotificationRow from './ReceptionistNotificationRow';
 import './ReceptionistNotificationsBell.css';
 
 export default function ReceptionistNotificationsBell({ onViewAll }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
+  const { canUpdateNotifications } = useReceptionistPermissionSet();
+  const openNotification = useNotificationNavigation(NOTIFICATION_MODULE.RECEPTIONIST);
+  const markOne = useMarkReceptionistNotificationReadMutation();
   const { data: unread = 0 } = useReceptionistNotificationsUnreadCountQuery();
   const { data: preview } = useReceptionistNotificationsListQuery({
     page: 1,
@@ -44,6 +52,14 @@ export default function ReceptionistNotificationsBell({ onViewAll }) {
   const handleViewAll = () => {
     setOpen(false);
     onViewAll?.();
+  };
+
+  const handleOpen = (notification) => {
+    setOpen(false);
+    void openNotification(notification, {
+      markRead: canUpdateNotifications ? (id) => markOne.mutateAsync(id) : undefined,
+      isUnread: isReceptionistNotificationUnread,
+    });
   };
 
   return (
@@ -79,7 +95,7 @@ export default function ReceptionistNotificationsBell({ onViewAll }) {
                   key={n.id}
                   notification={n}
                   compact
-                  onClick={handleViewAll}
+                  onClick={() => handleOpen(n)}
                 />
               ))
             )}

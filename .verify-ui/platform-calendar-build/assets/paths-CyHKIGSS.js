@@ -1,0 +1,1 @@
+var e=`/platform`,t=`${e}/crm`,n=`${e}/accounts`,r=`/login`;function i(e,t){return!t||t===`/`?e:`${e}${t.startsWith(`/`)?t:`/${t}`}`}var a=t=>i(e,t),o=e=>i(t,e),s=e=>i(n,e);export{s as a,r as i,t as n,o,e as r,a as s,n as t};

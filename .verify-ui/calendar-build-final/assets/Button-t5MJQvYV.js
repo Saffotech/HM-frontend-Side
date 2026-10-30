@@ -1,0 +1,1 @@
+import{o as e}from"./vendor-query-O0VAyrto.js";var t=e();function n({children:e,variant:n=`primary`,size:r=`md`,type:i=`button`,className:a=``,...o}){return(0,t.jsx)(`button`,{type:i,className:`btn btn-${n} btn-${r} ${a}`.trim(),...o,children:e})}export{n as t};

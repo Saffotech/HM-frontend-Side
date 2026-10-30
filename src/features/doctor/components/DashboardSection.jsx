@@ -1,4 +1,5 @@
-import { useMemo, useState, memo, useCallback, useEffect } from 'react';
+import { useMemo, useState, memo, useCallback, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
@@ -46,6 +47,7 @@ import {
 import { findQueueRowForAppointment } from '@/features/doctor/utils/queueWorkflow';
 
 import { Avatar } from '@/shared/components/common';
+import InlineApiError from '@/shared/components/errors/InlineApiError';
 import { formatPatientAge } from '@/features/doctor/utils/formatPatientAge';
 import Skeleton from '@/shared/components/common/Skeleton';
 
@@ -67,6 +69,7 @@ import { doctorConsultationsApi } from '@/shared/api/services';
 import { useQueryToken } from '@/shared/hooks/useQueryToken';
 import { queryKeys } from '@/shared/api/queryKeys';
 import { prefetchPatientProfileData } from '@/features/doctor/utils/doctorPatientProfileCache';
+import { findDoctorAdmissionById } from '@/features/doctor/utils/findDoctorAdmissionById';
 import { invalidateDoctorAppointmentStatusChange } from '@/features/doctor/utils/doctorDashboardCache';
 import { useCancelAppointmentMutation } from '@/shared/hooks/queries/useAppointmentQuery';
 
@@ -108,14 +111,28 @@ function DashboardSection({ encounterMode = DOCTOR_ENCOUNTER_MODE.OPD, onViewAll
 
   const token = useQueryToken();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const admissionRequestRef = useRef(0);
 
-  const { data: todayAppointments = [], isPending: isTodayPending } =
-    useDoctorDashboardTodayAppointmentsQuery();
+  const {
+    data: todayAppointments = [],
+    isPending: isTodayPending,
+    isError: isTodayError,
+    error: todayError,
+    refetch: refetchToday,
+  } = useDoctorDashboardTodayAppointmentsQuery();
 
-  const { data: todayQueue = [], isPending: isQueuePending } =
-    useDoctorDashboardTodayQueueQuery();
+  const {
+    data: todayQueue = [],
+    isPending: isQueuePending,
+    isError: isQueueError,
+    error: queueError,
+    refetch: refetchQueue,
+  } = useDoctorDashboardTodayQueueQuery();
 
   const isDashboardInitialLoad = isTodayPending || isQueuePending;
+  const appointmentsFailed = isTodayError || isQueueError;
+  const keepAppointmentData = todayAppointments.length > 0 || todayQueue.length > 0;
 
   const [consultFor, setConsultFor] = useState(null);
 
@@ -176,7 +193,13 @@ const [dateRangeError, setDateRangeError] = useState('');
 
   const isIpdMode = encounterMode === DOCTOR_ENCOUNTER_MODE.IPD;
 
-  const { data: ipdData, isPending: isIpdPending } = useDoctorIpdAdmissionsQuery(
+  const {
+    data: ipdData,
+    isPending: isIpdPending,
+    isError: isIpdError,
+    error: ipdError,
+    refetch: refetchIpd,
+  } = useDoctorIpdAdmissionsQuery(
     ipdQueryParams,
     { enabled: isIpdMode },
   );
@@ -402,6 +425,55 @@ const [dateRangeError, setDateRangeError] = useState('');
       setStartingConsult(false);
     }
   }, [queryClient, token]);
+
+  useEffect(() => {
+    const raw = searchParams.get('appointment');
+    if (!raw) return;
+    const id = Number(raw);
+    if (!Number.isInteger(id) || id <= 0) return;
+    setViewAppointmentDbId(id);
+  }, [searchParams]);
+
+  useEffect(() => {
+    const raw = searchParams.get('admission');
+    if (!raw || encounterMode !== DOCTOR_ENCOUNTER_MODE.IPD || !token) return;
+    const id = Number(raw);
+    if (!Number.isInteger(id) || id <= 0) return;
+
+    const requestId = admissionRequestRef.current + 1;
+    admissionRequestRef.current = requestId;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const row = await findDoctorAdmissionById(token, id);
+        if (cancelled || admissionRequestRef.current !== requestId) return;
+        if (!row?.admissionId) {
+          toast.info('This admission is not in your IPD list, so no patient was opened.');
+          return;
+        }
+        await beginIpdConsultation(row);
+      } catch {
+        if (!cancelled && admissionRequestRef.current === requestId) {
+          toast.info('The admission could not be loaded, so no patient was opened.');
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams, encounterMode, token, beginIpdConsultation]);
+
+  const closeAppointmentDetail = () => {
+    setViewAppointmentDbId(null);
+    setSearchParams((prev) => {
+      if (!prev.get('appointment')) return prev;
+      const next = new URLSearchParams(prev);
+      next.delete('appointment');
+      return next;
+    }, { replace: true });
+  };
 
   const beginConsultation = useCallback(async (appt) => {
     if (isIpdEncounter(appt)) {
@@ -681,8 +753,17 @@ const [dateRangeError, setDateRangeError] = useState('');
 
       />
 
+      {appointmentsFailed ? (
+        <InlineApiError
+          error={todayError || queueError}
+          onRetry={() => Promise.all([
+            isTodayError ? refetchToday() : Promise.resolve(),
+            isQueueError ? refetchQueue() : Promise.resolve(),
+          ])}
+        />
+      ) : null}
 
-
+      {!appointmentsFailed || keepAppointmentData ? (
       <div className="doc-dashboard-grid">
 
         <div className="doc-dashboard-main">
@@ -806,6 +887,7 @@ const [dateRangeError, setDateRangeError] = useState('');
         </div>
 
       </div>
+      ) : null}
         </>
       ) : (
         <>
@@ -815,6 +897,10 @@ const [dateRangeError, setDateRangeError] = useState('');
             onFilterChange={setIpdStatusFilter}
             isLoading={isIpdSummaryPending}
           />
+          {isIpdError ? (
+            <InlineApiError error={ipdError} onRetry={() => refetchIpd()} />
+          ) : null}
+          {!isIpdError || (ipdData?.items?.length > 0) ? (
           <DoctorIpdPatientsTable
             title={ipdStatusFilter === IPD_STATUS_FILTER.DISCHARGED ? 'Discharged IPD' : 'Admitted IPD'}
             emptyMessage={
@@ -839,6 +925,7 @@ const [dateRangeError, setDateRangeError] = useState('');
             startingConsult={startingConsult}
             visitCounts={ipdVisitCounts}
           />
+          ) : null}
         </>
       )}
 
@@ -871,7 +958,7 @@ const [dateRangeError, setDateRangeError] = useState('');
 
         open={viewAppointmentDbId != null}
 
-        onClose={() => setViewAppointmentDbId(null)}
+        onClose={closeAppointmentDetail}
 
       />
 

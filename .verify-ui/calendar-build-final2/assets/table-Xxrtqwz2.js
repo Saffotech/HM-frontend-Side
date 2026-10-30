@@ -1,0 +1,1 @@
+function e(e,t){let n=t.trim().toLowerCase();return!n||e.some(e=>String(e??``).toLowerCase().includes(n))}export{e as t};

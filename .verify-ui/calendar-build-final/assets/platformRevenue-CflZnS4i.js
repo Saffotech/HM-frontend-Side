@@ -1,0 +1,1 @@
+import{o as e}from"./platformAuth-ghuowdYK.js";function t(){return e(`/platform/revenue`)}export{t};

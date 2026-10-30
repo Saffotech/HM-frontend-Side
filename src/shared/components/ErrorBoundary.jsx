@@ -1,43 +1,78 @@
 import { Component } from 'react';
-import './ErrorBoundary.css';
+import { isChunkLoadError } from '@/shared/errors/errorClassification';
+import {
+  cancelChunkRecoveryReset,
+  claimAutomaticChunkReload,
+} from '@/shared/errors/chunkRecovery';
+import { recordClientDiagnostic, scrubRoute } from '@/shared/errors/errorDiagnostics';
+import ApplicationErrorPage from '@/shared/components/errors/ApplicationErrorPage';
+import RouteErrorFallback from '@/shared/components/errors/RouteErrorFallback';
 
 export default class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, recovering: false };
   }
 
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
   }
 
+  componentDidCatch(error) {
+    const chunk = isChunkLoadError(error);
+    recordClientDiagnostic({
+      category: chunk ? 'chunk' : 'render',
+      chunk,
+      network: chunk,
+      route: typeof window !== 'undefined' ? scrubRoute(window.location.pathname) : null,
+    });
+    if (!chunk || typeof window === 'undefined') return;
+    cancelChunkRecoveryReset();
+    if (claimAutomaticChunkReload(window.sessionStorage)) {
+      this.setState({ recovering: true });
+      window.location.reload();
+    }
+  }
+
   handleRetry = () => {
-    this.setState({ hasError: false, error: null });
+    const { error } = this.state;
+    if (isChunkLoadError(error) && typeof window !== 'undefined') {
+      window.location.reload();
+      return;
+    }
+    this.setState({ hasError: false, error: null, recovering: false });
   };
 
   render() {
-    const { hasError, error } = this.state;
-    const { children, fallback } = this.props;
+    const { hasError, error, recovering } = this.state;
+    const { children, fallback, variant } = this.props;
 
-    if (hasError) {
-      if (fallback) {
-        return typeof fallback === 'function' ? fallback(error, this.handleRetry) : fallback;
-      }
+    if (!hasError) return children;
 
+    if (fallback) {
+      return typeof fallback === 'function' ? fallback(error, this.handleRetry, recovering) : fallback;
+    }
+
+    if (variant === 'route') {
       return (
-        <div className="error-boundary" role="alert">
-          <h2 className="error-boundary__title">Something went wrong</h2>
-          <p className="error-boundary__message">
-            {error?.message || 'An unexpected error occurred.'}
-          </p>
-          <button type="button" className="error-boundary__retry" onClick={this.handleRetry}>
-            Try again
-          </button>
-        </div>
+        <RouteErrorFallback
+          error={error}
+          onRetry={this.handleRetry}
+          recovering={recovering}
+        />
       );
     }
 
-    return children;
+    return (
+      <ApplicationErrorPage
+        title={isChunkLoadError(error) ? 'This page needs a refresh' : 'Something went wrong'}
+        message={isChunkLoadError(error)
+          ? 'The latest version of this page could not be loaded. Refresh to continue. You will stay signed in.'
+          : 'This page ran into a problem. You can try again, or return to your dashboard.'}
+        onRetry={this.handleRetry}
+        recovering={recovering}
+        tone={isChunkLoadError(error) ? 'warning' : 'critical'}
+      />
+    );
   }
 }
-

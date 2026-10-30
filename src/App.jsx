@@ -1,6 +1,7 @@
 import { lazy } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import ToastContainer from '@/shared/components/common/Toast';
+import HospitalSessionRestoration from '@/shared/components/errors/HospitalSessionRestoration';
 import ProtectedRoute from '@/components/security/ProtectedRoute';
 import GuestRoute from '@/components/security/GuestRoute';
 import SessionTimeout from '@/components/security/SessionTimeout';
@@ -32,6 +33,7 @@ const PlatformApp = lazy(() => import('@/features/Platform Admin/PlatformApp'));
 export default function App() {
   return (
     <BrowserRouter future={ROUTER_FUTURE_FLAGS}>
+      <HospitalSessionRestoration>
       <SessionTimeout />
       <Routes>
         <Route
@@ -124,6 +126,7 @@ export default function App() {
           {renderRoutes(adminRoutes)}
         </Route>
       </Routes>
+      </HospitalSessionRestoration>
 
       <ToastContainer />
     </BrowserRouter>

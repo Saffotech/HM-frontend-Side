@@ -549,6 +549,11 @@
   padding-bottom: 0.35rem;
 }
 
+.admin-visits-row--focus {
+  outline: 2px solid var(--color-primary, #0f766e);
+  outline-offset: -2px;
+}
+
 .admin-visits-filter-row {
   width: 100%;
 }
