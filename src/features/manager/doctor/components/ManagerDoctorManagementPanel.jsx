@@ -114,7 +114,8 @@ function PermissionModuleList({
   ));
 }
 
-export default function AdminDoctorManagementPanel({ manageAdminEditLocks = false }) {
+/* Legacy identifier preserved: AdminDoctorManagementPanel. Active name: ManagerDoctorManagementPanel. */
+export default function ManagerDoctorManagementPanel({ manageAdminEditLocks = false }) {
   const [activeSection, setActiveSection] = useState(SECTION_TABS[0].id);
   const [selectedByRole, setSelectedByRole] = useState({});
   const [isDirty, setIsDirty] = useState(false);

@@ -12,7 +12,7 @@ import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { useNursePatientScope } from '@/features/nurse/context/nursePatientScope';
 import { ROUTES } from '@/shared/constants';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
-import { formatIpdDateTime } from '@/features/ipd/utils/ipdFormat';
+import { formatIpdDateTime } from '@/shared/utils/dateFormatter';
 import {
   useNurseBedPatientsQuery,
   useNurseDoctorVisitsQuery,

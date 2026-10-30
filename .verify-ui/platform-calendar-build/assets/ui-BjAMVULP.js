@@ -1,0 +1,1 @@
+import{o as e}from"./vendor-query-O0VAyrto.js";import"./Table-sqQRfHFV.js";import"./labDepartments-BJdAbv-p.js";import"./ConfirmDialog-9WN55Km3.js";import"./index-MCK0tJLM.js";e();

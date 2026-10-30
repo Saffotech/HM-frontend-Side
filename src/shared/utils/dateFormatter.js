@@ -20,3 +20,17 @@ export function formatDateTime(date) {
     minute: '2-digit',
   });
 }
+
+/** en-IN date and time used by IPD screens and nurse visit lists. */
+export function formatIpdDateTime(raw) {
+  if (!raw) return '—';
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return String(raw);
+  return date.toLocaleString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}

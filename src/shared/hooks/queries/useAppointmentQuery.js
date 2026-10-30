@@ -109,7 +109,6 @@ export function useTodayAppointmentsQuery() {
         },
         { softFail: true }
       ),
-    retry: 1,
   });
 }
 

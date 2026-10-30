@@ -12,7 +12,7 @@ import {
   useVoidDoctorVisitMutation,
 } from '@/shared/hooks/queries/useNurseQuery';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
-import { formatIpdDateTime } from '@/features/ipd/utils/ipdFormat';
+import { formatIpdDateTime } from '@/shared/utils/dateFormatter';
 
 const PAGE_SIZE = 10;
 

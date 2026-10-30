@@ -13,6 +13,8 @@ import {
   useMarkNurseNotificationReadMutation,
 } from '@/features/nurse/hooks/useNurseNotificationsQuery';
 import { Button, EmptyState } from '@/shared/components/common';
+import { NOTIFICATION_MODULE } from '@/shared/notifications/notificationModules';
+import { useNotificationNavigation } from '@/shared/notifications/useNotificationNavigation';
 import { toast } from '@/shared/utils/toast';
 import NurseNotificationRow from './NurseNotificationRow';
 import './NurseNotificationsBell.css';
@@ -72,6 +74,7 @@ export default function NurseNotificationsSection() {
   }, [page, debouncedSearch, readFilter, notificationType, startDate, endDate]);
 
   const { data, isLoading, isError, error, refetch } = useNurseNotificationsListQuery(filters);
+  const openNotification = useNotificationNavigation(NOTIFICATION_MODULE.NURSE);
   const markOne = useMarkNurseNotificationReadMutation();
   const markAll = useMarkAllNurseNotificationsReadMutation();
 
@@ -121,14 +124,11 @@ export default function NurseNotificationsSection() {
     setPage(1);
   };
 
-  const handleRowClick = async (n) => {
-    if (isNurseNotificationUnread(n)) {
-      try {
-        await markOne.mutateAsync(n.id);
-      } catch {
-        // The mutation displays the error toast.
-      }
-    }
+  const handleRowClick = (n) => {
+    void openNotification(n, {
+      markRead: (id) => markOne.mutateAsync(id),
+      isUnread: isNurseNotificationUnread,
+    });
   };
 
   return (
@@ -258,7 +258,7 @@ export default function NurseNotificationsSection() {
               <NurseNotificationRow
                 key={n.id}
                 notification={n}
-                onClick={isNurseNotificationUnread(n) ? () => handleRowClick(n) : undefined}
+                onClick={() => handleRowClick(n)}
               />
             ))
           )}

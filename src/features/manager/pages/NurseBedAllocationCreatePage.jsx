@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Save } from 'lucide-react';
-import AdminLayout from '@/features/manager/components/ManagerLayout';
-import AdminBackBar from '@/features/manager/components/ManagerBackBar';
-import AdminBedMultiSelect from '@/features/manager/components/ManagerBedMultiSelect';
+import ManagerLayout from '@/features/manager/components/ManagerLayout';
+import ManagerBackBar from '@/features/manager/components/ManagerBackBar';
+import ManagerBedMultiSelect from '@/features/manager/components/ManagerBedMultiSelect';
 import { useAdminBedAllocationPermissions } from '@/features/manager/hooks/useManagerBedAllocationPermissions';
 import {
   useAdminBedAllocationsQuery,
@@ -119,7 +119,7 @@ export default function NurseBedAllocationCreatePage() {
 
   if (!canView || !canSave) {
     return (
-      <AdminLayout pageTitle="New Bed Allocation">
+      <ManagerLayout pageTitle="New Bed Allocation">
         <div className="admin-card nba-denied">
           <h2>Access denied</h2>
           <p className="nba-muted">You do not have permission to create bed allocations.</p>
@@ -127,14 +127,14 @@ export default function NurseBedAllocationCreatePage() {
             Back to list
           </Button>
         </div>
-      </AdminLayout>
+      </ManagerLayout>
     );
   }
 
   return (
-    <AdminLayout pageTitle="New Bed Allocation">
+    <ManagerLayout pageTitle="New Bed Allocation">
       <div className="admin-page nba-page nba-page--compact">
-        <AdminBackBar
+        <ManagerBackBar
           onBack={() => navigate(ROUTES.MANAGER_BED_ALLOCATION)}
           label="Back to allocations"
         />
@@ -185,7 +185,7 @@ export default function NurseBedAllocationCreatePage() {
 
           <div className="nba-field nba-field--full">
             <span>Beds *</span>
-            <AdminBedMultiSelect
+            <ManagerBedMultiSelect
               beds={beds}
               selectedIds={bedIds}
               onChange={setBedIds}
@@ -212,6 +212,6 @@ export default function NurseBedAllocationCreatePage() {
           </div>
         </form>
       </div>
-    </AdminLayout>
+    </ManagerLayout>
   );
 }

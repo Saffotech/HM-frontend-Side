@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, Eye, Plus, RotateCcw } from 'lucide-react';
-import AdminLayout from '@/features/manager/components/ManagerLayout';
-import AdminEmptyState from '@/features/manager/components/ManagerEmptyState';
-import AdminPageHeader from '@/features/manager/components/ManagerPageHeader';
-import AdminStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
+import ManagerLayout from '@/features/manager/components/ManagerLayout';
+import ManagerEmptyState from '@/features/manager/components/ManagerEmptyState';
+import ManagerPageHeader from '@/features/manager/components/ManagerPageHeader';
+import ManagerStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
 import { useAdminDepartmentsQuery } from '@/shared/hooks/queries/useAdminQuery';
 import {
   Button,
@@ -56,9 +56,9 @@ export default function DepartmentListPage() {
   };
 
   return (
-    <AdminLayout pageTitle="Departments">
+    <ManagerLayout pageTitle="Departments">
       <div className="admin-page">
-        <AdminPageHeader
+        <ManagerPageHeader
           eyebrow="Organization"
           title="Departments"
           subtitle="Manage hospital departments and clinical units."
@@ -128,7 +128,7 @@ export default function DepartmentListPage() {
               onRetry={refetch}
             >
               {!filtered.length ? (
-                <AdminEmptyState
+                <ManagerEmptyState
                   icon={<Building2 size={22} />}
                   title="No departments found"
                   description="Create a department or adjust your search and status filters."
@@ -157,16 +157,16 @@ export default function DepartmentListPage() {
                           </td>
                           <td data-label="Type">
                             {isLabOrRadDepartment(dept) ? (
-                              <span className="sa-dept-type sa-dept-type--lab">Lab</span>
+                              <span className="admin-panel-dept-type admin-panel-dept-type--lab">Lab</span>
                             ) : (
-                              <span className="sa-dept-type sa-dept-type--doctor">Doctor</span>
+                              <span className="admin-panel-dept-type admin-panel-dept-type--doctor">Doctor</span>
                             )}
                           </td>
                           <td className="admin-table__muted" data-label="Description">
                             <span>{dept.description || '—'}</span>
                           </td>
                           <td data-label="Status">
-                            <AdminStaffStatusBadge isActive={dept.is_active} />
+                            <ManagerStaffStatusBadge isActive={dept.is_active} />
                           </td>
                           <td className="admin-table__actions" data-label="Actions">
                             <Button
@@ -190,7 +190,7 @@ export default function DepartmentListPage() {
           </div>
         </div>
       </div>
-    </AdminLayout>
+    </ManagerLayout>
   );
 }
 

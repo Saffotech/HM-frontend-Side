@@ -115,7 +115,8 @@ function PermissionToggles({
   ));
 }
 
-export default function AdminNurseManagementPanel({ manageAdminEditLocks = false }) {
+/* Legacy identifier preserved: AdminNurseManagementPanel. Active name: ManagerNurseManagementPanel. */
+export default function ManagerNurseManagementPanel({ manageAdminEditLocks = false }) {
   const [activeSection, setActiveSection] = useState(SECTION_TABS[0].id);
   const [selectedByRole, setSelectedByRole] = useState({});
   const [isDirty, setIsDirty] = useState(false);

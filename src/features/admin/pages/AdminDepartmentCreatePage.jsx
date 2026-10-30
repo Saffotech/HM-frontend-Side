@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Building2, Save } from 'lucide-react';
-import SuperAdminLayout from '@/features/admin/components/AdminLayout';
+import AdminLayout from '@/features/admin/components/AdminLayout';
 import DepartmentForm from '@/features/manager/components/DepartmentForm';
 import {
   buildDepartmentPayload,
@@ -13,7 +13,8 @@ import { adminPanelRoutes } from '@/shared/constants';
 import { isLabOrRadCode } from '@/shared/utils/labDepartments';
 import { toast } from '@/shared/utils/toast';
 
-export default function SuperAdminDepartmentCreatePage() {
+/* Legacy identifier preserved: SuperAdminDepartmentCreatePage. Active name: AdminDepartmentCreatePage. */
+export default function AdminDepartmentCreatePage() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const panel = adminPanelRoutes(pathname);
@@ -51,9 +52,9 @@ export default function SuperAdminDepartmentCreatePage() {
   };
 
   return (
-    <SuperAdminLayout compact>
+    <AdminLayout compact>
       <div className="admin-page dept-create-page">
-        <div className="admin-card sa-panel-card dept-create-shell">
+        <div className="admin-card admin-panel-panel-card dept-create-shell">
           <header className="dept-create-shell__toolbar">
             <Button
               type="button"
@@ -81,7 +82,7 @@ export default function SuperAdminDepartmentCreatePage() {
                 onChange={setForm}
                 showKind
                 hideDescription
-                idPrefix="sa-new-dept"
+                idPrefix="admin-panel-new-dept"
               />
             </div>
             <div className="dept-create-actions">
@@ -100,6 +101,6 @@ export default function SuperAdminDepartmentCreatePage() {
           </form>
         </div>
       </div>
-    </SuperAdminLayout>
+    </AdminLayout>
   );
 }

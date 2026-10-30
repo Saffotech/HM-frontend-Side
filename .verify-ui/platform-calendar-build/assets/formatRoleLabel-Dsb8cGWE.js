@@ -1,0 +1,1 @@
+function e(e){return e?e===`super_admin`||e===`admin`?`Admin`:e===`opd_billing`?`OPD `:e===`ipd`?`IPD`:e===`lab_technician`?`Lab Technician`:e.replace(/_/g,` `).replace(/\b\w/g,e=>e.toUpperCase()):`—`}export{e as t};

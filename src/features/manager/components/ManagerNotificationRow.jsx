@@ -34,7 +34,8 @@ function formatRelativeTime(iso) {
   });
 }
 
-export default function AdminNotificationRow({ notification: n, compact, onClick }) {
+/* Legacy identifier preserved: AdminNotificationRow. Active name: ManagerNotificationRow. */
+export default function ManagerNotificationRow({ notification: n, compact, onClick }) {
   const unread = isAdminNotificationUnread(n);
   const message = n.message ?? n.body;
   const createdAt = n.created_at ?? n.at;

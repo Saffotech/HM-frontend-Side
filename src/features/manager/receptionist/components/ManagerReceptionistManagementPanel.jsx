@@ -111,7 +111,8 @@ function PermissionModuleList({
   ));
 }
 
-export default function AdminReceptionistManagementPanel({ manageAdminEditLocks = false }) {
+/* Legacy identifier preserved: AdminReceptionistManagementPanel. Active name: ManagerReceptionistManagementPanel. */
+export default function ManagerReceptionistManagementPanel({ manageAdminEditLocks = false }) {
   const [activeSection, setActiveSection] = useState(SECTION_TABS[0].id);
   const [selectedByRole, setSelectedByRole] = useState({});
   const [isDirty, setIsDirty] = useState(false);

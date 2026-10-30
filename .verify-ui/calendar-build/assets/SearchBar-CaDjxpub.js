@@ -1,0 +1,1 @@
+import{o as e}from"./vendor-query-O0VAyrto.js";import{t}from"./search-DAglZFZn.js";var n=e();function r({value:e,onChange:r,placeholder:i=`Search`,id:a}){return(0,n.jsxs)(`label`,{className:`search-bar`,htmlFor:a,children:[(0,n.jsx)(t,{size:16,"aria-hidden":`true`}),(0,n.jsx)(`input`,{id:a,value:e,onChange:e=>r(e.target.value),placeholder:i})]})}export{r as t};

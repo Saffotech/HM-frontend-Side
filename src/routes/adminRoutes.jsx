@@ -1,24 +1,25 @@
 import { lazy } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import ProtectedRoute from '@/components/security/ProtectedRoute';
-import SuperAdminAppShell from '@/features/admin/components/AdminAppShell';
+import AdminAppShell from '@/features/admin/components/AdminAppShell';
 import { ROUTES, ROLES } from '@/shared/constants';
 import LazyRoute from '@/routes/LazyRoute';
+import LegacyOwnerRedirect from '@/routes/LegacyOwnerRedirect';
 
-const SuperAdminDashboardPage = lazy(() => import('@/features/admin/pages/AdminDashboardPage'));
-const SuperAdminStaffListPage = lazy(() => import('@/features/admin/pages/AdminStaffListPage'));
-const SuperAdminStaffRegisterPage = lazy(() => import('@/features/admin/pages/AdminStaffRegisterPage'));
-const SuperAdminStaffDetailPage = lazy(() => import('@/features/admin/pages/AdminStaffDetailPage'));
-const SuperAdminDepartmentCreatePage = lazy(() => import('@/features/admin/pages/AdminDepartmentCreatePage'));
-const SuperAdminDepartmentDetailPage = lazy(() => import('@/features/admin/pages/AdminDepartmentDetailPage'));
-const SuperAdminDepartmentsListPage = lazy(() => import('@/features/admin/pages/AdminDepartmentsListPage'));
-const SuperAdminRolesListPage = lazy(() => import('@/features/admin/pages/AdminRolesListPage'));
-const SuperAdminRoleCreatePage = lazy(() => import('@/features/admin/pages/AdminRoleCreatePage'));
-const SuperAdminAssignPermissionsPage = lazy(() => import('@/features/admin/pages/AdminAssignPermissionsPage'));
-const SuperAdminModuleSettingsPage = lazy(() => import('@/features/admin/pages/AdminModuleSettingsPage'));
-const SuperAdminReportsPage = lazy(() => import('@/features/admin/pages/AdminReportsPage'));
-const SuperAdminAuditLogPage = lazy(() => import('@/features/admin/pages/AdminAuditLogPage'));
-const SuperAdminProfilePage = lazy(() => import('@/features/admin/pages/AdminProfilePage'));
+const AdminDashboardPage = lazy(() => import('@/features/admin/pages/AdminDashboardPage'));
+const AdminStaffListPage = lazy(() => import('@/features/admin/pages/AdminStaffListPage'));
+const AdminStaffRegisterPage = lazy(() => import('@/features/admin/pages/AdminStaffRegisterPage'));
+const AdminStaffDetailPage = lazy(() => import('@/features/admin/pages/AdminStaffDetailPage'));
+const AdminDepartmentCreatePage = lazy(() => import('@/features/admin/pages/AdminDepartmentCreatePage'));
+const AdminDepartmentDetailPage = lazy(() => import('@/features/admin/pages/AdminDepartmentDetailPage'));
+const AdminDepartmentsListPage = lazy(() => import('@/features/admin/pages/AdminDepartmentsListPage'));
+const AdminRolesListPage = lazy(() => import('@/features/admin/pages/AdminRolesListPage'));
+const AdminRoleCreatePage = lazy(() => import('@/features/admin/pages/AdminRoleCreatePage'));
+const AdminAssignPermissionsPage = lazy(() => import('@/features/admin/pages/AdminAssignPermissionsPage'));
+const AdminModuleSettingsPage = lazy(() => import('@/features/admin/pages/AdminModuleSettingsPage'));
+const AdminReportsPage = lazy(() => import('@/features/admin/pages/AdminReportsPage'));
+const AdminAuditLogPage = lazy(() => import('@/features/admin/pages/AdminAuditLogPage'));
+const AdminProfilePage = lazy(() => import('@/features/admin/pages/AdminProfilePage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 const HOSPITAL_ADMIN_PATHS = {
@@ -66,41 +67,34 @@ function ownerPanelRoutes(allowedRoles, paths, unmatchedPath) {
     ),
     children: [
       {
-        element: <SuperAdminAppShell />,
+        element: <AdminAppShell />,
         children: [
-          { path: paths.dashboard, element: screen(<SuperAdminDashboardPage />) },
-          { path: paths.staff, element: screen(<SuperAdminStaffListPage />) },
-          { path: paths.staffNew, element: screen(<SuperAdminStaffRegisterPage />) },
-          { path: paths.staffDetail, element: screen(<SuperAdminStaffDetailPage />) },
-          { path: paths.departments, element: screen(<SuperAdminDepartmentsListPage />) },
-          { path: paths.departmentsNew, element: screen(<SuperAdminDepartmentCreatePage />) },
-          { path: paths.departmentDetail, element: screen(<SuperAdminDepartmentDetailPage />) },
-          { path: paths.roles, element: screen(<SuperAdminRolesListPage />) },
-          { path: paths.rolesNew, element: screen(<SuperAdminRoleCreatePage />) },
-          { path: paths.rolesAssign, element: screen(<SuperAdminAssignPermissionsPage />) },
+          { path: paths.dashboard, element: screen(<AdminDashboardPage />) },
+          { path: paths.staff, element: screen(<AdminStaffListPage />) },
+          { path: paths.staffNew, element: screen(<AdminStaffRegisterPage />) },
+          { path: paths.staffDetail, element: screen(<AdminStaffDetailPage />) },
+          { path: paths.departments, element: screen(<AdminDepartmentsListPage />) },
+          { path: paths.departmentsNew, element: screen(<AdminDepartmentCreatePage />) },
+          { path: paths.departmentDetail, element: screen(<AdminDepartmentDetailPage />) },
+          { path: paths.roles, element: screen(<AdminRolesListPage />) },
+          { path: paths.rolesNew, element: screen(<AdminRoleCreatePage />) },
+          { path: paths.rolesAssign, element: screen(<AdminAssignPermissionsPage />) },
           { path: paths.settings, element: <Navigate to={paths.settingsOpd} replace /> },
-          { path: paths.settingsOpd, element: screen(<SuperAdminModuleSettingsPage />) },
-          { path: paths.settingsDoctor, element: screen(<SuperAdminModuleSettingsPage />) },
-          { path: paths.settingsReceptionist, element: screen(<SuperAdminModuleSettingsPage />) },
-          { path: paths.settingsLab, element: screen(<SuperAdminModuleSettingsPage />) },
-          { path: paths.settingsNurse, element: screen(<SuperAdminModuleSettingsPage />) },
-          { path: paths.settingsPharmacy, element: screen(<SuperAdminModuleSettingsPage />) },
-          { path: paths.reports, element: screen(<SuperAdminReportsPage />) },
-          { path: paths.audit, element: screen(<SuperAdminAuditLogPage />) },
-          { path: paths.profile, element: screen(<SuperAdminProfilePage />) },
+          { path: paths.settingsOpd, element: screen(<AdminModuleSettingsPage />) },
+          { path: paths.settingsDoctor, element: screen(<AdminModuleSettingsPage />) },
+          { path: paths.settingsReceptionist, element: screen(<AdminModuleSettingsPage />) },
+          { path: paths.settingsLab, element: screen(<AdminModuleSettingsPage />) },
+          { path: paths.settingsNurse, element: screen(<AdminModuleSettingsPage />) },
+          { path: paths.settingsPharmacy, element: screen(<AdminModuleSettingsPage />) },
+          { path: paths.reports, element: screen(<AdminReportsPage />) },
+          { path: paths.audit, element: screen(<AdminAuditLogPage />) },
+          { path: paths.profile, element: screen(<AdminProfilePage />) },
           { path: paths.root, element: <Navigate to={paths.dashboard} replace /> },
           { path: unmatchedPath, element: screen(<NotFoundPage />) },
         ],
       },
     ],
   };
-}
-
-/** Old hospital owner URLs now live under /admin. */
-function LegacyOwnerRedirect() {
-  const { pathname, search, hash } = useLocation();
-  const rest = pathname.replace(/^\/super-admin(?=\/|$)/, '') || '/dashboard';
-  return <Navigate to={`/admin${rest}${search}${hash}`} replace />;
 }
 
 export const adminRoutes = [

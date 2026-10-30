@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, UserPlus } from 'lucide-react';
-import SuperAdminLayout from '@/features/admin/components/AdminLayout';
+import AdminLayout from '@/features/admin/components/AdminLayout';
 import {
   useAdminDepartmentsQuery,
   useAdminRolesQuery,
@@ -40,10 +40,10 @@ function formatRoleLabel(name) {
 
 function RegisterField({ id, label, required, children, className = '' }) {
   return (
-    <div className={`sa-register-field ${className}`.trim()}>
+    <div className={`admin-panel-register-field ${className}`.trim()}>
       <Label htmlFor={id}>
         {label}
-        {required ? <span className="sa-register-field__req" aria-hidden> *</span> : null}
+        {required ? <span className="admin-panel-register-field__req" aria-hidden> *</span> : null}
       </Label>
       {children}
     </div>
@@ -52,7 +52,8 @@ function RegisterField({ id, label, required, children, className = '' }) {
 
 
 
-export default function SuperAdminStaffRegisterPage() {
+/* Legacy identifier preserved: SuperAdminStaffRegisterPage. Active name: AdminStaffRegisterPage. */
+export default function AdminStaffRegisterPage() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const panel = adminPanelRoutes(pathname);
@@ -164,26 +165,26 @@ export default function SuperAdminStaffRegisterPage() {
   };
 
   return (
-    <SuperAdminLayout pageTitle="Register Staff" compact>
-      <div className="admin-page sa-register-page">
-        <div className="sa-register-shell admin-card sa-panel-card">
-          <header className="sa-register-shell__toolbar">
+    <AdminLayout pageTitle="Register Staff" compact>
+      <div className="admin-page admin-panel-register-page">
+        <div className="admin-panel-register-shell admin-card admin-panel-panel-card">
+          <header className="admin-panel-register-shell__toolbar">
             <Button
               type="button"
               variant="ghost"
-              className="sa-register-back"
+              className="admin-panel-register-back"
               onClick={() => navigate(panel.staff)}
             >
               <ArrowLeft size={16} aria-hidden />
               Back
             </Button>
-            <div className="sa-register-shell__title-wrap">
-              <span className="sa-register-shell__icon" aria-hidden>
+            <div className="admin-panel-register-shell__title-wrap">
+              <span className="admin-panel-register-shell__icon" aria-hidden>
                 <UserPlus size={22} strokeWidth={2} />
               </span>
               <div>
-                <h1 className="sa-register-shell__title">New staff member</h1>
-                <p className="sa-register-shell__desc">
+                <h1 className="admin-panel-register-shell__title">New staff member</h1>
+                <p className="admin-panel-register-shell__desc">
                   Create login access for any hospital role
                 </p>
               </div>
@@ -191,15 +192,15 @@ export default function SuperAdminStaffRegisterPage() {
           </header>
 
           {rolesError ? (
-            <div className="sa-register-shell__body">
+            <div className="admin-panel-register-shell__body">
               <QueryFeedback isError error={rolesQuery.error} onRetry={rolesQuery.refetch} />
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="sa-register-form">
-              <div className="sa-register-shell__body">
-                <section className="sa-register-section">
-                  <h2 className="sa-register-section__title">Personal details</h2>
-                  <div className="sa-register-grid">
+            <form onSubmit={handleSubmit} className="admin-panel-register-form">
+              <div className="admin-panel-register-shell__body">
+                <section className="admin-panel-register-section">
+                  <h2 className="admin-panel-register-section__title">Personal details</h2>
+                  <div className="admin-panel-register-grid">
                     <RegisterField id="sa_first_name" label="First name" required>
                       <Input
                         id="sa_first_name"
@@ -220,9 +221,9 @@ export default function SuperAdminStaffRegisterPage() {
                   </div>
                 </section>
 
-                <section className="sa-register-section">
-                  <h2 className="sa-register-section__title">Account credentials</h2>
-                  <div className="sa-register-grid">
+                <section className="admin-panel-register-section">
+                  <h2 className="admin-panel-register-section__title">Account credentials</h2>
+                  <div className="admin-panel-register-grid">
                     <RegisterField id="sa_email" label="Email" required>
                       <Input
                         id="sa_email"
@@ -250,9 +251,9 @@ export default function SuperAdminStaffRegisterPage() {
                   </div>
                 </section>
 
-                <section className="sa-register-section">
-                  <h2 className="sa-register-section__title">Role assignment</h2>
-                  <div className="sa-register-grid">
+                <section className="admin-panel-register-section">
+                  <h2 className="admin-panel-register-section__title">Role assignment</h2>
+                  <div className="admin-panel-register-grid">
                     <RegisterField id="sa_role" label="Role" required>
                       <Select
                         value={form.role_id}
@@ -268,7 +269,7 @@ export default function SuperAdminStaffRegisterPage() {
                       required={departmentEnabled}
                     >
                       {departmentsError ? (
-                        <p className="sa-register-field__error" role="alert">
+                        <p className="admin-panel-register-field__error" role="alert">
                           {departmentsQuery.error?.message || 'Could not load departments'}
                         </p>
                       ) : null}
@@ -300,7 +301,7 @@ export default function SuperAdminStaffRegisterPage() {
                 </section>
               </div>
 
-              <div className="sa-register-actions">
+              <div className="admin-panel-register-actions">
                 <Button
                   type="button"
                   variant="ghost"
@@ -325,6 +326,6 @@ export default function SuperAdminStaffRegisterPage() {
           )}
         </div>
       </div>
-    </SuperAdminLayout>
+    </AdminLayout>
   );
 }

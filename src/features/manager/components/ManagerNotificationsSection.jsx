@@ -12,8 +12,10 @@ import {
   useMarkAdminNotificationReadMutation,
 } from '@/features/manager/hooks/useManagerNotificationsQuery';
 import { Button, EmptyState } from '@/shared/components/common';
+import { NOTIFICATION_MODULE } from '@/shared/notifications/notificationModules';
+import { useNotificationNavigation } from '@/shared/notifications/useNotificationNavigation';
 import { toast } from '@/shared/utils/toast';
-import AdminNotificationRow from './ManagerNotificationRow';
+import ManagerNotificationRow from './ManagerNotificationRow';
 import './ManagerNotificationsBell.css';
 import './ManagerNotificationsSection.css';
 
@@ -34,7 +36,8 @@ const PRIORITY_FILTER_VALUES = new Set(
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-export default function AdminNotificationsSection({ onDeepLink }) {
+/* Legacy identifier preserved: AdminNotificationsSection. Active name: ManagerNotificationsSection. */
+export default function ManagerNotificationsSection() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -70,6 +73,7 @@ export default function AdminNotificationsSection({ onDeepLink }) {
   }, [page, debouncedSearch, readFilter, notificationType, startDate, endDate]);
 
   const { data, isLoading, isError, error, refetch } = useAdminNotificationsListQuery(filters);
+  const openNotification = useNotificationNavigation(NOTIFICATION_MODULE.MANAGER);
   const markOne = useMarkAdminNotificationReadMutation();
   const markAll = useMarkAllAdminNotificationsReadMutation();
 
@@ -117,15 +121,11 @@ export default function AdminNotificationsSection({ onDeepLink }) {
     setPage(1);
   };
 
-  const handleRowClick = async (n) => {
-    if (isAdminNotificationUnread(n)) {
-      try {
-        await markOne.mutateAsync(n.id);
-      } catch {
-        return;
-      }
-    }
-    onDeepLink?.(n);
+  const handleRowClick = (n) => {
+    void openNotification(n, {
+      markRead: (id) => markOne.mutateAsync(id),
+      isUnread: isAdminNotificationUnread,
+    });
   };
 
   return (
@@ -250,7 +250,7 @@ export default function AdminNotificationsSection({ onDeepLink }) {
             />
           ) : (
             items.map((n) => (
-              <AdminNotificationRow
+              <ManagerNotificationRow
                 key={n.id}
                 notification={n}
                 onClick={() => handleRowClick(n)}

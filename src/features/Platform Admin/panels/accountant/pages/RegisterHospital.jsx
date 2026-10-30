@@ -18,7 +18,7 @@ import { DEFAULT_PHONE_CODE, parsePhoneNumber } from "../../../shared/utils/phon
 import { usePlatform } from "../../../shared/context/PlatformContext";
 import { useToast } from "../../../shared/hooks/useToast";
 import { accountantBackTitle, isAccountantLocation } from "../../../shared/navigation/inAppHistory";
-import { useInAppBack, useInAppPrevious } from "../../../shared/navigation/InAppHistoryTracker";
+import { useInAppBack, useInAppPrevious } from "../../../shared/navigation/useInAppHistory";
 import { UNIVERSAL_LOGIN, accountsPath } from "../../../shared/paths";
 import { canSubmitRegistration } from "../../../shared/utils/registrationGate";
 import { PASSWORD_HINT, isPostalCode, isTenantCode, passwordIssue, required } from "../../../shared/utils/validation";

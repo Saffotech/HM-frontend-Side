@@ -16,7 +16,8 @@ function buildQuery(params = {}) {
 }
 
 /** GET /admin-manager/dashboard — the live hospital dashboard route. */
-export async function getAdminDashboard() {
+/* Legacy identifier preserved: getAdminDashboard. Active name: getManagerDashboard. */
+export async function getManagerDashboard() {
   return apiClient('/admin-manager/dashboard');
 }
 

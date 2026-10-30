@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 
 /** Admin routes shell */
-export default function AdminAppShell() {
+/* Legacy identifier preserved: AdminAppShell. Active name: ManagerAppShell. */
+export default function ManagerAppShell() {
   return <Outlet />;
 }

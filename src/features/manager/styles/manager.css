@@ -1,5 +1,7 @@
+/* Legacy prefix sa- is now admin-panel-. */
+/* Legacy class names (inactive): admin-layout, admin-shell. Active: manager-layout, manager-shell. */
 /* ── Admin design tokens (shared HMS system) ───────────────── */
-.admin-shell {
+.manager-shell {
   --admin-bg: var(--color-bg);
   --admin-surface: var(--color-surface);
   --admin-border: var(--color-border);
@@ -371,23 +373,23 @@
   margin: 0 -0.15rem;
 }
 
-.admin-shell .admin-datatable__toolbar .search-bar,
-.sa-shell .admin-datatable__toolbar .search-bar {
+.manager-shell .admin-datatable__toolbar .search-bar,
+.admin-panel-shell .admin-datatable__toolbar .search-bar {
   width: 100%;
   min-width: 0;
   max-width: none;
 }
 
-.admin-shell .admin-datatable__toolbar .searchable-select,
-.sa-shell .admin-datatable__toolbar .searchable-select {
+.manager-shell .admin-datatable__toolbar .searchable-select,
+.admin-panel-shell .admin-datatable__toolbar .searchable-select {
   width: 100%;
   min-width: 0;
 }
 
-.admin-shell .admin-datatable__toolbar .search-bar__input,
-.admin-shell .admin-datatable__toolbar .searchable-select__input,
-.sa-shell .admin-datatable__toolbar .search-bar__input,
-.sa-shell .admin-datatable__toolbar .searchable-select__input {
+.manager-shell .admin-datatable__toolbar .search-bar__input,
+.manager-shell .admin-datatable__toolbar .searchable-select__input,
+.admin-panel-shell .admin-datatable__toolbar .search-bar__input,
+.admin-panel-shell .admin-datatable__toolbar .searchable-select__input {
   height: 2.25rem;
   min-height: 2.25rem;
   padding-top: 0;
@@ -399,35 +401,35 @@
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
-.admin-shell .admin-datatable__toolbar .search-bar__input:focus,
-.admin-shell .admin-datatable__toolbar .searchable-select__input:focus,
-.sa-shell .admin-datatable__toolbar .search-bar__input:focus,
-.sa-shell .admin-datatable__toolbar .searchable-select__input:focus {
+.manager-shell .admin-datatable__toolbar .search-bar__input:focus,
+.manager-shell .admin-datatable__toolbar .searchable-select__input:focus,
+.admin-panel-shell .admin-datatable__toolbar .search-bar__input:focus,
+.admin-panel-shell .admin-datatable__toolbar .searchable-select__input:focus {
   border-color: var(--admin-primary);
   box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
 }
 
-.admin-shell .admin-datatable__toolbar .searchable-select__icon,
-.sa-shell .admin-datatable__toolbar .searchable-select__icon {
+.manager-shell .admin-datatable__toolbar .searchable-select__icon,
+.admin-panel-shell .admin-datatable__toolbar .searchable-select__icon {
   color: var(--admin-text-soft);
 }
 
-.admin-shell .admin-datatable__toolbar .admin-toolbar__reset,
-.sa-shell .admin-datatable__toolbar .admin-toolbar__reset {
+.manager-shell .admin-datatable__toolbar .admin-toolbar__reset,
+.admin-panel-shell .admin-datatable__toolbar .admin-toolbar__reset {
   height: 2.25rem;
   padding-inline: 0.85rem;
   white-space: nowrap;
   align-self: end;
 }
 
-.admin-shell .admin-datatable__toolbar .admin-toolbar__reset.is-active,
-.sa-shell .admin-datatable__toolbar .admin-toolbar__reset.is-active {
+.manager-shell .admin-datatable__toolbar .admin-toolbar__reset.is-active,
+.admin-panel-shell .admin-datatable__toolbar .admin-toolbar__reset.is-active {
   border-color: var(--admin-primary-border);
   color: var(--admin-primary-dark);
   background: var(--admin-primary-soft);
 }
 
-.sa-dept-type {
+.admin-panel-dept-type {
   display: inline-flex;
   align-items: center;
   padding: 0.2rem 0.55rem;
@@ -438,13 +440,13 @@
   border: 1px solid transparent;
 }
 
-.sa-dept-type--doctor {
+.admin-panel-dept-type--doctor {
   color: #1d4ed8;
   background: #eff6ff;
   border-color: #bfdbfe;
 }
 
-.sa-dept-type--lab {
+.admin-panel-dept-type--lab {
   color: #0f766e;
   background: #f0fdfa;
   border-color: #99f6e4;
@@ -545,6 +547,11 @@
   flex: 1 1 14rem;
   min-width: 0;
   padding-bottom: 0.35rem;
+}
+
+.admin-visits-row--focus {
+  outline: 2px solid var(--color-primary, #0f766e);
+  outline-offset: -2px;
 }
 
 .admin-visits-filter-row {
@@ -906,8 +913,8 @@
 }
 
 /* ── Create department ─────────────────────────────────────── */
-.admin-shell:has(.dept-create-page),
-.sa-shell:has(.dept-create-page) {
+.manager-shell:has(.dept-create-page),
+.admin-panel-shell:has(.dept-create-page) {
   padding-top: 0;
 }
 

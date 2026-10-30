@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 
-export default function AdminQuickAction({ to, icon, title, description, tone = 'neutral' }) {
+/* Legacy identifier preserved: AdminQuickAction. Active name: ManagerQuickAction. */
+export default function ManagerQuickAction({ to, icon, title, description, tone = 'neutral' }) {
   return (
     <Link to={to} className={`admin-quick-action admin-quick-action--${tone}`}>
       <div className="admin-quick-action__icon" aria-hidden>

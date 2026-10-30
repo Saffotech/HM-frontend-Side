@@ -17,17 +17,17 @@ import {
   X,
 } from 'lucide-react';
 import {
-  SUPER_ADMIN_PROFILE_EDITABLE_TOP_KEYS,
+  ADMIN_PROFILE_EDITABLE_TOP_KEYS,
   resolveSuperAdminProfileImageUrl,
 } from '@/features/admin/api/profile';
 import {
   useDeleteSuperAdminProfileImageMutation,
-  useSuperAdminProfileQuery,
+  useAdminProfileQuery,
   useUpdateSuperAdminProfileMutation,
   useUploadSuperAdminProfileImageMutation,
 } from '@/features/admin/hooks/useAdminProfileQuery';
-import SuperAdminLayout from '@/features/admin/components/AdminLayout';
-import SuperAdminPageHeader from '@/features/admin/components/AdminPageHeader';
+import AdminLayout from '@/features/admin/components/AdminLayout';
+import AdminPageHeader from '@/features/admin/components/AdminPageHeader';
 import { adminPanelRoutes } from '@/shared/constants';
 import {
   Button,
@@ -110,7 +110,7 @@ function buildEditableForm(profile) {
 function buildDirtyPayload(form, baseline) {
   const payload = {};
 
-  SUPER_ADMIN_PROFILE_EDITABLE_TOP_KEYS.forEach((key) => {
+  ADMIN_PROFILE_EDITABLE_TOP_KEYS.forEach((key) => {
     if (key === 'languages') {
       const next = parseProfileLanguages(form.languages);
       const prev = Array.isArray(baseline.languages) ? baseline.languages : [];
@@ -167,10 +167,10 @@ function buildDirtyPayload(form, baseline) {
 function ReadField({ label, value }) {
   const display = displayProfileText(value);
   return (
-    <div className="sa-profile-field">
-      <span className="sa-profile-field__label">{label}</span>
+    <div className="admin-panel-profile-field">
+      <span className="admin-panel-profile-field__label">{label}</span>
       <p
-        className={`sa-profile-field__value${!display ? ' sa-profile-field__value--empty' : ''}`}
+        className={`admin-panel-profile-field__value${!display ? ' admin-panel-profile-field__value--empty' : ''}`}
       >
         {display || 'Not set'}
       </p>
@@ -178,11 +178,12 @@ function ReadField({ label, value }) {
   );
 }
 
-export default function SuperAdminProfilePage() {
+/* Legacy identifier preserved: SuperAdminProfilePage. Active name: AdminProfilePage. */
+export default function AdminProfilePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const panel = adminPanelRoutes(location.pathname);
-  const { data, isLoading, isError, error, refetch } = useSuperAdminProfileQuery();
+  const { data, isLoading, isError, error, refetch } = useAdminProfileQuery();
   const profile = data?.profile;
   const updateProfile = useUpdateSuperAdminProfileMutation();
   const uploadImage = useUploadSuperAdminProfileImageMutation();
@@ -376,22 +377,22 @@ export default function SuperAdminProfilePage() {
 
   if (isLoading) {
     return (
-      <SuperAdminLayout pageTitle="My Profile" compact>
-        <div className="sa-profile-page">
-          <SuperAdminPageHeader
+      <AdminLayout pageTitle="My Profile" compact>
+        <div className="admin-panel-profile-page">
+          <AdminPageHeader
             title="My Profile"
           />
           <PageSpinner label="Loading profile…" />
         </div>
-      </SuperAdminLayout>
+      </AdminLayout>
     );
   }
 
   if (isError || !profile) {
     return (
-      <SuperAdminLayout pageTitle="My Profile" compact>
-        <div className="sa-profile-page">
-          <SuperAdminPageHeader
+      <AdminLayout pageTitle="My Profile" compact>
+        <div className="admin-panel-profile-page">
+          <AdminPageHeader
             title="My Profile"
           />
           <EmptyState
@@ -415,7 +416,7 @@ export default function SuperAdminProfilePage() {
             </Button>
           </div>
         </div>
-      </SuperAdminLayout>
+      </AdminLayout>
     );
   }
 
@@ -427,9 +428,9 @@ export default function SuperAdminProfilePage() {
   const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
 
   return (
-    <SuperAdminLayout pageTitle="My Profile" compact>
-      <div className="sa-profile-page">
-        <SuperAdminPageHeader
+    <AdminLayout pageTitle="My Profile" compact>
+      <div className="admin-panel-profile-page">
+        <AdminPageHeader
           title="My Profile"
           actions={
             <Button
@@ -442,32 +443,32 @@ export default function SuperAdminProfilePage() {
           }
         />
 
-        <div className="sa-profile-card">
-          <div className="sa-profile-hero">
-            <div className="sa-profile-avatar-wrap" ref={avatarWrapRef}>
+        <div className="admin-panel-profile-card">
+          <div className="admin-panel-profile-hero">
+            <div className="admin-panel-profile-avatar-wrap" ref={avatarWrapRef}>
               <button
                 type="button"
-                className="sa-profile-avatar"
+                className="admin-panel-profile-avatar"
                 aria-label="Profile photo options"
                 aria-haspopup="menu"
                 aria-expanded={avatarMenuOpen}
                 onClick={() => setAvatarMenuOpen((open) => !open)}
               >
                 {imageUrl ? (
-                  <img src={imageUrl} alt="" className="sa-profile-avatar__img" />
+                  <img src={imageUrl} alt="" className="admin-panel-profile-avatar__img" />
                 ) : (
-                  <div className="sa-profile-avatar__placeholder" aria-hidden>
+                  <div className="admin-panel-profile-avatar__placeholder" aria-hidden>
                     <User size={34} strokeWidth={1.75} />
                   </div>
                 )}
               </button>
 
               {avatarMenuOpen ? (
-                <div className="sa-profile-avatar-menu" role="menu">
+                <div className="admin-panel-profile-avatar-menu" role="menu">
                   <button
                     type="button"
                     role="menuitem"
-                    className="sa-profile-avatar-menu__item"
+                    className="admin-panel-profile-avatar-menu__item"
                     onClick={handleAvatarUploadClick}
                     disabled={uploadImage.isPending}
                   >
@@ -477,7 +478,7 @@ export default function SuperAdminProfilePage() {
                   <button
                     type="button"
                     role="menuitem"
-                    className="sa-profile-avatar-menu__item sa-profile-avatar-menu__item--danger"
+                    className="admin-panel-profile-avatar-menu__item admin-panel-profile-avatar-menu__item--danger"
                     onClick={handleAvatarRemoveClick}
                     disabled={deleteImage.isPending || !hasProfileImage}
                   >
@@ -496,49 +497,49 @@ export default function SuperAdminProfilePage() {
                 disabled={uploadImage.isPending}
               />
             </div>
-            <div className="sa-profile-hero__meta">
-              <div className="sa-profile-hero__top">
+            <div className="admin-panel-profile-hero__meta">
+              <div className="admin-panel-profile-hero__top">
                 <div>
-                  <h2 className="sa-profile-hero__name">{displayName}</h2>
-                  <p className="sa-profile-hero__sub">{profile.email}</p>
+                  <h2 className="admin-panel-profile-hero__name">{displayName}</h2>
+                  <p className="admin-panel-profile-hero__sub">{profile.email}</p>
                 </div>
               </div>
-              <div className="sa-profile-hero__tags">
-                {roleName ? <span className="sa-profile-tag">{roleName}</span> : null}
+              <div className="admin-panel-profile-hero__tags">
+                {roleName ? <span className="admin-panel-profile-tag">{roleName}</span> : null}
                 <span
-                  className={`sa-profile-tag ${
+                  className={`admin-panel-profile-tag ${
                     profile.is_profile_completed
-                      ? 'sa-profile-tag--ok'
-                      : 'sa-profile-tag--warn'
+                      ? 'admin-panel-profile-tag--ok'
+                      : 'admin-panel-profile-tag--warn'
                   }`}
                 >
                   {profile.is_profile_completed ? 'Profile complete' : 'Incomplete'}
                 </span>
                 {profile.is_active ? (
-                  <span className="sa-profile-tag sa-profile-tag--ok">Active</span>
+                  <span className="admin-panel-profile-tag admin-panel-profile-tag--ok">Active</span>
                 ) : (
-                  <span className="sa-profile-tag sa-profile-tag--warn">Inactive</span>
+                  <span className="admin-panel-profile-tag admin-panel-profile-tag--warn">Inactive</span>
                 )}
               </div>
-              <div className="sa-profile-hero__status-row">
+              <div className="admin-panel-profile-hero__status-row">
                 <div
-                  className="sa-profile-progress"
+                  className="admin-panel-profile-progress"
                   role="progressbar"
                   aria-valuenow={completionPct}
                   aria-valuemin={0}
                   aria-valuemax={100}
                   aria-label="Profile completion"
                 >
-                  <div className="sa-profile-progress__track">
+                  <div className="admin-panel-profile-progress__track">
                     <div
-                      className="sa-profile-progress__fill"
+                      className="admin-panel-profile-progress__fill"
                       style={{ width: `${completionPct}%` }}
                     />
                   </div>
-                  <span className="sa-profile-progress__label">{completionPct}% complete</span>
+                  <span className="admin-panel-profile-progress__label">{completionPct}% complete</span>
                 </div>
                 {formatUpdatedAgo(profile.updated_at) ? (
-                  <p className="sa-profile-hero__updated">
+                  <p className="admin-panel-profile-hero__updated">
                     Profile updated {formatUpdatedAgo(profile.updated_at)}
                   </p>
                 ) : null}
@@ -546,8 +547,8 @@ export default function SuperAdminProfilePage() {
             </div>
           </div>
 
-          <div className="sa-profile-page__toolbar">
-            <div className="sa-profile-tabs" role="tablist" aria-label="Profile sections">
+          <div className="admin-panel-profile-page__toolbar">
+            <div className="admin-panel-profile-tabs" role="tablist" aria-label="Profile sections">
               {[
                 { id: 'account', label: 'Account', icon: Shield },
                 { id: 'professional', label: 'Professional', icon: Briefcase },
@@ -560,7 +561,7 @@ export default function SuperAdminProfilePage() {
                     type="button"
                     role="tab"
                     aria-selected={activeTab === tab.id}
-                    className={`sa-profile-tab${activeTab === tab.id ? ' is-active' : ''}`}
+                    className={`admin-panel-profile-tab${activeTab === tab.id ? ' is-active' : ''}`}
                     onClick={() => setActiveTab(tab.id)}
                   >
                     <Icon size={15} aria-hidden />
@@ -569,7 +570,7 @@ export default function SuperAdminProfilePage() {
                 );
               })}
             </div>
-            <div className="sa-profile-page__actions">
+            <div className="admin-panel-profile-page__actions">
               {editing ? (
                 <>
                   <Button variant="outline" size="sm" onClick={handleCancel} disabled={saving}>
@@ -579,7 +580,7 @@ export default function SuperAdminProfilePage() {
                     size="sm"
                     type="button"
                     disabled={saving}
-                    onClick={() => document.getElementById('sa-profile-form')?.requestSubmit()}
+                    onClick={() => document.getElementById('admin-panel-profile-form')?.requestSubmit()}
                   >
                     {saving ? 'Saving…' : 'Save changes'}
                   </Button>
@@ -592,28 +593,28 @@ export default function SuperAdminProfilePage() {
             </div>
           </div>
 
-          <form id="sa-profile-form" className="sa-profile-body" onSubmit={handleSave}>
+          <form id="admin-panel-profile-form" className="admin-panel-profile-body" onSubmit={handleSave}>
             {activeTab === 'account' && (
               <section
-                id="sa-profile-section-account"
-                className="sa-profile-section is-active"
+                id="admin-panel-profile-section-account"
+                className="admin-panel-profile-section is-active"
                 role="tabpanel"
               >
-                <h3 className="sa-profile-section__title">
+                <h3 className="admin-panel-profile-section__title">
                   <Shield size={16} aria-hidden /> Account
                 </h3>
-                <p className="sa-profile-hint">
+                <p className="admin-panel-profile-hint">
                   Profile photo is managed from the avatar above. Name and email are system-managed.
                 </p>
-                <div className="sa-profile-grid">
+                <div className="admin-panel-profile-grid">
                   <ReadField label="Full name" value={fullName || null} />
                   <ReadField label="Email" value={profile.email} />
                   <ReadField label="Role" value={roleName} />
                   {editing && form ? (
-                    <label className="sa-profile-field sa-profile-field--span">
-                      <span className="sa-profile-field__label">Bio</span>
+                    <label className="admin-panel-profile-field admin-panel-profile-field--span">
+                      <span className="admin-panel-profile-field__label">Bio</span>
                       <textarea
-                        className="sa-profile-input"
+                        className="admin-panel-profile-input"
                         rows={3}
                         value={form.bio}
                         onChange={(e) => setTextField('bio', e.target.value)}
@@ -628,37 +629,37 @@ export default function SuperAdminProfilePage() {
 
             {activeTab === 'professional' && (
               <section
-                id="sa-profile-section-professional"
-                className="sa-profile-section is-active"
+                id="admin-panel-profile-section-professional"
+                className="admin-panel-profile-section is-active"
                 role="tabpanel"
               >
-                <h3 className="sa-profile-section__title">
+                <h3 className="admin-panel-profile-section__title">
                   <Briefcase size={16} aria-hidden /> Professional
                 </h3>
-                <p className="sa-profile-hint">
+                <p className="admin-panel-profile-hint">
                   Employee ID and joining date are system-managed.
                 </p>
-                <div className="sa-profile-grid">
+                <div className="admin-panel-profile-grid">
                   <ReadField label="Employee ID" value={profile.employee_id} />
                   <ReadField label="Joining date" value={profile.joining_date} />
                   {editing && form ? (
-                    <div className="sa-profile-field sa-profile-field--span">
-                      <span className="sa-profile-field__label">Languages</span>
-                      <div className="sa-profile-lang-row">
+                    <div className="admin-panel-profile-field admin-panel-profile-field--span">
+                      <span className="admin-panel-profile-field__label">Languages</span>
+                      <div className="admin-panel-profile-lang-row">
                         {parseProfileLanguages(form.languages).map((lang) => (
                           <button
                             key={lang}
                             type="button"
-                            className="sa-profile-lang-chip"
+                            className="admin-panel-profile-lang-chip"
                             onClick={() => removeLanguage(lang)}
                           >
                             {lang} ×
                           </button>
                         ))}
                       </div>
-                      <div className="sa-profile-lang-add">
+                      <div className="admin-panel-profile-lang-add">
                         <input
-                          className="sa-profile-input"
+                          className="admin-panel-profile-input"
                           placeholder="Add language"
                           value={langDraft}
                           onChange={(e) => setLangDraft(capitalizeFirst(e.target.value))}
@@ -695,39 +696,39 @@ export default function SuperAdminProfilePage() {
 
             {activeTab === 'contact' && (
               <section
-                id="sa-profile-section-contact"
-                className="sa-profile-section is-active"
+                id="admin-panel-profile-section-contact"
+                className="admin-panel-profile-section is-active"
                 role="tabpanel"
               >
-                <h3 className="sa-profile-section__title">
+                <h3 className="admin-panel-profile-section__title">
                   <Phone size={16} aria-hidden /> Contact
                 </h3>
-                <div className="sa-profile-grid">
+                <div className="admin-panel-profile-grid">
                   {editing && form ? (
                     <>
-                      <label className="sa-profile-field">
-                        <span className="sa-profile-field__label">Phone</span>
+                      <label className="admin-panel-profile-field">
+                        <span className="admin-panel-profile-field__label">Phone</span>
                         <ProfilePhoneField
-                          inputClassName="sa-profile-input"
+                          inputClassName="admin-panel-profile-input"
                           phoneCode={form.phone_code}
                           phone={form.phone}
                           onPhoneCodeChange={(value) => setField('phone_code', value)}
                           onPhoneChange={(value) => setField('phone', value)}
                         />
                       </label>
-                      <label className="sa-profile-field">
-                        <span className="sa-profile-field__label">Emergency contact name</span>
+                      <label className="admin-panel-profile-field">
+                        <span className="admin-panel-profile-field__label">Emergency contact name</span>
                         <input
-                          className="sa-profile-input"
+                          className="admin-panel-profile-input"
                           maxLength={120}
                           value={form.emergency_contact_name}
                           onChange={(e) => setTextField('emergency_contact_name', e.target.value)}
                         />
                       </label>
-                      <label className="sa-profile-field">
-                        <span className="sa-profile-field__label">Emergency phone</span>
+                      <label className="admin-panel-profile-field">
+                        <span className="admin-panel-profile-field__label">Emergency phone</span>
                         <input
-                          className="sa-profile-input"
+                          className="admin-panel-profile-input"
                           type="tel"
                           inputMode="numeric"
                           autoComplete="tel"
@@ -742,10 +743,10 @@ export default function SuperAdminProfilePage() {
                           }
                         />
                       </label>
-                      <label className="sa-profile-field">
-                        <span className="sa-profile-field__label">Gender</span>
+                      <label className="admin-panel-profile-field">
+                        <span className="admin-panel-profile-field__label">Gender</span>
                         <select
-                          className="sa-profile-input"
+                          className="admin-panel-profile-input"
                           value={form.gender === '' || form.gender == null ? '' : form.gender}
                           onChange={(e) => {
                             const next = Number(e.target.value);
@@ -761,7 +762,7 @@ export default function SuperAdminProfilePage() {
                           ))}
                         </select>
                       </label>
-                      <div className="sa-profile-field">
+                      <div className="admin-panel-profile-field">
                         <DateInput
                           label="Date of birth"
                           className="profile-page-date-input"
@@ -816,6 +817,6 @@ export default function SuperAdminProfilePage() {
         }}
         onConfirm={handleDeleteImage}
       />
-    </SuperAdminLayout>
+    </AdminLayout>
   );
 }

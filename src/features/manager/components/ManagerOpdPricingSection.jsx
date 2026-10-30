@@ -13,7 +13,7 @@ import {
   useAdminStaffListQuery,
 } from '@/shared/hooks/queries/useAdminQuery';
 import { useBedInventoryListQuery, useBedInventorySummaryQuery } from '@/features/manager/hooks/useOpdBedsQuery';
-import AdminEditLockToggle from '@/features/manager/components/ManagerEditLockToggle';
+import ManagerEditLockToggle from '@/features/manager/components/ManagerEditLockToggle';
 import { Button, Input, Label } from '@/shared/components/common';
 import {
   currencyAmountLabel,
@@ -223,7 +223,8 @@ function upsertDoctorFee(list, doctor, feeValue) {
 /**
  * Pricing cards — each card has its own dropdown(s) and Save button.
  */
-export default function AdminOpdPricingSection({
+/* Legacy identifier preserved: AdminOpdPricingSection. Active name: ManagerOpdPricingSection. */
+export default function ManagerOpdPricingSection({
   form,
   patch,
   setNumber,
@@ -563,7 +564,7 @@ export default function AdminOpdPricingSection({
         locked={!canEditGlobalFees}
         action={
           manageAdminEditLocks ? (
-            <AdminEditLockToggle
+            <ManagerEditLockToggle
               id="admin-edit-global_fees_tax"
               checked={Boolean(adminEdit.global_fees_tax)}
               disabled={adminEditSaving}
@@ -642,7 +643,7 @@ export default function AdminOpdPricingSection({
         locked={!canEditBedTariff}
         action={
           manageAdminEditLocks ? (
-            <AdminEditLockToggle
+            <ManagerEditLockToggle
               id="admin-edit-bed_tariff"
               checked={Boolean(adminEdit.bed_tariff)}
               disabled={adminEditSaving}
@@ -876,7 +877,7 @@ export default function AdminOpdPricingSection({
         locked={!canEditDeptFees}
         action={
           manageAdminEditLocks ? (
-            <AdminEditLockToggle
+            <ManagerEditLockToggle
               id="admin-edit-consultation_fee_by_department"
               checked={Boolean(adminEdit.consultation_fee_by_department)}
               disabled={adminEditSaving}
@@ -941,7 +942,7 @@ export default function AdminOpdPricingSection({
         locked={!canEditDoctorFees}
         action={
           manageAdminEditLocks ? (
-            <AdminEditLockToggle
+            <ManagerEditLockToggle
               id="admin-edit-consultation_fee_by_doctor"
               checked={Boolean(adminEdit.consultation_fee_by_doctor)}
               disabled={adminEditSaving}

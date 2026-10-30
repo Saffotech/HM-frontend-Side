@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Pencil, Save, X } from 'lucide-react';
-import AdminLayout from '@/features/manager/components/ManagerLayout';
-import AdminBackBar from '@/features/manager/components/ManagerBackBar';
-import AdminStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
+import ManagerLayout from '@/features/manager/components/ManagerLayout';
+import ManagerBackBar from '@/features/manager/components/ManagerBackBar';
+import ManagerStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
 import DepartmentForm from '@/features/manager/components/DepartmentForm';
 import {
   buildDepartmentPayload,
@@ -60,18 +60,18 @@ export default function DepartmentDetailPage() {
 
   if (!Number.isFinite(departmentId) || departmentId <= 0) {
     return (
-      <AdminLayout pageTitle="Department">
+      <ManagerLayout pageTitle="Department">
         <div className="admin-alert">
           <p className="admin-alert__title">Invalid department ID</p>
         </div>
-      </AdminLayout>
+      </ManagerLayout>
     );
   }
 
   return (
-    <AdminLayout pageTitle={department?.name || 'Department'}>
+    <ManagerLayout pageTitle={department?.name || 'Department'}>
       <div className="admin-page">
-        <AdminBackBar onBack={() => navigate(ROUTES.MANAGER_DEPARTMENTS)}>
+        <ManagerBackBar onBack={() => navigate(ROUTES.MANAGER_DEPARTMENTS)}>
           {!isLoading && department && !isEditing && (
             <Button onClick={() => setIsEditing(true)}>
               <Pencil size={16} aria-hidden />
@@ -90,7 +90,7 @@ export default function DepartmentDetailPage() {
               Cancel
             </Button>
           )}
-        </AdminBackBar>
+        </ManagerBackBar>
 
         <QueryFeedback isLoading={isLoading} isError={isError} error={error}>
           {department && (
@@ -128,7 +128,7 @@ export default function DepartmentDetailPage() {
                     <div className="admin-meta-item">
                       <div className="admin-meta-list__label">Status</div>
                       <div className="admin-meta-list__value">
-                        <AdminStaffStatusBadge isActive={department.is_active} />
+                        <ManagerStaffStatusBadge isActive={department.is_active} />
                       </div>
                     </div>
                     <div className="admin-meta-item">
@@ -148,6 +148,6 @@ export default function DepartmentDetailPage() {
           )}
         </QueryFeedback>
       </div>
-    </AdminLayout>
+    </ManagerLayout>
   );
 }

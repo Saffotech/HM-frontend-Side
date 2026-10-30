@@ -23,8 +23,8 @@ import {
   useAdminRolesQuery,
   useAdminStaffListQuery,
 } from '@/shared/hooks/queries/useAdminQuery';
-import AdminOpdPricingSection from '@/features/manager/components/ManagerOpdPricingSection';
-import AdminOpdBedsSection from '@/features/manager/components/ManagerOpdBedsSection';
+import ManagerOpdPricingSection from '@/features/manager/components/ManagerOpdPricingSection';
+import ManagerOpdBedsSection from '@/features/manager/components/ManagerOpdBedsSection';
 import {
   WEEKDAY_OPTIONS,
   createEmptyBillItem,
@@ -190,7 +190,8 @@ function Field({ id, label, hint, children }) {
   );
 }
 
-export default function AdminOpdSettingsPanel({ manageAdminEditLocks = false }) {
+/* Legacy identifier preserved: AdminOpdSettingsPanel. Active name: ManagerOpdSettingsPanel. */
+export default function ManagerOpdSettingsPanel({ manageAdminEditLocks = false }) {
   const settingsQuery = useAdminOpdSettingsQuery();
   const updateMutation = useUpdateAdminOpdSettingsMutation();
   const { canEdit, lockToggle, setAdminEditLock, adminEditSaving } =
@@ -398,7 +399,7 @@ export default function AdminOpdSettingsPanel({ manageAdminEditLocks = false }) 
             </div>
 
             {activeSection === 'beds' ? (
-              <AdminOpdBedsSection
+              <ManagerOpdBedsSection
                 manageAdminEditLocks={manageAdminEditLocks}
                 canEditBedInventory={canEdit('bed_inventory')}
                 canEditWards={canEdit('wards')}
@@ -462,7 +463,7 @@ export default function AdminOpdSettingsPanel({ manageAdminEditLocks = false }) 
 
             {activeSection === 'pricing' ? (
               <>
-                <AdminOpdPricingSection
+                <ManagerOpdPricingSection
                   form={form}
                   patch={patch}
                   setNumber={setNumber}

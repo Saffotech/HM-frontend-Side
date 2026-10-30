@@ -12,6 +12,8 @@ import {
   useMarkOpdBillingNotificationReadMutation,
 } from '@/features/opd/hooks/useOpdBillingNotificationsQuery';
 import { Button, EmptyState } from '@/shared/components/common';
+import { NOTIFICATION_MODULE } from '@/shared/notifications/notificationModules';
+import { useNotificationNavigation } from '@/shared/notifications/useNotificationNavigation';
 import { toast } from '@/shared/utils/toast';
 import OpdNotificationRow from './OpdNotificationRow';
 import './OpdNotificationsBell.css';
@@ -34,7 +36,7 @@ const PRIORITY_FILTER_VALUES = new Set(
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-export default function OpdNotificationsSection({ onDeepLink }) {
+export default function OpdNotificationsSection() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -70,6 +72,7 @@ export default function OpdNotificationsSection({ onDeepLink }) {
   }, [page, debouncedSearch, readFilter, notificationType, startDate, endDate]);
 
   const { data, isLoading, isError, error, refetch } = useOpdBillingNotificationsListQuery(filters);
+  const openNotification = useNotificationNavigation(NOTIFICATION_MODULE.OPD);
   const markOne = useMarkOpdBillingNotificationReadMutation();
   const markAll = useMarkAllOpdBillingNotificationsReadMutation();
 
@@ -117,15 +120,11 @@ export default function OpdNotificationsSection({ onDeepLink }) {
     setPage(1);
   };
 
-  const handleRowClick = async (n) => {
-    if (isOpdBillingNotificationUnread(n)) {
-      try {
-        await markOne.mutateAsync(n.id);
-      } catch {
-        return;
-      }
-    }
-    onDeepLink?.(n);
+  const handleRowClick = (n) => {
+    void openNotification(n, {
+      markRead: (id) => markOne.mutateAsync(id),
+      isUnread: isOpdBillingNotificationUnread,
+    });
   };
 
   return (

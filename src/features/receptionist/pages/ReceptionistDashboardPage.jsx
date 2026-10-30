@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { CalendarCheck, CheckCircle2, XCircle, Clock, ArrowRight } from 'lucide-react';
 import { receptionistApi } from '../api/receptionist';
 import DepartmentDoctorFilter from '../components/DepartmentDoctorFilter';
@@ -28,6 +28,7 @@ function activeTodayCount(stats) {
 }
 
 export default function ReceptionistDashboardPage() {
+  const [searchParams] = useSearchParams();
   const [stats, setStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [patients, setPatients] = useState([]);
@@ -40,7 +41,12 @@ export default function ReceptionistDashboardPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [tableDept, setTableDept] = useState('all');
   const [tableDoc, setTableDoc] = useState('all');
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(() => searchParams.get('q') || '');
+
+  useEffect(() => {
+    const next = searchParams.get('q');
+    if (next) setSearch(next);
+  }, [searchParams]);
   const debouncedSearch = useDebouncedValue(search, 400);
 
   const doctorId = tableDoc !== 'all' ? Number(tableDoc) : undefined;

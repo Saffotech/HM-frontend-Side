@@ -14,6 +14,8 @@ import {
   useMarkDoctorNotificationReadMutation,
 } from '@/features/doctor/hooks/useDoctorNotificationsQuery';
 import { Button, EmptyState } from '@/shared/components/common';
+import { NOTIFICATION_MODULE } from '@/shared/notifications/notificationModules';
+import { useNotificationNavigation } from '@/shared/notifications/useNotificationNavigation';
 import { toast } from '@/shared/utils/toast';
 import NotificationRow from './NotificationRow';
 import '../styles/doctor-ui.css';
@@ -42,7 +44,7 @@ const PRIORITY_FILTER_VALUES = new Set(
 /** Doctor Phase 2 by Atharva — debounce live search so typing does not spam the API */
 const SEARCH_DEBOUNCE_MS = 300;
 
-export default function NotificationsSection({ onLabReportClick }) {
+export default function NotificationsSection() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -80,6 +82,7 @@ export default function NotificationsSection({ onLabReportClick }) {
   }, [page, debouncedSearch, readFilter, notificationType, startDate, endDate]);
 
   const { data, isLoading, isError, error, refetch } = useDoctorNotificationsListQuery(filters);
+  const openNotification = useNotificationNavigation(NOTIFICATION_MODULE.DOCTOR);
   const markOne = useMarkDoctorNotificationReadMutation();
   const markAll = useMarkAllDoctorNotificationsReadMutation();
 
@@ -113,22 +116,11 @@ export default function NotificationsSection({ onLabReportClick }) {
     }
   };
 
-  const handleNotificationClick = async (notification) => {
-    if (isDoctorNotificationUnread(notification)) {
-      try {
-        await markOne.mutateAsync(notification.id);
-      } catch {
-        // The mutation displays the error toast.
-        return;
-      }
-    }
-    if (
-      notification.notification_type === 'LAB_REPORT_READY'
-      && notification.reference_type === 'LAB_ORDER'
-      && notification.reference_id != null
-    ) {
-      onLabReportClick?.(notification);
-    }
+  const handleNotificationClick = (notification) => {
+    void openNotification(notification, {
+      markRead: (id) => markOne.mutateAsync(id),
+      isUnread: isDoctorNotificationUnread,
+    });
   };
 
   // Doctor Phase 2 by Atharva — Clear filters for search + type + date range
@@ -275,14 +267,7 @@ export default function NotificationsSection({ onLabReportClick }) {
               <NotificationRow
                 key={n.id}
                 notification={n}
-                onClick={
-                  isDoctorNotificationUnread(n)
-                    || (n.notification_type === 'LAB_REPORT_READY'
-                      && n.reference_type === 'LAB_ORDER'
-                      && n.reference_id != null)
-                    ? () => handleNotificationClick(n)
-                    : undefined
-                }
+                onClick={() => handleNotificationClick(n)}
               />
             ))
           )}

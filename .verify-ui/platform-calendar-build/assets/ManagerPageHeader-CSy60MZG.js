@@ -1,0 +1,1 @@
+import{o as e}from"./vendor-query-O0VAyrto.js";import{n as t}from"./Table-sqQRfHFV.js";import"./ui-BjAMVULP.js";var n=e();function r({eyebrow:e,title:r,subtitle:i,actions:a}){return(0,n.jsx)(t,{eyebrow:e,title:r,subtitle:i,actions:a})}export{r as t};

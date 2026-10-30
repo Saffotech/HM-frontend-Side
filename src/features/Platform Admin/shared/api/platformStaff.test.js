@@ -1,4 +1,3 @@
-/* eslint-disable import/no-unresolved -- Node's test runner resolves node: imports. */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
@@ -237,10 +236,10 @@ describe("platform staff request", () => {
 
 describe("platform staff page wiring", () => {
   it("keeps registration on the platform admin route and does not persist the password", () => {
-    const page = readSrc("../../panels/superAdmin/pages/account/PlatformStaff.jsx");
+    const page = readSrc("../../panels/platformAdmin/pages/account/PlatformStaff.jsx");
     const api = readSrc("./platformStaffApi.js");
-    const routes = readSrc("../../panels/superAdmin/SuperAdminRoutes.jsx");
-    const sidebar = readSrc("../../panels/superAdmin/layout/Sidebar.jsx");
+    const routes = readSrc("../../panels/platformAdmin/PlatformAdminRoutes.jsx");
+    const sidebar = readSrc("../../panels/platformAdmin/layout/Sidebar.jsx");
     const crm = readSrc("../../panels/crm/CrmRoutes.jsx");
     const accountant = readSrc("../../panels/accountant/AccountantRoutes.jsx");
 

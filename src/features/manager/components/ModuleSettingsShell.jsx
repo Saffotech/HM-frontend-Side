@@ -1,13 +1,13 @@
 import { Construction } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
-import AdminSettingsNav from '@/features/manager/components/ManagerSettingsNav';
-import AdminEmptyState from '@/features/manager/components/ManagerEmptyState';
-import AdminOpdSettingsPanel from '@/features/manager/components/ManagerOpdSettingsPanel';
-import AdminNurseManagementPanel from '@/features/manager/nurse/components/ManagerNurseManagementPanel';
-import AdminReceptionistManagementPanel from '@/features/manager/receptionist/components/ManagerReceptionistManagementPanel';
-import AdminDoctorManagementPanel from '@/features/manager/doctor/components/ManagerDoctorManagementPanel';
-import AdminPharmacyManagementPanel from '@/features/manager/pharmacy/components/ManagerPharmacyManagementPanel';
-import AdminLabManagementPanel from '@/features/manager/lab/components/ManagerLabManagementPanel';
+import ManagerSettingsNav from '@/features/manager/components/ManagerSettingsNav';
+import ManagerEmptyState from '@/features/manager/components/ManagerEmptyState';
+import ManagerOpdSettingsPanel from '@/features/manager/components/ManagerOpdSettingsPanel';
+import ManagerNurseManagementPanel from '@/features/manager/nurse/components/ManagerNurseManagementPanel';
+import ManagerReceptionistManagementPanel from '@/features/manager/receptionist/components/ManagerReceptionistManagementPanel';
+import ManagerDoctorManagementPanel from '@/features/manager/doctor/components/ManagerDoctorManagementPanel';
+import ManagerPharmacyManagementPanel from '@/features/manager/pharmacy/components/ManagerPharmacyManagementPanel';
+import ManagerLabManagementPanel from '@/features/manager/lab/components/ManagerLabManagementPanel';
 import '@/features/manager/styles/nurseWorkforce.css';
 
 /**
@@ -51,26 +51,26 @@ export default function ModuleSettingsShell({
 
   return (
     <div className="admin-page nwf-page">
-      <AdminSettingsNav links={navLinks} />
+      <ManagerSettingsNav links={navLinks} />
 
       {showOpd ? (
-        <AdminOpdSettingsPanel manageAdminEditLocks={manageAdminEditLocks} />
+        <ManagerOpdSettingsPanel manageAdminEditLocks={manageAdminEditLocks} />
       ) : showNurse ? (
-        <AdminNurseManagementPanel manageAdminEditLocks={manageAdminEditLocks} />
+        <ManagerNurseManagementPanel manageAdminEditLocks={manageAdminEditLocks} />
       ) : showReceptionist ? (
-        <AdminReceptionistManagementPanel manageAdminEditLocks={manageAdminEditLocks} />
+        <ManagerReceptionistManagementPanel manageAdminEditLocks={manageAdminEditLocks} />
       ) : showDoctor ? (
-        <AdminDoctorManagementPanel manageAdminEditLocks={manageAdminEditLocks} />
+        <ManagerDoctorManagementPanel manageAdminEditLocks={manageAdminEditLocks} />
       ) : showPharmacy ? (
-        <AdminPharmacyManagementPanel manageAdminEditLocks={manageAdminEditLocks} />
+        <ManagerPharmacyManagementPanel manageAdminEditLocks={manageAdminEditLocks} />
       ) : showLab ? (
-        <AdminLabManagementPanel manageAdminEditLocks={manageAdminEditLocks} />
+        <ManagerLabManagementPanel manageAdminEditLocks={manageAdminEditLocks} />
       ) : (
         <section className="nwf-panel">
           <div className="nwf-panel__header">
             <h2 className="admin-card__title">{moduleLabel} settings</h2>
           </div>
-          <AdminEmptyState
+          <ManagerEmptyState
             icon={<Construction size={28} strokeWidth={1.75} />}
             title="Under development"
             description={`${moduleLabel} business controls are coming soon.`}

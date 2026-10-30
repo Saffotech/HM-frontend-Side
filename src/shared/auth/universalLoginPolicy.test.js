@@ -1,4 +1,3 @@
-/* eslint-disable import/no-unresolved -- Node's test runner resolves node: imports. */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
@@ -348,7 +347,7 @@ describe('login wiring', () => {
     const loginPage = readFileSync(new URL('../../pages/landing/LoginPage.jsx', import.meta.url), 'utf8');
     const app = readFileSync(new URL('../../App.jsx', import.meta.url), 'utf8');
     const auth = readFileSync(new URL('../../components/security/AuthContext.jsx', import.meta.url), 'utf8');
-    const platformRoutes = readFileSync(new URL('../../features/Platform Admin/panels/superAdmin/SuperAdminRoutes.jsx', import.meta.url), 'utf8');
+    const platformRoutes = readFileSync(new URL('../../features/Platform Admin/panels/platformAdmin/PlatformAdminRoutes.jsx', import.meta.url), 'utf8');
     const crmRoutes = readFileSync(new URL('../../features/Platform Admin/panels/crm/CrmRoutes.jsx', import.meta.url), 'utf8');
     const accountRoutes = readFileSync(new URL('../../features/Platform Admin/panels/accountant/AccountantRoutes.jsx', import.meta.url), 'utf8');
 

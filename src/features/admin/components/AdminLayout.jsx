@@ -46,17 +46,20 @@ function isNavLinkActive(pathname, link, panel) {
   return pathname === link.href || pathname.startsWith(`${link.href}/`);
 }
 
-export default function SuperAdminLayout({ children, compact = false }) {
+/* Legacy identifier preserved: SuperAdminLayout. Active name: AdminLayout. */
+export default function AdminLayout({ children, compact = false }) {
   const location = useLocation();
   const panel = adminPanelRoutes(location.pathname);
   const onProfilePage = location.pathname === panel.profile;
 
+  // Legacy layout class: layout--super-admin. Active: layout--admin.
+  // Legacy shell class: sa-shell. Active: admin-panel-shell.
   return (
     <RoleLayout
       navLinks={navLinksFor(panel)}
       resolveTitle={resolveTitle}
       homeRoute={panel.dashboard}
-      layoutClassName="layout--super-admin"
+      layoutClassName="layout--admin"
       defaultTitle={HEADER_TITLE}
       compact={compact}
       isNavLinkActive={(pathname, link) => isNavLinkActive(pathname, link, panel)}
@@ -64,7 +67,7 @@ export default function SuperAdminLayout({ children, compact = false }) {
       profileHref={panel.profile}
       logoutMenuOnly={onProfilePage}
     >
-      <div className="sa-shell">{children}</div>
+      <div className="admin-panel-shell">{children}</div>
     </RoleLayout>
   );
 }

@@ -1,4 +1,5 @@
-export default function AdminBarChart({
+/* Legacy identifier preserved: AdminBarChart. Active name: ManagerBarChart. */
+export default function ManagerBarChart({
   items,
   valueKey,
   labelKey,

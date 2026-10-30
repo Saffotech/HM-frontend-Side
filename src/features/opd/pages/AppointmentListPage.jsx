@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
 import {
   useAppointmentsQuery,
@@ -65,7 +65,13 @@ const SERVER_LIST_FILTER = {
 
 export default function AppointmentListPage() {
   const navigate = useNavigate();
-  const [search, setSearch] = useState('');
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(() => searchParams.get('q') || '');
+
+  useEffect(() => {
+    const next = searchParams.get('q');
+    if (next) setSearch(next);
+  }, [searchParams]);
   const [filterDate, setFilterDate] = useState('');
   const [filterDept, setFilterDept] = useState('All');
   const [filterDoc, setFilterDoc] = useState('All');

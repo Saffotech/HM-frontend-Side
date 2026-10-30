@@ -1,6 +1,7 @@
 import { PageHeader } from '@/components/ui';
 
-export default function AdminPageHeader({ eyebrow, title, subtitle, actions }) {
+/* Legacy identifier preserved: AdminPageHeader. Active name: ManagerPageHeader. */
+export default function ManagerPageHeader({ eyebrow, title, subtitle, actions }) {
   return (
     <PageHeader
       eyebrow={eyebrow}

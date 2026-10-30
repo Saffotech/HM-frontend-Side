@@ -1,4 +1,3 @@
-/* eslint-disable import/no-unresolved -- Node's test runner resolves node: imports. */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
@@ -308,15 +307,15 @@ describe("CRM account", () => {
 
 describe("platform admin screens use the platform routes", () => {
   it("does not send the hospital admin profile path for this login", () => {
-    const profilePage = readSrc("../../panels/superAdmin/pages/account/MyProfile.jsx");
+    const profilePage = readSrc("../../panels/platformAdmin/pages/account/MyProfile.jsx");
     const profileApi = readSrc("./platformAdminProfile.js");
-    const staffPage = readSrc("../../panels/superAdmin/pages/account/PlatformStaff.jsx");
-    const detail = readSrc("../../panels/superAdmin/pages/tenants/TenantDetails.jsx");
+    const staffPage = readSrc("../../panels/platformAdmin/pages/account/PlatformStaff.jsx");
+    const detail = readSrc("../../panels/platformAdmin/pages/tenants/TenantDetails.jsx");
     const plans = readSrc("./platformPlans.js");
     const revenue = readSrc("./platformRevenue.js");
     const analytics = readSrc("./platformCrmAnalytics.js");
     const performance = readSrc("./platformCrmPerformance.js");
-    const leads = readSrc("../../panels/superAdmin/pages/tenants/crmPerformance/useCrmPerformance.js");
+    const leads = readSrc("../../panels/platformAdmin/pages/tenants/crmPerformance/useCrmPerformance.js");
 
     assert.match(profilePage, /getPlatformAdminProfile/);
     assert.match(profilePage, /changePlatformAdminPassword/);

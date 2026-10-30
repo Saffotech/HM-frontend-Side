@@ -11,7 +11,8 @@ const TONE_CLASS = {
 };
 
 /** Admin KPI card — shared StatCard visuals; icon is a React node. */
-export default function AdminStatCard({
+/* Legacy identifier preserved: AdminStatCard. Active name: ManagerStatCard. */
+export default function ManagerStatCard({
   title,
   value,
   subtitle,

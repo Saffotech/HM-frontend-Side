@@ -14,6 +14,8 @@ import {
 } from '@/features/pharmacy/hooks/usePharmacistNotificationsQuery';
 import { usePharmacyPermissionSet } from '@/features/pharmacy/hooks/usePharmacyPermission';
 import { Button, EmptyState } from '@/shared/components/common';
+import { NOTIFICATION_MODULE } from '@/shared/notifications/notificationModules';
+import { useNotificationNavigation } from '@/shared/notifications/useNotificationNavigation';
 import { toast } from '@/shared/utils/toast';
 import PharmacyNotificationRow from './PharmacyNotificationRow';
 import './PharmacyNotificationsBell.css';
@@ -37,7 +39,7 @@ const PRIORITY_FILTER_VALUES = new Set(
 /** Nurse Phase 2 by Atharva — debounce live search so typing does not spam the API */
 const SEARCH_DEBOUNCE_MS = 300;
 
-export default function PharmacyNotificationsSection({ onDeepLink }) {
+export default function PharmacyNotificationsSection() {
   const { canViewNotifications, canUpdateNotifications } = usePharmacyPermissionSet();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -79,6 +81,7 @@ export default function PharmacyNotificationsSection({ onDeepLink }) {
     filters,
     { enabled: canViewNotifications },
   );
+  const openNotification = useNotificationNavigation(NOTIFICATION_MODULE.PHARMACY);
   const markOne = useMarkPharmacistNotificationReadMutation();
   const markAll = useMarkAllPharmacistNotificationsReadMutation();
 
@@ -132,19 +135,11 @@ export default function PharmacyNotificationsSection({ onDeepLink }) {
     setPage(1);
   };
 
-  const handleRowClick = async (n) => {
-    if (isPharmacistNotificationUnread(n)) {
-      if (!canUpdateNotifications) {
-        toast.error('You do not have permission to update notifications');
-        return;
-      }
-      try {
-        await markOne.mutateAsync(n.id);
-      } catch {
-        return;
-      }
-    }
-    onDeepLink?.(n);
+  const handleRowClick = (n) => {
+    void openNotification(n, {
+      markRead: canUpdateNotifications ? (id) => markOne.mutateAsync(id) : undefined,
+      isUnread: isPharmacistNotificationUnread,
+    });
   };
 
   if (!canViewNotifications) {

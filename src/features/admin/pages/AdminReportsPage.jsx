@@ -12,7 +12,7 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
-import SuperAdminLayout from '@/features/admin/components/AdminLayout';
+import AdminLayout from '@/features/admin/components/AdminLayout';
 import {
   defaultReportDateRange,
   formatReportDate,
@@ -103,7 +103,7 @@ function PaymentStatusBadge({ status }) {
   const normalized = String(status || '').toLowerCase();
   const tone = normalized === 'paid' ? 'paid' : normalized === 'pending' ? 'pending' : 'neutral';
   return (
-    <span className={`sa-reports-status sa-reports-status--${tone}`}>
+    <span className={`admin-panel-reports-status admin-panel-reports-status--${tone}`}>
       {status || '—'}
     </span>
   );
@@ -112,7 +112,7 @@ function PaymentStatusBadge({ status }) {
 function SourceBadge({ source }) {
   const normalized = String(source || 'opd').toLowerCase() === 'ipd' ? 'ipd' : 'opd';
   return (
-    <span className={`sa-reports-status sa-reports-status--${normalized}`}>
+    <span className={`admin-panel-reports-status admin-panel-reports-status--${normalized}`}>
       {normalized.toUpperCase()}
     </span>
   );
@@ -130,14 +130,14 @@ function ledgerRowSource(row) {
 
 function KpiCard({ label, value, hint, icon: Icon, tone = 'default' }) {
   return (
-    <article className={`sa-reports-kpi-card sa-reports-kpi-card--${tone}`}>
-      <div className="sa-reports-kpi-card__icon" aria-hidden>
+    <article className={`admin-panel-reports-kpi-card admin-panel-reports-kpi-card--${tone}`}>
+      <div className="admin-panel-reports-kpi-card__icon" aria-hidden>
         <Icon size={20} strokeWidth={2.1} />
       </div>
-      <div className="sa-reports-kpi-card__body">
-        <span className="sa-reports-kpi-card__label">{label}</span>
-        <strong className="sa-reports-kpi-card__value">{value}</strong>
-        {hint ? <span className="sa-reports-kpi-card__hint">{hint}</span> : null}
+      <div className="admin-panel-reports-kpi-card__body">
+        <span className="admin-panel-reports-kpi-card__label">{label}</span>
+        <strong className="admin-panel-reports-kpi-card__value">{value}</strong>
+        {hint ? <span className="admin-panel-reports-kpi-card__hint">{hint}</span> : null}
       </div>
     </article>
   );
@@ -145,17 +145,18 @@ function KpiCard({ label, value, hint, icon: Icon, tone = 'default' }) {
 
 function InsightPanel({ title, subtitle, children, className = '' }) {
   return (
-    <section className={`sa-reports-panel ${className}`.trim()}>
-      <header className="sa-reports-panel__head">
-        <h2 className="sa-reports-panel__title">{title}</h2>
-        {subtitle ? <p className="sa-reports-panel__sub">{subtitle}</p> : null}
+    <section className={`admin-panel-reports-panel ${className}`.trim()}>
+      <header className="admin-panel-reports-panel__head">
+        <h2 className="admin-panel-reports-panel__title">{title}</h2>
+        {subtitle ? <p className="admin-panel-reports-panel__sub">{subtitle}</p> : null}
       </header>
-      <div className="sa-reports-panel__body">{children}</div>
+      <div className="admin-panel-reports-panel__body">{children}</div>
     </section>
   );
 }
 
-export default function SuperAdminReportsPage() {
+/* Legacy identifier preserved: SuperAdminReportsPage. Active name: AdminReportsPage. */
+export default function AdminReportsPage() {
   const [range, setRange] = useState(defaultReportDateRange);
   const [source, setSource] = useState('all');
   const [departmentId, setDepartmentId] = useState('all');
@@ -265,47 +266,47 @@ export default function SuperAdminReportsPage() {
   };
 
   return (
-    <SuperAdminLayout pageTitle="Reports">
-      <div className="admin-page sa-reports-page">
-        <header className="sa-reports-hero">
-          <div className="sa-reports-hero__copy">
-            <h1 className="sa-reports-hero__title">Reports</h1>
-            <p className="sa-reports-hero__period">
+    <AdminLayout pageTitle="Reports">
+      <div className="admin-page admin-panel-reports-page">
+        <header className="admin-panel-reports-hero">
+          <div className="admin-panel-reports-hero__copy">
+            <h1 className="admin-panel-reports-hero__title">Reports</h1>
+            <p className="admin-panel-reports-hero__period">
               <CalendarRange size={15} aria-hidden />
               {formatPeriodLabel(range.from_date, range.to_date)}
             </p>
           </div>
         </header>
 
-        <div className="sa-reports-toolbar">
-          <div className="sa-reports-toolbar__row">
+        <div className="admin-panel-reports-toolbar">
+          <div className="admin-panel-reports-toolbar__row">
             <DateInput
               label="From"
               value={range.from_date}
               onChange={(e) => setRange((prev) => ({ ...prev, from_date: e.target.value }))}
-              className="sa-reports-toolbar__date"
+              className="admin-panel-reports-toolbar__date"
             />
             <DateInput
               label="To"
               value={range.to_date}
               onChange={(e) => setRange((prev) => ({ ...prev, to_date: e.target.value }))}
-              className="sa-reports-toolbar__date"
+              className="admin-panel-reports-toolbar__date"
             />
             <Select
               label="Source"
               value={source}
               onChange={setSource}
               options={SOURCE_OPTIONS}
-              className="sa-reports-toolbar__source"
+              className="admin-panel-reports-toolbar__source"
             />
             <Select
               label="Department"
               value={departmentId}
               onChange={setDepartmentId}
               options={departmentOptions}
-              className="sa-reports-toolbar__select"
+              className="admin-panel-reports-toolbar__select"
             />
-            <button type="button" className="sa-reports-toolbar__reset" onClick={resetFilters}>
+            <button type="button" className="admin-panel-reports-toolbar__reset" onClick={resetFilters}>
               <RotateCcw size={15} aria-hidden />
               Reset
             </button>
@@ -313,7 +314,7 @@ export default function SuperAdminReportsPage() {
         </div>
 
         <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
-          <section className="sa-reports-kpi-grid" aria-label="Key metrics">
+          <section className="admin-panel-reports-kpi-grid" aria-label="Key metrics">
             <KpiCard
               tone="revenue"
               icon={IndianRupee}
@@ -346,8 +347,8 @@ export default function SuperAdminReportsPage() {
             />
           </section>
 
-          <section className="sa-reports-staff-strip" aria-label="Staff overview">
-            <div className="sa-reports-staff-strip__item">
+          <section className="admin-panel-reports-staff-strip" aria-label="Staff overview">
+            <div className="admin-panel-reports-staff-strip__item">
               <Users size={16} aria-hidden />
               <span>
                 <strong>{dashboard?.total_staff ?? '—'}</strong>
@@ -355,7 +356,7 @@ export default function SuperAdminReportsPage() {
                 total staff
               </span>
             </div>
-            <div className="sa-reports-staff-strip__item">
+            <div className="admin-panel-reports-staff-strip__item">
               <UserCheck size={16} aria-hidden />
               <span>
                 <strong>{dashboard?.active_staff ?? '—'}</strong>
@@ -363,7 +364,7 @@ export default function SuperAdminReportsPage() {
                 active
               </span>
             </div>
-            <div className="sa-reports-staff-strip__item">
+            <div className="admin-panel-reports-staff-strip__item">
               <Stethoscope size={16} aria-hidden />
               <span>
                 <strong>{dashboard?.total_departments ?? '—'}</strong>
@@ -371,7 +372,7 @@ export default function SuperAdminReportsPage() {
                 departments
               </span>
             </div>
-            <div className="sa-reports-staff-strip__item">
+            <div className="admin-panel-reports-staff-strip__item">
               <Banknote size={16} aria-hidden />
               <span>
                 <strong>{visitsTotal.toLocaleString()}</strong>
@@ -381,28 +382,28 @@ export default function SuperAdminReportsPage() {
             </div>
           </section>
 
-          <div className="sa-reports-insights">
+          <div className="admin-panel-reports-insights">
             <InsightPanel
               title="Staff by role"
               subtitle="Headcount across hospital roles"
-              className="sa-reports-insights__staff"
+              className="admin-panel-reports-insights__staff"
             >
               {!staffByRole.length ? (
-                <p className="sa-reports-empty">No staff data available.</p>
+                <p className="admin-panel-reports-empty">No staff data available.</p>
               ) : (
-                <ul className="sa-reports-role-bars">
+                <ul className="admin-panel-reports-role-bars">
                   {staffByRole.map((row) => {
                     const max = Math.max(1, ...staffByRole.map((item) => item.count));
                     const pct = Math.max(8, (row.count / max) * 100);
                     return (
-                      <li key={row.key} className="sa-reports-role-bar">
-                        <div className="sa-reports-role-bar__meta">
-                          <span className="sa-reports-role-bar__label">{row.role}</span>
-                          <span className="sa-reports-role-bar__value">{row.count}</span>
+                      <li key={row.key} className="admin-panel-reports-role-bar">
+                        <div className="admin-panel-reports-role-bar__meta">
+                          <span className="admin-panel-reports-role-bar__label">{row.role}</span>
+                          <span className="admin-panel-reports-role-bar__value">{row.count}</span>
                         </div>
-                        <div className="sa-reports-role-bar__track">
+                        <div className="admin-panel-reports-role-bar__track">
                           <span
-                            className="sa-reports-role-bar__fill"
+                            className="admin-panel-reports-role-bar__fill"
                             style={{ width: `${pct}%`, background: row.tone }}
                           />
                         </div>
@@ -416,26 +417,26 @@ export default function SuperAdminReportsPage() {
             <InsightPanel
               title={copy.deptTitle}
               subtitle="Volume in selected period"
-              className="sa-reports-insights__departments"
+              className="admin-panel-reports-insights__departments"
             >
               {!visitsByDepartment.length ? (
-                <p className="sa-reports-empty">{copy.deptEmpty}</p>
+                <p className="admin-panel-reports-empty">{copy.deptEmpty}</p>
               ) : (
-                <ul className="sa-reports-dept-list">
+                <ul className="admin-panel-reports-dept-list">
                   {visitsByDepartment.slice(0, 8).map((row) => {
                     const max = Math.max(1, ...visitsByDepartment.map((item) => item.visit_count));
                     const pct = Math.max(6, (row.visit_count / max) * 100);
                     return (
-                      <li key={row.department_id} className="sa-reports-dept-item">
-                        <div className="sa-reports-dept-item__head">
-                          <span className="sa-reports-dept-item__name">
+                      <li key={row.department_id} className="admin-panel-reports-dept-item">
+                        <div className="admin-panel-reports-dept-item__head">
+                          <span className="admin-panel-reports-dept-item__name">
                             <Building2 size={14} aria-hidden />
                             {row.department_name}
                           </span>
-                          <span className="sa-reports-dept-item__count">{row.visit_count}</span>
+                          <span className="admin-panel-reports-dept-item__count">{row.visit_count}</span>
                         </div>
-                        <div className="sa-reports-dept-item__track">
-                          <span className="sa-reports-dept-item__fill" style={{ width: `${pct}%` }} />
+                        <div className="admin-panel-reports-dept-item__track">
+                          <span className="admin-panel-reports-dept-item__fill" style={{ width: `${pct}%` }} />
                         </div>
                       </li>
                     );
@@ -447,25 +448,25 @@ export default function SuperAdminReportsPage() {
             <InsightPanel
               title="Revenue by payment mode"
               subtitle="Collections breakdown"
-              className="sa-reports-insights__payments"
+              className="admin-panel-reports-insights__payments"
             >
               {!revenueByMode.length ? (
-                <p className="sa-reports-empty">No payment data in this period.</p>
+                <p className="admin-panel-reports-empty">No payment data in this period.</p>
               ) : (
-                <ul className="sa-reports-payment-list">
+                <ul className="admin-panel-reports-payment-list">
                   {revenueByMode.map((row) => (
-                    <li key={row.payment_mode} className="sa-reports-payment-item">
+                    <li key={row.payment_mode} className="admin-panel-reports-payment-item">
                       <div>
-                        <span className="sa-reports-payment-item__mode">
+                        <span className="admin-panel-reports-payment-item__mode">
                           {formatPaymentMode(row.payment_mode)}
                         </span>
-                        <span className="sa-reports-payment-item__count">
+                        <span className="admin-panel-reports-payment-item__count">
                           {row.transaction_count}
                           {' '}
                           transactions
                         </span>
                       </div>
-                      <strong className="sa-reports-payment-item__amount">
+                      <strong className="admin-panel-reports-payment-item__amount">
                         {formatCurrency(row.total_amount)}
                       </strong>
                     </li>
@@ -478,14 +479,14 @@ export default function SuperAdminReportsPage() {
           <InsightPanel
             title={copy.ledgerTitle}
             subtitle={`${visitsTotal.toLocaleString()} ${copy.ledgerItem} · filtered results`}
-            className="sa-reports-visits"
+            className="admin-panel-reports-visits"
           >
             {!visits.length ? (
-              <p className="sa-reports-empty">{copy.ledgerEmpty}</p>
+              <p className="admin-panel-reports-empty">{copy.ledgerEmpty}</p>
             ) : (
               <>
-                <div className="sa-reports-table-wrap">
-                  <table className="sa-reports-table admin-table--stack">
+                <div className="admin-panel-reports-table-wrap">
+                  <table className="admin-panel-reports-table admin-table--stack">
                     <thead>
                       <tr>
                         <th>Date</th>
@@ -493,27 +494,27 @@ export default function SuperAdminReportsPage() {
                         <th>Department</th>
                         <th>Bill</th>
                         <th>Token</th>
-                        <th className="sa-reports-table__num">Amount</th>
+                        <th className="admin-panel-reports-table__num">Amount</th>
                         <th>Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {visits.map((row, index) => (
                         <tr key={ledgerRowKey(row, index)}>
-                          <td className="sa-reports-table__date" data-label="Date">
+                          <td className="admin-panel-reports-table__date" data-label="Date">
                             <span>{row.visit_date ? formatReportDate(row.visit_date) : '—'}</span>
                           </td>
                           <td data-label="Source">
                             <SourceBadge source={ledgerRowSource(row)} />
                           </td>
                           <td data-label="Department"><span>{row.department_name || '—'}</span></td>
-                          <td className="sa-reports-table__mono" data-label="Bill">
+                          <td className="admin-panel-reports-table__mono" data-label="Bill">
                             <span>{row.bill_number || '—'}</span>
                           </td>
-                          <td className="sa-reports-table__mono" data-label="Token">
+                          <td className="admin-panel-reports-table__mono" data-label="Token">
                             <span>{row.token_number || row.admission_no || '—'}</span>
                           </td>
-                          <td className="sa-reports-table__num sa-reports-table__amount" data-label="Amount">
+                          <td className="admin-panel-reports-table__num admin-panel-reports-table__amount" data-label="Amount">
                             <span>{formatCurrency(row.grand_total)}</span>
                           </td>
                           <td data-label="Status">
@@ -537,6 +538,6 @@ export default function SuperAdminReportsPage() {
           </InsightPanel>
         </QueryFeedback>
       </div>
-    </SuperAdminLayout>
+    </AdminLayout>
   );
 }

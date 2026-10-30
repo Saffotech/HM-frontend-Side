@@ -1,6 +1,7 @@
 import { EmptyState } from '@/components/ui';
 
-export default function AdminEmptyState({ icon, title, description }) {
+/* Legacy identifier preserved: AdminEmptyState. Active name: ManagerEmptyState. */
+export default function ManagerEmptyState({ icon, title, description }) {
   return (
     <EmptyState
       iconNode={icon}

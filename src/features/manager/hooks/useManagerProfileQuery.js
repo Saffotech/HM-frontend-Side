@@ -5,7 +5,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   deleteAdminProfileImage,
-  getAdminProfile,
+  getManagerProfile,
   updateAdminProfile,
   uploadAdminProfileImage,
 } from '@/features/manager/api/profile';
@@ -15,13 +15,14 @@ import { mutationOnError } from '@/shared/utils/mutationErrors';
 import { syncAuthProfileAvatar } from '@/shared/utils/syncAuthProfileAvatar';
 
 async function fetchAdminProfile(token) {
-  const profile = await getAdminProfile(token);
+  const profile = await getManagerProfile(token);
   const data = { profile };
   syncAuthProfileAvatar(data);
   return data;
 }
 
-export function useAdminProfileQuery() {
+/* Legacy identifier preserved: useAdminProfileQuery. Active name: useManagerProfileQuery. */
+export function useManagerProfileQuery() {
   const token = useQueryToken();
   return useQuery({
     queryKey: queryKeys.admin.profile,

@@ -15,6 +15,8 @@ import {
 } from '@/features/lab/hooks/useLabTechnicianNotificationsQuery';
 import { useLabPermissionSet } from '@/features/lab/hooks/useLabPermission';
 import { Button, EmptyState } from '@/shared/components/common';
+import { NOTIFICATION_MODULE } from '@/shared/notifications/notificationModules';
+import { useNotificationNavigation } from '@/shared/notifications/useNotificationNavigation';
 import { toast } from '@/shared/utils/toast';
 import {
   isLabDepartmentUnassignedError,
@@ -42,7 +44,7 @@ const PRIORITY_FILTER_VALUES = new Set(
 /** Nurse Phase 2 by Atharva — debounce live search so typing does not spam the API */
 const SEARCH_DEBOUNCE_MS = 300;
 
-export default function LabNotificationsSection({ onDeepLink }) {
+export default function LabNotificationsSection() {
   const { canViewNotifications, canUpdateNotifications } = useLabPermissionSet();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -84,6 +86,7 @@ export default function LabNotificationsSection({ onDeepLink }) {
     filters,
     { enabled: canViewNotifications },
   );
+  const openNotification = useNotificationNavigation(NOTIFICATION_MODULE.LAB);
   const markOne = useMarkLabTechnicianNotificationReadMutation();
   const markAll = useMarkAllLabTechnicianNotificationsReadMutation();
 
@@ -137,19 +140,11 @@ export default function LabNotificationsSection({ onDeepLink }) {
     setPage(1);
   };
 
-  const handleRowClick = async (n) => {
-    if (isLabTechnicianNotificationUnread(n)) {
-      if (!canUpdateNotifications) {
-        toast.error('You do not have permission to update notifications');
-        return;
-      }
-      try {
-        await markOne.mutateAsync(n.id);
-      } catch {
-        return;
-      }
-    }
-    onDeepLink?.(n);
+  const handleRowClick = (n) => {
+    void openNotification(n, {
+      markRead: canUpdateNotifications ? (id) => markOne.mutateAsync(id) : undefined,
+      isUnread: isLabTechnicianNotificationUnread,
+    });
   };
 
   if (!canViewNotifications) {

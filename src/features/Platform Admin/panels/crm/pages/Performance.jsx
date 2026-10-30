@@ -9,6 +9,7 @@ import { formatRange, resolvePeriod } from "../../../shared/utils/periods";
 import { plural } from "../utils/crmLeads";
 import { METRIC_DEFINITIONS, buildMyPerformance } from "../utils/myPerformance";
 import { useCrm } from "../workspace/workspace-context";
+import { DateInput } from "@/shared/components/common";
 import "./Performance.css";
 
 const PRESETS = [
@@ -68,8 +69,8 @@ export default function Performance() {
         </div>
         {preset === "custom" && (
           <div className="crm-perf-custom">
-            <label className="crm-select"><span>From</span><input type="date" value={custom.start} max={today} onChange={(event) => update({ from: event.target.value })} /></label>
-            <label className="crm-select"><span>To</span><input type="date" value={custom.end} max={today} onChange={(event) => update({ to: event.target.value })} /></label>
+            <DateInput className="crm-perf-date" label="From" value={custom.start} max={today} onChange={(event) => update({ from: event.target.value })} />
+            <DateInput className="crm-perf-date" label="To" value={custom.end} max={today} onChange={(event) => update({ to: event.target.value })} />
           </div>
         )}
         <p className="crm-perf-range"><strong>{formatRange(period)}</strong><span>Compared {period.compareLabel}</span></p>

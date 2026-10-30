@@ -1,7 +1,8 @@
 import { Check } from 'lucide-react';
 import { groupPermissions } from '@/features/admin/utils/permissionPresentation';
 
-export default function SuperAdminPermissionPicker({
+/* Legacy identifier preserved: SuperAdminPermissionPicker. Active name: AdminPermissionPicker. */
+export default function AdminPermissionPicker({
   catalog = [],
   selectedIds = [],
   onToggle,
@@ -10,7 +11,7 @@ export default function SuperAdminPermissionPicker({
   const groups = groupPermissions(catalog);
 
   return (
-    <div className="sa-perm-list">
+    <div className="admin-panel-perm-list">
       {groups.map((group) => {
         const Icon = group.icon;
         const groupIds = group.permissions.map((p) => p.id);
@@ -20,42 +21,42 @@ export default function SuperAdminPermissionPicker({
         return (
           <section
             key={group.id}
-            className={`sa-perm-section sa-perm-section--${group.id}`}
+            className={`admin-panel-perm-section admin-panel-perm-section--${group.id}`}
           >
-            <div className="sa-perm-section__head">
-              <div className="sa-perm-section__title-wrap">
-                <span className="sa-perm-section__icon" aria-hidden>
+            <div className="admin-panel-perm-section__head">
+              <div className="admin-panel-perm-section__title-wrap">
+                <span className="admin-panel-perm-section__icon" aria-hidden>
                   <Icon size={15} />
                 </span>
-                <h3 className="sa-perm-section__title">{group.label}</h3>
+                <h3 className="admin-panel-perm-section__title">{group.label}</h3>
               </div>
               <button
                 type="button"
-                className="sa-perm-section__toggle"
+                className="admin-panel-perm-section__toggle"
                 onClick={() => onToggleGroup(groupIds, !allSelected)}
               >
                 {allSelected ? 'Deselect all' : 'Select all'}
               </button>
             </div>
 
-            <ul className="sa-perm-section__rows">
+            <ul className="admin-panel-perm-section__rows">
               {group.permissions.map((perm) => {
                 const checked = selectedIds.includes(perm.id);
                 return (
                   <li key={perm.id}>
-                    <label className={`sa-perm-row${checked ? ' sa-perm-row--on' : ''}`}>
+                    <label className={`admin-panel-perm-row${checked ? ' admin-panel-perm-row--on' : ''}`}>
                       <input
                         type="checkbox"
-                        className="sa-perm-row__input"
+                        className="admin-panel-perm-row__input"
                         checked={checked}
                         onChange={() => onToggle(perm.id)}
                       />
-                      <span className="sa-perm-row__check" aria-hidden>
+                      <span className="admin-panel-perm-row__check" aria-hidden>
                         {checked ? <Check size={13} strokeWidth={3} /> : null}
                       </span>
-                      <span className="sa-perm-row__text">
-                        <span className="sa-perm-row__label">{perm.label}</span>
-                        <span className="sa-perm-row__desc">{perm.description}</span>
+                      <span className="admin-panel-perm-row__text">
+                        <span className="admin-panel-perm-row__label">{perm.label}</span>
+                        <span className="admin-panel-perm-row__desc">{perm.description}</span>
                       </span>
                     </label>
                   </li>

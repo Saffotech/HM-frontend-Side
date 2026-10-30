@@ -1,3 +1,14 @@
+/**
+ * Deprecated legacy reference. Not imported and not registered.
+ *
+ * The Platform Admin route tree moved to
+ * panels/platformAdmin/PlatformAdminRoutes.jsx (PlatformAdminRoutes).
+ * The rest of this folder moved with it. This snapshot is only the previous route module.
+ * Remove this file after verification.
+ * Do not import it and do not add it back to PlatformApp.
+ */
+
+/*
 import { lazy } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { UNIVERSAL_LOGIN, platformPath } from "../../shared/paths";
@@ -40,3 +51,4 @@ export default function SuperAdminRoutes() {
     </Routes>
   );
 }
+*/

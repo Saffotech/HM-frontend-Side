@@ -112,6 +112,101 @@ export function recentPaidInvoices(invoices, limit = 5) {
   };
 }
 
+function calendarMonthKey(isoDate) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(isoDate || "").trim());
+  if (!match) return "";
+  const month = Number(match[2]);
+  if (month < 1 || month > 12) return "";
+  return `${match[1]}-${match[2]}`;
+}
+
+function shiftMonthKey(yearMonth, offset) {
+  const match = /^(\d{4})-(\d{2})$/.exec(yearMonth || "");
+  if (!match) return "";
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1 + offset, 1));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+function paidMonthKey(value) {
+  if (paidAtSortValue(value) == null) return "";
+  const match = PAID_AT.exec(String(value ?? "").trim());
+  return match ? `${match[1]}-${match[2]}` : "";
+}
+
+function monthLabel(yearMonth) {
+  const match = /^(\d{4})-(\d{2})$/.exec(yearMonth || "");
+  if (!match) return "";
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, 1));
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+}
+
+function collectionChangePercent(current, previous) {
+  if (!Number.isFinite(current) || !Number.isFinite(previous) || previous === 0) return null;
+  const change = ((current - previous) / previous) * 100;
+  return Number.isFinite(change) ? change : null;
+}
+
+/**
+ * Collected totals for the current calendar month and the previous one.
+ * Month membership comes from paid_at. Invoice date and due date are ignored.
+ * A zero previous month has no percentage, so the result is never Infinity or NaN.
+ */
+export function monthlyCollectionComparison(invoices, today) {
+  const currentKey = calendarMonthKey(today);
+  const previousKey = currentKey ? shiftMonthKey(currentKey, -1) : "";
+  const seen = new Set();
+  let current = 0;
+  let previous = 0;
+  let currentComplete = true;
+  let previousComplete = true;
+  let datedPaid = 0;
+  let undatedPaid = 0;
+
+  (Array.isArray(invoices) ? invoices : []).forEach((invoice) => {
+    if (invoice?.status !== "Paid") return;
+    const id = invoice?.id;
+    if (id != null && id !== "") {
+      const key = String(id);
+      if (seen.has(key)) return;
+      seen.add(key);
+    }
+    const month = paidMonthKey(invoice?.paidAt);
+    if (!month) {
+      undatedPaid += 1;
+      return;
+    }
+    datedPaid += 1;
+    if (month !== currentKey && month !== previousKey) return;
+    const value = paidInvoiceAmount(invoice);
+    if (month === currentKey) {
+      if (value == null) currentComplete = false;
+      else current += value;
+    } else if (value == null) previousComplete = false;
+    else previous += value;
+  });
+
+  let reason = "ok";
+  if (!currentKey || !previousKey) reason = "invalid-period";
+  else if (!currentComplete || !previousComplete) reason = "missing-amount";
+  else if (datedPaid === 0 && undatedPaid > 0) reason = "missing-payment-date";
+
+  const available = reason === "ok";
+  return {
+    available,
+    reason,
+    currentLabel: monthLabel(currentKey),
+    previousLabel: monthLabel(previousKey),
+    current: available ? current : null,
+    previous: available ? previous : null,
+    change: available ? collectionChangePercent(current, previous) : null,
+    undatedCount: undatedPaid,
+  };
+}
+
 export function mapPlatformInvoice(row) {
   if (!row || typeof row !== "object") return null;
   return {
@@ -155,7 +250,7 @@ function quarterKey(iso) {
   return `${String(iso).slice(0, 4)}-Q${Math.ceil(month / 3)}`;
 }
 
-export function matchesInvoiceFilters(invoice, { query = "", status = "", period = "", today = "" } = {}) {
+export function matchesInvoiceFilters(invoice, { query = "", status = "", period = "", today = "", dateFrom = "", dateTo = "" } = {}) {
   const needle = query.trim().toLowerCase();
   if (needle) {
     const hay = [invoice.number, invoice.hospitalName, invoice.hospitalCode, invoice.plan].join(" ").toLowerCase();
@@ -177,5 +272,9 @@ export function matchesInvoiceFilters(invoice, { query = "", status = "", period
   if (SERVER_STATUSES.has(status) && invoice.status !== status) return false;
   if (period === "month" && today && !String(invoice.dueDate).startsWith(today.slice(0, 7))) return false;
   if (period === "quarter" && today && quarterKey(invoice.dueDate) !== quarterKey(today)) return false;
+  if (period === "custom") {
+    const issueDate = String(invoice.invoiceDate || "").slice(0, 10);
+    if (!issueDate || (dateFrom && issueDate < dateFrom) || (dateTo && issueDate > dateTo)) return false;
+  }
   return true;
 }

@@ -8,7 +8,8 @@ function getInitials(name) {
   return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
 }
 
-export default function AdminUserCell({ name, email, subtitle }) {
+/* Legacy identifier preserved: AdminUserCell. Active name: ManagerUserCell. */
+export default function ManagerUserCell({ name, email, subtitle }) {
   const secondary = subtitle ?? email;
 
   return (

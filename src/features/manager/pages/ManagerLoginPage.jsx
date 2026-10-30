@@ -10,7 +10,8 @@ import { trimCredentials, hasCredentials, normalizeEmailInput } from '@/shared/u
 import { toast } from '@/shared/utils/toast';
 import '@/features/manager/styles/manager-login.css';
 
-export default function AdminLoginPage() {
+/* Legacy identifier preserved: AdminLoginPage. Active name: ManagerLoginPage. */
+export default function ManagerLoginPage() {
   const { login, logout, error, isAuthenticated, user, authReady } = useAuthStore();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');

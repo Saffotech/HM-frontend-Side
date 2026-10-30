@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { listAuditLogs } from '@/features/admin/api/admin';
 import { mapAuditResponse } from '@/features/admin/utils/auditMapper';
-import { loadSuperAdminPermissionCatalog } from '@/features/admin/utils/adminPermissionCatalog';
+import { loadAdminPermissionCatalog } from '@/features/admin/utils/adminPermissionCatalog';
 
 const superAdminKeys = {
   all: ['super-admin'],
@@ -9,7 +9,8 @@ const superAdminKeys = {
   permissionCatalog: ['super-admin', 'permission-catalog'],
 };
 
-export function useSuperAdminAuditQuery(filters = {}, options = {}) {
+/* Legacy identifier preserved: useSuperAdminAuditQuery. Active name: useAdminAuditQuery. */
+export function useAdminAuditQuery(filters = {}, options = {}) {
   const { enabled = true } = options;
   return useQuery({
     queryKey: superAdminKeys.audit(filters),
@@ -28,12 +29,13 @@ export function useSuperAdminAuditQuery(filters = {}, options = {}) {
   });
 }
 
-export function useSuperAdminPermissionCatalogQuery(options = {}) {
+/* Legacy identifier preserved: useSuperAdminPermissionCatalogQuery. Active name: useAdminPermissionCatalogQuery. */
+export function useAdminPermissionCatalogQuery(options = {}) {
   const { enabled = true } = options;
   return useQuery({
     queryKey: superAdminKeys.permissionCatalog,
     enabled,
-    queryFn: () => loadSuperAdminPermissionCatalog(),
+    queryFn: () => loadAdminPermissionCatalog(),
     staleTime: 0,
   });
 }

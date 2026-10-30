@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useSearchParams } from 'react-router-dom';
 import { Download, FileText, RotateCcw } from 'lucide-react';
-import AdminLayout from '@/features/manager/components/ManagerLayout';
-import AdminEmptyState from '@/features/manager/components/ManagerEmptyState';
-import AdminPageHeader from '@/features/manager/components/ManagerPageHeader';
-import AdminReportFilters from '@/features/manager/components/ManagerReportFilters';
-import AdminStatusPill from '@/features/manager/components/ManagerStatusPill';
+import ManagerLayout from '@/features/manager/components/ManagerLayout';
+import ManagerEmptyState from '@/features/manager/components/ManagerEmptyState';
+import ManagerPageHeader from '@/features/manager/components/ManagerPageHeader';
+import ManagerReportFilters from '@/features/manager/components/ManagerReportFilters';
+import ManagerStatusPill from '@/features/manager/components/ManagerStatusPill';
 import {
   defaultReportDateRange,
   formatReportDate,
@@ -27,6 +27,8 @@ import { toast } from '@/shared/utils/toast';
 const PAGE_SIZE = 10;
 
 export default function VisitsReportPage() {
+  const [searchParams] = useSearchParams();
+  const focusVisitId = searchParams.get('visit');
   const [range, setRange] = useState(defaultReportDateRange);
   const [departmentId, setDepartmentId] = useState('all');
   const [page, setPage] = useState(1);
@@ -51,6 +53,9 @@ export default function VisitsReportPage() {
   const { data, isLoading, isError, error, refetch } = useAdminReportsVisitsQuery(filters);
 
   const visits = data?.visits ?? [];
+  const focusVisible = focusVisitId != null && visits.some(
+    (visit) => String(visit.visit_id) === String(focusVisitId),
+  );
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -76,9 +81,9 @@ export default function VisitsReportPage() {
   };
 
   return (
-    <AdminLayout pageTitle="Visit reports">
+    <ManagerLayout pageTitle="Visit reports">
       <div className="admin-page admin-page--compact">
-        <AdminPageHeader
+        <ManagerPageHeader
           title="Visit reports"
           actions={(
             <nav className="admin-subnav" aria-label="Report sections">
@@ -108,7 +113,7 @@ export default function VisitsReportPage() {
         </p>
 
         <div className="admin-visits-filter-row">
-          <AdminReportFilters
+          <ManagerReportFilters
             inline
             fromDate={range.from_date}
             toDate={range.to_date}
@@ -130,8 +135,14 @@ export default function VisitsReportPage() {
               <RotateCcw size={14} aria-hidden />
               Reset
             </Button>
-          </AdminReportFilters>
+          </ManagerReportFilters>
         </div>
+
+        {focusVisitId && data && !focusVisible ? (
+          <p className="admin-reports-toolbar__subtitle">
+            Visit {focusVisitId} is not on this page. The visits report cannot search by visit id, so no other visit was selected.
+          </p>
+        ) : null}
 
         <QueryFeedback
           isLoading={isLoading}
@@ -144,7 +155,7 @@ export default function VisitsReportPage() {
               <div className="admin-card admin-card--flat">
                 <div className="admin-card__body admin-card__body--flush-top">
                   {!visits.length ? (
-                    <AdminEmptyState
+                    <ManagerEmptyState
                       icon={<FileText size={22} />}
                       title="No visits found"
                       description="Adjust the date range or department filter to see visit records."
@@ -168,7 +179,14 @@ export default function VisitsReportPage() {
                           </thead>
                           <tbody>
                             {visits.map((visit) => (
-                              <tr key={visit.visit_id}>
+                              <tr
+                                key={visit.visit_id}
+                                className={
+                                  focusVisitId != null && String(visit.visit_id) === String(focusVisitId)
+                                    ? 'admin-visits-row--focus'
+                                    : undefined
+                                }
+                              >
                                 <td data-label="Bill #"><span>{visit.bill_number}</span></td>
                                 <td data-label="Token"><span>{visit.token_number}</span></td>
                                 <td data-label="Patient"><span>#{visit.patient_id}</span></td>
@@ -185,10 +203,10 @@ export default function VisitsReportPage() {
                                   </span>
                                 </td>
                                 <td data-label="Payment">
-                                  <AdminStatusPill label={visit.payment_status} />
+                                  <ManagerStatusPill label={visit.payment_status} />
                                 </td>
                                 <td data-label="Status">
-                                  <AdminStatusPill label={visit.status} />
+                                  <ManagerStatusPill label={visit.status} />
                                 </td>
                               </tr>
                             ))}
@@ -211,6 +229,6 @@ export default function VisitsReportPage() {
           )}
         </QueryFeedback>
       </div>
-    </AdminLayout>
+    </ManagerLayout>
   );
 }

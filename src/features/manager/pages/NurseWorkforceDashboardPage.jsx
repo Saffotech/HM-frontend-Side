@@ -6,9 +6,9 @@ import {
   UserCheck,
   Users,
 } from 'lucide-react';
-import AdminLayout from '@/features/manager/components/ManagerLayout';
-import AdminStatCard from '@/features/manager/components/ManagerStatCard';
-import AdminEmptyState from '@/features/manager/components/ManagerEmptyState';
+import ManagerLayout from '@/features/manager/components/ManagerLayout';
+import ManagerStatCard from '@/features/manager/components/ManagerStatCard';
+import ManagerEmptyState from '@/features/manager/components/ManagerEmptyState';
 import NurseWorkforceNav from '@/features/manager/components/NurseWorkforceNav';
 import { useAdminWorkforcePermissions } from '@/features/manager/hooks/useManagerWorkforcePermissions';
 import {
@@ -533,24 +533,24 @@ export default function NurseWorkforceDashboardPage() {
 
   if (!canView) {
     return (
-      <AdminLayout pageTitle="Nurse Workforce">
-        <AdminEmptyState
+      <ManagerLayout pageTitle="Nurse Workforce">
+        <ManagerEmptyState
           title="Access denied"
           description="You need workforce:view permission."
         />
-      </AdminLayout>
+      </ManagerLayout>
     );
   }
 
   return (
-    <AdminLayout pageTitle="Nurse Workforce">
+    <ManagerLayout pageTitle="Nurse Workforce">
       <div className="admin-page nwf-page">
         <NurseWorkforceNav />
 
         <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
           <div className="nwf-stats nwf-stats--five" role="tablist" aria-label="Workforce filters">
             {kpis.map((kpi) => (
-              <AdminStatCard
+              <ManagerStatCard
                 key={kpi.id}
                 title={kpi.title}
                 value={kpi.value}
@@ -587,6 +587,6 @@ export default function NurseWorkforceDashboardPage() {
           </section>
         </QueryFeedback>
       </div>
-    </AdminLayout>
+    </ManagerLayout>
   );
 }

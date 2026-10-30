@@ -11,7 +11,8 @@ const ROLE_TONES = {
   lab_technician: 'lab',
 };
 
-export default function AdminRoleBadge({ roleName }) {
+/* Legacy identifier preserved: AdminRoleBadge. Active name: ManagerRoleBadge. */
+export default function ManagerRoleBadge({ roleName }) {
   const tone = ROLE_TONES[roleName] || 'neutral';
   return (
     <span className={`admin-role-badge admin-role-badge--${tone}`}>

@@ -1,0 +1,149 @@
+.recovery-inline,
+.recovery-page,
+.recovery-app,
+.recovery-status {
+  font-family: var(--font-sans, 'Plus Jakarta Sans', system-ui, sans-serif);
+  color: var(--color-text, #101828);
+}
+
+.recovery-inline {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 40rem;
+  margin: 0.75rem 0;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--color-border, #cfd9d6);
+  border-radius: var(--radius-md, 8px);
+  background: var(--color-surface, #f5f8f7);
+}
+
+.recovery-inline__icon,
+.recovery-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: var(--radius-md, 8px);
+}
+
+.recovery-inline__icon {
+  width: 2rem;
+  height: 2rem;
+  color: var(--color-warning, #f59e0b);
+  background: var(--color-warning-bg, #fffbeb);
+}
+
+.recovery-inline__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+.recovery-inline__message,
+.recovery-card__text {
+  margin: 0;
+  color: var(--color-text-muted, #475467);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.recovery-page,
+.recovery-app {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 1.5rem 1rem;
+  box-sizing: border-box;
+}
+
+.recovery-page {
+  min-height: 16rem;
+}
+
+.recovery-app {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--color-bg, #e4ebe9);
+}
+
+.recovery-card {
+  width: min(100%, 28rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1.25rem;
+  border: 1px solid var(--color-border, #cfd9d6);
+  border-radius: 12px;
+  background: var(--color-surface, #f5f8f7);
+  box-shadow: 0 4px 16px rgba(16, 24, 40, 0.06);
+}
+
+.recovery-card__icon {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 0.25rem;
+  color: var(--color-warning, #b45309);
+  background: var(--color-warning-bg, #fffbeb);
+}
+
+.recovery-card--critical .recovery-card__icon {
+  color: var(--color-danger, #dc2626);
+  background: var(--color-danger-bg, #fef2f2);
+}
+
+.recovery-card__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--color-text, #101828);
+}
+
+.recovery-card__text {
+  max-width: 24rem;
+}
+
+.recovery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.recovery-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 12rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.recovery-status p {
+  margin: 0;
+  color: var(--color-text-muted, #475467);
+}
+
+@media (max-width: 640px) {
+  .recovery-inline {
+    flex-direction: column;
+  }
+
+  .recovery-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .recovery-actions .btn {
+    width: 100%;
+  }
+}

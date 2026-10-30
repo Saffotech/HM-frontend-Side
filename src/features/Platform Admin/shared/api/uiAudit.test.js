@@ -1,4 +1,3 @@
-/* eslint-disable import/no-unresolved -- Node's test runner resolves node: imports. */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
@@ -131,9 +130,9 @@ describe("registration submit gate", () => {
   });
 
   it("wires the session check, the in-flight guard, and a sign-in link into the registration forms", () => {
-    const platform = readSrc("../../panels/superAdmin/pages/tenants/RegisterHospital.jsx");
+    const platform = readSrc("../../panels/platformAdmin/pages/tenants/RegisterHospital.jsx");
     const accountant = readSrc("../../panels/accountant/pages/RegisterHospital.jsx");
-    const staff = readSrc("../../panels/superAdmin/pages/account/PlatformStaff.jsx");
+    const staff = readSrc("../../panels/platformAdmin/pages/account/PlatformStaff.jsx");
     for (const source of [platform, accountant, staff]) {
       assert.match(source, /canSubmitRegistration/);
       assert.match(source, /disabled=\{!canSubmit\}/);
@@ -149,7 +148,7 @@ describe("registration submit gate", () => {
 describe("accountant registration plan pricing", () => {
   it("uses the shared live catalog and updates pricing from the selected plan and billing cycle", () => {
     const accountant = readSrc("../../panels/accountant/pages/RegisterHospital.jsx");
-    const platform = readSrc("../../panels/superAdmin/pages/tenants/RegisterHospital.jsx");
+    const platform = readSrc("../../panels/platformAdmin/pages/tenants/RegisterHospital.jsx");
     const plansApi = readSrc("./platformPlans.js");
     const plansHook = readSrc("../hooks/usePlatformPlans.js");
     assert.match(accountant, /planNames\.map/);
@@ -209,7 +208,7 @@ describe("CRM lead email fields and tabs", () => {
 
 describe("panel page titles", () => {
   it("renders the active route title in each panel header without repeating it in page content", () => {
-    const platformHeader = readSrc("../../panels/superAdmin/layout/Breadcrumbs.jsx");
+    const platformHeader = readSrc("../../panels/platformAdmin/layout/Breadcrumbs.jsx");
     for (const title of [
       "Dashboard",
       "Platform Analytics",
@@ -234,10 +233,10 @@ describe("panel page titles", () => {
     assert.match(crmLayout, /leadPage \? "Lead details" : current\.label/);
 
     const pages = [
-      "../../panels/superAdmin/pages/dashboard/Dashboard.jsx",
-      "../../panels/superAdmin/pages/tenants/Hospitals.jsx",
-      "../../panels/superAdmin/pages/billing/SubscriptionPlans.jsx",
-      "../../panels/superAdmin/pages/billing/Subscriptions.jsx",
+      "../../panels/platformAdmin/pages/dashboard/Dashboard.jsx",
+      "../../panels/platformAdmin/pages/tenants/Hospitals.jsx",
+      "../../panels/platformAdmin/pages/billing/SubscriptionPlans.jsx",
+      "../../panels/platformAdmin/pages/billing/Subscriptions.jsx",
     ];
     for (const file of pages) assert.doesNotMatch(readSrc(file), /<h1\b/);
 
@@ -246,7 +245,7 @@ describe("panel page titles", () => {
       assert.ok(accountantLayout.includes(`"${title}"`), `Accountant header title is mapped: ${title}`);
     }
 
-    const plans = readSrc("../../panels/superAdmin/pages/billing/SubscriptionPlans.jsx");
+    const plans = readSrc("../../panels/platformAdmin/pages/billing/SubscriptionPlans.jsx");
     const planApi = readSrc("./platformPlans.js");
     assert.doesNotMatch(plans, /This screen shows the active catalog/);
     assert.match(plans, /Add plan/);

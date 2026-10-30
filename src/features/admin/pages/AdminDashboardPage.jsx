@@ -9,17 +9,17 @@ import {
   Users,
   Shield,
 } from 'lucide-react';
-import SuperAdminLayout from '@/features/admin/components/AdminLayout';
-import AdminStatCard from '@/features/manager/components/ManagerStatCard';
-import AdminRoleBadge from '@/features/manager/components/ManagerRoleBadge';
-import AdminStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
+import AdminLayout from '@/features/admin/components/AdminLayout';
+import ManagerStatCard from '@/features/manager/components/ManagerStatCard';
+import ManagerRoleBadge from '@/features/manager/components/ManagerRoleBadge';
+import ManagerStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import {
   useAdminDashboardQuery,
   useAdminRolesQuery,
   useAdminStaffListQuery,
 } from '@/shared/hooks/queries/useAdminQuery';
-import { useSuperAdminAuditQuery } from '@/features/admin/hooks/useAdminQuery';
+import { useAdminAuditQuery } from '@/features/admin/hooks/useAdminQuery';
 import { QueryFeedback, SearchBar, TablePagination } from '@/shared/components/common';
 import { adminPanelRoutes } from '@/shared/constants';
 import { filterHospitalRoleRecords } from '@/features/manager/utils/hospitalManagerRoles';
@@ -68,10 +68,10 @@ function quickActions(panel) {
 
 function DashboardTableCell({ column, row }) {
   if (column.key === 'role') {
-    return <AdminRoleBadge roleName={row.role} />;
+    return <ManagerRoleBadge roleName={row.role} />;
   }
   if (column.key === 'status') {
-    return <AdminStaffStatusBadge isActive={row.isActive} />;
+    return <ManagerStaffStatusBadge isActive={row.isActive} />;
   }
   if (column.key === 'action') {
     const badgeClass = getAuditActionBadgeClass(row.actionKey);
@@ -84,7 +84,8 @@ function DashboardTableCell({ column, row }) {
   return <span>{row[column.key] ?? '—'}</span>;
 }
 
-export default function SuperAdminDashboardPage() {
+/* Legacy identifier preserved: SuperAdminDashboardPage. Active name: AdminDashboardPage. */
+export default function AdminDashboardPage() {
   const { pathname } = useLocation();
   const panel = adminPanelRoutes(pathname);
   const [activeFilter, setActiveFilter] = useState(DASHBOARD_FILTERS.TOTAL_STAFF);
@@ -131,12 +132,12 @@ export default function SuperAdminDashboardPage() {
     };
   }, [debouncedSearch, isAuditTab, page, today]);
 
-  const auditQuery = useSuperAdminAuditQuery(
+  const auditQuery = useAdminAuditQuery(
     auditListParams ?? { page: 1, limit: 1 },
     { enabled: isAuditTab },
   );
 
-  const todayAuditCountQuery = useSuperAdminAuditQuery(
+  const todayAuditCountQuery = useAdminAuditQuery(
     { dateFrom: today, dateTo: today, page: 1, limit: 1 },
     { enabled: true },
   );
@@ -269,19 +270,19 @@ export default function SuperAdminDashboardPage() {
   ]);
 
   return (
-    <SuperAdminLayout pageTitle="Admin">
+    <AdminLayout pageTitle="Admin">
       <div className="admin-page admin-page--dashboard">
         <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
-          <div className="admin-stats admin-stats--dashboard sa-dashboard-stats">
+          <div className="admin-stats admin-stats--dashboard admin-panel-dashboard-stats">
             {stats.map((s) => (
               <button
                 key={s.key}
                 type="button"
-                className={`sa-dashboard-stat-btn${activeFilter === s.key ? ' sa-dashboard-stat-btn--active' : ''}`}
+                className={`admin-panel-dashboard-stat-btn${activeFilter === s.key ? ' admin-panel-dashboard-stat-btn--active' : ''}`}
                 onClick={() => setActiveFilter(s.key)}
                 aria-pressed={activeFilter === s.key}
               >
-                <AdminStatCard
+                <ManagerStatCard
                   title={s.label}
                   value={s.value}
                   subtitle={s.sub}
@@ -293,11 +294,11 @@ export default function SuperAdminDashboardPage() {
             ))}
           </div>
 
-          <div className="admin-detail-grid sa-dashboard-grid">
-            <div className="admin-card sa-panel-card sa-dashboard-table-card">
-              <div className="admin-card__body sa-dashboard-table-body">
+          <div className="admin-detail-grid admin-panel-dashboard-grid">
+            <div className="admin-card admin-panel-panel-card admin-panel-dashboard-table-card">
+              <div className="admin-card__body admin-panel-dashboard-table-body">
                 <SearchBar
-                  className="sa-dashboard-table-search"
+                  className="admin-panel-dashboard-table-search"
                   value={searchQuery}
                   onChange={setSearchQuery}
                   placeholder={tableMeta.searchPlaceholder}
@@ -310,7 +311,7 @@ export default function SuperAdminDashboardPage() {
                   <div className="admin-empty-state"><p>{tableMeta.noResultsMessage}</p></div>
                 ) : (
                   <>
-                    <div className="admin-table-wrap sa-dashboard-table-wrap">
+                    <div className="admin-table-wrap admin-panel-dashboard-table-wrap">
                       <table className="admin-table admin-table--stack">
                         <thead>
                           <tr>
@@ -340,19 +341,19 @@ export default function SuperAdminDashboardPage() {
               </div>
             </div>
 
-            <div className="admin-card sa-panel-card sa-dashboard-quick-card">
+            <div className="admin-card admin-panel-panel-card admin-panel-dashboard-quick-card">
               <div className="admin-card__header">
                 <h2 className="admin-card__title">Quick Actions</h2>
               </div>
-              <div className="admin-card__body sa-dashboard-quick-body">
-                <div className="sa-dashboard-quick-actions">
+              <div className="admin-card__body admin-panel-dashboard-quick-body">
+                <div className="admin-panel-dashboard-quick-actions">
                   {quickActions(panel).map((action) => {
                     const Icon = action.icon;
                     return (
                       <Link
                         key={action.to}
                         to={action.to}
-                        className={`admin-quick-action admin-quick-action--${action.tone} sa-dashboard-quick-action`}
+                        className={`admin-quick-action admin-quick-action--${action.tone} admin-panel-dashboard-quick-action`}
                       >
                         <div className="admin-quick-action__icon" aria-hidden>
                           <Icon size={20} />
@@ -370,6 +371,6 @@ export default function SuperAdminDashboardPage() {
           </div>
         </QueryFeedback>
       </div>
-    </SuperAdminLayout>
+    </AdminLayout>
   );
 }

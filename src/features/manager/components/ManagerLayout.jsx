@@ -7,9 +7,10 @@ import {
   User,
   Users,
 } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/shared/constants';
 import RoleLayout from '@/shared/components/layout/RoleLayout';
+import ManagerNotificationsBell from '@/features/manager/components/ManagerNotificationsBell';
 import '../styles/manager.css';
 import '../styles/manager-mobile.css';
 
@@ -62,10 +63,13 @@ function isNavLinkActive(pathname, link) {
   return pathname === link.href || pathname.startsWith(link.href);
 }
 
-export default function AdminLayout({ children, compact = false }) {
+/* Legacy identifier preserved: AdminLayout. Active name: ManagerLayout. */
+export default function ManagerLayout({ children, compact = false }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const onProfilePage = location.pathname === ROUTES.MANAGER_PROFILE;
 
+  // Legacy classes (inactive): admin-layout, admin-shell. Active: manager-layout, manager-shell.
   return (
     <RoleLayout
       navLinks={NAV_LINKS}
@@ -73,13 +77,18 @@ export default function AdminLayout({ children, compact = false }) {
       homeRoute={ROUTES.MANAGER_DASHBOARD}
       defaultTitle={HEADER_TITLE}
       compact={compact}
-      layoutClassName="admin-layout"
+      layoutClassName="manager-layout"
       isNavLinkActive={isNavLinkActive}
-      showBell={false}
+      showBell
+      headerBell={
+        <ManagerNotificationsBell
+          onViewAll={() => navigate(ROUTES.MANAGER_NOTIFICATIONS)}
+        />
+      }
       profileHref={ROUTES.MANAGER_PROFILE}
       logoutMenuOnly={onProfilePage}
     >
-      <div className="admin-shell">{children}</div>
+      <div className="manager-shell">{children}</div>
     </RoleLayout>
   );
 }

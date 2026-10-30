@@ -1,4 +1,3 @@
-/* eslint-disable import/no-unresolved -- Node's test runner resolves node: imports. */
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { describe, it } from 'node:test';

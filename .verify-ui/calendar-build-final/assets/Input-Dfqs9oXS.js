@@ -1,0 +1,1 @@
+function e({id:e,error:t,describedBy:n,ariaInvalid:r}){let i=t!=null&&t!==!1&&t!==``,a=i||r===!0||r===`true`,o=i?`${e}-error`:``,s=[n,o].filter(Boolean).join(` `)||void 0;return{invalid:a,errorId:o,inputProps:{id:e,"aria-invalid":a?`true`:void 0,"aria-describedby":s}}}export{e as t};

@@ -8,9 +8,9 @@ import {
   UserRound,
   Users,
 } from 'lucide-react';
-import AdminLayout from '@/features/manager/components/ManagerLayout';
-import AdminBackBar from '@/features/manager/components/ManagerBackBar';
-import AdminAllocationStatusBadge from '@/features/manager/components/ManagerAllocationStatusBadge';
+import ManagerLayout from '@/features/manager/components/ManagerLayout';
+import ManagerBackBar from '@/features/manager/components/ManagerBackBar';
+import ManagerAllocationStatusBadge from '@/features/manager/components/ManagerAllocationStatusBadge';
 import { useAdminBedAllocationPermissions } from '@/features/manager/hooks/useManagerBedAllocationPermissions';
 import {
   useAdminBedAllocationDetailQuery,
@@ -19,10 +19,40 @@ import {
 import { Button, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import {
-  formatAllocationDateTime,
+  formatAllocationDate,
   groupAllocationListItems,
 } from '@/shared/api/mappers/adminBedAllocationMapper';
 import '@/features/manager/styles/nurseBedAllocation.css';
+
+function formatRecordedAt(value) {
+  if (!value) return '';
+  const dt = new Date(value);
+  if (Number.isNaN(dt.getTime())) return '';
+  return dt.toLocaleString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+function sameRecordedMoment(left, right) {
+  if (!left || !right) return true;
+  const a = new Date(left).getTime();
+  const b = new Date(right).getTime();
+  if (Number.isNaN(a) || Number.isNaN(b)) return String(left) === String(right);
+  return Math.abs(a - b) < 60_000;
+}
+
+function assignmentWindow(rows) {
+  const fromDates = rows.map((row) => row.shiftDate).filter(Boolean).map(String).sort();
+  const untilDates = rows.map((row) => row.assignedUntil).filter(Boolean).map(String).sort();
+  return {
+    from: fromDates[0] || '',
+    until: untilDates.length ? untilDates[untilDates.length - 1] : '',
+  };
+}
 
 export default function NurseBedAllocationDetailPage() {
   const { id } = useParams();
@@ -90,6 +120,7 @@ export default function NurseBedAllocationDetailPage() {
     };
   }, [primary, siblingRows]);
 
+  const period = useMemo(() => assignmentWindow(siblingRows), [siblingRows]);
   const loading = isLoading || (Boolean(primary) && siblingsLoading);
   const pageError = isError ? error : siblingsError ? siblingsErr : null;
   const retry = () => {
@@ -99,19 +130,19 @@ export default function NurseBedAllocationDetailPage() {
 
   if (!canView) {
     return (
-      <AdminLayout pageTitle="Allocation Details">
+      <ManagerLayout pageTitle="Allocation Details">
         <div className="admin-card nba-denied">
           <h2>Access denied</h2>
           <p className="nba-muted">You do not have permission to view bed allocations.</p>
         </div>
-      </AdminLayout>
+      </ManagerLayout>
     );
   }
 
   return (
-    <AdminLayout pageTitle="Allocation Details">
+    <ManagerLayout pageTitle="Allocation Details">
       <div className="admin-page nba-page nba-detail-page">
-        <AdminBackBar
+        <ManagerBackBar
           onBack={() => navigate(ROUTES.MANAGER_BED_ALLOCATION)}
           label="Back to allocations"
         />
@@ -134,16 +165,15 @@ export default function NurseBedAllocationDetailPage() {
                     <span className="nba-detail-hero__id">
                       Allocation #{group.idLabel ?? group.id}
                     </span>
-                    <AdminAllocationStatusBadge isActive={group.isActive} />
+                    <ManagerAllocationStatusBadge isActive={group.isActive} />
                   </div>
                   <h1 className="nba-detail-hero__title">{group.nurseName}</h1>
-                  <p className="nba-detail-hero__subtitle">
-                    Bed responsibility for this period — patients are not owned by the nurse.
-                  </p>
                   <div className="nba-detail-hero__meta">
                     <span className="nba-detail-pill">
                       <CalendarDays size={14} aria-hidden />
-                      {group.shiftDate || '—'}
+                      {formatAllocationDate(period.from || group.shiftDate)}
+                      {' – '}
+                      {period.until ? formatAllocationDate(period.until) : 'Ongoing'}
                     </span>
                     <span className="nba-detail-pill">
                       <Mail size={14} aria-hidden />
@@ -214,13 +244,17 @@ export default function NurseBedAllocationDetailPage() {
                       <dd>{group.nurseEmail || '—'}</dd>
                     </div>
                     <div className="nba-detail-fact">
-                      <dt>Date</dt>
-                      <dd>{group.shiftDate || '—'}</dd>
+                      <dt>Assigned from</dt>
+                      <dd>{formatAllocationDate(period.from || group.shiftDate)}</dd>
+                    </div>
+                    <div className="nba-detail-fact">
+                      <dt>Assigned till</dt>
+                      <dd>{period.until ? formatAllocationDate(period.until) : 'Ongoing'}</dd>
                     </div>
                     <div className="nba-detail-fact">
                       <dt>Status</dt>
                       <dd>
-                        <AdminAllocationStatusBadge isActive={group.isActive} />
+                        <ManagerAllocationStatusBadge isActive={group.isActive} />
                       </dd>
                     </div>
                     <div className="nba-detail-fact">
@@ -230,12 +264,16 @@ export default function NurseBedAllocationDetailPage() {
                       <dd>{group.assignedByName || '—'}</dd>
                     </div>
                     <div className="nba-detail-fact">
-                      <dt>Created</dt>
-                      <dd>{formatAllocationDateTime(group.createdAt)}</dd>
-                    </div>
-                    <div className="nba-detail-fact">
-                      <dt>Updated</dt>
-                      <dd>{formatAllocationDateTime(group.updatedAt)}</dd>
+                      <dt>
+                        {sameRecordedMoment(group.createdAt, group.updatedAt) ? 'Recorded' : 'Last updated'}
+                      </dt>
+                      <dd>
+                        {formatRecordedAt(
+                          sameRecordedMoment(group.createdAt, group.updatedAt)
+                            ? group.createdAt
+                            : group.updatedAt,
+                        ) || formatAllocationDate(group.shiftDate)}
+                      </dd>
                     </div>
                   </dl>
                   {group.notes ? (
@@ -250,6 +288,6 @@ export default function NurseBedAllocationDetailPage() {
           )}
         </QueryFeedback>
       </div>
-    </AdminLayout>
+    </ManagerLayout>
   );
 }

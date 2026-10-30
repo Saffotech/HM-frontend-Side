@@ -29,7 +29,7 @@ import {
   isSessionCurrent,
   setLogoutTask,
 } from '@/components/security/sessionEpoch';
-import { clearSessionNotice, peekSessionNotice, publishSessionNotice } from '@/components/security/sessionNotice';
+import { clearSessionNotice, publishSessionNotice } from '@/components/security/sessionNotice';
 import { clearAllConsultationDrafts } from '@/shared/utils/consultationDraftStorage';
 import { decodeJwt, isTokenExpired, getTokenExpiresInMs } from '@/shared/utils/jwtHelper';
 import { normalizeRole, DEPARTMENT_BY_ROLE } from '@/shared/utils/roleUtils';

@@ -1,20 +1,9 @@
 /** Shared IPD display helpers — keep UI formatting out of pages. */
 
+export { formatIpdDateTime } from '@/shared/utils/dateFormatter';
+
 const IST_TIME_ZONE = 'Asia/Kolkata';
 const IST_OFFSET = '+05:30';
-
-export function formatIpdDateTime(raw) {
-  if (!raw) return '—';
-  const date = new Date(raw);
-  if (Number.isNaN(date.getTime())) return String(raw);
-  return date.toLocaleString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 /** Current wall-clock time in Asia/Kolkata as HH:mm:ss. */
 function currentIstTimeParts(now = new Date()) {
