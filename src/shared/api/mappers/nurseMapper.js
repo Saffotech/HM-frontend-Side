@@ -631,6 +631,13 @@ export function mapMedicationToPrescription(
     ?? item.first_administered_by
     ?? (firstGivenAt ? administration?.administered_by_name : null)
     ?? null;
+  const sameDose =
+    Boolean(firstGivenAt)
+    && firstGivenAt === (administration?.administered_at ?? null);
+  const firstStatus =
+    firstAdministration?.status
+    ?? (sameDose ? administration?.status : null)
+    ?? null;
 
   return {
     id: itemId,
@@ -657,8 +664,10 @@ export function mapMedicationToPrescription(
     administration,
     last_administered_at: administration?.administered_at ?? null,
     last_administered_by: administration?.administered_by_name ?? null,
+    last_administered_status: administration?.status ?? status ?? null,
     first_administered_at: firstGivenAt,
     first_administered_by: firstGivenBy,
+    first_administered_status: firstStatus,
   };
 }
 

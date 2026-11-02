@@ -12,7 +12,7 @@ import {
   useMarkAllNurseNotificationsReadMutation,
   useMarkNurseNotificationReadMutation,
 } from '@/features/nurse/hooks/useNurseNotificationsQuery';
-import { Button, EmptyState } from '@/shared/components/common';
+import { Button, DateInput, EmptyState } from '@/shared/components/common';
 import { NOTIFICATION_MODULE } from '@/shared/notifications/notificationModules';
 import { useNotificationNavigation } from '@/shared/notifications/useNotificationNavigation';
 import { toast } from '@/shared/utils/toast';
@@ -23,11 +23,9 @@ import './NurseNotificationsSection.css';
 const TYPE_FILTERS = [
   { value: '', label: 'All types', kind: 'all' },
   { value: 'EMERGENCY_ALERT', label: 'Emergency', kind: 'type' },
-  { value: 'HANDOVER_TAKEN_OVER', label: 'Handover', kind: 'type' },
   { value: 'SHIFT_UPDATED', label: 'Shift updated', kind: 'type' },
   { value: 'ADMIN_UPDATE', label: 'Admin', kind: 'type' },
   // Nurse Phase 2 by Atharva — priority options in the same filter dropdown
-  { value: 'CRITICAL', label: 'Critical', kind: 'priority' },
   { value: 'HIGH', label: 'High', kind: 'priority' },
   { value: 'NORMAL', label: 'Normal', kind: 'priority' },
 ];
@@ -194,32 +192,32 @@ export default function NurseNotificationsSection() {
               </option>
             ))}
           </select>
-          <label className="nurse-notif-date">
+          <div className="nurse-notif-date">
             <span className="nurse-notif-date__label">From</span>
-            <input
-              type="date"
-              className="nurse-notif-date__input"
+            <DateInput
+              className="nurse-notif-date__picker"
               value={startDate}
+              max={endDate || undefined}
               onChange={(e) => {
                 setStartDate(e.target.value);
                 setPage(1);
               }}
               aria-label="Start date"
             />
-          </label>
-          <label className="nurse-notif-date">
+          </div>
+          <div className="nurse-notif-date">
             <span className="nurse-notif-date__label">To</span>
-            <input
-              type="date"
-              className="nurse-notif-date__input"
+            <DateInput
+              className="nurse-notif-date__picker"
               value={endDate}
+              min={startDate || undefined}
               onChange={(e) => {
                 setEndDate(e.target.value);
                 setPage(1);
               }}
               aria-label="End date"
             />
-          </label>
+          </div>
           {hasActiveFilters ? (
             <Button
               size="sm"

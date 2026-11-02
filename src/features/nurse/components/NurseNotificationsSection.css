@@ -233,20 +233,20 @@
   white-space: nowrap;
 }
 
-.nurse-notif-date__input {
-  padding: 0.35rem 0.5rem;
-  border: 1px solid #b8d5d0;
+.nurse-notif-date__picker {
+  margin: 0;
+  min-width: 10.75rem;
+}
+
+.nurse-notif-filters__row .nurse-notif-date__picker .date-input__wrap {
+  min-height: 2.15rem;
+  border-color: #b8d5d0;
   border-radius: 0.5rem;
-  font: inherit;
-  font-size: 0.8125rem;
-  color: var(--nn-ink);
   background: #fff;
 }
 
-.nurse-notif-date__input:focus {
-  outline: none;
-  border-color: var(--nn-teal);
-  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+.nurse-notif-filters__row .nurse-notif-date__picker .date-input__text {
+  font-size: 0.8125rem;
 }
 
 .nurse-notif-card {

@@ -107,6 +107,10 @@
   .nurse-clinical-fields--notes {
     grid-template-columns: 1fr;
   }
+
+  .nurse-clinical-fields--vitals .nurse-clinical-field--bp {
+    grid-column: auto;
+  }
 }
 
 /* Sections inside the main white panel */
@@ -175,6 +179,59 @@
   padding: 0.3rem 0.5rem;
   font-size: 0.8125rem;
   min-height: 0;
+}
+
+.nurse-clinical-fields--vitals .nurse-clinical-field--bp {
+  grid-column: span 2;
+}
+
+.nurse-vitals-bp {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.nurse-vitals-bp .nurse-clinical-field__input {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.nurse-vitals-bp__sep {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: #334155;
+}
+
+.nurse-vitals-bp__unit {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: #64748b;
+}
+
+.nurse-vitals-bp__readout {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: #334155;
+}
+
+.nurse-clinical-field__input--invalid {
+  border-color: #dc2626;
+}
+
+.nurse-clinical-field__input--invalid:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+.nurse-vitals-field-error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .nurse-clinical-fields--vitals .nurse-clinical-field__range {

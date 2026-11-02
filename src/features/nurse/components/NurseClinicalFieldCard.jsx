@@ -18,9 +18,10 @@ export function NurseClinicalFieldShell({
   onClear,
   clearDisabled = true,
   clearContent = 'Clear',
+  className = '',
 }) {
   return (
-    <div className={`nurse-clinical-field nurse-clinical-field--${accent}`}>
+    <div className={`nurse-clinical-field nurse-clinical-field--${accent}${className ? ` ${className}` : ''}`}>
       <div className="nurse-clinical-field__top">
         <div className="nurse-clinical-field__label">
           <NurseClinicalFieldIcon icon={Icon} accent={accent} />

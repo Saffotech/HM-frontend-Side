@@ -6,21 +6,136 @@
   gap: 1.15rem;
 }
 
-.nurse-patient-med-history-page .nurse-page-header {
-  padding: 1rem 1.2rem;
+.nurse-med-history__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  padding: 1.15rem 1.35rem;
   border-radius: 14px;
   border: 1px solid #e2e8f0;
   background:
-    linear-gradient(145deg, #f4faf6 0%, #ffffff 48%, #f8fafc 100%);
+    linear-gradient(145deg, #f8fafc 0%, #ffffff 46%, #f0fdf4 100%);
   box-shadow:
     0 1px 2px rgba(15, 23, 42, 0.04),
-    0 8px 20px rgba(26, 92, 52, 0.04);
+    0 8px 24px rgba(15, 23, 42, 0.04);
 }
 
-.nurse-patient-med-history-page .nurse-page-header h1,
-.nurse-patient-med-history-page .nurse-page-header__title {
+.nurse-med-history__identity {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+.nurse-med-history__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.15rem;
+  height: 3.15rem;
+  flex-shrink: 0;
+  border-radius: 12px;
+  color: #047857;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+
+.nurse-med-history__eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.nurse-med-history__title {
+  margin: 0.15rem 0 0;
+  font-size: 1.35rem;
+  font-weight: 700;
   letter-spacing: -0.02em;
   color: #0f172a;
+  line-height: 1.25;
+  text-transform: capitalize;
+}
+
+.nurse-med-history__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.nurse-med-history__stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid #d1fae5;
+  background: #fff;
+  color: #047857;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.nurse-med-history__stat strong {
+  font-weight: 700;
+  color: #065f46;
+}
+
+.nurse-med-history__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.nurse-med-history__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.nurse-med-history__when {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.nurse-med-history__when-date {
+  font-weight: 650;
+  color: #0f172a;
+}
+
+.nurse-med-history__when-time {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.nurse-med-history__by {
+  font-weight: 650;
+  color: #1e293b;
+  text-transform: capitalize;
+}
+
+.nurse-med-history__remarks {
+  display: inline-flex;
+  max-width: 16rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 0.75rem;
+  font-weight: 650;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.nurse-med-history__empty {
+  color: #94a3b8;
 }
 
 .nurse-patient-med-history-page .nurse-table-wrap,

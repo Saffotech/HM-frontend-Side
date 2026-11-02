@@ -1,9 +1,6 @@
 import { useLocation } from 'react-router-dom';
 import { ROUTES } from '@/shared/constants';
-import {
-  formatNurseShiftLabel,
-  useNursePatientScope,
-} from '@/features/nurse/context/nursePatientScope';
+import { useNursePatientScope } from '@/features/nurse/context/nursePatientScope';
 
 /** Exact list routes where All / Allocated changes the visible patient set. */
 const SCOPE_LIST_PATHS = new Set([
@@ -64,23 +61,17 @@ export default function NursePatientScopeBar() {
 
       {allocationSummary && (
         <div className="nurse-scope-bar__summary" aria-live="polite">
-          <p className="nurse-scope-bar__shift">
-            {formatNurseShiftLabel(allocationSummary.shift_name)}
-          </p>
           <div className="nurse-scope-bar__stats">
-            <span>
-              Beds Assigned
-              {' '}
+            <span className="nurse-scope-bar__stat">
+              <span className="nurse-scope-bar__stat-label">Beds assigned</span>
               <strong>{allocationSummary.assigned_bed_count}</strong>
             </span>
-            <span>
-              Occupied
-              {' '}
+            <span className="nurse-scope-bar__stat">
+              <span className="nurse-scope-bar__stat-label">Occupied</span>
               <strong>{allocationSummary.occupied_count}</strong>
             </span>
-            <span>
-              Vacant
-              {' '}
+            <span className="nurse-scope-bar__stat">
+              <span className="nurse-scope-bar__stat-label">Vacant</span>
               <strong>{allocationSummary.vacant_count}</strong>
             </span>
           </div>

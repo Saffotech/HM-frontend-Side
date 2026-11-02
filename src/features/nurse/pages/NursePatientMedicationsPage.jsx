@@ -6,7 +6,7 @@ import NurseDataTable from '@/features/nurse/components/NurseDataTable';
 import NursePagination from '@/features/nurse/components/NursePagination';
 import NurseConfirmDialog from '@/features/nurse/components/NurseConfirmDialog';
 import { useNursePermissionSet } from '@/features/nurse/hooks/useNursePermission';
-import { QueryFeedback, Modal, Button } from '@/shared/components/common';
+import { QueryFeedback, Modal, Button, DateInput } from '@/shared/components/common';
 import {
   useNursePatientMedicationsQuery,
   useAdministerMedicationMutation,
@@ -18,6 +18,7 @@ import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
 import NursePrescribedDoctorCell from '@/features/nurse/components/NursePrescribedDoctorCell';
 import NursePermissionButton from '@/features/nurse/components/NursePermissionButton';
 import NurseMedicineCell from '@/features/nurse/components/NurseMedicineCell';
+import NurseQueueStatusBadge from '@/features/nurse/components/NurseQueueStatusBadge';
 import { toast } from '@/shared/utils/toast';
 import './NursePatientMedicationsPage.css';
 
@@ -66,26 +67,68 @@ function hasAdministrationRecord(prescription) {
   );
 }
 
+const DOSE_STATUS_WORDS = {
+  given: 'given',
+  refused: 'refused',
+  missed: 'missed',
+  delayed: 'delayed',
+};
+
+function doseStatusKey(status) {
+  const key = String(status || '').trim().toLowerCase();
+  return DOSE_STATUS_WORDS[key] ? key : '';
+}
+
+function doseEventLabel(prefix, status) {
+  const word = DOSE_STATUS_WORDS[doseStatusKey(status)] || 'given';
+  return `${prefix} ${word}`;
+}
+
+function firstDoseStatus(prescription) {
+  return doseStatusKey(prescription?.first_administered_status);
+}
+
+function lastDoseStatus(prescription) {
+  return doseStatusKey(
+    prescription?.last_administered_status
+    || prescription?.administration?.status
+    || prescription?.status,
+  );
+}
+
 function LastAdministrationDetails({ prescription }) {
+  const firstStatus = firstDoseStatus(prescription);
+  const lastStatus = lastDoseStatus(prescription);
+
   return (
     <div className="nurse-patient-meds__last-admin-modal-body">
-      <div className="nurse-patient-meds__last-admin-row nurse-patient-meds__last-admin-row--first">
+      <div className={`nurse-patient-meds__last-admin-row nurse-patient-meds__last-admin-row--first${firstStatus ? ` nurse-patient-meds__last-admin-row--status-${firstStatus}` : ''}`}>
         <span className="nurse-patient-meds__last-admin-icon" aria-hidden>
           <Clock size={14} />
         </span>
         <div className="nurse-patient-meds__last-admin-content">
-          <span className="nurse-patient-meds__last-admin-label">First Given</span>
+          <span className="nurse-patient-meds__last-admin-label-row">
+            <span className="nurse-patient-meds__last-admin-label">
+              {doseEventLabel('First', firstStatus)}
+            </span>
+            {firstStatus ? <NurseQueueStatusBadge status={firstStatus} /> : null}
+          </span>
           <span className="nurse-patient-meds__last-admin-value">
             {formatFirstGiven(prescription)}
           </span>
         </div>
       </div>
-      <div className="nurse-patient-meds__last-admin-row nurse-patient-meds__last-admin-row--time">
+      <div className={`nurse-patient-meds__last-admin-row nurse-patient-meds__last-admin-row--time${lastStatus ? ` nurse-patient-meds__last-admin-row--status-${lastStatus}` : ''}`}>
         <span className="nurse-patient-meds__last-admin-icon" aria-hidden>
           <Clock size={14} />
         </span>
         <div className="nurse-patient-meds__last-admin-content">
-          <span className="nurse-patient-meds__last-admin-label">Last Given</span>
+          <span className="nurse-patient-meds__last-admin-label-row">
+            <span className="nurse-patient-meds__last-admin-label">
+              {doseEventLabel('Last', lastStatus)}
+            </span>
+            {lastStatus ? <NurseQueueStatusBadge status={lastStatus} /> : null}
+          </span>
           <span className="nurse-patient-meds__last-admin-value">
             {formatLastGiven(prescription)}
           </span>
@@ -207,6 +250,7 @@ export default function NursePatientMedicationsPage() {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(null);
   const [viewingLastAdmin, setViewingLastAdmin] = useState(null);
+  const [viewingInstruction, setViewingInstruction] = useState(null);
   const [adminMode, setAdminMode] = useState('create'); // 'create' | 'update'
   const [adminData, setAdminData] = useState({
     status: 'given',
@@ -346,7 +390,22 @@ export default function NursePatientMedicationsPage() {
     { header: 'Timing', render: (p) => p.timing || '—' },
     {
       header: 'Instruction',
-      render: (p) => (String(p.instructions ?? '').trim() || '—'),
+      render: (p) => {
+        const instruction = String(p.instructions ?? '').trim();
+        if (!instruction) return '—';
+        return (
+          <button
+            type="button"
+            className="nurse-btn nurse-btn--sm nurse-btn--secondary nurse-patient-meds__view-btn"
+            onClick={(event) => {
+              event.stopPropagation();
+              setViewingInstruction(p);
+            }}
+          >
+            View instruction
+          </button>
+        );
+      },
     },
     {
       header: 'Last Administration',
@@ -496,6 +555,28 @@ export default function NursePatientMedicationsPage() {
           ) : null}
 
           <Modal
+            isOpen={Boolean(viewingInstruction)}
+            onClose={() => setViewingInstruction(null)}
+            title="Instruction"
+            footer={
+              <Button variant="outline" onClick={() => setViewingInstruction(null)}>
+                Close
+              </Button>
+            }
+          >
+            {viewingInstruction ? (
+              <>
+                <p className="nurse-patient-meds__last-admin-modal-med">
+                  {viewingInstruction.medicine_name || 'Medicine'}
+                </p>
+                <p className="nurse-patient-meds__instruction-modal-text">
+                  {String(viewingInstruction.instructions ?? '').trim()}
+                </p>
+              </>
+            ) : null}
+          </Modal>
+
+          <Modal
             isOpen={Boolean(viewingLastAdmin)}
             onClose={() => setViewingLastAdmin(null)}
             title="Last Administration"
@@ -555,10 +636,11 @@ export default function NursePatientMedicationsPage() {
                   </div>
                   <div className="nurse-field">
                     <label htmlFor="med-admin-time">Scheduled time</label>
-                    <input
+                    <DateInput
                       id="med-admin-time"
-                      type="datetime-local"
-                      className="nurse-input"
+                      className="nurse-patient-meds-admin-form__datetime"
+                      withTime
+                      aria-label="Scheduled time"
                       value={adminData.scheduled_time}
                       onChange={(e) =>
                         setAdminData((prev) => ({ ...prev, scheduled_time: e.target.value }))

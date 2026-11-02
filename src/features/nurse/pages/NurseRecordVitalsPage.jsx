@@ -4,6 +4,7 @@ import { ArrowLeft, Calendar, User } from 'lucide-react';
 import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseVitalsFormFields from '@/features/nurse/components/NurseVitalsFormFields';
 import { INITIAL_VITALS_FORM, buildVitalsPayload } from '@/features/nurse/utils/nurseVitalsFormModel';
+import { isVitalsFormValid } from '@/features/nurse/utils/vitalSignsValidation';
 import { useNursePermission } from '@/features/nurse/hooks/useNursePermission';
 import { QueryFeedback } from '@/shared/components/common';
 import { formatPatientIdDisplay } from '@/shared/api/mappers/nurseMapper';
@@ -21,6 +22,8 @@ export default function NurseRecordVitalsPage() {
   const patientIdFromUrl = searchParams.get('patientId');
   const navigate = useNavigate();
   const [form, setForm] = useState(INITIAL_VITALS_FORM);
+  const [showVitalErrors, setShowVitalErrors] = useState(false);
+  const vitalsValid = isVitalsFormValid(form);
   const createMut = useCreateVitalsMutation();
   const canCreateVitals = useNursePermission('nurse_vitals:create');
 
@@ -78,6 +81,10 @@ export default function NurseRecordVitalsPage() {
 
   const onSubmit = (e) => {
     e.preventDefault();
+    if (!isVitalsFormValid(form)) {
+      setShowVitalErrors(true);
+      return;
+    }
     const payload = buildVitalsPayload(form, {
       appointmentId: appointmentId || undefined,
       patientId: patientId || undefined,
@@ -154,12 +161,12 @@ export default function NurseRecordVitalsPage() {
           <section className="nurse-vital-detail__section">
             <h2 className="nurse-vital-detail__section-title">Record Vital Signs</h2>
             <form className="nurse-clinical-panel nurse-clinical-panel--compact nurse-card nurse-card--padded" onSubmit={onSubmit}>
-              <NurseVitalsFormFields form={form} setForm={setForm} />
+              <NurseVitalsFormFields form={form} setForm={setForm} showAllErrors={showVitalErrors} />
               <div className="nurse-form-actions">
                 <button type="button" className="nurse-btn nurse-btn--secondary" onClick={() => navigate(-1)}>
                   Cancel
                 </button>
-                <button type="submit" className="nurse-btn nurse-btn--primary" disabled={createMut.isPending}>
+                <button type="submit" className="nurse-btn nurse-btn--primary" disabled={!vitalsValid || createMut.isPending}>
                   {createMut.isPending ? 'Saving…' : 'Save Vitals'}
                 </button>
               </div>

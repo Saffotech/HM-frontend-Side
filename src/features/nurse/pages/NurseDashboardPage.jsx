@@ -168,12 +168,17 @@ export default function NurseDashboardPage() {
   );
 
   const columns = useMemo(() => [
-    { header: 'Patient ID', render: (row) => formatPatientIdDisplay(row) },
+    {
+      header: 'Patient ID',
+      render: (row) => (
+        <span className="nurse-dashboard-row__id">{formatPatientIdDisplay(row)}</span>
+      ),
+    },
     {
       header: 'Patient Name',
       render: (row) => (
         <span className="nurse-dashboard-page__patient-cell">
-          <span>{row.patient_name}</span>
+          <span className="nurse-dashboard-row__name">{row.patient_name}</span>
           {listMode === 'all' && row.is_allocated && (
             <span className="nurse-badge nurse-badge--allocated">Allocated</span>
           )}
@@ -188,57 +193,89 @@ export default function NurseDashboardPage() {
       render: (row) => {
         const ward = String(row.ward_name ?? '').trim();
         const bed = String(row.bed_number ?? '').trim();
-        if (ward && bed) return `${ward} / ${bed}`;
-        return ward || bed || '—';
+        if (!ward && !bed) return '—';
+        return (
+          <span className="nurse-dashboard-row__location">
+            {ward ? <span className="nurse-dashboard-row__ward">{ward}</span> : null}
+            {bed ? <span className="nurse-dashboard-row__bed">{bed}</span> : null}
+          </span>
+        );
       },
     },
-    { header: 'Doctor', render: (row) => row.doctor_name?.trim() || '—' },
-    { header: 'Department', render: (row) => row.department || '—' },
+    {
+      header: 'Doctor',
+      render: (row) => (
+        <span className="nurse-dashboard-row__doctor">{row.doctor_name?.trim() || '—'}</span>
+      ),
+    },
+    {
+      header: 'Department',
+      render: (row) => {
+        const department = String(row.department ?? '').trim();
+        if (!department) return '—';
+        return <span className="nurse-dashboard-row__dept">{department}</span>;
+      },
+    },
     {
       header: 'Pending Medicines',
-      render: (row) => (row.pending_medications > 0 ? row.pending_medications : '—'),
+      render: (row) => (
+        row.pending_medications > 0 ? (
+          <span className="nurse-dashboard-row__pending">{row.pending_medications}</span>
+        ) : (
+          <span className="nurse-dashboard-row__pending nurse-dashboard-row__pending--none">None</span>
+        )
+      ),
     },
     {
       header: 'Actions',
-      render: (row) => (
-        <div className="nurse-table__actions nurse-dashboard-page__actions">
-          <NursePermissionButton
-            allowed={canCreateVitals}
-            className="nurse-dashboard-page__action-btn nurse-dashboard-page__action-btn--vitals"
-            onClick={() => {
-              const url = buildNurseVitalsUrl(row);
-              if (url) navigate(url);
-            }}
-          >
-            Vitals
-          </NursePermissionButton>
-          <NursePermissionButton
-            allowed={canCreateNotes}
-            className="nurse-dashboard-page__action-btn nurse-dashboard-page__action-btn--note"
-            onClick={() => {
-              const url = buildNurseNotesUrl(row);
-              if (url) navigate(url);
-            }}
-          >
-            Note
-          </NursePermissionButton>
-          <NursePermissionButton
-            allowed={canViewMedication}
-            className="nurse-dashboard-page__action-btn nurse-dashboard-page__action-btn--meds"
-            onClick={() => {
-              if (row.patient_id == null) return;
-              navigate(`/nurse/medications/patient/${row.patient_id}`, {
-                state: {
-                  backTo: ROUTES.NURSE_DASHBOARD,
-                  medicineCount: Number(row.pending_medications) || 0,
-                },
-              });
-            }}
-          >
-            Meds
-          </NursePermissionButton>
-        </div>
-      ),
+      render: (row) => {
+        const vitalsDone = Boolean(row.has_vitals);
+        const notesDone = Boolean(row.has_notes);
+        const careDone = vitalsDone && notesDone;
+        return (
+          <div className="nurse-table__actions nurse-dashboard-page__actions">
+            {!vitalsDone ? (
+              <NursePermissionButton
+                allowed={canCreateVitals}
+                className="nurse-dashboard-page__action-btn nurse-dashboard-page__action-btn--vitals"
+                onClick={() => {
+                  const url = buildNurseVitalsUrl(row);
+                  if (url) navigate(url);
+                }}
+              >
+                Vitals
+              </NursePermissionButton>
+            ) : null}
+            {!notesDone ? (
+              <NursePermissionButton
+                allowed={canCreateNotes}
+                className="nurse-dashboard-page__action-btn nurse-dashboard-page__action-btn--note"
+                onClick={() => {
+                  const url = buildNurseNotesUrl(row);
+                  if (url) navigate(url);
+                }}
+              >
+                Note
+              </NursePermissionButton>
+            ) : null}
+            <NursePermissionButton
+              allowed={canViewMedication}
+              className="nurse-dashboard-page__action-btn nurse-dashboard-page__action-btn--meds"
+              onClick={() => {
+                if (row.patient_id == null) return;
+                navigate(`/nurse/medications/patient/${row.patient_id}`, {
+                  state: {
+                    backTo: ROUTES.NURSE_DASHBOARD,
+                    medicineCount: Number(row.pending_medications) || 0,
+                  },
+                });
+              }}
+            >
+              {careDone ? 'Update Med' : 'Meds'}
+            </NursePermissionButton>
+          </div>
+        );
+      },
     },
   ], [
     navigate,

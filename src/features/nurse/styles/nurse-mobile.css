@@ -134,6 +134,11 @@
     align-items: stretch;
   }
 
+  .nurse-layout .nurse-scope-bar__summary {
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+
   .nurse-layout .nurse-kpi-grid {
     grid-template-columns: 1fr;
   }

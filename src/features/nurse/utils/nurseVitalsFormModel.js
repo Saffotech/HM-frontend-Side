@@ -7,29 +7,32 @@ import {
   Thermometer,
   Wind,
 } from 'lucide-react';
+import { splitBloodPressure, toVitalsApiNumbers } from '@/features/nurse/utils/vitalSignsValidation';
 
 const CUSTOM_VITALS_MARKER = '__custom_vitals__';
 
 export const VITAL_FIELDS = [
   { key: 'temperature', label: 'Temperature (°F)', icon: Thermometer, accent: 'rose', inputMode: 'decimal', placeholder: 'e.g. 98.6' },
-  { key: 'blood_pressure', label: 'Blood Pressure', icon: Activity, accent: 'blue', inputMode: 'numeric', placeholder: 'e.g. 120/80' },
+  { key: 'blood_pressure', label: 'Blood Pressure', icon: Activity, accent: 'blue', inputMode: 'numeric', placeholder: '120/80' },
   { key: 'heart_rate', label: 'Heart Rate (BPM)', icon: Heart, accent: 'red', inputMode: 'numeric', placeholder: 'e.g. 72' },
   { key: 'respiratory_rate', label: 'Respiratory Rate (/min)', icon: Wind, accent: 'teal', inputMode: 'numeric', placeholder: 'e.g. 16' },
   { key: 'oxygen_saturation', label: 'SpO₂ (%)', icon: Droplets, accent: 'sky', inputMode: 'numeric', min: 0, max: 100, placeholder: 'e.g. 98' },
-  { key: 'blood_sugar', label: 'Blood Sugar (mg/dL)', icon: Droplets, accent: 'amber', inputMode: 'numeric', placeholder: 'e.g. 110' },
+  { key: 'blood_sugar', label: 'Blood Sugar (mg/dL)', icon: Droplets, accent: 'amber', inputMode: 'decimal', placeholder: 'e.g. 110' },
   { key: 'weight', label: 'Weight (kg)', icon: Scale, accent: 'slate', inputMode: 'decimal', placeholder: 'e.g. 70' },
-  { key: 'pain_level', label: 'Pain Level', icon: Stethoscope, accent: 'purple', type: 'range', min: 0, max: 10 },
+  { key: 'pain_level', label: 'Pain Level (0–10)', icon: Stethoscope, accent: 'purple', inputMode: 'numeric', placeholder: '0–10' },
 ];
 
 export const INITIAL_VITALS_FORM = {
   temperature: '',
   blood_pressure: '',
+  bp_systolic: '',
+  bp_diastolic: '',
   heart_rate: '',
   respiratory_rate: '',
   oxygen_saturation: '',
   blood_sugar: '',
   weight: '',
-  pain_level: 0,
+  pain_level: '',
   customVitals: [],
 };
 
@@ -66,14 +69,7 @@ export function decodeCustomVitals(observationNotes) {
 
 export function buildVitalsPayload(form, { appointmentId, patientId } = {}) {
   const payload = {
-    temperature: form.temperature ? Number(form.temperature) : null,
-    blood_pressure: form.blood_pressure || null,
-    heart_rate: form.heart_rate ? Number(form.heart_rate) : null,
-    respiratory_rate: form.respiratory_rate ? Number(form.respiratory_rate) : null,
-    oxygen_saturation: form.oxygen_saturation ? Number(form.oxygen_saturation) : null,
-    blood_sugar: form.blood_sugar ? Number(form.blood_sugar) : null,
-    weight: form.weight ? Number(form.weight) : null,
-    pain_level: Number(form.pain_level),
+    ...toVitalsApiNumbers(form),
     observation_notes: encodeCustomVitals(form.customVitals),
   };
 
@@ -84,15 +80,19 @@ export function buildVitalsPayload(form, { appointmentId, patientId } = {}) {
 }
 
 export function vitalsToForm(vital) {
+  const bloodPressure = vital.blood_pressure ?? '';
+  const bp = splitBloodPressure(bloodPressure);
   return {
     temperature: vital.temperature ?? '',
-    blood_pressure: vital.blood_pressure ?? '',
+    blood_pressure: bloodPressure,
+    bp_systolic: bp.systolic,
+    bp_diastolic: bp.diastolic,
     heart_rate: vital.heart_rate ?? '',
     respiratory_rate: vital.respiratory_rate ?? '',
     oxygen_saturation: vital.oxygen_saturation ?? '',
     blood_sugar: vital.blood_sugar ?? '',
     weight: vital.weight ?? '',
-    pain_level: vital.pain_level ?? 0,
+    pain_level: vital.pain_level ?? '',
     customVitals: decodeCustomVitals(vital.observation_notes),
   };
 }

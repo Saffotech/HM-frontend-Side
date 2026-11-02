@@ -193,6 +193,7 @@
   .doctor-shell .doc-patient-filters--pill .doc-patient-filters__field select,
   .doctor-shell .doc-patient-filters--pill .doc-patient-filters__field input,
   .doctor-shell .doc-patient-filters--pill .doc-patient-filters__reset,
+  .doctor-shell .doc-dashboard-ipd-dates__input,
   .doctor-shell .doc-dashboard-ipd-dates__field input,
   .doctor-shell .doc-week-date-picker__date,
   .doctor-shell .doc-queue-card__patient-search-input {

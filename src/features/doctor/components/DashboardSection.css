@@ -90,13 +90,23 @@
   color: var(--color-text-muted);
 }
 
-.doc-dashboard-ipd-dates__field input{
-  min-height: 2rem;
-  padding: 0.3rem 0.45rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font: inherit;
+.doc-dashboard-ipd-dates__input{
+  width: 10.25rem;
+}
+
+.doc-dashboard-ipd-dates__input .date-input__text{
+  height: 2rem;
+  padding: 0 0.5rem;
   font-size: 0.8125rem;
+}
+
+.doc-dashboard-ipd-dates__input .date-input__calendar-btn{
+  width: 2rem;
+  height: 2rem;
+}
+
+.doc-dashboard-ipd-dates__input--invalid .date-input__wrap{
+  border-color: var(--color-danger, #b42318);
 }
 
 .doc-dashboard-ipd-dates__error{

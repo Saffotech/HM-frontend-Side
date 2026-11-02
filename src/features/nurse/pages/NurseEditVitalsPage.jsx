@@ -5,6 +5,7 @@ import NurseLayout from '@/features/nurse/components/NurseLayout';
 import NurseHistoryFilter from '@/shared/components/clinical/NurseHistoryFilter';
 import NurseVitalsFormFields from '@/features/nurse/components/NurseVitalsFormFields';
 import { buildVitalsPayload, vitalsToForm } from '@/features/nurse/utils/nurseVitalsFormModel';
+import { isVitalsFormValid } from '@/features/nurse/utils/vitalSignsValidation';
 import { useNursePermission } from '@/features/nurse/hooks/useNursePermission';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { QueryFeedback } from '@/shared/components/common';
@@ -71,6 +72,8 @@ export default function NurseEditVitalsPage() {
 
   const [selectedHistoryId, setSelectedHistoryId] = useState('');
   const [form, setForm] = useState(null);
+  const [showVitalErrors, setShowVitalErrors] = useState(false);
+  const vitalsValid = form ? isVitalsFormValid(form) : false;
 
   const activeHistoryId = useMemo(() => {
     if (!historyItems.length) return '';
@@ -118,6 +121,7 @@ export default function NurseEditVitalsPage() {
   useEffect(() => {
     if (activeSnapshot) {
       setForm(vitalsToForm(activeSnapshot));
+      setShowVitalErrors(false);
     }
   }, [activeSnapshot]);
 
@@ -127,6 +131,10 @@ export default function NurseEditVitalsPage() {
 
   const onSubmit = (e) => {
     e.preventDefault();
+    if (!isVitalsFormValid(form)) {
+      setShowVitalErrors(true);
+      return;
+    }
     if (!canUpdateVitals) {
       toast.error('You do not have permission to update vitals.');
       return;
@@ -209,12 +217,17 @@ export default function NurseEditVitalsPage() {
               <section className="nurse-vital-detail__section">
                 <h2 className="nurse-vital-detail__section-title">Update Vital Signs</h2>
                 <form className="nurse-clinical-panel nurse-clinical-panel--compact nurse-card nurse-card--padded" onSubmit={onSubmit}>
-                  <NurseVitalsFormFields form={form} setForm={setForm} />
+                  <NurseVitalsFormFields
+                    form={form}
+                    setForm={setForm}
+                    showAllErrors={showVitalErrors}
+                    resetKey={activeHistoryId}
+                  />
                   <div className="nurse-form-actions">
                     <button type="button" className="nurse-btn nurse-btn--secondary" onClick={() => navigate(-1)}>
                       Cancel
                     </button>
-                    <button type="submit" className="nurse-btn nurse-btn--primary" disabled={updateMut.isPending}>
+                    <button type="submit" className="nurse-btn nurse-btn--primary" disabled={!vitalsValid || updateMut.isPending}>
                       {updateMut.isPending ? 'Updating…' : 'Update Vitals'}
                     </button>
                   </div>

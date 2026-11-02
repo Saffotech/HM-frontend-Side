@@ -46,7 +46,7 @@ import {
 
 import { findQueueRowForAppointment } from '@/features/doctor/utils/queueWorkflow';
 
-import { Avatar } from '@/shared/components/common';
+import { Avatar, DateInput } from '@/shared/components/common';
 import InlineApiError from '@/shared/components/errors/InlineApiError';
 import { formatPatientAge } from '@/features/doctor/utils/formatPatientAge';
 import Skeleton from '@/shared/components/common/Skeleton';
@@ -681,28 +681,28 @@ const [dateRangeError, setDateRangeError] = useState('');
 
   const ipdDateFilters = (
     <div className="doc-dashboard-ipd-dates">
-      <label className="doc-dashboard-ipd-dates__field">
+      <div className="doc-dashboard-ipd-dates__field">
         <span>From</span>
-        <input
-          type="date"
+        <DateInput
+          className={`doc-dashboard-ipd-dates__input${dateRangeError ? ' doc-dashboard-ipd-dates__input--invalid' : ''}`}
           value={ipdFromDate}
           max={ipdToDate || undefined}
           onChange={(e) => handleIpdFromDate(e.target.value)}
           aria-label="Admit date from"
-          aria-invalid={Boolean(dateRangeError)}
+          placeholder="DD/MM/YYYY"
         />
-      </label>
-      <label className="doc-dashboard-ipd-dates__field">
+      </div>
+      <div className="doc-dashboard-ipd-dates__field">
         <span>To</span>
-        <input
-          type="date"
+        <DateInput
+          className={`doc-dashboard-ipd-dates__input${dateRangeError ? ' doc-dashboard-ipd-dates__input--invalid' : ''}`}
           value={ipdToDate}
           min={ipdFromDate || undefined}
           onChange={(e) => handleIpdToDate(e.target.value)}
           aria-label="Admit date to"
-          aria-invalid={Boolean(dateRangeError)}
+          placeholder="DD/MM/YYYY"
         />
-      </label>
+      </div>
       {hasIpdDateFilter ? (
         <button
           type="button"
