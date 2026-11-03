@@ -41,7 +41,10 @@ import {
 } from '@/shared/components/common';
 
 import { ROUTES } from '@/shared/constants';
-import { filterHospitalStaffRecords, filterHospitalRoleRecords } from '@/features/manager/utils/hospitalManagerRoles';
+import {
+  filterManagerRoleRecords,
+  filterManagerStaffRecords,
+} from '@/features/manager/utils/hospitalManagerRoles';
 
 
 
@@ -139,7 +142,7 @@ export default function StaffListPage() {
 
 
 
-  const staff = filterHospitalStaffRecords(data?.staff ?? []);
+  const staff = filterManagerStaffRecords(data?.staff ?? []);
 
   const total = data?.total ?? 0;
 
@@ -157,7 +160,7 @@ export default function StaffListPage() {
 
       { value: 'all', label: 'All roles' },
 
-      ...(filterHospitalRoleRecords(roles)?.map((role) => ({
+      ...(filterManagerRoleRecords(roles)?.map((role) => ({
 
         value: String(role.id),
 
@@ -471,5 +474,4 @@ export default function StaffListPage() {
   );
 
 }
-
 

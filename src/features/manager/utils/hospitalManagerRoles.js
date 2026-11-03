@@ -88,14 +88,28 @@ export function isPlatformOrganizationRole(roleName) {
   return PLATFORM_ROLES.has(roleName);
 }
 
+export function isManagerManagedStaffRole(roleName) {
+  return roleName !== 'admin' && !isPlatformOrganizationRole(roleName);
+}
+
 export function filterHospitalStaffRecords(staff) {
   if (!staff?.length) return [];
   return staff.filter((user) => !isPlatformOrganizationRole(user?.role_name || user?.role));
 }
 
+export function filterManagerStaffRecords(staff) {
+  if (!staff?.length) return [];
+  return staff.filter((user) => isManagerManagedStaffRole(user?.role_name || user?.role));
+}
+
 export function filterHospitalRoleRecords(roles) {
   if (!roles?.length) return [];
   return roles.filter((role) => !isPlatformOrganizationRole(role?.name));
+}
+
+export function filterManagerRoleRecords(roles) {
+  if (!roles?.length) return [];
+  return roles.filter((role) => isManagerManagedStaffRole(role?.name));
 }
 
 /** Organization actors whose activity must not appear on the hospital audit log. */

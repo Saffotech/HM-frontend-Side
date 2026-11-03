@@ -26,7 +26,10 @@ import {
 } from '@/shared/hooks/queries/useAdminQuery';
 import { Button, ConfirmDialog, Input, Label, QueryFeedback, Select } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
-import { filterHospitalAdminRegisterRoles } from '@/features/manager/utils/hospitalManagerRoles';
+import {
+  filterHospitalAdminRegisterRoles,
+  isManagerManagedStaffRole,
+} from '@/features/manager/utils/hospitalManagerRoles';
 import { toast } from '@/shared/utils/toast';
 import { ensureLabTechDepartmentId } from '@/features/manager/utils/ensureLabTechDepartment';
 import {
@@ -148,6 +151,7 @@ export default function StaffDetailPage() {
   const selectedRoleName = selectedRole?.name || user?.role_name;
   const departmentRequired = roleRequiresDepartment(selectedRoleName);
   const isActive = user?.is_active !== false;
+  const canManageAccount = isManagerManagedStaffRole(user?.role_name || user?.role);
   const displayName = staffName(user) || 'Staff Details';
 
   const roleOptions = useMemo(
@@ -252,7 +256,7 @@ export default function StaffDetailPage() {
     <ManagerLayout pageTitle={displayName}>
       <div className="admin-page admin-panel-staff-detail-page staff-detail-page">
         <ManagerBackBar onBack={() => navigate(ROUTES.MANAGER_STAFF)} label="Back to staff">
-          {user && !editing ? (
+          {user && !editing && canManageAccount ? (
             <div className="admin-panel-staff-detail__toolbar-actions">
               <Button
                 size="sm"
@@ -285,7 +289,7 @@ export default function StaffDetailPage() {
               </Button>
             </div>
           ) : null}
-          {editing ? (
+          {editing && canManageAccount ? (
             <div className="admin-panel-staff-detail__toolbar-actions">
               <Button
                 size="sm"
@@ -612,7 +616,7 @@ export default function StaffDetailPage() {
       </div>
 
       <ConfirmDialog
-        isOpen={Boolean(confirm)}
+        isOpen={Boolean(confirm) && canManageAccount}
         title="Update account status"
         message={`${isActive ? 'Deactivate' : 'Activate'} ${displayName}?`}
         confirmLabel="Confirm"

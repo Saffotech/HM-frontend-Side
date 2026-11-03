@@ -57,7 +57,7 @@ export default function DepartmentListPage() {
 
   return (
     <ManagerLayout pageTitle="Departments">
-      <div className="admin-page">
+      <div className="admin-page admin-page--departments">
         <ManagerPageHeader
           eyebrow="Organization"
           title="Departments"
@@ -193,4 +193,3 @@ export default function DepartmentListPage() {
     </ManagerLayout>
   );
 }
-

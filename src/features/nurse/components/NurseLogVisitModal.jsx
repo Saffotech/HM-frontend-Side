@@ -64,6 +64,9 @@ export default function NurseLogVisitModal({ open, onClose, initialPatient = nul
     return all.filter((doc) => doc.department === department);
   }, [doctorsData, department]);
 
+  const minVisitedAt = toLocalDatetimeValue(initialPatient?.admitted_at);
+  const maxVisitedAt = toLocalDatetimeValue(new Date());
+
   const handleSubmit = async () => {
     if (!patientId) {
       toast.error('Please select a patient');
@@ -77,11 +80,27 @@ export default function NurseLogVisitModal({ open, onClose, initialPatient = nul
       toast.error('Please set the visit time');
       return;
     }
+    const visitTime = new Date(visitedAt);
+    if (Number.isNaN(visitTime.getTime())) {
+      toast.error('Please enter a valid visit time');
+      return;
+    }
+    if (visitTime > new Date()) {
+      toast.error('Visit time cannot be in the future');
+      return;
+    }
+    const admissionTime = initialPatient?.admitted_at
+      ? new Date(initialPatient.admitted_at)
+      : null;
+    if (admissionTime && visitTime < admissionTime) {
+      toast.error('Visit time cannot be before the patient admission');
+      return;
+    }
 
     const payload = {
       patient_id: Number(patientId),
       doctor_id: Number(doctorId),
-      visited_at: new Date(visitedAt).toISOString(),
+      visited_at: visitTime.toISOString(),
       notes: notes.trim() || null,
     };
 
@@ -153,6 +172,8 @@ export default function NurseLogVisitModal({ open, onClose, initialPatient = nul
             className="nurse-input"
             value={visitedAt}
             onChange={(e) => setVisitedAt(e.target.value)}
+            min={minVisitedAt || undefined}
+            max={maxVisitedAt}
             disabled={createVisit.isPending}
           />
         </div>

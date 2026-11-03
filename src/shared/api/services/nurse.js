@@ -356,14 +356,7 @@ export async function getPatientMedications(patientId, token) {
   const id = Number(patientId);
   const historyPatientKey = Number.isFinite(id) && id >= 1 ? id : patientId;
 
-  let rawMeds = null;
-  try {
-    rawMeds = await nurseApi.getPatientMedications(patientId, token);
-  } catch (err) {
-    // 404 Prescription not found — still try other sources so the page is not empty.
-    if (err?.status !== 404) throw err;
-    rawMeds = null;
-  }
+  const rawMeds = await nurseApi.getPatientMedications(patientId, token);
 
   let historyRows = [];
   try {

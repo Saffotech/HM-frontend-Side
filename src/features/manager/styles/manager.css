@@ -42,6 +42,14 @@
   max-width: 1440px;
 }
 
+.admin-page--departments {
+  gap: 0.5rem;
+}
+
+.admin-page--departments > .ui-page-header {
+  margin-bottom: 0;
+}
+
 .admin-page--compact {
   gap: 0.75rem;
 }
@@ -1332,11 +1340,28 @@
     box-shadow var(--admin-transition);
 }
 
-.admin-quick-action:hover {
+.manager-shell .admin-quick-action,
+.manager-shell .admin-quick-action:hover,
+.manager-shell .admin-quick-action:focus,
+.manager-shell .admin-quick-action:active {
+  text-decoration: none;
+}
+
+.manager-shell .admin-quick-action:hover,
+.manager-shell .admin-quick-action:focus-visible {
   border-color: #cbd5e1;
   background: #f8fafc;
   transform: translateX(2px);
   box-shadow: var(--admin-shadow-sm);
+}
+
+.manager-shell .admin-quick-action:focus-visible {
+  outline: 2px solid var(--admin-primary);
+  outline-offset: 2px;
+}
+
+.manager-shell .admin-quick-action:active {
+  transform: translateX(2px) scale(0.99);
 }
 
 .admin-quick-action__icon {
@@ -1394,6 +1419,15 @@
 .admin-quick-action__arrow {
   color: var(--admin-text-soft);
   flex-shrink: 0;
+  transition:
+    color var(--admin-transition),
+    transform var(--admin-transition);
+}
+
+.manager-shell .admin-quick-action:hover .admin-quick-action__arrow,
+.manager-shell .admin-quick-action:focus-visible .admin-quick-action__arrow {
+  color: var(--admin-primary);
+  transform: translateX(2px);
 }
 
 .admin-role-breakdown {
