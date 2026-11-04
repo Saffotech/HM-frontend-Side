@@ -353,6 +353,8 @@ export default function StaffListPage() {
 
                         <tr>
 
+                          <th>Employee ID</th>
+
                           <th>Staff member</th>
 
                           <th>Role</th>
@@ -377,9 +379,16 @@ export default function StaffListPage() {
 
                             <tr key={member.id}>
 
+                              <td className="admin-table__muted" data-label="Employee ID">
+                                {member.employee_id || '—'}
+                              </td>
+
                               <td data-label="Staff member">
 
-                                <ManagerUserCell name={fullName} email={member.email} />
+                                <ManagerUserCell
+                                  name={fullName}
+                                  email={member.email}
+                                />
 
                               </td>
 
@@ -474,4 +483,3 @@ export default function StaffListPage() {
   );
 
 }
-

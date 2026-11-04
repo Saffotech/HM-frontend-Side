@@ -68,6 +68,12 @@ export function isLabOrRadDepartment(dept) {
   return isLabOrRadCode(dept);
 }
 
+export function isLabDepartment(dept) {
+  if (dept?.kind === 'lab') return true;
+  if (dept?.kind === 'doctor') return false;
+  return isLabOrRadDepartment(dept);
+}
+
 /** Clinical visit departments — hide Laboratory and Radiology. */
 export function filterClinicalDepartments(departments = []) {
   return departments.filter((d) => !isLabOrRadDepartment(d));
