@@ -169,7 +169,9 @@ export default function StaffListPage() {
             ? 'OPD Billing'
             : role.name === 'ipd'
               ? 'IPD'
-              : role.name.replace(/_/g, ' '),
+              : role.name
+                  .replace(/_/g, ' ')
+                  .replace(/\b\w/g, (letter) => letter.toUpperCase()),
 
       })) ?? []),
 
