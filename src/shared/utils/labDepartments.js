@@ -75,12 +75,16 @@ export function filterClinicalDepartments(departments = []) {
 
 /** Staff register: doctors get clinical depts only (no LAB/RAD). */
 export function filterDoctorStaffDepartments(departments = []) {
-  return filterClinicalDepartments(departments);
+  return filterClinicalDepartments(
+    asDepartmentList(departments).filter((department) => department?.is_active !== false),
+  );
 }
 
 /** Lab technicians may only be assigned Laboratory or Radiology. */
 export function filterLabTechDepartments(departments = []) {
-  return asDepartmentList(departments).filter(isLabOrRadDepartment);
+  return asDepartmentList(departments).filter(
+    (department) => department?.is_active !== false && isLabOrRadDepartment(department),
+  );
 }
 
 export function resolveLabDepartmentId(departments, code) {
@@ -222,18 +226,12 @@ export function departmentOptionsForRole(departments = [], roleName) {
   return [];
 }
 
-/** Fixed Lab Technician department dropdown: Laboratory | Radiology. */
-export const LAB_TECH_DEPARTMENT_OPTIONS = [
-  { value: LAB_DEPT_CODE.LAB, label: 'Laboratory' },
-  { value: LAB_DEPT_CODE.RAD, label: 'Radiology' },
-];
-
 export function staffDepartmentSelectOptions(departments = [], roleName) {
   if (isLabTechnicianRole(roleName)) {
-    return LAB_TECH_DEPARTMENT_OPTIONS.map(({ value: code, label }) => {
-      const id = resolveLabDepartmentId(departments, code);
-      return { value: id != null ? String(id) : code, label };
-    });
+    return filterLabTechDepartments(departments).map((department) => ({
+      value: String(department.id),
+      label: labDepartmentLabel(department),
+    }));
   }
   return departmentOptionsForRole(departments, roleName).map((dept) => ({
     value: String(dept.id),
