@@ -168,6 +168,7 @@ export default function NurseDoctorVisitsPage() {
                 setLogPatient({
                   patient_id: row.patient_id,
                   patient_name: row.patient_name,
+                  admitted_at: row.admitted_at,
                 })
               }
               aria-label={`Log visit for ${row.patient_name || 'patient'}`}

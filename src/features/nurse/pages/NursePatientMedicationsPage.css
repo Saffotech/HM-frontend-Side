@@ -6,6 +6,33 @@
   min-width: 0;
 }
 
+.nurse-patient-meds-page__not-found {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 38rem;
+  margin: 3rem auto;
+  padding: 2.5rem;
+  border: 1px solid #fecaca;
+  border-radius: 14px;
+  background: #fff;
+  color: #b91c1c;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.nurse-patient-meds-page__not-found h1 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.35rem;
+}
+
+.nurse-patient-meds-page__not-found p {
+  margin: 0 0 0.5rem;
+  color: #64748b;
+}
+
 /* —— Header —— */
 .nurse-patient-meds-page__header {
   display: flex;
@@ -209,7 +236,7 @@
 }
 
 .nurse-patient-meds-page__table .nurse-table {
-  table-layout: auto;
+  table-layout: fixed;
   width: 100%;
   min-width: 58rem;
   border-collapse: separate;
@@ -278,24 +305,11 @@
 
 .nurse-patient-meds-page__table .nurse-table th:nth-child(7),
 .nurse-patient-meds-page__table .nurse-table td:nth-child(7) {
-  max-width: 12rem;
-  white-space: normal;
+  width: 18%;
 }
 
-.nurse-patient-meds__instruction {
-  display: block;
-  max-width: 11rem;
+.nurse-patient-meds-page__table .nurse-table td:nth-child(7) {
   white-space: normal;
-  overflow-wrap: anywhere;
-  color: #334155;
-}
-
-.nurse-patient-meds__instruction-modal-text {
-  margin: 0;
-  color: #334155;
-  font-size: 0.9375rem;
-  line-height: 1.55;
-  white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
@@ -451,63 +465,11 @@
   background: var(--color-primary-light, #eff6ff);
 }
 
-.nurse-patient-meds__last-admin-row--status-delayed {
-  background: #fffbeb;
-  border-color: #fde68a;
-}
-
-.nurse-patient-meds__last-admin-row--status-delayed:hover {
-  background: #fef3c7;
-  border-color: #fcd34d;
-}
-
-.nurse-patient-meds__last-admin-row--status-delayed .nurse-patient-meds__last-admin-icon {
-  color: #b45309;
-  background: #fef3c7;
-}
-
-.nurse-patient-meds__last-admin-row--status-missed {
-  background: #fef2f2;
-  border-color: #fecaca;
-}
-
-.nurse-patient-meds__last-admin-row--status-missed:hover {
-  background: #fee2e2;
-  border-color: #fca5a5;
-}
-
-.nurse-patient-meds__last-admin-row--status-missed .nurse-patient-meds__last-admin-icon {
-  color: #b91c1c;
-  background: #fee2e2;
-}
-
-.nurse-patient-meds__last-admin-row--status-refused {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-}
-
-.nurse-patient-meds__last-admin-row--status-refused:hover {
-  background: #f1f5f9;
-  border-color: #94a3b8;
-}
-
-.nurse-patient-meds__last-admin-row--status-refused .nurse-patient-meds__last-admin-icon {
-  color: #475569;
-  background: #e2e8f0;
-}
-
 .nurse-patient-meds__last-admin-content {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
   min-width: 0;
-}
-
-.nurse-patient-meds__last-admin-label-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem;
 }
 
 .nurse-patient-meds__last-admin-label {
@@ -571,25 +533,6 @@
   border-radius: 9px;
   border-color: #e2e8f0;
   background: #fff;
-}
-
-.nurse-patient-meds-admin-form__datetime.field {
-  gap: 0;
-}
-
-.nurse-patient-meds-admin-form__datetime .date-input__wrap {
-  border-radius: 9px;
-  border-color: #e2e8f0;
-  background: #fff;
-}
-
-.nurse-patient-meds-admin-form__datetime .date-input__text,
-.nurse-patient-meds-admin-form__datetime .date-input__calendar-btn {
-  height: 2.375rem;
-}
-
-.nurse-patient-meds-admin-form__datetime .date-input__calendar-btn {
-  width: 2.375rem;
 }
 
 .nurse-patient-meds-admin-form .nurse-input:focus,

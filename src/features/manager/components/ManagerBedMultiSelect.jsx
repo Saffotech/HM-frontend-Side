@@ -148,7 +148,7 @@ export default function ManagerBedMultiSelect({
     onChange([]);
   };
 
-  if (isLoading) {
+  if (isLoading && !showSearch) {
     return <p className="nba-muted">Loading beds…</p>;
   }
 
@@ -239,7 +239,9 @@ export default function ManagerBedMultiSelect({
       </div>
 
       {!beds.length ? (
-        <p className="nba-muted">No beds match the current filters.</p>
+        <p className="nba-muted">
+          {isLoading ? 'Loading beds…' : 'No beds match the current filters.'}
+        </p>
       ) : !filteredBeds.length ? (
         <p className="nba-muted">No beds match this filter.</p>
       ) : (

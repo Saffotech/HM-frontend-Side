@@ -737,9 +737,6 @@ export default function PharmacistProfilePage() {
                 <h3 className="pharmacy-profile-section__title">
                   <Shield size={16} aria-hidden /> Account
                 </h3>
-                <p className="pharmacy-profile-hint">
-                  Employee ID is managed by a manager.
-                </p>
                 <div className="pharmacy-profile-grid">
                   <ReadField label="First name" value={profile.first_name} />
                   <ReadField label="Last name" value={profile.last_name} />

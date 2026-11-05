@@ -165,6 +165,9 @@ export default function NursePatientMedicationsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { canCreateMedication, canUpdateMedication, canViewMedication } = useNursePermissionSet();
+  const isValidPatientId = /^\d+$/.test(String(patientId ?? ''))
+    && Number.isSafeInteger(Number(patientId))
+    && Number(patientId) > 0;
 
   const handleBack = useCallback(() => {
     const backTo = location.state?.backTo;
@@ -232,10 +235,11 @@ export default function NursePatientMedicationsPage() {
     );
   }, [navigate, patientId, location.state]);
   const { data: patientData, isLoading, isError, error, refetch } =
-    useNursePatientMedicationsQuery(patientId);
+    useNursePatientMedicationsQuery(patientId, { enabled: isValidPatientId });
+  const isPatientNotFound = !isValidPatientId || (isError && error?.status === 404);
   const { data: doctorsData } = useNurseActiveDoctorsQuery(
     { page: 1, page_size: 200 },
-    { enabled: Boolean(patientId) },
+    { enabled: isValidPatientId && !isPatientNotFound },
   );
   const doctorDepartmentMap = useMemo(() => {
     const map = new Map();
@@ -450,8 +454,28 @@ export default function NursePatientMedicationsPage() {
 
   return (
     <NurseLayout>
-      <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
+      {isPatientNotFound ? (
         <div className="nurse-page nurse-patient-meds-page">
+          <section className="nurse-patient-meds-page__not-found" role="alert">
+            <AlertCircle size={36} aria-hidden />
+            <h1>Patient Not Found</h1>
+            <p>
+              We couldn&apos;t find a patient with ID {patientId || 'provided'}.
+              Please check the patient ID and try again.
+            </p>
+            <button
+              type="button"
+              className="nurse-btn nurse-btn--secondary"
+              onClick={() => navigate(ROUTES.NURSE_MEDICATIONS)}
+            >
+              <ArrowLeft size={16} aria-hidden />
+              Back to Patients
+            </button>
+          </section>
+        </div>
+      ) : (
+        <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
+          <div className="nurse-page nurse-patient-meds-page">
           {patientData ? (
             <>
               <div className="nurse-vital-detail__top nurse-patient-meds-page__header">
@@ -669,8 +693,9 @@ export default function NursePatientMedicationsPage() {
             onConfirm={handleConfirm}
             onCancel={() => setSelected(null)}
           />
-        </div>
-      </QueryFeedback>
+          </div>
+        </QueryFeedback>
+      )}
     </NurseLayout>
   );
 }

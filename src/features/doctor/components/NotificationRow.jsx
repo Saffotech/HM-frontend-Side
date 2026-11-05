@@ -44,7 +44,14 @@ function formatRelativeTime(iso) {
 export default function NotificationRow({ notification: n, compact, onClick }) {
   // Doctor Phase 2 by Atharva — shared unread helper (API is_read + legacy read)
   const unread = isDoctorNotificationUnread(n);
-  const message = n.message ?? n.body;
+  const isVisitCancelled = n.notification_type === 'NURSE_DOCTOR_VISIT_VOIDED';
+  const title = isVisitCancelled ? 'Doctor visit cancelled' : n.title;
+  const message = isVisitCancelled
+    ? String(n.message ?? n.body ?? '').replace(/\bvoided\b/gi, 'cancelled')
+    : n.message ?? n.body;
+  const notificationType = isVisitCancelled
+    ? 'NURSE DOCTOR VISIT CANCELLED'
+    : String(n.notification_type ?? '').replace(/_/g, ' ');
   const createdAt = n.created_at ?? n.at;
   const kind = TYPE_ICON[n.notification_type] || { icon: Bell, tint: 'doc-notif-icon--muted' };
   const Icon = kind.icon;
@@ -62,7 +69,7 @@ export default function NotificationRow({ notification: n, compact, onClick }) {
       <div style={{ minWidth: 0, flex: 1 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
           <span style={{ fontWeight: 600, fontSize: compact ? '0.8125rem' : '0.875rem' }}>
-            {n.title}
+            {title}
           </span>
           {unread ? (
             <span
@@ -89,7 +96,7 @@ export default function NotificationRow({ notification: n, compact, onClick }) {
           style={{ fontSize: '0.6875rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}
         >
           {n.priority ? <span className={`doc-notif-chip ${priorityClass}`}>{n.priority}</span> : null}
-          {n.notification_type ? <span>{String(n.notification_type).replace(/_/g, ' ')}</span> : null}
+          {n.notification_type ? <span>{notificationType}</span> : null}
           <span>{formatRelativeTime(createdAt)}</span>
         </div>
       </div>

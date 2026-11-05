@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Activity,
+  AlertCircle,
   ArrowLeft,
   FileText,
   FlaskConical,
@@ -50,6 +51,9 @@ export default function NursePatientOverviewPage() {
   const { patientId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const isValidPatientId = /^\d+$/.test(String(patientId ?? ''))
+    && Number.isSafeInteger(Number(patientId))
+    && Number(patientId) > 0;
   const {
     canViewVitals,
     canUpdateVitals,
@@ -94,7 +98,7 @@ export default function NursePatientOverviewPage() {
     refetch: refetchVitals,
   } = useNurseVitalsSearchQuery(
     { patient_id: patientId, page: 1, page_size: 100 },
-    { enabled: Boolean(patientId) && canViewVitals },
+    { enabled: isValidPatientId && canViewVitals },
   );
   const {
     data: notes,
@@ -104,7 +108,7 @@ export default function NursePatientOverviewPage() {
     refetch: refetchNotes,
   } = useNurseNotesSearchQuery(
     { patient_id: patientId },
-    { enabled: Boolean(patientId) && canViewNotes },
+    { enabled: isValidPatientId && canViewNotes },
   );
   const {
     data: labReports,
@@ -114,7 +118,7 @@ export default function NursePatientOverviewPage() {
     refetch: refetchLabReports,
   } = useNurseLabReportsQuery(
     { patient_id: patientId, page: 1, page_size: 20, ...scopeFilters },
-    { enabled: Boolean(patientId) && scopeReady && canViewLabReports },
+    { enabled: isValidPatientId && scopeReady && canViewLabReports },
   );
   const {
     data: meds,
@@ -123,7 +127,7 @@ export default function NursePatientOverviewPage() {
     error: medsError,
     refetch: refetchMeds,
   } = useNursePatientMedicationsQuery(patientId, {
-    enabled: Boolean(patientId) && canViewMedication,
+    enabled: isValidPatientId && canViewMedication,
   });
   const {
     data: medHistory,
@@ -132,7 +136,7 @@ export default function NursePatientOverviewPage() {
     error: historyError,
     refetch: refetchHistory,
   } = useNursePatientMedHistoryQuery(patientId, {
-    enabled: Boolean(patientId) && canViewMedication,
+    enabled: isValidPatientId && canViewMedication,
   });
 
   const {
@@ -140,7 +144,7 @@ export default function NursePatientOverviewPage() {
     isLoading: isDoctorVisitsLoading,
   } = useNurseDoctorVisitsQuery(
     { patient_id: patientId ? Number(patientId) : undefined, page: 1, page_size: 100 },
-    { enabled: Boolean(patientId) && canViewDoctorVisits },
+    { enabled: isValidPatientId && canViewDoctorVisits },
   );
 
   const doctorVisitCount = useMemo(
@@ -173,6 +177,8 @@ export default function NursePatientOverviewPage() {
       admitted_at: bedPatient?.admitted_at ?? null,
     };
   }, [patientId, meds, vitals, notes, bedData?.items]);
+  const isPatientNotFound = !isValidPatientId
+    || (canViewMedication && isMedsError && medsError?.status === 404);
 
   const labReportItems = labReports?.items ?? [];
 
@@ -274,6 +280,26 @@ export default function NursePatientOverviewPage() {
 
   return (
     <NurseLayout>
+      {isPatientNotFound ? (
+        <div className="nurse-page nurse-patient-overview">
+          <section className="nurse-patient-overview__not-found" role="alert">
+            <AlertCircle size={36} aria-hidden />
+            <h1>Patient Not Found</h1>
+            <p>
+              We couldn&apos;t find a patient with ID {patientId || 'provided'}.
+              Please check the patient ID and try again.
+            </p>
+            <button
+              type="button"
+              className="nurse-btn nurse-btn--secondary"
+              onClick={() => navigate(location.state?.backTo || ROUTES.NURSE_QUEUE)}
+            >
+              <ArrowLeft size={16} aria-hidden />
+              Back to Patients
+            </button>
+          </section>
+        </div>
+      ) : (
       <div className="nurse-page nurse-patient-overview">
         <div className="nurse-vital-detail__top">
           <div className="nurse-vital-detail__identity">
@@ -530,6 +556,7 @@ export default function NursePatientOverviewPage() {
           </div>
         </div>
       </div>
+      )}
     </NurseLayout>
   );
 }

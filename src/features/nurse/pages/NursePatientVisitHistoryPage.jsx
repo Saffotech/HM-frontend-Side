@@ -267,6 +267,7 @@ export default function NursePatientVisitHistoryPage() {
         <NurseEditVisitModal
           open={Boolean(editingVisit)}
           visit={editingVisit}
+          admittedAt={patient?.admitted_at}
           onClose={() => setEditingVisit(null)}
         />
       )}

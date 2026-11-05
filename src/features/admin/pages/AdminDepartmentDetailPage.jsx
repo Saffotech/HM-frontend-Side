@@ -14,7 +14,7 @@ import {
   filterDoctorsByDepartment,
   staffDisplayName,
 } from '@/features/admin/utils/departmentDoctors';
-import { isLabOrRadDepartment } from '@/shared/utils/labDepartments';
+import { isLabDepartment } from '@/shared/utils/labDepartments';
 import {
   useAdminDepartmentDetailQuery,
   useUpdateDepartmentMutation,
@@ -50,7 +50,7 @@ export default function AdminDepartmentDetailPage() {
   } = useDepartmentDoctorsData();
   const updateMutation = useUpdateDepartmentMutation();
 
-  const isLabDept = isLabOrRadDepartment(department);
+  const isLabDept = isLabDepartment(department);
   const assignedStaff = useMemo(
     () =>
       filterDoctorsByDepartment(isLabDept ? labTechnicians : doctors, departmentId),

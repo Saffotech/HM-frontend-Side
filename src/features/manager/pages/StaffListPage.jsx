@@ -41,7 +41,10 @@ import {
 } from '@/shared/components/common';
 
 import { ROUTES } from '@/shared/constants';
-import { filterHospitalStaffRecords, filterHospitalRoleRecords } from '@/features/manager/utils/hospitalManagerRoles';
+import {
+  filterManagerRoleRecords,
+  filterManagerStaffRecords,
+} from '@/features/manager/utils/hospitalManagerRoles';
 
 
 
@@ -139,7 +142,7 @@ export default function StaffListPage() {
 
 
 
-  const staff = filterHospitalStaffRecords(data?.staff ?? []);
+  const staff = filterManagerStaffRecords(data?.staff ?? []);
 
   const total = data?.total ?? 0;
 
@@ -157,7 +160,7 @@ export default function StaffListPage() {
 
       { value: 'all', label: 'All roles' },
 
-      ...(filterHospitalRoleRecords(roles)?.map((role) => ({
+      ...(filterManagerRoleRecords(roles)?.map((role) => ({
 
         value: String(role.id),
 
@@ -166,7 +169,9 @@ export default function StaffListPage() {
             ? 'OPD Billing'
             : role.name === 'ipd'
               ? 'IPD'
-              : role.name.replace(/_/g, ' '),
+              : role.name
+                  .replace(/_/g, ' ')
+                  .replace(/\b\w/g, (letter) => letter.toUpperCase()),
 
       })) ?? []),
 
@@ -350,6 +355,8 @@ export default function StaffListPage() {
 
                         <tr>
 
+                          <th>Employee ID</th>
+
                           <th>Staff member</th>
 
                           <th>Role</th>
@@ -374,9 +381,16 @@ export default function StaffListPage() {
 
                             <tr key={member.id}>
 
+                              <td className="admin-table__muted" data-label="Employee ID">
+                                {member.employee_id || '—'}
+                              </td>
+
                               <td data-label="Staff member">
 
-                                <ManagerUserCell name={fullName} email={member.email} />
+                                <ManagerUserCell
+                                  name={fullName}
+                                  email={member.email}
+                                />
 
                               </td>
 
@@ -471,5 +485,3 @@ export default function StaffListPage() {
   );
 
 }
-
-

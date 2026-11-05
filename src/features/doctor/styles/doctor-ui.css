@@ -2016,6 +2016,17 @@
   width: 100%;
   min-width: 0;
   overflow-x: clip;
+  container: doctor-patient-profile / inline-size;
+}
+
+.doctor-shell .doc-patient-profile .doc-profile-panel--consulting .doc-visit-detail-grid{
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+@container doctor-patient-profile (min-width: 760px){
+  .doctor-shell .doc-patient-profile .doc-profile-panel--consulting .doc-visit-detail-grid{
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
 }
 
 .doc-patient-profile .table-wrap{
@@ -2967,6 +2978,19 @@
   max-width: 18rem;
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+.doc-profile-visits-table__cancellation{
+  display: grid;
+  gap: 0.2rem;
+  min-width: 10rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  color: var(--color-danger, #b42318);
+}
+
+.doc-profile-visits-table__cancellation strong{
+  font-weight: 700;
 }
 
 .doc-profile-visits-table__pagination{

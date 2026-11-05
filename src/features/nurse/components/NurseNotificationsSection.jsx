@@ -12,7 +12,7 @@ import {
   useMarkAllNurseNotificationsReadMutation,
   useMarkNurseNotificationReadMutation,
 } from '@/features/nurse/hooks/useNurseNotificationsQuery';
-import { Button, DateInput, EmptyState } from '@/shared/components/common';
+import { Button, EmptyState } from '@/shared/components/common';
 import { NOTIFICATION_MODULE } from '@/shared/notifications/notificationModules';
 import { useNotificationNavigation } from '@/shared/notifications/useNotificationNavigation';
 import { toast } from '@/shared/utils/toast';
@@ -22,7 +22,6 @@ import './NurseNotificationsSection.css';
 
 const TYPE_FILTERS = [
   { value: '', label: 'All types', kind: 'all' },
-  { value: 'EMERGENCY_ALERT', label: 'Emergency', kind: 'type' },
   { value: 'SHIFT_UPDATED', label: 'Shift updated', kind: 'type' },
   { value: 'ADMIN_UPDATE', label: 'Admin', kind: 'type' },
   // Nurse Phase 2 by Atharva — priority options in the same filter dropdown
@@ -192,32 +191,32 @@ export default function NurseNotificationsSection() {
               </option>
             ))}
           </select>
-          <div className="nurse-notif-date">
+          <label className="nurse-notif-date">
             <span className="nurse-notif-date__label">From</span>
-            <DateInput
-              className="nurse-notif-date__picker"
+            <input
+              type="date"
+              className="nurse-notif-date__input"
               value={startDate}
-              max={endDate || undefined}
               onChange={(e) => {
                 setStartDate(e.target.value);
                 setPage(1);
               }}
               aria-label="Start date"
             />
-          </div>
-          <div className="nurse-notif-date">
+          </label>
+          <label className="nurse-notif-date">
             <span className="nurse-notif-date__label">To</span>
-            <DateInput
-              className="nurse-notif-date__picker"
+            <input
+              type="date"
+              className="nurse-notif-date__input"
               value={endDate}
-              min={startDate || undefined}
               onChange={(e) => {
                 setEndDate(e.target.value);
                 setPage(1);
               }}
               aria-label="End date"
             />
-          </div>
+          </label>
           {hasActiveFilters ? (
             <Button
               size="sm"

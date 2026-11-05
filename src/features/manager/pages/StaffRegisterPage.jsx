@@ -58,7 +58,7 @@ export default function StaffRegisterPage() {
     isError: departmentsError,
     error: departmentsQueryError,
     refetch: refetchDepartments,
-  } = useAdminDepartmentsQuery();
+  } = useAdminDepartmentsQuery({ is_active: true });
   const registerMutation = useRegisterStaffMutation();
 
   const selectedRole = roles?.find((r) => String(r.id) === String(form.role_id));

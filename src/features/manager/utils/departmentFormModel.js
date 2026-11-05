@@ -1,4 +1,4 @@
-import { isLabOrRadCode, departmentCode } from '@/shared/utils/labDepartments';
+import { isLabDepartment } from '@/shared/utils/labDepartments';
 
 const EMPTY = {
   name: '',
@@ -14,13 +14,12 @@ export function emptyDepartmentForm() {
 
 export function departmentToForm(department) {
   if (!department) return emptyDepartmentForm();
-  const lab = isLabOrRadCode(departmentCode(department));
   return {
     name: department.name ?? '',
     code: department.code ?? '',
     description: department.description ?? '',
     is_active: department.is_active !== false,
-    kind: lab ? 'lab' : 'doctor',
+    kind: isLabDepartment(department) ? 'lab' : 'doctor',
   };
 }
 
@@ -29,6 +28,7 @@ export function buildDepartmentPayload(form, { includeStatus = false } = {}) {
     name: form.name.trim(),
     code: form.code.trim() || null,
     description: form.description.trim() || null,
+    kind: form.kind,
   };
   if (includeStatus) {
     payload.is_active = Boolean(form.is_active);

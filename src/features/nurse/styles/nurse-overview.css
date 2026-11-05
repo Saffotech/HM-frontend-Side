@@ -17,6 +17,33 @@
   gap: 1.35rem;
 }
 
+.nurse-patient-overview__not-found {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 38rem;
+  margin: 3rem auto;
+  padding: 2.5rem;
+  border: 1px solid #fecaca;
+  border-radius: 16px;
+  background: #fff;
+  color: #b91c1c;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.nurse-patient-overview__not-found h1 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.35rem;
+}
+
+.nurse-patient-overview__not-found p {
+  margin: 0 0 0.5rem;
+  color: #64748b;
+}
+
 /* Header identity */
 .nurse-patient-overview .nurse-vital-detail__top {
   align-items: center;
