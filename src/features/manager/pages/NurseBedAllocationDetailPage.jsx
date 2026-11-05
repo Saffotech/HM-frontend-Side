@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   BedDouble,
   CalendarDays,
+  Clock3,
   Mail,
   Pencil,
   UserRound,
@@ -242,6 +243,21 @@ export default function NurseBedAllocationDetailPage() {
                     <div className="nba-detail-fact">
                       <dt>Email</dt>
                       <dd>{group.nurseEmail || '—'}</dd>
+                    </div>
+                    <div className="nba-detail-fact">
+                      <dt>
+                        <Clock3 size={13} aria-hidden /> Nurse shift
+                      </dt>
+                      <dd>
+                        {[
+                          group.shiftName,
+                          group.shiftStart && group.shiftEnd
+                            ? `${String(group.shiftStart).slice(0, 5)}–${String(group.shiftEnd).slice(0, 5)}`
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ') || '—'}
+                      </dd>
                     </div>
                     <div className="nba-detail-fact">
                       <dt>Assigned from</dt>

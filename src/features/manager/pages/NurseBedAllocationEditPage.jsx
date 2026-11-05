@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   BedDouble,
   CalendarDays,
+  Clock3,
   Pencil,
   Save,
   UserRound,
@@ -313,6 +314,13 @@ export default function NurseBedAllocationEditPage() {
                     <span className="nba-detail-pill">
                       <CalendarDays size={14} aria-hidden />
                       {shiftDate || '—'}
+                    </span>
+                    <span className="nba-detail-pill">
+                      <Clock3 size={14} aria-hidden />
+                      {allocation.shiftName || 'Shift not set'}
+                      {allocation.shiftStart && allocation.shiftEnd
+                        ? ` · ${String(allocation.shiftStart).slice(0, 5)}–${String(allocation.shiftEnd).slice(0, 5)}`
+                        : ''}
                     </span>
                     <span className="nba-detail-pill">
                       <BedDouble size={14} aria-hidden />
