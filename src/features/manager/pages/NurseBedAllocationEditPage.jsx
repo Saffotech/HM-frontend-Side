@@ -51,10 +51,7 @@ export default function NurseBedAllocationEditPage() {
       page: 1,
       page_size: 100,
     };
-  }, [
-    allocation?.nurseId,
-    allocation?.isActive,
-  ]);
+  }, [allocation?.nurseId, allocation?.isActive]);
 
   const {
     data: siblingsData,
@@ -87,6 +84,7 @@ export default function NurseBedAllocationEditPage() {
   }, [siblingRows]);
 
   const [shiftDate, setShiftDate] = useState('');
+  const [assignedUntil, setAssignedUntil] = useState('');
   const [nurseId, setNurseId] = useState('');
   const [bedIds, setBedIds] = useState([]);
   const [notes, setNotes] = useState('');
@@ -102,6 +100,7 @@ export default function NurseBedAllocationEditPage() {
     if (siblingFilters && siblingsData == null) return;
 
     setShiftDate(allocation.shiftDate || '');
+    setAssignedUntil(groupMeta?.assignedUntil || allocation.assignedUntil || '');
     setNurseId(allocation.nurseId != null ? String(allocation.nurseId) : '');
     setNotes(allocation.notes || '');
     setIsActive(Boolean(allocation.isActive));
@@ -119,6 +118,7 @@ export default function NurseBedAllocationEditPage() {
     setHydrated(true);
   }, [
     allocation,
+    groupMeta?.assignedUntil,
     siblingRows,
     siblingsLoading,
     siblingsData,
@@ -198,18 +198,21 @@ export default function NurseBedAllocationEditPage() {
       toast.error('Date and nurse are required');
       return;
     }
+    if (assignedUntil && assignedUntil < shiftDate) {
+      toast.error('Assigned till must be on or after assigned from');
+      return;
+    }
     if (!bedIds.length) {
       toast.error('Select at least one bed');
       return;
     }
 
-    setSaving(true);
     const selected = new Set(bedIds.map(Number));
     const originalBedIds = Object.keys(originalByBedId).map(Number);
     const toRemove = originalBedIds.filter((bedId) => !selected.has(bedId));
     const toKeep = originalBedIds.filter((bedId) => selected.has(bedId));
     const toAdd = [...selected].filter((bedId) => !originalByBedId[bedId]);
-
+    setSaving(true);
     try {
       for (const bedId of toKeep) {
         const allocationId = originalByBedId[bedId];
@@ -219,6 +222,7 @@ export default function NurseBedAllocationEditPage() {
             nurseId,
             bedId,
             shiftDate,
+            assignedUntil,
             notes,
             isActive,
           },
@@ -235,6 +239,7 @@ export default function NurseBedAllocationEditPage() {
           nurseId,
           bedIds: toAdd,
           shiftDate,
+          assignedUntil,
           notes,
         });
         const skipped = res?.skipped ?? 0;
@@ -355,7 +360,21 @@ export default function NurseBedAllocationEditPage() {
                         label="Assigned from"
                         required
                         value={shiftDate}
-                        onChange={(e) => setShiftDate(e.target.value)}
+                        onChange={(e) => {
+                          const next = e.target.value;
+                          setShiftDate(next);
+                          if (assignedUntil && next && assignedUntil < next) {
+                            setAssignedUntil(next);
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="nba-field">
+                      <DateInput
+                        label="Assigned till"
+                        value={assignedUntil}
+                        min={shiftDate || undefined}
+                        onChange={(e) => setAssignedUntil(e.target.value)}
                       />
                     </div>
                     <label className="nba-field">

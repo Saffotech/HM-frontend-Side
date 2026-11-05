@@ -275,4 +275,3 @@ export function formatShiftWithTime(shiftName, shiftStart, shiftEnd) {
   if (start && end) return `${name} (${start}–${end})`;
   return name;
 }
-
