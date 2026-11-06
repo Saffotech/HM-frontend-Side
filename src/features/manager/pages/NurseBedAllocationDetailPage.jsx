@@ -1,8 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   BedDouble,
   CalendarDays,
+  ChevronDown,
+  ChevronUp,
   Clock3,
   Mail,
   Pencil,
@@ -59,6 +61,7 @@ export default function NurseBedAllocationDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { canView, canUpdate } = useAdminBedAllocationPermissions();
+  const [bedsExpanded, setBedsExpanded] = useState(false);
 
   const {
     data,
@@ -184,11 +187,24 @@ export default function NurseBedAllocationDetailPage() {
                 </div>
 
                 <div className="nba-detail-hero__side">
-                  <div className="nba-detail-stat">
+                  <button
+                    type="button"
+                    className="nba-detail-stat nba-detail-stat--toggle"
+                    aria-expanded={bedsExpanded}
+                    aria-controls="allocation-bed-list"
+                    onClick={() => setBedsExpanded((expanded) => !expanded)}
+                  >
                     <span className="nba-detail-stat__label">Total beds</span>
                     <strong className="nba-detail-stat__value">{group.totalBeds}</strong>
-                    <span className="nba-detail-stat__hint">{group.allocatedBedsLabel}</span>
-                  </div>
+                    <span className="nba-detail-stat__hint">
+                      {bedsExpanded ? 'Hide beds' : 'Click to view beds'}
+                    </span>
+                    {bedsExpanded ? (
+                      <ChevronUp className="nba-detail-stat__toggle-icon" size={16} aria-hidden />
+                    ) : (
+                      <ChevronDown className="nba-detail-stat__toggle-icon" size={16} aria-hidden />
+                    )}
+                  </button>
                   {canUpdate ? (
                     <Button
                       className="nba-detail-hero__edit"
@@ -206,7 +222,11 @@ export default function NurseBedAllocationDetailPage() {
               </section>
 
               <div className="nba-detail-layout">
-                <section className="nba-detail-panel">
+                <section
+                  id="allocation-bed-list"
+                  className="nba-detail-panel"
+                  hidden={!bedsExpanded}
+                >
                   <header className="nba-detail-panel__header">
                     <BedDouble size={18} aria-hidden />
                     <div>

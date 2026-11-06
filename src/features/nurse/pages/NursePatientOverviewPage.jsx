@@ -47,6 +47,13 @@ function formatDate(iso) {
   });
 }
 
+function errorMatchesDetail(error, expectedDetail) {
+  const expected = expectedDetail.toLowerCase();
+  return [error?.detail, error?.message].some(
+    (value) => String(value ?? '').trim().toLowerCase() === expected,
+  );
+}
+
 export default function NursePatientOverviewPage() {
   const { patientId } = useParams();
   const navigate = useNavigate();
@@ -177,8 +184,18 @@ export default function NursePatientOverviewPage() {
       admitted_at: bedPatient?.admitted_at ?? null,
     };
   }, [patientId, meds, vitals, notes, bedData?.items]);
+  const isPrescriptionNotFound =
+    canViewMedication &&
+    isMedsError &&
+    medsError?.status === 404 &&
+    errorMatchesDetail(medsError, 'Prescription not found');
   const isPatientNotFound = !isValidPatientId
-    || (canViewMedication && isMedsError && medsError?.status === 404);
+    || (
+      canViewMedication &&
+      isMedsError &&
+      medsError?.status === 404 &&
+      errorMatchesDetail(medsError, 'Patient not found')
+    );
 
   const labReportItems = labReports?.items ?? [];
 
@@ -453,12 +470,16 @@ export default function NursePatientOverviewPage() {
             {activeTab === 'meds' && (
               <QueryFeedback
                 isLoading={isMedsLoading}
-                isError={isMedsError}
-                error={medsError}
+                isError={isMedsError && !isPrescriptionNotFound}
+                error={isPrescriptionNotFound ? null : medsError}
                 onRetry={refetchMeds}
               >
                 {prescriptions.length === 0 ? (
-                  <div className="nurse-patient-overview__empty">No active medications for this patient.</div>
+                  <div className="nurse-patient-overview__empty">
+                    {isPrescriptionNotFound
+                      ? 'No prescription yet.'
+                      : 'No active medications for this patient.'}
+                  </div>
                 ) : (
                   <div className="nurse-patient-overview__table-wrap">
                     <table className="nurse-patient-overview__table nurse-patient-overview__med-table nurse-table--stack">

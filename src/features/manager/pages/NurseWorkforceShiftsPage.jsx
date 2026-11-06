@@ -37,9 +37,23 @@ export default function NurseWorkforceShiftsPage() {
 
   const onCreate = (e) => {
     e.preventDefault();
+    const normalize = (value) => String(value || '').trim().toLowerCase();
+    const name = normalize(form.name);
+    const code = normalize(form.code);
+    const existingShifts = data?.items ?? [];
+    if (existingShifts.some((shift) => normalize(shift.name) === name)) {
+      toast.error('A shift with this name already exists');
+      return;
+    }
+    if (code && existingShifts.some((shift) => normalize(shift.code) === code)) {
+      toast.error('A shift with this code already exists');
+      return;
+    }
     createMut.mutate(
       {
         ...form,
+        name: form.name.trim(),
+        code: form.code.trim(),
         start_time: form.start_time.length === 5 ? `${form.start_time}:00` : form.start_time,
         end_time: form.end_time.length === 5 ? `${form.end_time}:00` : form.end_time,
         grace_minutes: Number(form.grace_minutes) || 15,

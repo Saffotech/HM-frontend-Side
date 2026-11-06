@@ -651,6 +651,34 @@
   min-height: 0;
 }
 
+.nba-detail-stat--toggle {
+  position: relative;
+  width: 100%;
+  padding-right: 2rem;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.nba-detail-stat--toggle:hover {
+  border-color: #9fc9ae;
+  box-shadow: 0 2px 8px rgba(26, 92, 52, 0.08);
+}
+
+.nba-detail-stat--toggle:focus-visible {
+  outline: 2px solid #1a5c34;
+  outline-offset: 2px;
+}
+
+.nba-detail-stat__toggle-icon {
+  position: absolute;
+  right: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #1a5c34;
+}
+
 .nba-detail-stat__value {
   grid-row: 1 / span 2;
   align-self: center;

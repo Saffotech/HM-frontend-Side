@@ -231,10 +231,6 @@ export default function NurseBedAllocationListPage() {
               />
             ) : (
               <>
-                <div className="admin-datatable__summary">
-                  Showing <strong>{items.length}</strong> of <strong>{total}</strong>
-                  {hasFilters ? ' (filtered)' : ''}
-                </div>
                 <div className="nba-table-wrap">
                   <table className="nba-table admin-table--stack">
                     <thead>

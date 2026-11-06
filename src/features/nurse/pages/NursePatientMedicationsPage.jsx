@@ -24,6 +24,13 @@ import './NursePatientMedicationsPage.css';
 const PAGE_SIZE = 10;
 const ACTIONABLE_STATUSES = new Set(['missed', 'delayed']);
 
+function errorMatchesDetail(error, expectedDetail) {
+  const expected = expectedDetail.toLowerCase();
+  return [error?.detail, error?.message].some(
+    (value) => String(value ?? '').trim().toLowerCase() === expected,
+  );
+}
+
 /** Local datetime string for `<input type="datetime-local" />` (YYYY-MM-DDTHH:mm). */
 function toDateTimeLocalValue(date = new Date()) {
   const d = date instanceof Date ? date : new Date(date);
@@ -193,7 +200,26 @@ export default function NursePatientMedicationsPage() {
   }, [navigate, patientId, location.state]);
   const { data: patientData, isLoading, isError, error, refetch } =
     useNursePatientMedicationsQuery(patientId, { enabled: isValidPatientId });
-  const isPatientNotFound = !isValidPatientId || (isError && error?.status === 404);
+  const isPrescriptionNotFound =
+    isError &&
+    error?.status === 404 &&
+    errorMatchesDetail(error, 'Prescription not found');
+  const isPatientNotFound = !isValidPatientId
+    || (
+      isError &&
+      error?.status === 404 &&
+      errorMatchesDetail(error, 'Patient not found')
+    );
+  const patientDataForDisplay = patientData ?? (
+    isPrescriptionNotFound
+      ? {
+          ...location.state?.patient,
+          patient_id: Number(patientId),
+          patient_name: location.state?.patient?.patient_name || 'Patient',
+          prescriptions: [],
+        }
+      : null
+  );
   const { data: doctorsData } = useNurseActiveDoctorsQuery(
     { page: 1, page_size: 200 },
     { enabled: isValidPatientId && !isPatientNotFound },
@@ -219,12 +245,12 @@ export default function NursePatientMedicationsPage() {
   });
 
   const prescriptions = useMemo(
-    () => patientData?.prescriptions ?? [],
-    [patientData?.prescriptions],
+    () => patientDataForDisplay?.prescriptions ?? [],
+    [patientDataForDisplay?.prescriptions],
   );
   const expectedMedicineCount = Math.max(
-    Number(patientData?.expectedMedicineCount) || 0,
-    Number(location.state?.medicineCount) || 0,
+    isPrescriptionNotFound ? 0 : Number(patientDataForDisplay?.expectedMedicineCount) || 0,
+    isPrescriptionNotFound ? 0 : Number(location.state?.medicineCount) || 0,
     prescriptions.length,
   );
 
@@ -415,9 +441,14 @@ export default function NursePatientMedicationsPage() {
           </section>
         </div>
       ) : (
-        <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
+        <QueryFeedback
+          isLoading={isLoading}
+          isError={isError && !isPrescriptionNotFound}
+          error={isPrescriptionNotFound ? null : error}
+          onRetry={refetch}
+        >
           <div className="nurse-page nurse-patient-meds-page">
-          {patientData ? (
+          {patientDataForDisplay ? (
             <>
               <div className="nurse-vital-detail__top nurse-patient-meds-page__header">
                 <div className="nurse-vital-detail__identity">
@@ -425,16 +456,16 @@ export default function NursePatientMedicationsPage() {
                     <Pill size={22} />
                   </div>
                   <div>
-                    <h1 className="nurse-vital-detail__name">{patientData.patient_name || '—'}</h1>
+                    <h1 className="nurse-vital-detail__name">{patientDataForDisplay.patient_name || '—'}</h1>
                     <p className="nurse-vital-detail__meta-line nurse-patient-meds-page__meta">
                       <span className="nurse-patient-meds-page__meta-chip">
-                        ID: <strong>{formatPatientIdDisplay(patientData)}</strong>
+                        ID: <strong>{formatPatientIdDisplay(patientDataForDisplay)}</strong>
                       </span>
                       <span className="nurse-patient-meds-page__meta-chip">
-                        Ward: <strong>{patientData.ward_name || '—'}</strong>
+                        Ward: <strong>{patientDataForDisplay.ward_name || '—'}</strong>
                       </span>
                       <span className="nurse-patient-meds-page__meta-chip">
-                        Bed: <strong>{patientData.bed_number || '—'}</strong>
+                        Bed: <strong>{patientDataForDisplay.bed_number || '—'}</strong>
                       </span>
                     </p>
                   </div>
@@ -502,7 +533,9 @@ export default function NursePatientMedicationsPage() {
                   data={pagedPrescriptions}
                   isLoading={false}
                   emptyMessage={
-                    expectedMedicineCount > 0
+                    isPrescriptionNotFound
+                      ? 'No prescription yet.'
+                      : expectedMedicineCount > 0
                       ? `List shows ${expectedMedicineCount} medicine(s), but the latest prescription has no items. Ask the doctor to save the prescription again from Doctor → Consultation / Prescribe.`
                       : 'No active prescriptions.'
                   }
