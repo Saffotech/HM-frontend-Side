@@ -217,8 +217,11 @@ export default function VisitsReportPage() {
                       {total > PAGE_SIZE && (
                         <TablePagination
                           page={page}
+                          pageSize={PAGE_SIZE}
                           totalPages={totalPages}
+                          totalItems={total}
                           onPageChange={setPage}
+                          itemLabel="items"
                         />
                       )}
                     </>

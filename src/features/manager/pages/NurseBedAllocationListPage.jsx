@@ -26,6 +26,7 @@ import { ROUTES } from '@/shared/constants';
 import {
   formatAllocationDate,
   formatAssignedUntil,
+  formatShiftWithTime,
   groupAllocationListItems,
 } from '@/shared/api/mappers/adminBedAllocationMapper';
 import { toast } from '@/shared/utils/toast';
@@ -140,7 +141,8 @@ export default function NurseBedAllocationListPage() {
           <div className="nba-list-heading">
             <h1 className="nba-list-heading__title">Bed allocations</h1>
             <p className="nba-list-heading__subtitle">
-              Beds stay assigned until admin changes them. Filter by date if needed (default: all).
+              When a nurse’s shift ends, the bed moves to the next shift’s rostered nurse.
+              The finished assignment becomes inactive. Open All statuses to see it.
             </p>
           </div>
           <div className="nba-list-actions__buttons">
@@ -236,6 +238,7 @@ export default function NurseBedAllocationListPage() {
                     <thead>
                       <tr>
                         <th>Nurse</th>
+                        <th>Shift</th>
                         <th>Assigned From</th>
                         <th>Assigned Until</th>
                         <th>Allocated Beds</th>
@@ -249,6 +252,9 @@ export default function NurseBedAllocationListPage() {
                       {items.map((row) => (
                         <tr key={`${row.nurseId}-${row.isActive ? 'a' : 'i'}-${row.id}`}>
                           <td data-label="Nurse"><span>{row.nurseName}</span></td>
+                          <td data-label="Shift">
+                            <span>{formatShiftWithTime(row.shiftName, row.shiftStart, row.shiftEnd)}</span>
+                          </td>
                           <td data-label="Assigned From"><span>{formatAllocationDate(row.shiftDate)}</span></td>
                           <td data-label="Assigned Until"><span>{formatAssignedUntil(row.assignedUntil, row.isActive)}</span></td>
                           <td data-label="Allocated Beds">
