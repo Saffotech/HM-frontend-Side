@@ -20,6 +20,7 @@ function createDefaultState() {
     platformSession: null,
     crmSession: null,
     accountsSession: null,
+    legalFinanceSession: null,
   };
 }
 

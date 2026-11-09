@@ -1,0 +1,1012 @@
+/* Legal & Finance panel styles.
+   Ported from hms-legal-finance-v3.html and SCOPED under .lf-panel so nothing here
+   can leak into (or be overridden by) the CRM / Account / Admin styles. */
+.lf-panel {
+        color-scheme: light;
+        --bg: #ffffff;
+        --sf: #ffffff;
+        --tx: #0f172a;
+        --mu: #5b6478;
+        --bd: #e3e8f4;
+        --ac: #4f46e5;
+        --acb: #eef0ff;
+        --ok: #047857;
+        --okb: #d1fae5;
+        --wn: #b45309;
+        --wnb: #fef3c7;
+        --er: #dc2626;
+        --erb: #fee2e2;
+        --in: #1d4ed8;
+        --inb: #dbeafe;
+        box-sizing: border-box;
+}
+.lf-panel * {
+        box-sizing: border-box;
+}
+.lf-panel {
+        font:
+          14px/1.45 system-ui,
+          -apple-system,
+          Segoe UI,
+          sans-serif;
+        background: var(--bg);
+        color: var(--tx);
+        min-width: 0;
+}
+.lf-panel aside {
+        width: 220px;
+        background: var(--sf);
+        border-right: 1px solid var(--bd);
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+}
+.lf-panel .logo {
+        padding: 16px;
+        font-weight: 700;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+}
+.lf-panel .logo i {
+        background: var(--ac);
+        color: #fff;
+        border-radius: 7px;
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        font-style: normal;
+}
+.lf-panel .logo small {
+        display: block;
+        font-weight: 400;
+        color: var(--mu);
+        font-size: 11px;
+}
+.lf-panel nav {
+        flex: 1;
+        padding: 4px 8px;
+}
+.lf-panel nav a {
+        display: flex;
+        gap: 10px;
+        padding: 9px 10px;
+        border-radius: 6px;
+        color: var(--mu);
+        cursor: pointer;
+        margin-bottom: 2px;
+}
+.lf-panel nav a:hover {
+        background: var(--bg);
+}
+.lf-panel nav a.on {
+        background: var(--acb);
+        color: var(--ac);
+        font-weight: 600;
+}
+.lf-panel .me {
+        border-top: 1px solid var(--bd);
+        padding: 12px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        cursor: pointer;
+}
+.lf-panel .av {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--ac);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-weight: 600;
+        font-size: 12px;
+        flex-shrink: 0;
+}
+.lf-panel .me small {
+        color: var(--mu);
+        display: block;
+        font-size: 11px;
+}
+.lf-panel main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+}
+.lf-panel header {
+        height: 54px;
+        background: var(--sf);
+        border-bottom: 1px solid var(--bd);
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+}
+.lf-panel .bc {
+        color: var(--mu);
+        flex: 1;
+}
+.lf-panel .bc a {
+        cursor: pointer;
+        color: var(--ac);
+}
+.lf-panel input,
+.lf-panel select,
+.lf-panel textarea {
+        font: inherit;
+        color: var(--tx);
+        background: var(--sf);
+        border: 1px solid var(--bd);
+        border-radius: 6px;
+        padding: 7px 9px;
+        max-width: 100%;
+}
+.lf-panel textarea {
+        width: 100%;
+}
+.lf-panel .ct {
+        flex: 1;
+        overflow: auto;
+        padding: 20px 24px;
+}
+.lf-panel h1 {
+        font-size: 20px;
+        margin: 0 0 14px;
+}
+.lf-panel h2 {
+        font-size: 15px;
+        margin: 0 0 10px;
+}
+.lf-panel .card {
+        background: var(--sf);
+        border: 1px solid var(--bd);
+        border-radius: 8px;
+        padding: 14px;
+        margin-bottom: 14px;
+}
+.lf-panel .g {
+        display: grid;
+        gap: 14px;
+}
+.lf-panel .g4 {
+        grid-template-columns: repeat(4, 1fr);
+}
+.lf-panel .g2 {
+        grid-template-columns: 2fr 1fr;
+}
+.lf-panel .h2c {
+        grid-template-columns: 1fr 1fr;
+}
+@media (max-width: 1000px) {
+.lf-panel .g4 {
+          grid-template-columns: 1fr 1fr;
+}
+.lf-panel .g2,
+.lf-panel .h2c {
+          grid-template-columns: 1fr;
+}
+.lf-panel aside {
+          width: 60px;
+}
+.lf-panel aside span,
+.lf-panel .me div,
+.lf-panel .logo div {
+          display: none;
+}
+}
+.lf-panel .kpi {
+        cursor: pointer;
+}
+.lf-panel .kpi:hover {
+        border-color: var(--ac);
+}
+.lf-panel .kpi b {
+        font-size: 24px;
+        display: block;
+}
+.lf-panel .kpi span {
+        color: var(--mu);
+        font-size: 12px;
+}
+.lf-panel table {
+        width: 100%;
+        border-collapse: collapse;
+}
+.lf-panel th {
+        text-align: left;
+        font-size: 12px;
+        color: var(--mu);
+        padding: 8px;
+        border-bottom: 1px solid var(--bd);
+        white-space: nowrap;
+}
+.lf-panel td {
+        padding: 9px 8px;
+        border-bottom: 1px solid var(--bd);
+}
+.lf-panel tbody tr:hover {
+        background: var(--bg);
+}
+.lf-panel .tw {
+        overflow-x: auto;
+}
+.lf-panel table.lf-fixed {
+        table-layout: fixed;
+        width: 100%;
+}
+.lf-panel table.lf-fixed th,
+.lf-panel table.lf-fixed td {
+        vertical-align: middle;
+}
+.lf-panel .lf-clip {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        max-width: 100%;
+}
+.lf-panel .lf-tip {
+        position: fixed;
+        z-index: 80;
+        padding: 8px 10px;
+        background: #fff;
+        color: var(--tx);
+        border: 1px solid var(--bd);
+        border-radius: 8px;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.16);
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.4;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        pointer-events: none;
+}
+.lf-panel table.lf-hosp { min-width: 1120px; }
+.lf-panel table.lf-hosp .c-id { width: 8%; }
+.lf-panel table.lf-hosp .c-name { width: 22%; }
+.lf-panel table.lf-hosp .c-city { width: 11%; }
+.lf-panel table.lf-hosp .c-plan { width: 16%; }
+.lf-panel table.lf-hosp .c-legal { width: 18%; }
+.lf-panel table.lf-hosp .c-fin { width: 9%; }
+.lf-panel table.lf-hosp .c-st { width: 12%; }
+.lf-panel table.lf-hosp tbody tr.lf-row {
+        cursor: pointer;
+}
+.lf-panel table.lf-fixed .btn,
+.lf-panel table.lf-fixed .bd {
+        white-space: nowrap;
+}
+.lf-panel table.lf-leads { min-width: 760px; }
+.lf-panel table.lf-leads .c-id { width: 11%; }
+.lf-panel table.lf-leads .c-name { width: 28%; }
+.lf-panel table.lf-leads .c-lead { width: 18%; }
+.lf-panel table.lf-leads .c-docs { width: 12%; }
+.lf-panel table.lf-leads .c-st { width: 16%; }
+.lf-panel table.lf-leads .c-act { width: 9%; }
+.lf-panel table.lf-docs { min-width: 1040px; }
+.lf-panel table.lf-docs .c-doc { width: 16%; }
+.lf-panel table.lf-docs .c-cat { width: 14%; }
+.lf-panel table.lf-docs .c-by { width: 12%; }
+.lf-panel table.lf-docs .c-date { width: 11%; }
+.lf-panel table.lf-docs .c-st { width: 12%; }
+.lf-panel table.lf-docs .c-act { width: 35%; }
+.lf-panel table.lf-docs th:last-child,
+.lf-panel table.lf-docs td:last-child {
+        text-align: center;
+}
+.lf-panel table.lf-docs .ab {
+        flex-wrap: nowrap;
+        justify-content: center;
+}
+.lf-panel table.lf-fin { min-width: 520px; }
+.lf-panel table.lf-fin .c-rec { width: 34%; }
+.lf-panel table.lf-fin .c-ref { width: 22%; }
+.lf-panel table.lf-fin .c-amt { width: 22%; }
+.lf-panel table.lf-fin .c-st { width: 22%; }
+.lf-panel .bd {
+        display: inline-flex;
+        gap: 5px;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 99px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+}
+.lf-panel .s-ok {
+        background: var(--okb);
+        color: var(--ok);
+}
+.lf-panel .s-wn {
+        background: var(--wnb);
+        color: var(--wn);
+}
+.lf-panel .s-er {
+        background: var(--erb);
+        color: var(--er);
+}
+.lf-panel .s-in {
+        background: var(--inb);
+        color: var(--in);
+}
+.lf-panel .s-mu {
+        background: var(--bg);
+        color: var(--mu);
+        border: 1px solid var(--bd);
+}
+.lf-panel .btn {
+        border: 1px solid var(--bd);
+        background: var(--sf);
+        color: var(--tx);
+        border-radius: 6px;
+        padding: 7px 12px;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 600;
+}
+.lf-panel .btn.p {
+        background: var(--ac);
+        border-color: var(--ac);
+        color: #fff;
+}
+.lf-panel .btn.d {
+        color: var(--er);
+        border-color: var(--er);
+}
+.lf-panel .btn[disabled] {
+        opacity: 0.45;
+        cursor: not-allowed;
+}
+.lf-panel .btn.sm {
+        padding: 3px 8px;
+        font-size: 12px;
+}
+.lf-panel a.l {
+        color: var(--ac);
+        cursor: pointer;
+        font-weight: 600;
+}
+.lf-panel .row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 10px;
+}
+.lf-panel .mu {
+        color: var(--mu);
+}
+.lf-panel .kv {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 20px;
+}
+.lf-panel .kv div span {
+        display: block;
+        color: var(--mu);
+        font-size: 12px;
+}
+.lf-panel .ov {
+        position: fixed;
+        inset: 0;
+        background: #0008;
+        display: grid;
+        place-items: center;
+        z-index: 50;
+        padding: 16px;
+}
+.lf-panel .md {
+        background: var(--sf);
+        border-radius: 10px;
+        padding: 18px;
+        width: 540px;
+        max-width: 100%;
+        max-height: 90%;
+        overflow: auto;
+        border: 1px solid var(--bd);
+}
+.lf-panel .md label {
+        display: block;
+        margin: 8px 0 3px;
+        font-size: 12px;
+        color: var(--mu);
+}
+.lf-panel .md input,
+.lf-panel .md select {
+        width: 100%;
+}
+.lf-panel .warn {
+        background: var(--wnb);
+        color: var(--wn);
+        padding: 10px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+}
+.lf-panel .err {
+        background: var(--erb);
+        color: var(--er);
+        padding: 10px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+}
+.lf-panel .inf {
+        background: var(--inb);
+        color: var(--in);
+        padding: 10px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+}
+.lf-toast {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        background: var(--tx);
+        color: var(--sf);
+        padding: 10px 14px;
+        border-radius: 8px;
+        z-index: 99;
+}
+.lf-panel .bar {
+        height: 8px;
+        background: var(--bg);
+        border-radius: 4px;
+        overflow: hidden;
+}
+.lf-panel .bar i {
+        display: block;
+        height: 100%;
+        background: var(--ac);
+}
+.lf-panel .ci {
+        border-top: 1px solid var(--bd);
+        padding: 8px 0;
+}
+.lf-panel aside {
+        background: #312e81;
+        border-right: 0;
+}
+.lf-panel .logo {
+        color: #fff;
+}
+.lf-panel .logo i {
+        background: #fff;
+        color: #4f46e5;
+}
+.lf-panel .logo small {
+        color: #a5b4fc;
+}
+.lf-panel nav a {
+        color: #c7d2fe;
+}
+.lf-panel nav a:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+}
+.lf-panel nav a.on {
+        background: #fff;
+        color: #4338ca;
+        font-weight: 700;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+.lf-panel .me {
+        border-top: 1px solid rgba(255, 255, 255, 0.18);
+        color: #fff;
+}
+.lf-panel .me small {
+        color: #a5b4fc;
+}
+.lf-panel .av {
+        background: linear-gradient(135deg, #f472b6, #fb923c);
+}
+.lf-panel header {
+        background: #fff;
+        box-shadow: 0 2px 10px rgba(79, 70, 229, 0.1);
+        border-bottom: 3px solid #4f46e5;
+}
+.lf-panel .ct {
+        background: #fff;
+}
+.lf-panel .card {
+        box-shadow: 0 2px 8px rgba(79, 70, 229, 0.08);
+        border-color: #dfe4f7;
+}
+.lf-panel button.kpi {
+        display: block;
+        width: 100%;
+        text-align: left;
+        font: inherit;
+        color: inherit;
+        --kpi: #4f46e5;
+        border-top: 4px solid var(--kpi);
+}
+.lf-panel .kpi:nth-child(2) {
+        --kpi: #f59e0b;
+        border-top-color: #f59e0b;
+}
+.lf-panel .kpi:nth-child(3) {
+        --kpi: #ef4444;
+        border-top-color: #ef4444;
+}
+.lf-panel .kpi:nth-child(4) {
+        --kpi: #10b981;
+        border-top-color: #10b981;
+}
+.lf-panel .kpi:nth-child(5) {
+        --kpi: #2563eb;
+        border-top-color: #2563eb;
+}
+.lf-panel .kpi:nth-child(6) {
+        --kpi: #be123c;
+        border-top-color: #be123c;
+}
+.lf-panel .kpi.on {
+        background: color-mix(in srgb, var(--kpi) 14%, #fff);
+        border-color: var(--kpi);
+        box-shadow: 0 0 0 2px var(--kpi);
+}
+.lf-panel .kpi.on b,
+.lf-panel .kpi.on span {
+        color: var(--kpi);
+        font-weight: 700;
+}
+.lf-panel .lf-kpis {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+@media (max-width: 1000px) {
+.lf-panel .lf-kpis {
+          grid-template-columns: 1fr 1fr;
+}
+}
+.lf-panel .kpi b {
+        color: #4338ca;
+}
+.lf-panel h1 {
+        color: #312e81;
+}
+.lf-panel th {
+        background: #f3f4ff;
+        color: #4338ca;
+}
+.lf-panel tbody tr:hover {
+        background: #f7f8ff;
+}
+.lf-panel .bar {
+        background: #e3e6ff;
+}
+.lf-panel .bar i {
+        background: linear-gradient(90deg, #4f46e5, #06b6d4);
+}
+.lf-panel .btn {
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+.lf-panel .btn:hover:not([disabled]) {
+        border-color: #4f46e5;
+        color: #4f46e5;
+}
+.lf-panel .btn.p {
+        background: #4f46e5;
+        border-color: #4f46e5;
+        color: #fff;
+}
+.lf-panel .btn.p:hover:not([disabled]) {
+        background: #4338ca;
+        color: #fff;
+}
+.lf-panel .btn.d:hover:not([disabled]) {
+        background: #fee2e2;
+        color: #dc2626;
+        border-color: #dc2626;
+}
+.lf-panel input:focus,
+.lf-panel select:focus,
+.lf-panel textarea:focus {
+        outline: 2px solid #a5b4fc;
+        border-color: #4f46e5;
+}
+.lf-panel .s-mu {
+        background: #f1f5f9;
+}
+.lf-panel a.l {
+        color: #4f46e5;
+}
+.lf-panel .bc a {
+        color: #4f46e5;
+}
+.lf-panel .warn {
+        border-left: 4px solid #f59e0b;
+}
+.lf-panel .err {
+        border-left: 4px solid #ef4444;
+}
+.lf-panel .inf {
+        border-left: 4px solid #3b82f6;
+}
+.lf-panel .md.wide {
+        width: 900px;
+}
+.lf-panel .hh {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--bd);
+        margin-bottom: 14px;
+}
+.lf-panel .hi {
+        width: 54px;
+        height: 54px;
+        border-radius: 12px;
+        background: var(--acb);
+        display: grid;
+        place-items: center;
+        font-size: 28px;
+        flex-shrink: 0;
+}
+.lf-panel .tiles {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-bottom: 14px;
+}
+.lf-panel .tile {
+        border: 1px solid var(--bd);
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: #f7f8ff;
+}
+.lf-panel .tile small {
+        color: var(--mu);
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+}
+.lf-panel .tile b {
+        display: block;
+        font-size: 16px;
+        color: #312e81;
+        margin: 3px 0 4px;
+}
+.lf-panel .sec {
+        border: 1px solid var(--bd);
+        border-radius: 10px;
+        padding: 12px 14px;
+        margin-bottom: 12px;
+}
+.lf-panel .sec h3 {
+        margin: 0 0 10px;
+        font-size: 12px;
+        color: #4338ca;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+}
+.lf-panel .cg {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 18px;
+}
+.lf-panel .cg > div {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+}
+@media (max-width: 760px) {
+.lf-panel .tiles {
+          grid-template-columns: 1fr 1fr;
+}
+.lf-panel .cg {
+          grid-template-columns: 1fr;
+}
+}
+.lf-panel .ab {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+}
+.lf-panel .ab .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+}
+.lf-panel .cs {
+        position: relative;
+        min-width: 360px;
+}
+.lf-panel .csb {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        background: #fff;
+        border: 1px solid #c7d2fe;
+        border-radius: 10px;
+        padding: 8px 12px;
+        cursor: pointer;
+        font: inherit;
+        color: var(--tx);
+        text-align: left;
+        box-shadow: 0 1px 3px rgba(79, 70, 229, 0.12);
+}
+.lf-panel .csb:hover {
+        border-color: #4f46e5;
+}
+.lf-panel .csb:disabled {
+        cursor: default;
+        opacity: 0.85;
+}
+.lf-panel .csb:disabled:hover {
+        border-color: #c7d2fe;
+}
+.lf-panel .hi2 {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        background: var(--acb);
+        display: grid;
+        place-items: center;
+        font-size: 18px;
+        flex-shrink: 0;
+}
+.lf-panel .cst {
+        flex: 1;
+        min-width: 0;
+}
+.lf-panel .cst b {
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+}
+.lf-panel .cst small {
+        color: var(--mu);
+        font-size: 12px;
+}
+.lf-panel .car {
+        color: var(--mu);
+}
+.lf-panel .csp {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 6px);
+        width: 430px;
+        max-width: 92vw;
+        background: #fff;
+        border: 1px solid var(--bd);
+        border-radius: 12px;
+        box-shadow: 0 12px 32px rgba(49, 46, 129, 0.22);
+        padding: 8px;
+        z-index: 40;
+}
+.lf-panel .csp[hidden] {
+        display: none;
+}
+.lf-panel .csp input {
+        width: 100%;
+        margin-bottom: 6px;
+}
+.lf-panel .csl {
+        max-height: 300px;
+        overflow: auto;
+}
+.lf-panel .cso {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px;
+        border-radius: 8px;
+        cursor: pointer;
+}
+.lf-panel .cso:hover {
+        background: #f3f4ff;
+}
+.lf-panel .cso.on {
+        background: #eef0ff;
+        box-shadow: inset 3px 0 0 #4f46e5;
+}
+@media (max-width: 760px) {
+.lf-panel .cs {
+          min-width: 0;
+          width: 100%;
+}
+}
+.lf-panel .fadein {
+        animation: fi 0.45s;
+}
+@keyframes fi {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+@media (prefers-reduced-motion: reduce) {
+.lf-panel .fadein {
+          animation: none;
+}
+}
+
+.lf-panel a { text-decoration: none; }
+.lf-panel a:hover,
+.lf-panel a:focus { text-decoration: none; }
+
+/* Open content column: pages fill the main area. Individual cards keep their own boxes. */
+.portal-legal-finance .header-left {
+        flex: 1;
+        min-width: 0;
+}
+.portal-legal-finance .portal-user-link,
+.portal-legal-finance .portal-user-link:hover,
+.portal-legal-finance .portal-user-link strong {
+        text-decoration: none;
+}
+.portal-legal-finance .user-meta span {
+        display: none;
+}
+.portal-legal-finance .lf-bc {
+        min-width: 0;
+        overflow: hidden;
+        color: var(--color-text-secondary);
+        font-size: 14px;
+        line-height: 1.3;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+}
+.portal-legal-finance .lf-bc a {
+        color: var(--color-primary);
+        font-weight: 650;
+        text-decoration: none;
+}
+.portal-legal-finance .lf-bc a:hover {
+        text-decoration: underline;
+}
+.portal-legal-finance .content {
+        width: 100%;
+        max-width: none;
+        padding: 20px var(--space-page) 40px;
+}
+.portal-legal-finance .content > .lf-panel {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+}
+.portal-legal-finance .lf-body {
+        width: 100%;
+        min-width: 0;
+}
+.portal-legal-finance .lf-panel .g,
+.portal-legal-finance .lf-panel .g > *,
+.portal-legal-finance .lf-panel .card,
+.portal-legal-finance .lf-panel .tw {
+        min-width: 0;
+        max-width: 100%;
+}
+@media (max-width: 760px) {
+.portal-legal-finance .header {
+          height: auto;
+          min-height: var(--header-height);
+          flex-wrap: wrap;
+          row-gap: 8px;
+          padding-top: 10px;
+          padding-bottom: 10px;
+}
+.portal-legal-finance .content {
+          padding: 16px 14px 32px;
+}
+}
+.lf-panel .csl { max-height: 300px; overflow: auto; }
+
+.lf-panel .card.lf-check {
+        padding: 0;
+        overflow: hidden;
+}
+.lf-panel .lf-check-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        background: #eef2ff;
+        border-bottom: 1px solid #e0e7ff;
+}
+.lf-panel .lf-check-ico {
+        display: grid;
+        place-items: center;
+        flex: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: #fff;
+        color: #4f46e5;
+}
+.lf-panel .lf-check-head h2 {
+        margin: 0;
+        font-size: 16px;
+}
+.lf-panel .lf-check-head p {
+        margin: 2px 0 0;
+        color: var(--mu);
+        font-size: 12px;
+}
+.lf-panel .lf-check-prog {
+        margin-left: auto;
+        min-width: 150px;
+        text-align: right;
+        color: var(--mu);
+        font-size: 12px;
+}
+.lf-panel .lf-check-prog .bar {
+        height: 6px;
+        margin-top: 6px;
+        background: #e5e7eb;
+}
+.lf-panel .lf-check-item {
+        display: grid;
+        grid-template-columns: 36px 24rem auto 9.5rem minmax(0, 1fr);
+        align-items: center;
+        column-gap: 12px;
+        padding: 10px 14px;
+        border-top: 1px solid var(--bd);
+}
+.lf-panel .lf-check-item:first-of-type {
+        border-top: 0;
+}
+.lf-panel .lf-check-num {
+        display: grid;
+        place-items: center;
+        flex: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: #f3f4f8;
+        color: #64748b;
+        font-weight: 700;
+}
+.lf-panel .lf-check-title {
+        font-weight: 650;
+        white-space: nowrap;
+}
+.lf-panel .lf-check-tools {
+        display: contents;
+}
+.lf-panel .lf-check-tools select,
+.lf-panel .lf-check-tools input {
+        height: 36px;
+        width: 100%;
+        min-width: 0;
+}
+@media (max-width: 900px) {
+.lf-panel .lf-check-head {
+          align-items: flex-start;
+          flex-wrap: wrap;
+}
+.lf-panel .lf-check-item {
+          grid-template-columns: 36px minmax(0, 1fr) auto;
+          row-gap: 8px;
+}
+.lf-panel .lf-check-title {
+          white-space: normal;
+}
+.lf-panel .lf-check-prog {
+          width: 100%;
+          margin-left: 0;
+}
+.lf-panel .lf-check-tools {
+          display: grid;
+          grid-template-columns: 9.5rem minmax(0, 1fr);
+          grid-column: 1 / -1;
+          align-items: center;
+          column-gap: 12px;
+          width: 100%;
+}
+}

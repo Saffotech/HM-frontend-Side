@@ -12,6 +12,7 @@ import "./shared/styles/global.css";
 const PlatformAdminRoutes = lazy(() => import("./panels/platformAdmin/PlatformAdminRoutes"));
 const CrmRoutes = lazy(() => import("./panels/crm/CrmRoutes"));
 const AccountantRoutes = lazy(() => import("./panels/accountant/AccountantRoutes"));
+const LegalFinanceRoutes = lazy(() => import("./panels/legalFinance/LegalFinanceRoutes"));
 
 /**
  * Platform (SaaS owner) app — mounted at `/platform/*` by src/App.jsx.
@@ -28,6 +29,7 @@ export default function PlatformApp() {
               <Routes>
                 <Route path="crm/*" element={<CrmRoutes />} />
                 <Route path="accounts/*" element={<AccountantRoutes />} />
+                <Route path="legal-finance/*" element={<LegalFinanceRoutes />} />
                 {/* Previous registration, retained for reference. Remove after verification.
                     <Route path="*" element={<SuperAdminRoutes />} /> */}
                 <Route path="*" element={<PlatformAdminRoutes />} />

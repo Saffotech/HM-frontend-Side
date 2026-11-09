@@ -155,7 +155,7 @@ export default function Dashboard() {
     },
     registered: {
       title: "Hospitals registered",
-      note: `${registeredThisMonth} this month · ${withAccounts.length} still with Accounts`,
+      note: `${registeredThisMonth} this month · ${withAccounts.length} agreed`,
       empty: ["No registered hospitals yet", "Hospitals appear here once Accounts registers them."],
       columns: ["Hospital", "Plan", "Registered", "Registered by", "Subscription"],
       cells: (lead) => {

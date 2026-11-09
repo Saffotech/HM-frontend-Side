@@ -14,16 +14,16 @@ const titles = {
 };
 
 export default function AccountantLayout() {
-  const [waiting, setWaiting] = useState(0);
+  const [waiting, setWaiting] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
     listRegistrations("agreed")
       .then((rows) => {
-        if (!cancelled) setWaiting(Array.isArray(rows) ? rows.length : 0);
+        if (!cancelled && Array.isArray(rows)) setWaiting(rows.length);
       })
       .catch(() => {
-        if (!cancelled) setWaiting(0);
+        /* A 403, 409, or 422 is not an empty queue. Keep the last known count. */
       });
     return () => {
       cancelled = true;

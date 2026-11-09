@@ -5,6 +5,7 @@ export const PORTAL_BACKEND_ROLE = {
   platform: "platform_admin",
   accountant: "accountant",
   crm: "crm",
+  legalFinance: "legal_finance",
 };
 
 const PORTAL_ACCESS = {
@@ -19,6 +20,10 @@ const PORTAL_ACCESS = {
   crm: {
     permissions: ["leads:manage"],
     denial: "This account cannot work CRM leads in this portal.",
+  },
+  legalFinance: {
+    permissions: ["legal:review"],
+    denial: "This account cannot open the legal and finance portal.",
   },
 };
 

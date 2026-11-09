@@ -294,7 +294,7 @@ function LeadView({ lead, today, actions, back, userId }) {
           {lead.agreedAt && (
             <>
               <Fact label="Agreed plan" value={`${lead.plan || "—"} · ${lead.billingCycle || "—"}`} />
-              <Fact label="Sent to Accounts" value={`${formatDateTime(lead.agreedAt)} · ${lead.agreedBy || "—"}`} />
+              <Fact label="Agreed" value={`${formatDateTime(lead.agreedAt)} · ${lead.agreedBy || "—"}`} />
               <Fact wide label="Handover note" value={lead.handoverNote} />
             </>
           )}

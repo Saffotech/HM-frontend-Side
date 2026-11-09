@@ -243,6 +243,9 @@ export default function PlatformStaff() {
   const accountantCount = staffRows.filter(
     (row) => String(row.role).toLowerCase() === "accountant",
   ).length;
+  const legalFinanceCount = staffRows.filter(
+    (row) => String(row.role).toLowerCase() === "legal_finance",
+  ).length;
   const filteredRows = staffRows.filter((row) => {
     const role = String(row.role).toLowerCase();
     const matchesFilter =
@@ -292,6 +295,13 @@ export default function PlatformStaff() {
             <strong>{loading ? "—" : accountantCount}</strong>
           </div>
         </button>
+        <button className={`platform-staff-filter-card${staffFilter === "legal_finance" ? " is-selected" : ""}`} onClick={() => setStaffFilter("legal_finance")} aria-pressed={staffFilter === "legal_finance"}>
+          <span className="summary-icon summary-icon--legal">§</span>
+          <div>
+            <small>Legal & Finance</small>
+            <strong>{loading ? "—" : legalFinanceCount}</strong>
+          </div>
+        </button>
       </div>
       {listError && (
         <div className="platform-staff-alert" role="alert">
@@ -327,14 +337,14 @@ export default function PlatformStaff() {
           rows={loading && rows.length === 0 ? [] : pagination.rows}
           columns={columns}
           emptyTitle={
-            loading ? "Loading platform staff" : "No CRM or accountant accounts"
+            loading ? "Loading platform staff" : "No platform staff accounts"
           }
           emptyMessage={
             loading
               ? "Fetching the staff directory."
               : query || staffFilter !== "all"
                 ? "Try changing your search or selected staff card."
-                : "Use Register Staff to create a CRM or Accountant account. Hospital staff are not registered here."
+                : "Use Register Staff to create a CRM, Accountant, or Legal & Finance account. Hospital staff are not registered here."
           }
         />
         <Pagination {...pagination} onPageChange={pagination.setPage} />
@@ -343,7 +353,7 @@ export default function PlatformStaff() {
       <Modal
         open={open}
         title="Register Staff"
-        subtitle="Creates a CRM or Accountant account with no hospital attached."
+        subtitle="Creates a CRM, Accountant, or Legal & Finance account with no hospital attached."
         onClose={close}
         size="lg"
       >

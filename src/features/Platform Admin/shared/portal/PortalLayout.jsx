@@ -11,7 +11,17 @@ import "../layout/Sidebar.css";
 import "../layout/Header.css";
 import "./PortalLayout.css";
 
-export default function PortalLayout({ portal, name, profilePath, items, titles, className = "" }) {
+export default function PortalLayout({
+  portal,
+  name,
+  profilePath,
+  items,
+  titles,
+  className = "",
+  headerLeft = null,
+  headerExtra = null,
+  showLogout = true,
+}) {
   const { sessionFor, signOutPortal, portalProfile } = usePlatform();
   const logoutConfirmation = useLogoutConfirmation(() => signOutPortal(portal));
   const session = sessionFor(portal);
@@ -58,20 +68,23 @@ export default function PortalLayout({ portal, name, profilePath, items, titles,
       </aside>
       <div className="main-column">
         <header className="header">
-          <h1 className="portal-title">{title}</h1>
+          {headerLeft ? <div className="header-left">{headerLeft}</div> : <h1 className="portal-title">{title}</h1>}
           <div className="header-right">
+            {headerExtra}
             {profilePath ? (
               <Link to={profilePath} className="portal-user-link" aria-label={`Open my profile (${session.name})`}>
                 {user}
               </Link>
             ) : user}
-            <button type="button" className="portal-logout" aria-label="Logout" onClick={logoutConfirmation.requestLogout}>
-              <LogOut size={16} aria-hidden="true" />
-              <span className="portal-logout-label">Logout</span>
-            </button>
+            {showLogout ? (
+              <button type="button" className="portal-logout" aria-label="Logout" onClick={logoutConfirmation.requestLogout}>
+                <LogOut size={16} aria-hidden="true" />
+                <span className="portal-logout-label">Logout</span>
+              </button>
+            ) : null}
           </div>
         </header>
-        {logoutConfirmation.dialog}
+        {showLogout ? logoutConfirmation.dialog : null}
         <div className="content">
           <Outlet />
         </div>

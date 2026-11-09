@@ -4,6 +4,7 @@ import { interpretPlatformError, shouldEndPlatformSession } from "./platformErro
 export const PLATFORM_STAFF_ROLES = [
   { value: "crm", label: "CRM" },
   { value: "accountant", label: "Accountant" },
+  { value: "legal_finance", label: "Legal & Finance" },
 ];
 
 const ROLE_VALUES = new Set(PLATFORM_STAFF_ROLES.map((role) => role.value));
@@ -41,7 +42,7 @@ export function validatePlatformStaff(values) {
   else if (password.length < 8) errors.password = "Password must be at least 8 characters.";
   else if (password.length > 128) errors.password = "Password must be 128 characters or fewer.";
 
-  if (!ROLE_VALUES.has(role)) errors.role = "Choose CRM or Accountant.";
+  if (!ROLE_VALUES.has(role)) errors.role = "Choose CRM, Accountant, or Legal & Finance.";
 
   return errors;
 }
@@ -78,7 +79,7 @@ export function mapStaffDirectory(body) {
   return {
     ok: true,
     rows: body.flatMap((row) => {
-      if (row?.role !== "crm" && row?.role !== "accountant") return [];
+      if (row?.role !== "crm" && row?.role !== "accountant" && row?.role !== "legal_finance") return [];
       if (row?.user_id == null || !row?.email) return [];
       return [{
         id: row.user_id,

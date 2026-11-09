@@ -6,6 +6,7 @@ export const PORTAL_SESSION_KEYS = {
   platform: "platformSession",
   crm: "crmSession",
   accountant: "accountsSession",
+  legalFinance: "legalFinanceSession",
 };
 
 const ACCESS_TOKEN = "saffocare.platform.accessToken";
@@ -159,6 +160,7 @@ function emptyPortalState() {
     platformSession: null,
     crmSession: null,
     accountsSession: null,
+    legalFinanceSession: null,
   };
 }
 

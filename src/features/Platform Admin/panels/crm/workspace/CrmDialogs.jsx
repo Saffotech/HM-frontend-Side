@@ -105,7 +105,7 @@ export function ContactDialog({ lead, mode, today, onCancel, onSubmit, initialOu
           </Select>
         )}
         {form.outcome === "agreed" && (
-          <p className="crm-span crm-hint">After saving, confirm the agreed plan to hand the lead over to Accounts for registration.</p>
+          <p className="crm-span crm-hint">After saving, confirm the agreed plan. The server opens the Legal & Finance case. Accounts registers the hospital only after that case is approved and the advance is recorded.</p>
         )}
       </div>
     </Modal>
@@ -163,9 +163,9 @@ export function AgreeDialog({ lead, planOptions, onCancel, onSubmit }) {
       title="Hospital agreed to register"
       subtitle={`${lead.hospitalName} · ${lead.contactPerson}`}
       onClose={onCancel}
-      footer={<><Button variant="secondary" onClick={onCancel}>Cancel</Button><Button disabled={!form.plan} onClick={send}>Send to Accounts</Button></>}
+      footer={<><Button variant="secondary" onClick={onCancel}>Cancel</Button><Button disabled={!form.plan} onClick={send}>Mark as agreed</Button></>}
     >
-      <p className="crm-callout crm-callout-purple">Accounts registers the hospital and sets up billing. You can follow the registration from My Conversions.</p>
+      <p className="crm-callout crm-callout-purple">This sends the hospital to Legal & Finance. It does not approve the case or record a payment. Accounts registers the hospital after that review.</p>
       <div className="crm-form">
         <Select label="Agreed plan *" value={form.plan} onChange={(event) => setForm({ ...form, plan: event.target.value })}>
           {planOptions.map((plan) => <option key={plan}>{plan}</option>)}

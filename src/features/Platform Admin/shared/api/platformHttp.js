@@ -2,6 +2,20 @@ import { PlatformApiError, parseErrorBody } from "./platformErrors.js";
 
 const DEFAULT_TIMEOUT_MS = 15000;
 
+function filenameFromDisposition(header) {
+  if (!header) return "";
+  const encoded = /filename\*=UTF-8''([^;]+)/i.exec(header);
+  if (encoded) {
+    try {
+      return decodeURIComponent(encoded[1]);
+    } catch {
+      return encoded[1];
+    }
+  }
+  const plain = /filename="?([^";]+)"?/i.exec(header);
+  return plain ? plain[1] : "";
+}
+
 async function readBody(response) {
   try {
     return await response.json();
@@ -56,6 +70,7 @@ export async function executePlatformRequest(endpoint, options = {}, deps) {
     token,
     skipRefresh = false,
     invalidPasswordKeepsSession = false,
+    responseType = "json",
     _retried = false,
   } = options;
   const access = token || (anonymous ? null : deps.auth.getAccessToken());
@@ -67,7 +82,7 @@ export async function executePlatformRequest(endpoint, options = {}, deps) {
   }
 
   const formData = typeof FormData !== "undefined" && body instanceof FormData;
-  const headers = { Accept: "application/json" };
+  const headers = { Accept: responseType === "blob" ? "*/*" : "application/json" };
   if (body != null && !formData) headers["Content-Type"] = "application/json";
   if (access) headers.Authorization = `Bearer ${access}`;
 
@@ -77,6 +92,14 @@ export async function executePlatformRequest(endpoint, options = {}, deps) {
     { method, headers, body },
     deps.timeoutMs ?? DEFAULT_TIMEOUT_MS,
   );
+  if (response.ok && responseType === "blob") {
+    const blob = await response.blob();
+    return {
+      blob,
+      filename: filenameFromDisposition(response.headers.get("Content-Disposition")),
+    };
+  }
+
   const parsed = await readBody(response);
 
   if (response.status === 401 && invalidPasswordKeepsSession) {

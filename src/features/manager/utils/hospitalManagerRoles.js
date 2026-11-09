@@ -26,6 +26,7 @@ export const HOSPITAL_ADMIN_FORBIDDEN_ROLE_NAMES = [
   'platform_admin',
   'crm',
   'accountant',
+  'legal_finance',
 ];
 
 const ASSIGNABLE = new Set(HOSPITAL_ADMIN_ASSIGNABLE_ROLE_NAMES);
@@ -80,6 +81,7 @@ export const PLATFORM_ORGANIZATION_ROLE_NAMES = [
   'platform_admin',
   'crm',
   'accountant',
+  'legal_finance',
 ];
 
 const PLATFORM_ROLES = new Set(PLATFORM_ORGANIZATION_ROLE_NAMES);
@@ -99,7 +101,7 @@ export function filterHospitalRoleRecords(roles) {
 }
 
 /** Organization actors whose activity must not appear on the hospital audit log. */
-const HOSPITAL_AUDIT_HIDDEN_ROLES = new Set(['platform_admin', 'crm', 'accountant']);
+const HOSPITAL_AUDIT_HIDDEN_ROLES = new Set(['platform_admin', 'crm', 'accountant', 'legal_finance']);
 
 function auditActorRole(entry) {
   return String(entry?.actor_role || '')

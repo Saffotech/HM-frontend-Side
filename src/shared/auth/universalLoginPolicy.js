@@ -4,6 +4,7 @@ import { normalizeRole } from '../utils/roleUtils.js';
 import {
   ACCOUNTS_BASE,
   CRM_BASE,
+  LEGAL_FINANCE_BASE,
   PLATFORM_BASE,
 } from '../../features/Platform Admin/shared/paths.js';
 
@@ -12,12 +13,14 @@ export const PLATFORM_ROLE_TO_PORTAL = {
   platform_admin: 'platform',
   crm: 'crm',
   accountant: 'accountant',
+  legal_finance: 'legalFinance',
 };
 
 const PLATFORM_DASHBOARD = {
   platform: PLATFORM_BASE,
   crm: CRM_BASE,
   accountant: ACCOUNTS_BASE,
+  legalFinance: LEGAL_FINANCE_BASE,
 };
 
 /** Roles that belong to a hospital and must have a real tenant id. */
@@ -148,6 +151,7 @@ function isPlatformAdminPath(path) {
   if (!bare.startsWith(`${PLATFORM_BASE}/`)) return false;
   if (bare === CRM_BASE || bare.startsWith(`${CRM_BASE}/`)) return false;
   if (bare === ACCOUNTS_BASE || bare.startsWith(`${ACCOUNTS_BASE}/`)) return false;
+  if (bare === LEGAL_FINANCE_BASE || bare.startsWith(`${LEGAL_FINANCE_BASE}/`)) return false;
   return !isLoginPath(bare);
 }
 
@@ -158,6 +162,7 @@ export function isReturnPathForRole(role, target) {
   if (cleaned === 'platform_admin') return isPlatformAdminPath(path);
   if (cleaned === 'crm') return matchesPrefix(path, CRM_BASE);
   if (cleaned === 'accountant') return matchesPrefix(path, ACCOUNTS_BASE);
+  if (cleaned === 'legal_finance') return matchesPrefix(path, LEGAL_FINANCE_BASE);
 
   const normalized = normalizeRole(cleaned);
   const prefixes = HOSPITAL_RETURN_PREFIXES[normalized];

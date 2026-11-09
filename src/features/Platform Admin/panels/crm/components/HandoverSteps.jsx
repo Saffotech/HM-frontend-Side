@@ -4,7 +4,7 @@ import { time } from "../../../shared/utils/leadMetrics";
 import { daysBetween, localDay } from "../../../shared/utils/periods";
 import { plural } from "../utils/crmLeads";
 
-/** Lead received → first contact → agreed (sent to Accounts) → registered by Accounts. */
+/** Lead received → first contact → agreed (Legal & Finance) → registered by Accounts. */
 function handoverSteps(lead, today) {
   const history = [...(lead.activity || [])].sort((a, b) => time(a.at) - time(b.at));
   const firstContact = history.find((entry) => CONTACT_METHODS.includes(entry.method));
@@ -14,7 +14,7 @@ function handoverSteps(lead, today) {
   return [
     { key: "received", label: "Lead received", done: true, at: lead.submittedAt, by: lead.source || "" },
     { key: "contacted", label: "First contact", done: Boolean(firstContact) || agreed || registered, at: firstContact?.at, by: firstContact?.by },
-    { key: "agreed", label: "Agreed · sent to Accounts", done: agreed, at: lead.agreedAt, by: lead.agreedBy },
+    { key: "agreed", label: "Agreed · with Legal & Finance", done: agreed, at: lead.agreedAt, by: lead.agreedBy },
     {
       key: "registered",
       label: "Registered by Accounts",
@@ -22,7 +22,7 @@ function handoverSteps(lead, today) {
       current: lead.status === "Agreed",
       at: lead.registeredAt,
       by: lead.registeredBy,
-      pending: lead.status === "Agreed" ? `Waiting ${waiting <= 0 ? "since today" : plural(waiting, "day")}` : "",
+      pending: lead.status === "Agreed" ? `Waiting on legal review ${waiting <= 0 ? "since today" : plural(waiting, "day")}` : "",
     },
   ];
 }

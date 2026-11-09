@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   PLAN_NAMES,
@@ -12,14 +12,14 @@ import {
   listLeads,
   logLeadContact,
   mapLead,
-  mapLeadList,
+  parseLeadList,
   reopenLead,
   scheduleLeadFollowUp,
   updateLead,
   leadUpdateBody,
 } from "../../../shared/api/leadApi";
 import { usePlatform } from "../../../shared/context/PlatformContext";
-import { shouldEndPlatformSession } from "../../../shared/api/platformErrors";
+import { platformCallMessage, shouldEndPlatformSession } from "../../../shared/api/platformErrors";
 import { useToast } from "../../../shared/hooks/useToast";
 import { crmPath } from "../../../shared/paths";
 import { todayInput } from "../../../shared/utils/formatDate";
@@ -68,6 +68,8 @@ export default function CrmWorkspace({ children }) {
   const me = crmSession?.name || "";
   const today = todayInput();
   const [rows, setRows] = useState([]);
+  const rowsRef = useRef(rows);
+  rowsRef.current = rows;
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [dialog, setDialog] = useState(null);
@@ -83,16 +85,23 @@ export default function CrmWorkspace({ children }) {
     setLoading(true);
     setLoadError("");
     try {
-      const body = await listLeads();
-      setRows(mapLeadList(body, crmSession));
+      const parsed = parseLeadList(await listLeads(), crmSession);
+      if (!parsed.ok) {
+        setLoadError(parsed.error);
+        if (rowsRef.current.length) push(parsed.error, "error");
+        return;
+      }
+      setRows(parsed.rows);
+      setLoadError("");
     } catch (error) {
-      setRows([]);
-      setLoadError(error?.message || "Leads could not be loaded.");
+      const message = platformCallMessage(error);
+      setLoadError(message);
+      if (rowsRef.current.length) push(message, "error");
       if (shouldEndPlatformSession(error)) signOutPortal("crm");
     } finally {
       setLoading(false);
     }
-  }, [crmSession, signOutPortal]);
+  }, [crmSession, push, signOutPortal]);
 
   useEffect(() => {
     load();
@@ -107,7 +116,7 @@ export default function CrmWorkspace({ children }) {
 
   const fail = (error) => {
     if (shouldEndPlatformSession(error)) signOutPortal("crm");
-    push(error?.message || BLOCKED, "error");
+    push(platformCallMessage(error) || BLOCKED, "error");
     return null;
   };
 
@@ -248,7 +257,7 @@ export default function CrmWorkspace({ children }) {
               }
               return agreeLead(dialogLead.id, values);
             },
-            (saved) => `${saved.hospitalName} sent to Accounts for registration.`,
+            (saved) => `${saved.hospitalName} was marked agreed. Legal & Finance reviews it before Accounts can register the hospital.`,
           )}
         />
       )}

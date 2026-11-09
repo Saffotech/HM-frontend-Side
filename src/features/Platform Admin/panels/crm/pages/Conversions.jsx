@@ -122,7 +122,7 @@ export default function Conversions() {
                     <td>{lead.plan || "—"}<span className="crm-sub">{lead.billingCycle || "—"}</span></td>
                     <td className="crm-nowrap">{formatDate(lead.agreedAt)}<span className="crm-sub">{lead.agreedBy || "—"}</span></td>
                     <td className="crm-nowrap"><span className={`crm-due ${waiting > 3 ? "crm-due-overdue" : "crm-due-later"}`}>{waiting <= 0 ? "Today" : plural(waiting, "day")}</span></td>
-                    <td><span className="crm-badge crm-badge-agreed">Waiting for Accounts</span></td>
+                    <td><span className="crm-badge crm-badge-agreed">Agreed</span></td>
                     <td><HandoverSteps lead={lead} today={today} compact /></td>
                     <td><span className="crm-clip" title={lead.handoverNote}>{lead.handoverNote || "—"}</span></td>
                   </tr>

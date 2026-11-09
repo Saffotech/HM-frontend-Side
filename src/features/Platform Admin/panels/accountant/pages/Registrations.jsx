@@ -44,12 +44,14 @@ export default function Registrations() {
         listRegistrations("agreed"),
         listRegistrations("registered"),
       ]);
-      setWaiting((Array.isArray(agreed) ? agreed : []).map(mapRegistration));
-      setRegistered((Array.isArray(done) ? done : []).map(mapRegistration));
+      if (!Array.isArray(agreed) || !Array.isArray(done)) {
+        setError("The registration list was not in the expected format.");
+        return;
+      }
+      setWaiting(agreed.map(mapRegistration));
+      setRegistered(done.map(mapRegistration));
     } catch (err) {
       const result = interpretPlatformError(err);
-      setWaiting([]);
-      setRegistered([]);
       setError(result.toast);
       if (shouldEndPlatformSession(err)) signOutRef.current("accountant");
     } finally {
@@ -156,7 +158,7 @@ export default function Registrations() {
           rows={loading ? [] : pagination.rows}
           columns={tab === "To register" ? waitingColumns : registeredColumns}
           emptyTitle={loading ? "Loading registrations" : error ? "Registrations could not be loaded" : search.trim() ? "No hospitals match your search." : tab === "To register" ? "Nothing to register" : "No registrations yet"}
-          emptyMessage={loading ? "Fetching the registration queue." : error ? "Retry the request. Nothing was saved in this browser." : search.trim() ? "Try a hospital name, city or contact." : tab === "To register" ? "Hospitals appear here when CRM marks them as agreed." : "Hospitals you register will appear here."}
+          emptyMessage={loading ? "Fetching the registration queue." : error ? "Retry the request. Nothing was saved in this browser." : search.trim() ? "Try a hospital name, city or contact." : tab === "To register" ? "Hospitals appear here only after Legal & Finance approves the case." : "Hospitals you register will appear here."}
         />
         {!loading && !error ? <Pagination {...pagination} onPageChange={pagination.setPage} /> : null}
       </section>
