@@ -24,6 +24,7 @@ export default function ManagerReportFilters({
       <DateInput
         label="To"
         value={toDate}
+        min={fromDate || undefined}
         onChange={(e) => onToChange(e.target.value)}
         className="admin-report-filters__date"
       />

@@ -3,6 +3,45 @@
  * Backend is source of truth; map contracts here only.
  */
 
+/** Inclusive ISO dates from `from` through `to` (YYYY-MM-DD). */
+export function eachIsoDate(from, to) {
+  if (!from || !to || to < from) return [];
+  const [fy, fm, fd] = from.split('-').map(Number);
+  const [ty, tm, td] = to.split('-').map(Number);
+  if (![fy, fm, fd, ty, tm, td].every(Number.isFinite)) return [];
+  const cursor = new Date(Date.UTC(fy, fm - 1, fd));
+  const end = new Date(Date.UTC(ty, tm - 1, td));
+  const dates = [];
+  while (cursor <= end && dates.length < 400) {
+    const y = cursor.getUTCFullYear();
+    const m = String(cursor.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(cursor.getUTCDate()).padStart(2, '0');
+    dates.push(`${y}-${m}-${d}`);
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return dates;
+}
+
+/** Nurse ids who have a confirmed roster shift on every date in the range. */
+export function confirmedNurseIdsForRange(rosterItems, from, to) {
+  const needed = eachIsoDate(from, to);
+  const allowed = new Set();
+  if (!needed.length) return allowed;
+  const byNurse = new Map();
+  for (const row of rosterItems ?? []) {
+    if (String(row.status ?? '').toLowerCase() !== 'confirmed') continue;
+    const id = Number(row.nurse_id);
+    const day = String(row.roster_date ?? '').slice(0, 10);
+    if (!Number.isFinite(id) || !day) continue;
+    if (!byNurse.has(id)) byNurse.set(id, new Set());
+    byNurse.get(id).add(day);
+  }
+  for (const [id, days] of byNurse) {
+    if (needed.every((day) => days.has(day))) allowed.add(id);
+  }
+  return allowed;
+}
+
 export function mapAllocationItem(row) {
   if (!row) return null;
   return {

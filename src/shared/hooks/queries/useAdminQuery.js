@@ -32,6 +32,7 @@ import {
   createWorkforceRoster,
   bulkCreateWorkforceRoster,
   createWorkforceShift,
+  confirmWorkforceRoster,
   deleteWorkforceRoster,
   deleteWorkforceShift,
   getWorkforceDashboard,
@@ -365,6 +366,14 @@ export function useBulkCreateWorkforceRosterMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body) => bulkCreateWorkforceRoster(body),
+    onSuccess: () => invalidateWorkforce(queryClient),
+  });
+}
+
+export function useConfirmWorkforceRosterMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => confirmWorkforceRoster(id),
     onSuccess: () => invalidateWorkforce(queryClient),
   });
 }

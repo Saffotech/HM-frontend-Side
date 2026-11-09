@@ -21,11 +21,13 @@ import {
   useBulkCreateBedAllocationsMutation,
   useDeactivateBedAllocationMutation,
   useUpdateBedAllocationMutation,
+  useWorkforceRosterQuery,
 } from '@/shared/hooks/queries/useAdminQuery';
 import { useBedsQuery } from '@/shared/hooks/queries/useBedsQuery';
 import { Button, DateInput, QueryFeedback, Select } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import {
+  confirmedNurseIdsForRange,
   formatGroupedBedsLabel,
   groupAllocationListItems,
 } from '@/shared/api/mappers/adminBedAllocationMapper';
@@ -139,6 +141,31 @@ export default function NurseBedAllocationEditPage() {
     const items = staffData?.staff ?? staffData?.items ?? [];
     return Array.isArray(items) ? items : [];
   }, [staffData]);
+
+  const rosterReady = Boolean(shiftDate) && (!assignedUntil || assignedUntil >= shiftDate);
+  const { data: rosterData, isLoading: rosterLoading } = useWorkforceRosterQuery(
+    {
+      date_from: shiftDate,
+      date_to: assignedUntil || shiftDate,
+      page: 1,
+      page_size: 200,
+    },
+    { enabled: canUpdate && rosterReady },
+  );
+  const confirmedNurses = useMemo(() => {
+    const allowed = confirmedNurseIdsForRange(
+      rosterData?.items,
+      shiftDate,
+      assignedUntil || shiftDate,
+    );
+    return nurses.filter((nurse) => allowed.has(Number(nurse.id)));
+  }, [nurses, rosterData?.items, shiftDate, assignedUntil]);
+
+  useEffect(() => {
+    if (!hydrated || rosterLoading || !nurseId) return;
+    if (confirmedNurses.some((nurse) => String(nurse.id) === String(nurseId))) return;
+    setNurseId('');
+  }, [confirmedNurses, hydrated, nurseId, rosterLoading]);
 
   const { data: bedsData, isLoading: bedsLoading } = useBedsQuery({ search: bedSearch });
   const beds = useMemo(() => bedsData?.beds ?? [], [bedsData?.beds]);
@@ -394,8 +421,11 @@ export default function NurseBedAllocationEditPage() {
                         value={nurseId}
                         onChange={setNurseId}
                         options={[
-                          { value: '', label: 'Select nurse…' },
-                          ...nurses.map((n) => ({
+                          {
+                            value: '',
+                            label: rosterLoading ? 'Loading confirmed nurses…' : 'Select nurse…',
+                          },
+                          ...confirmedNurses.map((n) => ({
                             value: String(n.id),
                             label:
                               `${n.first_name || ''} ${n.last_name || ''}`.trim() ||
@@ -404,6 +434,11 @@ export default function NurseBedAllocationEditPage() {
                           })),
                         ]}
                       />
+                      {!rosterLoading && shiftDate && !confirmedNurses.length ? (
+                        <p className="nba-muted">
+                          No nurse has a confirmed roster shift for these dates.
+                        </p>
+                      ) : null}
                     </label>
                   </div>
                 </section>

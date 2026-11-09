@@ -536,6 +536,16 @@
   max-width: 10.5rem;
 }
 
+.admin-report-date-error {
+  margin: 0;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.875rem;
+}
+
 .admin-reports-toolbar {
   display: flex;
   flex-wrap: wrap;

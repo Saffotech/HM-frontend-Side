@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Save } from 'lucide-react';
 import ManagerLayout from '@/features/manager/components/ManagerLayout';
@@ -10,11 +10,13 @@ import {
   useAdminRolesQuery,
   useAdminStaffListQuery,
   useBulkCreateBedAllocationsMutation,
+  useWorkforceRosterQuery,
 } from '@/shared/hooks/queries/useAdminQuery';
 import { useBedsQuery } from '@/shared/hooks/queries/useBedsQuery';
 import { Button, DateInput, Select } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import {
+  confirmedNurseIdsForRange,
   todayIsoDate,
 } from '@/shared/api/mappers/adminBedAllocationMapper';
 import { toast } from '@/shared/utils/toast';
@@ -45,6 +47,21 @@ export default function NurseBedAllocationCreatePage() {
     const items = staffData?.staff ?? staffData?.items ?? [];
     return Array.isArray(items) ? items : [];
   }, [staffData]);
+
+  const { data: rosterData, isLoading: rosterLoading } = useWorkforceRosterQuery(
+    { date_from: shiftDate, date_to: assignedUntil, page: 1, page_size: 200 },
+    { enabled: canView && Boolean(shiftDate) && Boolean(assignedUntil) && assignedUntil >= shiftDate },
+  );
+  const confirmedNurses = useMemo(() => {
+    const allowed = confirmedNurseIdsForRange(rosterData?.items, shiftDate, assignedUntil);
+    return nurses.filter((nurse) => allowed.has(Number(nurse.id)));
+  }, [nurses, rosterData?.items, shiftDate, assignedUntil]);
+
+  useEffect(() => {
+    if (!nurseId || rosterLoading) return;
+    if (confirmedNurses.some((nurse) => String(nurse.id) === String(nurseId))) return;
+    setNurseId('');
+  }, [confirmedNurses, nurseId, rosterLoading]);
 
   const { data: bedsData, isLoading: bedsLoading } = useBedsQuery({ search: bedSearch });
   const beds = bedsData?.beds ?? [];
@@ -170,8 +187,11 @@ export default function NurseBedAllocationCreatePage() {
                 value={nurseId}
                 onChange={setNurseId}
                 options={[
-                  { value: '', label: 'Select nurse…' },
-                  ...nurses.map((n) => ({
+                  {
+                    value: '',
+                    label: rosterLoading ? 'Loading confirmed nurses…' : 'Select nurse…',
+                  },
+                  ...confirmedNurses.map((n) => ({
                     value: String(n.id),
                     label:
                       `${n.first_name || ''} ${n.last_name || ''}`.trim() ||
@@ -180,6 +200,11 @@ export default function NurseBedAllocationCreatePage() {
                   })),
                 ]}
               />
+              {!rosterLoading && !confirmedNurses.length ? (
+                <p className="nba-muted">
+                  No nurse has a confirmed roster shift for these dates. Confirm the shift on the roster first.
+                </p>
+              ) : null}
             </label>
           </div>
 

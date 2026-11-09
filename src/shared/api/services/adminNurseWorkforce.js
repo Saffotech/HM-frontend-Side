@@ -43,6 +43,10 @@ export async function bulkCreateWorkforceRoster(body) {
   return api.bulkCreateWorkforceRoster(body);
 }
 
+export async function confirmWorkforceRoster(id) {
+  return api.confirmWorkforceRoster(id);
+}
+
 export async function deleteWorkforceRoster(id) {
   return api.deleteWorkforceRoster(id);
 }
