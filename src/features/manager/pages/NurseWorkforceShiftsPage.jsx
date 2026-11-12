@@ -6,6 +6,7 @@ import { useAdminWorkforcePermissions } from '@/features/manager/hooks/useManage
 import {
   useCreateWorkforceShiftMutation,
   useDeleteWorkforceShiftMutation,
+  useUpdateWorkforceShiftMutation,
   useWorkforceShiftsQuery,
 } from '@/shared/hooks/queries/useAdminQuery';
 import { Button, QueryFeedback } from '@/shared/components/common';
@@ -24,13 +25,39 @@ const EMPTY = {
 };
 
 export default function NurseWorkforceShiftsPage() {
-  const { canView, canCreate, canDelete } = useAdminWorkforcePermissions();
-  const { data, isLoading, isError, error, refetch } = useWorkforceShiftsQuery(
+  const { canView, canCreate, canUpdate, canDelete } = useAdminWorkforcePermissions();
+  const {
+    data: activeData,
+    isLoading: isActiveLoading,
+    isError: isActiveError,
+    error: activeError,
+    refetch: refetchActive,
+  } = useWorkforceShiftsQuery(
     { is_active: true },
     { enabled: canView },
   );
+  const {
+    data: inactiveData,
+    isLoading: isInactiveLoading,
+    isError: isInactiveError,
+    error: inactiveError,
+    refetch: refetchInactive,
+  } = useWorkforceShiftsQuery(
+    { is_active: false },
+    { enabled: canView },
+  );
+  const shifts = [...(activeData?.items ?? []), ...(inactiveData?.items ?? [])]
+    .sort((a, b) => String(a.start_time).localeCompare(String(b.start_time)));
+  const isLoading = isActiveLoading || isInactiveLoading;
+  const isError = isActiveError || isInactiveError;
+  const error = activeError || inactiveError;
+  const refetch = () => {
+    refetchActive();
+    refetchInactive();
+  };
   const createMut = useCreateWorkforceShiftMutation();
   const deleteMut = useDeleteWorkforceShiftMutation();
+  const updateMut = useUpdateWorkforceShiftMutation();
   const [form, setForm] = useState(EMPTY);
 
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
@@ -46,7 +73,7 @@ export default function NurseWorkforceShiftsPage() {
     const normalize = (value) => String(value || '').trim().toLowerCase();
     const name = normalize(form.name);
     const code = normalize(form.code);
-    const existingShifts = data?.items ?? [];
+    const existingShifts = shifts;
     if (existingShifts.some((shift) => normalize(shift.name) === name)) {
       toast.error('A shift with this name already exists');
       return;
@@ -120,8 +147,11 @@ export default function NurseWorkforceShiftsPage() {
                 </tr>
               </thead>
               <tbody>
-                {(data?.items ?? []).map((s) => (
-                  <tr key={s.id}>
+                {shifts.map((s) => (
+                  <tr
+                    key={s.id}
+                    className={s.is_active ? undefined : 'nwf-shift-row--inactive'}
+                  >
                     <td data-label="Name"><span>{s.name}</span></td>
                     <td data-label="Code"><span>{s.code || '—'}</span></td>
                     <td data-label="Start"><span>{String(s.start_time).slice(0, 5)}</span></td>
@@ -132,7 +162,7 @@ export default function NurseWorkforceShiftsPage() {
                     </td>
                     <td data-label="Template"><span>{s.is_template ? 'Yes' : 'No'}</span></td>
                     <td className="admin-table__actions" data-label="Action">
-                      {canDelete && (
+                      {s.is_active && canDelete ? (
                         <Button
                           variant="danger"
                           size="sm"
@@ -145,7 +175,24 @@ export default function NurseWorkforceShiftsPage() {
                         >
                           Deactivate
                         </Button>
-                      )}
+                      ) : !s.is_active && canUpdate ? (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          disabled={updateMut.isPending}
+                          onClick={() =>
+                            updateMut.mutate(
+                              { id: s.id, body: { is_active: true } },
+                              {
+                                onSuccess: () => toast.success('Shift activated'),
+                                onError: (err) => toast.error(err?.message || 'Failed to activate shift'),
+                              },
+                            )
+                          }
+                        >
+                          Activate
+                        </Button>
+                      ) : null}
                     </td>
                   </tr>
                 ))}

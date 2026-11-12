@@ -8,7 +8,6 @@ import {
   useAdminRolesQuery,
   useAdminStaffListQuery,
   useBulkCreateWorkforceRosterMutation,
-  useConfirmWorkforceRosterMutation,
   useDeleteWorkforceRosterMutation,
   useWorkforceRosterQuery,
   useWorkforceShiftsQuery,
@@ -204,7 +203,6 @@ export default function NurseWorkforceRosterPage() {
   );
 
   const bulkMut = useBulkCreateWorkforceRosterMutation();
-  const confirmMut = useConfirmWorkforceRosterMutation();
   const deleteMut = useDeleteWorkforceRosterMutation();
 
   const nurses = staffData?.staff ?? staffData?.items ?? [];
@@ -300,18 +298,6 @@ export default function NurseWorkforceRosterPage() {
         onError: (err) => toast.error(err?.message || 'Failed to add roster'),
       },
     );
-  };
-
-  const confirmSpan = async (span) => {
-    setCancellingKey(span.key);
-    const results = await Promise.allSettled(
-      span.ids.map((id) => confirmMut.mutateAsync(id)),
-    );
-    setCancellingKey(null);
-    const ok = results.filter((r) => r.status === 'fulfilled').length;
-    const failed = results.length - ok;
-    if (ok) toast.success(ok === 1 ? 'Shift confirmed' : `${ok} days confirmed`);
-    if (failed) toast.error(`${failed} failed to confirm`);
   };
 
   const cancelSpan = async (span) => {
@@ -563,18 +549,6 @@ export default function NurseWorkforceRosterPage() {
                                 <span className="nwf-badge nwf-badge--balanced">{span.status}</span>
                               </td>
                               <td className="nwf-td-actions" data-label="Action">
-                                {String(span.status).toLowerCase() !== 'confirmed' ? (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    disabled={cancellingKey === span.key || confirmMut.isPending}
-                                    onClick={() => confirmSpan(span)}
-                                  >
-                                    {cancellingKey === span.key && confirmMut.isPending
-                                      ? 'Confirming…'
-                                      : 'Confirm'}
-                                  </Button>
-                                ) : null}
                                 <Button
                                   variant="ghost"
                                   size="sm"

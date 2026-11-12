@@ -178,6 +178,15 @@
   border-bottom: none;
 }
 
+.nwf-panel .admin-table tbody tr.nwf-shift-row--inactive td {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.nwf-panel .admin-table tbody tr.nwf-shift-row--inactive:hover td {
+  background: #e8edf3;
+}
+
 .nwf-empty-cell {
   text-align: center;
   color: #64748b;
