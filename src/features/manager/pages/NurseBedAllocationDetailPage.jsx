@@ -23,7 +23,9 @@ import { Button, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import {
   formatAllocationDate,
+  formatShiftWithTime,
   groupAllocationListItems,
+  normalizeShiftName,
 } from '@/shared/api/mappers/adminBedAllocationMapper';
 import '@/features/manager/styles/nurseBedAllocation.css';
 
@@ -98,7 +100,8 @@ export default function NurseBedAllocationDetailPage() {
     const sameNurse = siblings.filter(
       (row) =>
         Number(row.nurseId) === Number(primary.nurseId) &&
-        Boolean(row.isActive) === Boolean(primary.isActive),
+        Boolean(row.isActive) === Boolean(primary.isActive) &&
+        normalizeShiftName(row.shiftName) === normalizeShiftName(primary.shiftName),
     );
     const pool = sameNurse.length ? sameNurse : [primary];
     return pool
@@ -178,6 +181,10 @@ export default function NurseBedAllocationDetailPage() {
                       {formatAllocationDate(period.from || group.shiftDate)}
                       {' – '}
                       {period.until ? formatAllocationDate(period.until) : 'Ongoing'}
+                    </span>
+                    <span className="nba-detail-pill">
+                      <Clock3 size={14} aria-hidden />
+                      {formatShiftWithTime(group.shiftName, group.shiftStart, group.shiftEnd)}
                     </span>
                     <span className="nba-detail-pill">
                       <Mail size={14} aria-hidden />

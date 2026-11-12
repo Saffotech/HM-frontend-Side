@@ -11,7 +11,7 @@ const LINKS = [
 export default function NurseWorkforceNav() {
   return (
     <div className="nwf-subnav-row">
-      <nav className="nwf-subnav" aria-label="Nurse workforce sections">
+      <nav className="nwf-subnav nwf-workforce-nav" aria-label="Nurse workforce sections">
         {LINKS.map((link) => (
           <NavLink
             key={link.to}

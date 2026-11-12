@@ -31,8 +31,40 @@
 }
 
 .nba-form-grid--create {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.65rem;
+  align-items: end;
+}
+
+.nba-shift-value {
+  display: flex;
+  align-items: center;
+  min-height: 2.5rem;
+}
+
+.nba-shift-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 100%;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  line-height: 1.2;
+  color: #143028;
+  background: color-mix(in srgb, var(--shift-color, #0f766e) 16%, white);
+  border: 1px solid color-mix(in srgb, var(--shift-color, #0f766e) 34%, white);
+  white-space: nowrap;
+}
+
+.nba-shift-pill__name {
+  text-transform: capitalize;
+}
+
+.nba-shift-pill__time {
+  font-weight: 600;
+  color: color-mix(in srgb, var(--shift-color, #0f766e) 70%, #143028);
 }
 
 @media (max-width: 960px) {

@@ -250,7 +250,7 @@ export default function NurseBedAllocationListPage() {
                     </thead>
                     <tbody>
                       {items.map((row) => (
-                        <tr key={`${row.nurseId}-${row.isActive ? 'a' : 'i'}-${row.id}`}>
+                        <tr key={`${row.nurseId}-${row.shiftName || 'shift'}-${row.isActive ? 'a' : 'i'}-${row.id}`}>
                           <td data-label="Nurse"><span>{row.nurseName}</span></td>
                           <td data-label="Shift">
                             <span>{formatShiftWithTime(row.shiftName, row.shiftStart, row.shiftEnd)}</span>

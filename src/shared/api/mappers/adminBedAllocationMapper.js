@@ -22,14 +22,76 @@ export function eachIsoDate(from, to) {
   return dates;
 }
 
-/** Nurse ids who have a confirmed roster shift on every date in the range. */
+export function normalizeShiftName(name) {
+  return String(name ?? '').trim().toLowerCase();
+}
+
+/** True when [from, until] overlaps [otherFrom, otherUntil]. A blank end is open-ended. */
+export function allocationRangesOverlap(from, until, otherFrom, otherUntil) {
+  const startA = String(from ?? '').slice(0, 10);
+  const startB = String(otherFrom ?? '').slice(0, 10);
+  if (!startA || !startB) return false;
+  const endA = until ? String(until).slice(0, 10) : '9999-12-31';
+  const endB = otherUntil ? String(otherUntil).slice(0, 10) : '9999-12-31';
+  return startA <= endB && startB <= endA;
+}
+
+const ROSTER_ASSIGNABLE = new Set(['scheduled', 'completed']);
+
+/** Roster shifts for one nurse on one date. Scheduled and completed both count. */
+export function rosterShiftsForNurseOnDate(rosterItems, nurseId, date) {
+  const wantedId = Number(nurseId);
+  const day = String(date ?? '').slice(0, 10);
+  if (!Number.isFinite(wantedId) || !day) return [];
+  const byName = new Map();
+  for (const row of rosterItems ?? []) {
+    if (Number(row.nurse_id) !== wantedId) continue;
+    if (String(row.roster_date ?? '').slice(0, 10) !== day) continue;
+    if (!ROSTER_ASSIGNABLE.has(String(row.status ?? '').toLowerCase())) continue;
+    const name = String(row.shift_name ?? '').trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (!byName.has(key)) {
+      byName.set(key, {
+        name,
+        start: row.start_time ?? null,
+        end: row.end_time ?? null,
+        color: row.shift_color || '#0f766e',
+      });
+    }
+  }
+  return Array.from(byName.values());
+}
+
+/**
+ * Beds already taken for this shift on an overlapping date range.
+ * A Morning allocation does not block an Evening selection.
+ */
+export function bedIdsTakenForShift(items, { shiftName, from, until } = {}) {
+  const wanted = normalizeShiftName(shiftName);
+  if (!wanted || !from) return [];
+  const ids = new Set();
+  for (const row of items ?? []) {
+    if (row?.isActive === false) continue;
+    const rowShift = row?.shiftName ?? row?.shift_name;
+    if (normalizeShiftName(rowShift) !== wanted) continue;
+    const rowFrom = row.shiftDate ?? row.shift_date;
+    const rowUntil = row.assignedUntil ?? row.assigned_until ?? null;
+    if (!allocationRangesOverlap(rowFrom, rowUntil, from, until || from)) continue;
+    const bedId = Number(row.bedId ?? row.bed_id);
+    if (Number.isFinite(bedId)) ids.add(bedId);
+  }
+  return Array.from(ids);
+}
+
+/** Nurse ids rostered on every date in the range. Scheduled and completed both count. */
 export function confirmedNurseIdsForRange(rosterItems, from, to) {
   const needed = eachIsoDate(from, to);
   const allowed = new Set();
   if (!needed.length) return allowed;
   const byNurse = new Map();
   for (const row of rosterItems ?? []) {
-    if (String(row.status ?? '').toLowerCase() !== 'confirmed') continue;
+    if (!ROSTER_ASSIGNABLE.has(String(row.status ?? '').toLowerCase())) continue;
     const id = Number(row.nurse_id);
     const day = String(row.roster_date ?? '').slice(0, 10);
     if (!Number.isFinite(id) || !day) continue;
@@ -137,11 +199,13 @@ export function formatGroupedBedsLabel(items) {
 }
 
 function groupKey(item) {
-  // Persistent assignment: one list row per nurse + active/inactive.
-  return [item.nurseId ?? '', item.isActive ? '1' : '0'].join('|');
+  // One list row per nurse, shift, and active/inactive.
+  // Morning and Evening for the same nurse stay separate.
+  const shift = normalizeShiftName(item.shiftName);
+  return [item.nurseId ?? '', item.isActive ? '1' : '0', shift].join('|');
 }
 
-/** Collapse one-row-per-bed into one row per nurse (active or inactive). */
+/** Collapse one-row-per-bed into one row per nurse and shift. */
 export function groupAllocationListItems(items) {
   if (!items?.length) return [];
 

@@ -258,7 +258,7 @@ export default function ManagerBedMultiSelect({
                 className={`nba-bed-chip${checked ? ' is-selected' : ''}${disabled || locked ? ' is-disabled' : ''}`}
                 title={
                   locked
-                    ? `${bed.bedNo ?? bed.bed_number} · ${ward} · Already assigned to a nurse`
+                    ? `${bed.bedNo ?? bed.bed_number} · ${ward} · Already assigned for this shift`
                     : `${bed.bedNo ?? bed.bed_number} · ${ward} · ${statusLabel(status, bed.status)}`
                 }
               >

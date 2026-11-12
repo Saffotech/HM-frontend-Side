@@ -33,32 +33,6 @@ function addDaysIso(iso, days) {
   return `${y}-${m}-${day}`;
 }
 
-function startOfWeekIso(iso) {
-  const d = new Date(`${String(iso).slice(0, 10)}T12:00:00`);
-  const day = d.getDay(); // 0 Sun
-  const diff = day === 0 ? -6 : 1 - day; // Monday start
-  d.setDate(d.getDate() + diff);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${dd}`;
-}
-
-function startOfMonthIso(iso) {
-  const raw = String(iso).slice(0, 10);
-  return `${raw.slice(0, 7)}-01`;
-}
-
-function endOfMonthIso(iso) {
-  const d = new Date(`${String(iso).slice(0, 7)}-01T12:00:00`);
-  d.setMonth(d.getMonth() + 1);
-  d.setDate(0);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${dd}`;
-}
-
 function dayDiffIso(a, b) {
   const da = new Date(`${String(a).slice(0, 10)}T12:00:00`);
   const db = new Date(`${String(b).slice(0, 10)}T12:00:00`);
@@ -87,12 +61,6 @@ function formatDateLabel(iso) {
     month: 'short',
     year: 'numeric',
   });
-}
-
-function formatDayShort(iso) {
-  const d = new Date(`${String(iso).slice(0, 10)}T12:00:00`);
-  if (Number.isNaN(d.getTime())) return String(iso);
-  return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' });
 }
 
 function formatShiftClock(value) {
@@ -158,23 +126,12 @@ function groupRosterSpans(items) {
   return spans;
 }
 
-function itemsByDate(items) {
-  const map = new Map();
-  for (const row of items ?? []) {
-    if (String(row.status ?? '').toLowerCase() === 'cancelled') continue;
-    const key = String(row.roster_date).slice(0, 10);
-    if (!map.has(key)) map.set(key, []);
-    map.get(key).push(row);
-  }
-  return map;
-}
-
 export default function NurseWorkforceRosterPage() {
   const { canManageRoster } = useAdminWorkforcePermissions();
   const today = todayIso();
   const [dateFrom, setDateFrom] = useState(today);
-  const [dateTo, setDateTo] = useState(addDaysIso(today, 6));
-  const [view, setView] = useState('list');
+  const [dateTo, setDateTo] = useState(today);
+  const [statusFilter, setStatusFilter] = useState('all');
   const [form, setForm] = useState({
     nurse_id: '',
     shift_id: '',
@@ -208,40 +165,13 @@ export default function NurseWorkforceRosterPage() {
   const nurses = staffData?.staff ?? staffData?.items ?? [];
   const shifts = shiftsData?.items ?? [];
   const items = useMemo(() => data?.items ?? [], [data?.items]);
-  const spans = useMemo(() => groupRosterSpans(items), [items]);
-  const byDate = useMemo(() => itemsByDate(items), [items]);
-
-  const weekDates = useMemo(() => {
-    const start = startOfWeekIso(dateFrom);
-    return eachDateInclusive(start, addDaysIso(start, 6));
-  }, [dateFrom]);
-
-  const monthDates = useMemo(() => {
-    const start = startOfMonthIso(dateFrom);
-    const end = endOfMonthIso(dateFrom);
-    return eachDateInclusive(start, end);
-  }, [dateFrom]);
-
-  const setPreset = (preset) => {
-    if (preset === 'today') {
-      setDateFrom(today);
-      setDateTo(today);
-      setView('list');
-      return;
-    }
-    if (preset === 'week') {
-      const start = startOfWeekIso(today);
-      setDateFrom(start);
-      setDateTo(addDaysIso(start, 6));
-      setView('weekly');
-      return;
-    }
-    if (preset === 'month') {
-      setDateFrom(startOfMonthIso(today));
-      setDateTo(endOfMonthIso(today));
-      setView('monthly');
-    }
-  };
+  const filteredItems = useMemo(
+    () => statusFilter === 'all'
+      ? items
+      : items.filter((row) => String(row.status ?? '').toLowerCase() === statusFilter),
+    [items, statusFilter],
+  );
+  const spans = useMemo(() => groupRosterSpans(filteredItems), [filteredItems]);
 
   const onCreate = (e) => {
     e.preventDefault();
@@ -417,28 +347,30 @@ export default function NurseWorkforceRosterPage() {
           <section className="nwf-roster-main">
             <div className="nwf-roster-toolbar">
               <div className="nwf-roster-toolbar__left">
-                <h2 className="nwf-roster-main__title">Roster schedule</h2>
-                <p className="nwf-roster-main__meta">
-                  <CalendarDays size={14} aria-hidden />
-                  {periodLabel}
-                  <span className="nwf-roster-dot">·</span>
-                  {spans.length} assignment{spans.length === 1 ? '' : 's'}
-                </p>
+                <div>
+                  <h2 className="nwf-roster-main__title">Roster schedule</h2>
+                  <p className="nwf-roster-main__meta">
+                    <CalendarDays size={14} aria-hidden />
+                    {periodLabel}
+                    <span className="nwf-roster-dot">·</span>
+                    {spans.length} assignment{spans.length === 1 ? '' : 's'}
+                  </p>
+                </div>
+                <label className="nwf-field nwf-field--inline nwf-roster-status-filter">
+                  <span>Status</span>
+                  <Select
+                    value={statusFilter}
+                    onChange={setStatusFilter}
+                    options={[
+                      { value: 'all', label: 'All statuses' },
+                      { value: 'scheduled', label: 'Scheduled' },
+                      { value: 'completed', label: 'Completed' },
+                    ]}
+                  />
+                </label>
               </div>
 
               <div className="nwf-roster-toolbar__right">
-                <div className="nwf-seg" role="group" aria-label="Quick range">
-                  <button type="button" className="nwf-seg__btn" onClick={() => setPreset('today')}>
-                    Today
-                  </button>
-                  <button type="button" className="nwf-seg__btn" onClick={() => setPreset('week')}>
-                    Week
-                  </button>
-                  <button type="button" className="nwf-seg__btn" onClick={() => setPreset('month')}>
-                    Month
-                  </button>
-                </div>
-
                 <div className="nwf-roster-range">
                   <label className="nwf-field nwf-field--inline">
                     <span>From</span>
@@ -462,41 +394,11 @@ export default function NurseWorkforceRosterPage() {
                     />
                   </label>
                 </div>
-
-                <div className="nwf-seg" role="tablist" aria-label="View mode">
-                  {[
-                    { id: 'list', label: 'List' },
-                    { id: 'weekly', label: 'Week' },
-                    { id: 'monthly', label: 'Month' },
-                  ].map((opt) => (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      role="tab"
-                      aria-selected={view === opt.id}
-                      className={`nwf-seg__btn${view === opt.id ? ' is-active' : ''}`}
-                      onClick={() => {
-                        setView(opt.id);
-                        if (opt.id === 'weekly') {
-                          const start = startOfWeekIso(dateFrom);
-                          setDateFrom(start);
-                          setDateTo(addDaysIso(start, 6));
-                        }
-                        if (opt.id === 'monthly') {
-                          setDateFrom(startOfMonthIso(dateFrom));
-                          setDateTo(endOfMonthIso(dateFrom));
-                        }
-                      }}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
               </div>
+
             </div>
 
             <QueryFeedback isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
-              {view === 'list' ? (
                 <div className="nwf-roster-list">
                   {!spans.length ? (
                     <div className="nwf-roster-empty">
@@ -567,93 +469,6 @@ export default function NurseWorkforceRosterPage() {
                     </div>
                   )}
                 </div>
-              ) : null}
-
-              {view === 'weekly' ? (
-                <div className="nwf-roster-week">
-                  {weekDates.map((date) => {
-                    const dayItems = byDate.get(date) ?? [];
-                    return (
-                      <article key={date} className="nwf-roster-day-card">
-                        <header className="nwf-roster-day-card__head">
-                          <strong>{formatDayShort(date)}</strong>
-                          <span>{dayItems.length}</span>
-                        </header>
-                        <div className="nwf-roster-day-card__body">
-                          {!dayItems.length ? (
-                            <p className="nwf-muted">No one rostered</p>
-                          ) : (
-                            dayItems.map((row) => (
-                              <div key={row.id} className="nwf-roster-day-item">
-                                <span
-                                  className="nwf-shift-dot"
-                                  style={{ background: row.shift_color || '#3B82F6' }}
-                                  aria-hidden
-                                />
-                                <div>
-                                  <strong>{row.nurse_name}</strong>
-                                  <span>{row.shift_name}</span>
-                                </div>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
-              ) : null}
-
-              {view === 'monthly' ? (
-                <div className="nwf-roster-month">
-                  <div className="nwf-roster-month__weekdays" aria-hidden>
-                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
-                      <span key={d}>{d}</span>
-                    ))}
-                  </div>
-                  <div className="nwf-roster-month__grid">
-                    {(() => {
-                      const first = monthDates[0];
-                      const pad = first
-                        ? (() => {
-                            const wd = new Date(`${first}T12:00:00`).getDay();
-                            return wd === 0 ? 6 : wd - 1;
-                          })()
-                        : 0;
-                      const cells = [
-                        ...Array.from({ length: pad }, (_, i) => ({ key: `pad-${i}`, empty: true })),
-                        ...monthDates.map((date) => ({ key: date, date, items: byDate.get(date) ?? [] })),
-                      ];
-                      return cells.map((cell) =>
-                        cell.empty ? (
-                          <div key={cell.key} className="nwf-roster-month__cell is-empty" />
-                        ) : (
-                          <div key={cell.key} className="nwf-roster-month__cell">
-                            <div className="nwf-roster-month__daynum">
-                              {Number(String(cell.date).slice(8, 10))}
-                            </div>
-                            <div className="nwf-roster-month__chips">
-                              {cell.items.slice(0, 3).map((row) => (
-                                <span
-                                  key={row.id}
-                                  className="nwf-month-chip"
-                                  style={{ background: row.shift_color || '#dbeafe' }}
-                                  title={`${row.nurse_name} · ${row.shift_name}`}
-                                >
-                                  {row.nurse_name?.split(' ')[0] || 'Nurse'}
-                                </span>
-                              ))}
-                              {cell.items.length > 3 ? (
-                                <span className="nwf-month-more">+{cell.items.length - 3}</span>
-                              ) : null}
-                            </div>
-                          </div>
-                        ),
-                      );
-                    })()}
-                  </div>
-                </div>
-              ) : null}
             </QueryFeedback>
           </section>
         </div>

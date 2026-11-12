@@ -47,6 +47,45 @@
   color: #1d4ed8;
 }
 
+.nwf-workforce-nav .nwf-subnav__link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: #475569;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.nwf-workforce-nav .nwf-subnav__link:hover {
+  background: #f1f5f9;
+  border-color: #dbe4ee;
+  color: #0f172a;
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.nwf-workforce-nav .nwf-subnav__link.is-active {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+}
+
+.nwf-workforce-nav .nwf-subnav__link:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.35);
+  outline-offset: 2px;
+}
+
 .nwf-subnav__action {
   flex-shrink: 0;
   white-space: nowrap;
@@ -464,6 +503,13 @@
   color: #64748b;
 }
 
+.nwf-roster-toolbar__left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
 .nwf-roster-dot {
   opacity: 0.6;
 }
@@ -471,9 +517,10 @@
 .nwf-roster-toolbar__right {
   display: flex;
   flex-wrap: wrap;
-  align-items: end;
+  align-items: flex-end;
   gap: 0.55rem;
   justify-content: flex-end;
+  margin-left: auto;
 }
 
 .nwf-roster-range {
@@ -486,41 +533,12 @@
   min-width: 8.5rem;
 }
 
+.nwf-roster-status-filter {
+  min-width: 9.5rem;
+}
+
 .nwf-field--inline span {
   font-size: 0.72rem;
-}
-
-.nwf-seg {
-  display: inline-flex;
-  padding: 0.2rem;
-  border-radius: 10px;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  gap: 0.15rem;
-}
-
-.nwf-seg__btn {
-  border: 0;
-  background: transparent;
-  color: #64748b;
-  font: inherit;
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 0.35rem 0.7rem;
-  border-radius: 8px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.nwf-seg__btn:hover {
-  color: #0f172a;
-  background: rgba(255, 255, 255, 0.7);
-}
-
-.nwf-seg__btn.is-active {
-  background: #fff;
-  color: #0f766e;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
 }
 
 .nwf-roster-table-wrap {
@@ -760,14 +778,19 @@
     justify-content: stretch;
   }
 
-  .nwf-roster-range,
-  .nwf-seg {
+  .nwf-roster-toolbar__left {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .nwf-roster-range {
     width: 100%;
   }
 
   .nwf-roster-range .nwf-field--inline {
     flex: 1;
   }
+
 }
 
 @media (max-width: 640px) {
