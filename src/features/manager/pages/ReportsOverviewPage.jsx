@@ -117,7 +117,7 @@ export default function ReportsOverviewPage() {
                 />
                 <ManagerStatCard
                   title="Pending payments"
-                  value={data.pending_payments}
+                  value={formatCurrency(data.pending_payments)}
                   icon={<Wallet size={18} />}
                   isLoading={isLoading}
                   tone="warning"
