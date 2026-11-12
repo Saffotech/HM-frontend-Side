@@ -217,6 +217,10 @@
   border-bottom: none;
 }
 
+.nwf-shift-actions {
+  gap: 0.65rem;
+}
+
 .nwf-panel .admin-table tbody tr.nwf-shift-row--inactive td {
   background: #f1f5f9;
   color: #64748b;

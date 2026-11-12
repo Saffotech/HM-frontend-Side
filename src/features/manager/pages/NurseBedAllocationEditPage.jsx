@@ -498,28 +498,20 @@ export default function NurseBedAllocationEditPage() {
                           No nurse is rostered for these dates. Add the shift on the roster first.
                         </p>
                       ) : null}
-                    </label>
-                    {nurseId && rosterShifts.length === 1 ? (
-                      <div className="nba-field">
-                        <span>Shift</span>
-                        <div className="nba-shift-value">
-                          <span
-                            className="nba-shift-pill"
-                            style={{ '--shift-color': rosterShifts[0].color || '#0f766e' }}
-                          >
-                            <span className="nba-shift-pill__name">{rosterShifts[0].name}</span>
-                            {rosterShifts[0].start && rosterShifts[0].end ? (
-                              <span className="nba-shift-pill__time">
-                                {String(rosterShifts[0].start).slice(0, 5)}–{String(rosterShifts[0].end).slice(0, 5)}
-                              </span>
-                            ) : null}
-                          </span>
-                        </div>
-                      </div>
-                    ) : null}
-                    {nurseId && rosterShifts.length > 1 ? (
-                      <label className="nba-field">
-                        <span>Shift *</span>
+                      {nurseId && rosterShifts.length === 1 ? (
+                        <span
+                          className="nba-shift-pill"
+                          style={{ '--shift-color': rosterShifts[0].color || '#0f766e' }}
+                        >
+                          <span className="nba-shift-pill__name">{rosterShifts[0].name}</span>
+                          {rosterShifts[0].start && rosterShifts[0].end ? (
+                            <span className="nba-shift-pill__time">
+                              {String(rosterShifts[0].start).slice(0, 5)}–{String(rosterShifts[0].end).slice(0, 5)}
+                            </span>
+                          ) : null}
+                        </span>
+                      ) : null}
+                      {nurseId && rosterShifts.length > 1 ? (
                         <Select
                           value={shiftName}
                           onChange={setShiftName}
@@ -531,8 +523,8 @@ export default function NurseBedAllocationEditPage() {
                             })),
                           ]}
                         />
-                      </label>
-                    ) : null}
+                      ) : null}
+                    </label>
                   </div>
                 </section>
 

@@ -59,10 +59,33 @@ export default function NurseWorkforceShiftsPage() {
   const deleteMut = useDeleteWorkforceShiftMutation();
   const updateMut = useUpdateWorkforceShiftMutation();
   const [form, setForm] = useState(EMPTY);
+  const [editingId, setEditingId] = useState(null);
+  const saving = createMut.isPending || updateMut.isPending;
 
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
-  const onCreate = (e) => {
+  const clockValue = (value) => String(value || '').slice(0, 5);
+
+  const resetForm = () => {
+    setEditingId(null);
+    setForm(EMPTY);
+  };
+
+  const startEdit = (shift) => {
+    setEditingId(shift.id);
+    setForm({
+      name: shift.name || '',
+      code: shift.code || '',
+      start_time: clockValue(shift.start_time) || '06:00',
+      end_time: clockValue(shift.end_time) || '14:00',
+      grace_minutes: shift.grace_minutes ?? 0,
+      color: shift.color || '#3B82F6',
+      weekly_mask: shift.weekly_mask || '1111111',
+      notes: shift.notes || '',
+    });
+  };
+
+  const onSubmit = (e) => {
     e.preventDefault();
     const graceMinutes =
       form.grace_minutes === '' ? 0 : Number(form.grace_minutes);
@@ -73,32 +96,43 @@ export default function NurseWorkforceShiftsPage() {
     const normalize = (value) => String(value || '').trim().toLowerCase();
     const name = normalize(form.name);
     const code = normalize(form.code);
-    const existingShifts = shifts;
-    if (existingShifts.some((shift) => normalize(shift.name) === name)) {
+    const others = shifts.filter((shift) => shift.id !== editingId);
+    if (others.some((shift) => normalize(shift.name) === name)) {
       toast.error('A shift with this name already exists');
       return;
     }
-    if (code && existingShifts.some((shift) => normalize(shift.code) === code)) {
+    if (code && others.some((shift) => normalize(shift.code) === code)) {
       toast.error('A shift with this code already exists');
       return;
     }
-    createMut.mutate(
-      {
-        ...form,
-        name: form.name.trim(),
-        code: form.code.trim(),
-        start_time: form.start_time.length === 5 ? `${form.start_time}:00` : form.start_time,
-        end_time: form.end_time.length === 5 ? `${form.end_time}:00` : form.end_time,
-        grace_minutes: graceMinutes,
-      },
-      {
-        onSuccess: () => {
-          toast.success('Shift created');
-          setForm(EMPTY);
+    const body = {
+      ...form,
+      name: form.name.trim(),
+      code: form.code.trim(),
+      start_time: form.start_time.length === 5 ? `${form.start_time}:00` : form.start_time,
+      end_time: form.end_time.length === 5 ? `${form.end_time}:00` : form.end_time,
+      grace_minutes: graceMinutes,
+    };
+    if (editingId) {
+      updateMut.mutate(
+        { id: editingId, body },
+        {
+          onSuccess: () => {
+            toast.success('Shift updated');
+            resetForm();
+          },
+          onError: (err) => toast.error(err?.message || 'Failed to update shift'),
         },
-        onError: (err) => toast.error(err?.message || 'Failed to create shift'),
+      );
+      return;
+    }
+    createMut.mutate(body, {
+      onSuccess: () => {
+        toast.success('Shift created');
+        resetForm();
       },
-    );
+      onError: (err) => toast.error(err?.message || 'Failed to create shift'),
+    });
   };
 
   if (!canView) {
@@ -114,9 +148,9 @@ export default function NurseWorkforceShiftsPage() {
       <div className="admin-page nwf-page">
         <NurseWorkforceNav />
 
-        {canCreate && (
-          <form className="nwf-panel" onSubmit={onCreate}>
-            <h2 className="admin-card__title">Create shift</h2>
+        {(canCreate || editingId) && (
+          <form className="nwf-panel" onSubmit={onSubmit}>
+            <h2 className="admin-card__title">{editingId ? 'Edit shift' : 'Create shift'}</h2>
             <div className="nwf-form-row nwf-form-row--six">
               <label className="nwf-field">Name<input value={form.name} onChange={(e) => set('name', e.target.value)} required /></label>
               <label className="nwf-field">Code<input value={form.code} onChange={(e) => set('code', e.target.value)} /></label>
@@ -125,9 +159,14 @@ export default function NurseWorkforceShiftsPage() {
               <label className="nwf-field">Grace (min)<input type="number" min={0} max={180} step={1} value={form.grace_minutes} onChange={(e) => set('grace_minutes', e.target.value)} /></label>
               <label className="nwf-field">Color<input type="color" value={form.color} onChange={(e) => set('color', e.target.value)} /></label>
             </div>
-            <Button type="submit" disabled={createMut.isPending}>
-              {createMut.isPending ? 'Saving…' : 'Save shift'}
+            <Button type="submit" disabled={saving}>
+              {saving ? 'Saving…' : editingId ? 'Save changes' : 'Save shift'}
             </Button>
+            {editingId ? (
+              <Button type="button" variant="outline" onClick={resetForm} disabled={saving}>
+                Cancel
+              </Button>
+            ) : null}
           </form>
         )}
 
@@ -162,6 +201,16 @@ export default function NurseWorkforceShiftsPage() {
                     </td>
                     <td data-label="Template"><span>{s.is_template ? 'Yes' : 'No'}</span></td>
                     <td className="admin-table__actions" data-label="Action">
+                      <div className="admin-table__actions-inner nwf-shift-actions">
+                      {s.is_active && canUpdate ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => startEdit(s)}
+                        >
+                          Edit
+                        </Button>
+                      ) : null}
                       {s.is_active && canDelete ? (
                         <Button
                           variant="danger"
@@ -193,6 +242,7 @@ export default function NurseWorkforceShiftsPage() {
                           Activate
                         </Button>
                       ) : null}
+                      </div>
                     </td>
                   </tr>
                 ))}

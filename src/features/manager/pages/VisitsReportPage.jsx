@@ -7,7 +7,6 @@ import ManagerPageHeader from '@/features/manager/components/ManagerPageHeader';
 import ManagerReportFilters from '@/features/manager/components/ManagerReportFilters';
 import ManagerStatusPill from '@/features/manager/components/ManagerStatusPill';
 import {
-  defaultReportDateRange,
   formatReportDate,
 } from '@/features/manager/utils/reportUtils';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
@@ -29,7 +28,7 @@ const PAGE_SIZE = 10;
 export default function VisitsReportPage() {
   const [searchParams] = useSearchParams();
   const focusVisitId = searchParams.get('visit');
-  const [range, setRange] = useState(defaultReportDateRange);
+  const [range, setRange] = useState({ from_date: '', to_date: '' });
   const [departmentId, setDepartmentId] = useState('all');
   const [page, setPage] = useState(1);
 
@@ -71,7 +70,7 @@ export default function VisitsReportPage() {
   );
 
   const resetFilters = () => {
-    setRange(defaultReportDateRange());
+    setRange({ from_date: '', to_date: '' });
     setDepartmentId('all');
     setPage(1);
   };

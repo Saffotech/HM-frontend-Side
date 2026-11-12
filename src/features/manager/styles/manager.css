@@ -536,6 +536,12 @@
   max-width: 10.5rem;
 }
 
+.admin-reports-overview .admin-report-filters--inline .admin-report-filters__date {
+  min-width: 10.5rem;
+  width: 11rem;
+  max-width: 11rem;
+}
+
 .admin-report-date-error {
   margin: 0;
   padding: 0.65rem 0.85rem;

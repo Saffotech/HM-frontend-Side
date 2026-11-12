@@ -14,7 +14,6 @@ import ManagerPageHeader from '@/features/manager/components/ManagerPageHeader';
 import ManagerReportFilters from '@/features/manager/components/ManagerReportFilters';
 import ManagerStatCard from '@/features/manager/components/ManagerStatCard';
 import {
-  defaultReportDateRange,
   normalizeReportsOverviewPayments,
 } from '@/features/manager/utils/reportUtils';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
@@ -23,7 +22,7 @@ import { QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 
 export default function ReportsOverviewPage() {
-  const [range, setRange] = useState(defaultReportDateRange);
+  const [range, setRange] = useState({ from_date: '', to_date: '' });
   const isInvalidDateRange =
     Boolean(range.from_date && range.to_date) && range.from_date > range.to_date;
 
@@ -40,7 +39,7 @@ export default function ReportsOverviewPage() {
 
   return (
     <ManagerLayout pageTitle="Reports">
-      <div className="admin-page admin-page--compact">
+      <div className="admin-page admin-page--compact admin-reports-overview">
         <ManagerPageHeader
           title="Reports overview"
           actions={(
