@@ -2,6 +2,7 @@ const STATUS_MAP = {
   active: 'success',
   inactive: 'neutral',
   completed: 'success',
+  complete: 'success',
   pending: 'warning',
   paid: 'success',
   partial: 'warning',
@@ -9,6 +10,8 @@ const STATUS_MAP = {
   cancelled: 'danger',
   canceled: 'danger',
   registered: 'info',
+  admit: 'info',
+  discharged: 'warning',
   in_progress: 'info',
   warning: 'warning',
 };

@@ -89,6 +89,7 @@
   }
 
   .manager-layout .admin-visits-filter-row .searchable-select.admin-visits-filter-row__dept,
+  .manager-layout .admin-visits-filter-row .searchable-select.admin-visits-filter-row__status,
   .manager-layout .admin-visits-filter-row .admin-report-filters__date,
   .manager-layout .admin-visits-filter-row .admin-report-filters__date.date-input,
   .manager-layout .admin-report-filters--inline .admin-report-filters__date {
