@@ -633,9 +633,9 @@
 
 .admin-visits-filter-row__status,
 .admin-visits-filter-row .searchable-select.admin-visits-filter-row__status {
-  width: 11rem !important;
-  min-width: 10rem !important;
-  max-width: 12rem !important;
+  width: 13.5rem !important;
+  min-width: 12.5rem !important;
+  max-width: 15rem !important;
 }
 
 .admin-visits-filter-row .admin-report-filters--inline > .btn {

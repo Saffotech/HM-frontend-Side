@@ -32,6 +32,9 @@ const STATUS_LABELS = {
   discharged: 'Discharged',
   complete: 'Complete',
   completed: 'Complete',
+  no_show: 'Missed appointment',
+  missed: 'Missed appointment',
+  missed_appointment: 'Missed appointment',
 };
 
 function statusKey(value) {
@@ -48,6 +51,9 @@ function matchesStatus(value, selected) {
   if (selected === 'admit') return key === 'admit' || key === 'admitted';
   if (selected === 'discharged') return key === 'discharged';
   if (selected === 'complete') return key === 'complete' || key === 'completed';
+  if (selected === 'missed') {
+    return key === 'no_show' || key === 'missed' || key === 'missed_appointment';
+  }
   return true;
 }
 
@@ -121,6 +127,7 @@ export default function VisitsReportPage() {
     { value: 'admit', label: 'Admit' },
     { value: 'discharged', label: 'Discharged' },
     { value: 'complete', label: 'Complete' },
+    { value: 'missed', label: 'Missed appointment' },
   ];
 
   const resetFilters = () => {
