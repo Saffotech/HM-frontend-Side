@@ -192,6 +192,10 @@
     text-align: right;
   }
 
+  .manager-layout .admin-table--stack .admin-visits-uid {
+    align-items: flex-end;
+  }
+
   .manager-layout .admin-table--stack td:last-child {
     border-bottom: none;
     padding-bottom: 0.15rem !important;

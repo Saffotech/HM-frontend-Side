@@ -51,6 +51,18 @@ function matchesStatus(value, selected) {
   return true;
 }
 
+function visitSource(visit) {
+  const explicit = String(visit?.source || '').trim().toLowerCase();
+  if (explicit === 'ipd') return 'IPD';
+  if (explicit === 'opd') return 'OPD';
+  const marker = [visit?.token_number, visit?.bill_number, visit?.admission_no]
+    .filter(Boolean)
+    .join(' ')
+    .toUpperCase();
+  if (marker.includes('IPD')) return 'IPD';
+  return 'OPD';
+}
+
 export default function VisitsReportPage() {
   const [searchParams] = useSearchParams();
   const focusVisitId = searchParams.get('visit');
@@ -227,7 +239,9 @@ export default function VisitsReportPage() {
                             </tr>
                           </thead>
                           <tbody>
-                            {visits.map((visit) => (
+                            {visits.map((visit) => {
+                              const source = visitSource(visit);
+                              return (
                               <tr
                                 key={visit.visit_id}
                                 className={
@@ -236,7 +250,14 @@ export default function VisitsReportPage() {
                                     : undefined
                                 }
                               >
-                                <td data-label="Patient UID"><span>{visit.patient_uid || '—'}</span></td>
+                                <td data-label="Patient UID">
+                                  <span className="admin-visits-uid">
+                                    <span>{visit.patient_uid || '—'}</span>
+                                    <span className={`admin-visits-uid__source admin-visits-uid__source--${source.toLowerCase()}`}>
+                                      {source}
+                                    </span>
+                                  </span>
+                                </td>
                                 <td data-label="Patient"><span>{visit.patient_name || '—'}</span></td>
                                 <td data-label="Doctor"><span>{visit.doctor_name || '—'}</span></td>
                                 <td data-label="Department"><span>{visit.department_name}</span></td>
@@ -258,7 +279,8 @@ export default function VisitsReportPage() {
                                   <ManagerStatusPill label={statusLabel(visit.status)} />
                                 </td>
                               </tr>
-                            ))}
+                              );
+                            })}
                           </tbody>
                         </table>
                       </div>
