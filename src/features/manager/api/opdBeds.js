@@ -15,6 +15,7 @@ export async function listInventoryBeds(params = {}) {
     ward: params.ward,
     status: params.status,
     search: params.search,
+    status_filter: params.status_filter,
   });
   return apiClient(`/opd/beds${query}`);
 }
@@ -49,5 +50,17 @@ export async function deleteInventoryBed(bedId) {
 export async function deleteInventoryWard(wardName) {
   return apiClient(`/opd/beds/by-ward/${encodeURIComponent(wardName)}`, {
     method: 'DELETE',
+  });
+}
+
+export async function activateInventoryBed(bedId) {
+  return apiClient(`/opd/beds/${bedId}/activate`, {
+    method: 'PATCH',
+  });
+}
+
+export async function activateInventoryWard(wardName) {
+  return apiClient(`/opd/beds/by-ward/${encodeURIComponent(wardName)}/activate`, {
+    method: 'PATCH',
   });
 }

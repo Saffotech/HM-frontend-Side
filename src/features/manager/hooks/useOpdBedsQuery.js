@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  activateInventoryBed,
+  activateInventoryWard,
   createInventoryBed,
   createInventoryBedsBulk,
   deleteInventoryBed,
@@ -79,6 +81,22 @@ export function useDeleteInventoryWardMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteInventoryWard,
+    onSuccess: () => invalidateBedEverywhere(queryClient),
+  });
+}
+
+export function useActivateInventoryBedMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: activateInventoryBed,
+    onSuccess: () => invalidateBedEverywhere(queryClient),
+  });
+}
+
+export function useActivateInventoryWardMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: activateInventoryWard,
     onSuccess: () => invalidateBedEverywhere(queryClient),
   });
 }

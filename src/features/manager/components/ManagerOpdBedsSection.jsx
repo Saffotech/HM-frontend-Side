@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  Ban,
   BedDouble,
   CheckCircle2,
   ChevronDown,
@@ -10,6 +11,8 @@ import {
   UserRound,
 } from 'lucide-react';
 import {
+  useActivateInventoryBedMutation,
+  useActivateInventoryWardMutation,
   useBedInventoryListQuery,
   useBedInventorySummaryQuery,
   useCreateInventoryBedMutation,
@@ -138,6 +141,15 @@ function defaultPrefixForWard(ward) {
   return clean ? `${clean}-` : 'W-';
 }
 
+function bedHadPatient(bed) {
+  if (!bed) return false;
+  return (
+    Boolean(bed.has_patient_history) ||
+    bed.patient_id != null ||
+    String(bed.status || '').toLowerCase() === 'occupied'
+  );
+}
+
 function buildBulkIds(form) {
   const start = Number(form.start_number) || 0;
   const count = Math.min(Math.max(Number(form.count) || 0, 0), 100);
@@ -156,12 +168,16 @@ export default function ManagerOpdBedsSection({
 }) {
   const [wardFilter, setWardFilter] = useState('all');
   const [bedTypeFilter, setBedTypeFilter] = useState('all');
+  const [lifecycleFilter, setLifecycleFilter] = useState('active');
+  const [wardLifecycleFilter, setWardLifecycleFilter] = useState('active');
   const [addMode, setAddMode] = useState('single'); // single | bulk | ward
   const [wardName, setWardName] = useState('');
   const [customWards, setCustomWards] = useState([]);
   const [newWardName, setNewWardName] = useState('');
   const [pendingWardDelete, setPendingWardDelete] = useState(null);
   const [pendingBedDelete, setPendingBedDelete] = useState(null);
+  const [pendingWardActivate, setPendingWardActivate] = useState(null);
+  const [pendingBedActivate, setPendingBedActivate] = useState(null);
   const [singleBedNumber, setSingleBedNumber] = useState('');
   const [bulkForm, setBulkForm] = useState({
     prefix: '',
@@ -180,26 +196,42 @@ export default function ManagerOpdBedsSection({
   const [bedType, setBedType] = useState('single');
 
   const summaryQ = useBedInventorySummaryQuery();
-  // Always load full inventory so duplicate checks & next-number work with ward filter on.
-  const listQ = useBedInventoryListQuery({});
+  // Load every bed so Active / Inactive / All can filter locally, and so a
+  // deactivated bed number still counts as taken.
+  const listQ = useBedInventoryListQuery({ status_filter: 'all' });
   const createMut = useCreateInventoryBedMutation();
   const bulkMut = useCreateInventoryBedsBulkMutation();
   const updateMut = useUpdateInventoryBedMutation();
   const deleteMut = useDeleteInventoryBedMutation();
   const deleteWardMut = useDeleteInventoryWardMutation();
+  const activateMut = useActivateInventoryBedMutation();
+  const activateWardMut = useActivateInventoryWardMutation();
 
   const allBeds = useMemo(() => listQ.data?.beds ?? [], [listQ.data?.beds]);
+  const activeInventory = useMemo(
+    () => allBeds.filter((bed) => bed.is_active !== false),
+    [allBeds],
+  );
   const beds = allBeds.filter((b) => {
+    const isActive = b.is_active !== false;
+    if (lifecycleFilter === 'active' && !isActive) return false;
+    if (lifecycleFilter === 'inactive' && isActive) return false;
     if (wardFilter !== 'all' && b.ward_name !== wardFilter) return false;
     const type = b.bed_type === 'double' ? 'double' : 'single';
     if (bedTypeFilter !== 'all' && type !== bedTypeFilter) return false;
     return true;
   });
 
-  const stats = listQ.data?.stats ?? summaryQ.data?.totals ?? {};
-  const total = Number(stats.total ?? stats.beds ?? 0);
-  const available = Number(stats.available ?? 0);
-  const occupied = Number(stats.occupied ?? 0);
+  const summaryTotals = summaryQ.data?.totals;
+  const total = Number(summaryTotals?.beds ?? summaryTotals?.total ?? activeInventory.length);
+  const available = Number(
+    summaryTotals?.available ??
+      activeInventory.filter((bed) => String(bed.status).toLowerCase() !== 'occupied').length,
+  );
+  const occupied = Number(
+    summaryTotals?.occupied ??
+      activeInventory.filter((bed) => String(bed.status).toLowerCase() === 'occupied').length,
+  );
   const wardCount = Number(summaryQ.data?.totals?.wards ?? 0);
 
   const taken = useMemo(() => existingBedSet(allBeds), [allBeds]);
@@ -271,7 +303,9 @@ export default function ManagerOpdBedsSection({
     bulkMut.isPending ||
     updateMut.isPending ||
     deleteMut.isPending ||
-    deleteWardMut.isPending;
+    deleteWardMut.isPending ||
+    activateMut.isPending ||
+    activateWardMut.isPending;
 
   const wardRows = useMemo(() => {
     const byName = new Map();
@@ -279,27 +313,50 @@ export default function ManagerOpdBedsSection({
       const name = bed.ward_name;
       if (!name) continue;
       if (!byName.has(name)) {
-        byName.set(name, { ward_name: name, total: 0, available: 0, occupied: 0 });
+        byName.set(name, {
+          ward_name: name,
+          total: 0,
+          active: 0,
+          occupied: 0,
+          hasPatientHistory: false,
+        });
       }
       const row = byName.get(name);
       row.total += 1;
-      if (String(bed.status).toLowerCase() === 'occupied') row.occupied += 1;
-      else row.available += 1;
+      if (bed.is_active !== false) {
+        row.active += 1;
+        if (String(bed.status).toLowerCase() === 'occupied') row.occupied += 1;
+      }
+      if (bedHadPatient(bed)) row.hasPatientHistory = true;
     }
     for (const name of customWards) {
       if (!byName.has(name)) {
-        byName.set(name, { ward_name: name, total: 0, available: 0, occupied: 0 });
+        byName.set(name, {
+          ward_name: name,
+          total: 0,
+          active: 0,
+          occupied: 0,
+          hasPatientHistory: false,
+        });
       }
     }
-    return [...byName.values()].sort((a, b) => a.ward_name.localeCompare(b.ward_name));
+    return [...byName.values()]
+      .map((row) => ({ ...row, isInactive: row.total > 0 && row.active === 0 }))
+      .sort((a, b) => a.ward_name.localeCompare(b.ward_name));
   }, [allBeds, customWards]);
+
+  const visibleWards = wardRows.filter((ward) => {
+    if (wardLifecycleFilter === 'inactive') return ward.isInactive;
+    if (wardLifecycleFilter === 'active') return !ward.isInactive;
+    return true;
+  });
 
   const handleDeleteWard = (ward) => {
     if (!canEditWards) return;
     const occupiedCount = Number(ward.occupied ?? 0);
     if (occupiedCount > 0) {
       toast.error(
-        `Cannot delete "${ward.ward_name}" — ${occupiedCount} bed(s) still occupied. Release patients first.`
+        `Cannot deactivate "${ward.ward_name}" — ${occupiedCount} bed(s) still occupied. Release patients first.`
       );
       return;
     }
@@ -322,12 +379,12 @@ export default function ManagerOpdBedsSection({
 
     try {
       const result = await deleteWardMut.mutateAsync(ward.ward_name);
-      setCustomWards((prev) => prev.filter((w) => w !== ward.ward_name));
-      if (wardName === ward.ward_name) setWardName('');
-      if (wardFilter === ward.ward_name) setWardFilter('all');
-      toast.success(
-        `Ward "${ward.ward_name}" deleted (${result?.deleted_beds ?? bedCount} beds removed)`
-      );
+      if (!ward.hasPatientHistory) {
+        setCustomWards((prev) => prev.filter((w) => w !== ward.ward_name));
+        if (wardName === ward.ward_name) setWardName('');
+        if (wardFilter === ward.ward_name) setWardFilter('all');
+      }
+      toast.success(result?.message || `Ward "${ward.ward_name}" updated`);
       setStartTouched(false);
       setSingleTouched(false);
     } catch (err) {
@@ -475,7 +532,7 @@ export default function ManagerOpdBedsSection({
   const handleDelete = (bed) => {
     if (!canEditAllBeds) return;
     if (String(bed.status).toLowerCase() === 'occupied') {
-      toast.error('Release the patient before deleting this bed');
+      toast.error('Release the patient before deactivating this bed');
       return;
     }
     setPendingBedDelete(bed);
@@ -488,18 +545,47 @@ export default function ManagerOpdBedsSection({
 
     const currentBed = allBeds.find((item) => item.id === bed.id);
     if (String(currentBed?.status ?? bed.status).toLowerCase() === 'occupied') {
-      toast.error('Release the patient before deleting this bed');
+      toast.error('Release the patient before deactivating this bed');
       return;
     }
 
     try {
-      await deleteMut.mutateAsync(bed.id);
-      toast.success(`Bed ${bed.bed_number} deleted`);
+      const result = await deleteMut.mutateAsync(bed.id);
+      toast.success(
+        result?.message ||
+          (bedHadPatient(bed)
+            ? `Bed ${bed.bed_number} deactivated`
+            : `Bed ${bed.bed_number} deleted`)
+      );
       if (editingId === bed.id) cancelEdit();
       setStartTouched(false);
       setSingleTouched(false);
     } catch (err) {
-      toast.error(err?.message || 'Failed to delete bed');
+      toast.error(err?.message || 'Failed to update bed');
+    }
+  };
+
+  const confirmActivateBed = async () => {
+    const bed = pendingBedActivate;
+    if (!bed || !canEditAllBeds) return;
+    setPendingBedActivate(null);
+    try {
+      const result = await activateMut.mutateAsync(bed.id);
+      toast.success(result?.message || `Bed ${bed.bed_number} activated`);
+    } catch (err) {
+      toast.error(err?.message || 'Failed to activate bed');
+    }
+  };
+
+  const confirmActivateWard = async () => {
+    const ward = pendingWardActivate;
+    if (!ward || !canEditWards) return;
+    setPendingWardActivate(null);
+    try {
+      const result = await activateWardMut.mutateAsync(ward.ward_name);
+      toast.success(result?.message || `Ward "${ward.ward_name}" activated`);
+    } catch (err) {
+      toast.error(err?.message || 'Failed to activate ward');
     }
   };
 
@@ -779,17 +865,41 @@ export default function ManagerOpdBedsSection({
         collapsible
         defaultOpen={false}
         locked={!canEditWards}
-        action={lockToggle('wards')}
+        action={
+          <div className="aos-beds__list-actions">
+            <select
+              className="aos-select aos-select--sm aos-beds__filter aos-beds__filter--lifecycle"
+              value={wardLifecycleFilter}
+              onChange={(e) => setWardLifecycleFilter(e.target.value)}
+              aria-label="Filter wards by active or inactive"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="all">All</option>
+            </select>
+            {lockToggle('wards')}
+          </div>
+        }
       >
         <p className="aos-card__hint">
-          Delete a ward to remove it and all its empty beds. Occupied beds must be released first.
+          A ward is deleted only when no bed in it has ever had a patient. If any bed was
+          admitted or discharged, the whole ward is deactivated and can be activated again.
+          Occupied beds must be released first.
         </p>
-        {wardRows.length === 0 ? (
-          <p className="aos-beds__ward-empty">No wards yet. Use <strong>New ward</strong> above.</p>
+        {visibleWards.length === 0 ? (
+          <p className="aos-beds__ward-empty">
+            {wardRows.length === 0
+              ? 'No wards yet. Use New ward above.'
+              : wardLifecycleFilter === 'inactive'
+                ? 'No inactive wards.'
+                : 'No active wards.'}
+          </p>
         ) : (
           <ul className="aos-beds__ward-list">
-            {wardRows.map((ward) => {
+            {visibleWards.map((ward) => {
               const blocked = Number(ward.occupied ?? 0) > 0;
+              const deactivateWard = Boolean(ward.hasPatientHistory);
               return (
                 <li key={ward.ward_name} className="aos-beds__ward-row">
                   <div className="aos-beds__ward-meta">
@@ -798,23 +908,46 @@ export default function ManagerOpdBedsSection({
                       {ward.total} bed{ward.total === 1 ? '' : 's'}
                       {ward.occupied > 0 ? ` · ${ward.occupied} occupied` : ''}
                     </span>
+                    {ward.isInactive ? (
+                      <span className="aos-beds__status aos-beds__status--inactive">
+                        <span className="aos-beds__status-dot" aria-hidden />
+                        Inactive
+                      </span>
+                    ) : null}
                   </div>
-                  {canEditWards ? (
+                  {canEditWards && ward.isInactive ? (
                     <Button
                       type="button"
                       size="sm"
                       variant="outline"
-                      className="aos-beds__icon-btn aos-beds__icon-btn--danger"
+                      className="aos-beds__icon-btn aos-beds__icon-btn--activate"
+                      disabled={busy}
+                      title={`Activate ward ${ward.ward_name}`}
+                      onClick={() => setPendingWardActivate(ward)}
+                    >
+                      <CheckCircle2 size={14} />
+                      <span>Activate ward</span>
+                    </Button>
+                  ) : canEditWards ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className={`aos-beds__icon-btn${
+                        deactivateWard ? '' : ' aos-beds__icon-btn--danger'
+                      }`}
                       disabled={busy || blocked}
                       title={
                         blocked
-                          ? 'Release occupied beds before deleting this ward'
-                          : `Delete ward ${ward.ward_name}`
+                          ? 'Release occupied beds before deactivating this ward'
+                          : deactivateWard
+                            ? `Deactivate ward ${ward.ward_name}`
+                            : `Delete ward ${ward.ward_name}`
                       }
                       onClick={() => handleDeleteWard(ward)}
                     >
-                      <Trash2 size={14} />
-                      <span>Delete ward</span>
+                      {deactivateWard ? <Ban size={14} /> : <Trash2 size={14} />}
+                      <span>{deactivateWard ? 'Deactivate ward' : 'Delete ward'}</span>
                     </Button>
                   ) : null}
                 </li>
@@ -826,24 +959,48 @@ export default function ManagerOpdBedsSection({
 
       <ConfirmDialog
         isOpen={Boolean(pendingWardDelete)}
-        title="Delete ward?"
+        title={pendingWardDelete?.hasPatientHistory ? 'Deactivate ward?' : 'Delete ward?'}
         message={
-          Number(pendingWardDelete?.total ?? 0) > 0
-            ? `Delete "${pendingWardDelete.ward_name}" and its ${pendingWardDelete.total} empty bed(s)? This action cannot be undone.`
-            : `Remove "${pendingWardDelete?.ward_name}"?`
+          Number(pendingWardDelete?.total ?? 0) === 0
+            ? `Remove "${pendingWardDelete?.ward_name}"?`
+            : pendingWardDelete?.hasPatientHistory
+              ? `Deactivate "${pendingWardDelete.ward_name}"? Every bed in this ward will be deactivated. Patient history is kept, and you can activate the ward again later.`
+              : `Delete "${pendingWardDelete.ward_name}" and its ${pendingWardDelete.total} unused bed(s)? No patient has used this ward. This cannot be undone.`
         }
-        confirmLabel="Delete ward"
+        confirmLabel={pendingWardDelete?.hasPatientHistory ? 'Deactivate ward' : 'Delete ward'}
         onConfirm={confirmDeleteWard}
         onCancel={() => setPendingWardDelete(null)}
       />
 
       <ConfirmDialog
+        isOpen={Boolean(pendingWardActivate)}
+        title="Activate ward?"
+        message={`Activate "${pendingWardActivate?.ward_name}" and put its ${pendingWardActivate?.total} bed(s) back into inventory?`}
+        confirmLabel="Activate ward"
+        onConfirm={confirmActivateWard}
+        onCancel={() => setPendingWardActivate(null)}
+      />
+
+      <ConfirmDialog
         isOpen={Boolean(pendingBedDelete)}
-        title="Delete bed?"
-        message={`Delete bed "${pendingBedDelete?.bed_number}" from "${pendingBedDelete?.ward_name}"? This action cannot be undone.`}
-        confirmLabel="Delete bed"
+        title={bedHadPatient(pendingBedDelete) ? 'Deactivate bed?' : 'Delete bed?'}
+        message={
+          bedHadPatient(pendingBedDelete)
+            ? `Deactivate bed "${pendingBedDelete?.bed_number}" in "${pendingBedDelete?.ward_name}"? A patient was admitted or discharged here, so the bed and its history stay on record. You can activate it again later.`
+            : `Delete bed "${pendingBedDelete?.bed_number}" from "${pendingBedDelete?.ward_name}"? This bed has never had a patient, so it will be removed.`
+        }
+        confirmLabel={bedHadPatient(pendingBedDelete) ? 'Deactivate bed' : 'Delete bed'}
         onConfirm={confirmDeleteBed}
         onCancel={() => setPendingBedDelete(null)}
+      />
+
+      <ConfirmDialog
+        isOpen={Boolean(pendingBedActivate)}
+        title="Activate bed?"
+        message={`Activate bed "${pendingBedActivate?.bed_number}" in "${pendingBedActivate?.ward_name}" and put it back into inventory?`}
+        confirmLabel="Activate bed"
+        onConfirm={confirmActivateBed}
+        onCancel={() => setPendingBedActivate(null)}
       />
 
       <SectionCard
@@ -884,6 +1041,17 @@ export default function ManagerOpdBedsSection({
               <option value="single">Single</option>
               <option value="double">Double</option>
             </select>
+            <select
+              className="aos-select aos-select--sm aos-beds__filter aos-beds__filter--lifecycle"
+              value={lifecycleFilter}
+              onChange={(e) => setLifecycleFilter(e.target.value)}
+              aria-label="Filter by active or inactive"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="all">All</option>
+            </select>
           </div>
         }
       >
@@ -898,8 +1066,16 @@ export default function ManagerOpdBedsSection({
               <span className="aos-beds__empty-icon" aria-hidden>
                 <BedDouble size={22} strokeWidth={2} />
               </span>
-              <strong>No beds yet</strong>
-              <p>Add a ward or beds above to start your inventory.</p>
+              <strong>
+                {lifecycleFilter === 'inactive' ? 'No inactive beds' : 'No beds yet'}
+              </strong>
+              <p>
+                {lifecycleFilter === 'inactive'
+                  ? 'Deactivated beds will appear here.'
+                  : lifecycleFilter === 'all'
+                    ? 'No beds match these filters.'
+                    : 'Add a ward or beds above to start your inventory.'}
+              </p>
             </div>
           ) : (
             <div className="aos-table-wrap aos-beds__table-wrap">
@@ -917,12 +1093,18 @@ export default function ManagerOpdBedsSection({
                 <tbody>
                   {beds.map((bed) => {
                     const occupiedBed = String(bed.status).toLowerCase() === 'occupied';
+                    const inactiveBed = bed.is_active === false;
+                    const hadPatient = bedHadPatient(bed);
                     const isEditing = editingId === bed.id;
                     return (
                       <tr
                         key={bed.id}
                         className={
-                          occupiedBed ? 'aos-beds__row--occupied' : 'aos-beds__row--available'
+                          inactiveBed
+                            ? 'aos-beds__row--inactive'
+                            : occupiedBed
+                              ? 'aos-beds__row--occupied'
+                              : 'aos-beds__row--available'
                         }
                       >
                         <td data-label="Bed">
@@ -985,11 +1167,15 @@ export default function ManagerOpdBedsSection({
                         <td data-label="Status">
                           <span
                             className={`aos-beds__status aos-beds__status--${
-                              occupiedBed ? 'occupied' : 'available'
+                              inactiveBed
+                                ? 'inactive'
+                                : occupiedBed
+                                  ? 'occupied'
+                                  : 'available'
                             }`}
                           >
                             <span className="aos-beds__status-dot" aria-hidden />
-                            {occupiedBed ? 'Occupied' : 'Available'}
+                            {inactiveBed ? 'Inactive' : occupiedBed ? 'Occupied' : 'Available'}
                           </span>
                         </td>
                         <td className="aos-beds__patient" data-label="Patient">
@@ -1019,6 +1205,21 @@ export default function ManagerOpdBedsSection({
                                 Cancel
                               </Button>
                             </div>
+                          ) : inactiveBed ? (
+                            <div className="aos-beds__actions">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="aos-beds__icon-btn aos-beds__icon-btn--activate"
+                                disabled={busy}
+                                title="Activate bed"
+                                onClick={() => setPendingBedActivate(bed)}
+                              >
+                                <CheckCircle2 size={14} />
+                                <span>Activate</span>
+                              </Button>
+                            </div>
                           ) : (
                             <div className="aos-beds__actions">
                               <Button
@@ -1041,17 +1242,21 @@ export default function ManagerOpdBedsSection({
                                 type="button"
                                 size="sm"
                                 variant="outline"
-                                className="aos-beds__icon-btn aos-beds__icon-btn--danger"
+                                className={`aos-beds__icon-btn${
+                                  hadPatient ? '' : ' aos-beds__icon-btn--danger'
+                                }`}
                                 disabled={occupiedBed || busy}
                                 title={
                                   occupiedBed
-                                    ? 'Release patient before deleting'
-                                    : 'Delete bed'
+                                    ? 'Release the patient before deactivating this bed'
+                                    : hadPatient
+                                      ? 'Deactivate bed. Patient history is kept.'
+                                      : 'Delete bed. This bed has never had a patient.'
                                 }
                                 onClick={() => handleDelete(bed)}
                               >
-                                <Trash2 size={14} />
-                                <span>Delete</span>
+                                {hadPatient ? <Ban size={14} /> : <Trash2 size={14} />}
+                                <span>{hadPatient ? 'Deactivate' : 'Delete'}</span>
                               </Button>
                             </div>
                           )}
