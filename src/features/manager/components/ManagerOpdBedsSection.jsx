@@ -18,7 +18,7 @@ import {
   useDeleteInventoryWardMutation,
   useUpdateInventoryBedMutation,
 } from '@/features/manager/hooks/useOpdBedsQuery';
-import { Button, Input, QueryFeedback } from '@/shared/components/common';
+import { Button, ConfirmDialog, Input, QueryFeedback } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
 
 const WARD_PREFIX = {
@@ -160,7 +160,8 @@ export default function ManagerOpdBedsSection({
   const [wardName, setWardName] = useState('');
   const [customWards, setCustomWards] = useState([]);
   const [newWardName, setNewWardName] = useState('');
-  const [newWardPrefix, setNewWardPrefix] = useState('');
+  const [pendingWardDelete, setPendingWardDelete] = useState(null);
+  const [pendingBedDelete, setPendingBedDelete] = useState(null);
   const [singleBedNumber, setSingleBedNumber] = useState('');
   const [bulkForm, setBulkForm] = useState({
     prefix: '',
@@ -293,7 +294,7 @@ export default function ManagerOpdBedsSection({
     return [...byName.values()].sort((a, b) => a.ward_name.localeCompare(b.ward_name));
   }, [allBeds, customWards]);
 
-  const handleDeleteWard = async (ward) => {
+  const handleDeleteWard = (ward) => {
     if (!canEditWards) return;
     const occupiedCount = Number(ward.occupied ?? 0);
     if (occupiedCount > 0) {
@@ -302,13 +303,15 @@ export default function ManagerOpdBedsSection({
       );
       return;
     }
-    const bedCount = Number(ward.total ?? 0);
-    const msg =
-      bedCount > 0
-        ? `Delete ward "${ward.ward_name}" and its ${bedCount} bed(s)? This cannot be undone.`
-        : `Remove ward "${ward.ward_name}"?`;
-    if (!window.confirm(msg)) return;
+    setPendingWardDelete(ward);
+  };
 
+  const confirmDeleteWard = async () => {
+    const ward = pendingWardDelete;
+    if (!ward || !canEditWards) return;
+    setPendingWardDelete(null);
+
+    const bedCount = Number(ward.total ?? 0);
     if (bedCount === 0) {
       setCustomWards((prev) => prev.filter((w) => w !== ward.ward_name));
       if (wardName === ward.ward_name) setWardName('');
@@ -347,10 +350,9 @@ export default function ManagerOpdBedsSection({
     }
     setCustomWards((prev) => [...prev, name]);
     setWardName(name);
-    const prefix = (newWardPrefix.trim() || defaultPrefixForWard(name));
+    const prefix = defaultPrefixForWard(name);
     setBulkForm((p) => ({ ...p, prefix }));
     setNewWardName('');
-    setNewWardPrefix('');
     setStartTouched(false);
     setSingleTouched(false);
     setAddMode('bulk');
@@ -470,13 +472,26 @@ export default function ManagerOpdBedsSection({
     }
   };
 
-  const handleDelete = async (bed) => {
+  const handleDelete = (bed) => {
     if (!canEditAllBeds) return;
     if (String(bed.status).toLowerCase() === 'occupied') {
       toast.error('Release the patient before deleting this bed');
       return;
     }
-    if (!window.confirm(`Delete bed ${bed.bed_number} from ${bed.ward_name}?`)) return;
+    setPendingBedDelete(bed);
+  };
+
+  const confirmDeleteBed = async () => {
+    const bed = pendingBedDelete;
+    if (!bed || !canEditAllBeds) return;
+    setPendingBedDelete(null);
+
+    const currentBed = allBeds.find((item) => item.id === bed.id);
+    if (String(currentBed?.status ?? bed.status).toLowerCase() === 'occupied') {
+      toast.error('Release the patient before deleting this bed');
+      return;
+    }
+
     try {
       await deleteMut.mutateAsync(bed.id);
       toast.success(`Bed ${bed.bed_number} deleted`);
@@ -587,20 +602,6 @@ export default function ManagerOpdBedsSection({
                 }}
               />
             </label>
-            <label className="aos-beds__compact-field aos-beds__compact-field--sm">
-              <span>Prefix</span>
-              <Input
-                value={newWardPrefix}
-                onChange={(e) => setNewWardPrefix(e.target.value)}
-                placeholder="auto"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddWard(e);
-                  }
-                }}
-              />
-            </label>
             <Button
               type="button"
               size="sm"
@@ -665,23 +666,6 @@ export default function ManagerOpdBedsSection({
               </label>
             ) : (
               <>
-                <label className="aos-beds__compact-field aos-beds__compact-field--sm">
-                  <span>Prefix</span>
-                  <Input
-                    value={bulkForm.prefix}
-                    onChange={(e) => {
-                      setStartTouched(false);
-                      setBulkForm((p) => ({ ...p, prefix: e.target.value }));
-                    }}
-                    placeholder="G-"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAdd(e);
-                      }
-                    }}
-                  />
-                </label>
                 <label className="aos-beds__compact-field aos-beds__compact-field--xs">
                   <span>Start</span>
                   <Input
@@ -839,6 +823,28 @@ export default function ManagerOpdBedsSection({
           </ul>
         )}
       </SectionCard>
+
+      <ConfirmDialog
+        isOpen={Boolean(pendingWardDelete)}
+        title="Delete ward?"
+        message={
+          Number(pendingWardDelete?.total ?? 0) > 0
+            ? `Delete "${pendingWardDelete.ward_name}" and its ${pendingWardDelete.total} empty bed(s)? This action cannot be undone.`
+            : `Remove "${pendingWardDelete?.ward_name}"?`
+        }
+        confirmLabel="Delete ward"
+        onConfirm={confirmDeleteWard}
+        onCancel={() => setPendingWardDelete(null)}
+      />
+
+      <ConfirmDialog
+        isOpen={Boolean(pendingBedDelete)}
+        title="Delete bed?"
+        message={`Delete bed "${pendingBedDelete?.bed_number}" from "${pendingBedDelete?.ward_name}"? This action cannot be undone.`}
+        confirmLabel="Delete bed"
+        onConfirm={confirmDeleteBed}
+        onCancel={() => setPendingBedDelete(null)}
+      />
 
       <SectionCard
         title="All beds"
