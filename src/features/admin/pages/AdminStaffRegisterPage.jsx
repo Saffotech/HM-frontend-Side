@@ -60,7 +60,7 @@ export default function AdminStaffRegisterPage() {
   const [form, setForm] = useState(EMPTY_FORM);
 
   const rolesQuery = useAdminRolesQuery();
-  const departmentsQuery = useAdminDepartmentsQuery();
+  const departmentsQuery = useAdminDepartmentsQuery({ is_active: true });
   const registerMutation = useRegisterStaffMutation();
 
   const roles = rolesQuery.data;

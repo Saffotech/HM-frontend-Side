@@ -12,7 +12,7 @@ import {
   SearchBar,
   Select,
 } from '@/shared/components/common';
-import { isLabOrRadDepartment } from '@/shared/utils/labDepartments';
+import { isLabDepartment } from '@/shared/utils/labDepartments';
 import { ROUTES } from '@/shared/constants';
 
 export default function DepartmentListPage() {
@@ -33,9 +33,9 @@ export default function DepartmentListPage() {
   const filtered = useMemo(() => {
     let rows = departments ?? [];
     if (typeFilter === 'lab') {
-      rows = rows.filter((dept) => isLabOrRadDepartment(dept));
+      rows = rows.filter(isLabDepartment);
     } else if (typeFilter === 'doctor') {
-      rows = rows.filter((dept) => !isLabOrRadDepartment(dept));
+      rows = rows.filter((dept) => !isLabDepartment(dept));
     }
     const term = search.trim().toLowerCase();
     if (!term) return rows;
@@ -57,7 +57,7 @@ export default function DepartmentListPage() {
 
   return (
     <ManagerLayout pageTitle="Departments">
-      <div className="admin-page">
+      <div className="admin-page admin-page--departments">
         <ManagerPageHeader
           eyebrow="Organization"
           title="Departments"
@@ -156,7 +156,7 @@ export default function DepartmentListPage() {
                             <span>{dept.code || '—'}</span>
                           </td>
                           <td data-label="Type">
-                            {isLabOrRadDepartment(dept) ? (
+                            {isLabDepartment(dept) ? (
                               <span className="admin-panel-dept-type admin-panel-dept-type--lab">Lab</span>
                             ) : (
                               <span className="admin-panel-dept-type admin-panel-dept-type--doctor">Doctor</span>
@@ -193,4 +193,3 @@ export default function DepartmentListPage() {
     </ManagerLayout>
   );
 }
-

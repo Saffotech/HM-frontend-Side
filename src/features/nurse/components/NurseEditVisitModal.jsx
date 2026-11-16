@@ -16,7 +16,7 @@ function toLocalDatetimeValue(date) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export default function NurseEditVisitModal({ open, visit, onClose }) {
+export default function NurseEditVisitModal({ open, visit, admittedAt, onClose }) {
   const updateVisit = useUpdateDoctorVisitMutation(visit?.id);
   const voidVisit = useVoidDoctorVisitMutation(visit?.id);
   const { data: doctorsData, isLoading: doctorsLoading } = useNurseActiveDoctorsQuery(
@@ -63,6 +63,9 @@ export default function NurseEditVisitModal({ open, visit, onClose }) {
     return all.filter((doc) => doc.department === department);
   }, [doctorsData, department]);
 
+  const minVisitedAt = toLocalDatetimeValue(admittedAt);
+  const maxVisitedAt = toLocalDatetimeValue(new Date());
+
   const handleSubmit = async () => {
     if (!doctorId) {
       toast.error('Please select a doctor');
@@ -73,9 +76,24 @@ export default function NurseEditVisitModal({ open, visit, onClose }) {
       return;
     }
 
+    const visitTime = new Date(visitedAt);
+    if (Number.isNaN(visitTime.getTime())) {
+      toast.error('Please enter a valid visit time');
+      return;
+    }
+    if (visitTime > new Date()) {
+      toast.error('Visit time cannot be in the future');
+      return;
+    }
+    const admissionTime = admittedAt ? new Date(admittedAt) : null;
+    if (admissionTime && visitTime < admissionTime) {
+      toast.error('Visit time cannot be before the patient admission');
+      return;
+    }
+
     const payload = {
       doctor_id: Number(doctorId),
-      visited_at: new Date(visitedAt).toISOString(),
+      visited_at: visitTime.toISOString(),
       notes: notes.trim() || null,
     };
 
@@ -173,6 +191,8 @@ export default function NurseEditVisitModal({ open, visit, onClose }) {
               className="nurse-input"
               value={visitedAt}
               onChange={(e) => setVisitedAt(e.target.value)}
+              min={minVisitedAt || undefined}
+              max={maxVisitedAt}
               disabled={updateVisit.isPending || visit?.is_voided}
             />
           </div>

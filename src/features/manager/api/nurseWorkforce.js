@@ -45,6 +45,10 @@ export function bulkCreateWorkforceRoster(body) {
   return apiClient(`${BASE}/roster/bulk`, { method: 'POST', body: JSON.stringify(body) });
 }
 
+export function confirmWorkforceRoster(id) {
+  return apiClient(`${BASE}/roster/${id}/confirm`, { method: 'POST' });
+}
+
 export function deleteWorkforceRoster(id) {
   return apiClient(`${BASE}/roster/${id}`, { method: 'DELETE' });
 }

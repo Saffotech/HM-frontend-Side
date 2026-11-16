@@ -340,6 +340,7 @@ export default function NurseLabReportsRegistryPage() {
                   data={rows}
                   isLoading={false}
                   emptyMessage={emptyMessage}
+                  rowKey={(row) => row.report_id ?? row.id}
                   onRowClick={viewReport}
                 />
               </div>

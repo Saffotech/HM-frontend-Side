@@ -89,6 +89,7 @@
   }
 
   .manager-layout .admin-visits-filter-row .searchable-select.admin-visits-filter-row__dept,
+  .manager-layout .admin-visits-filter-row .searchable-select.admin-visits-filter-row__status,
   .manager-layout .admin-visits-filter-row .admin-report-filters__date,
   .manager-layout .admin-visits-filter-row .admin-report-filters__date.date-input,
   .manager-layout .admin-report-filters--inline .admin-report-filters__date {
@@ -189,6 +190,10 @@
     min-width: 0;
     justify-self: end;
     text-align: right;
+  }
+
+  .manager-layout .admin-table--stack .admin-visits-uid {
+    align-items: flex-end;
   }
 
   .manager-layout .admin-table--stack td:last-child {

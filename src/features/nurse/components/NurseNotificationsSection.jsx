@@ -22,7 +22,6 @@ import './NurseNotificationsSection.css';
 
 const TYPE_FILTERS = [
   { value: '', label: 'All types', kind: 'all' },
-  { value: 'EMERGENCY_ALERT', label: 'Emergency', kind: 'type' },
   { value: 'SHIFT_UPDATED', label: 'Shift updated', kind: 'type' },
   { value: 'ADMIN_UPDATE', label: 'Admin', kind: 'type' },
   // Nurse Phase 2 by Atharva — priority options in the same filter dropdown

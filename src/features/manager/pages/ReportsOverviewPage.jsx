@@ -14,7 +14,6 @@ import ManagerPageHeader from '@/features/manager/components/ManagerPageHeader';
 import ManagerReportFilters from '@/features/manager/components/ManagerReportFilters';
 import ManagerStatCard from '@/features/manager/components/ManagerStatCard';
 import {
-  defaultReportDateRange,
   normalizeReportsOverviewPayments,
 } from '@/features/manager/utils/reportUtils';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
@@ -23,19 +22,24 @@ import { QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 
 export default function ReportsOverviewPage() {
-  const [range, setRange] = useState(defaultReportDateRange);
+  const [range, setRange] = useState({ from_date: '', to_date: '' });
+  const isInvalidDateRange =
+    Boolean(range.from_date && range.to_date) && range.from_date > range.to_date;
 
   const filters = useMemo(
     () => ({ from_date: range.from_date, to_date: range.to_date }),
     [range]
   );
 
-  const { data: rawData, isLoading, isError, error, refetch } = useAdminReportsOverviewQuery(filters);
+  const { data: rawData, isLoading, isError, error, refetch } = useAdminReportsOverviewQuery(
+    filters,
+    { enabled: !isInvalidDateRange },
+  );
   const data = useMemo(() => normalizeReportsOverviewPayments(rawData), [rawData]);
 
   return (
     <ManagerLayout pageTitle="Reports">
-      <div className="admin-page admin-page--compact">
+      <div className="admin-page admin-page--compact admin-reports-overview">
         <ManagerPageHeader
           title="Reports overview"
           actions={(
@@ -69,13 +73,18 @@ export default function ReportsOverviewPage() {
           onToChange={(value) => setRange((prev) => ({ ...prev, to_date: value }))}
         />
 
-        <QueryFeedback
-          isLoading={isLoading}
-          isError={isError}
-          error={error}
-          onRetry={refetch}
-        >
-          {data && (
+        {isInvalidDateRange ? (
+          <p className="admin-report-date-error" role="alert">
+            From date must be on or before the To date.
+          </p>
+        ) : (
+          <QueryFeedback
+            isLoading={isLoading}
+            isError={isError}
+            error={error}
+            onRetry={refetch}
+          >
+            {data && (
             <>
               <div className="admin-stats admin-stats--reports">
                 <ManagerStatCard
@@ -108,7 +117,7 @@ export default function ReportsOverviewPage() {
                 />
                 <ManagerStatCard
                   title="Pending payments"
-                  value={data.pending_payments}
+                  value={formatCurrency(data.pending_payments)}
                   icon={<Wallet size={18} />}
                   isLoading={isLoading}
                   tone="warning"
@@ -162,8 +171,9 @@ export default function ReportsOverviewPage() {
                 </div>
               </div>
             </>
-          )}
-        </QueryFeedback>
+            )}
+          </QueryFeedback>
+        )}
       </div>
     </ManagerLayout>
   );

@@ -1,8 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   BedDouble,
   CalendarDays,
+  ChevronDown,
+  ChevronUp,
+  Clock3,
   Mail,
   Pencil,
   UserRound,
@@ -20,7 +23,9 @@ import { Button, QueryFeedback } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import {
   formatAllocationDate,
+  formatShiftWithTime,
   groupAllocationListItems,
+  normalizeShiftName,
 } from '@/shared/api/mappers/adminBedAllocationMapper';
 import '@/features/manager/styles/nurseBedAllocation.css';
 
@@ -58,6 +63,7 @@ export default function NurseBedAllocationDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { canView, canUpdate } = useAdminBedAllocationPermissions();
+  const [bedsExpanded, setBedsExpanded] = useState(false);
 
   const {
     data,
@@ -94,7 +100,8 @@ export default function NurseBedAllocationDetailPage() {
     const sameNurse = siblings.filter(
       (row) =>
         Number(row.nurseId) === Number(primary.nurseId) &&
-        Boolean(row.isActive) === Boolean(primary.isActive),
+        Boolean(row.isActive) === Boolean(primary.isActive) &&
+        normalizeShiftName(row.shiftName) === normalizeShiftName(primary.shiftName),
     );
     const pool = sameNurse.length ? sameNurse : [primary];
     return pool
@@ -176,6 +183,10 @@ export default function NurseBedAllocationDetailPage() {
                       {period.until ? formatAllocationDate(period.until) : 'Ongoing'}
                     </span>
                     <span className="nba-detail-pill">
+                      <Clock3 size={14} aria-hidden />
+                      {formatShiftWithTime(group.shiftName, group.shiftStart, group.shiftEnd)}
+                    </span>
+                    <span className="nba-detail-pill">
                       <Mail size={14} aria-hidden />
                       {group.nurseEmail || 'No email'}
                     </span>
@@ -183,11 +194,24 @@ export default function NurseBedAllocationDetailPage() {
                 </div>
 
                 <div className="nba-detail-hero__side">
-                  <div className="nba-detail-stat">
+                  <button
+                    type="button"
+                    className="nba-detail-stat nba-detail-stat--toggle"
+                    aria-expanded={bedsExpanded}
+                    aria-controls="allocation-bed-list"
+                    onClick={() => setBedsExpanded((expanded) => !expanded)}
+                  >
                     <span className="nba-detail-stat__label">Total beds</span>
                     <strong className="nba-detail-stat__value">{group.totalBeds}</strong>
-                    <span className="nba-detail-stat__hint">{group.allocatedBedsLabel}</span>
-                  </div>
+                    <span className="nba-detail-stat__hint">
+                      {bedsExpanded ? 'Hide beds' : 'Click to view beds'}
+                    </span>
+                    {bedsExpanded ? (
+                      <ChevronUp className="nba-detail-stat__toggle-icon" size={16} aria-hidden />
+                    ) : (
+                      <ChevronDown className="nba-detail-stat__toggle-icon" size={16} aria-hidden />
+                    )}
+                  </button>
                   {canUpdate ? (
                     <Button
                       className="nba-detail-hero__edit"
@@ -205,7 +229,11 @@ export default function NurseBedAllocationDetailPage() {
               </section>
 
               <div className="nba-detail-layout">
-                <section className="nba-detail-panel">
+                <section
+                  id="allocation-bed-list"
+                  className="nba-detail-panel"
+                  hidden={!bedsExpanded}
+                >
                   <header className="nba-detail-panel__header">
                     <BedDouble size={18} aria-hidden />
                     <div>
@@ -242,6 +270,21 @@ export default function NurseBedAllocationDetailPage() {
                     <div className="nba-detail-fact">
                       <dt>Email</dt>
                       <dd>{group.nurseEmail || '—'}</dd>
+                    </div>
+                    <div className="nba-detail-fact">
+                      <dt>
+                        <Clock3 size={13} aria-hidden /> Nurse shift
+                      </dt>
+                      <dd>
+                        {[
+                          group.shiftName,
+                          group.shiftStart && group.shiftEnd
+                            ? `${String(group.shiftStart).slice(0, 5)}–${String(group.shiftEnd).slice(0, 5)}`
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ') || '—'}
+                      </dd>
                     </div>
                     <div className="nba-detail-fact">
                       <dt>Assigned from</dt>

@@ -36,8 +36,13 @@
 }
 
 .toast--error {
-  background: var(--color-danger);
-  color: #fff;
+  background: #fff1f2;
+  color: #9f1239;
+  border: 1px solid #fecdd3;
+  border-left: 4px solid var(--color-danger);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  box-shadow: 0 6px 18px rgba(159, 18, 57, 0.16);
 }
 
 .toast--info {

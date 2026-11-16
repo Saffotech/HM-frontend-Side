@@ -7,7 +7,6 @@ import ManagerPageHeader from '@/features/manager/components/ManagerPageHeader';
 import ManagerReportFilters from '@/features/manager/components/ManagerReportFilters';
 import ManagerStatusPill from '@/features/manager/components/ManagerStatusPill';
 import {
-  defaultReportDateRange,
   formatReportDate,
 } from '@/features/manager/utils/reportUtils';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
@@ -25,38 +24,91 @@ import { ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
 
 const PAGE_SIZE = 10;
+const STATUS_FETCH_LIMIT = 100;
+
+const STATUS_LABELS = {
+  admit: 'Admit',
+  admitted: 'Admit',
+  discharged: 'Discharged',
+  complete: 'Complete',
+  completed: 'Complete',
+  no_show: 'Missed appointment',
+  missed: 'Missed appointment',
+  missed_appointment: 'Missed appointment',
+};
+
+function statusKey(value) {
+  return String(value || '').trim().toLowerCase().replace(/\s+/g, '_');
+}
+
+function statusLabel(value) {
+  const key = statusKey(value);
+  return STATUS_LABELS[key] || value || '—';
+}
+
+function matchesStatus(value, selected) {
+  const key = statusKey(value);
+  if (selected === 'admit') return key === 'admit' || key === 'admitted';
+  if (selected === 'discharged') return key === 'discharged';
+  if (selected === 'complete') return key === 'complete' || key === 'completed';
+  if (selected === 'missed') {
+    return key === 'no_show' || key === 'missed' || key === 'missed_appointment';
+  }
+  return true;
+}
+
+function visitSource(visit) {
+  const explicit = String(visit?.source || '').trim().toLowerCase();
+  if (explicit === 'ipd') return 'IPD';
+  if (explicit === 'opd') return 'OPD';
+  const marker = [visit?.token_number, visit?.bill_number, visit?.admission_no]
+    .filter(Boolean)
+    .join(' ')
+    .toUpperCase();
+  if (marker.includes('IPD')) return 'IPD';
+  return 'OPD';
+}
 
 export default function VisitsReportPage() {
   const [searchParams] = useSearchParams();
   const focusVisitId = searchParams.get('visit');
-  const [range, setRange] = useState(defaultReportDateRange);
+  const [range, setRange] = useState({ from_date: '', to_date: '' });
   const [departmentId, setDepartmentId] = useState('all');
+  const [status, setStatus] = useState('all');
   const [page, setPage] = useState(1);
 
   const { data: departments } = useAdminDepartmentsQuery();
 
   useEffect(() => {
     setPage(1);
-  }, [range.from_date, range.to_date, departmentId]);
+  }, [range.from_date, range.to_date, departmentId, status]);
 
   const filters = useMemo(() => {
     const params = {
       from_date: range.from_date,
       to_date: range.to_date,
-      page,
-      limit: PAGE_SIZE,
+      page: status === 'all' ? page : 1,
+      limit: status === 'all' ? PAGE_SIZE : STATUS_FETCH_LIMIT,
     };
     if (departmentId !== 'all') params.department_id = Number(departmentId);
     return params;
-  }, [range, departmentId, page]);
+  }, [range, departmentId, status, page]);
 
   const { data, isLoading, isError, error, refetch } = useAdminReportsVisitsQuery(filters);
 
-  const visits = data?.visits ?? [];
+  const matchedVisits = useMemo(() => {
+    const rows = data?.visits ?? [];
+    if (status === 'all') return rows;
+    return rows.filter((visit) => matchesStatus(visit.status, status));
+  }, [data, status]);
+
+  const visits = status === 'all'
+    ? matchedVisits
+    : matchedVisits.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const focusVisible = focusVisitId != null && visits.some(
     (visit) => String(visit.visit_id) === String(focusVisitId),
   );
-  const total = data?.total ?? 0;
+  const total = status === 'all' ? (data?.total ?? 0) : matchedVisits.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const departmentOptions = useMemo(
@@ -70,9 +122,18 @@ export default function VisitsReportPage() {
     [departments]
   );
 
+  const statusOptions = [
+    { value: 'all', label: 'All statuses' },
+    { value: 'admit', label: 'Admit' },
+    { value: 'discharged', label: 'Discharged' },
+    { value: 'complete', label: 'Complete' },
+    { value: 'missed', label: 'Missed appointment' },
+  ];
+
   const resetFilters = () => {
-    setRange(defaultReportDateRange());
+    setRange({ from_date: '', to_date: '' });
     setDepartmentId('all');
+    setStatus('all');
     setPage(1);
   };
 
@@ -127,6 +188,13 @@ export default function VisitsReportPage() {
               options={departmentOptions}
               className="admin-visits-filter-row__dept"
             />
+            <Select
+              label="Status"
+              value={status}
+              onChange={setStatus}
+              options={statusOptions}
+              className="admin-visits-filter-row__status"
+            />
             <Button type="button" variant="outline" size="sm" onClick={handleExport}>
               <Download size={16} aria-hidden />
               Export
@@ -158,7 +226,7 @@ export default function VisitsReportPage() {
                     <ManagerEmptyState
                       icon={<FileText size={22} />}
                       title="No visits found"
-                      description="Adjust the date range or department filter to see visit records."
+                      description="Adjust the date range, department, or status filter to see visit records."
                     />
                   ) : (
                     <>
@@ -166,9 +234,9 @@ export default function VisitsReportPage() {
                         <table className="admin-table admin-table--stack">
                           <thead>
                             <tr>
-                              <th>Bill #</th>
-                              <th>Token</th>
+                              <th>Patient UID</th>
                               <th>Patient</th>
+                              <th>Doctor</th>
                               <th>Department</th>
                               <th>Visit date</th>
                               <th className="admin-table__num">Total</th>
@@ -178,7 +246,9 @@ export default function VisitsReportPage() {
                             </tr>
                           </thead>
                           <tbody>
-                            {visits.map((visit) => (
+                            {visits.map((visit) => {
+                              const source = visitSource(visit);
+                              return (
                               <tr
                                 key={visit.visit_id}
                                 className={
@@ -187,9 +257,16 @@ export default function VisitsReportPage() {
                                     : undefined
                                 }
                               >
-                                <td data-label="Bill #"><span>{visit.bill_number}</span></td>
-                                <td data-label="Token"><span>{visit.token_number}</span></td>
-                                <td data-label="Patient"><span>#{visit.patient_id}</span></td>
+                                <td data-label="Patient UID">
+                                  <span className="admin-visits-uid">
+                                    <span>{visit.patient_uid || '—'}</span>
+                                    <span className={`admin-visits-uid__source admin-visits-uid__source--${source.toLowerCase()}`}>
+                                      {source}
+                                    </span>
+                                  </span>
+                                </td>
+                                <td data-label="Patient"><span>{visit.patient_name || '—'}</span></td>
+                                <td data-label="Doctor"><span>{visit.doctor_name || '—'}</span></td>
                                 <td data-label="Department"><span>{visit.department_name}</span></td>
                                 <td data-label="Visit date"><span>{formatReportDate(visit.visit_date)}</span></td>
                                 <td className="admin-table__num" data-label="Total">
@@ -206,10 +283,11 @@ export default function VisitsReportPage() {
                                   <ManagerStatusPill label={visit.payment_status} />
                                 </td>
                                 <td data-label="Status">
-                                  <ManagerStatusPill label={visit.status} />
+                                  <ManagerStatusPill label={statusLabel(visit.status)} />
                                 </td>
                               </tr>
-                            ))}
+                              );
+                            })}
                           </tbody>
                         </table>
                       </div>
@@ -217,8 +295,11 @@ export default function VisitsReportPage() {
                       {total > PAGE_SIZE && (
                         <TablePagination
                           page={page}
+                          pageSize={PAGE_SIZE}
                           totalPages={totalPages}
+                          totalItems={total}
                           onPageChange={setPage}
+                          itemLabel="items"
                         />
                       )}
                     </>

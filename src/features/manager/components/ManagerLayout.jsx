@@ -1,6 +1,7 @@
 import {
   BarChart3,
   BedDouble,
+  Building2,
   CalendarDays,
   LayoutDashboard,
   Settings,
@@ -17,6 +18,7 @@ import '../styles/manager-mobile.css';
 const NAV_LINKS = [
   { href: ROUTES.MANAGER_DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
   { href: ROUTES.MANAGER_STAFF, label: 'Staff', icon: Users },
+  { href: ROUTES.MANAGER_DEPARTMENTS, label: 'Departments', icon: Building2 },
   { href: ROUTES.MANAGER_BED_ALLOCATION, label: 'Nurse Bed Allocation', icon: BedDouble },
   { href: ROUTES.MANAGER_NURSE_WORKFORCE, label: 'Nurse Workforce', icon: CalendarDays },
   { href: ROUTES.MANAGER_REPORTS, label: 'Reports', icon: BarChart3 },

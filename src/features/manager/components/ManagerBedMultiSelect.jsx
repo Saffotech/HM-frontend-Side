@@ -148,7 +148,7 @@ export default function ManagerBedMultiSelect({
     onChange([]);
   };
 
-  if (isLoading) {
+  if (isLoading && !showSearch) {
     return <p className="nba-muted">Loading beds…</p>;
   }
 
@@ -239,7 +239,9 @@ export default function ManagerBedMultiSelect({
       </div>
 
       {!beds.length ? (
-        <p className="nba-muted">No beds match the current filters.</p>
+        <p className="nba-muted">
+          {isLoading ? 'Loading beds…' : 'No beds match the current filters.'}
+        </p>
       ) : !filteredBeds.length ? (
         <p className="nba-muted">No beds match this filter.</p>
       ) : (
@@ -256,7 +258,7 @@ export default function ManagerBedMultiSelect({
                 className={`nba-bed-chip${checked ? ' is-selected' : ''}${disabled || locked ? ' is-disabled' : ''}`}
                 title={
                   locked
-                    ? `${bed.bedNo ?? bed.bed_number} · ${ward} · Already assigned to a nurse`
+                    ? `${bed.bedNo ?? bed.bed_number} · ${ward} · Already assigned for this shift`
                     : `${bed.bedNo ?? bed.bed_number} · ${ward} · ${statusLabel(status, bed.status)}`
                 }
               >

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   BedDouble,
   CalendarDays,
+  Clock3,
   Pencil,
   Save,
   UserRound,
@@ -20,13 +21,19 @@ import {
   useBulkCreateBedAllocationsMutation,
   useDeactivateBedAllocationMutation,
   useUpdateBedAllocationMutation,
+  useWorkforceRosterQuery,
 } from '@/shared/hooks/queries/useAdminQuery';
 import { useBedsQuery } from '@/shared/hooks/queries/useBedsQuery';
 import { Button, DateInput, QueryFeedback, Select } from '@/shared/components/common';
 import { ROUTES } from '@/shared/constants';
 import {
+  bedIdsTakenForShift,
+  confirmedNurseIdsForRange,
   formatGroupedBedsLabel,
+  formatShiftWithTime,
   groupAllocationListItems,
+  normalizeShiftName,
+  rosterShiftsForNurseOnDate,
 } from '@/shared/api/mappers/adminBedAllocationMapper';
 import { toast } from '@/shared/utils/toast';
 import '@/features/manager/styles/nurseBedAllocation.css';
@@ -50,10 +57,7 @@ export default function NurseBedAllocationEditPage() {
       page: 1,
       page_size: 100,
     };
-  }, [
-    allocation?.nurseId,
-    allocation?.isActive,
-  ]);
+  }, [allocation?.nurseId, allocation?.isActive]);
 
   const {
     data: siblingsData,
@@ -69,7 +73,8 @@ export default function NurseBedAllocationEditPage() {
     const sameNurse = siblings.filter(
       (row) =>
         Number(row.nurseId) === Number(allocation.nurseId) &&
-        Boolean(row.isActive) === Boolean(allocation.isActive),
+        Boolean(row.isActive) === Boolean(allocation.isActive) &&
+        normalizeShiftName(row.shiftName) === normalizeShiftName(allocation.shiftName),
     );
     return (sameNurse.length ? sameNurse : [allocation])
       .slice()
@@ -86,7 +91,9 @@ export default function NurseBedAllocationEditPage() {
   }, [siblingRows]);
 
   const [shiftDate, setShiftDate] = useState('');
+  const [assignedUntil, setAssignedUntil] = useState('');
   const [nurseId, setNurseId] = useState('');
+  const [shiftName, setShiftName] = useState('');
   const [bedIds, setBedIds] = useState([]);
   const [notes, setNotes] = useState('');
   const [isActive, setIsActive] = useState(true);
@@ -101,7 +108,9 @@ export default function NurseBedAllocationEditPage() {
     if (siblingFilters && siblingsData == null) return;
 
     setShiftDate(allocation.shiftDate || '');
+    setAssignedUntil(groupMeta?.assignedUntil || allocation.assignedUntil || '');
     setNurseId(allocation.nurseId != null ? String(allocation.nurseId) : '');
+    setShiftName(allocation.shiftName || '');
     setNotes(allocation.notes || '');
     setIsActive(Boolean(allocation.isActive));
 
@@ -118,6 +127,7 @@ export default function NurseBedAllocationEditPage() {
     setHydrated(true);
   }, [
     allocation,
+    groupMeta?.assignedUntil,
     siblingRows,
     siblingsLoading,
     siblingsData,
@@ -139,6 +149,56 @@ export default function NurseBedAllocationEditPage() {
     return Array.isArray(items) ? items : [];
   }, [staffData]);
 
+  const rosterReady = Boolean(shiftDate) && (!assignedUntil || assignedUntil >= shiftDate);
+  const { data: rosterData, isLoading: rosterLoading } = useWorkforceRosterQuery(
+    {
+      date_from: shiftDate,
+      date_to: assignedUntil || shiftDate,
+      page: 1,
+      page_size: 200,
+    },
+    { enabled: canUpdate && rosterReady },
+  );
+  const confirmedNurses = useMemo(() => {
+    const allowed = confirmedNurseIdsForRange(
+      rosterData?.items,
+      shiftDate,
+      assignedUntil || shiftDate,
+    );
+    return nurses.filter((nurse) => allowed.has(Number(nurse.id)));
+  }, [nurses, rosterData?.items, shiftDate, assignedUntil]);
+
+  useEffect(() => {
+    if (!hydrated || rosterLoading || !nurseId) return;
+    if (confirmedNurses.some((nurse) => String(nurse.id) === String(nurseId))) return;
+    setNurseId('');
+  }, [confirmedNurses, hydrated, nurseId, rosterLoading]);
+
+  const rosterShifts = useMemo(
+    () => rosterShiftsForNurseOnDate(rosterData?.items, nurseId, shiftDate),
+    [rosterData?.items, nurseId, shiftDate],
+  );
+  const selectedShift = rosterShifts.length === 1
+    ? rosterShifts[0]
+    : rosterShifts.find((shift) => shift.name === shiftName)
+      || rosterShifts.find(
+        (shift) => normalizeShiftName(shift.name) === normalizeShiftName(allocation?.shiftName),
+      )
+      || null;
+
+  useEffect(() => {
+    if (!hydrated || rosterLoading) return;
+    if (rosterShifts.length === 1) {
+      setShiftName(rosterShifts[0].name);
+      return;
+    }
+    if (rosterShifts.some((shift) => shift.name === shiftName)) return;
+    const fromRecord = rosterShifts.find(
+      (shift) => normalizeShiftName(shift.name) === normalizeShiftName(allocation?.shiftName),
+    );
+    setShiftName(fromRecord?.name || '');
+  }, [allocation?.shiftName, hydrated, rosterLoading, rosterShifts, shiftName]);
+
   const { data: bedsData, isLoading: bedsLoading } = useBedsQuery({ search: bedSearch });
   const beds = useMemo(() => bedsData?.beds ?? [], [bedsData?.beds]);
 
@@ -148,11 +208,30 @@ export default function NurseBedAllocationEditPage() {
   );
   const assignedBedIds = useMemo(
     () =>
-      (activeAllocations?.items ?? [])
-        .map((row) => Number(row.bedId))
-        .filter(Number.isFinite),
-    [activeAllocations?.items],
+      bedIdsTakenForShift(activeAllocations?.items, {
+        shiftName: selectedShift?.name || allocation?.shiftName,
+        from: shiftDate || allocation?.shiftDate,
+        until: assignedUntil || shiftDate || allocation?.shiftDate,
+      }),
+    [
+      activeAllocations?.items,
+      selectedShift?.name,
+      allocation?.shiftName,
+      allocation?.shiftDate,
+      shiftDate,
+      assignedUntil,
+    ],
   );
+  useEffect(() => {
+    if (!hydrated || !assignedBedIds.length) return;
+    const taken = new Set(assignedBedIds);
+    const original = new Set(Object.keys(originalByBedId).map(Number));
+    setBedIds((current) => {
+      const next = current.filter((id) => original.has(Number(id)) || !taken.has(Number(id)));
+      return next.length === current.length ? current : next;
+    });
+  }, [assignedBedIds, hydrated, originalByBedId]);
+
   const allowAssignedIds = useMemo(() => {
     const ids = new Set([
       ...Object.keys(originalByBedId).map(Number),
@@ -197,18 +276,28 @@ export default function NurseBedAllocationEditPage() {
       toast.error('Date and nurse are required');
       return;
     }
+    if (assignedUntil && assignedUntil < shiftDate) {
+      toast.error('Assigned till must be on or after assigned from');
+      return;
+    }
+    if (rosterShifts.length > 1 && !selectedShift) {
+      toast.error('Select a shift');
+      return;
+    }
     if (!bedIds.length) {
       toast.error('Select at least one bed');
       return;
     }
+    const shiftPayload = rosterShifts.length > 1 && selectedShift
+      ? { shiftName: selectedShift.name }
+      : {};
 
-    setSaving(true);
     const selected = new Set(bedIds.map(Number));
     const originalBedIds = Object.keys(originalByBedId).map(Number);
     const toRemove = originalBedIds.filter((bedId) => !selected.has(bedId));
     const toKeep = originalBedIds.filter((bedId) => selected.has(bedId));
     const toAdd = [...selected].filter((bedId) => !originalByBedId[bedId]);
-
+    setSaving(true);
     try {
       for (const bedId of toKeep) {
         const allocationId = originalByBedId[bedId];
@@ -218,8 +307,10 @@ export default function NurseBedAllocationEditPage() {
             nurseId,
             bedId,
             shiftDate,
+            assignedUntil,
             notes,
             isActive,
+            ...shiftPayload,
           },
         });
       }
@@ -234,7 +325,9 @@ export default function NurseBedAllocationEditPage() {
           nurseId,
           bedIds: toAdd,
           shiftDate,
+          assignedUntil,
           notes,
+          ...shiftPayload,
         });
         const skipped = res?.skipped ?? 0;
         if (skipped) {
@@ -315,6 +408,12 @@ export default function NurseBedAllocationEditPage() {
                       {shiftDate || '—'}
                     </span>
                     <span className="nba-detail-pill">
+                      <Clock3 size={14} aria-hidden />
+                      {selectedShift
+                        ? formatShiftWithTime(selectedShift.name, selectedShift.start, selectedShift.end)
+                        : formatShiftWithTime(allocation.shiftName, allocation.shiftStart, allocation.shiftEnd)}
+                    </span>
+                    <span className="nba-detail-pill">
                       <BedDouble size={14} aria-hidden />
                       {selectedBedsLabel}
                     </span>
@@ -347,7 +446,21 @@ export default function NurseBedAllocationEditPage() {
                         label="Assigned from"
                         required
                         value={shiftDate}
-                        onChange={(e) => setShiftDate(e.target.value)}
+                        onChange={(e) => {
+                          const next = e.target.value;
+                          setShiftDate(next);
+                          if (assignedUntil && next && assignedUntil < next) {
+                            setAssignedUntil(next);
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="nba-field">
+                      <DateInput
+                        label="Assigned till"
+                        value={assignedUntil}
+                        min={shiftDate || undefined}
+                        onChange={(e) => setAssignedUntil(e.target.value)}
                       />
                     </div>
                     <label className="nba-field">
@@ -367,8 +480,11 @@ export default function NurseBedAllocationEditPage() {
                         value={nurseId}
                         onChange={setNurseId}
                         options={[
-                          { value: '', label: 'Select nurse…' },
-                          ...nurses.map((n) => ({
+                          {
+                            value: '',
+                            label: rosterLoading ? 'Loading nurses…' : 'Select nurse…',
+                          },
+                          ...confirmedNurses.map((n) => ({
                             value: String(n.id),
                             label:
                               `${n.first_name || ''} ${n.last_name || ''}`.trim() ||
@@ -377,6 +493,37 @@ export default function NurseBedAllocationEditPage() {
                           })),
                         ]}
                       />
+                      {!rosterLoading && shiftDate && !confirmedNurses.length ? (
+                        <p className="nba-muted">
+                          No nurse is rostered for these dates. Add the shift on the roster first.
+                        </p>
+                      ) : null}
+                      {nurseId && rosterShifts.length === 1 ? (
+                        <span
+                          className="nba-shift-pill"
+                          style={{ '--shift-color': rosterShifts[0].color || '#0f766e' }}
+                        >
+                          <span className="nba-shift-pill__name">{rosterShifts[0].name}</span>
+                          {rosterShifts[0].start && rosterShifts[0].end ? (
+                            <span className="nba-shift-pill__time">
+                              {String(rosterShifts[0].start).slice(0, 5)}–{String(rosterShifts[0].end).slice(0, 5)}
+                            </span>
+                          ) : null}
+                        </span>
+                      ) : null}
+                      {nurseId && rosterShifts.length > 1 ? (
+                        <Select
+                          value={shiftName}
+                          onChange={setShiftName}
+                          options={[
+                            { value: '', label: 'Select shift…' },
+                            ...rosterShifts.map((shift) => ({
+                              value: shift.name,
+                              label: formatShiftWithTime(shift.name, shift.start, shift.end),
+                            })),
+                          ]}
+                        />
+                      ) : null}
                     </label>
                   </div>
                 </section>

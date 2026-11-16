@@ -603,9 +603,6 @@ export default function AdminProfilePage() {
                 <h3 className="admin-panel-profile-section__title">
                   <Shield size={16} aria-hidden /> Account
                 </h3>
-                <p className="admin-panel-profile-hint">
-                  Profile photo is managed from the avatar above. Name and email are system-managed.
-                </p>
                 <div className="admin-panel-profile-grid">
                   <ReadField label="Full name" value={fullName || null} />
                   <ReadField label="Email" value={profile.email} />
@@ -636,9 +633,6 @@ export default function AdminProfilePage() {
                 <h3 className="admin-panel-profile-section__title">
                   <Briefcase size={16} aria-hidden /> Professional
                 </h3>
-                <p className="admin-panel-profile-hint">
-                  Employee ID and joining date are system-managed.
-                </p>
                 <div className="admin-panel-profile-grid">
                   <ReadField label="Employee ID" value={profile.employee_id} />
                   <ReadField label="Joining date" value={profile.joining_date} />

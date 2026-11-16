@@ -15,7 +15,10 @@ import ManagerBarChart from '@/features/manager/components/ManagerBarChart';
 import ManagerEmptyState from '@/features/manager/components/ManagerEmptyState';
 import ManagerQuickAction from '@/features/manager/components/ManagerQuickAction';
 import { formatRoleLabel } from '@/features/manager/utils/formatRoleLabel';
-import { isPlatformOrganizationRole } from '@/features/manager/utils/hospitalManagerRoles';
+import {
+  filterManagerStaffRecords,
+  isManagerManagedStaffRole,
+} from '@/features/manager/utils/hospitalManagerRoles';
 import ManagerStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
 import ManagerStatCard from '@/features/manager/components/ManagerStatCard';
 import ManagerUserCell from '@/features/manager/components/ManagerUserCell';
@@ -31,7 +34,7 @@ import { ROUTES } from '@/shared/constants';
 const PREVIEW_LIMIT = 100;
 
 function hospitalStaffByRole(rows = []) {
-  return rows.filter((item) => !isPlatformOrganizationRole(item.role_name));
+  return rows.filter((item) => isManagerManagedStaffRole(item.role_name));
 }
 
 /** Main panel focus: staff (default) | departments | roles */
@@ -227,7 +230,7 @@ export default function ManagerDashboardPage() {
   });
 
   const previewItems = useMemo(
-    () => previewData?.staff ?? previewData?.items ?? [],
+    () => filterManagerStaffRecords(previewData?.staff ?? previewData?.items ?? []),
     [previewData?.staff, previewData?.items],
   );
 
@@ -303,7 +306,7 @@ export default function ManagerDashboardPage() {
     }
 
     return Array.from(counts.values())
-      .filter((item) => !isPlatformOrganizationRole(item.role_name))
+      .filter((item) => isManagerManagedStaffRole(item.role_name))
       .sort((a, b) => String(a.role_name || '').localeCompare(String(b.role_name || '')))
       .map((item) => ({
         ...item,
@@ -516,14 +519,16 @@ export default function ManagerDashboardPage() {
                           Clear filter
                         </Button>
                       ) : null}
-                      <Button variant="outline" size="sm" onClick={openPrimaryAction}>
-                        {focus === FOCUS.DEPARTMENTS && !selectedDepartment ? (
-                          <Building2 size={14} aria-hidden />
-                        ) : (
-                          <Users size={14} aria-hidden />
-                        )}
-                        {viewAllLabel}
-                      </Button>
+                      {!(focus === FOCUS.DEPARTMENTS && selectedDepartment) ? (
+                        <Button variant="outline" size="sm" onClick={openPrimaryAction}>
+                          {focus === FOCUS.DEPARTMENTS ? (
+                            <Building2 size={14} aria-hidden />
+                          ) : (
+                            <Users size={14} aria-hidden />
+                          )}
+                          {viewAllLabel}
+                        </Button>
+                      ) : null}
                     </div>
                   </div>
                   <div className="admin-card__body">

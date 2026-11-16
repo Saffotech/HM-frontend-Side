@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ROUTES } from '@/shared/constants';
 import { useNursePatientScope } from '@/features/nurse/context/nursePatientScope';
 
@@ -61,6 +61,13 @@ export default function NursePatientScopeBar() {
 
       {allocationSummary && (
         <div className="nurse-scope-bar__summary" aria-live="polite">
+          <Link
+            to={ROUTES.NURSE_MY_DUTY}
+            className="nurse-scope-bar__shift"
+            aria-label="Open My Duty"
+          >
+            {formatNurseShiftLabel(allocationSummary.shift_name)}
+          </Link>
           <div className="nurse-scope-bar__stats">
             <span className="nurse-scope-bar__stat">
               <span className="nurse-scope-bar__stat-label">Beds assigned</span>

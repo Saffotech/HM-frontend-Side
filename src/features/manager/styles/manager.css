@@ -42,6 +42,14 @@
   max-width: 1440px;
 }
 
+.admin-page--departments {
+  gap: 0.5rem;
+}
+
+.admin-page--departments > .ui-page-header {
+  margin-bottom: 0;
+}
+
 .admin-page--compact {
   gap: 0.75rem;
 }
@@ -528,6 +536,22 @@
   max-width: 10.5rem;
 }
 
+.admin-reports-overview .admin-report-filters--inline .admin-report-filters__date {
+  min-width: 10.5rem;
+  width: 11rem;
+  max-width: 11rem;
+}
+
+.admin-report-date-error {
+  margin: 0;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.875rem;
+}
+
 .admin-reports-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -547,6 +571,28 @@
   flex: 1 1 14rem;
   min-width: 0;
   padding-bottom: 0.35rem;
+}
+
+.admin-visits-uid {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  line-height: 1.2;
+}
+
+.admin-visits-uid__source {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.admin-visits-uid__source--opd {
+  color: #1d4ed8;
+}
+
+.admin-visits-uid__source--ipd {
+  color: #0f766e;
 }
 
 .admin-visits-row--focus {
@@ -583,6 +629,13 @@
   width: 12rem !important;
   min-width: 11rem !important;
   max-width: 13rem !important;
+}
+
+.admin-visits-filter-row__status,
+.admin-visits-filter-row .searchable-select.admin-visits-filter-row__status {
+  width: 13.5rem !important;
+  min-width: 12.5rem !important;
+  max-width: 15rem !important;
 }
 
 .admin-visits-filter-row .admin-report-filters--inline > .btn {
@@ -1263,7 +1316,7 @@
   border: 1px solid var(--admin-border);
 }
 
-.admin-subnav__link {
+.admin-subnav a.admin-subnav__link {
   display: inline-flex;
   align-items: center;
   padding: 0.45rem 0.9rem;
@@ -1277,15 +1330,20 @@
     color var(--admin-transition);
 }
 
-.admin-subnav__link:hover {
+.admin-subnav a.admin-subnav__link:hover,
+.admin-subnav a.admin-subnav__link:focus {
   color: var(--admin-text);
   background: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
 }
 
-.admin-subnav__link--active {
-  background: var(--admin-surface);
-  color: var(--admin-primary-dark);
-  box-shadow: var(--admin-shadow-sm);
+.admin-subnav a.admin-subnav__link--active,
+.admin-subnav a.admin-subnav__link--active:hover,
+.admin-subnav a.admin-subnav__link--active:focus {
+  background: #0f172a;
+  color: #fff;
+  box-shadow: none;
+  text-decoration: none;
 }
 
 /* ── Dashboard ─────────────────────────────────────────────── */
@@ -1332,11 +1390,28 @@
     box-shadow var(--admin-transition);
 }
 
-.admin-quick-action:hover {
+.manager-shell .admin-quick-action,
+.manager-shell .admin-quick-action:hover,
+.manager-shell .admin-quick-action:focus,
+.manager-shell .admin-quick-action:active {
+  text-decoration: none;
+}
+
+.manager-shell .admin-quick-action:hover,
+.manager-shell .admin-quick-action:focus-visible {
   border-color: #cbd5e1;
   background: #f8fafc;
   transform: translateX(2px);
   box-shadow: var(--admin-shadow-sm);
+}
+
+.manager-shell .admin-quick-action:focus-visible {
+  outline: 2px solid var(--admin-primary);
+  outline-offset: 2px;
+}
+
+.manager-shell .admin-quick-action:active {
+  transform: translateX(2px) scale(0.99);
 }
 
 .admin-quick-action__icon {
@@ -1394,6 +1469,15 @@
 .admin-quick-action__arrow {
   color: var(--admin-text-soft);
   flex-shrink: 0;
+  transition:
+    color var(--admin-transition),
+    transform var(--admin-transition);
+}
+
+.manager-shell .admin-quick-action:hover .admin-quick-action__arrow,
+.manager-shell .admin-quick-action:focus-visible .admin-quick-action__arrow {
+  color: var(--admin-primary);
+  transform: translateX(2px);
 }
 
 .admin-role-breakdown {

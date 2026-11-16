@@ -1,7 +1,15 @@
 import { memo } from 'react';
 import { EmptyState } from '@/shared/components/common';
 
-function NurseDataTable({ columns, data, isLoading, emptyMessage, onRowClick, rowClassName }) {
+function NurseDataTable({
+  columns,
+  data,
+  isLoading,
+  emptyMessage,
+  onRowClick,
+  rowClassName,
+  rowKey,
+}) {
   const rows = data ?? [];
   const isEmpty = !isLoading && rows.length === 0;
 
@@ -42,7 +50,8 @@ function NurseDataTable({ columns, data, isLoading, emptyMessage, onRowClick, ro
             rows.map((row, index) => (
               <tr
                 key={
-                  row.patient_id
+                  rowKey?.(row, index)
+                  ?? row.patient_id
                   ?? row.id
                   ?? row.history_id
                   ?? row.prescription_item_id

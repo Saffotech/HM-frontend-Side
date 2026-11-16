@@ -6,7 +6,7 @@ import AdminPageHeader from '@/features/admin/components/AdminPageHeader';
 import ManagerStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
 import { useDepartmentDoctorsData } from '@/features/admin/hooks/useDepartmentDoctors';
 import { useAdminDepartmentsQuery } from '@/shared/hooks/queries/useAdminQuery';
-import { isLabOrRadDepartment } from '@/shared/utils/labDepartments';
+import { isLabDepartment } from '@/shared/utils/labDepartments';
 import {
   Button,
   QueryFeedback,
@@ -45,9 +45,9 @@ export default function AdminDepartmentsListPage() {
   const filtered = useMemo(() => {
     let rows = departments ?? [];
     if (typeFilter === 'lab') {
-      rows = rows.filter((dept) => isLabOrRadDepartment(dept));
+      rows = rows.filter(isLabDepartment);
     } else if (typeFilter === 'doctor') {
-      rows = rows.filter((dept) => !isLabOrRadDepartment(dept));
+      rows = rows.filter((dept) => !isLabDepartment(dept));
     }
     const term = search.trim().toLowerCase();
     if (!term) return rows;
@@ -173,7 +173,7 @@ export default function AdminDepartmentsListPage() {
                             <span>{dept.code || '—'}</span>
                           </td>
                           <td data-label="Type">
-                            {isLabOrRadDepartment(dept) ? (
+                            {isLabDepartment(dept) ? (
                               <span className="admin-panel-dept-type admin-panel-dept-type--lab">Lab</span>
                             ) : (
                               <span className="admin-panel-dept-type admin-panel-dept-type--doctor">Doctor</span>
@@ -181,7 +181,7 @@ export default function AdminDepartmentsListPage() {
                           </td>
                           <td data-label="Assigned">
                             <span className="admin-panel-dept-list__doctor-count">
-                              {isLabOrRadDepartment(dept)
+                              {isLabDepartment(dept)
                                 ? (labTechCountByDepartment[dept.id] ?? 0)
                                 : (doctorCountByDepartment[dept.id] ?? 0)}
                             </span>

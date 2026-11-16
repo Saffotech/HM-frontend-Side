@@ -19,22 +19,22 @@ function buildQuery(params = {}) {
 }
 
 export async function getAdminNotifications(params = {}, token) {
-  return apiClient(`/admin/notifications${buildQuery(params)}`, { token });
+  return apiClient(`/manager/notifications${buildQuery(params)}`, { token });
 }
 
 export async function getAdminNotificationsUnreadCount(token) {
-  return apiClient('/admin/notifications/unread-count', { token });
+  return apiClient('/manager/notifications/unread-count', { token });
 }
 
 export async function markAdminNotificationRead(notificationId, token) {
-  return apiClient(`/admin/notifications/${notificationId}/read`, {
+  return apiClient(`/manager/notifications/${notificationId}/read`, {
     method: 'PATCH',
     token,
   });
 }
 
 export async function markAllAdminNotificationsRead(token) {
-  return apiClient('/admin/notifications/read-all', {
+  return apiClient('/manager/notifications/read-all', {
     method: 'PATCH',
     token,
   });

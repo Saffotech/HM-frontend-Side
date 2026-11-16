@@ -26,8 +26,8 @@ export default function ModuleSettingsShell({
   const moduleByPath = [
     { prefix: routes.doctor, label: 'Doctor' },
     { prefix: routes.receptionist, label: 'Receptionist' },
-    { prefix: routes.lab, label: 'LAB' },
-    { prefix: routes.nurse, label: 'NURSE' },
+    { prefix: routes.lab, label: 'Lab' },
+    { prefix: routes.nurse, label: 'Nurse' },
     { prefix: routes.pharmacy, label: 'Pharmacy' },
     { prefix: routes.opd, label: 'OPD/IPD' },
   ];

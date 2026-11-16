@@ -16,8 +16,8 @@ const ADMIN_SETTINGS_NAV = [
   { to: ROUTES.MANAGER_SETTINGS_OPD, label: 'OPD/IPD', end: true },
   { to: ROUTES.MANAGER_SETTINGS_DOCTOR, label: 'Doctor' },
   { to: ROUTES.MANAGER_SETTINGS_RECEPTIONIST, label: 'Receptionist' },
-  { to: ROUTES.MANAGER_SETTINGS_LAB, label: 'LAB' },
-  { to: ROUTES.MANAGER_SETTINGS_NURSE, label: 'NURSE' },
+  { to: ROUTES.MANAGER_SETTINGS_LAB, label: 'Lab' },
+  { to: ROUTES.MANAGER_SETTINGS_NURSE, label: 'Nurse' },
   { to: ROUTES.MANAGER_SETTINGS_PHARMACY, label: 'Pharmacy' },
 ];
 

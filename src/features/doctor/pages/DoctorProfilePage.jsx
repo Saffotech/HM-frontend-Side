@@ -763,10 +763,6 @@ export default function DoctorProfilePage() {
               <h3 className="doc-profile-section__title">
                 <Shield size={16} aria-hidden /> Account
               </h3>
-              <p className="doc-profile-hint">
-                License, fee, specialization, department, employee ID, and joining date are
-                managed by a manager.
-              </p>
               <div className="doc-profile-grid">
                 <ReadField label="First name" value={profile.first_name} />
                 <ReadField label="Last name" value={profile.last_name} />
