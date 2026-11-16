@@ -1,15 +1,15 @@
-import { Download, Eye } from "lucide-react";
+import { Eye } from "lucide-react";
+import { formatDate } from "../../../shared/utils/formatDate";
 import { useLegalFinance } from "../context/LegalFinanceContext";
 import StatusBadge from "./StatusBadge";
 import useDocActions from "../hooks/useDocActions";
 import { DocPreviewModal, UploadDocModal } from "./DocModals";
-import Clip from "./Clip";
 import { isLegalDone } from "../utils/caseHelpers";
 import { caseIsDecided } from "../../../shared/api/legalCaseModel";
 
 export default function DocsCard({ c }) {
   const { openModal, setDocStatus } = useLegalFinance();
-  const { downloadDoc, downloadIndex } = useDocActions();
+  const { downloadIndex } = useDocActions();
   const locked = !c.id || caseIsDecided(c.st);
   return (
     <div className="card">
@@ -38,17 +38,15 @@ export default function DocsCard({ c }) {
             )}
             {c.docs.map((d, i) => (
               <tr key={d.id ?? i}>
-                <td><Clip>{d.n}</Clip></td>
-                <td><Clip>{d.t}</Clip></td>
-                <td><Clip>{d.by}</Clip></td>
-                <td><Clip>{d.d}</Clip></td>
+                <td><span className="lf-doc-text" title={d.n}>{d.n}</span></td>
+                <td><span className="lf-doc-text" title={d.t}>{d.t}</span></td>
+                <td><span className="lf-doc-text" title={d.by}>{d.by}</span></td>
+                <td className="lf-date">{formatDate(d.d)}</td>
                 <td><StatusBadge status={d.s} /></td>
                 <td>
                   <div className="ab">
                     <button className="btn sm" type="button" onClick={() => openModal(<DocPreviewModal caseId={c.id} index={i} />)}><Eye size={14} aria-hidden="true" /> Preview</button>
-                    <button className="btn sm" type="button" onClick={() => downloadDoc(d, c)}><Download size={14} aria-hidden="true" /> Download</button>
                     <button className="btn sm p" type="button" disabled={locked} onClick={() => setDocStatus(c.id, i, "Verified")}>Verify</button>
-                    <button className="btn sm d" type="button" disabled={locked} onClick={() => setDocStatus(c.id, i, "Changes Requested")}>Request changes</button>
                   </div>
                 </td>
               </tr>

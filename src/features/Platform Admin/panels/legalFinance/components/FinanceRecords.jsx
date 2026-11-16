@@ -1,12 +1,12 @@
 import StatusBadge from "./StatusBadge";
 import Clip from "./Clip";
-import { caseFinance, formatRupees } from "../utils/finance";
+import { caseFinance, formatRupees, moneyEachCycle } from "../utils/finance";
 
 export default function FinanceRecords({ c }) {
   const { f, k } = caseFinance(c);
   const rows = c.empty ? [] : [
-    ["Standard price", "Saved terms", `${formatRupees(f.std)} / yr`, c.fr ? "Done" : "Pending"],
-    ["Proposed price", `${c.disc}% discount`, `${formatRupees(k.pr)} / yr`, c.esc],
+    ["Standard price", "Saved terms", moneyEachCycle(f.std, f.freq), c.fr ? "Done" : "Pending"],
+    ["Proposed price", `${c.disc}% discount`, moneyEachCycle(k.pr, f.freq), c.esc],
     ["Advance", `${f.adv}% of the proposed price`, formatRupees(k.adv), c.pay ? "Received" : "Not received"],
   ];
   return (

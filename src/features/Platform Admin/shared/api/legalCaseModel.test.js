@@ -58,6 +58,8 @@ test("finance terms stay in whole rupees and do not invent a price", () => {
   assert.equal(saved.disc, 18);
   assert.equal(financePayload(saved).standard_price, 120000);
   assert.equal(financePayload(saved).discount, 18);
+  assert.equal(financePayload(saved).plan, null);
+  assert.equal(financePayload({ ...saved, plan: " Enterprise " }).plan, "Enterprise");
   assert.equal(financePayload({ ...saved, std: 12.5 }), null);
 });
 
@@ -86,7 +88,15 @@ test("case mapping keeps server status and does not mark the advance paid", () =
     status: "Approved",
     discount: 18,
     escalation: "Approved",
-    documents: [{ id: 3, category: "Hospital License", file_name: "licence.pdf", status: "Verified", uploaded_by: 4 }],
+    documents: [{
+      id: 3,
+      category: "Hospital License",
+      file_name: "C:/uploads/licence.pdf",
+      status: "Verified",
+      uploaded_by: 4,
+      uploaded_by_name: "Krishna Singh",
+      uploaded_at: "2026-11-12T11:20:00+05:30",
+    }],
     checklist: [{ id: 9, label: "Hospital address checked", status: "Pending", note: null }],
     finance: { standard_price: 0, discount: 18, years: 1, implementation_fee: 0, training_fee: 0, tax_percent: 0, advance_percent: 0, credit_days: 0, frequency: "Annual", modules: null, gstin: null, po_required: "No", invoice_email: null, reviewed: true },
     decision: { status: "Approved", reason: "Papers are complete.", condition: null, condition_owner: null },
@@ -98,8 +108,61 @@ test("case mapping keeps server status and does not mark the advance paid", () =
   assert.equal(mapped.readyToRegister, false);
   assert.equal(mapped.esc, "Approved");
   assert.equal(mapped.docs[0].id, 3);
+  assert.equal(mapped.docs[0].n, "licence.pdf");
+  assert.equal(mapped.docs[0].t, "Hospital License");
+  assert.equal(mapped.docs[0].by, "Krishna Singh");
+  assert.equal(mapped.docs[0].d, "2026-11-12T11:20:00+05:30");
   assert.equal(mapped.cl[0].id, 9);
+  const unnamed = mapLegalCase({
+    id: 8,
+    lead_id: 16,
+    hospital_name: "City Hospital",
+    status: "In Review",
+    documents: [{ id: 4, category: "Entity Registration", file_name: "entity.pdf", status: "Pending Review", uploaded_by: 30 }],
+    checklist: [],
+    advance_received: false,
+    ready_to_register: false,
+  });
+  assert.equal(unnamed.docs[0].by, "—");
   assert.equal(mapped.fin.std, 0);
+
+  const edited = mapLegalCase({
+    id: 9,
+    lead_id: 20,
+    hospital_name: "City Care",
+    plan: "Professional",
+    status: "In Review",
+    discount: 4,
+    finance: {
+      standard_price: 180000,
+      discount: 4,
+      years: 2,
+      implementation_fee: 5000,
+      training_fee: 2000,
+      tax_percent: 18,
+      advance_percent: 25,
+      credit_days: 15,
+      frequency: "Quarterly",
+      modules: "OPD, IPD",
+      gstin: "27ABCDE1234F1Z5",
+      po_required: "Yes",
+      invoice_email: "accounts@city.test",
+      reviewed: true,
+    },
+    advance_received: false,
+    ready_to_register: false,
+  });
+  assert.equal(edited.plan, "Professional");
+  assert.equal(edited.disc, 4);
+  assert.equal(edited.fin.std, 180000);
+  assert.equal(edited.fin.freq, "Quarterly");
+  assert.equal(edited.fin.mod, "OPD, IPD");
+  assert.equal(edited.fin.mail, "accounts@city.test");
+  const payload = financePayload({ ...edited.fin, disc: edited.disc, plan: edited.plan });
+  assert.equal(payload.standard_price, 180000);
+  assert.equal(payload.frequency, "Quarterly");
+  assert.equal(payload.plan, "Professional");
+  assert.equal(payload.implementation_fee, 5000);
 });
 
 test("document checks follow the upload contract", () => {

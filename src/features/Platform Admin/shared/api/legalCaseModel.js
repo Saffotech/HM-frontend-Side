@@ -107,6 +107,7 @@ export function financePayload(form) {
     gstin: textOrNull(form.gst),
     po_required: form.po === "Yes" ? "Yes" : "No",
     invoice_email: textOrNull(form.mail),
+    plan: textOrNull(form.plan),
   };
 }
 
@@ -137,8 +138,14 @@ export function checklistPayload(item) {
   };
 }
 
-function personLabel(userId) {
-  return userId == null ? "—" : String(userId);
+function fileLabel(value) {
+  const text = String(value ?? "").replace(/\\/g, "/").split("/").filter(Boolean).pop()?.trim();
+  return text || "Document";
+}
+
+function uploaderName(doc) {
+  const name = String(doc?.uploaded_by_name ?? "").trim();
+  return name || "—";
 }
 
 export function mapLegalCase(row) {
@@ -176,10 +183,10 @@ export function mapLegalCase(row) {
     docs: Array.isArray(row.documents)
       ? row.documents.map((doc) => ({
         id: doc.id,
-        n: doc.file_name || "Document",
+        n: fileLabel(doc.file_name),
         t: doc.category || "",
-        by: personLabel(doc.uploaded_by),
-        d: doc.reviewed_at || "—",
+        by: uploaderName(doc),
+        d: doc.uploaded_at || "",
         s: doc.status || "Pending Review",
       }))
       : [],

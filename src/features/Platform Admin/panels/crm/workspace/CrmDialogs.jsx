@@ -174,7 +174,7 @@ export function AgreeDialog({ lead, planOptions, onCancel, onSubmit }) {
           {billingCycles.map((cycle) => <option key={cycle}>{cycle}</option>)}
         </Select>
         <Input className="crm-span" label="Hospital email *" type="email" value={form.hospitalEmail} error={emailError} onChange={(event) => { setForm({ ...form, hospitalEmail: event.target.value }); setEmailError(""); }} />
-        <Input as="textarea" rows={3} className="crm-span" label="Handover note for Accounts" value={form.note} onChange={(event) => setForm({ ...form, note: event.target.value })} placeholder="Billing contact, go-live date, anything Accounts should know" />
+        <Input as="textarea" rows={3} className="crm-span" label="Handover note for Legal & Finance" value={form.note} onChange={(event) => setForm({ ...form, note: event.target.value })} placeholder="Billing contact, go-live date, anything Legal & Finance should know" />
       </div>
     </Modal>
   );

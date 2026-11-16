@@ -1,44 +1,53 @@
-import { useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import { usePlatform } from "../../../shared/context/PlatformContext";
 import useLogoutConfirmation from "@/shared/hooks/useLogoutConfirmation";
 import { useLegalFinance } from "../context/LegalFinanceContext";
-import { STATUS_GROUPS } from "../utils/status";
-import { LF_BASE_PATH, DISCOUNT_LIMIT } from "../constants";
+import { DISCOUNT_LIMIT } from "../constants";
 
 export default function Profile() {
-  const { user, cases, ws } = useLegalFinance();
+  const { user } = useLegalFinance();
   const { signOutPortal } = usePlatform();
   const logoutConfirmation = useLogoutConfirmation(() => signOutPortal("legalFinance"));
-  const navigate = useNavigate();
-  const n = (g) => cases.filter((x) => STATUS_GROUPS[g].includes(x.st)).length;
   const info = [
     ["Employee ID", user.employeeId],
     ["Department", user.department],
     ["Email", user.email],
-    ["Discount approval limit", DISCOUNT_LIMIT + "%"],
+    ["Discount approval limit", `${DISCOUNT_LIMIT}%`],
+  ];
+  const permissions = [
+    ["can", "Review documents, checklist, price, and the case decision"],
+    ["can", `Request Finance Head approval above ${DISCOUNT_LIMIT}%`],
+    ["can", "Record that approval or rejection while escalation is Pending"],
+    ["cannot", "Record the advance payment or register the hospital"],
   ];
   return (
     <>
-      <div className="g g2">
-        <div className="card">
-          <div className="row">
-            <div className="av" style={{ width: 56, height: 56, fontSize: 18 }}>{user.initials}</div>
-            <div><b style={{ fontSize: 16 }}>{user.name}</b><br /><span className="mu">{user.role}</span></div>
-            <button type="button" className="btn" style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6 }} onClick={logoutConfirmation.requestLogout}>
-              <LogOut size={14} aria-hidden="true" /> Logout
-            </button>
+      <section className="card lf-profile">
+        <div className="lf-profile-head">
+          <div className="av" aria-hidden="true">{user.initials}</div>
+          <div>
+            <h2>{user.name}</h2>
+            <p>{user.role}</p>
           </div>
-          <div className="kv">{info.map(([l, v]) => <div key={l}><span>{l}</span>{v}</div>)}</div>
-          <h2 style={{ marginTop: 14 }}>Permissions</h2>
-          <p>✓ Review documents, checklist, price, and the case decision<br />✓ Request Finance Head approval above {DISCOUNT_LIMIT}%<br />✓ Record that approval or rejection while escalation is Pending<br />✗ Record the advance payment or register the hospital</p>
+          <button type="button" className="btn" onClick={logoutConfirmation.requestLogout}>
+            <LogOut size={14} aria-hidden="true" /> Logout
+          </button>
         </div>
-        <div className="card">
-          <h2>My caseload</h2>
-          {Object.keys(STATUS_GROUPS).map((g) => <p key={g}>{g}: <b>{n(g)}</b></p>)}
-          <button className="btn p" onClick={() => navigate(`${LF_BASE_PATH}/cases`)}>View My {ws.pl}</button>
-        </div>
-      </div>
+        <dl className="lf-profile-facts">
+          {info.map(([label, value]) => (
+            <div key={label}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
+        <h3>Permissions</h3>
+        <ul className="lf-profile-perms">
+          {permissions.map(([kind, text]) => (
+            <li key={text} className={kind === "cannot" ? "is-no" : "is-yes"}>{text}</li>
+          ))}
+        </ul>
+      </section>
       {logoutConfirmation.dialog}
     </>
   );

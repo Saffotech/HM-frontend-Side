@@ -29,7 +29,7 @@ const TABS = [
   ["lost", "Lost leads", XCircle],
 ];
 const COLUMNS = {
-  pending: ["Hospital", "Agreed plan", "Sent to Accounts", "Waiting", "Registration", "Handover", "Note for Accounts"],
+  pending: ["Hospital", "Agreed plan", "Sent to Accounts", "Waiting", "Registration", "Handover", "Note for Legal & Finance"],
   registered: ["Hospital", "Hospital ID", "Plan", "Registered", "Registered by", "Subscription", "Days to convert", "Paid revenue"],
   lost: ["Hospital", "Plan", "Reason", "Note", "Closed", "Closed by"],
 };

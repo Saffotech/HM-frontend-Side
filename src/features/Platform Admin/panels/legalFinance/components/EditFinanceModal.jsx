@@ -1,15 +1,17 @@
 import { useState } from "react";
+import { PLAN_NAMES } from "../../../shared/data/catalog";
 import { useLegalFinance } from "../context/LegalFinanceContext";
-import { getFinance, calcFinance, formatRupees, isInvalidFinance } from "../utils/finance";
+import { getFinance, calcFinance, cycleSuffix, cycleUnit, formatRupees, isInvalidFinance } from "../utils/finance";
 import { DISCOUNT_LIMIT } from "../constants";
 
 export default function EditFinanceModal({ caseId }) {
   const { cases, saveFinance, closeModal, toast } = useLegalFinance();
   const c = cases.find((x) => x.id === caseId);
-  const [v, setV] = useState(() => (c ? { ...getFinance(c), disc: c.disc } : { disc: 0 }));
+  const [v, setV] = useState(() => (c ? { ...getFinance(c), disc: c.disc, plan: c.plan || "" } : { disc: 0, plan: "" }));
   const [busy, setBusy] = useState(false);
   if (!c) return null;
   const set = (key) => (e) => setV((s) => ({ ...s, [key]: e.target.value }));
+  const planChoices = [...new Set([c.plan, ...PLAN_NAMES].filter(Boolean))];
 
   // numeric view of the form for validation / preview
   const num = { ...v, std: +v.std, disc: +v.disc, yrs: +v.yrs, impl: +v.impl, trn: +v.trn, tax: +v.tax, adv: +v.adv, cr: +v.cr };
@@ -39,9 +41,16 @@ export default function EditFinanceModal({ caseId }) {
     <>
       <h2>Edit finance details · {c.h}</h2>
       <div className="g h2c">
+        <div>
+          <label>Plan</label>
+          <select value={v.plan} onChange={set("plan")}>
+            {!v.plan && <option value="">Select a plan</option>}
+            {planChoices.map((plan) => <option key={plan}>{plan}</option>)}
+          </select>
+        </div>
         {Txt("mod", "Modules")}
         {Num("yrs", "Duration (years)")}
-        {Num("std", "Standard price (₹ / yr)")}
+        {Num("std", `Standard price (₹ per ${cycleUnit(v.freq)})`)}
         {Num("disc", "Discount %")}
         {Num("impl", "Implementation fee (₹)")}
         {Num("trn", "Training fee (₹)")}
@@ -58,7 +67,7 @@ export default function EditFinanceModal({ caseId }) {
           "Enter whole rupees. Discount, tax, and advance are 0–100."
         ) : (
           <>
-            Proposed price <b>{formatRupees(k.pr)}</b> / yr · Total <b>{formatRupees(k.tot)}</b> + tax {formatRupees(k.gst)} · Advance {formatRupees(k.adv)}
+            Proposed price <b>{formatRupees(k.pr)}</b> {cycleSuffix(v.freq)} · Total <b>{formatRupees(k.tot)}</b> + tax {formatRupees(k.gst)} · Advance {formatRupees(k.adv)}
             {num.disc > DISCOUNT_LIMIT && <><br /><b>Discount above {DISCOUNT_LIMIT}%: escalation becomes Not requested unless it is already Pending or Approved.</b></>}
           </>
         )}

@@ -1,7 +1,7 @@
 import { caseIsDecided } from "../../../shared/api/legalCaseModel";
 import { useLegalFinance } from "../context/LegalFinanceContext";
 import EditFinanceModal from "./EditFinanceModal";
-import { caseFinance, formatRupees, exceedsDiscountLimit } from "../utils/finance";
+import { caseFinance, durationLabel, formatRupees, moneyEachCycle, exceedsDiscountLimit } from "../utils/finance";
 import { DISCOUNT_LIMIT } from "../constants";
 
 export default function FinanceCard({ c }) {
@@ -28,10 +28,10 @@ export default function FinanceCard({ c }) {
     : [
       ["Plan", c.plan || "—"],
       ["Modules", f.mod || "—"],
-      ["Contract duration", f.yrs + " years"],
-      ["Standard price", formatRupees(f.std) + " / yr"],
+      ["Contract duration", durationLabel(f.yrs)],
+      ["Standard price", moneyEachCycle(f.std, f.freq)],
       ["Discount", `${c.disc}% (limit: ${DISCOUNT_LIMIT}%)`],
-      ["Proposed price", formatRupees(k.pr) + " / yr"],
+      ["Proposed price", moneyEachCycle(k.pr, f.freq)],
       ["Implementation fee", formatRupees(f.impl)],
       ["Training fee", formatRupees(f.trn)],
       ["Total contract value", `${formatRupees(k.tot)} + ${f.tax}% tax (${formatRupees(k.gst)})`],

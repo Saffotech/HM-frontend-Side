@@ -1,11 +1,12 @@
 import { Download, Eye } from "lucide-react";
+import { formatDate } from "../../../shared/utils/formatDate";
 import { useLegalFinance } from "../context/LegalFinanceContext";
 import StatusBadge from "./StatusBadge";
 import StageLink from "./StageLink";
 import useOpenCase from "../hooks/useOpenCase";
 import useDocActions from "../hooks/useDocActions";
 import { DocPreviewModal } from "./DocModals";
-import { caseFinance, formatRupees } from "../utils/finance";
+import { caseFinance, durationLabel, formatRupees, moneyEachCycle } from "../utils/finance";
 import { checklistDone, docsVerified, isLegalDone, isFinanceDone } from "../utils/caseHelpers";
 import Clip from "./Clip";
 
@@ -49,7 +50,9 @@ export default function CaseDetailModal({ caseId }) {
             ["Lead", x.lead],
             ["City", x.city || "—"],
             ["Plan", x.plan || "—"],
+            ["Modules", f.mod || "—"],
             ["GSTIN", f.gst || "—"],
+            ["PO required", f.po || "—"],
             ["Invoice email", f.mail || "—"],
             ["Escalation", x.esc],
             ["Decision", x.dec?.k || "—"],
@@ -59,8 +62,11 @@ export default function CaseDetailModal({ caseId }) {
         <div className="sec" style={{ margin: 0 }}>
           <h3>Finance summary</h3>
           <KV rows={[
-            ["Proposed price", formatRupees(k.pr) + " / yr"],
-            ["Duration", f.yrs + " years"],
+            ["Standard price", moneyEachCycle(f.std, f.freq)],
+            ["Proposed price", moneyEachCycle(k.pr, f.freq)],
+            ["Duration", durationLabel(f.yrs)],
+            ["Implementation fee", formatRupees(f.impl)],
+            ["Training fee", formatRupees(f.trn)],
             ["Payment", `${f.freq} · ${f.adv}% advance`],
             ["Credit period", f.cr + " days"],
             ["Discount escalation", <StatusBadge key="esc" status={x.esc} />],
@@ -81,10 +87,10 @@ export default function CaseDetailModal({ caseId }) {
             <tbody>
               {x.docs.map((d, j) => (
                 <tr key={d.id ?? j}>
-                  <td><Clip>{"📄 " + d.n}</Clip></td>
-                  <td><Clip>{d.t}</Clip></td>
-                  <td><Clip>{d.by}</Clip></td>
-                  <td><Clip>{d.d}</Clip></td>
+                  <td><span className="lf-doc-text" title={d.n}>{d.n}</span></td>
+                  <td><span className="lf-doc-text" title={d.t}>{d.t}</span></td>
+                  <td><span className="lf-doc-text" title={d.by}>{d.by}</span></td>
+                  <td className="lf-date">{formatDate(d.d)}</td>
                   <td><StatusBadge status={d.s} /></td>
                   <td>
                     <div className="ab">
