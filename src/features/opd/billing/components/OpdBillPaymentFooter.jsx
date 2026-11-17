@@ -23,6 +23,7 @@ export default function OpdBillPaymentFooter({
   serviceReady,
   selectedPatient,
   patientApptsFetched,
+  billGenerationBlocked,
   enabledPaymentModes,
   onBack,
 }) {
@@ -127,7 +128,8 @@ export default function OpdBillPaymentFooter({
             createBillPending ||
             !patientId ||
             !serviceReady ||
-            (Boolean(selectedPatient) && !patientApptsFetched)
+            (Boolean(selectedPatient) && !patientApptsFetched) ||
+            billGenerationBlocked
           }
         >
           {createBillPending ? 'Saving...' : 'Generate & Save Bill'}

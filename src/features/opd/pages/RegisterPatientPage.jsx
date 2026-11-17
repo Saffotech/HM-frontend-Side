@@ -53,9 +53,7 @@ export default function RegisterPatientPage() {
     isRevisitPatient,
     isSaving,
     billedRegistrationFee,
-    billedConsultationFee,
     billedTotal,
-    resolveConsultationFee,
     handlePhoneBlur,
     resetAppointmentSlot,
     handleDoctorChange,
@@ -103,13 +101,15 @@ export default function RegisterPatientPage() {
               />
               <div className="field">
                 <label className="field__label" htmlFor="register-gender">
-                  Gender
+                  Gender *
                 </label>
                 <select
                   id="register-gender"
                   className="field__input"
                   value={form.gender || ''}
                   onChange={(e) => set('gender', e.target.value)}
+                  required
+                  aria-required="true"
                   aria-invalid={!!errors.gender}
                 >
                   <option value="" disabled>
@@ -167,11 +167,12 @@ export default function RegisterPatientPage() {
               <Input
                 id="register-dob"
                 type="date"
-                label="Date of Birth"
+                label="Date of Birth *"
                 value={form.dob}
                 onChange={(e) => set('dob', e.target.value)}
                 max={todayIso()}
                 error={errors.dob}
+                required
               />
               <div className="register-form__blood-address-row form-grid--full">
                 <div className="register-form__blood-group">
@@ -195,12 +196,12 @@ export default function RegisterPatientPage() {
               <Input label="State" value={form.state} onChange={(e) => set('state', e.target.value)} />
               <Input
                 id="register-aadhaar"
-                label="Aadhaar"
+                label="Aadhaar *"
                 value={form.aadhaar}
                 onChange={(e) => set('aadhaar', formatAadhaarInput(e.target.value))}
                 placeholder="XXXX-XXXX-XXXX"
                 error={errors.aadhaar}
-                required={!isRevisitPatient}
+                required
               />
             </div>
 
@@ -228,7 +229,7 @@ export default function RegisterPatientPage() {
                 error={errors.doctorId}
                 options={doctors.map((d) => ({
                   value: d.id,
-                  label: `Dr. ${d.name} — ${formatCurrency(resolveConsultationFee(d.id, form.deptId))}`,
+                  label: `Dr. ${d.name} — ${formatCurrency(d.fee)}`,
                 }))}
               />
             </div>
@@ -238,7 +239,7 @@ export default function RegisterPatientPage() {
                 <div className="fee-box fee-box--compact">
                   <p className="fee-box__line">
                     Registration: {formatCurrency(billedRegistrationFee)} + Consultation:{' '}
-                    {formatCurrency(billedConsultationFee)}
+                    {formatCurrency(selectedDoctor.fee)}
                   </p>
                   <p className="fee-box__total">
                     Total: <MoneyAmount amount={feeTotal} strong />

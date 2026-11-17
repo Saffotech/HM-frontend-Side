@@ -93,6 +93,7 @@ export function createOpdBillRecord({
   const { status, balance } = getBillStatus(paid, grandTotal);
   const date = getTodayDateString();
   const service = resolveServiceFromAppointment(appointment, patient);
+  const appointmentDbId = Number(appointment?.dbId);
 
   const payments =
     paid > 0
@@ -121,6 +122,10 @@ export function createOpdBillRecord({
     payments,
     notes: notes?.trim() || undefined,
     appointmentId: service.appointmentId,
+    appointmentDbId:
+      Number.isSafeInteger(appointmentDbId) && appointmentDbId > 0
+        ? appointmentDbId
+        : undefined,
     doctorId: service.doctorId,
     deptId: service.deptId,
     doctorName: service.doctorName,

@@ -9,6 +9,7 @@ export default function OpdBillConfirmDialog({
   onClose,
   onConfirm,
   confirming,
+  billGenerationBlocked = false,
   summary,
 }) {
   if (!summary) return null;
@@ -24,7 +25,11 @@ export default function OpdBillConfirmDialog({
           <Button type="button" variant="outline" onClick={onClose} disabled={confirming}>
             Cancel
           </Button>
-          <Button type="button" onClick={onConfirm} disabled={confirming}>
+          <Button
+            type="button"
+            onClick={onConfirm}
+            disabled={confirming || billGenerationBlocked}
+          >
             {confirming ? 'Saving...' : 'Confirm'}
           </Button>
         </>

@@ -141,26 +141,6 @@ function SectionCard({
   );
 }
 
-function ToggleRow({ id, label, hint, checked, onChange, disabled = false }) {
-  return (
-    <label className="aos-toggle" htmlFor={id}>
-      <span className="aos-toggle__text">
-        <strong>{label}</strong>
-        {hint ? <span>{hint}</span> : null}
-      </span>
-      <input
-        id={id}
-        type="checkbox"
-        className="aos-toggle__input"
-        checked={Boolean(checked)}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      <span className="aos-toggle__track" aria-hidden />
-    </label>
-  );
-}
-
 function CardSaveBar({ onSave, saving, label = 'Save', disabled = false }) {
   return (
     <div className="aos-card-save">
@@ -616,16 +596,6 @@ export default function ManagerOpdPricingSection({
               onChange={setNumber('pricing.consultation_fee')}
             />
           </Field>
-        </div>
-
-        <div className="aos-toggle-list aos-toggle-list--compact">
-          <ToggleRow
-            id="allow_manual_price_entry"
-            label="Allow staff to type custom prices"
-            checked={form.pricing.allow_manual_price_entry}
-            disabled={!canEditGlobalFees}
-            onChange={(v) => patch('pricing.allow_manual_price_entry', v)}
-          />
         </div>
 
         <CardSaveBar

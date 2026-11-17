@@ -48,10 +48,11 @@ export function mapInvoiceToUiBill(raw, visitId) {
       mode: p.mode,
       ref: p.ref,
     })),
-    service: raw.service,
   });
   return {
     ...mapped,
+    deptName: raw.service?.department || null,
+    doctorName: raw.service?.doctor || null,
     subtotal: Number(summary.subtotal ?? 0),
     gstAmount: Number(summary.gst_amount ?? 0),
     gstLabel: summary.gst_label ?? "GST",

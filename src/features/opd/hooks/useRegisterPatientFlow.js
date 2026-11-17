@@ -29,6 +29,7 @@ import {
 export const REGISTER_FIELD_IDS = {
   name: 'register-name',
   phone: 'register-phone',
+  gender: 'register-gender',
   dob: 'register-dob',
   aadhaar: 'register-aadhaar',
   deptId: 'register-dept',
@@ -40,6 +41,7 @@ export const REGISTER_FIELD_IDS = {
 const REGISTER_FIELD_ORDER = [
   'name',
   'phone',
+  'gender',
   'dob',
   'aadhaar',
   'deptId',
@@ -87,7 +89,7 @@ export function useRegisterPatientFlow() {
   const isRevisitPatient = Boolean(revisitConfirmed && existingPatient?.found);
   const { values: form, errors, handleChange, setErrors } = useFormValidation(
     REGISTER_PATIENT_INITIAL_FORM,
-    (values) => validateRegisterPatient(values, { isRevisit: isRevisitPatient })
+    validateRegisterPatient
   );
 
   const billedRegistrationFee = isRevisitPatient ? 0 : Number(registrationFee) || 0;
@@ -109,6 +111,8 @@ export function useRegisterPatientFlow() {
           registrationFee: billedRegistrationFee,
           consultationFee: billedConsultationFee,
           gstPercent: billedGstPercent,
+          doctorId: form.doctorId,
+          departmentId: form.deptId,
         },
         token,
       );
@@ -121,6 +125,7 @@ export function useRegisterPatientFlow() {
     };
   }, [
     form.doctorId,
+    form.deptId,
     billedRegistrationFee,
     billedConsultationFee,
     billedGstPercent,
@@ -235,7 +240,7 @@ export function useRegisterPatientFlow() {
 
   const getOnSubmit = (selectedDoctor) => (e) => {
     e?.preventDefault?.();
-    const nextErrors = validateRegisterPatient(form, { isRevisit: isRevisitPatient });
+    const nextErrors = validateRegisterPatient(form);
     if (!form.deptId) nextErrors.deptId = 'Department is required';
     if (!form.doctorId) nextErrors.doctorId = 'Doctor is required';
     if (form.doctorId) {
@@ -267,6 +272,8 @@ export function useRegisterPatientFlow() {
             registrationFee: billedRegistrationFee,
             consultationFee: billedConsultationFee,
             gstPercent: billedGstPercent,
+            doctorId: form.doctorId,
+            departmentId: form.deptId,
           },
           token,
         );
@@ -485,9 +492,7 @@ export function useRegisterPatientFlow() {
     isRevisitPatient,
     isSaving,
     billedRegistrationFee,
-    billedConsultationFee,
     billedTotal,
-    resolveConsultationFee,
     handlePhoneBlur,
     resetAppointmentSlot,
     handleDoctorChange,
