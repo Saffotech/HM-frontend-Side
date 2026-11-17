@@ -286,6 +286,8 @@ export default function ManagerOpdPricingSection({
   const [doctorDeptId, setDoctorDeptId] = useState('');
   const [selectedDoctorId, setSelectedDoctorId] = useState('');
   const [doctorFeeDraft, setDoctorFeeDraft] = useState('');
+  const [doctorFeeDepartmentFilter, setDoctorFeeDepartmentFilter] = useState('');
+  const [doctorFeeDoctorFilter, setDoctorFeeDoctorFilter] = useState('');
   const [savingCard, setSavingCard] = useState(null);
 
   useEffect(() => {
@@ -309,6 +311,85 @@ export default function ManagerOpdPricingSection({
     if (!doctorDeptId) return [];
     return doctors.filter((d) => String(d.department_id) === String(doctorDeptId));
   }, [doctors, doctorDeptId]);
+
+  const configuredDoctorFees = useMemo(
+    () =>
+      (form.pricing.doctor_consultation_fees ?? [])
+        .filter(
+          (row) =>
+            row.fee !== '' &&
+            row.fee != null &&
+            Number.isFinite(Number(row.fee)),
+        )
+        .map((row) => {
+          const doctor = doctors.find(
+            (item) => Number(item.id) === Number(row.doctor_id),
+          );
+          const department = departments.find(
+            (item) => Number(item.id) === Number(doctor?.department_id ?? row.department_id),
+          );
+          return {
+            doctor_id: row.doctor_id,
+            doctor_name: doctor
+              ? doctorDisplayName(doctor)
+              : row.doctor_name || `Doctor #${row.doctor_id}`,
+            department_id: doctor?.department_id ?? row.department_id,
+            department_name:
+              department?.name || doctor?.department_name || row.department_name || '—',
+            fee: Number(row.fee),
+            is_editable: Boolean(doctor),
+          };
+        })
+        .sort(
+          (a, b) =>
+            a.department_name.localeCompare(b.department_name) ||
+            a.doctor_name.localeCompare(b.doctor_name),
+        ),
+    [departments, doctors, form.pricing.doctor_consultation_fees],
+  );
+
+  const doctorFeeDepartments = useMemo(() => {
+    const byId = new Map();
+    configuredDoctorFees.forEach((row) => {
+      if (row.department_id == null || row.department_id === '') return;
+      const id = String(row.department_id);
+      if (!byId.has(id)) byId.set(id, row.department_name);
+    });
+    return [...byId.entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [configuredDoctorFees]);
+
+  const doctorFeeRowsForFilter = useMemo(
+    () =>
+      configuredDoctorFees.filter(
+        (row) =>
+          !doctorFeeDepartmentFilter ||
+          String(row.department_id) === doctorFeeDepartmentFilter,
+      ),
+    [configuredDoctorFees, doctorFeeDepartmentFilter],
+  );
+
+  const visibleDoctorFees = useMemo(
+    () =>
+      doctorFeeRowsForFilter.filter(
+        (row) =>
+          !doctorFeeDoctorFilter ||
+          String(row.doctor_id) === doctorFeeDoctorFilter,
+      ),
+    [doctorFeeDoctorFilter, doctorFeeRowsForFilter],
+  );
+
+  useEffect(() => {
+    if (
+      doctorFeeDoctorFilter &&
+      !doctorFeeRowsForFilter.some(
+        (row) => String(row.doctor_id) === doctorFeeDoctorFilter,
+      )
+    ) {
+      setDoctorFeeDoctorFilter('');
+    }
+  }, [doctorFeeDoctorFilter, doctorFeeRowsForFilter]);
 
   useEffect(() => {
     if (!doctorsInDept.length) {
@@ -395,6 +476,15 @@ export default function ManagerOpdPricingSection({
     };
     patch('pricing.doctor_consultation_fees', nextFees);
     await persist('doctor', nextForm);
+  };
+
+  const handleEditDoctorFee = (row) => {
+    const doctor = doctors.find((item) => Number(item.id) === Number(row.doctor_id));
+    if (!doctor) return;
+    setDoctorDeptId(String(doctor.department_id));
+    setSelectedDoctorId(String(doctor.id));
+    setDoctorFeeDraft(String(row.fee));
+    document.getElementById('doctor_fee_value')?.focus();
   };
 
   const cardBusy = (key) => savingCard === key || (isSaving && savingCard === key);
@@ -985,6 +1075,103 @@ export default function ManagerOpdPricingSection({
               {cardBusy('doctor') ? 'Saving…' : 'Save'}
             </Button>
           </div>
+        </div>
+        <p className="aos-card__hint">
+          Saved doctor-specific fees are listed below. Select Edit to load a fee into
+          the controls above. Doctors without an individual fee use their department
+          fee or the hospital default.
+        </p>
+        <div className="aos-doctor-fee-filters">
+          <Field id="doctor_fee_list_department" label="Filter by department">
+            <select
+              id="doctor_fee_list_department"
+              className="aos-select"
+              value={doctorFeeDepartmentFilter}
+              onChange={(e) => {
+                setDoctorFeeDepartmentFilter(e.target.value);
+                setDoctorFeeDoctorFilter('');
+              }}
+            >
+              <option value="">All departments</option>
+              {doctorFeeDepartments.map((department) => (
+                <option key={department.id} value={department.id}>
+                  {department.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field id="doctor_fee_list_doctor" label="Filter by doctor">
+            <select
+              id="doctor_fee_list_doctor"
+              className="aos-select"
+              value={doctorFeeDoctorFilter}
+              onChange={(e) => setDoctorFeeDoctorFilter(e.target.value)}
+            >
+              <option value="">All doctors</option>
+              {doctorFeeRowsForFilter.map((row) => (
+                <option key={row.doctor_id} value={String(row.doctor_id)}>
+                  {row.doctor_name}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+        <div className="aos-table-wrap aos-doctor-fees-list">
+          <table className="aos-table" aria-label="Consultation fees by doctor">
+            <thead>
+              <tr>
+                <th>Doctor</th>
+                <th>Department</th>
+                <th>{currencyAmountLabel('Consultation fee')}</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {configuredDoctorFees.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="aos-table__empty">
+                    No doctor-specific consultation fees configured
+                  </td>
+                </tr>
+              ) : visibleDoctorFees.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="aos-table__empty">
+                    No consultation fees match these filters
+                  </td>
+                </tr>
+              ) : (
+                visibleDoctorFees.map((row) => (
+                  <tr key={row.doctor_id}>
+                    <td>
+                      <span className="aos-table__primary">{row.doctor_name}</span>
+                    </td>
+                    <td>{row.department_name}</td>
+                    <td>
+                      {getCurrencySymbol()}
+                      {row.fee.toLocaleString()}
+                    </td>
+                    <td>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditDoctorFee(row)}
+                        disabled={!row.is_editable}
+                        aria-label={`Edit consultation fee for ${row.doctor_name}`}
+                        title={
+                          row.is_editable
+                            ? 'Edit this doctor’s consultation fee'
+                            : 'Only active doctors can be edited here'
+                        }
+                      >
+                        Edit
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </SectionCard>
     </>

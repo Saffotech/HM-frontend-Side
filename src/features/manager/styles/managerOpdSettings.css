@@ -510,6 +510,31 @@
   border-radius: 12px;
 }
 
+.aos-doctor-fees-list {
+  max-height: 15rem;
+  overflow-y: auto;
+}
+
+.aos-doctor-fee-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  max-width: 48rem;
+  margin-bottom: 0.75rem;
+}
+
+.aos-doctor-fees-list .aos-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+@media (max-width: 720px) {
+  .aos-doctor-fee-filters {
+    grid-template-columns: 1fr;
+  }
+}
+
 .aos-table {
   width: 100%;
   border-collapse: collapse;
