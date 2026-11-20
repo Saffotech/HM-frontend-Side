@@ -22,6 +22,34 @@ function buildWardRateMap(wardStatsPayload) {
   return map;
 }
 
+function paymentModeLabel(mode) {
+  const code = String(mode?.code || '').toLowerCase();
+  if (code === 'upi') return 'UPI';
+  if (code) return code.charAt(0).toUpperCase() + code.slice(1);
+  return String(mode?.label || '').trim();
+}
+
+/** Payment modes the administrator turned off. Empty when settings cannot be read. */
+export function useIpdDisabledPaymentModesQuery() {
+  return useQuery({
+    queryKey: [...queryKeys.ipd.all, 'disabled-payment-modes'],
+    queryFn: async () => {
+      try {
+        const data = await getOpdBillingSettings();
+        const form = opdSettingsApiToForm({ ...data, _source: 'api' });
+        return (form?.payment_modes?.modes ?? [])
+          .filter((mode) => String(mode?.code || '').toLowerCase() !== 'insurance')
+          .filter((mode) => mode.enabled === false)
+          .map(paymentModeLabel);
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 30_000,
+    retry: false,
+  });
+}
+
 export function useIpdBedTariffQuery() {
   return useQuery({
     queryKey: [...queryKeys.ipd.all, 'bed-tariff'],

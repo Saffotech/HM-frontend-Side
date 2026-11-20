@@ -152,6 +152,18 @@ function CardSaveBar({ onSave, saving, label = 'Save', disabled = false }) {
   );
 }
 
+function formatFeeAmount(value) {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return '—';
+  return `${getCurrencySymbol()}${amount.toLocaleString()}`;
+}
+
+function savedFeeAmount(row) {
+  if (!row || row.fee === '' || row.fee == null) return null;
+  const amount = Number(row.fee);
+  return Number.isFinite(amount) ? amount : null;
+}
+
 function doctorDisplayName(member) {
   const full = [member.first_name, member.last_name].filter(Boolean).join(' ').trim();
   return full ? `Dr. ${full}` : member.email || `Doctor #${member.id}`;
@@ -312,32 +324,47 @@ export default function ManagerOpdPricingSection({
     return doctors.filter((d) => String(d.department_id) === String(doctorDeptId));
   }, [doctors, doctorDeptId]);
 
+  const hospitalDefault = form.pricing.consultation_fee;
+  const hospitalDefaultAmount = Number(hospitalDefault);
+
+  const departmentFeeRows = useMemo(() => {
+    const savedFees = form.pricing.department_consultation_fees ?? [];
+    return [...departments]
+      .map((dept) => {
+        const saved = savedFees.find(
+          (row) => Number(row.department_id) === Number(dept.id),
+        );
+        const override = savedFeeAmount(saved);
+        return {
+          id: dept.id,
+          name: dept.name,
+          code: dept.code,
+          fee: override ?? hospitalDefaultAmount,
+          usesDefault: override == null,
+        };
+      })
+      .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+  }, [departments, form.pricing.department_consultation_fees, hospitalDefaultAmount]);
+
   const configuredDoctorFees = useMemo(
     () =>
-      (form.pricing.doctor_consultation_fees ?? [])
-        .filter(
-          (row) =>
-            row.fee !== '' &&
-            row.fee != null &&
-            Number.isFinite(Number(row.fee)),
-        )
-        .map((row) => {
-          const doctor = doctors.find(
-            (item) => Number(item.id) === Number(row.doctor_id),
+      doctors
+        .map((doctor) => {
+          const saved = (form.pricing.doctor_consultation_fees ?? []).find(
+            (row) => Number(row.doctor_id) === Number(doctor.id),
           );
+          const override = savedFeeAmount(saved);
           const department = departments.find(
-            (item) => Number(item.id) === Number(doctor?.department_id ?? row.department_id),
+            (item) => Number(item.id) === Number(doctor.department_id),
           );
           return {
-            doctor_id: row.doctor_id,
-            doctor_name: doctor
-              ? doctorDisplayName(doctor)
-              : row.doctor_name || `Doctor #${row.doctor_id}`,
-            department_id: doctor?.department_id ?? row.department_id,
-            department_name:
-              department?.name || doctor?.department_name || row.department_name || '—',
-            fee: Number(row.fee),
-            is_editable: Boolean(doctor),
+            doctor_id: doctor.id,
+            doctor_name: doctorDisplayName(doctor),
+            department_id: doctor.department_id,
+            department_name: department?.name || doctor.department_name || '—',
+            fee: override ?? hospitalDefaultAmount,
+            usesDefault: override == null,
+            is_editable: true,
           };
         })
         .sort(
@@ -345,7 +372,7 @@ export default function ManagerOpdPricingSection({
             a.department_name.localeCompare(b.department_name) ||
             a.doctor_name.localeCompare(b.doctor_name),
         ),
-    [departments, doctors, form.pricing.doctor_consultation_fees],
+    [departments, doctors, form.pricing.doctor_consultation_fees, hospitalDefaultAmount],
   );
 
   const doctorFeeDepartments = useMemo(() => {
@@ -429,8 +456,6 @@ export default function ManagerOpdPricingSection({
     setDoctorFeeDraft(saved?.fee === 0 || saved?.fee ? String(saved.fee) : '');
   }, [selectedDoctor, form.pricing.doctor_consultation_fees]);
 
-  const hospitalDefault = form.pricing.consultation_fee;
-
   const persist = async (cardKey, nextForm) => {
     setSavingCard(cardKey);
     try {
@@ -481,9 +506,9 @@ export default function ManagerOpdPricingSection({
   const handleEditDoctorFee = (row) => {
     const doctor = doctors.find((item) => Number(item.id) === Number(row.doctor_id));
     if (!doctor) return;
-    setDoctorDeptId(String(doctor.department_id));
+    setDoctorDeptId(doctor.department_id == null ? '' : String(doctor.department_id));
     setSelectedDoctorId(String(doctor.id));
-    setDoctorFeeDraft(String(row.fee));
+    setDoctorFeeDraft(row.usesDefault ? '' : String(row.fee));
     document.getElementById('doctor_fee_value')?.focus();
   };
 
@@ -644,6 +669,22 @@ export default function ManagerOpdPricingSection({
         }
       >
         <p className="aos-card__note">Applies to all departments and doctors</p>
+
+        <label className="aos-toggle" htmlFor="consultation_enabled">
+          <span className="aos-toggle__text">
+            <strong>Enable Consultation Charges</strong>
+            <span>Enable or disable consultation charges for newly generated OPD bills.</span>
+          </span>
+          <input
+            id="consultation_enabled"
+            type="checkbox"
+            className="aos-toggle__input"
+            checked={form.pricing.consultation_enabled !== false}
+            disabled={!canEditGlobalFees}
+            onChange={(e) => patch('pricing.consultation_enabled', e.target.checked)}
+          />
+          <span className="aos-toggle__track" aria-hidden />
+        </label>
 
         <div className="aos-grid aos-grid--3">
           <Field id="registration_fee" label={currencyAmountLabel('Registration fee')}>
@@ -993,6 +1034,51 @@ export default function ManagerOpdPricingSection({
             </Button>
           </div>
         </div>
+        <div className="aos-table-wrap aos-fee-list aos-fee-list--dept">
+          <table className="aos-table aos-table--fee admin-table--stack" aria-label="Consultation fees by department">
+            <thead>
+              <tr>
+                <th>Department</th>
+                <th className="aos-fee-col-amount">{currencyAmountLabel('Consultation fee')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {departmentFeeRows.length === 0 ? (
+                <tr>
+                  <td colSpan={2} className="aos-table__empty">
+                    No departments
+                  </td>
+                </tr>
+              ) : (
+                departmentFeeRows.map((row) => (
+                  <tr
+                    key={row.id}
+                    className={row.usesDefault ? undefined : 'aos-table__row--custom'}
+                  >
+                    <td data-label="Department">
+                      <span className="aos-table__primary">
+                        {row.name}
+                        {row.code ? ` (${row.code})` : ''}
+                      </span>
+                    </td>
+                    <td data-label="Consultation fee">
+                      <span className="aos-fee-cell">
+                        <span className="aos-fee-amount">{formatFeeAmount(row.fee)}</span>
+                        <span
+                          className={`aos-fee-tag ${
+                            row.usesDefault ? 'aos-fee-tag--default' : 'aos-fee-tag--custom'
+                          }`}
+                        >
+                          {row.usesDefault ? 'Hospital default' : 'Custom'}
+                        </span>
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </SectionCard>
 
       <SectionCard
@@ -1077,9 +1163,8 @@ export default function ManagerOpdPricingSection({
           </div>
         </div>
         <p className="aos-card__hint">
-          Saved doctor-specific fees are listed below. Select Edit to load a fee into
-          the controls above. Doctors without an individual fee use their department
-          fee or the hospital default.
+          Every doctor is listed below. A doctor without a saved fee shows the hospital
+          default. Select Edit to load that doctor into the controls above.
         </p>
         <div className="aos-doctor-fee-filters">
           <Field id="doctor_fee_list_department" label="Filter by department">
@@ -1116,21 +1201,21 @@ export default function ManagerOpdPricingSection({
             </select>
           </Field>
         </div>
-        <div className="aos-table-wrap aos-doctor-fees-list">
-          <table className="aos-table" aria-label="Consultation fees by doctor">
+        <div className="aos-table-wrap aos-doctor-fees-list aos-fee-list aos-fee-list--doctor">
+          <table className="aos-table aos-table--fee admin-table--stack" aria-label="Consultation fees by doctor">
             <thead>
               <tr>
                 <th>Doctor</th>
                 <th>Department</th>
-                <th>{currencyAmountLabel('Consultation fee')}</th>
-                <th>Action</th>
+                <th className="aos-fee-col-amount">{currencyAmountLabel('Consultation fee')}</th>
+                <th className="aos-fee-col-action">Action</th>
               </tr>
             </thead>
             <tbody>
-              {configuredDoctorFees.length === 0 ? (
+              {doctors.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="aos-table__empty">
-                    No doctor-specific consultation fees configured
+                    No doctors
                   </td>
                 </tr>
               ) : visibleDoctorFees.length === 0 ? (
@@ -1141,16 +1226,29 @@ export default function ManagerOpdPricingSection({
                 </tr>
               ) : (
                 visibleDoctorFees.map((row) => (
-                  <tr key={row.doctor_id}>
-                    <td>
+                  <tr
+                    key={row.doctor_id}
+                    className={row.usesDefault ? undefined : 'aos-table__row--custom'}
+                  >
+                    <td data-label="Doctor">
                       <span className="aos-table__primary">{row.doctor_name}</span>
                     </td>
-                    <td>{row.department_name}</td>
-                    <td>
-                      {getCurrencySymbol()}
-                      {row.fee.toLocaleString()}
+                    <td data-label="Department">
+                      <span>{row.department_name}</span>
                     </td>
-                    <td>
+                    <td data-label="Consultation fee">
+                      <span className="aos-fee-cell">
+                        <span className="aos-fee-amount">{formatFeeAmount(row.fee)}</span>
+                        <span
+                          className={`aos-fee-tag ${
+                            row.usesDefault ? 'aos-fee-tag--default' : 'aos-fee-tag--custom'
+                          }`}
+                        >
+                          {row.usesDefault ? 'Hospital default' : 'Custom'}
+                        </span>
+                      </span>
+                    </td>
+                    <td data-label="Action">
                       <Button
                         type="button"
                         variant="outline"

@@ -8,9 +8,11 @@ export const NOTIFICATION_MODULE = {
   OPD: 'opd',
   RECEPTIONIST: 'receptionist',
   MANAGER: 'manager',
+  IPD: 'ipd',
 };
 
 const PREFIX_MODULES = [
+  ['/ipd', NOTIFICATION_MODULE.IPD],
   ['/nurse', NOTIFICATION_MODULE.NURSE],
   ['/doctor', NOTIFICATION_MODULE.DOCTOR],
   ['/pharmacy', NOTIFICATION_MODULE.PHARMACY],
@@ -48,6 +50,7 @@ const MODULE_PREFIXES = {
   [NOTIFICATION_MODULE.RECEPTIONIST]: ['/receptionist'],
   [NOTIFICATION_MODULE.MANAGER]: ['/manager'],
   [NOTIFICATION_MODULE.OPD]: OPD_PREFIXES,
+  [NOTIFICATION_MODULE.IPD]: ['/ipd'],
 };
 
 export function isDestinationInModule(module, pathname) {

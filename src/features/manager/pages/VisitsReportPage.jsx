@@ -10,10 +10,8 @@ import {
   formatReportDate,
 } from '@/features/manager/utils/reportUtils';
 import { formatCurrency } from '@/shared/utils/formatCurrency';
-import {
-  useAdminDepartmentsQuery,
-  useAdminReportsVisitsQuery,
-} from '@/shared/hooks/queries/useAdminQuery';
+import { useAdminDepartmentsQuery } from '@/shared/hooks/queries/useAdminQuery';
+import { useVisitReportQuery } from '@/shared/hooks/queries/useVisitReport';
 import {
   Button,
   QueryFeedback,
@@ -94,7 +92,7 @@ export default function VisitsReportPage() {
     return params;
   }, [range, departmentId, status, page]);
 
-  const { data, isLoading, isError, error, refetch } = useAdminReportsVisitsQuery(filters);
+  const { data, isLoading, isError, error, refetch } = useVisitReportQuery(filters);
 
   const matchedVisits = useMemo(() => {
     const rows = data?.visits ?? [];

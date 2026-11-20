@@ -32,6 +32,7 @@ import {
   buildPayAndClaimInsuranceProfile,
   insuranceAdmitRouteId,
 } from "@/features/ipd/utils/insuranceAdmitPayload";
+import { useOpdPaymentControls } from "@/features/opd/hooks/useOpdBillingSettingsQuery";
 import { validateRegisterPatient } from "@/features/opd/utils/registerPatientUtils";
 import {
   BED_TYPE_OPTIONS,
@@ -189,6 +190,7 @@ export default function AdmitPatientForm() {
 
   const admitMutation = useCreateIpdAdmissionMutation();
   const registerMutation = useRegisterIpdPatientMutation();
+  const { insuranceProviders } = useOpdPaymentControls();
 
   const set = (key, value) => {
     setValues((prev) => {
@@ -1015,13 +1017,22 @@ export default function AdmitPatientForm() {
                   >
                     Insurance company
                   </label>
-                  <input
+                  <select
                     id="ipd-admit-ins-company"
-                    className="ipd-input"
+                    className="ipd-select"
                     value={values.insuranceCompany}
                     onChange={(e) => set("insuranceCompany", e.target.value)}
-                    placeholder="Company name"
-                  />
+                  >
+                    <option value="">Select…</option>
+                    {insuranceProviders.map((provider) => (
+                      <option
+                        key={provider.id || provider.code || provider.name}
+                        value={provider.name}
+                      >
+                        {provider.name}
+                      </option>
+                    ))}
+                  </select>
                   {show("insuranceCompany") ? (
                     <span className="ipd-field-error">
                       {errors.insuranceCompany}

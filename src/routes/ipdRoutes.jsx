@@ -19,6 +19,7 @@ const IpdInsurancePatientPage = lazy(() => import('@/features/ipd/pages/IpdInsur
 const IpdInsuranceBillingPage = lazy(() => import('@/features/ipd/pages/IpdInsuranceBillingPage'));
 const IpdPricingPage = lazy(() => import('@/features/ipd/pages/IpdPricingPage'));
 const IpdProfilePage = lazy(() => import('@/features/ipd/pages/IpdProfilePage'));
+const IpdNotificationsPage = lazy(() => import('@/features/ipd/pages/IpdNotificationsPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 export const ipdRoutes = [
@@ -150,6 +151,14 @@ export const ipdRoutes = [
             element: (
               <LazyRoute>
                 <IpdPricingPage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: ROUTES.IPD_NOTIFICATIONS,
+            element: (
+              <LazyRoute>
+                <IpdNotificationsPage />
               </LazyRoute>
             ),
           },

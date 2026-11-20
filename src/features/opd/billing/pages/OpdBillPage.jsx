@@ -81,6 +81,7 @@ export default function OpdBillPage() {
     taxRate,
     allowManualPriceEntry,
     billItems: pricingBillItems,
+    consultationEnabled,
   } = useOpdPricingControls();
   const { enabledPaymentModes } = useOpdPaymentControls();
   const isLoading = lp;
@@ -383,8 +384,12 @@ export default function OpdBillPage() {
 
     let price = item.price;
 
-    // Consultation fee is added ONLY when user selects Consultation
+    // Consultation is not added while consultation charges are turned off.
     if (isConsultationLine(item.name)) {
+      if (!consultationEnabled) {
+        setQuickAddSelection('');
+        return;
+      }
       price = resolveConsultFee(pricing, {
         doctorId,
         departmentId: deptId,
@@ -458,10 +463,12 @@ export default function OpdBillPage() {
       return next;
     });
 
-    const resolvedConsult = resolveConsultFee(pricing, {
-      doctorId,
-      departmentId: deptId,
-    });
+    const resolvedConsult = consultationEnabled
+      ? resolveConsultFee(pricing, {
+        doctorId,
+        departmentId: deptId,
+      })
+      : 0;
     let registrationFee = 0;
     let consultationFee = resolvedConsult;
     const extraItems = [];
@@ -472,7 +479,9 @@ export default function OpdBillPage() {
         continue;
       }
       if (isConsultationLine(row.name)) {
-        consultationFee = Number(row.unitPrice) || resolvedConsult;
+        if (consultationEnabled) {
+          consultationFee = Number(row.unitPrice) || resolvedConsult;
+        }
         continue;
       }
       extraItems.push(row);
@@ -654,7 +663,11 @@ export default function OpdBillPage() {
                   onUpdateItem={updateItem}
                   onRemoveItem={removeItem}
                   onAddItem={addItem}
-                  billItems={pricingBillItems}
+                  billItems={
+                    consultationEnabled
+                      ? pricingBillItems
+                      : (pricingBillItems ?? []).filter((item) => !isConsultationLine(item.name))
+                  }
                   allowManualPriceEntry={allowManualPriceEntry}
                 />
                 <OpdBillItemsStepFooter

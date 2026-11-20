@@ -68,6 +68,7 @@ export function useRegisterPatientFlow() {
   const {
     registrationFee,
     gstPercent,
+    consultationEnabled,
     resolveConsultationFee,
     isLoading: pricingLoading,
     isError: pricingError,
@@ -93,9 +94,9 @@ export function useRegisterPatientFlow() {
   );
 
   const billedRegistrationFee = isRevisitPatient ? 0 : Number(registrationFee) || 0;
-  const billedConsultationFee = form.doctorId
-    ? Number(resolveConsultationFee(form.doctorId, form.deptId)) || 0
-    : 0;
+  const billedConsultationFee = !consultationEnabled || !form.doctorId
+    ? 0
+    : Number(resolveConsultationFee(form.doctorId, form.deptId)) || 0;
   const billedGstPercent = Number.isFinite(Number(gstPercent)) ? Number(gstPercent) : 0;
   const [billedTotal, setBilledTotal] = useState(0);
 

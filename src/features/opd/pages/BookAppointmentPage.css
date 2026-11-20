@@ -313,6 +313,11 @@
   gap: 0.35rem;
 }
 
+.book-payment__mode {
+  position: relative;
+  display: inline-flex;
+}
+
 .book-payment__mode-btn {
   padding: 0.4rem 0.75rem;
   border: 1px solid var(--color-border);
@@ -333,6 +338,73 @@
   border-color: var(--color-primary);
   background: var(--color-primary);
   color: #fff;
+}
+
+.book-payment__mode-btn--blocked {
+  border-color: #fecdd3;
+  background: #fff1f2;
+  color: #9f1239;
+  cursor: help;
+}
+
+.book-payment__mode-btn--blocked:hover,
+.book-payment__mode-btn--blocked:focus-visible {
+  border-color: #e11d48;
+  background: #ffe4e6;
+}
+
+.book-payment__mode-tip {
+  position: absolute;
+  z-index: 6;
+  left: 0;
+  top: calc(100% + 0.4rem);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  width: max-content;
+  max-width: 16rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid #fecdd3;
+  border-left: 4px solid #e11d48;
+  background: #fff1f2;
+  color: #9f1239;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+  box-shadow: 0 8px 18px rgba(159, 18, 57, 0.16);
+  pointer-events: none;
+}
+
+.book-payment__mode-tip svg {
+  flex-shrink: 0;
+  margin-top: 0.08rem;
+}
+
+.book-payment__mode:last-child .book-payment__mode-tip {
+  left: auto;
+  right: 0;
+}
+
+.book-payment__error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.7rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid #fecdd3;
+  border-left: 4px solid #e11d48;
+  background: #fff1f2;
+  color: #9f1239;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.book-payment__error svg {
+  flex-shrink: 0;
+  margin-top: 0.08rem;
 }
 
 /* ── Footer ────────────────────────────────────────────── */

@@ -32,7 +32,7 @@ import {
   validateOpdSettingsForm,
 } from '@/features/manager/utils/opdSettingsMapper';
 import { normalizeAdminEdit } from '@/features/manager/constants/managerEditLocks';
-import { Button, Input, Label, QueryFeedback, SearchableSelect } from '@/shared/components/common';
+import { Button, ConfirmDialog, Input, Label, QueryFeedback, SearchableSelect } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
 import { getCurrencySymbol } from '@/shared/utils/formatCurrency';
 import '@/features/manager/styles/managerOpdSettings.css';
@@ -199,6 +199,7 @@ export default function ManagerOpdSettingsPanel({ manageAdminEditLocks = false }
   const [form, setForm] = useState(null);
   const [activeSection, setActiveSection] = useState(SECTION_TABS[0].id);
   const [billItemFilter, setBillItemFilter] = useState('all');
+  const [pendingPaymentMode, setPendingPaymentMode] = useState(null);
 
   // Doctor/department data for per-doctor slots
   const { data: slotDepartments = [] } = useAdminDepartmentsQuery({ is_active: true });
@@ -346,6 +347,23 @@ export default function ManagerOpdSettingsPanel({ manageAdminEditLocks = false }
     await saveSettings(next, { silentSuccess: true });
   };
 
+  const requestPaymentModeToggle = (index, enabled) => {
+    const mode = form?.payment_modes?.modes?.[index];
+    if (!mode || !canEdit('payment_modes') || updateMutation.isPending) return;
+    setPendingPaymentMode({
+      index,
+      enabled,
+      label: mode.label || mode.code,
+    });
+  };
+
+  const confirmPaymentModeToggle = async () => {
+    if (!pendingPaymentMode) return;
+    const { index, enabled } = pendingPaymentMode;
+    setPendingPaymentMode(null);
+    await autoSavePaymentModeToggle(index, enabled);
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     await saveSettings();
@@ -359,7 +377,6 @@ export default function ManagerOpdSettingsPanel({ manageAdminEditLocks = false }
       !canEdit('doctor_slot_overrides')) ||
     (activeSection === 'payment' &&
       !canEdit('payment_modes') &&
-      !canEdit('bank_upi_details') &&
       !canEdit('insurance_providers'));
 
   return (
@@ -972,72 +989,9 @@ export default function ManagerOpdSettingsPanel({ manageAdminEditLocks = false }
                         hint={`Code: ${mode.code}`}
                         checked={mode.enabled}
                         disabled={updateMutation.isPending || !canEdit('payment_modes')}
-                        onChange={(v) => void autoSavePaymentModeToggle(index, v)}
+                        onChange={(v) => requestPaymentModeToggle(index, v)}
                       />
                     ))}
-                  </div>
-                </SectionCard>
-
-                <SectionCard
-                  title="Bank / UPI details"
-                  icon={CreditCard}
-                  locked={!canEdit('bank_upi_details')}
-                  action={lockToggle('bank_upi_details')}
-                >
-                  <div className="aos-grid aos-grid--2">
-                    <Field id="account_name" label="Account name">
-                      <Input
-                        id="account_name"
-                        value={form.payment_modes.bank_details.account_name}
-                        disabled={!canEdit('bank_upi_details')}
-                        onChange={(e) =>
-                          patch('payment_modes.bank_details.account_name', e.target.value)
-                        }
-                      />
-                    </Field>
-                    <Field id="bank_name" label="Bank name">
-                      <Input
-                        id="bank_name"
-                        value={form.payment_modes.bank_details.bank_name}
-                        disabled={!canEdit('bank_upi_details')}
-                        onChange={(e) =>
-                          patch('payment_modes.bank_details.bank_name', e.target.value)
-                        }
-                      />
-                    </Field>
-                    <Field id="account_number" label="Account number">
-                      <Input
-                        id="account_number"
-                        value={form.payment_modes.bank_details.account_number}
-                        disabled={!canEdit('bank_upi_details')}
-                        onChange={(e) =>
-                          patch(
-                            'payment_modes.bank_details.account_number',
-                            e.target.value,
-                          )
-                        }
-                      />
-                    </Field>
-                    <Field id="ifsc" label="IFSC">
-                      <Input
-                        id="ifsc"
-                        value={form.payment_modes.bank_details.ifsc}
-                        disabled={!canEdit('bank_upi_details')}
-                        onChange={(e) =>
-                          patch('payment_modes.bank_details.ifsc', e.target.value)
-                        }
-                      />
-                    </Field>
-                    <Field id="upi_id" label="UPI ID" hint="Shown on payment receipts when set.">
-                      <Input
-                        id="upi_id"
-                        value={form.payment_modes.bank_details.upi_id}
-                        disabled={!canEdit('bank_upi_details')}
-                        onChange={(e) =>
-                          patch('payment_modes.bank_details.upi_id', e.target.value)
-                        }
-                      />
-                    </Field>
                   </div>
                 </SectionCard>
 
@@ -1148,6 +1102,24 @@ export default function ManagerOpdSettingsPanel({ manageAdminEditLocks = false }
           </div>
         ) : null}
       </QueryFeedback>
+      <ConfirmDialog
+        isOpen={Boolean(pendingPaymentMode)}
+        title={
+          pendingPaymentMode?.enabled
+            ? `Turn on ${pendingPaymentMode.label}?`
+            : `Turn off ${pendingPaymentMode?.label}?`
+        }
+        message={
+          pendingPaymentMode?.enabled
+            ? `Are you sure you want to turn on ${pendingPaymentMode.label}? Staff will be able to take this payment.`
+            : `Are you sure you want to turn off ${pendingPaymentMode?.label}? Staff will not be able to take this payment.`
+        }
+        confirmLabel={pendingPaymentMode?.enabled ? 'Turn on' : 'Turn off'}
+        onConfirm={() => {
+          void confirmPaymentModeToggle();
+        }}
+        onCancel={() => setPendingPaymentMode(null)}
+      />
     </div>
   );
 }

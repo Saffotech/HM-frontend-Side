@@ -34,10 +34,11 @@ import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { useFormValidation } from '@/shared/hooks/useFormValidation';
 
 import { toast } from '@/shared/utils/toast';
+import { userFacingMessage } from '@/shared/errors/errorClassification';
 
 import { validatePaymentTransactionRef, requiresTransactionReference } from '@/shared/utils/validators';
 import { APPT_PAY_LATER_NOTE } from '@/shared/utils/appointmentPaymentUtils';
-import { useOpdPricingControls } from '@/features/opd/hooks/useOpdBillingSettingsQuery';
+import { useOpdPaymentControls, useOpdPricingControls } from '@/features/opd/hooks/useOpdBillingSettingsQuery';
 import {
   BOOK_APPOINTMENT_INITIAL_VALUES,
   validateAppointment,
@@ -49,12 +50,34 @@ import {
 } from '@/features/opd/utils/bookAppointmentPatientUtils';
 import './BookAppointmentPage.css';
 
+function disabledPaymentModeMessage(mode) {
+  const key = String(mode || '').trim().toLowerCase();
+  const restriction = key === 'upi'
+    ? 'UPI Payment Restricted by administration.'
+    : key === 'card'
+      ? 'Card payment disabled by admin.'
+      : key === 'cash'
+        ? 'Cash payment disabled by admin.'
+        : `${mode} payment disabled by admin.`;
+  return `${restriction} Select Pay later to book the appointment.`;
+}
+
+function isPaymentModeRestriction(message) {
+  return /payment disabled|payment restricted/i.test(String(message || ''));
+}
+
 export default function BookAppointmentPage() {
   const [patientSearch, setPatientSearch] = useState('');
   const [payLater, setPayLater] = useState(false);
   const [paymentMode, setPaymentMode] = useState('Cash');
+  const [paymentModeError, setPaymentModeError] = useState('');
+  const [hoveredPaymentMode, setHoveredPaymentMode] = useState('');
   const [amountReceived, setAmountReceived] = useState('');
   const [paymentRef, setPaymentRef] = useState('');
+  const {
+    disabledPaymentModes,
+    isSuccess: paymentSettingsReady,
+  } = useOpdPaymentControls();
   const debouncedPatientSearch = useDebouncedValue(patientSearch.trim(), 300);
 
   const { data: patientsData, isLoading, isError, error } = usePatientsQuery({
@@ -213,6 +236,16 @@ export default function BookAppointmentPage() {
     const tax = Math.round(subtotal * taxRate * 100) / 100;
     const grandTotal = subtotal + tax;
 
+    if (!payLater && paymentSettingsReady && !PAYMENT_MODES.some((mode) => !paymentModeIsDisabled(mode))) {
+      setPaymentModeError('Select Pay later to book the appointment.');
+      return;
+    }
+
+    if (!payLater && paymentModeIsDisabled(paymentMode)) {
+      setPaymentModeError(disabledPaymentModeMessage(paymentMode));
+      return;
+    }
+
     if (!payLater) {
       const paid = Math.min(Number(amountReceived) || 0, grandTotal);
       const refError = validatePaymentTransactionRef(paymentMode, paymentRef, {
@@ -281,10 +314,25 @@ export default function BookAppointmentPage() {
           : `Booked and paid for ${selectedPatient.name}`,
       );
       navigate(ROUTES.APPOINTMENTS);
-    } catch {
+    } catch (err) {
+      const message = userFacingMessage(err, { mutation: true });
+      if (isPaymentModeRestriction(message)) {
+        setPaymentModeError(message);
+      }
       /* mutationOnError handles toast */
     }
   });
+
+  const paymentModeIsDisabled = (mode) =>
+    paymentSettingsReady && (disabledPaymentModes ?? []).includes(mode);
+
+  useEffect(() => {
+    if (!paymentSettingsReady || payLater) return;
+    if (!paymentModeIsDisabled(paymentMode)) return;
+    const next = PAYMENT_MODES.find((mode) => !disabledPaymentModes.includes(mode)) || '';
+    setPaymentMode(next);
+    if (!next || !requiresTransactionReference(next)) setPaymentRef('');
+  }, [disabledPaymentModes, payLater, paymentMode, paymentSettingsReady]);
 
   const fee = selectedDoctor ? billedConsultationFee + billedRegistrationFee : 0;
 
@@ -532,7 +580,10 @@ export default function BookAppointmentPage() {
                       <input
                         type="checkbox"
                         checked={payLater}
-                        onChange={(e) => setPayLater(e.target.checked)}
+                        onChange={(e) => {
+                          setPayLater(e.target.checked);
+                          if (e.target.checked) setPaymentModeError('');
+                        }}
                       />
                       Pay later
                     </label>
@@ -541,20 +592,64 @@ export default function BookAppointmentPage() {
                       <>
                         <Label>Payment mode</Label>
                         <div className="book-payment__modes">
-                          {PAYMENT_MODES.map((m) => (
-                            <button
-                              key={m}
-                              type="button"
-                              className={`book-payment__mode-btn ${paymentMode === m ? 'book-payment__mode-btn--active' : ''}`}
-                              onClick={() => {
-                                setPaymentMode(m);
-                                if (!requiresTransactionReference(m)) setPaymentRef('');
-                              }}
-                            >
-                              {m}
-                            </button>
-                          ))}
+                          {PAYMENT_MODES.map((m) => {
+                            const blocked = paymentModeIsDisabled(m);
+                            const showHoverError = blocked && hoveredPaymentMode === m;
+                            return (
+                              <span
+                                key={m}
+                                className="book-payment__mode"
+                                onMouseEnter={() => {
+                                  if (blocked) setHoveredPaymentMode(m);
+                                }}
+                                onMouseLeave={() => {
+                                  setHoveredPaymentMode((current) => (current === m ? '' : current));
+                                }}
+                              >
+                                <button
+                                  type="button"
+                                  className={`book-payment__mode-btn${
+                                    !blocked && paymentMode === m ? ' book-payment__mode-btn--active' : ''
+                                  }${blocked ? ' book-payment__mode-btn--blocked' : ''}`}
+                                  aria-describedby={showHoverError ? `payment-mode-tip-${m}` : undefined}
+                                  onFocus={() => {
+                                    if (blocked) setHoveredPaymentMode(m);
+                                  }}
+                                  onBlur={() => {
+                                    setHoveredPaymentMode((current) => (current === m ? '' : current));
+                                  }}
+                                  onClick={() => {
+                                    if (blocked) {
+                                      setPaymentModeError(disabledPaymentModeMessage(m));
+                                      return;
+                                    }
+                                    setPaymentMode(m);
+                                    if (!requiresTransactionReference(m)) setPaymentRef('');
+                                    setPaymentModeError('');
+                                  }}
+                                >
+                                  {m}
+                                </button>
+                                {showHoverError ? (
+                                  <span
+                                    className="book-payment__mode-tip"
+                                    id={`payment-mode-tip-${m}`}
+                                    role="tooltip"
+                                  >
+                                    <AlertCircle size={14} aria-hidden />
+                                    <span>{disabledPaymentModeMessage(m)}</span>
+                                  </span>
+                                ) : null}
+                              </span>
+                            );
+                          })}
                         </div>
+                        {paymentModeError && hoveredPaymentMode === '' ? (
+                          <p className="book-payment__error" role="alert">
+                            <AlertCircle size={16} aria-hidden />
+                            <span>{paymentModeError}</span>
+                          </p>
+                        ) : null}
                         <Input
                           label={currencyAmountLabel('Amount received')}
                           type="number"

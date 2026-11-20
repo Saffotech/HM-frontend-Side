@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getOpdBillingSettings } from '@/features/opd/api/opdSettings';
 import { mapOpdSettingsApiResponse } from '@/shared/api/services/adminOpdSettings';
@@ -37,8 +38,15 @@ export function useOpdDeleteControls() {
   };
 }
 
+/** Missing flag means consultation charges stay on. */
+export function isConsultationEnabled(pricing) {
+  return pricing?.consultation_enabled !== false;
+}
+
 /** Same priority as backend: doctor → department → hospital default. */
 export function resolveConsultationFee(pricing, { doctorId, departmentId } = {}) {
+  if (!isConsultationEnabled(pricing)) return 0;
+
   const doctorFees = pricing?.doctor_consultation_fees ?? [];
   const deptFees = pricing?.department_consultation_fees ?? [];
   const hospitalDefault = Number(pricing?.consultation_fee ?? 500);
@@ -64,23 +72,30 @@ export function resolveConsultationFee(pricing, { doctorId, departmentId } = {})
   return Number.isFinite(hospitalDefault) ? hospitalDefault : 500;
 }
 
+function paymentModeLabel(mode) {
+  const code = String(mode?.code || '').toLowerCase();
+  if (code === 'upi') return 'UPI';
+  if (code) return code.charAt(0).toUpperCase() + code.slice(1);
+  return String(mode?.label || '').trim();
+}
+
 export function useOpdPaymentControls() {
   const query = useOpdBillingSettingsQuery();
   const pm = query.data?.payment_modes;
   const modes = pm?.modes ?? [];
 
-  const enabledModes = modes
-    .filter((m) => m.enabled !== false)
-    .filter((m) => (m.code || '').toLowerCase() !== 'insurance')
-    .map((m) => {
-      const code = (m.code || '').toLowerCase();
-      if (code === 'upi') return 'UPI';
-      return code.charAt(0).toUpperCase() + code.slice(1);
-    });
+  const { enabledModes, disabledModes } = useMemo(() => {
+    const named = modes.filter((mode) => String(mode?.code || '').toLowerCase() !== 'insurance');
+    return {
+      enabledModes: named.filter((mode) => mode.enabled !== false).map(paymentModeLabel),
+      disabledModes: named.filter((mode) => mode.enabled === false).map(paymentModeLabel),
+    };
+  }, [modes]);
 
   return {
     ...query,
     enabledPaymentModes: enabledModes.length ? enabledModes : ['Cash', 'Card', 'UPI'],
+    disabledPaymentModes: disabledModes,
     bankDetails: pm?.bank_details ?? {},
     insuranceProviders: (pm?.insurance_providers ?? []).filter((p) => p.is_active),
   };
@@ -92,7 +107,10 @@ export function useOpdPricingControls() {
 
   const gstPercent = Number(pricing?.gst_percent ?? TAX_RATE * 100);
   const registrationFee = Number(pricing?.registration_fee ?? 200);
-  const consultationFeeDefault = Number(pricing?.consultation_fee ?? 500);
+  const consultationEnabled = isConsultationEnabled(pricing);
+  const consultationFeeDefault = consultationEnabled
+    ? Number(pricing?.consultation_fee ?? 500)
+    : 0;
   const allowManualPriceEntry = pricing?.allow_manual_price_entry !== false;
 
   const billItems = (() => {
@@ -114,9 +132,12 @@ export function useOpdPricingControls() {
     gstPercent: Number.isFinite(gstPercent) ? gstPercent : 5,
     taxRate: (Number.isFinite(gstPercent) ? gstPercent : 5) / 100,
     registrationFee: Number.isFinite(registrationFee) ? registrationFee : 200,
-    consultationFeeDefault: Number.isFinite(consultationFeeDefault)
+    consultationEnabled,
+    consultationFeeDefault: consultationEnabled && Number.isFinite(consultationFeeDefault)
       ? consultationFeeDefault
-      : 500,
+      : consultationEnabled
+        ? 500
+        : 0,
     allowManualPriceEntry,
     billItems,
     resolveConsultationFee: (doctorId, departmentId) =>
