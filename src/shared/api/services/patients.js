@@ -136,6 +136,10 @@ export async function getPatientProfileById(patientDbId, token) {
   const patient = await enrichPatientAadhaar(apiToUiPatient(raw.patient), token);
   return {
     patient,
+    hasActiveIpdAdmission:
+      raw.has_active_ipd_admission == null
+        ? null
+        : raw.has_active_ipd_admission === true,
     summary: {
       totalVisits: raw.summary?.total_visits ?? 0,
       totalBilled: raw.summary?.total_billed ?? 0,

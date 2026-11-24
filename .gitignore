@@ -90,3 +90,6 @@ secrets.json
 
 # Local scratch at repo root
 /_*.js
+
+# Documentation — do not push to GitHub
+/docs/

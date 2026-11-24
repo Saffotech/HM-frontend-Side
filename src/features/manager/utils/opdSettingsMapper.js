@@ -61,6 +61,7 @@ export function getDefaultOpdSettings() {
       gst_percent: 5,
       registration_fee: 200,
       consultation_fee: 500,
+      consultation_enabled: true,
       allow_manual_price_entry: true,
       bed_tariff: {
         general_ward_charge: 500,
@@ -255,6 +256,7 @@ export function opdSettingsApiToForm(api = {}) {
         pricing.consultation_fee,
         defaults.pricing.consultation_fee,
       ),
+      consultation_enabled: asBool(pricing.consultation_enabled, true),
       allow_manual_price_entry: asBool(
         pricing.allow_manual_price_entry,
         defaults.pricing.allow_manual_price_entry,
@@ -365,6 +367,7 @@ export function opdSettingsFormToApi(form = {}) {
       gst_percent: asNumber(form.pricing?.gst_percent, 0),
       registration_fee: asNumber(form.pricing?.registration_fee, 0),
       consultation_fee: asNumber(form.pricing?.consultation_fee, 0),
+      consultation_enabled: asBool(form.pricing?.consultation_enabled, true),
       allow_manual_price_entry: asBool(form.pricing?.allow_manual_price_entry, false),
       bed_tariff: {
         general_ward_charge: asNumber(form.pricing?.bed_tariff?.general_ward_charge, 0),

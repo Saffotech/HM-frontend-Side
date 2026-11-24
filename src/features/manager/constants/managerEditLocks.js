@@ -44,6 +44,15 @@ export const ADMIN_EDIT_DEFAULTS = Object.freeze({
 
 export const ADMIN_EDIT_KEYS = Object.freeze(Object.keys(ADMIN_EDIT_DEFAULTS));
 
+/** Pricing & tax cards controlled together by the section switch. */
+export const PRICING_EDIT_KEYS = Object.freeze([
+  'global_fees_tax',
+  'bed_tariff',
+  'consultation_fee_by_department',
+  'consultation_fee_by_doctor',
+  'bill_item_price_list',
+]);
+
 export function normalizeAdminEdit(raw = {}) {
   const next = { ...ADMIN_EDIT_DEFAULTS };
   if (!raw || typeof raw !== 'object') return next;

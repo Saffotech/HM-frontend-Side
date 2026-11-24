@@ -33,6 +33,9 @@ const PATHS = {
   MANAGER_PROFILE: '/manager/profile',
   MANAGER_NURSE_WORKFORCE_ROSTER: '/manager/nurse-workforce/roster',
   MANAGER_REPORTS_VISITS: '/manager/reports/visits',
+  IPD_PATIENT_DETAIL: '/ipd/patients/:admissionId',
+  IPD_BILL_VIEW: '/ipd/billing/bills/:billId',
+  IPD_PROFILE: '/ipd/profile',
 };
 
 export function positiveReferenceId(value) {
@@ -406,6 +409,35 @@ function resolveManager(notification) {
   return stay('This notification has no related screen in the Manager module.');
 }
 
+function resolveIpd(notification) {
+  const type = notificationType(notification);
+  const ref = referenceType(notification);
+  const id = positiveReferenceId(notification?.reference_id);
+
+  if (type === 'IPD_ADMITTED' || ref === 'ADMISSION') {
+    if (!id || (ref && ref !== 'ADMISSION')) {
+      return stay('This admission notification has no admission id.');
+    }
+    return go(
+      NOTIFICATION_MODULE.IPD,
+      fill(PATHS.IPD_PATIENT_DETAIL, { admissionId: id }),
+    );
+  }
+
+  if (ref === 'BILL' || type === 'PAYMENT_PENDING') {
+    if (!id || (ref && ref !== 'BILL')) {
+      return stay('This billing notification has no bill id.');
+    }
+    return go(NOTIFICATION_MODULE.IPD, fill(PATHS.IPD_BILL_VIEW, { billId: id }));
+  }
+
+  if (ref === 'USER' || ref === 'SCHEDULE' || type === 'ADMIN_UPDATE' || type === 'SHIFT_UPDATED') {
+    return go(NOTIFICATION_MODULE.IPD, PATHS.IPD_PROFILE);
+  }
+
+  return stay('This notification has no related screen in IPD.');
+}
+
 const RESOLVERS = {
   [NOTIFICATION_MODULE.NURSE]: resolveNurse,
   [NOTIFICATION_MODULE.DOCTOR]: resolveDoctor,
@@ -414,6 +446,7 @@ const RESOLVERS = {
   [NOTIFICATION_MODULE.OPD]: resolveOpd,
   [NOTIFICATION_MODULE.RECEPTIONIST]: resolveReceptionist,
   [NOTIFICATION_MODULE.MANAGER]: resolveManager,
+  [NOTIFICATION_MODULE.IPD]: resolveIpd,
 };
 
 export function resolveNotificationDestination(notification, module) {

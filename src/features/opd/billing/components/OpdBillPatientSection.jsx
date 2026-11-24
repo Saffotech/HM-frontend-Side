@@ -111,8 +111,8 @@ export default function OpdBillPatientSection({
               <div className="opd-alert opd-alert--warn" role="status">
                 <AlertTriangle size={18} aria-hidden />
                 <span>
-                  No scheduled appointment for this patient. Select department and doctor below to
-                  generate a bill.
+                  No scheduled appointment for this patient. An OPD appointment or visit is required
+                  before generating a bill.
                 </span>
               </div>
               <div className="form-grid opd-bill__service-fields">

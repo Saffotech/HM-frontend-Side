@@ -81,6 +81,7 @@ export default function OpdBillPage() {
     taxRate,
     allowManualPriceEntry,
     billItems: pricingBillItems,
+    consultationEnabled,
   } = useOpdPricingControls();
   const { enabledPaymentModes } = useOpdPaymentControls();
   const isLoading = lp;
@@ -117,7 +118,8 @@ export default function OpdBillPage() {
     [patients, patientId, patientDetail],
   );
 
-  const { data: patientProfile } = usePatientProfileQuery(selectedPatient?.dbId);
+  const patientProfileQuery = usePatientProfileQuery(selectedPatient?.dbId);
+  const patientProfile = patientProfileQuery.data;
   const profilePatient = patientProfile?.patient;
   const displayPatient = useMemo(() => {
     if (!selectedPatient) return null;
@@ -140,6 +142,28 @@ export default function OpdBillPage() {
       enabled: Boolean(selectedPatient?.dbId || selectedPatient?.id),
     });
   const patientAppointments = asAppointmentList(patientApptsData);
+  const appointmentDbId = Number(billAppointment?.dbId);
+  const hasBillAppointment =
+    Number.isSafeInteger(appointmentDbId) && appointmentDbId > 0;
+  const admissionStatusReady =
+    patientProfileQuery.isSuccess &&
+    !patientProfileQuery.isFetching &&
+    typeof patientProfile?.hasActiveIpdAdmission === 'boolean';
+  const hasActiveIpdAdmission =
+    patientProfile?.hasActiveIpdAdmission === true;
+  const admissionStatusUnavailable = Boolean(selectedPatient) && (
+    !selectedPatient.dbId ||
+    patientProfileQuery.isError ||
+    (patientProfileQuery.isSuccess &&
+      typeof patientProfile?.hasActiveIpdAdmission !== 'boolean')
+  );
+  const admissionStatusLoading =
+    Boolean(selectedPatient?.dbId) &&
+    patientProfileQuery.isFetching &&
+    !patientProfileQuery.isError &&
+    !admissionStatusReady;
+  const billGenerationBlocked =
+    !hasBillAppointment || !admissionStatusReady || hasActiveIpdAdmission;
 
   // Keep lightweight today bills fetch; profile covers outstanding + recent history.
   const { data: todayBillsData } = useBillsQuery({
@@ -360,8 +384,12 @@ export default function OpdBillPage() {
 
     let price = item.price;
 
-    // Consultation fee is added ONLY when user selects Consultation
+    // Consultation is not added while consultation charges are turned off.
     if (isConsultationLine(item.name)) {
+      if (!consultationEnabled) {
+        setQuickAddSelection('');
+        return;
+      }
       price = resolveConsultFee(pricing, {
         doctorId,
         departmentId: deptId,
@@ -382,6 +410,18 @@ export default function OpdBillPage() {
 
     if (!patientApptsFetched) {
       toast.error('Loading appointment details. Please wait.');
+      return false;
+    }
+    if (!hasBillAppointment) {
+      toast.error('An OPD appointment or visit is required before generating an OPD bill.');
+      return false;
+    }
+    if (!admissionStatusReady) {
+      toast.error("Could not verify the patient's IPD admission status. Please retry patient details.");
+      return false;
+    }
+    if (hasActiveIpdAdmission) {
+      toast.error('OPD billing is not allowed because this patient currently has an active IPD admission.');
       return false;
     }
     if (!deptId || !doctorId) {
@@ -423,10 +463,12 @@ export default function OpdBillPage() {
       return next;
     });
 
-    const resolvedConsult = resolveConsultFee(pricing, {
-      doctorId,
-      departmentId: deptId,
-    });
+    const resolvedConsult = consultationEnabled
+      ? resolveConsultFee(pricing, {
+        doctorId,
+        departmentId: deptId,
+      })
+      : 0;
     let registrationFee = 0;
     let consultationFee = resolvedConsult;
     const extraItems = [];
@@ -437,7 +479,9 @@ export default function OpdBillPage() {
         continue;
       }
       if (isConsultationLine(row.name)) {
-        consultationFee = Number(row.unitPrice) || resolvedConsult;
+        if (consultationEnabled) {
+          consultationFee = Number(row.unitPrice) || resolvedConsult;
+        }
         continue;
       }
       extraItems.push(row);
@@ -509,6 +553,11 @@ export default function OpdBillPage() {
       setConfirmOpen(false);
       return;
     }
+    if (!validateItemsStep()) {
+      setConfirmOpen(false);
+      pendingBillRef.current = null;
+      return;
+    }
     submitBill(pending.newBill, pending.newBillId);
   };
 
@@ -517,6 +566,7 @@ export default function OpdBillPage() {
     !patientId ||
     !serviceReady ||
     (Boolean(selectedPatient) && !patientApptsFetched) ||
+    billGenerationBlocked ||
     !grandTotal ||
     grandTotal <= 0;
 
@@ -574,6 +624,34 @@ export default function OpdBillPage() {
               onOpenBill={handleOpenBill}
               onOpenOutstanding={handleOpenOutstanding}
             />
+            {selectedPatient && patientApptsFetched && !hasBillAppointment ? (
+              <div className="opd-alert opd-alert--warn" role="alert">
+                An OPD appointment or visit is required before generating an OPD bill.
+              </div>
+            ) : null}
+            {hasActiveIpdAdmission ? (
+              <div className="opd-alert opd-alert--warn" role="alert">
+                OPD billing is not allowed because this patient currently has an active IPD admission.
+              </div>
+            ) : null}
+            {admissionStatusLoading ? (
+              <div className="opd-alert opd-alert--warn" role="status">
+                Checking the patient&apos;s IPD admission status. Bill generation is disabled until this check completes.
+              </div>
+            ) : null}
+            {admissionStatusUnavailable ? (
+              <div className="opd-alert opd-alert--warn" role="alert">
+                Could not verify the patient&apos;s IPD admission status. Retry patient details before generating a bill.
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => patientProfileQuery.refetch()}
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : null}
 
             {billStep === 'items' ? (
               <>
@@ -585,7 +663,11 @@ export default function OpdBillPage() {
                   onUpdateItem={updateItem}
                   onRemoveItem={removeItem}
                   onAddItem={addItem}
-                  billItems={pricingBillItems}
+                  billItems={
+                    consultationEnabled
+                      ? pricingBillItems
+                      : (pricingBillItems ?? []).filter((item) => !isConsultationLine(item.name))
+                  }
                   allowManualPriceEntry={allowManualPriceEntry}
                 />
                 <OpdBillItemsStepFooter
@@ -625,6 +707,7 @@ export default function OpdBillPage() {
                   serviceReady={serviceReady}
                   selectedPatient={selectedPatient}
                   patientApptsFetched={patientApptsFetched}
+                  billGenerationBlocked={billGenerationBlocked}
                   enabledPaymentModes={enabledPaymentModes}
                   onBack={() => setBillStep('items')}
                 />
@@ -641,6 +724,7 @@ export default function OpdBillPage() {
           }}
           onConfirm={handleConfirmGenerate}
           confirming={createBill.isPending}
+          billGenerationBlocked={billGenerationBlocked}
           summary={confirmSummary}
         />
 

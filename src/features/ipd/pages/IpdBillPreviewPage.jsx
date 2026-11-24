@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Printer } from 'lucide-react';
+import { AlertCircle, Printer } from 'lucide-react';
 import { Button, QueryFeedback } from '@/shared/components/common';
 import { IPD_COLLECT_PAYMENT_MODES, ROUTES } from '@/shared/constants';
 import { toast } from '@/shared/utils/toast';
@@ -25,6 +25,7 @@ import IpdStatusBadge from '@/features/ipd/components/IpdStatusBadge';
 import { useIpdPermissionSet } from '@/features/ipd/hooks/useIpdPermission';
 import IpdPermissionButton from '@/features/ipd/components/IpdPermissionButton';
 import useIpdBackNavigation from '@/features/ipd/hooks/useIpdBackNavigation';
+import { useIpdDisabledPaymentModesQuery } from '@/features/ipd/hooks/useIpdBedRateLookup';
 import {
   useGenerateIpdBillMutation,
   useIpdAdmissionDetailQuery,
@@ -78,6 +79,18 @@ function dailyChargesMatch(prev, next) {
       row.charge_date === n.charge_date
     );
   });
+}
+
+function disabledPaymentModeMessage(mode) {
+  const key = String(mode || '').trim().toLowerCase();
+  if (key === 'upi') return 'UPI Payment Restricted by administration.';
+  if (key === 'card') return 'Card payment disabled by admin.';
+  if (key === 'cash') return 'Cash payment disabled by admin.';
+  return `${mode} payment disabled by admin.`;
+}
+
+function isPaymentModeRestriction(message) {
+  return /payment disabled|payment restricted/i.test(String(message || ''));
 }
 
 export default function IpdBillPreviewPage() {
@@ -150,7 +163,9 @@ export default function IpdBillPreviewPage() {
   const [payMode, setPayMode] = useState('Cash');
   const [payAmount, setPayAmount] = useState('');
   const [paymentRef, setPaymentRef] = useState('');
+  const [paymentSubmitError, setPaymentSubmitError] = useState('');
   const [lastBillResult, setLastBillResult] = useState(null);
+  const { data: disabledPaymentModes = [] } = useIpdDisabledPaymentModesQuery();
 
 
   const paymentBusy = generateMutation.isPending || payMutation.isPending;
@@ -235,6 +250,10 @@ export default function IpdBillPreviewPage() {
     Number.isFinite(parsedPayAmount)
     && parsedPayAmount > 0
     && collectAmountCap > 0.01;
+  const paymentModeBlocked = disabledPaymentModes.includes(payMode);
+  const paymentModeError = paymentModeBlocked
+    ? disabledPaymentModeMessage(payMode)
+    : paymentSubmitError;
   const collectDisabled =
     paymentBusy
     || !hasValidPayAmount
@@ -334,6 +353,10 @@ export default function IpdBillPreviewPage() {
 
   const onCollectPayment = async () => {
     if (!admissionIsActive) return;
+    if (disabledPaymentModes.includes(payMode)) {
+      setPaymentSubmitError(disabledPaymentModeMessage(payMode));
+      return;
+    }
     const amount = Math.floor(Number(payAmount));
 
 
@@ -406,7 +429,12 @@ export default function IpdBillPreviewPage() {
       // Refresh data in the background; this is not a browser reload.
       await refreshBilling();
     } catch (err) {
-      toast.error(err?.message || 'Payment failed');
+      const message = err?.message || 'Payment failed';
+      if (isPaymentModeRestriction(message)) {
+        setPaymentSubmitError(message);
+        return;
+      }
+      toast.error(message);
     }
   };
 
@@ -538,6 +566,7 @@ export default function IpdBillPreviewPage() {
                             value={payMode}
                             onChange={(e) => {
                               setPayMode(e.target.value);
+                              setPaymentSubmitError('');
                               if (!requiresTransactionReference(e.target.value)) {
                                 setPaymentRef('');
                               }
@@ -587,6 +616,12 @@ export default function IpdBillPreviewPage() {
                               placeholder="e.g. UPI ref or card auth code"
                             />
                           </div>
+                        ) : null}
+                        {paymentModeError ? (
+                          <p className="ipd-pay-panel__error" role="alert">
+                            <AlertCircle size={15} aria-hidden />
+                            <span>{paymentModeError}</span>
+                          </p>
                         ) : null}
                         {!admissionIsActive ? (
                           <p className="ipd-page__subtitle">

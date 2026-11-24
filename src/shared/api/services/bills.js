@@ -179,7 +179,7 @@ export async function collectBillPayment(visitId, payment, token) {
 }
 
 export async function fetchBillPreview(
-  { registrationFee, consultationFee, gstPercent, registerBody },
+  { registrationFee, consultationFee, gstPercent, doctorId, departmentId, registerBody },
   token
 ) {
   try {
@@ -190,6 +190,8 @@ export async function fetchBillPreview(
             registration_fee: registrationFee,
             consultation_fee: consultationFee,
             gst_percent: gstPercent,
+            doctor_id: doctorId,
+            department_id: departmentId,
           },
           token
         );

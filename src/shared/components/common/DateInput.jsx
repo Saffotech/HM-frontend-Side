@@ -339,6 +339,7 @@ const DateInput = forwardRef(function DateInput({
   placeholder = 'DD/MM/YYYY',
   disabled = false,
   error,
+  required = false,
   className = '',
   min,
   max,
@@ -695,6 +696,8 @@ const DateInput = forwardRef(function DateInput({
           onKeyDown={handleTextKeyDown}
           placeholder={resolvedPlaceholder}
           disabled={disabled}
+          required={required}
+          aria-required={required || undefined}
           autoComplete="off"
           inputMode="numeric"
           maxLength={withTime ? 16 : 10}

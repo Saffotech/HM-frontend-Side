@@ -164,6 +164,7 @@ export const ROUTES = {
   IPD_DISCHARGE_ADMISSION: '/ipd/discharge/:admissionId',
   IPD_PRICING: '/ipd/pricing',
   IPD_PROFILE: '/ipd/profile',
+  IPD_NOTIFICATIONS: '/ipd/notifications',
   ADMIN_LOGIN: '/admin/login',
   ADMIN_DASHBOARD: '/admin/dashboard',
   ADMIN_STAFF: '/admin/staff',

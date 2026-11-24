@@ -13,7 +13,7 @@ export function formatAppointmentDisplay(dateStr) {
   });
 }
 
-export function validateRegisterPatient(values, { isRevisit = false } = {}) {
+export function validateRegisterPatient(values) {
   const errors = {};
   if (!values.name?.trim()) errors.name = 'Name is required';
 
@@ -21,12 +21,13 @@ export function validateRegisterPatient(values, { isRevisit = false } = {}) {
   if (!/^\d{10}$/.test(phone)) errors.phone = 'Phone must be 10 digits';
 
   if (!values.dob) errors.dob = 'Date of birth is required';
+  if (!values.gender) errors.gender = 'Gender is required';
 
-  if (!isRevisit) {
-    const aadhaarDigits = (values.aadhaar || '').replace(/\D/g, '');
-    if (aadhaarDigits.length !== 12) {
-      errors.aadhaar = 'Aadhaar must be 12 digits (XXXX-XXXX-XXXX)';
-    }
+  const aadhaarDigits = (values.aadhaar || '').replace(/\D/g, '');
+  if (!aadhaarDigits) {
+    errors.aadhaar = 'Aadhaar is required';
+  } else if (aadhaarDigits.length !== 12) {
+    errors.aadhaar = 'Aadhaar must be 12 digits (XXXX-XXXX-XXXX)';
   }
 
   return errors;

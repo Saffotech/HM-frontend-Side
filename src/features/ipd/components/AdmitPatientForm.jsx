@@ -32,6 +32,7 @@ import {
   buildPayAndClaimInsuranceProfile,
   insuranceAdmitRouteId,
 } from "@/features/ipd/utils/insuranceAdmitPayload";
+import { useOpdPaymentControls } from "@/features/opd/hooks/useOpdBillingSettingsQuery";
 import { validateRegisterPatient } from "@/features/opd/utils/registerPatientUtils";
 import {
   BED_TYPE_OPTIONS,
@@ -189,6 +190,7 @@ export default function AdmitPatientForm() {
 
   const admitMutation = useCreateIpdAdmissionMutation();
   const registerMutation = useRegisterIpdPatientMutation();
+  const { insuranceProviders } = useOpdPaymentControls();
 
   const set = (key, value) => {
     setValues((prev) => {
@@ -259,6 +261,7 @@ export default function AdmitPatientForm() {
     const demoErrors = validateRegisterPatient({
       name: values.name,
       phone: values.phone,
+      gender: values.gender,
       dob: values.dob,
       aadhaar: values.aadhaar,
     });
@@ -271,7 +274,13 @@ export default function AdmitPatientForm() {
     const aadhaarMessage = aadhaarValidationMessage(values.aadhaar);
     if (aadhaarMessage) demoErrors.aadhaar = aadhaarMessage;
     else delete demoErrors.aadhaar;
-    setErrors((prev) => ({ ...prev, ...demoErrors }));
+    setErrors((prev) => {
+      const next = { ...prev, ...demoErrors };
+      for (const key of ["name", "phone", "gender", "dob", "aadhaar"]) {
+        if (!demoErrors[key]) delete next[key];
+      }
+      return next;
+    });
     if (Object.keys(demoErrors).length > 0) return;
 
     const raw = uiToApiPatient({
@@ -641,7 +650,7 @@ export default function AdmitPatientForm() {
                     className="ipd-toolbar__label"
                     htmlFor="ipd-reg-gender"
                   >
-                    Gender
+                    Gender *
                   </label>
                   <select
                     id="ipd-reg-gender"
@@ -649,13 +658,16 @@ export default function AdmitPatientForm() {
                     value={values.gender}
                     onChange={(e) => set("gender", e.target.value)}
                   >
-                    <option value="">Optional…</option>
+                    <option value="">Select gender</option>
                     {GENDERS.map((g) => (
                       <option key={g} value={g}>
                         {g}
                       </option>
                     ))}
                   </select>
+                  {errors.gender ? (
+                    <span className="ipd-field-error">{errors.gender}</span>
+                  ) : null}
                 </div>
                 <div className="ipd-toolbar__field">
                   <label className="ipd-toolbar__label" htmlFor="ipd-reg-dob">
@@ -1015,13 +1027,22 @@ export default function AdmitPatientForm() {
                   >
                     Insurance company
                   </label>
-                  <input
+                  <select
                     id="ipd-admit-ins-company"
-                    className="ipd-input"
+                    className="ipd-select"
                     value={values.insuranceCompany}
                     onChange={(e) => set("insuranceCompany", e.target.value)}
-                    placeholder="Company name"
-                  />
+                  >
+                    <option value="">Select…</option>
+                    {insuranceProviders.map((provider) => (
+                      <option
+                        key={provider.id || provider.code || provider.name}
+                        value={provider.name}
+                      >
+                        {provider.name}
+                      </option>
+                    ))}
+                  </select>
                   {show("insuranceCompany") ? (
                     <span className="ipd-field-error">
                       {errors.insuranceCompany}

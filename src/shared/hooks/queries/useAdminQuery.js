@@ -9,7 +9,6 @@ import {
   getManagerDashboard,
   getDepartmentById,
   getReportsOverview,
-  getReportsVisits,
   getStaffById,
   listDepartments,
   listRoles,
@@ -105,14 +104,7 @@ export function useAdminReportsOverviewQuery(filters = {}, options = {}) {
   });
 }
 
-export function useAdminReportsVisitsQuery(filters = {}, options = {}) {
-  const { enabled = true } = options;
-  return useQuery({
-    queryKey: queryKeys.admin.reportsVisits(filters),
-    enabled,
-    queryFn: () => getReportsVisits(filters),
-  });
-}
+export { useVisitReportQuery as useAdminReportsVisitsQuery } from './useVisitReport';
 
 export function usePermissionCatalogQuery(options = {}) {
   const { enabled = true } = options;

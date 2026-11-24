@@ -23,7 +23,7 @@ export default function RegisterPhoneField({
   return (
     <div className={`field register-phone-field${error ? ' register-phone-field--error' : ''}`}>
       <label htmlFor={inputId} className="field__label">
-        Phone
+        Phone *
       </label>
       <div className="register-phone-field__control">
         <select
@@ -50,6 +50,8 @@ export default function RegisterPhoneField({
           onBlur={onBlur}
           placeholder="10-digit number"
           maxLength={10}
+          required
+          aria-required="true"
           disabled={disabled}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorId : undefined}

@@ -45,11 +45,31 @@ export function useAdminEditLocks(manageAdminEditLocks = false) {
     [manageAdminEditLocks, mutation, adminEdit],
   );
 
+  const setAdminEditLocks = useCallback(
+    async (keys, enabled) => {
+      if (!manageAdminEditLocks || mutation.isPending) return;
+      const next = { ...adminEdit };
+      for (const key of keys) next[key] = enabled;
+      try {
+        await mutation.mutateAsync(next);
+        toast.success(
+          enabled
+            ? 'Manager can edit pricing and tax'
+            : 'Pricing and tax edit is locked',
+        );
+      } catch (err) {
+        toast.error(err?.message || 'Failed to update edit access');
+      }
+    },
+    [manageAdminEditLocks, mutation, adminEdit],
+  );
+
   const lockToggle = useCallback(
-    (key) =>
+    (key, options = {}) =>
       manageAdminEditLocks ? (
         <ManagerEditLockToggle
           id={`admin-edit-${key}`}
+          label={options.label}
           checked={Boolean(adminEdit[key])}
           disabled={mutation.isPending}
           onChange={(v) => setAdminEditLock(key, v)}
@@ -62,6 +82,7 @@ export function useAdminEditLocks(manageAdminEditLocks = false) {
     adminEdit,
     canEdit,
     setAdminEditLock,
+    setAdminEditLocks,
     lockToggle,
     adminEditSaving: mutation.isPending,
     locksLoading: settingsQuery.isLoading,

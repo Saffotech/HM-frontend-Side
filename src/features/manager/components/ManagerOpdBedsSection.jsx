@@ -4,6 +4,7 @@ import {
   BedDouble,
   CheckCircle2,
   ChevronDown,
+  Info,
   Layers,
   Pencil,
   Plus,
@@ -208,6 +209,10 @@ export default function ManagerOpdBedsSection({
   const activateWardMut = useActivateInventoryWardMutation();
 
   const allBeds = useMemo(() => listQ.data?.beds ?? [], [listQ.data?.beds]);
+  const newWardNeedsBed =
+    Boolean(wardName) &&
+    customWards.some((name) => name.toLowerCase() === wardName.toLowerCase()) &&
+    !allBeds.some((bed) => String(bed.ward_name || '').toLowerCase() === wardName.toLowerCase());
   const activeInventory = useMemo(
     () => allBeds.filter((bed) => bed.is_active !== false),
     [allBeds],
@@ -805,6 +810,16 @@ export default function ManagerOpdBedsSection({
             </Button>
           </div>
         )}
+
+        {newWardNeedsBed ? (
+          <p className="aos-beds__ward-requirement" role="status">
+            <Info size={16} aria-hidden="true" />
+            <span>
+              <strong>At least one bed is required.</strong> Wards without beds will be
+              automatically removed.
+            </span>
+          </p>
+        ) : null}
 
         {addMode === 'single' && singleConflict ? (
           <p className="aos-beds__warn">

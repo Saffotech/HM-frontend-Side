@@ -3,7 +3,7 @@
  */
 
 import { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { ROUTES } from '@/shared/constants';
 import RoleLayout from '@/shared/components/layout/RoleLayout';
+import IpdNotificationsBell from '@/features/ipd/components/IpdNotificationsBell';
 import { useIpdPermissionSet } from '@/features/ipd/hooks/useIpdPermission';
 import '../styles/ipd.css';
 
@@ -83,6 +84,7 @@ function resolveTitle(_pathname, pageTitleOverride) {
 }
 
 export default function IpdLayout({ children }) {
+  const navigate = useNavigate();
   const location = useLocation();
   const onProfilePage = location.pathname === ROUTES.IPD_PROFILE;
   const perms = useIpdPermissionSet();
@@ -128,7 +130,12 @@ export default function IpdLayout({ children }) {
       resolveTitle={resolveTitle}
       homeRoute={homeRoute}
       defaultTitle="IPD"
-      showBell={false}
+      showBell
+      headerBell={
+        <IpdNotificationsBell
+          onViewAll={() => navigate(ROUTES.IPD_NOTIFICATIONS)}
+        />
+      }
       profileHref={ROUTES.IPD_PROFILE}
       logoutMenuOnly={onProfilePage}
       layoutClassName="ipd-layout"
