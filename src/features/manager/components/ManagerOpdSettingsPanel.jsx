@@ -18,6 +18,7 @@ import {
   useUpdateAdminOpdSettingsMutation,
 } from '@/features/manager/hooks/useOpdSettingsQuery';
 import { useAdminEditLocks } from '@/features/manager/hooks/useManagerEditLocks';
+import ManagerEditLockToggle from '@/features/manager/components/ManagerEditLockToggle';
 import {
   useAdminDepartmentsQuery,
   useAdminRolesQuery,
@@ -31,7 +32,7 @@ import {
   createEmptyInsuranceProvider,
   validateOpdSettingsForm,
 } from '@/features/manager/utils/opdSettingsMapper';
-import { normalizeAdminEdit } from '@/features/manager/constants/managerEditLocks';
+import { normalizeAdminEdit, PRICING_EDIT_KEYS } from '@/features/manager/constants/managerEditLocks';
 import { Button, ConfirmDialog, Input, Label, QueryFeedback, SearchableSelect } from '@/shared/components/common';
 import { toast } from '@/shared/utils/toast';
 import { getCurrencySymbol } from '@/shared/utils/formatCurrency';
@@ -194,7 +195,7 @@ function Field({ id, label, hint, children }) {
 export default function ManagerOpdSettingsPanel({ manageAdminEditLocks = false }) {
   const settingsQuery = useAdminOpdSettingsQuery();
   const updateMutation = useUpdateAdminOpdSettingsMutation();
-  const { canEdit, lockToggle, setAdminEditLock, adminEditSaving } =
+  const { canEdit, lockToggle, setAdminEditLock, setAdminEditLocks, adminEditSaving } =
     useAdminEditLocks(manageAdminEditLocks);
   const [form, setForm] = useState(null);
   const [activeSection, setActiveSection] = useState(SECTION_TABS[0].id);
@@ -229,7 +230,7 @@ export default function ManagerOpdSettingsPanel({ manageAdminEditLocks = false }
 
   const sourceLabel = useMemo(() => {
     if (!form?._source) return '';
-    if (form._source === 'api') return 'Synced with backend';
+    if (form._source === 'api') return '';
     if (form._source === 'local') return 'Saved locally (backend route pending)';
     return 'Showing defaults — save to apply';
   }, [form?._source]);
@@ -479,7 +480,25 @@ export default function ManagerOpdSettingsPanel({ manageAdminEditLocks = false }
             ) : null}
 
             {activeSection === 'pricing' ? (
-              <>
+              <SectionCard
+                title="Pricing and tax"
+                icon={CircleDollarSign}
+                collapsible
+                defaultOpen
+                tone="teal"
+                action={
+                  manageAdminEditLocks ? (
+                    <ManagerEditLockToggle
+                      id="admin-edit-pricing-and-tax"
+                      label=""
+                      checked={PRICING_EDIT_KEYS.every((key) => Boolean(adminEdit[key]))}
+                      disabled={adminEditSaving}
+                      onChange={(enabled) => setAdminEditLocks(PRICING_EDIT_KEYS, enabled)}
+                    />
+                  ) : null
+                }
+              >
+                <div className="aos-pricing-group">
                 <ManagerOpdPricingSection
                   form={form}
                   patch={patch}
@@ -504,7 +523,7 @@ export default function ManagerOpdSettingsPanel({ manageAdminEditLocks = false }
                   locked={!canEdit('bill_item_price_list')}
                   action={
                     <>
-                      {lockToggle('bill_item_price_list')}
+                      {lockToggle('bill_item_price_list', { label: '' })}
                       {canEdit('bill_item_price_list') ? (
                         <Button type="button" variant="outline" size="sm" onClick={addBillItem}>
                           <Plus size={14} /> Add Item
@@ -619,7 +638,8 @@ export default function ManagerOpdSettingsPanel({ manageAdminEditLocks = false }
                     </div>
                   </div>
                 </SectionCard>
-              </>
+                </div>
+              </SectionCard>
             ) : null}
 
             {activeSection === 'discount' ? (

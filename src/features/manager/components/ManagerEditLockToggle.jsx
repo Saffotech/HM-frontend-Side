@@ -7,16 +7,17 @@ export default function ManagerEditLockToggle({
   checked,
   onChange,
   disabled = false,
-  label = 'Admin can edit',
+  label = 'Manager can edit',
 }) {
   return (
     <label className="aos-admin-edit-lock" htmlFor={id} onClick={(e) => e.stopPropagation()}>
-      <span className="aos-admin-edit-lock__label">{label}</span>
+      {label ? <span className="aos-admin-edit-lock__label">{label}</span> : null}
       <input
         id={id}
         type="checkbox"
         className="aos-toggle__input"
         role="switch"
+        aria-label={label ? undefined : 'Manager can edit'}
         aria-checked={Boolean(checked)}
         checked={Boolean(checked)}
         disabled={disabled}

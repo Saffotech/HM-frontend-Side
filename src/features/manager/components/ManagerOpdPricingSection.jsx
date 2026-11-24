@@ -661,6 +661,7 @@ export default function ManagerOpdPricingSection({
           manageAdminEditLocks ? (
             <ManagerEditLockToggle
               id="admin-edit-global_fees_tax"
+              label=""
               checked={Boolean(adminEdit.global_fees_tax)}
               disabled={adminEditSaving}
               onChange={(v) => onAdminEditChange?.('global_fees_tax', v)}
@@ -746,6 +747,7 @@ export default function ManagerOpdPricingSection({
           manageAdminEditLocks ? (
             <ManagerEditLockToggle
               id="admin-edit-bed_tariff"
+              label=""
               checked={Boolean(adminEdit.bed_tariff)}
               disabled={adminEditSaving}
               onChange={(v) => onAdminEditChange?.('bed_tariff', v)}
@@ -980,6 +982,7 @@ export default function ManagerOpdPricingSection({
           manageAdminEditLocks ? (
             <ManagerEditLockToggle
               id="admin-edit-consultation_fee_by_department"
+              label=""
               checked={Boolean(adminEdit.consultation_fee_by_department)}
               disabled={adminEditSaving}
               onChange={(v) => onAdminEditChange?.('consultation_fee_by_department', v)}
@@ -1090,6 +1093,7 @@ export default function ManagerOpdPricingSection({
           manageAdminEditLocks ? (
             <ManagerEditLockToggle
               id="admin-edit-consultation_fee_by_doctor"
+              label=""
               checked={Boolean(adminEdit.consultation_fee_by_doctor)}
               disabled={adminEditSaving}
               onChange={(v) => onAdminEditChange?.('consultation_fee_by_doctor', v)}

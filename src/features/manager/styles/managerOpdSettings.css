@@ -373,6 +373,16 @@
   gap: 0.55rem;
 }
 
+.aos-pricing-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.aos-pricing-group > .aos-card {
+  box-shadow: none;
+}
+
 .aos-card__hint {
   margin: 0;
   color: #64748b;
