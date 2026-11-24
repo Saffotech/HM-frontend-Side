@@ -999,7 +999,7 @@
 }
 .lf-panel .cs {
         position: relative;
-        min-width: 360px;
+        min-width: 520px;
 }
 .lf-panel .csb {
         display: flex;
@@ -1057,7 +1057,7 @@
         position: absolute;
         right: 0;
         top: calc(100% + 6px);
-        width: 430px;
+        width: 520px;
         max-width: 92vw;
         background: #fff;
         border: 1px solid var(--bd);
@@ -1074,13 +1074,15 @@
         margin-bottom: 6px;
 }
 .lf-panel .csl {
-        max-height: 300px;
-        overflow: auto;
+        max-height: 520px;
+        overflow-y: auto;
 }
 .lf-panel .cso {
         display: flex;
         align-items: center;
         gap: 10px;
+        box-sizing: border-box;
+        min-height: 52px;
         padding: 8px;
         border-radius: 8px;
         cursor: pointer;
@@ -1189,7 +1191,7 @@
           padding: 16px 14px 32px;
 }
 }
-.lf-panel .csl { max-height: 300px; overflow: auto; }
+.lf-panel .csl { max-height: 520px; overflow-y: auto; }
 
 .lf-panel .card.lf-check {
         padding: 0;
