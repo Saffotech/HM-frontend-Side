@@ -261,6 +261,7 @@ export default function AdmitPatientForm() {
     const demoErrors = validateRegisterPatient({
       name: values.name,
       phone: values.phone,
+      gender: values.gender,
       dob: values.dob,
       aadhaar: values.aadhaar,
     });
@@ -273,7 +274,13 @@ export default function AdmitPatientForm() {
     const aadhaarMessage = aadhaarValidationMessage(values.aadhaar);
     if (aadhaarMessage) demoErrors.aadhaar = aadhaarMessage;
     else delete demoErrors.aadhaar;
-    setErrors((prev) => ({ ...prev, ...demoErrors }));
+    setErrors((prev) => {
+      const next = { ...prev, ...demoErrors };
+      for (const key of ["name", "phone", "gender", "dob", "aadhaar"]) {
+        if (!demoErrors[key]) delete next[key];
+      }
+      return next;
+    });
     if (Object.keys(demoErrors).length > 0) return;
 
     const raw = uiToApiPatient({
@@ -643,7 +650,7 @@ export default function AdmitPatientForm() {
                     className="ipd-toolbar__label"
                     htmlFor="ipd-reg-gender"
                   >
-                    Gender
+                    Gender *
                   </label>
                   <select
                     id="ipd-reg-gender"
@@ -651,13 +658,16 @@ export default function AdmitPatientForm() {
                     value={values.gender}
                     onChange={(e) => set("gender", e.target.value)}
                   >
-                    <option value="">Optional…</option>
+                    <option value="">Select gender</option>
                     {GENDERS.map((g) => (
                       <option key={g} value={g}>
                         {g}
                       </option>
                     ))}
                   </select>
+                  {errors.gender ? (
+                    <span className="ipd-field-error">{errors.gender}</span>
+                  ) : null}
                 </div>
                 <div className="ipd-toolbar__field">
                   <label className="ipd-toolbar__label" htmlFor="ipd-reg-dob">
