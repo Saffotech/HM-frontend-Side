@@ -143,6 +143,17 @@
         padding: 7px 9px;
         max-width: 100%;
 }
+.lf-panel .lf-field.is-invalid input,
+.lf-panel .lf-field.is-invalid select,
+.lf-panel .lf-field.is-invalid textarea {
+        border-color: var(--er);
+        background: var(--erb);
+}
+.lf-panel .lf-field-error {
+        margin: 4px 0 0;
+        font-size: 12px;
+        color: var(--er);
+}
 .lf-panel textarea {
         width: 100%;
 }
@@ -388,6 +399,21 @@
         align-items: center;
         margin-bottom: 10px;
 }
+.lf-panel .lf-case-head {
+        align-items: flex-start;
+}
+.lf-panel .lf-case-meta {
+        min-width: 0;
+}
+.lf-panel .lf-case-decision {
+        display: inline-flex;
+        margin-bottom: 4px;
+        font-size: 13px;
+}
+.lf-panel .lf-case-meta .mu {
+        margin: 2px 0 0;
+        font-size: 12px;
+}
 .lf-panel .mu {
         color: var(--mu);
 }
@@ -400,6 +426,120 @@
         display: block;
         color: var(--mu);
         font-size: 12px;
+}
+.lf-panel .lf-pricing-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+}
+.lf-panel .lf-pricing-head h2 {
+        margin: 0 0 2px;
+        font-size: 18px;
+}
+.lf-panel .lf-pricing-head p {
+        margin: 0;
+        color: var(--mu);
+        font-size: 14px;
+}
+.lf-panel .lf-pricing-grid {
+        display: grid;
+        grid-template-columns: 0.9fr 1.15fr;
+        gap: 10px;
+        margin-bottom: 10px;
+}
+.lf-panel .lf-pricing-block {
+        border: 1px solid var(--bd);
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: var(--sf);
+        min-width: 0;
+}
+.lf-panel .lf-pricing-block h3 {
+        margin: 0 0 8px;
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #4338ca;
+        font-weight: 700;
+}
+.lf-panel .lf-pricing-block h3.lf-pricing-next {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid var(--bd);
+}
+.lf-panel .lf-price-facts {
+        display: grid;
+        gap: 8px;
+}
+.lf-panel .lf-price-fact span,
+.lf-panel .lf-price-line span {
+        display: block;
+        color: var(--mu);
+        font-size: 13px;
+        font-weight: 600;
+}
+.lf-panel .lf-price-fact strong {
+        display: block;
+        margin-top: 1px;
+        font-size: 16px;
+        font-weight: 650;
+        color: var(--tx);
+        word-break: break-word;
+}
+.lf-panel .lf-price-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 4px 0;
+        border-bottom: 1px solid var(--bd);
+}
+.lf-panel .lf-price-line small {
+        display: block;
+        margin-top: 1px;
+        color: var(--mu);
+        font-size: 12px;
+        font-weight: 500;
+}
+.lf-panel .lf-price-line b {
+        font-size: 15px;
+        font-weight: 650;
+        white-space: nowrap;
+}
+.lf-panel .lf-price-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-top: 8px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: #eef2ff;
+        color: #312e81;
+}
+.lf-panel .lf-price-total span {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+}
+.lf-panel .lf-price-total strong {
+        font-size: 20px;
+        font-weight: 750;
+}
+.lf-panel .lf-pricing-note {
+        display: grid;
+        gap: 10px;
+}
+@media (max-width: 1100px) {
+        .lf-panel .lf-pricing-grid {
+                grid-template-columns: 1fr;
+        }
+        .lf-panel .lf-pricing-head {
+                flex-direction: column;
+        }
 }
 .lf-panel .lf-profile {
         max-width: 720px;
@@ -778,6 +918,55 @@
         text-transform: uppercase;
         letter-spacing: 0.6px;
 }
+.lf-panel .lf-crm-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+}
+.lf-panel .lf-crm-head h3 {
+        margin: 0;
+}
+.lf-panel .lf-crm-head .mu {
+        font-size: 12px;
+}
+.lf-panel .lf-sheet {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 40px;
+        margin: 8px 0 0;
+}
+.lf-panel .lf-sheet > div {
+        min-width: 0;
+}
+.lf-panel .lf-line {
+        display: grid;
+        grid-template-columns: 168px minmax(0, 1fr);
+        gap: 8px 12px;
+        align-items: baseline;
+        padding: 4px 0;
+}
+.lf-panel .lf-line.is-wide {
+        grid-column: 1 / -1;
+}
+.lf-panel .lf-sheet dt {
+        margin: 0;
+        color: var(--mu);
+        font-size: 13px;
+}
+.lf-panel .lf-sheet dd {
+        margin: 0;
+        font-size: 14px;
+        word-break: break-word;
+}
+.lf-panel .lf-sheet dd.is-empty {
+        color: #94a3b8;
+}
+.lf-panel .lf-review-banner {
+        margin: 8px 0 0;
+        color: #92400e;
+        font-size: 13px;
+}
 .lf-panel .cg {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -792,7 +981,8 @@
 .lf-panel .tiles {
           grid-template-columns: 1fr 1fr;
 }
-.lf-panel .cg {
+.lf-panel .cg,
+.lf-panel .lf-sheet {
           grid-template-columns: 1fr;
 }
 }
@@ -1066,8 +1256,20 @@
         color: #64748b;
         font-weight: 700;
 }
+.lf-panel .lf-check-copy {
+        min-width: 0;
+}
 .lf-panel .lf-check-title {
         font-weight: 650;
+        white-space: nowrap;
+}
+.lf-panel .lf-check-files {
+        display: block;
+        overflow: hidden;
+        color: var(--mu);
+        font-size: 12px;
+        font-weight: 500;
+        text-overflow: ellipsis;
         white-space: nowrap;
 }
 .lf-panel .lf-check-tools {
@@ -1090,6 +1292,9 @@
 }
 .lf-panel .lf-check-title {
           white-space: normal;
+}
+.lf-panel .lf-check-copy {
+          grid-column: 2 / -1;
 }
 .lf-panel .lf-check-prog {
           width: 100%;

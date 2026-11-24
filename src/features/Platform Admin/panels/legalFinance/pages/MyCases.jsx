@@ -45,9 +45,9 @@ export default function MyCases() {
                 <td><Clip>{x.id}</Clip></td>
                 <td><Clip className="l">{x.h}</Clip></td>
                 <td><Clip>{x.city}</Clip></td>
-                <td><Clip>{x.plan}</Clip></td>
+                <td><Clip>{x.plan || "Not Set"}</Clip>{x.crm?.billingCycle ? <span className="mu"> {x.crm.billingCycle}</span> : null}</td>
                 <td><StageLink done={isLegalDone(x)} section="legal" caseId={x.id} /> <span className="mu">{docsVerified(x)}/{x.docs.length} docs</span></td>
-                <td><StageLink done={isFinanceDone(x)} section="finance" caseId={x.id} /> <span className="mu">{x.disc}% · {x.esc}</span></td>
+                <td><StageLink done={isFinanceDone(x)} section="finance" caseId={x.id} /> <span className="mu">{x.fr || x.commercialChange ? `${x.disc}% · ${x.esc}` : "Not Set"}</span></td>
                 <td><StatusBadge status={x.st} /></td>
               </tr>
             ))}

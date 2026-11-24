@@ -40,7 +40,6 @@ function DecisionModal({ caseId, kind }) {
           <select value={owner} onChange={(e) => setOwner(e.target.value)}>
             {CONDITION_OWNERS.map((item) => <option key={item}>{item}</option>)}
           </select>
-          <div className="warn">An approved condition is not a received payment. Accounts records the advance separately.</div>
         </>
       )}
       <label>Reason (required)</label>

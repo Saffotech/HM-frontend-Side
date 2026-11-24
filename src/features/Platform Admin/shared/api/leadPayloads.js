@@ -26,6 +26,7 @@ export function leadCreateBody(values, { shared = false, allowDuplicate = false 
     designation: emptyToNull(values.designation),
     contact_phone: serializePhoneNumber(values.phone, values.phoneCode || DEFAULT_PHONE_CODE),
     contact_email: emptyToNull(values.email),
+    hospital_email: emptyToNull(values.hospitalEmail),
     city: String(values.city || "").trim(),
     state: emptyToNull(values.state),
     plan: emptyToNull(values.plan),
@@ -101,6 +102,7 @@ export function leadAgreeBody(values) {
   return {
     plan: values.plan,
     billing_cycle: values.billingCycle,
+    hospital_email: emptyToNull(values.hospitalEmail),
     note: emptyToNull(values.note),
   };
 }

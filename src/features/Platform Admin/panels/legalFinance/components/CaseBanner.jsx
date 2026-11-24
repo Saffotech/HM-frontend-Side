@@ -19,8 +19,6 @@ export default function CaseBanner({ c }) {
               <br />Condition: {c.cond.c} (owner {c.cond.o || "—"})
             </>
           )}
-          <br />
-          <b>{c.pay ? "Advance recorded by Accounts." : "Advance not recorded. Approval does not record the payment."}</b>
         </div>
       )}
     </>

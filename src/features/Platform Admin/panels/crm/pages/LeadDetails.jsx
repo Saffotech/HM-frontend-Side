@@ -192,6 +192,9 @@ function LeadView({ lead, today, actions, back, userId }) {
               )}
             </>
           )}
+          {lead.status === "Agreed" && (
+            <Button size="sm" variant="secondary" className="crm-tone-agreed" onClick={() => actions.agree(lead)}><Send size={14} aria-hidden="true" />Update agreement</Button>
+          )}
           {(open || lead.status === "Agreed") && (
             <Button size="sm" variant="secondary" className="crm-tone-edit" onClick={() => actions.edit(lead)}><Pencil size={14} aria-hidden="true" />Edit</Button>
           )}

@@ -1,73 +1,103 @@
 import { useState } from "react";
-import { PLAN_NAMES } from "../../../shared/data/catalog";
 import { useLegalFinance } from "../context/LegalFinanceContext";
-import { getFinance, calcFinance, cycleSuffix, cycleUnit, formatRupees, isInvalidFinance } from "../utils/finance";
+import { FREQUENCIES } from "../../../shared/api/legalCaseModel";
+import { getFinance, calcFinance, cycleSuffix, cycleUnit, formatRupees, financeFieldErrors } from "../utils/finance";
 import { DISCOUNT_LIMIT } from "../constants";
+
+function FinanceField({ id, label, error, children }) {
+  return (
+    <div className={error ? "lf-field is-invalid" : "lf-field"}>
+      <label htmlFor={`lf-fin-${id}`}>{label}</label>
+      {children}
+      {error ? <p className="lf-field-error">{error}</p> : null}
+    </div>
+  );
+}
 
 export default function EditFinanceModal({ caseId }) {
   const { cases, saveFinance, closeModal, toast } = useLegalFinance();
   const c = cases.find((x) => x.id === caseId);
+  const agreedCycle = FREQUENCIES.includes(c?.crm?.billingCycle) ? c.crm.billingCycle : "";
   const [v, setV] = useState(() => (c ? { ...getFinance(c), disc: c.disc, plan: c.plan || "" } : { disc: 0, plan: "" }));
+  const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
   if (!c) return null;
-  const set = (key) => (e) => setV((s) => ({ ...s, [key]: e.target.value }));
-  const planChoices = [...new Set([c.plan, ...PLAN_NAMES].filter(Boolean))];
 
-  // numeric view of the form for validation / preview
+  const set = (key) => (e) => {
+    const value = e.target.value;
+    setV((s) => ({ ...s, [key]: value }));
+    setErrors((current) => {
+      if (!current[key]) return current;
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+  };
+
   const num = { ...v, std: +v.std, disc: +v.disc, yrs: +v.yrs, impl: +v.impl, trn: +v.trn, tax: +v.tax, adv: +v.adv, cr: +v.cr };
-  const bad = isInvalidFinance(num);
+  const clientErrors = financeFieldErrors(num);
+  const bad = Object.keys(clientErrors).length > 0;
   const k = calcFinance(num);
-
-  const Num = (key, label) => (
-    <div><label>{label}</label><input type="number" min="0" step="1" value={v[key]} onChange={set(key)} /></div>
-  );
-  const Txt = (key, label) => (
-    <div><label>{label}</label><input value={v[key]} onChange={set(key)} /></div>
-  );
-  const Sel = (key, label, opts) => (
-    <div><label>{label}</label><select value={v[key]} onChange={set(key)}>{opts.map((o) => <option key={o}>{o}</option>)}</select></div>
-  );
 
   const save = async () => {
     if (busy) return;
-    if (bad) return toast("Enter whole rupees. Discount is required.", true);
+    if (bad) {
+      setErrors(clientErrors);
+      toast("Check the highlighted fields.", true);
+      return;
+    }
     setBusy(true);
-    const saved = await saveFinance(caseId, num);
+    const result = await saveFinance(caseId, num);
     setBusy(false);
-    if (saved) closeModal();
+    if (result?.ok) {
+      closeModal();
+      return;
+    }
+    if (result?.fieldErrors && Object.keys(result.fieldErrors).length) {
+      setErrors(result.fieldErrors);
+    }
   };
 
   return (
     <>
       <h2>Edit finance details · {c.h}</h2>
       <div className="g h2c">
-        <div>
-          <label>Plan</label>
-          <select value={v.plan} onChange={set("plan")}>
-            {!v.plan && <option value="">Select a plan</option>}
-            {planChoices.map((plan) => <option key={plan}>{plan}</option>)}
+        <FinanceField id="yrs" label="Subscription Period (years)" error={errors.yrs}>
+          <input id="lf-fin-yrs" type="number" min="0" step="1" value={v.yrs} onChange={set("yrs")} aria-invalid={Boolean(errors.yrs)} />
+        </FinanceField>
+        <FinanceField id="std" label={`Regular Subscription Price (₹ per ${cycleUnit(v.freq)})`} error={errors.std}>
+          <input id="lf-fin-std" type="number" min="0" step="1" value={v.std} onChange={set("std")} aria-invalid={Boolean(errors.std)} />
+        </FinanceField>
+        <FinanceField id="disc" label="Discount Offered (%)" error={errors.disc}>
+          <input id="lf-fin-disc" type="number" min="0" step="1" value={v.disc} onChange={set("disc")} aria-invalid={Boolean(errors.disc)} />
+        </FinanceField>
+        <FinanceField id="impl" label="One-Time Setup Fee (₹)" error={errors.impl}>
+          <input id="lf-fin-impl" type="number" min="0" step="1" value={v.impl} onChange={set("impl")} aria-invalid={Boolean(errors.impl)} />
+        </FinanceField>
+        <FinanceField id="trn" label="Staff Training Fee (₹)" error={errors.trn}>
+          <input id="lf-fin-trn" type="number" min="0" step="1" value={v.trn} onChange={set("trn")} aria-invalid={Boolean(errors.trn)} />
+        </FinanceField>
+        <FinanceField id="tax" label="Tax (%)" error={errors.tax}>
+          <input id="lf-fin-tax" type="number" min="0" step="1" value={v.tax} onChange={set("tax")} aria-invalid={Boolean(errors.tax)} />
+        </FinanceField>
+        <FinanceField id="freq" label="Payment Terms" error={errors.freq}>
+          <select id="lf-fin-freq" value={agreedCycle || v.freq} onChange={set("freq")} disabled={Boolean(agreedCycle)} aria-invalid={Boolean(errors.freq)}>
+            <option value="Annual">Annual</option>
+            <option value="Half-yearly">Half-yearly</option>
+            <option value="Quarterly">Quarterly</option>
+            <option value="Monthly">Monthly</option>
           </select>
-        </div>
-        {Txt("mod", "Modules")}
-        {Num("yrs", "Duration (years)")}
-        {Num("std", `Standard price (₹ per ${cycleUnit(v.freq)})`)}
-        {Num("disc", "Discount %")}
-        {Num("impl", "Implementation fee (₹)")}
-        {Num("trn", "Training fee (₹)")}
-        {Num("tax", "Tax %")}
-        {Sel("freq", "Payment frequency", ["Annual", "Half-yearly", "Quarterly", "Monthly"])}
-        {Num("adv", "Advance payment %")}
-        {Num("cr", "Credit period (days)")}
-        {Txt("gst", "Billing GSTIN")}
-        {Sel("po", "PO required", ["Yes", "No"])}
+        </FinanceField>
+        <FinanceField id="cr" label="Payment Due (days)" error={errors.cr}>
+          <input id="lf-fin-cr" type="number" min="0" step="1" value={v.cr} onChange={set("cr")} aria-invalid={Boolean(errors.cr)} />
+        </FinanceField>
       </div>
-      {Txt("mail", "Invoice email")}
       <div className="inf" style={{ marginTop: 10 }}>
         {bad ? (
-          "Enter whole rupees. Discount, tax, and advance are 0–100."
+          "Enter whole rupees. Discount and tax are 0–100."
         ) : (
           <>
-            Proposed price <b>{formatRupees(k.pr)}</b> {cycleSuffix(v.freq)} · Total <b>{formatRupees(k.tot)}</b> + tax {formatRupees(k.gst)} · Advance {formatRupees(k.adv)}
+            Price after discount <b>{formatRupees(k.pr)}</b> {cycleSuffix(v.freq)} · Subtotal <b>{formatRupees(k.tot)}</b> · Tax {formatRupees(k.gst)} · Total payable <b>{formatRupees(Number(k.tot) + Number(k.gst))}</b>
             {num.disc > DISCOUNT_LIMIT && <><br /><b>Discount above {DISCOUNT_LIMIT}%: escalation becomes Not requested unless it is already Pending or Approved.</b></>}
           </>
         )}

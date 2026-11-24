@@ -7,6 +7,8 @@ export const DOCUMENT_CATEGORIES = [
   "Tax / GST Details",
   "Hospital License",
   "Service Agreement",
+  "Hospital address checked",
+  "Contract signing requirements checked",
 ];
 
 export const DOCUMENT_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png", ".webp"];
@@ -15,6 +17,26 @@ export const DISCOUNT_ESCALATION_LIMIT = 10;
 export const FREQUENCIES = ["Annual", "Half-yearly", "Quarterly", "Monthly"];
 export const CONDITION_OWNERS = ["Accounts Team", "Sales Owner"];
 export const DECIDED_STATUSES = ["Approved", "Rejected", "Conditionally Approved"];
+export const NOT_SET = "Not Set";
+
+export function manualTerm(caseRow, value) {
+  if (caseRow?.empty) return "Not Provided";
+  if (!caseRow?.fr && !caseRow?.commercialChange) return NOT_SET;
+  return value;
+}
+
+export function catalogTerm(caseRow, value) {
+  if (caseRow?.empty) return "Not Provided";
+  if (!caseRow?.fr && !caseRow?.commercialChange && !(Number(caseRow?.fin?.std) > 0)) return NOT_SET;
+  return value;
+}
+
+export function billingSource(caseRow) {
+  if (caseRow?.empty) return "";
+  if (caseRow?.commercialChange) return "CRM agreement changed · finance review required";
+  if (caseRow?.fr) return "Reviewed by Legal & Finance";
+  return "From CRM";
+}
 
 export const EMPTY_FINANCE = {
   mod: "",
@@ -60,10 +82,13 @@ export function documentFileError(file) {
 
 export function financeFormFromCase(caseRow) {
   const saved = caseRow?.fin;
-  return {
+  const form = {
     ...(saved || EMPTY_FINANCE),
     disc: Number(caseRow?.disc) || 0,
   };
+  const crmCycle = caseRow?.crm?.billingCycle;
+  if (FREQUENCIES.includes(crmCycle)) form.freq = crmCycle;
+  return form;
 }
 
 export function financePayload(form) {
@@ -107,7 +132,6 @@ export function financePayload(form) {
     gstin: textOrNull(form.gst),
     po_required: form.po === "Yes" ? "Yes" : "No",
     invoice_email: textOrNull(form.mail),
-    plan: textOrNull(form.plan),
   };
 }
 
@@ -158,6 +182,28 @@ export function mapLegalCase(row) {
     h: row.hospital_name || "",
     city: row.city || "",
     plan: row.plan || "",
+    crm: {
+      hospitalName: row.hospital_name || "",
+      hospitalType: row.hospital_type || "",
+      city: row.city || "",
+      state: row.state || "",
+      hospitalEmail: row.hospital_email || "",
+      contactPerson: row.contact_person || "",
+      designation: row.designation || "",
+      contactPhone: row.contact_phone || "",
+      contactEmail: row.contact_email || "",
+      leadId: row.lead_id ?? "",
+      source: row.lead_source || "",
+      priority: row.priority || "",
+      assignedEmployee: row.assigned_employee_name || "",
+      agreedAt: row.agreed_at || "",
+      agreedBy: row.agreed_by_name || "",
+      message: row.requirement || "",
+      handoverNote: row.handover_note || "",
+      plan: row.plan || "",
+      billingCycle: row.billing_cycle || "",
+    },
+    commercialChange: row.commercial_change_note || "",
     disc: Number(row.discount) || 0,
     st: row.status || "",
     esc: row.escalation || "Not needed",
@@ -172,7 +218,7 @@ export function mapLegalCase(row) {
         impl: finance.implementation_fee ?? 0,
         trn: finance.training_fee ?? 0,
         tax: finance.tax_percent ?? 0,
-        freq: finance.frequency || "Annual",
+        freq: finance.frequency || "",
         adv: finance.advance_percent ?? 0,
         cr: finance.credit_days ?? 0,
         gst: finance.gstin || "",

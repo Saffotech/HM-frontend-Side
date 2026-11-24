@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { platformCallMessage, shouldEndPlatformSession } from "../../../shared/api/platformErrors";
+import { interpretPlatformError, platformCallMessage, shouldEndPlatformSession } from "../../../shared/api/platformErrors";
 import {
   checklistPayload,
   decisionPayload,
@@ -152,6 +152,34 @@ export function LegalFinanceProvider({ user, children }) {
     }
   }, [fail]);
 
+  const setDocsStatusForCategory = useCallback(async (id, category, checklistStatus) => {
+    const current = cases.find((item) => item.id === id);
+    const documents = current?.docs?.filter((doc) => doc.t === category) || [];
+    if (!documents.length) {
+      toast("Upload this document first.", true);
+      return false;
+    }
+    const status = checklistStatus === "Verified"
+      ? "Verified"
+      : checklistStatus === "Issue Found"
+        ? "Changes Requested"
+        : null;
+    if (!status) {
+      toast("This item follows the uploaded file. Verify it or request changes.", true);
+      return false;
+    }
+    try {
+      const call = status === "Verified" ? verifyLegalDocument : requestLegalDocumentChanges;
+      let body = null;
+      for (const document of documents) {
+        body = await call(id, document.id);
+      }
+      return applyResponse(body, status === "Verified" ? "Document verified" : "Changes requested");
+    } catch (error) {
+      return fail(error);
+    }
+  }, [applyResponse, cases, fail, toast]);
+
   const setChecklistItem = useCallback(async (id, index, patch) => {
     const current = cases.find((item) => item.id === id);
     const item = current?.cl?.[index];
@@ -201,12 +229,31 @@ export function LegalFinanceProvider({ user, children }) {
     const body = financePayload(values);
     if (!body) {
       toast("Enter whole rupees. Discount is required.", true);
-      return false;
+      return { ok: false };
     }
     try {
-      return applyResponse(await updateLegalFinance(id, body), "Finance terms saved");
+      const saved = applyResponse(await updateLegalFinance(id, body), "Finance terms saved");
+      return { ok: Boolean(saved) };
     } catch (error) {
-      return fail(error);
+      fail(error);
+      return {
+        ok: false,
+        fieldErrors: interpretPlatformError(error, {
+          discount: "disc",
+          standard_price: "std",
+          years: "yrs",
+          implementation_fee: "impl",
+          training_fee: "trn",
+          tax_percent: "tax",
+          advance_percent: "adv",
+          credit_days: "cr",
+          frequency: "freq",
+          modules: "mod",
+          gstin: "gst",
+          po_required: "po",
+          invoice_email: "mail",
+        }).fieldErrors,
+      };
     }
   }, [applyResponse, fail, toast]);
 
@@ -245,6 +292,7 @@ export function LegalFinanceProvider({ user, children }) {
     toastMsg,
     toast,
     setDocStatus,
+    setDocsStatusForCategory,
     addDocument,
     loadDocumentFile,
     setChecklistItem,

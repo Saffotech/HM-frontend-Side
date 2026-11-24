@@ -1,17 +1,15 @@
 import { useLegalFinance } from "../context/LegalFinanceContext";
-import EditFinanceModal from "../components/EditFinanceModal";
-import StatusBadge from "../components/StatusBadge";
 import CaseSelector from "../components/CaseSelector";
 import CaseBanner from "../components/CaseBanner";
 import FinanceCard from "../components/FinanceCard";
+import HospitalCrmInfo from "../components/HospitalCrmInfo";
 import FinanceRecords from "../components/FinanceRecords";
 import DecisionCard from "../components/DecisionCard";
-import { caseIsDecided } from "../../../shared/api/legalCaseModel";
-import { isFinanceDone, discountCleared } from "../utils/caseHelpers";
 import { emptyLegalCase } from "../utils/emptyCase";
+import { STATUS_TONE, TONE_ICON } from "../utils/status";
 
 export default function Finance() {
-  const { loading, loadError, current, reloadCases, openModal } = useLegalFinance();
+  const { loading, loadError, current, reloadCases } = useLegalFinance();
   if (loading) return <div className="card"><p className="mu">Loading cases…</p></div>;
   if (loadError) {
     return (
@@ -21,28 +19,27 @@ export default function Finance() {
       </div>
     );
   }
-  return <FinanceCase c={current || emptyLegalCase()} openModal={openModal} />;
+  return <FinanceCase c={current || emptyLegalCase()} />;
 }
 
-function FinanceCase({ c, openModal }) {
-  const ok = discountCleared(c);
+function FinanceCase({ c }) {
   return (
     <>
-      <div className="row">
-        {c.id && <StatusBadge status={isFinanceDone(c) ? "Done" : "Pending"} />}
+      <div className="row lf-case-head">
+        {c.id ? (
+          <div className="lf-case-meta">
+            <span className={`bd s-${STATUS_TONE[c.st] || "mu"} lf-case-decision`}>{TONE_ICON[STATUS_TONE[c.st] || "mu"]} Decision: {c.st}</span>
+            <p className="mu">{c.h} · {c.id} · CRM lead {c.lead}</p>
+          </div>
+        ) : null}
         <span style={{ marginLeft: "auto" }}><CaseSelector /></span>
       </div>
-      {c.id && <p className="mu">{c.h} · {c.id} · CRM lead {c.lead}</p>}
-      <CaseBanner c={c} />
+      {c.st === "Changes Requested" ? <CaseBanner c={c} /> : null}
+      {c.id ? <HospitalCrmInfo c={c} /> : null}
       <FinanceCard c={c} />
       <div className="card">
-        <h2>Finance records</h2>
+        <h2>Saved pricing records</h2>
         <FinanceRecords c={c} />
-        <p className="mu">Payment status comes from the Accounts record, not from approval.</p>
-      </div>
-      <div className="card">
-        <button className="btn p" type="button" disabled={!c.id || c.fr || !ok || caseIsDecided(c.st)} onClick={() => openModal(<EditFinanceModal caseId={c.id} />)}>{c.fr ? "Finance review recorded" : "Mark finance review done"}</button>{" "}
-        {!ok && <span className="mu">Discount escalation must be approved first.</span>}
       </div>
       <DecisionCard c={c} />
     </>

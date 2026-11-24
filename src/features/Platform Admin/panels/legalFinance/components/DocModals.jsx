@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { documentFileError } from "../../../shared/api/legalCaseModel";
 import { useLegalFinance } from "../context/LegalFinanceContext";
+import { availableUploadOptions } from "../utils/checklistMap";
 import { ModalFrame } from "./ModalHost";
 import StatusBadge from "./StatusBadge";
 import useDocActions from "../hooks/useDocActions";
@@ -101,10 +102,18 @@ export function DocFullModal({ caseId, index }) {
 }
 
 export function UploadDocModal({ caseId }) {
-  const { ws, addDocument, closeModal, toast } = useLegalFinance();
-  const [category, setCategory] = useState(ws.DT[0]);
+  const { cases, addDocument, closeModal, toast } = useLegalFinance();
+  const current = cases.find((item) => item.id === caseId);
+  const options = availableUploadOptions(current);
+  const optionKey = options.map((item) => item.value).join("\n");
+  const [category, setCategory] = useState(options[0]?.value || "");
   const [file, setFile] = useState(null);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const values = optionKey ? optionKey.split("\n") : [];
+    setCategory((current) => (values.includes(current) ? current : (values[0] || "")));
+  }, [optionKey]);
 
   const upload = async () => {
     const problem = documentFileError(file);
@@ -112,8 +121,8 @@ export function UploadDocModal({ caseId }) {
       toast(problem, true);
       return;
     }
-    if (!ws.DT.includes(category)) {
-      toast("Choose a hospital document category.", true);
+    if (!options.some((item) => item.value === category)) {
+      toast(options.length ? "Choose a checklist category that has no file yet." : "Every checklist item already has a file.", true);
       return;
     }
     setBusy(true);
@@ -125,12 +134,16 @@ export function UploadDocModal({ caseId }) {
   return (
     <ModalFrame
       title="Upload document"
-      actions={<button className="btn p" type="button" disabled={busy} onClick={upload}>{busy ? "Uploading…" : "Upload"}</button>}
+      actions={<button className="btn p" type="button" disabled={busy || !options.length} onClick={upload}>{busy ? "Uploading…" : "Upload"}</button>}
     >
       <label>Category</label>
-      <select value={category} onChange={(event) => setCategory(event.target.value)}>
-        {ws.DT.map((item) => <option key={item}>{item}</option>)}
-      </select>
+      {options.length ? (
+        <select value={category} onChange={(event) => setCategory(event.target.value)}>
+          {options.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+        </select>
+      ) : (
+        <p className="mu">Every checklist item already has a file.</p>
+      )}
       <label>File</label>
       <input
         type="file"

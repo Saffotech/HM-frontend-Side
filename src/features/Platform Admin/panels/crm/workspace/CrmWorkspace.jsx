@@ -26,7 +26,6 @@ import { todayInput } from "../../../shared/utils/formatDate";
 import Button from "../../../shared/components/Button";
 import AddLeadForm from "../components/AddLeadForm";
 import { CLAIM_LIMIT, isUnclaimed } from "../utils/crmLeads";
-import { rememberAutoCreatedHospitalEmailActivity } from "../utils/autoCreatedEmailActivity";
 import { AgreeDialog, CloseDialog, ContactDialog, EditLeadDialog, ReopenDialog, ScheduleDialog } from "./CrmDialogs";
 import { WorkspaceContext } from "./workspace-context";
 
@@ -250,13 +249,7 @@ export default function CrmWorkspace({ children }) {
           planOptions={planOptions}
           onCancel={() => setDialog(null)}
           onSubmit={(values) => finish(
-            async () => {
-              const hospitalEmail = String(values.hospitalEmail || "").trim();
-              if (hospitalEmail && hospitalEmail !== String(dialogLead.hospitalEmail || "").trim()) {
-                await updateLead(dialogLead.id, dialogLead, { hospitalEmail });
-              }
-              return agreeLead(dialogLead.id, values);
-            },
+            () => agreeLead(dialogLead.id, values),
             (saved) => `${saved.hospitalName} was marked agreed. Legal & Finance reviews it before Accounts can register the hospital.`,
           )}
         />
@@ -313,13 +306,7 @@ export default function CrmWorkspace({ children }) {
           hospitals={[]}
           onCreate={async (input, { shared, allowDuplicate }) => {
             try {
-              const created = remember(await createLead(input, { shared, allowDuplicate }));
-              const hospitalEmail = String(input.hospitalEmail || "").trim();
-              let saved = created;
-              if (!shared && hospitalEmail) {
-                saved = remember(await updateLead(created.id, created, { hospitalEmail }));
-                rememberAutoCreatedHospitalEmailActivity(created.id, created, saved, crmSession?.userId);
-              }
+              const saved = remember(await createLead(input, { shared, allowDuplicate }));
               setAdding(false);
               if (shared) {
                 push(`${saved.hospitalName} added to New enquiries for the team to claim.`, "success");

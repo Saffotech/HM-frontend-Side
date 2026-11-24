@@ -6,8 +6,9 @@ import StageLink from "./StageLink";
 import useOpenCase from "../hooks/useOpenCase";
 import useDocActions from "../hooks/useDocActions";
 import { DocPreviewModal } from "./DocModals";
-import { caseFinance, durationLabel, formatRupees, moneyEachCycle } from "../utils/finance";
-import { checklistDone, docsVerified, isLegalDone, isFinanceDone } from "../utils/caseHelpers";
+import HospitalCrmInfo from "./HospitalCrmInfo";
+import { caseFinance, catalogTerm, creditLabel, durationLabel, formatRupees, manualTerm, moneyEachCycle } from "../utils/finance";
+import { checklistDone, checklistRows, checklistTotal, docsVerified, isLegalDone, isFinanceDone, itemHasVerifiedFile } from "../utils/caseHelpers";
 import Clip from "./Clip";
 
 const KV = ({ rows }) => (
@@ -22,6 +23,7 @@ export default function CaseDetailModal({ caseId }) {
   if (!x) return null;
   const { f, k } = caseFinance(x);
   const nl = checklistDone(x);
+  const nt = checklistTotal(x);
   const nv = docsVerified(x);
 
   return (
@@ -38,41 +40,25 @@ export default function CaseDetailModal({ caseId }) {
 
       <div className="tiles">
         <div className="tile"><small>Legal docs</small><b>{nv}/{x.docs.length} verified</b><StageLink done={isLegalDone(x)} section="legal" caseId={x.id} /></div>
-        <div className="tile"><small>Legal checklist</small><b>{nl}/{x.cl.length} done</b><div className="bar"><i style={{ width: x.cl.length ? (nl / x.cl.length) * 100 + "%" : "0%" }} /></div></div>
+        <div className="tile"><small>Legal checklist</small><b>{nl}/{nt} done</b><div className="bar"><i style={{ width: nt ? (nl / nt) * 100 + "%" : "0%" }} /></div></div>
         <div className="tile"><small>Finance</small><b>{x.disc}% discount</b><StageLink done={isFinanceDone(x)} section="finance" caseId={x.id} /></div>
-        <div className="tile"><small>Contract value</small><b>{formatRupees(k.tot)}</b><span className="mu">+ tax {formatRupees(k.gst)}</span></div>
+        <div className="tile"><small>Contract value</small><b>{manualTerm(x, formatRupees(k.tot))}</b><span className="mu">{x.fr || x.commercialChange ? `+ tax ${formatRupees(k.gst)}` : "Not Set until finance review"}</span></div>
       </div>
 
-      <div className="g h2c" style={{ marginBottom: 12 }}>
-        <div className="sec" style={{ margin: 0 }}>
-          <h3>{ws.nm} details</h3>
-          <KV rows={[
-            ["Lead", x.lead],
-            ["City", x.city || "—"],
-            ["Plan", x.plan || "—"],
-            ["Modules", f.mod || "—"],
-            ["GSTIN", f.gst || "—"],
-            ["PO required", f.po || "—"],
-            ["Invoice email", f.mail || "—"],
-            ["Escalation", x.esc],
-            ["Decision", x.dec?.k || "—"],
-            ["Advance", x.pay ? "Received" : "Not received"],
-          ]} />
-        </div>
-        <div className="sec" style={{ margin: 0 }}>
-          <h3>Finance summary</h3>
-          <KV rows={[
-            ["Standard price", moneyEachCycle(f.std, f.freq)],
-            ["Proposed price", moneyEachCycle(k.pr, f.freq)],
-            ["Duration", durationLabel(f.yrs)],
-            ["Implementation fee", formatRupees(f.impl)],
-            ["Training fee", formatRupees(f.trn)],
-            ["Payment", `${f.freq} · ${f.adv}% advance`],
-            ["Credit period", f.cr + " days"],
-            ["Discount escalation", <StatusBadge key="esc" status={x.esc} />],
-            ["Advance payment", <StatusBadge key="pay" status={x.pay ? "Received" : "Not received"} />],
-          ]} />
-        </div>
+      <HospitalCrmInfo c={x} />
+
+      <div className="sec" style={{ marginBottom: 12 }}>
+        <h3>Pricing &amp; payment <em className="lf-source">{x.fr ? "Reviewed by Legal & Finance" : "Finance review"}</em></h3>
+        <KV rows={[
+          ["Catalog Standard Price", catalogTerm(x, moneyEachCycle(f.std, f.freq))],
+          ["Price After Discount", manualTerm(x, moneyEachCycle(k.pr, f.freq))],
+          ["Subscription Period", manualTerm(x, durationLabel(f.yrs))],
+          ["One-Time Setup Fee", manualTerm(x, formatRupees(f.impl))],
+          ["Staff Training Fee", manualTerm(x, formatRupees(f.trn))],
+          ["Payment Terms", f.freq || "Not Set"],
+          ["Payment Due", manualTerm(x, creditLabel(f.cr))],
+          ["Discount escalation", <StatusBadge key="esc" status={x.esc} />],
+        ]} />
       </div>
 
       <div className="sec">
@@ -109,10 +95,14 @@ export default function CaseDetailModal({ caseId }) {
       <div className="sec">
         <h3>Legal checklist</h3>
         <div className="cg">
-          {x.cl.map((c) => (
-            <div key={c.t}>
-              {c.s === "Verified" || c.s === "Not applicable" ? <b style={{ color: "var(--ok)" }}>✓</b> : <b className="mu">○</b>}
-              <span>{c.t}{c.n && <><br /><span className="mu">{c.n}</span></>}</span>
+          {checklistRows(x).map((c) => (
+            <div key={c.key}>
+              {itemHasVerifiedFile(c) ? <b style={{ color: "var(--ok)" }}>✓</b> : <b className="mu">○</b>}
+              <span>
+                {c.t}
+                {c.docs?.length ? <><br /><span className="mu">{c.docs.map((d) => d.n).join(", ")}</span></> : null}
+                {c.n && <><br /><span className="mu">{c.n}</span></>}
+              </span>
             </div>
           ))}
         </div>
@@ -127,7 +117,7 @@ export default function CaseDetailModal({ caseId }) {
         )}
         {x.cond && (
           <p style={{ margin: "8px 0 0" }}>
-            Condition: {x.cond.c} (owner {x.cond.o || "—"}) · <b>{x.pay ? "Advance recorded by Accounts" : "Advance not recorded"}</b>
+            Condition: {x.cond.c} (owner {x.cond.o || "—"})
           </p>
         )}
       </div>

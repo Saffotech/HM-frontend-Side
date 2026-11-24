@@ -18,7 +18,7 @@ export default function Profile() {
     ["can", "Review documents, checklist, price, and the case decision"],
     ["can", `Request Finance Head approval above ${DISCOUNT_LIMIT}%`],
     ["can", "Record that approval or rejection while escalation is Pending"],
-    ["cannot", "Record the advance payment or register the hospital"],
+    ["cannot", "Register the hospital"],
   ];
   return (
     <>

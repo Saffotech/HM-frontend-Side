@@ -3,12 +3,16 @@ import test from "node:test";
 import { sessionFromLogin } from "./platformLoginPolicy.js";
 import { PLATFORM_STAFF_ROLES, platformStaffBody, validatePlatformStaff } from "./platformStaff.js";
 import {
+  billingSource,
+  catalogTerm,
   checklistPayload,
   decisionPayload,
   documentFileError,
   financeFormFromCase,
   financePayload,
+  manualTerm,
   mapLegalCase,
+  NOT_SET,
   MAX_DOCUMENT_BYTES,
 } from "./legalCaseModel.js";
 
@@ -58,8 +62,8 @@ test("finance terms stay in whole rupees and do not invent a price", () => {
   assert.equal(saved.disc, 18);
   assert.equal(financePayload(saved).standard_price, 120000);
   assert.equal(financePayload(saved).discount, 18);
-  assert.equal(financePayload(saved).plan, null);
-  assert.equal(financePayload({ ...saved, plan: " Enterprise " }).plan, "Enterprise");
+  assert.equal("plan" in financePayload(saved), false);
+  assert.equal("plan" in financePayload({ ...saved, plan: " Enterprise " }), false);
   assert.equal(financePayload({ ...saved, std: 12.5 }), null);
 });
 
@@ -161,8 +165,76 @@ test("case mapping keeps server status and does not mark the advance paid", () =
   const payload = financePayload({ ...edited.fin, disc: edited.disc, plan: edited.plan });
   assert.equal(payload.standard_price, 180000);
   assert.equal(payload.frequency, "Quarterly");
-  assert.equal(payload.plan, "Professional");
+  assert.equal("plan" in payload, false);
   assert.equal(payload.implementation_fee, 5000);
+});
+
+test("crm agreement fields stay on the case and monthly billing is not rewritten to annual", () => {
+  const mapped = mapLegalCase({
+    id: 11,
+    lead_id: 44,
+    hospital_name: "City Care Hospital",
+    hospital_type: "General",
+    city: "Pune",
+    state: "Maharashtra",
+    hospital_email: "desk@city.test",
+    contact_person: "Asha Rao",
+    designation: "Director",
+    contact_phone: "9000000000",
+    contact_email: "asha@city.test",
+    lead_source: "Website",
+    priority: "High",
+    requirement: "Need OPD and IPD.",
+    assigned_employee_name: "Meera Shah",
+    agreed_at: "2026-11-24T10:00:00+05:30",
+    agreed_by_name: "Meera Shah",
+    handover_note: "Bill the admin office.",
+    plan: "Professional",
+    billing_cycle: "Monthly",
+    commercial_change_note: "",
+    status: "New from CRM",
+    discount: 0,
+    finance: {
+      standard_price: 8999,
+      discount: 0,
+      years: 1,
+      implementation_fee: 0,
+      training_fee: 0,
+      tax_percent: 0,
+      advance_percent: 0,
+      credit_days: 0,
+      frequency: "Monthly",
+      modules: null,
+      gstin: null,
+      po_required: "No",
+      invoice_email: null,
+      reviewed: false,
+    },
+    advance_received: false,
+    ready_to_register: false,
+  });
+  assert.equal(mapped.crm.hospitalEmail, "desk@city.test");
+  assert.equal(mapped.crm.contactPerson, "Asha Rao");
+  assert.equal(mapped.crm.assignedEmployee, "Meera Shah");
+  assert.equal(mapped.crm.handoverNote, "Bill the admin office.");
+  assert.equal(mapped.crm.message, "Need OPD and IPD.");
+  assert.equal(mapped.crm.billingCycle, "Monthly");
+  assert.equal(mapped.fin.freq, "Monthly");
+  assert.equal(mapped.fr, false);
+  const form = financeFormFromCase(mapped);
+  assert.equal(form.freq, "Monthly");
+  const reviewed = financeFormFromCase({ ...mapped, fr: true, fin: { ...mapped.fin, freq: "Annual" } });
+  assert.equal(reviewed.freq, "Monthly");
+  assert.equal(form.std, 8999);
+  assert.equal(form.mail, "");
+  assert.equal(manualTerm(mapped, "₹0"), NOT_SET);
+  assert.equal(catalogTerm(mapped, "₹8,999 / mo"), "₹8,999 / mo");
+  assert.equal(billingSource(mapped), "From CRM");
+  assert.equal(manualTerm({ ...mapped, fr: true }, "₹4,000"), "₹4,000");
+  assert.equal(
+    billingSource({ ...mapped, commercialChange: "Finance review required." }),
+    "CRM agreement changed · finance review required",
+  );
 });
 
 test("document checks follow the upload contract", () => {
