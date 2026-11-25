@@ -969,7 +969,7 @@
 }
 
 @media (max-width: 560px) {
-  .cp-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cp-kpis,
   .cp-top-stats { grid-template-columns: 1fr; }
   .cp-top-stats div + div { border-left: 0; border-top: 1px solid var(--cp-border); }
 }

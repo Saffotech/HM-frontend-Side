@@ -101,8 +101,14 @@
   gap: 16px;
 }
 
+.crm-perf-grid > * {
+  min-width: 0;
+}
+
 .crm-perf-chart {
   height: 260px;
+  min-width: 0;
+  max-width: 100%;
   padding: 12px 12px 8px 4px;
 }
 
@@ -214,5 +220,16 @@
 
   .crm-perf-bar .crm-segment {
     flex-wrap: wrap;
+  }
+
+  .crm-perf-custom {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .crm-perf-date {
+    width: auto;
+    flex: 1 1 140px;
+    min-width: 0;
   }
 }

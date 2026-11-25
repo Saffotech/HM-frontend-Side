@@ -323,8 +323,16 @@
 
 @media (max-width: 700px) {
   .subs-toolbar,
-  .subs-info {
+  .subs-info,
+  .subs-summary {
     grid-template-columns: 1fr;
   }
 
+  .subs-summary-item {
+    border-left: 0;
+  }
+
+  .subs-summary-item + .subs-summary-item {
+    border-top: 1px solid var(--classic-border);
+  }
 }

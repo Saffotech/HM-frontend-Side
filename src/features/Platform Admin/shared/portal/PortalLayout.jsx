@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { LogOut } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import logo from "../assets/images/logo.svg";
 import { portalSessionIsAuthenticated } from "../api/platformSession";
 import { usePlatform } from "../context/PlatformContext";
@@ -26,6 +27,27 @@ export default function PortalLayout({
   const logoutConfirmation = useLogoutConfirmation(() => signOutPortal(portal));
   const session = sessionFor(portal);
   const { pathname } = useLocation();
+  const [navOpen, setNavOpen] = useState(false);
+  const [seenPath, setSeenPath] = useState(pathname);
+  if (seenPath !== pathname) {
+    setSeenPath(pathname);
+    setNavOpen(false);
+  }
+
+  useEffect(() => {
+    if (!navOpen) return undefined;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (event) => {
+      if (event.key === "Escape") setNavOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [navOpen]);
+
   // Keys ending in "/" title every page below that path.
   const title = titles[pathname]
     || Object.entries(titles).find(([path]) => path.endsWith("/") && pathname.startsWith(path))?.[1]
@@ -44,7 +66,7 @@ export default function PortalLayout({
   );
 
   return (
-    <div className={`app-shell portal-shell ${className}`}>
+    <div className={`app-shell portal-shell ${className}${navOpen ? " is-nav-open" : ""}`}>
       <aside className="sidebar" aria-label={`${name} navigation`}>
         <div className="brand">
           <img src={logo} alt="" />
@@ -52,23 +74,38 @@ export default function PortalLayout({
             <strong>SaffoCare</strong>
             <span>{name}</span>
           </div>
+          <button type="button" className="icon-btn sidebar-close" onClick={() => setNavOpen(false)} aria-label="Close navigation">
+            <X size={18} aria-hidden="true" />
+          </button>
         </div>
         <div className="sidebar-scroll">
           {items.map((item) => {
             const Icon = item.icon;
             return (
-              <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+                onClick={() => setNavOpen(false)}
+              >
                 <Icon size={16} aria-hidden="true" />
-                {item.label}
+                <span className="nav-label">{item.label}</span>
                 {item.badge ? <span className="portal-nav-badge" aria-label={`${item.badge} waiting`}>{item.badge}</span> : null}
               </NavLink>
             );
           })}
         </div>
       </aside>
+      <button type="button" className="nav-backdrop" aria-label="Close navigation" onClick={() => setNavOpen(false)} />
       <div className="main-column">
         <header className="header">
-          {headerLeft ? <div className="header-left">{headerLeft}</div> : <h1 className="portal-title">{title}</h1>}
+          <div className="header-left">
+            <button type="button" className="icon-btn nav-toggle" aria-label="Open navigation" aria-expanded={navOpen} onClick={() => setNavOpen(true)}>
+              <Menu size={18} aria-hidden="true" />
+            </button>
+            {headerLeft || <h1 className="portal-title">{title}</h1>}
+          </div>
           <div className="header-right">
             {headerExtra}
             {profilePath ? (

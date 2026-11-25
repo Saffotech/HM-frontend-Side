@@ -456,8 +456,14 @@
 }
 
 @media (max-width: 640px) {
-  .inv-view-grid {
+  .inv-view-grid,
+  .inv-toolbar,
+  .inv-form {
     grid-template-columns: 1fr;
+  }
+
+  .inv-span-2 {
+    grid-column: auto;
   }
 
   .inv-hero {

@@ -25,6 +25,10 @@
   min-width: 0;
 }
 
+.header-right {
+  flex: none;
+}
+
 .unread-dot {
   position: absolute;
   top: 7px;
@@ -100,7 +104,7 @@
 }
 
 .notify-panel {
-  width: 320px;
+  width: min(320px, calc(100vw - 16px));
 }
 
 .notify-item {
@@ -116,4 +120,15 @@
 
 .menu-anchor {
   position: relative;
+}
+
+@media (max-width: 760px) {
+  .header .dropdown,
+  .notify-panel {
+    position: fixed;
+    top: 68px;
+    right: 8px;
+    left: 8px;
+    width: auto;
+  }
 }

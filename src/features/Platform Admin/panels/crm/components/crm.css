@@ -414,6 +414,7 @@ button.crm-kpi:focus-visible {
 
 .crm-table {
   width: 100%;
+  min-width: 720px;
   border-collapse: collapse;
   font-size: 13px;
 }
@@ -594,6 +595,17 @@ button.crm-kpi:focus-visible {
 .crm-empty .btn,
 .crm-state .btn {
   margin-top: 8px;
+}
+
+@media (max-width: 760px) {
+  .crm-table .crm-empty,
+  .crm-table .crm-state {
+    position: sticky;
+    left: 0;
+    width: calc(100vw - 40px);
+    max-width: calc(100vw - 40px);
+    box-sizing: border-box;
+  }
 }
 
 .crm-state-error svg {

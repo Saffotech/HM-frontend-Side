@@ -488,6 +488,26 @@
   }
 }
 
+@media (max-width: 700px) {
+  .inv-summary,
+  .inv-toolbar,
+  .inv-form {
+    grid-template-columns: 1fr;
+  }
+
+  .inv-span-2 {
+    grid-column: auto;
+  }
+
+  .inv-summary-item {
+    border-left: 0;
+  }
+
+  .inv-summary-item + .inv-summary-item {
+    border-top: 1px solid var(--classic-border);
+  }
+}
+
 @media print {
   .sidebar,
   .header,

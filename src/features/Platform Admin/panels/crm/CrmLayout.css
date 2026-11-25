@@ -2,6 +2,7 @@
   --crm-side: 244px;
   --crm-top: 64px;
   min-height: 100vh;
+  overflow-x: clip;
   background: var(--color-background);
   color: var(--color-text);
 }
@@ -188,8 +189,10 @@
 /* Main column */
 .crm-main {
   min-width: 0;
+  max-width: 100%;
   min-height: 100vh;
   margin-left: var(--crm-side);
+  overflow-x: clip;
   transition: margin-left 0.18s ease;
 }
 
@@ -616,6 +619,11 @@
 
   .crm-search-pop {
     min-width: 0;
+    max-width: 100%;
+  }
+
+  .crm-profile-pop {
+    width: min(260px, calc(100vw - 16px));
   }
 
   .crm-notify {

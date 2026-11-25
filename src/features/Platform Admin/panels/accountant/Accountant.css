@@ -830,7 +830,10 @@
 }
 
 .portal-table-wrap {
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .portal-table {

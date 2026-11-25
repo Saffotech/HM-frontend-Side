@@ -555,4 +555,7 @@
   .plan-info { grid-template-columns: 1fr; }
   .plan-info-row:nth-child(odd) { border-right: 0; }
   .plan-info-features { columns: 1; }
+  .plans-summary { grid-template-columns: 1fr; }
+  .plans-summary-item { border-left: 0; }
+  .plans-summary-item + .plans-summary-item { border-top: 1px solid var(--classic-border); }
 }

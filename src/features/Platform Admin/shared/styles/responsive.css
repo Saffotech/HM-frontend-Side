@@ -1,3 +1,23 @@
+.kpi-grid > *,
+.chart-grid > *,
+.form-grid > *,
+.chart-card,
+.chart-box,
+.crm-perf-chart,
+.cp-chart,
+.accounts-chart,
+.accounts-chart__plot {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.kpi-grid b,
+.kpi-grid strong,
+.stat-card b,
+.stat-card strong {
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 1100px) {
   .kpi-grid,
   .chart-grid {
@@ -14,8 +34,6 @@
     --space-page: 16px;
   }
 
-  .kpi-grid,
-  .chart-grid,
   .form-grid {
     grid-template-columns: 1fr;
   }
@@ -24,7 +42,24 @@
     grid-column: auto;
   }
 
-  .page-header {
+  .page-header,
+  .portal-head {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-actions {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .platform-root {
+    --space-page: 12px;
+  }
+
+  .kpi-grid,
+  .chart-grid {
+    grid-template-columns: 1fr;
   }
 }

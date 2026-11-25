@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Bell, ChevronDown } from "lucide-react";
+import { Bell, ChevronDown, Menu } from "lucide-react";
 import { Link } from "react-router-dom";
 import { usePlatform } from "../../../shared/context/PlatformContext";
 import { initials } from "../../../shared/utils/validation";
@@ -8,7 +8,7 @@ import useLogoutConfirmation from "@/shared/hooks/useLogoutConfirmation";
 import Breadcrumbs from "./Breadcrumbs";
 import "../../../shared/layout/Header.css";
 
-export default function Header() {
+export default function Header({ navOpen = false, onOpenNav }) {
   const { sessionFor, signOutPortal } = usePlatform();
   const logoutConfirmation = useLogoutConfirmation(() => signOutPortal("platform"));
   const session = sessionFor("platform");
@@ -29,6 +29,9 @@ export default function Header() {
   return (
     <header className="header">
       <div className="header-left">
+        <button type="button" className="icon-btn nav-toggle" aria-label="Open navigation" aria-expanded={navOpen} onClick={onOpenNav}>
+          <Menu size={18} aria-hidden="true" />
+        </button>
         <Breadcrumbs />
       </div>
       <div className="header-right">

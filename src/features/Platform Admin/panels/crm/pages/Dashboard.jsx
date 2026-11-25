@@ -37,12 +37,6 @@ function greeting() {
   return "Good evening";
 }
 
-function subscriptionTone(status) {
-  if (status === "Active") return "converted";
-  if (status === "Trial") return "new";
-  return "closed";
-}
-
 export default function Dashboard() {
   const { me, today, leads, hospitals, invoices, actions } = useCrm();
   const { revenue: attributed, loading: revenueLoading, error: revenueError } = useCrmRevenue();
@@ -157,19 +151,16 @@ export default function Dashboard() {
       title: "Hospitals registered",
       note: `${registeredThisMonth} this month · ${withAccounts.length} agreed`,
       empty: ["No registered hospitals yet", "Hospitals appear here once Accounts registers them."],
-      columns: ["Hospital", "Plan", "Registered", "Registered by", "Subscription"],
-      cells: (lead) => {
-        const status = facts.get(lead.id)?.subscriptionStatus;
-        return (
-          <>
-            {hospitalCell(lead)}
-            {planCell(lead)}
-            <td className="crm-nowrap">{formatDate(lead.registeredAt)}</td>
-            <td>{lead.registeredBy || "—"}</td>
-            <td>{status ? <span className={`crm-badge crm-badge-${subscriptionTone(status)}`}>{status}</span> : <span className="crm-sub">—</span>}</td>
-          </>
-        );
-      },
+      columns: ["Hospital ID", "Hospital", "Plan", "Registered", "Registered by"],
+      cells: (lead) => (
+        <>
+          <td className="crm-mono">{lead.hospitalId || "—"}</td>
+          {hospitalCell(lead)}
+          {planCell(lead)}
+          <td className="crm-nowrap">{formatDate(lead.registeredAt)}</td>
+          <td>{lead.registeredBy || "—"}</td>
+        </>
+      ),
     },
     conversion: {
       title: "All assigned leads",

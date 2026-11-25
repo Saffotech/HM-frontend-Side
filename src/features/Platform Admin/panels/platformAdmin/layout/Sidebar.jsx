@@ -3,6 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import {
   Building2,
   ChartColumn,
+  ChevronDown,
   CircleUserRound,
   ContactRound,
   CreditCard,
@@ -11,7 +12,7 @@ import {
   LayoutDashboard,
   Receipt,
   UserPlus,
-  ChevronDown,
+  X,
 } from "lucide-react";
 import logo from "../../../shared/assets/images/logo.svg";
 import { PLATFORM_BASE, platformPath } from "../../../shared/paths";
@@ -54,7 +55,7 @@ const groups = [
   },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ onNavigate }) {
   const [collapsed, setCollapsed] = useState({});
   const { pathname } = useLocation();
 
@@ -66,6 +67,9 @@ export default function Sidebar() {
           <strong>SaffoCare</strong>
           <span>Platform Admin</span>
         </div>
+        <button type="button" className="icon-btn sidebar-close" onClick={onNavigate} aria-label="Close navigation">
+          <X size={18} aria-hidden="true" />
+        </button>
       </div>
       <div className="sidebar-scroll">
         {groups.map((group) => {
@@ -78,7 +82,7 @@ export default function Sidebar() {
                 aria-expanded={isOpen}
                 onClick={() => setCollapsed((current) => ({ ...current, [group.id]: isOpen }))}
               >
-                {group.label}
+                <span className="nav-label">{group.label}</span>
                 <ChevronDown size={14} style={{ transform: isOpen ? "rotate(0deg)" : "rotate(-90deg)" }} />
               </button>
               {isOpen && group.items.map((item) => {
@@ -92,9 +96,10 @@ export default function Sidebar() {
                       const excluded = item.exclude?.some((path) => pathname.startsWith(path));
                       return `nav-link ${isActive && !excluded ? "active" : ""}`;
                     }}
+                    onClick={onNavigate}
                   >
                     <Icon size={16} aria-hidden="true" />
-                    {item.label}
+                    <span className="nav-label">{item.label}</span>
                   </NavLink>
                 );
               })}

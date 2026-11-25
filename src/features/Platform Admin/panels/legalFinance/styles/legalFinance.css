@@ -999,7 +999,14 @@
 }
 .lf-panel .cs {
         position: relative;
-        min-width: 520px;
+        flex: 0 0 520px;
+        width: 520px;
+        max-width: 100%;
+}
+.lf-panel .lf-case-head > span {
+        flex: 0 0 520px;
+        width: 520px;
+        max-width: 100%;
 }
 .lf-panel .csb {
         display: flex;
@@ -1057,8 +1064,8 @@
         position: absolute;
         right: 0;
         top: calc(100% + 6px);
-        width: 520px;
-        max-width: 92vw;
+        width: min(520px, 100%);
+        max-width: calc(100vw - 24px);
         background: #fff;
         border: 1px solid var(--bd);
         border-radius: 12px;
@@ -1095,7 +1102,9 @@
         box-shadow: inset 3px 0 0 #4f46e5;
 }
 @media (max-width: 760px) {
+.lf-panel .lf-case-head > span,
 .lf-panel .cs {
+          flex: 1 1 100%;
           min-width: 0;
           width: 100%;
 }
@@ -1283,7 +1292,27 @@
         width: 100%;
         min-width: 0;
 }
-@media (max-width: 900px) {
+@media (max-width: 480px) {
+.lf-panel .g4,
+.lf-panel .tiles,
+.lf-panel .h2c {
+        grid-template-columns: 1fr;
+}
+.lf-panel .kpi b,
+.lf-panel .tile b {
+        overflow-wrap: anywhere;
+}
+.lf-panel .md,
+.lf-panel .md.wide {
+        width: 100%;
+        max-height: calc(100vh - 24px);
+}
+.lf-panel .hh,
+.lf-panel .ab {
+        flex-wrap: wrap;
+}
+}
+@media (max-width: 1180px) {
 .lf-panel .lf-check-head {
           align-items: flex-start;
           flex-wrap: wrap;
