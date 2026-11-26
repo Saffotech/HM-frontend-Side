@@ -19,7 +19,7 @@ import { PLAN_NAMES, billingCycles } from "../../../../shared/data/catalog";
 import { usePlatform } from "../../../../shared/context/PlatformContext";
 import { usePlatformPlans } from "../../../../shared/hooks/usePlatformPlans";
 import Pagination from "../../../../shared/components/Pagination";
-import { LIST_PAGE_SIZE, usePagination } from "../../../../shared/hooks/usePagination";
+import { PLATFORM_PAGE_SIZE, usePagination } from "../../../../shared/hooks/usePagination";
 import { usePlatformRevenue } from "../../../../shared/hooks/usePlatformRevenue";
 import { isPlatformAdminLocation, platformBackTitle } from "../../../../shared/navigation/inAppHistory";
 import { useInAppBack, useInAppPrevious } from "../../../../shared/navigation/useInAppHistory";
@@ -217,7 +217,7 @@ function SubscriptionHistory({ tenantId }) {
     () => (revenue?.invoices || []).filter((invoice) => String(invoice.tenantId) === String(tenantId)),
     [revenue, tenantId],
   );
-  const pagination = usePagination(rows, LIST_PAGE_SIZE, String(tenantId || ""));
+  const pagination = usePagination(rows, PLATFORM_PAGE_SIZE, String(tenantId || ""));
 
   return (
     <section className="td-box">

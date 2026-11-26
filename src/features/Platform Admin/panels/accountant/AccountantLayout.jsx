@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Building2, LayoutDashboard, Receipt, UserRound } from "lucide-react";
 import PortalLayout from "../../shared/portal/PortalLayout";
 import { listRegistrations } from "../../shared/api/registrationApi";
@@ -14,7 +15,20 @@ const titles = {
 };
 
 export default function AccountantLayout() {
+  const { pathname } = useLocation();
+  const onQueue = pathname === accountsPath("/registrations");
   const [waiting, setWaiting] = useState(null);
+  const [queueEntries, setQueueEntries] = useState(0);
+  const skipQueueBump = useRef(true);
+
+  useEffect(() => {
+    if (skipQueueBump.current) {
+      skipQueueBump.current = false;
+      return;
+    }
+    if (!onQueue) return;
+    setQueueEntries((count) => count + 1);
+  }, [onQueue]);
 
   useEffect(() => {
     let cancelled = false;
@@ -23,12 +37,12 @@ export default function AccountantLayout() {
         if (!cancelled && Array.isArray(rows)) setWaiting(rows.length);
       })
       .catch(() => {
-        /* A 403, 409, or 422 is not an empty queue. Keep the last known count. */
+        /* A failed count is not an empty queue. Keep the last known count and leave navigation usable. */
       });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [queueEntries]);
 
   const items = [
     { to: ACCOUNTS_BASE, label: "Collections", icon: LayoutDashboard, end: true },
@@ -45,6 +59,7 @@ export default function AccountantLayout() {
       items={items}
       titles={titles}
       className="portal-accounts"
+      showLogout={false}
     />
   );
 }

@@ -244,10 +244,50 @@ export function paymentRequestBody(form) {
   };
 }
 
+function calendarDate(value) {
+  const text = String(value ?? "").trim().slice(0, 10);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+  if (!match) return "";
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return "";
+  return text;
+}
+
 function quarterKey(iso) {
-  const month = Number(String(iso || "").slice(5, 7));
-  if (!month) return "";
-  return `${String(iso).slice(0, 4)}-Q${Math.ceil(month / 3)}`;
+  const date = calendarDate(iso);
+  if (!date) return "";
+  const month = Number(date.slice(5, 7));
+  return `${date.slice(0, 4)}-Q${Math.ceil(month / 3)}`;
+}
+
+/**
+ * Month, quarter, and custom ranges all use the due date.
+ * That matches This month, This quarter, and the invoice list's due=month filter.
+ * A missing or invalid due date does not match a period.
+ */
+function matchesPeriod(invoice, period, today, dateFrom, dateTo) {
+  if (!period) return true;
+  const due = calendarDate(invoice?.dueDate);
+  if (period === "month" || period === "quarter") {
+    const todayDate = calendarDate(today);
+    if (!todayDate) return true;
+    if (!due) return false;
+    if (period === "month") return due.slice(0, 7) === todayDate.slice(0, 7);
+    return quarterKey(due) === quarterKey(todayDate);
+  }
+  if (period === "custom") {
+    if (!due) return false;
+    const from = calendarDate(dateFrom);
+    const to = calendarDate(dateTo);
+    if (dateFrom && !from) return false;
+    if (dateTo && !to) return false;
+    if (from && due < from) return false;
+    if (to && due > to) return false;
+  }
+  return true;
 }
 
 export function matchesInvoiceFilters(invoice, { query = "", status = "", period = "", today = "", dateFrom = "", dateTo = "" } = {}) {
@@ -270,11 +310,5 @@ export function matchesInvoiceFilters(invoice, { query = "", status = "", period
     if (invoice.status === "Paid" || invoice.dueDate !== today) return false;
   }
   if (SERVER_STATUSES.has(status) && invoice.status !== status) return false;
-  if (period === "month" && today && !String(invoice.dueDate).startsWith(today.slice(0, 7))) return false;
-  if (period === "quarter" && today && quarterKey(invoice.dueDate) !== quarterKey(today)) return false;
-  if (period === "custom") {
-    const issueDate = String(invoice.invoiceDate || "").slice(0, 10);
-    if (!issueDate || (dateFrom && issueDate < dateFrom) || (dateTo && issueDate > dateTo)) return false;
-  }
-  return true;
+  return matchesPeriod(invoice, period, today, dateFrom, dateTo);
 }

@@ -3,6 +3,7 @@
  */
 
 import { labDepartmentLabel } from '@/shared/utils/labDepartments';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import { mapApiVisitLocationFields } from '@/features/lab/utils/visitLocation';
 
 const IST_OFFSET = '+05:30';
@@ -50,7 +51,7 @@ export function apiToUiLabOrder(row) {
     appointmentId: row.appointment_id ?? row.appointmentId,
     patientId: row.patient_uhid ?? row.patient_uid ?? row.patientUid ?? String(row.patient_id ?? ''),
     patientDbId: row.patient_id ?? row.patientDbId,
-    patientName: row.patient_name ?? row.patientName ?? '—',
+    patientName: formatPersonName(row.patient_name ?? row.patientName) || '—',
     doctorId: row.doctor_id ?? row.doctorId,
     doctorName: row.doctor_name ?? row.doctorName ?? '—',
     testName: row.test_name ?? row.testName ?? '—',
@@ -122,7 +123,7 @@ export function apiToUiLabReport(row) {
     reportDbId: reportId,
     orderId: row.order_id ?? row.lab_test_order_id ?? row.orderId,
     patientId: row.patient_uhid ?? row.patient_uid ?? String(row.patient_id ?? ''),
-    patientName: row.patient_name ?? row.patientName ?? '—',
+    patientName: formatPersonName(row.patient_name ?? row.patientName) || '—',
     testName: row.test_name ?? row.testName ?? '—',
     price: priceRaw != null && priceRaw !== '' ? String(priceRaw) : null,
     doctorName: row.doctor_name ?? row.doctorName ?? '—',
@@ -144,7 +145,7 @@ export function apiToUiLabReportDetail(row) {
     reportDbId: row.id,
     orderId: row.lab_test_order_id ?? order.id,
     patientId: order.patient_uhid ?? order.patient_uid ?? '',
-    patientName: order.patient_name ?? '—',
+    patientName: formatPersonName(order.patient_name) || '—',
     testName: order.test_name ?? '—',
     labTestId: order.lab_test_id ?? row.lab_test_id ?? null,
     price: order.price != null ? String(order.price) : (row.price != null ? String(row.price) : null),

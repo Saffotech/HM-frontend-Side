@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { paginate } from "./paginationMath";
 
-export { LIST_PAGE_SIZE, paginate, shouldShowPagination, visiblePageNumbers } from "./paginationMath";
+export { LIST_PAGE_SIZE, PLATFORM_PAGE_SIZE, paginate, shouldShowPagination, visiblePageNumbers } from "./paginationMath";
 
 /**
  * Paginate an in-memory array. `resetKey` returns to page 1 when search,

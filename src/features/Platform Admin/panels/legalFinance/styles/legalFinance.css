@@ -399,20 +399,12 @@
         align-items: center;
         margin-bottom: 10px;
 }
-.lf-panel .lf-case-head {
-        align-items: flex-start;
-}
 .lf-panel .lf-case-meta {
         min-width: 0;
 }
 .lf-panel .lf-case-decision {
         display: inline-flex;
-        margin-bottom: 4px;
         font-size: 13px;
-}
-.lf-panel .lf-case-meta .mu {
-        margin: 2px 0 0;
-        font-size: 12px;
 }
 .lf-panel .mu {
         color: var(--mu);
@@ -429,19 +421,14 @@
 }
 .lf-panel .lf-pricing-head {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         justify-content: space-between;
         gap: 12px;
         margin-bottom: 10px;
 }
 .lf-panel .lf-pricing-head h2 {
-        margin: 0 0 2px;
-        font-size: 18px;
-}
-.lf-panel .lf-pricing-head p {
         margin: 0;
-        color: var(--mu);
-        font-size: 14px;
+        font-size: 18px;
 }
 .lf-panel .lf-pricing-grid {
         display: grid;
@@ -962,6 +949,54 @@
 .lf-panel .lf-sheet dd.is-empty {
         color: #94a3b8;
 }
+.lf-panel .lf-crm {
+        background: #f7f8fd;
+        padding: 10px 12px 6px;
+}
+.lf-panel .lf-crm h3 {
+        margin: 0 0 6px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #e4e7f5;
+}
+.lf-panel .lf-crm .lf-sheet {
+        margin: 0;
+        gap: 0 24px;
+}
+.lf-panel .lf-crm .lf-sheet > div + div {
+        border-left: 1px solid #e4e7f5;
+        padding-left: 18px;
+}
+.lf-panel .lf-crm .lf-line {
+        grid-template-columns: 118px minmax(0, 1fr);
+        gap: 4px 10px;
+        padding: 4px 0;
+        border-bottom: 1px solid #eef0f6;
+}
+.lf-panel .lf-crm .lf-sheet > div .lf-line:last-child {
+        border-bottom: 0;
+}
+.lf-panel .lf-crm .lf-sheet dt {
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748b;
+}
+.lf-panel .lf-crm .lf-sheet dd {
+        font-size: 13px;
+        font-weight: 650;
+        color: #1e293b;
+}
+.lf-panel .lf-crm .lf-chip {
+        display: inline-block;
+        max-width: 100%;
+        padding: 0 8px;
+        border-radius: 999px;
+        background: #e8ebff;
+        color: #3730a3;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 20px;
+        vertical-align: baseline;
+}
 .lf-panel .lf-review-banner {
         margin: 8px 0 0;
         color: #92400e;
@@ -984,6 +1019,12 @@
 .lf-panel .cg,
 .lf-panel .lf-sheet {
           grid-template-columns: 1fr;
+}
+.lf-panel .lf-crm .lf-sheet > div + div {
+          border-left: 0;
+          padding-left: 0;
+          margin-top: 2px;
+          border-top: 1px solid #e4e7f5;
 }
 }
 .lf-panel .ab {
@@ -1176,9 +1217,17 @@
         border: 0;
         box-shadow: none;
 }
-.portal-legal-finance .lf-body {
+.portal-legal-finance .lf-body,
+.portal-legal-finance .lf-profile-body {
         width: 100%;
         min-width: 0;
+}
+.portal-legal-finance .content > .lf-profile-page {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+        background: transparent;
 }
 .portal-legal-finance .lf-panel .g,
 .portal-legal-finance .lf-panel .g > *,

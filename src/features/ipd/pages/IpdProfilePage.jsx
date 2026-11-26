@@ -46,6 +46,7 @@ import {
   displayProfileText,
   parseProfileLanguages,
 } from '@/shared/utils/profileTextFormat';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import './IpdProfilePage.css';
 
 const GENDER_OPTIONS = [
@@ -291,7 +292,7 @@ export default function IpdProfilePage() {
   const displayName = useMemo(() => {
     if (!profile) return 'IPD';
     const name = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email;
-    return displayProfileText(name);
+    return name.includes('@') ? name : formatPersonName(name);
   }, [profile]);
 
   const imageUrl = resolveIpdProfileImageUrl(profile?.profile_image_url);
@@ -708,8 +709,8 @@ export default function IpdProfilePage() {
                 </h3>
 
                 <div className="opd-profile-grid">
-                  <ReadField label="First name" value={profile.first_name} />
-                  <ReadField label="Last name" value={profile.last_name} />
+                  <ReadField label="First name" value={profile.first_name ? formatPersonName(profile.first_name) : profile.first_name} />
+                  <ReadField label="Last name" value={profile.last_name ? formatPersonName(profile.last_name) : profile.last_name} />
                   <ReadField label="Email" value={profile.email} />
                   <ReadField label="Employee ID" value={profile.employee_id} />
                   <ReadField label="Joining date" value={profile.joining_date} />

@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import { Building2, CalendarPlus, IndianRupee, Users } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import Button from "../../../../shared/components/Button";
 import Pagination from "../../../../shared/components/Pagination";
-import { LIST_PAGE_SIZE, usePagination } from "../../../../shared/hooks/usePagination";
+import SearchBar from "../../../../shared/components/SearchBar";
+import { PLATFORM_PAGE_SIZE, usePagination } from "../../../../shared/hooks/usePagination";
 import { usePlatformRevenue } from "../../../../shared/hooks/usePlatformRevenue";
 import { formatCurrency } from "../../../../shared/utils/formatCurrency";
-import { formatDate, formatDateTime } from "../../../../shared/utils/formatDate";
+import { formatDate } from "../../../../shared/utils/formatDate";
 import { PLATFORM_BASE } from "../../../../shared/paths";
 import { registrationsThisMonth } from "../../sessionHospitals";
 import { useRegisteredHospitals } from "../../useRegisteredHospitals";
@@ -39,6 +39,27 @@ function paymentHospital(payment) {
 
 function paidAmount(payment) {
   return payment.paymentAmount == null ? payment.amount : payment.paymentAmount;
+}
+
+function rowSearchText(type, row) {
+  if (type === "revenue") {
+    return [row.hospitalName, row.hospitalCode, row.plan, row.number, row.paidAt].filter(Boolean).join(" ");
+  }
+  return [
+    row.name,
+    row.code,
+    row.admin_email,
+    row.plan,
+    row.billing_cycle,
+    row.subscription_status,
+    row.tenant_status,
+  ].filter(Boolean).join(" ");
+}
+
+function matchesTableQuery(type, row, query) {
+  const needle = String(query || "").trim().toLowerCase();
+  if (!needle) return true;
+  return rowSearchText(type, row).toLowerCase().includes(needle);
 }
 
 function DashboardRows({ type, rows, onOpenHospital }) {
@@ -128,16 +149,14 @@ export default function Dashboard() {
     refreshing,
     error: hospitalsError,
     refreshError,
-    updatedAt,
-    reload,
   } = useRegisteredHospitals();
   const {
     revenue,
     loading: revenueLoading,
     error: revenueError,
-    reload: reloadRevenue,
   } = usePlatformRevenue();
   const [selected, setSelected] = useState("hospitals");
+  const [query, setQuery] = useState("");
   const hospitalsBusy = hospitalsLoading || refreshing;
   const hospitalError = refreshError || hospitalsError;
   const now = useMemo(() => new Date(), []);
@@ -180,8 +199,6 @@ export default function Dashboard() {
       rows: hospitals,
       loading: hospitalsBusy,
       error: hospitalError,
-      refreshing: refreshing || hospitalsLoading,
-      refresh: reload,
     };
     if (selected === "registrations") return {
       title: "New Registration",
@@ -190,8 +207,6 @@ export default function Dashboard() {
       rows: registrations,
       loading: hospitalsBusy,
       error: hospitalError,
-      refreshing: refreshing || hospitalsLoading,
-      refresh: reload,
     };
     if (selected === "subscriptions") return {
       title: "Active Subscriptions",
@@ -200,8 +215,6 @@ export default function Dashboard() {
       rows: subscriptions,
       loading: hospitalsBusy,
       error: hospitalError,
-      refreshing: refreshing || hospitalsLoading,
-      refresh: reload,
     };
     return {
       title: "Hospital payments",
@@ -210,11 +223,13 @@ export default function Dashboard() {
       rows: payments,
       loading: revenueLoading && !revenue,
       error: revenueError,
-      refreshing: revenueLoading,
-      refresh: reloadRevenue,
     };
-  }, [hospitalError, hospitals, hospitalsBusy, hospitalsLoading, payments, refreshing, registrations, reload, reloadRevenue, revenue, revenueError, revenueLoading, selected, subscriptions]);
-  const pagination = usePagination(table.rows, LIST_PAGE_SIZE, selected);
+  }, [hospitalError, hospitals, hospitalsBusy, payments, registrations, revenue, revenueError, revenueLoading, selected, subscriptions]);
+  const visibleRows = useMemo(
+    () => table.rows.filter((row) => matchesTableQuery(selected, row, query)),
+    [query, selected, table.rows],
+  );
+  const pagination = usePagination(visibleRows, PLATFORM_PAGE_SIZE, `${selected}|${query}`);
 
   return (
     <section className="dash-page">
@@ -249,22 +264,12 @@ export default function Dashboard() {
             <p className="panel-copy">{table.description}</p>
           </div>
           <div className="dash-table-actions">
-            {updatedAt && selected !== "revenue" && (
-              <time className="dash-updated" dateTime={new Date(updatedAt).toISOString()}>
-                Updated {formatDateTime(updatedAt)}
-              </time>
-            )}
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={table.refreshing}
-              onClick={table.refresh}
-            >
-              {table.refreshing ? "Refreshing…" : "Refresh"}
-            </Button>
-            <span className="dash-result-count">
-              {table.loading ? "Loading" : table.error ? "Unavailable" : `${table.rows.length} records`}
-            </span>
+            <SearchBar
+              id="dashboard-table-search"
+              value={query}
+              onChange={setQuery}
+              placeholder={selected === "revenue" ? "Search hospital or plan" : "Search hospital, email, or plan"}
+            />
           </div>
         </div>
         <div className="dash-table-wrap">
@@ -277,6 +282,8 @@ export default function Dashboard() {
                 <tr><td colSpan={table.headers.length}><p className="dash-empty" role="alert">{table.error}</p></td></tr>
               ) : table.rows.length === 0 ? (
                 <tr><td colSpan={table.headers.length}><p className="dash-empty">No {table.title.toLowerCase()} to show.</p></td></tr>
+              ) : visibleRows.length === 0 ? (
+                <tr><td colSpan={table.headers.length}><p className="dash-empty">No records match this search.</p></td></tr>
               ) : (
                 <DashboardRows
                   type={selected}
@@ -287,7 +294,7 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
-        {!table.loading && !table.error ? <Pagination {...pagination} onPageChange={pagination.setPage} /> : null}
+        {!table.loading && !table.error && visibleRows.length > 0 ? <Pagination {...pagination} onPageChange={pagination.setPage} /> : null}
       </section>
 
     </section>

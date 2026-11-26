@@ -12,6 +12,7 @@ import { adminPanelRoutes } from '@/shared/constants';
 import { filterHospitalOwnerRegisterRoles } from '@/features/manager/utils/hospitalManagerRoles';
 import { toast } from '@/shared/utils/toast';
 import { normalizeEmailInput } from '@/shared/utils/credentials';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import { ensureLabTechDepartmentId } from '@/features/manager/utils/ensureLabTechDepartment';
 import {
   isLabTechnicianRole,
@@ -92,7 +93,11 @@ export default function AdminStaffRegisterPage() {
     const value = e.target.value;
     setForm((prev) => ({
       ...prev,
-      [field]: field === 'email' ? normalizeEmailInput(value) : value,
+      [field]: field === 'email'
+        ? normalizeEmailInput(value)
+        : field === 'first_name' || field === 'last_name'
+          ? formatPersonName(value)
+          : value,
     }));
   };
 

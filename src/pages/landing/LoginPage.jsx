@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Activity,
@@ -20,7 +20,12 @@ import { isSupersededSessionError } from '@/components/security/httpSessionPolic
 import { getAppEntryForUser } from '@/shared/utils/authRedirect';
 import { useUniversalSignIn } from '@/shared/auth/useUniversalSignIn';
 import { trimCredentials, hasCredentials, normalizeEmailInput } from '@/shared/utils/credentials';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import { toast } from '@/shared/utils/toast';
+import {
+  clearPasswordChangedNotice,
+  readPasswordChangedNotice,
+} from '@/shared/auth/passwordChangedNotice';
 import './LoginPage.design.css';
 
 const HERO_IMAGE = '/images/hospital-login.png';
@@ -127,9 +132,29 @@ export default function LoginPage() {
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [slideIndex, setSlideIndex] = useState(0);
+  const [passwordNotice, setPasswordNotice] = useState(() => readPasswordChangedNotice());
+  const passwordNoticeRef = useRef(null);
 
   const slide = SLIDES[slideIndex];
   const SlideIcon = slide.icon;
+
+  useEffect(() => {
+    if (!passwordNotice) return undefined;
+    passwordNoticeRef.current?.focus();
+    const onKey = (event) => {
+      if (event.key === 'Escape') {
+        clearPasswordChangedNotice();
+        setPasswordNotice(false);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [passwordNotice]);
+
+  function dismissPasswordNotice() {
+    clearPasswordChangedNotice();
+    setPasswordNotice(false);
+  }
 
   useEffect(() => {
     if (searchParams.get('switch') === '1') {
@@ -193,7 +218,10 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       const result = await signIn(trimmed);
-      const name = result.profile?.full_name || result.profile?.name || 'back';
+      clearPasswordChangedNotice();
+      setPasswordNotice(false);
+      const rawName = result.profile?.full_name || result.profile?.name || '';
+      const name = rawName ? formatPersonName(rawName) : 'back';
       toast.success(`Welcome, ${name}`);
       navigate(result.destination, { replace: true });
     } catch (err) {
@@ -214,6 +242,32 @@ export default function LoginPage() {
 
   return (
     <main className="hlogin">
+      {passwordNotice ? (
+        <div className="hlogin-notice" role="presentation" onClick={dismissPasswordNotice}>
+          <div
+            className="hlogin-notice-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="hlogin-password-title"
+            aria-describedby="hlogin-password-copy"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="hlogin-notice-icon" aria-hidden>
+              <CheckCircle2 size={28} />
+            </div>
+            <h2 id="hlogin-password-title">Your password is changed</h2>
+            <p id="hlogin-password-copy">Login with your new password.</p>
+            <button
+              ref={passwordNoticeRef}
+              type="button"
+              className="hlogin-notice-ok"
+              onClick={dismissPasswordNotice}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      ) : null}
       <div className="hlogin-glow hlogin-glow--left" aria-hidden />
       <div className="hlogin-glow hlogin-glow--right" aria-hidden />
 
@@ -270,7 +324,7 @@ export default function LoginPage() {
                   {mode === 'signin' && isAuthenticated && user && (
                     <div className="hlogin-session" role="status">
                       <p>
-                        Signed in as <strong>{user.full_name}</strong>
+                        Signed in as <strong>{formatPersonName(user.full_name)}</strong>
                       </p>
                       <div className="hlogin-session-actions">
                         <button

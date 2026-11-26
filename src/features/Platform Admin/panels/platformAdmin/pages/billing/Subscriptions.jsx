@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import Button from "../../../../shared/components/Button";
 import Pagination from "../../../../shared/components/Pagination";
 import SearchBar from "../../../../shared/components/SearchBar";
-import { LIST_PAGE_SIZE, usePagination } from "../../../../shared/hooks/usePagination";
+import { PLATFORM_PAGE_SIZE, usePagination } from "../../../../shared/hooks/usePagination";
 import Select from "../../../../shared/components/Select";
 import { activePlanNames } from "../../../../shared/api/platformPlans";
 import { PLAN_NAMES } from "../../../../shared/data/catalog";
@@ -57,7 +57,7 @@ export default function Subscriptions() {
     if (filters.cycle && hospital.billing_cycle !== filters.cycle) return false;
     return true;
   }), [hospitals, filters]);
-  const pagination = usePagination(rows, LIST_PAGE_SIZE, [filters.query, filters.plan, filters.status, filters.cycle].join("|"));
+  const pagination = usePagination(rows, PLATFORM_PAGE_SIZE, [filters.query, filters.plan, filters.status, filters.cycle].join("|"));
 
   const summary = [
     ["all", "All", counts.all, ""],

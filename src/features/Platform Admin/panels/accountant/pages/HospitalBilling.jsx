@@ -27,7 +27,6 @@ const STATUS_FILTERS = [
   { key: "Pending", label: "Pending" },
   { key: "Overdue", label: "Overdue" },
   { key: "Paid", label: "Paid" },
-  { key: "Failed", label: "Failed" },
   { key: "soon", label: "Due soon" },
 ];
 
@@ -54,7 +53,7 @@ export default function HospitalBilling() {
     ? (accountantBackTitle(previous.pathname) || "Back")
     : "Invoices & Payments";
   const today = todayInput();
-  const { invoices, loading, error, reload } = usePlatformInvoices({ tenantId: id, enabled: Boolean(id) });
+  const { invoices, loading, error, reload } = usePlatformInvoices({ tenantId: id, enabled: Boolean(id), portal: "accountant" });
   const [status, setStatus] = useState("");
   const [period, setPeriod] = useState("");
   const [query, setQuery] = useState("");
@@ -102,7 +101,6 @@ export default function HospitalBilling() {
       Pending: scoped.filter((invoice) => invoice.status === "Pending").length,
       Overdue: scoped.filter((invoice) => invoice.status === "Overdue").length,
       Paid: scoped.filter((invoice) => invoice.status === "Paid").length,
-      Failed: scoped.filter((invoice) => invoice.status === "Failed").length,
       soon: scoped.filter((invoice) => matchesInvoiceFilters(invoice, { status: "soon", today })).length,
     };
   }, [invoices, period, query, today]);
@@ -189,6 +187,7 @@ export default function HospitalBilling() {
           error={error}
           showRecords
           hideHospital
+          onRetry={reload}
           onPay={setPaying}
           onPrint={(invoice) => setPrintJob({ key: Date.now(), invoices: [invoice] })}
         />

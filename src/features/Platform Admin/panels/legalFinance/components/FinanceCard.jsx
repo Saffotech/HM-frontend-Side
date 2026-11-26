@@ -49,7 +49,6 @@ export default function FinanceCard({ c }) {
       <div className="lf-pricing-head">
         <div>
           <h2>Pricing &amp; Payment Details</h2>
-          <p>Subscription, charges and billing for this hospital.</p>
         </div>
         <button
           className="btn p"
@@ -105,9 +104,7 @@ export default function FinanceCard({ c }) {
       </div>
 
       {c.commercialChange ? <div className="lf-review-banner">{c.commercialChange}</div> : null}
-      {c.empty ? null : !c.fr && !c.commercialChange ? (
-        <div className="inf">Catalog price and billing cycle came from CRM. Contract length, discount, fees, tax, and invoice details stay Not Set until Legal &amp; Finance reviews them.</div>
-      ) : over ? (
+      {c.empty || (!c.fr && !c.commercialChange) ? null : over ? (
         <div className="lf-pricing-note">
           <div className="warn">Discount exceeds the 10% limit. Finance Head status: <b>{c.esc}</b></div>
           {c.esc === "Not requested" && (

@@ -1,3 +1,4 @@
+import { formatPersonName } from "@/shared/utils/formatPersonName";
 import { interpretPlatformError, shouldEndPlatformSession } from "./platformErrors.js";
 
 /** Roles the platform staff endpoint accepts. Hospital and platform admin are excluded. */
@@ -51,8 +52,8 @@ export function validatePlatformStaff(values) {
 export function platformStaffBody(values) {
   const lastName = String(values?.lastName ?? "").trim();
   return {
-    first_name: String(values?.firstName ?? "").trim(),
-    last_name: lastName || null,
+    first_name: formatPersonName(String(values?.firstName ?? "").trim()),
+    last_name: formatPersonName(lastName) || null,
     email: String(values?.email ?? "").trim().toLowerCase(),
     password: String(values?.password ?? ""),
     role: values?.role,
@@ -84,8 +85,8 @@ export function mapStaffDirectory(body) {
       return [{
         id: row.user_id,
         userId: row.user_id,
-        firstName: row.first_name || "",
-        lastName: row.last_name || "",
+        firstName: formatPersonName(row.first_name || ""),
+        lastName: formatPersonName(row.last_name || ""),
         email: row.email,
         role: row.role,
         isActive: Boolean(row.is_active),
@@ -100,8 +101,8 @@ export function staffCreatedNotice(body) {
   return {
     id: body.user_id,
     userId: body.user_id,
-    firstName: body.first_name || "",
-    lastName: body.last_name || "",
+    firstName: formatPersonName(body.first_name || ""),
+    lastName: formatPersonName(body.last_name || ""),
     email: body.email,
     role: body.role,
     isActive: Boolean(body.is_active),

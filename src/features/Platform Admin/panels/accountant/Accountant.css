@@ -22,9 +22,9 @@
   gap: 0;
   position: relative;
   width: 100%;
-  min-height: 112px;
-  padding: 16px 18px 14px;
-  border-radius: 16px;
+  min-height: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
   box-shadow: none;
   font: inherit;
   text-align: left;
@@ -44,19 +44,11 @@
 
 .accounts-home .accounts-stat strong {
   display: block;
-  margin: 8px 0 6px;
-  font-size: 30px;
+  margin: 2px 0 0;
+  font-size: 24px;
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.03em;
-}
-
-.accounts-home .accounts-stat .accounts-count {
-  color: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.2;
-  white-space: nowrap;
 }
 
 .accounts-home .accounts-stat-today {
@@ -97,12 +89,6 @@
   outline-offset: 2px;
 }
 
-.accounts-count {
-  color: var(--color-text-secondary);
-  font-size: 13px;
-  white-space: nowrap;
-}
-
 .accounts-home .card-pad,
 .accounts-home .accounts-panel {
   padding: 18px 18px 14px;
@@ -122,6 +108,25 @@
 .accounts-home .accounts-panel-head p {
   margin-top: 4px;
   max-width: 46ch;
+}
+
+.accounts-queue-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-left: auto;
+  min-width: 0;
+}
+
+.accounts-queue-tools .search-bar {
+  width: min(280px, 100%);
+  min-width: 0;
+  flex: 1 1 220px;
+}
+
+.accounts-queue-tools .search-bar input {
+  padding: 8px 0;
 }
 
 .accounts-banner {
@@ -580,9 +585,12 @@
 .accounts-chart {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
+  width: 100%;
   height: 100%;
   min-height: 0;
   min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .accounts-chart__axis {
@@ -595,13 +603,22 @@
 }
 
 .accounts-chart__plot {
+  position: relative;
   min-width: 0;
   min-height: 0;
+  width: 100%;
   height: 100%;
+  overflow: hidden;
 }
 
 .accounts-chart__plot .recharts-responsive-container {
+  position: absolute !important;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
   min-width: 0 !important;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .accounts-chart-tip {
@@ -860,6 +877,13 @@
   display: block;
   color: var(--color-text-secondary);
   font-size: 12px;
+}
+
+@media (max-width: 860px) {
+  .accounts-queue-tools {
+    width: 100%;
+    margin-left: 0;
+  }
 }
 
 @media (max-width: 1100px) {

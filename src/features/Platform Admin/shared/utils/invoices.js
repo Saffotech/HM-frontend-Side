@@ -16,7 +16,7 @@ export function compareCollections(left, right) {
   };
   const byRank = rank(left) - rank(right);
   if (byRank) return byRank;
-  return left.dueDate.localeCompare(right.dueDate);
+  return String(left?.dueDate ?? "").localeCompare(String(right?.dueDate ?? ""));
 }
 
 export function subscriptionIdFromTenant(tenantId) {

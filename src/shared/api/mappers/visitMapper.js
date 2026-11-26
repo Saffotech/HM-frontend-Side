@@ -3,6 +3,7 @@
  */
 
 import { formatOpdDisplayDate, formatOpdDisplayTime } from '@/shared/utils/opdDates';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 
 const PAYMENT_STATUS_UI = {
   pending: 'Unpaid',
@@ -22,7 +23,7 @@ export function apiToUiOpdVisit(row) {
     tokenNumber: row.token_number ?? row.tokenNumber,
     billNumber: row.bill_number ?? row.billNumber,
     patientUid: row.patient_id ?? row.patient_uid ?? row.patientUid,
-    patientName: row.patient_name ?? row.patientName,
+    patientName: formatPersonName(row.patient_name ?? row.patientName),
     doctorName: row.doctor_name ?? row.doctorName,
     department: row.department ?? row.department_name ?? row.deptName,
     visitDate: formatOpdDisplayDate(visitDateRaw),

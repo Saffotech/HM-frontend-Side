@@ -22,14 +22,17 @@ import {
 } from '@/shared/components/common';
 import { adminPanelRoutes } from '@/shared/constants';
 import { filterHospitalStaffRecords, filterHospitalRoleRecords } from '@/features/manager/utils/hospitalManagerRoles';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import { toast } from '@/shared/utils/toast';
 
 const PAGE_SIZE = 20;
 
 function staffName(u) {
   if (!u) return 'this user';
-  if (u.full_name) return u.full_name;
-  return `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || 'this user';
+  const raw = u.full_name || `${u.first_name || ''} ${u.last_name || ''}`.trim();
+  if (!raw) return u.email || 'this user';
+  if (raw.includes('@')) return raw;
+  return formatPersonName(raw);
 }
 
 /* Legacy identifier preserved: SuperAdminStaffListPage. Active name: AdminStaffListPage. */

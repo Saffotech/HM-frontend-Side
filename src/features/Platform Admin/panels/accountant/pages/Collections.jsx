@@ -4,6 +4,7 @@ import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis
 import { AlertCircle, Banknote, CheckCircle2 } from "lucide-react";
 import Pagination from "../../../shared/components/Pagination";
 import RecordPaymentDialog from "../../../shared/components/RecordPaymentDialog";
+import SearchBar from "../../../shared/components/SearchBar";
 import Button from "../../../shared/components/Button";
 import { LIST_PAGE_SIZE, usePagination } from "../../../shared/hooks/usePagination";
 import { matchesInvoiceFilters, monthlyCollectionComparison, recentPaidInvoices } from "../../../shared/api/invoiceModel";
@@ -242,38 +243,59 @@ function ComparisonTotals({ comparison }) {
   );
 }
 
+function matchesQueueQuery(invoice, query) {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return true;
+  const hay = [invoice.hospitalName, invoice.number, invoice.hospitalCode, invoice.plan, invoice.status, invoice.amount]
+    .filter((part) => part != null && part !== "")
+    .join(" ")
+    .toLowerCase();
+  return hay.includes(needle);
+}
+
 export default function Collections() {
   const navigate = useNavigate();
   const today = todayInput();
-  const { invoices, loading, error, reload } = usePlatformInvoices();
+  const { invoices, loading, error, reload } = usePlatformInvoices({ portal: "accountant" });
   const [active, setActive] = useState("");
+  const [query, setQuery] = useState("");
   const [paying, setPaying] = useState(null);
   const [notice, setNotice] = useState("");
 
+  const searched = useMemo(
+    () => invoices.filter((invoice) => matchesQueueQuery(invoice, query)),
+    [invoices, query],
+  );
   const counts = useMemo(() => ({
-    today: invoices.filter((invoice) => matchesInvoiceFilters(invoice, { status: "today", today })).length,
-    overdue: invoices.filter((invoice) => invoice.status === "Overdue").length,
-    pending: invoices.filter((invoice) => invoice.status === "Pending").length,
-    collected: invoices.filter((invoice) => invoice.status === "Paid").length,
-  }), [invoices, today]);
+    today: searched.filter((invoice) => matchesInvoiceFilters(invoice, { status: "today", today })).length,
+    overdue: searched.filter((invoice) => matchesInvoiceFilters(invoice, { status: "overdue", today })).length,
+    pending: searched.filter((invoice) => matchesInvoiceFilters(invoice, { status: "pending", today })).length,
+    collected: searched.filter((invoice) => matchesInvoiceFilters(invoice, { status: "collected", today })).length,
+  }), [searched, today]);
 
   const queue = useMemo(() => {
-    const rows = invoices.filter((invoice) => (active ? matchesInvoiceFilters(invoice, { status: active, today }) : isUnpaid(invoice)));
+    const rows = searched.filter((invoice) => (
+      active ? matchesInvoiceFilters(invoice, { status: active, today }) : isUnpaid(invoice)
+    ));
     return [...rows].sort(compareCollections);
-  }, [active, invoices, today]);
-  const collected = useMemo(() => recentPaidInvoices(invoices, Number.POSITIVE_INFINITY), [invoices]);
+  }, [active, searched, today]);
+  const collected = useMemo(() => recentPaidInvoices(invoices), [invoices]);
   const comparison = useMemo(() => monthlyCollectionComparison(invoices, today), [invoices, today]);
-  const queuePagination = usePagination(queue, LIST_PAGE_SIZE, active);
+  const queuePagination = usePagination(queue, LIST_PAGE_SIZE, `${active}|${query}`);
   const activityCaption = activityNote(collected);
   const monthCaption = comparisonSubtitle(comparison);
   const activityScrollable = collected.rows.length > 5;
 
-  const queueSubtitle = active
-    ? `${CARDS.find((card) => card.key === active)?.label} invoices that need payment follow-up.`
-    : "";
+  const showActions = active !== "collected";
+  const queueColumns = showActions ? 6 : 5;
+  const queueSubtitle = active === "collected"
+    ? "Invoices that have already been paid."
+    : active
+      ? `${CARDS.find((card) => card.key === active)?.label} invoices that need payment follow-up.`
+      : "";
 
   const retryButton = (
-    <Button variant="secondary" size="sm" onClick={reload}>
+    <Button variant="secondary" size="sm" onClick={reload} disabled={loading}>
       Retry
     </Button>
   );
@@ -308,7 +330,6 @@ export default function Collections() {
           >
             <span>{card.label}</span>
             <strong>{loading || error ? "—" : counts[card.key]}</strong>
-            <span className="accounts-count">{loading ? "Loading" : error ? "Unavailable" : `${counts[card.key]} invoices`}</span>
           </button>
         ))}
       </div>
@@ -319,9 +340,12 @@ export default function Collections() {
             <h2>Collection Queue</h2>
             {queueSubtitle ? <p>{queueSubtitle}</p> : null}
           </div>
-          <Link to={accountsPath("/invoices")} className="accounts-text-btn">
-            All invoices
-          </Link>
+          <div className="accounts-queue-tools">
+            <SearchBar id="collection-queue-search" value={query} onChange={setQuery} placeholder="Search hospital or invoice" />
+            <Link to={accountsPath("/invoices")} className="accounts-text-btn">
+              All invoices
+            </Link>
+          </div>
         </div>
         <div className="portal-table-wrap">
           <table className="portal-table accounts-queue">
@@ -332,26 +356,29 @@ export default function Collections() {
                 <th scope="col">Due date</th>
                 <th scope="col" className="accounts-amount-col">Amount</th>
                 <th scope="col">Status</th>
-                <th scope="col">Actions</th>
+                {showActions ? <th scope="col">Actions</th> : null}
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={queueColumns}>
                     <SectionState title="Loading invoices" detail="Fetching the collection queue." />
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={queueColumns}>
                     <SectionState title="Invoices could not be loaded" detail={error} action={retryButton} />
                   </td>
                 </tr>
               ) : queue.length === 0 ? (
                 <tr>
-                  <td colSpan={6}>
-                    <SectionState title="No invoices in this queue." detail="Nothing on the server matches this view." />
+                  <td colSpan={queueColumns}>
+                    <SectionState
+                      title={query.trim() ? "No invoices match your search." : "No invoices in this queue."}
+                      detail={query.trim() ? "Try a hospital name or invoice ID." : "Nothing on the server matches this view."}
+                    />
                   </td>
                 </tr>
               ) : queuePagination.rows.map((invoice) => {
@@ -389,22 +416,24 @@ export default function Collections() {
                     <td><DueCell invoice={invoice} /></td>
                     <td className="accounts-amount">{formatCurrency(invoice.amount)}</td>
                     <td><StatusBadge status={invoice.status} /></td>
-                    <td onClick={(event) => event.stopPropagation()}>
-                      {isUnpaid(invoice) ? (
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          className="accounts-pay-btn"
-                          onClick={() => setPaying(invoice)}
-                          disabled={Boolean(paying)}
-                        >
-                          <Banknote size={14} aria-hidden="true" />
-                          Record payment
-                        </Button>
-                      ) : (
-                        <span className="accounts-muted">—</span>
-                      )}
-                    </td>
+                    {showActions ? (
+                      <td onClick={(event) => event.stopPropagation()}>
+                        {isUnpaid(invoice) ? (
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            className="accounts-pay-btn"
+                            onClick={() => setPaying(invoice)}
+                            disabled={Boolean(paying)}
+                          >
+                            <Banknote size={14} aria-hidden="true" />
+                            Record payment
+                          </Button>
+                        ) : (
+                          <span className="accounts-muted">—</span>
+                        )}
+                      </td>
+                    ) : null}
                   </tr>
                 );
               })}

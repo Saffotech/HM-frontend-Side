@@ -1,3 +1,4 @@
+import { formatPersonName } from "@/shared/utils/formatPersonName";
 import { PORTAL_BACKEND_ROLE } from "./platformLoginPolicy.js";
 
 export const PLATFORM_PORTAL_STORAGE_KEY = "saffocare.platform.v1";
@@ -201,7 +202,7 @@ export function saveActivePortalProfile(portal, profile, storage = browserLocalS
   const next = portalStateFrom(storage);
   next[key] = {
     userId: profile.userId,
-    name: profile.name || "",
+    name: formatPersonName(profile.name || ""),
     email: profile.email || "",
     role: profile.role || PORTAL_BACKEND_ROLE[portal] || "",
     signedInAt: profile.signedInAt || new Date().toISOString(),

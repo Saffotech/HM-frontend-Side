@@ -23,7 +23,7 @@ const STATUSES = [
 
 export default function InvoicesPayments() {
   const today = todayInput();
-  const { invoices, loading, error } = usePlatformInvoices();
+  const { invoices, loading, error, reload } = usePlatformInvoices({ portal: "accountant" });
   const [status, setStatus] = useState("");
   const [period, setPeriod] = useState("");
   const [query, setQuery] = useState("");
@@ -34,7 +34,7 @@ export default function InvoicesPayments() {
     () => invoices.filter((invoice) => matchesInvoiceFilters(invoice, { query, status, period, today, dateFrom, dateTo })),
     [invoices, period, query, status, today, dateFrom, dateTo],
   );
-  const pagination = usePagination(visible, LIST_PAGE_SIZE, `${query}|${status}|${period}`);
+  const pagination = usePagination(visible, LIST_PAGE_SIZE, `${query}|${status}|${period}|${dateFrom}|${dateTo}`);
 
   return (
     <section className="inv-page">
@@ -63,6 +63,7 @@ export default function InvoicesPayments() {
           loading={loading}
           error={error}
           viewPath={(invoice) => (invoice.tenantId == null ? "" : accountsPath(`/hospitals/${invoice.tenantId}`))}
+          onRetry={reload}
           hospitalLink={(invoice) => (
             invoice.tenantId == null
               ? (invoice.hospitalName || "Hospital")

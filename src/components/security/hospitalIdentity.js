@@ -1,3 +1,4 @@
+import { formatPersonName } from '../../shared/utils/formatPersonName.js';
 import { DEPARTMENT_BY_ROLE, normalizeRole } from '../../shared/utils/roleUtils.js';
 
 /**
@@ -83,9 +84,9 @@ export function mergeAuthenticatedProfile(previous, me, loginData, accessToken, 
       ? [...(resolvePermissions(loginData, accessToken) ?? [])]
       : (Array.isArray(base?.permissions) ? [...base.permissions] : []));
 
-  const firstName = source.first_name ?? loginData?.first_name ?? base?.first_name ?? '';
-  const lastName = source.last_name ?? base?.last_name ?? '';
-  const fullName = `${firstName} ${lastName}`.trim() || base?.full_name || '';
+  const firstName = formatPersonName(source.first_name ?? loginData?.first_name ?? base?.first_name ?? '');
+  const lastName = formatPersonName(source.last_name ?? base?.last_name ?? '');
+  const fullName = formatPersonName(`${firstName} ${lastName}`.trim() || base?.full_name || '');
 
   const profile = {
     ...(base ?? {}),

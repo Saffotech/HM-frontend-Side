@@ -1,3 +1,4 @@
+import { formatPersonName } from "@/shared/utils/formatPersonName";
 import { isNumericLeadId } from "./hospitalRegistration.js";
 import { DEFAULT_PHONE_CODE, parsePhoneNumber, serializePhoneNumber } from "../utils/phoneNumbers.js";
 
@@ -125,7 +126,7 @@ export const LEAD_CREATE_FIELD_MAP = {
 };
 
 function displayName(value) {
-  return String(value ?? "").trim();
+  return formatPersonName(String(value ?? "").trim());
 }
 
 /**
@@ -154,7 +155,7 @@ export function mapLead(lead, session) {
     type: lead.hospital_type || "",
     city: lead.city || "",
     state: lead.state || "",
-    contactPerson: lead.contact_person || "",
+    contactPerson: formatPersonName(lead.contact_person || ""),
     designation: lead.designation || "",
     contactPhone: lead.contact_phone || "",
     contactEmail: lead.contact_email || "",
@@ -172,14 +173,14 @@ export function mapLead(lead, session) {
     nextAction: lead.next_action || "",
     activity,
     agreedAt: lead.agreed_at || "",
-    agreedBy: lead.agreed_by_name || "",
+    agreedBy: formatPersonName(lead.agreed_by_name || ""),
     handoverNote: lead.handover_note || "",
     hospitalId: lead.hospital_id ?? null,
     registeredAt: lead.registered_at || "",
-    registeredBy: lead.registered_by_name || "",
+    registeredBy: formatPersonName(lead.registered_by_name || ""),
     closeReason: lead.close_reason || "",
     closeNote: lead.close_note || "",
-    closedBy: lead.closed_by_name || "",
+    closedBy: formatPersonName(lead.closed_by_name || ""),
     closedAt: lead.closed_at || "",
     contactsVisible: Boolean(lead.contacts_visible),
   };

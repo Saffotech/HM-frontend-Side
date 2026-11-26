@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { recordInvoicePayment } from "../api/invoiceApi";
 import { paymentRequestBody } from "../api/invoiceModel";
 import { interpretPlatformError } from "../api/platformErrors";
@@ -23,12 +23,13 @@ export default function RecordPaymentDialog({ invoice, onClose, onRecorded }) {
   });
   const [errors, setErrors] = useState({});
   const [pending, setPending] = useState(false);
+  const pendingRef = useRef(false);
 
   const set = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }));
 
   const submit = async (event) => {
     event.preventDefault();
-    if (pending) return;
+    if (pendingRef.current) return;
     const next = paymentErrors(form);
     if (Number(form.amount) !== Number(invoice.amount) || !Number.isInteger(Number(form.amount))) {
       next.amount = "Enter the full invoice amount in whole rupees.";
@@ -36,6 +37,7 @@ export default function RecordPaymentDialog({ invoice, onClose, onRecorded }) {
     if (form.paidAt && form.paidAt > today) next.paidAt = "Payment date cannot be in the future.";
     setErrors(next);
     if (Object.keys(next).length) return;
+    pendingRef.current = true;
     setPending(true);
     try {
       const saved = await recordInvoicePayment(invoice.id, paymentRequestBody(form));
@@ -44,6 +46,7 @@ export default function RecordPaymentDialog({ invoice, onClose, onRecorded }) {
       const result = interpretPlatformError(err, FIELD_MAP);
       setErrors(Object.keys(result.fieldErrors).length ? result.fieldErrors : { form: result.toast });
     } finally {
+      pendingRef.current = false;
       setPending(false);
     }
   };

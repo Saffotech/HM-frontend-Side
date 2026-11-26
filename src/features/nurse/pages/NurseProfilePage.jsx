@@ -45,6 +45,7 @@ import {
   displayProfileText,
   parseProfileLanguages,
 } from '@/shared/utils/profileTextFormat';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import './NurseProfilePage.css';
 
 const GENDER_OPTIONS = [
@@ -288,7 +289,7 @@ export default function NurseProfilePage() {
   const displayName = useMemo(() => {
     if (!profile) return 'Nurse';
     const name = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email;
-    return displayProfileText(name);
+    return name.includes('@') ? name : formatPersonName(name);
   }, [profile]);
 
   const imageUrl = resolveNurseProfileImageUrl(profile?.profile_image_url);
@@ -724,8 +725,8 @@ export default function NurseProfilePage() {
                 
                 </p>
                 <div className="nurse-profile-grid">
-                  <ReadField label="First name" value={profile.first_name} />
-                  <ReadField label="Last name" value={profile.last_name} />
+                  <ReadField label="First name" value={profile.first_name ? formatPersonName(profile.first_name) : profile.first_name} />
+                  <ReadField label="Last name" value={profile.last_name ? formatPersonName(profile.last_name) : profile.last_name} />
                   <ReadField label="Email" value={profile.email} />
                   <ReadField label="Employee ID" value={profile.employee_id} />
                   <ReadField label="Joining date" value={profile.joining_date} />

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Button from "../../../../shared/components/Button";
 import Pagination from "../../../../shared/components/Pagination";
 import { invoiceListCountLabel, invoiceListErrorMessage, matchesInvoiceFilters } from "../../../../shared/api/invoiceModel";
-import { LIST_PAGE_SIZE, usePagination } from "../../../../shared/hooks/usePagination";
+import { PLATFORM_PAGE_SIZE, usePagination } from "../../../../shared/hooks/usePagination";
 import { usePlatformInvoices } from "../../../../shared/hooks/usePlatformInvoices";
 import { usePlatformRevenue } from "../../../../shared/hooks/usePlatformRevenue";
 import { formatDate } from "../../../../shared/utils/formatDate";
@@ -104,7 +104,7 @@ export default function InvoicesPayments() {
     () => invoices.filter((invoice) => matchesInvoiceFilters(invoice, { status: filter })),
     [filter, invoices],
   );
-  const pagination = usePagination(visible, LIST_PAGE_SIZE, filter);
+  const pagination = usePagination(visible, PLATFORM_PAGE_SIZE, filter);
   let tableBody;
   if (invoicesLoading) {
     tableBody = (

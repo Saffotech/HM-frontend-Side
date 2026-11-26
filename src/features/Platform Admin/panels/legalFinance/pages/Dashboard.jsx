@@ -49,7 +49,7 @@ export default function Dashboard() {
               <col className="c-id" /><col className="c-name" /><col className="c-lead" />
               <col className="c-docs" /><col className="c-st" /><col className="c-act" />
             </colgroup>
-            <thead><tr><th>Case</th><th>{ws.nm}</th><th>CRM lead</th><th>Docs</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Case</th><th>{ws.nm}</th><th>CRM lead</th><th>Docs</th><th>Status</th><th>Action</th></tr></thead>
             <tbody>
               {rows.map((x) => (
                 <tr key={x.id}>

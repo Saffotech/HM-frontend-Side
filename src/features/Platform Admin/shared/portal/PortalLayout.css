@@ -34,6 +34,7 @@
 
 .portal-user-link:hover {
   background: var(--color-primary-light);
+  text-decoration: none;
 }
 
 .portal-user-link:focus-visible {

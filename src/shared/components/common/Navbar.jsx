@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/shared/constants';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import { useAuthStore } from '@/shared/store/useAuthStore';
 import useLogoutConfirmation from '@/shared/hooks/useLogoutConfirmation';
 import Button from './Button';
@@ -27,7 +28,7 @@ export default function Navbar() {
       <div className="navbar__actions">
         {isAuthenticated ? (
           <>
-            <span className="navbar__user">{user?.full_name || user?.email}</span>
+            <span className="navbar__user">{user?.full_name ? formatPersonName(user.full_name) : user?.email}</span>
             <Button variant="secondary" onClick={logoutConfirmation.requestLogout}>
               Logout
             </Button>

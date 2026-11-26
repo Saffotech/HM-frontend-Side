@@ -18,6 +18,8 @@ import ManagerUserCell from '@/features/manager/components/ManagerUserCell';
 
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 
+import { formatPersonName } from '@/shared/utils/formatPersonName';
+
 import {
 
   useAdminRolesQuery,
@@ -375,7 +377,7 @@ export default function StaffListPage() {
 
                         {staff.map((member) => {
 
-                          const fullName = `${member.first_name} ${member.last_name || ''}`.trim();
+                          const fullName = formatPersonName(`${member.first_name} ${member.last_name || ''}`.trim());
 
                           return (
 

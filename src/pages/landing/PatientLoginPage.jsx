@@ -28,6 +28,7 @@ import {
 import { ROUTES } from '@/shared/constants';
 import { BrandLogo, BrandName } from '@/shared/components/common';
 
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import { toast } from '@/shared/utils/toast';
 
 import './PatientLoginPage.css';
@@ -311,7 +312,7 @@ export default function PatientLoginPage() {
                         id="patient-name"
                         placeholder="Demo Patient"
                         value={values.name}
-                        onChange={(e) => handleChange('name', e.target.value)}
+                        onChange={(e) => handleChange('name', formatPersonName(e.target.value))}
                         autoComplete="name"
                       />
                     </div>

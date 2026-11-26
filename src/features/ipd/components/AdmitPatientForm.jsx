@@ -14,6 +14,7 @@ import {
   uiToApiPatient,
   apiToUiPatient,
 } from "@/shared/api/mappers/patientMapper";
+import { formatPersonName } from "@/shared/utils/formatPersonName";
 import { formatAadhaarInput } from "@/shared/utils/validators";
 import { toast } from "@/shared/utils/toast";
 import { useIpdPermissionSet } from "@/features/ipd/hooks/useIpdPermission";
@@ -617,7 +618,7 @@ export default function AdmitPatientForm() {
                     id="ipd-reg-name"
                     className="ipd-input"
                     value={values.name}
-                    onChange={(e) => set("name", e.target.value)}
+                    onChange={(e) => set("name", formatPersonName(e.target.value))}
                     placeholder="Patient full name"
                   />
                   {errors.name ? (
@@ -1080,7 +1081,7 @@ export default function AdmitPatientForm() {
                     id="ipd-admit-holder"
                     className="ipd-input"
                     value={values.policyHolderName}
-                    onChange={(e) => set("policyHolderName", e.target.value)}
+                    onChange={(e) => set("policyHolderName", formatPersonName(e.target.value))}
                     placeholder="Full name"
                   />
                   {show("policyHolderName") ? (

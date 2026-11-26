@@ -3,6 +3,7 @@
  */
 
 import { formatOpdDisplayDate } from "@/shared/utils/opdDates";
+import { formatPersonName } from "@/shared/utils/formatPersonName";
 import { billCollectedAmount } from "@/shared/utils/billHelpers";
 import { validatePaymentTransactionRef } from "@/shared/utils/validators";
 
@@ -67,7 +68,7 @@ export function apiToUiBill(apiBill) {
     visitId: apiBill.visit_id ?? apiBill.visitId,
     patientUid: apiBill.patient_uid ?? apiBill.patientUid,
     patientId: apiBill.patient_uid ?? apiBill.patient_id ?? apiBill.patientId,
-    patientName: apiBill.patient_name ?? apiBill.patientName,
+    patientName: formatPersonName(apiBill.patient_name ?? apiBill.patientName),
     date: formatOpdDisplayDate(
       apiBill.visit_date ?? apiBill.bill_date ?? apiBill.date,
     ),

@@ -47,6 +47,7 @@ import {
   displayProfileText,
   parseProfileLanguages,
 } from '@/shared/utils/profileTextFormat';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import './AdminProfilePage.css';
 
 const GENDER_OPTIONS = [
@@ -239,7 +240,7 @@ export default function AdminProfilePage() {
   const displayName = useMemo(() => {
     if (!profile) return 'Admin';
     const name = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email;
-    return displayProfileText(name);
+    return name.includes('@') ? name : formatPersonName(name);
   }, [profile]);
 
   const imageUrl = resolveSuperAdminProfileImageUrl(profile?.profile_image_url);
@@ -425,7 +426,7 @@ export default function AdminProfilePage() {
     : 'Admin';
   const hasProfileImage = Boolean(profile.profile_image_url);
   const saving = updateProfile.isPending;
-  const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+  const fullName = formatPersonName(`${profile.first_name || ''} ${profile.last_name || ''}`.trim());
 
   return (
     <AdminLayout pageTitle="My Profile" compact>

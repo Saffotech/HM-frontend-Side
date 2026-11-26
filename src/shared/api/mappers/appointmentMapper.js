@@ -3,6 +3,7 @@
  */
 
 import { parseOpdDateString } from '@/features/doctor/utils/doctorDates';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 
 const IST_OFFSET = '+05:30';
 
@@ -169,7 +170,7 @@ export function apiToUiAppointment(apiAppt) {
       apiAppt.patient_uid ??
       apiAppt.patientUid ??
       null,
-    patientName: apiAppt.patient_name ?? apiAppt.patientName,
+    patientName: formatPersonName(apiAppt.patient_name ?? apiAppt.patientName),
     patientAge: apiAppt.patient_age ?? apiAppt.patientAge ?? null,
     dob:
       apiAppt.date_of_birth

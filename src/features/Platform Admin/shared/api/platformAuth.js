@@ -1,3 +1,4 @@
+import { formatPersonName } from "@/shared/utils/formatPersonName";
 import { platformApi } from "./platformClient.js";
 import { PlatformApiError } from "./platformErrors.js";
 import { PORTAL_BACKEND_ROLE, sessionFromLogin } from "./platformLoginPolicy.js";
@@ -27,7 +28,7 @@ export async function commitPlatformSession(portal, email, body) {
         detail: "Permission denied",
       });
     }
-    const name = [me.first_name, me.last_name].filter(Boolean).join(" ").trim();
+    const name = formatPersonName([me.first_name, me.last_name].filter(Boolean).join(" ").trim());
     const profile = {
       ...session.profile,
       name: name || session.profile.name,
@@ -75,12 +76,12 @@ export function fetchPlatformMe() {
 }
 
 export function mapPlatformMe(body, session) {
-  const name = [body?.first_name, body?.last_name].filter(Boolean).join(" ").trim();
+  const name = formatPersonName([body?.first_name, body?.last_name].filter(Boolean).join(" ").trim());
   return {
     userId: body?.user_id ?? session?.userId,
-    firstName: body?.first_name || session?.firstName || "",
-    lastName: body?.last_name || session?.lastName || "",
-    name: name || session?.name || "",
+    firstName: formatPersonName(body?.first_name || session?.firstName || ""),
+    lastName: formatPersonName(body?.last_name || session?.lastName || ""),
+    name: name || formatPersonName(session?.name || ""),
     email: body?.email || session?.email || "",
     role: body?.role || session?.role || "",
     roleId: body?.role_id ?? null,

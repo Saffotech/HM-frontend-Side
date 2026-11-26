@@ -1,3 +1,4 @@
+import { formatPersonName } from "@/shared/utils/formatPersonName";
 import { DEFAULT_PHONE_CODE, parseProfilePhone } from "../utils/phoneNumbers.js";
 
 const PROFILE_FIELDS = [
@@ -100,7 +101,7 @@ export function profileFieldErrors(draft) {
 export function mapPlatformAdminProfile(body, resolveUrl = (url) => url || "") {
   if (!body || typeof body !== "object" || Array.isArray(body)) return null;
   if (![...PROFILE_KEYS].some((key) => key in body)) return null;
-  const name = [body.first_name, body.last_name].filter(Boolean).join(" ").trim();
+  const name = formatPersonName([body.first_name, body.last_name].filter(Boolean).join(" ").trim());
   return {
     ...profileDraft(body),
     photoUrl: resolveUrl(body.profile_image_url || ""),

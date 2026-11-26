@@ -61,9 +61,11 @@ function LegalFinanceShell() {
 /** Page body inside PortalLayout. Sections render directly; modals stay mounted here. */
 export function LegalFinanceWorkspace() {
   const { wsType } = useLegalFinance();
+  const { pathname } = useLocation();
+  const profile = pathname.endsWith("/profile");
   return (
-    <div className="lf-panel" data-ws={wsType}>
-      <div className="lf-body fadein" key={wsType}>
+    <div className={profile ? "lf-profile-page" : "lf-panel"} data-ws={wsType}>
+      <div className={profile ? "lf-profile-body" : "lf-body fadein"} key={wsType}>
         <Outlet />
       </div>
       <ModalHost />

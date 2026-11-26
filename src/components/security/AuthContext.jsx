@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { login as apiLogin, getCurrentUser, refreshAccessToken, logout as requestHospitalLogout } from '@/shared/api/auth';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import { setAuthRef, getAuthRef } from '@/components/security/authRef';
 import {
   loadAuthSession,
@@ -317,7 +318,9 @@ export function AuthProvider({ children }) {
         tenant_id: prev.tenant_id,
         hospital: prev.hospital ? { ...prev.hospital } : prev.hospital,
       };
-      next.full_name = `${next.first_name ?? ''} ${next.last_name ?? ''}`.trim() || next.full_name;
+      next.first_name = formatPersonName(next.first_name);
+      next.last_name = formatPersonName(next.last_name);
+      next.full_name = formatPersonName(`${next.first_name ?? ''} ${next.last_name ?? ''}`.trim() || next.full_name);
       const session = loadAuthSession();
       if (tokenRef.current) saveAuthSession(tokenRef.current, next, session?.refreshToken);
       return next;

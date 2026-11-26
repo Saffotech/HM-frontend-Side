@@ -35,8 +35,14 @@ export default function Registrations() {
   const [registered, setRegistered] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [stale, setStale] = useState(false);
+  const requestRef = useRef(0);
+  const hasLoadedRef = useRef(false);
+  const listVersion = useRef(0);
 
   const load = useCallback(async () => {
+    const requestId = ++requestRef.current;
     setLoading(true);
     setError("");
     try {
@@ -44,23 +50,35 @@ export default function Registrations() {
         listRegistrations("agreed"),
         listRegistrations("registered"),
       ]);
+      if (requestId !== requestRef.current) return;
       if (!Array.isArray(agreed) || !Array.isArray(done)) {
         setError("The registration list was not in the expected format.");
+        setStale(hasLoadedRef.current);
         return;
       }
       setWaiting(agreed.map(mapRegistration));
       setRegistered(done.map(mapRegistration));
+      hasLoadedRef.current = true;
+      listVersion.current += 1;
+      setHasLoaded(true);
+      setStale(false);
+      setError("");
     } catch (err) {
+      if (requestId !== requestRef.current) return;
       const result = interpretPlatformError(err);
       setError(result.toast);
+      setStale(hasLoadedRef.current);
       if (shouldEndPlatformSession(err)) signOutRef.current("accountant");
     } finally {
-      setLoading(false);
+      if (requestId === requestRef.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     load();
+    return () => {
+      requestRef.current += 1;
+    };
   }, [load]);
 
   const waitingRows = useMemo(
@@ -84,8 +102,10 @@ export default function Registrations() {
   const openRow = async (row) => {
     setViewId(row.id);
     if (row.status !== "Registered" || row.hospitalCode) return;
+    const version = listVersion.current;
     try {
       const detail = mapRegistration(await getRegistration(row.id));
+      if (version !== listVersion.current) return;
       setRegistered((current) => current.map((item) => (item.id === row.id ? { ...item, ...detail } : item)));
     } catch {
       /* The list row remains usable when the detail call fails. */
@@ -150,17 +170,21 @@ export default function Registrations() {
         </div>
         {error && (
           <div className="hr-load-error" role="alert">
-            {error}
-            <Button variant="secondary" onClick={load}>Retry</Button>
+            <span>
+              {error}
+              {stale ? " Showing the last successful load. These rows may be out of date." : ""}
+            </span>
+            <Button variant="secondary" onClick={load} disabled={loading}>Retry</Button>
           </div>
         )}
+        {loading && hasLoaded && !error ? <p className="panel-copy" role="status">Refreshing registrations.</p> : null}
         <DataTable
-          rows={loading ? [] : pagination.rows}
+          rows={hasLoaded ? pagination.rows : []}
           columns={tab === "To register" ? waitingColumns : registeredColumns}
-          emptyTitle={loading ? "Loading registrations" : error ? "Registrations could not be loaded" : search.trim() ? "No hospitals match your search." : tab === "To register" ? "Nothing to register" : "No registrations yet"}
-          emptyMessage={loading ? "Fetching the registration queue." : error ? "Retry the request. Nothing was saved in this browser." : search.trim() ? "Try a hospital name, city or contact." : tab === "To register" ? "Hospitals appear here only after Legal & Finance approves the case." : "Hospitals you register will appear here."}
+          emptyTitle={loading && !hasLoaded ? "Loading registrations" : error && !hasLoaded ? "Registrations could not be loaded" : search.trim() ? "No hospitals match your search." : tab === "To register" ? "Nothing to register" : "No registrations yet"}
+          emptyMessage={loading && !hasLoaded ? "Fetching the registration queue." : error && !hasLoaded ? "Retry the request. Nothing was saved in this browser." : search.trim() ? "Try a hospital name, city or contact." : tab === "To register" ? "Hospitals appear here only after Legal & Finance approves the case." : "Hospitals you register will appear here."}
         />
-        {!loading && !error ? <Pagination {...pagination} onPageChange={pagination.setPage} /> : null}
+        {hasLoaded ? <Pagination {...pagination} onPageChange={pagination.setPage} /> : null}
       </section>
 
       <Modal

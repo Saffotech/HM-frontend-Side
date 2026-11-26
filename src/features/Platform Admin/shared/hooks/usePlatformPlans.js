@@ -3,7 +3,7 @@ import { listPlatformPlans, mapPlatformPlans } from "../api/platformPlans";
 import { platformCallMessage, shouldEndPlatformSession } from "../api/platformErrors";
 import { usePlatform } from "../context/PlatformContext";
 
-export function usePlatformPlans() {
+export function usePlatformPlans({ portal = "platform" } = {}) {
   const { signOutPortal } = usePlatform();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +29,7 @@ export function usePlatformPlans() {
       .catch((err) => {
         if (cancelled) return;
         setError(platformCallMessage(err));
-        if (shouldEndPlatformSession(err)) signOutPortal("platform");
+        if (shouldEndPlatformSession(err)) signOutPortal(portal);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -37,7 +37,7 @@ export function usePlatformPlans() {
     return () => {
       cancelled = true;
     };
-  }, [attempt, signOutPortal]);
+  }, [attempt, portal, signOutPortal]);
 
   return { plans, loading, error, reload };
 }

@@ -6,6 +6,7 @@ import PhoneInput from "../../../shared/components/PhoneInput";
 import Select from "../../../shared/components/Select";
 import { billingCycles, hospitalTypes } from "../../../shared/data/catalog";
 import { DEFAULT_PHONE_CODE, validPhoneForCode } from "../../../shared/utils/phoneNumbers";
+import { formatPersonName } from "@/shared/utils/formatPersonName";
 import { isEmail, required } from "../../../shared/utils/validation";
 import { LEAD_SOURCES, PRIORITIES, findLeadDuplicates } from "../utils/crmLeads";
 import { StatusMark } from "./CrmMarks";
@@ -56,7 +57,7 @@ export default function AddLeadForm({ leads, me, planOptions, onClose, onCreate,
   const [shared, setShared] = useState(false);
   const creatingRef = useRef(false);
   const set = (key) => (event) => {
-    const value = event.target.value;
+    const value = key === "contactPerson" ? formatPersonName(event.target.value) : event.target.value;
     setForm((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: "" }));
     setFormError("");

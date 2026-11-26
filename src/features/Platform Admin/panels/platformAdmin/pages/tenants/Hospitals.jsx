@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../../../../shared/components/Button";
 import Pagination from "../../../../shared/components/Pagination";
-import { usePagination } from "../../../../shared/hooks/usePagination";
+import { PLATFORM_PAGE_SIZE, usePagination } from "../../../../shared/hooks/usePagination";
 import SearchBar from "../../../../shared/components/SearchBar";
 import Select from "../../../../shared/components/Select";
 import { billingCycles } from "../../../../shared/data/catalog";
@@ -12,7 +12,6 @@ import { PLATFORM_BASE, platformPath } from "../../../../shared/paths";
 import { useRegisteredHospitals } from "../../useRegisteredHospitals";
 import "./Hospitals.css";
 
-const PAGE_SIZE = 8;
 const EMPTY_FILTERS = {
   query: "",
   plan: "",
@@ -125,7 +124,7 @@ export default function Hospitals() {
 
   const pagination = usePagination(
     filtered,
-    PAGE_SIZE,
+    PLATFORM_PAGE_SIZE,
     [filters.query, filters.plan, filters.cycle, filters.type, filters.status, filters.activation, sort.key, sort.direction].join("|"),
   );
   const pageRows = pagination.rows;

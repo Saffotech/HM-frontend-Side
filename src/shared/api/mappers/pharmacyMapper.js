@@ -4,6 +4,7 @@
  */
 
 import { formatHumanInstructions } from '@/features/pharmacy/utils/prescriptionQuantity';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import {
   resolveItemQuantities,
 } from '@/features/pharmacy/utils/prescriptionQuantities';
@@ -33,7 +34,7 @@ export function apiToUiPharmacyListItem(row) {
     id: row.id,
     patient_id: row.patient_id,
     patient_uid: row.patient_uid ?? null,
-    patient_name: row.patient_name ?? '',
+    patient_name: formatPersonName(row.patient_name ?? ''),
     patient_allergies: normalizeAllergies(row.patient_allergies ?? row.allergies),
     doctor_name: row.doctor_name ?? '',
     diagnosis: row.diagnosis ?? '',
@@ -102,10 +103,10 @@ export function apiToUiPharmacyPrescriptionItem(item) {
 export function apiToUiPharmacyPrescriptionDetail(raw) {
   if (!raw) return null;
 
-  const doctorName = raw.doctor_name ?? '';
+  const doctorName = formatPersonName(raw.doctor_name ?? '');
   const diagnosis = raw.diagnosis ?? '';
   const allergies = normalizeAllergies(raw.allergies);
-  const patientName = raw.patient_name ?? '';
+  const patientName = formatPersonName(raw.patient_name ?? '');
 
   const prescriptionItems = (raw.items ?? raw.prescription_items ?? [])
     .map(apiToUiPharmacyPrescriptionItem)
@@ -175,7 +176,7 @@ export function mapDispenseHistory(raw) {
       prescription_id: row.prescription_id,
       prescription_item_id: row.prescription_item_id,
       patient_uid: row.patient_uid ?? null,
-      patient_name: row.patient_name ?? '',
+      patient_name: formatPersonName(row.patient_name ?? ''),
       medicines_summary: medicineName ? `${medicineName} ×${qty}` : '—',
       medicine_name: medicineName,
       pharmacist_name: row.pharmacist_name ?? '',

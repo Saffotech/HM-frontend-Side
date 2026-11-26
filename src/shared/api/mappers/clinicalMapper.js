@@ -3,6 +3,7 @@
  */
 
 import { asList } from '@/shared/api/dataSource';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import { labDepartmentLabel } from '@/shared/utils/labDepartments';
 import {
   formatDurationForApi,
@@ -87,7 +88,7 @@ export function apiToUiPrescription(api) {
     admissionId: api.admission_id ?? api.admissionId ?? null,
     patientId: api.patient_id ?? api.patientId,
     patientUid: api.patient_uhid ?? api.patientUid,
-    patientName: api.patient_name ?? api.patientName,
+    patientName: formatPersonName(api.patient_name ?? api.patientName),
     doctor: api.doctor_name ?? api.doctor,
     diagnosis: api.diagnosis,
     notes: api.notes,
@@ -229,7 +230,7 @@ export function apiToUiLabTest(api) {
     patientId: displayPatientId,
     patientUid,
     patientDbId: patientDbId != null ? Number(patientDbId) : null,
-    patientName: api.patient_name ?? api.patientName,
+    patientName: formatPersonName(api.patient_name ?? api.patientName),
     testName: api.test_name ?? api.test,
     labTestId: api.lab_test_id ?? api.labTestId ?? null,
     price: api.price != null && api.price !== '' ? String(api.price) : null,
@@ -263,7 +264,7 @@ export function apiToUiDoctorLabReport(api) {
     orderId: api.order_id ?? api.orderId ?? api.id,
     patientId: api.patient_uid ?? api.patient_uhid ?? api.patient_id,
     patientDbId: api.patient_id ?? null,
-    patientName: api.patient_name ?? api.patientName ?? '—',
+    patientName: formatPersonName(api.patient_name ?? api.patientName) || '—',
     testName: api.test_name ?? api.testName ?? '—',
     category: api.category ?? '—',
     priority: api.priority ?? 'Normal',

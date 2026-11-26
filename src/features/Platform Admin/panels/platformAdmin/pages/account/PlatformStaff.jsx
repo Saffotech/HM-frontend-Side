@@ -14,10 +14,11 @@ import {
   staffCreatedNotice,
   validatePlatformStaff,
 } from "../../../../shared/api/platformStaff";
+import { formatPersonName } from "@/shared/utils/formatPersonName";
 import Button from "../../../../shared/components/Button";
 import DataTable from "../../../../shared/components/DataTable";
 import Pagination from "../../../../shared/components/Pagination";
-import { LIST_PAGE_SIZE, usePagination } from "../../../../shared/hooks/usePagination";
+import { PLATFORM_PAGE_SIZE, usePagination } from "../../../../shared/hooks/usePagination";
 import Input from "../../../../shared/components/Input";
 import Modal from "../../../../shared/components/Modal";
 import PasswordField from "../../../../shared/components/PasswordField";
@@ -257,7 +258,7 @@ export default function PlatformStaff() {
       (!term || `${displayName(row)} ${row.email}`.toLowerCase().includes(term))
     );
   });
-  const pagination = usePagination(filteredRows, LIST_PAGE_SIZE, `${query}|${staffFilter}`);
+  const pagination = usePagination(filteredRows, PLATFORM_PAGE_SIZE, `${query}|${staffFilter}`);
 
   return (
     <section className="platform-staff-page">
@@ -381,7 +382,7 @@ export default function PlatformStaff() {
               error={errors.firstName}
               maxLength={100}
               autoComplete="given-name"
-              onChange={(event) => setField("firstName", event.target.value)}
+              onChange={(event) => setField("firstName", formatPersonName(event.target.value))}
             />
             <Input
               label={<Label text="Last Name" optional />}
@@ -389,7 +390,7 @@ export default function PlatformStaff() {
               error={errors.lastName}
               maxLength={100}
               autoComplete="family-name"
-              onChange={(event) => setField("lastName", event.target.value)}
+              onChange={(event) => setField("lastName", formatPersonName(event.target.value))}
             />
             <Input
               label={<Label text="Email" />}

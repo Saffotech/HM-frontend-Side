@@ -9,6 +9,7 @@ import { usePlatform } from "../../context/PlatformContext";
 import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
 import { usePlatformMe } from "../../hooks/usePlatformMe";
 import { useToast } from "../../hooks/useToast";
+import { markPasswordChangedNotice } from "@/shared/auth/passwordChangedNotice";
 import useLogoutConfirmation from "@/shared/hooks/useLogoutConfirmation";
 import { formatDate, formatDateTime } from "../../utils/formatDate";
 import AvatarImage from "./AvatarImage";
@@ -213,6 +214,7 @@ export default function PortalProfile({
   };
 
   const onPasswordChanged = useCallback((message) => {
+    markPasswordChangedNotice();
     push(message || "Password changed. Sign in again.", "success");
     signOutPortal(portal);
   }, [portal, push, signOutPortal]);

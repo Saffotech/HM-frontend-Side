@@ -6,6 +6,7 @@ import {
   PLATFORM_PORTAL_STORAGE_KEY,
   PORTAL_SESSION_KEYS,
 } from "../api/platformSession";
+import { formatPersonName } from "@/shared/utils/formatPersonName";
 
 const PlatformContext = createContext(null);
 const STORAGE_KEY = "saffocare.platform.v1";
@@ -42,7 +43,10 @@ export function PlatformProvider({ children }) {
 
   const sessionFor = useCallback((portal) => {
     const key = SESSION_KEYS[portal];
-    return key ? state[key] || null : null;
+    const session = key ? state[key] || null : null;
+    if (!session?.name) return session;
+    const name = formatPersonName(session.name);
+    return name === session.name ? session : { ...session, name };
   }, [state]);
 
   const portalProfile = useCallback((portal) => {
@@ -68,7 +72,7 @@ export function PlatformProvider({ children }) {
       ...latestPortalState(current),
       [key]: {
         userId: profile.userId,
-        name: profile.name,
+        name: formatPersonName(profile.name),
         email: profile.email,
         role: profile.role,
         signedInAt: new Date().toISOString(),

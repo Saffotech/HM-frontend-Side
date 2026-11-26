@@ -1,3 +1,4 @@
+import { formatPersonName } from "@/shared/utils/formatPersonName";
 import { formatDateTime } from "../../../shared/utils/formatDate";
 import { formatPhoneDisplay } from "../../../shared/utils/phoneNumbers";
 
@@ -5,12 +6,13 @@ function text(value) {
   return String(value ?? "").trim();
 }
 
-function Row({ label, value }) {
+function Row({ label, value, chip = false }) {
   const shown = text(value);
+  const className = shown ? (chip ? "lf-chip" : undefined) : "is-empty";
   return (
     <div className="lf-line">
       <dt>{label}</dt>
-      <dd className={shown ? undefined : "is-empty"}>{shown || "Not Set"}</dd>
+      <dd className={className}>{shown || "Not Set"}</dd>
     </div>
   );
 }
@@ -30,13 +32,13 @@ export default function HospitalCrmInfo({ c }) {
         <div>
           <Row label="Hospital" value={crm.hospitalName || c?.h} />
           <Row label="City" value={crm.city || c?.city} />
-          <Row label="Contact" value={crm.contactPerson} />
+          <Row label="Contact" value={formatPersonName(crm.contactPerson)} />
           <Row label="Phone" value={phone(crm.contactPhone)} />
           <Row label="Email" value={crm.contactEmail} />
           <Row label="Hospital email" value={crm.hospitalEmail} />
         </div>
         <div>
-          <Row label="Plan" value={crm.plan || c?.plan} />
+          <Row label="Plan" value={crm.plan || c?.plan} chip />
           <Row label="Agreed" value={crm.agreedAt ? formatDateTime(crm.agreedAt) : ""} />
           <Row label="Handover note" value={crm.handoverNote} />
         </div>

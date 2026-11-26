@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react';
 import ManagerLayout from '@/features/manager/components/ManagerLayout';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import ManagerBackBar from '@/features/manager/components/ManagerBackBar';
 import ManagerRoleBadge from '@/features/manager/components/ManagerRoleBadge';
 import ManagerStaffStatusBadge from '@/features/manager/components/ManagerStaffStatusBadge';
@@ -403,7 +404,7 @@ export default function StaffDetailPage() {
                           <Input
                             id="admin_staff_first"
                             value={form.first_name || ''}
-                            onChange={(e) => setForm((f) => ({ ...f, first_name: e.target.value }))}
+                            onChange={(e) => setForm((f) => ({ ...f, first_name: formatPersonName(e.target.value) }))}
                           />
                         </div>
                         <div>
@@ -411,7 +412,7 @@ export default function StaffDetailPage() {
                           <Input
                             id="admin_staff_last"
                             value={form.last_name || ''}
-                            onChange={(e) => setForm((f) => ({ ...f, last_name: e.target.value }))}
+                            onChange={(e) => setForm((f) => ({ ...f, last_name: formatPersonName(e.target.value) }))}
                           />
                         </div>
                         <div>

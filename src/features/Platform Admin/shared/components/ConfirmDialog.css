@@ -1,4 +1,10 @@
 .confirm-copy {
-  color: var(--color-text-secondary);
-  line-height: 1.6;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.55;
 }

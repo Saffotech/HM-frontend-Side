@@ -1,6 +1,6 @@
 import Modal from "../../../../../shared/components/Modal";
 import Pagination from "../../../../../shared/components/Pagination";
-import { LIST_PAGE_SIZE, usePagination } from "../../../../../shared/hooks/usePagination";
+import { PLATFORM_PAGE_SIZE, usePagination } from "../../../../../shared/hooks/usePagination";
 import { formatCurrency } from "../../../../../shared/utils/formatCurrency";
 import { formatDate } from "../../../../../shared/utils/formatDate";
 import { SCORE_WEIGHTS, formatRate } from "./metrics";
@@ -19,7 +19,7 @@ const PART_LABELS = {
 const STATUS_TONES = { New: "new", Contacted: "contacted", Registered: "registered", "Not Interested": "closed" };
 
 export default function EmployeeDetail({ row, ranked, leads, trend, period, today, onClose, listKey = "" }) {
-  const pagination = usePagination(leads, LIST_PAGE_SIZE, `${row?.name || ""}|${listKey}`);
+  const pagination = usePagination(leads, PLATFORM_PAGE_SIZE, `${row?.name || ""}|${listKey}`);
   if (!row) return null;
   const recent = pagination.rows;
   return (

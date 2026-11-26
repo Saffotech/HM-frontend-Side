@@ -7,9 +7,69 @@ function money(value) {
   return formatCurrency(value);
 }
 
-function StatusChip({ status }) {
-  const tone = { Paid: "paid", Pending: "pending", Overdue: "overdue", Failed: "failed" }[status] || "pending";
-  return <span className={`inv-chip inv-chip-${tone}`}>{status || "—"}</span>;
+function polar(cx, cy, radius, deg) {
+  const angle = (deg * Math.PI) / 180;
+  return [cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)];
+}
+
+function scallopPath(cx, cy, radius, teeth, depth) {
+  let path = "";
+  for (let tooth = 0; tooth < teeth; tooth += 1) {
+    const start = polar(cx, cy, radius, (360 * tooth) / teeth - 90);
+    const peak = polar(cx, cy, radius + depth, (360 * (tooth + 0.5)) / teeth - 90);
+    const end = polar(cx, cy, radius, (360 * (tooth + 1)) / teeth - 90);
+    path += tooth === 0 ? `M ${start[0].toFixed(2)} ${start[1].toFixed(2)} ` : "";
+    path += `Q ${peak[0].toFixed(2)} ${peak[1].toFixed(2)} ${end[0].toFixed(2)} ${end[1].toFixed(2)} `;
+  }
+  return `${path}Z`;
+}
+
+function starPoints(cx, cy, radius) {
+  const points = [];
+  for (let point = 0; point < 10; point += 1) {
+    const size = point % 2 === 0 ? radius : radius * 0.42;
+    const [x, y] = polar(cx, cy, size, point * 36 - 90);
+    points.push(`${x.toFixed(2)},${y.toFixed(2)}`);
+  }
+  return points.join(" ");
+}
+
+const SEAL_CENTER = 120;
+const SEAL_EDGE = scallopPath(SEAL_CENTER, SEAL_CENTER, 90, 32, 14);
+const SEAL_NAME_ARC = (() => {
+  const [startX, startY] = polar(SEAL_CENTER, SEAL_CENTER, 64, 206);
+  const [endX, endY] = polar(SEAL_CENTER, SEAL_CENTER, 64, 334);
+  return `M ${startX.toFixed(2)} ${startY.toFixed(2)} A 64 64 0 0 1 ${endX.toFixed(2)} ${endY.toFixed(2)}`;
+})();
+const SEAL_STARS = [-142, -116, -90, -64, -38, 38, 64, 90, 116, 142].map((deg) => {
+  const [x, y] = polar(SEAL_CENTER, SEAL_CENTER, 80, deg);
+  return starPoints(x, y, 5.4);
+});
+
+function InvoiceSeal({ paid, sealId }) {
+  const label = paid ? "PAID" : "UNPAID";
+  return (
+    <svg
+      className={`invoice-stamp ${paid ? "is-paid" : "is-unpaid"}`}
+      viewBox="0 0 240 240"
+      role="img"
+      aria-label={`${label}, SaffoCare`}
+    >
+      <path className="invoice-stamp__edge" d={SEAL_EDGE} />
+      <circle className="invoice-stamp__ring" cx="120" cy="120" r="88" />
+      <circle className="invoice-stamp__ring" cx="120" cy="120" r="74" />
+      {SEAL_STARS.map((points) => <polygon key={points} points={points} />)}
+      <defs>
+        <path id={sealId} d={SEAL_NAME_ARC} />
+      </defs>
+      <text className="invoice-stamp__name">
+        <textPath href={`#${sealId}`} startOffset="50%" textAnchor="middle" dy="20">SAFFOCARE</textPath>
+      </text>
+      <path className="invoice-stamp__arc" d="M 74,104 A 50,22 0 0,1 166,104" />
+      <text className="invoice-stamp__status" x="120" y={paid ? 138 : 134} textAnchor="middle">{label}</text>
+      <path className="invoice-stamp__arc" d="M 82,152 A 42,16 0 0,0 158,152" />
+    </svg>
+  );
 }
 
 function hasPaymentRecord(invoice) {
@@ -42,7 +102,6 @@ export function InvoiceSheet({ invoice }) {
         <div className="invoice-title">
           <h3>INVOICE</h3>
           <span className="inv-mono">{invoice.number || "—"}</span>
-          <StatusChip status={invoice.status} />
         </div>
       </header>
       <div className="invoice-parties">
@@ -94,8 +153,9 @@ export function InvoiceSheet({ invoice }) {
         ) : (
           <span>No payment has been recorded for this invoice.</span>
         )}
-        <span>Computer-generated invoice. No physical stamp required.</span>
+        <span>Computer-generated invoice.</span>
       </div>
+      <InvoiceSeal paid={paid} sealId={`saffo-seal-${invoice.id ?? invoice.number ?? "invoice"}`} />
     </article>
   );
 }

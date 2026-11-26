@@ -168,28 +168,26 @@ function RegisterForm({ request }) {
   const signedIn = hasPlatformAccessToken();
   const canSubmit = canSubmitRegistration({ signedIn, busy: submitting || confirming });
   const isTrial = values.tenantStatus === "Trial" || values.trialPeriod !== "None";
-  const { plans, loading: plansLoading, error: plansError } = usePlatformPlans();
-  const planNames = useMemo(() => {
-    const remote = activePlanNames(plans);
-    return remote.length ? remote : PLAN_NAMES;
-  }, [plans]);
+  const { plans, loading: plansLoading, error: plansError } = usePlatformPlans({ portal: "accountant" });
+  const agreedPlan = String(request.plan || "").trim();
+  const activeNames = useMemo(() => activePlanNames(plans), [plans]);
+  const catalogReady = !plansLoading && !plansError;
+  const selectedPlanUnavailable = catalogReady && Boolean(values.plan) && !activeNames.includes(values.plan);
+  const planOptions = useMemo(() => {
+    const choices = catalogReady ? activeNames : PLAN_NAMES;
+    if (!values.plan || choices.includes(values.plan)) return choices;
+    return [values.plan, ...choices];
+  }, [activeNames, catalogReady, values.plan]);
   const selectedPlan = plans.find((plan) => plan.name === values.plan);
   const cycleOptions = cyclesForPlan(selectedPlan);
   const listedPrice = catalogPrice(selectedPlan, values.billingCycle);
 
   useEffect(() => {
-    if (plansLoading || plansError) return;
-    if (planNames.includes(values.plan)) return;
-    setValues((current) => ({
-      ...current,
-      plan: planNames.includes("Professional") ? "Professional" : planNames[0],
-    }));
-  }, [planNames, plansError, plansLoading, values.plan]);
-
-  useEffect(() => {
+    if (selectedPlanUnavailable) return;
     if (cycleOptions.includes(values.billingCycle)) return;
+    if (!cycleOptions[0]) return;
     setValues((current) => ({ ...current, billingCycle: cycleOptions[0] }));
-  }, [cycleOptions, values.billingCycle]);
+  }, [cycleOptions, selectedPlanUnavailable, values.billingCycle]);
 
   const setField = (key, value) => {
     setValues((current) => ({ ...current, [key]: value }));
@@ -205,7 +203,16 @@ function RegisterForm({ request }) {
     if (passwordError) next.adminPassword = passwordError;
     if (!values.adminPasswordConfirm) next.adminPasswordConfirm = "Re-enter the password.";
     else if (values.adminPasswordConfirm !== values.adminPassword) next.adminPasswordConfirm = "Passwords do not match.";
+    if (!trialPeriods.includes(values.trialPeriod)) next.trialPeriod = "Choose a trial period.";
+    else if (values.tenantStatus === "Trial" && values.trialPeriod === "None") {
+      next.trialPeriod = "Choose 14, 30, or 60 days. None does not set a trial length.";
+    }
     if (!required(values.plan)) next.plan = "Choose a subscription plan.";
+    else if (catalogReady && !activeNames.includes(values.plan)) {
+      next.plan = agreedPlan && values.plan === agreedPlan
+        ? `${agreedPlan} is inactive or unavailable. Choose an active plan.`
+        : "Choose an active subscription plan.";
+    }
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -294,14 +301,25 @@ function RegisterForm({ request }) {
 
           <section className="reg-section">
             <SectionHead number="3" title="Subscription configuration" />
+            {selectedPlanUnavailable && (
+              <p className="reg-plan-warning" role="status">
+                {agreedPlan && values.plan === agreedPlan
+                  ? `The agreed plan ${agreedPlan} is inactive or unavailable. Choose an active plan. The hospital will stay on ${agreedPlan} until you do.`
+                  : `${values.plan} is inactive or unavailable. Choose an active plan before registering.`}
+              </p>
+            )}
             <div className="reg-grid reg-grid-4">
               <Select label={<Label text="Subscription Plan" />} value={values.plan} error={errors.plan} onChange={(event) => setField("plan", event.target.value)}>
-                {planNames.map((plan) => <option key={plan}>{plan}</option>)}
+                {planOptions.map((plan) => (
+                  <option key={plan} value={plan} disabled={selectedPlanUnavailable && plan === values.plan}>
+                    {selectedPlanUnavailable && plan === values.plan ? `${plan} (unavailable)` : plan}
+                  </option>
+                ))}
               </Select>
               <Select label={<Label text="Billing Cycle" />} value={values.billingCycle} onChange={(event) => setField("billingCycle", event.target.value)}>
                 {cycleOptions.map((cycle) => <option key={cycle}>{cycle}</option>)}
               </Select>
-              <Select label={<Label text="Trial Period" />} value={values.trialPeriod} onChange={(event) => setField("trialPeriod", event.target.value)}>
+              <Select label={<Label text="Trial Period" />} value={values.trialPeriod} error={errors.trialPeriod} onChange={(event) => setField("trialPeriod", event.target.value)}>
                 {trialPeriods.map((period) => <option key={period}>{period}</option>)}
               </Select>
               <Select label={<Label text="Tenant Status" />} value={values.tenantStatus} onChange={(event) => setField("tenantStatus", event.target.value)}>
@@ -338,7 +356,7 @@ function RegisterForm({ request }) {
             </div>
             <span className="reg-plan-sub">
               {isTrial
-                ? `Trial: ${values.trialPeriod === "None" ? "14 days" : values.trialPeriod}. Subscription pricing does not apply during a trial.`
+                ? `Trial: ${values.trialPeriod}. Subscription pricing does not apply during a trial.`
                 : plansLoading
                   ? "Loading subscription price…"
                   : plansError
@@ -353,7 +371,7 @@ function RegisterForm({ request }) {
       <ConfirmDialog
         open={confirming}
         title="Register this hospital?"
-        message="You are about to create the hospital on the server. The lead will be marked registered."
+        message={`You are about to create the hospital on the ${values.plan || "selected"} plan. Trial ${values.trialPeriod}, status ${values.tenantStatus}. The lead will be marked registered.`}
         confirmLabel={submitting ? "Registering…" : "Register hospital"}
         tone="primary"
         onCancel={() => { if (!submitting) setConfirming(false); }}

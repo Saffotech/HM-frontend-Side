@@ -478,14 +478,11 @@
 }
 
 .invoice-print-stack {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  display: none;
 }
 
 .invoice-sheet {
+  position: relative;
   border: 1px solid var(--classic-border, #c9d3e0);
   border-radius: 4px;
   padding: 22px;
@@ -526,9 +523,63 @@
   color: var(--color-text);
 }
 
-.invoice-title .inv-chip {
-  margin-top: 4px;
+.invoice-stamp {
+  position: absolute;
+  top: 46px;
+  right: 28px;
+  z-index: 2;
+  display: block;
+  width: 150px;
+  height: 150px;
+  margin: 0;
+  opacity: 0.34;
+  pointer-events: none;
+  overflow: visible;
+  transform: rotate(-14deg);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
+
+.invoice-stamp__edge,
+.invoice-stamp__ring,
+.invoice-stamp__arc {
+  fill: none;
+  stroke: currentColor;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.invoice-stamp__edge { stroke-width: 5; }
+.invoice-stamp__ring { stroke-width: 2.4; }
+.invoice-stamp__arc { stroke-width: 2.2; }
+
+.invoice-stamp polygon {
+  fill: currentColor;
+}
+
+.invoice-stamp text {
+  fill: currentColor;
+  font-family: Inter, "Segoe UI", Roboto, sans-serif;
+  font-weight: 800;
+}
+
+.invoice-stamp__name {
+  font-size: 15px;
+  letter-spacing: 2.6px;
+}
+
+.invoice-stamp__status {
+  font-size: 38px;
+  letter-spacing: 1.5px;
+}
+
+.invoice-stamp.is-unpaid .invoice-stamp__status {
+  font-size: 24px;
+  letter-spacing: 0.5px;
+}
+
+.invoice-stamp.is-paid { color: #6d46b5; }
+.invoice-stamp.is-unpaid { color: #c0392b; }
 
 .invoice-parties {
   display: flex;
@@ -621,26 +672,33 @@
 }
 
 @media print {
+  .platform-root.printing-invoices {
+    background: #fff;
+  }
+
   .platform-root.printing-invoices .app-shell {
     display: none !important;
   }
 
   .platform-root.printing-invoices .invoice-print-stack {
+    display: block !important;
     position: static;
     width: auto;
     height: auto;
     overflow: visible;
-    clip: auto;
   }
 
   .platform-root.printing-invoices .invoice-sheet {
+    display: block;
     border: 0;
-    break-after: page;
-    page-break-after: always;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    background: #fff;
+    color: #142d52;
   }
 
-  .platform-root.printing-invoices .invoice-sheet:last-child {
-    break-after: auto;
-    page-break-after: auto;
+  .platform-root.printing-invoices .invoice-sheet + .invoice-sheet {
+    break-before: page;
+    page-break-before: always;
   }
 }

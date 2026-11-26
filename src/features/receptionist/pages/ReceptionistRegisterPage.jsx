@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Lock, Mail, UserRound } from 'lucide-react';
 import { ROUTES } from '@/shared/constants';
 import { BrandLogo, BrandName } from '@/shared/components/common';
 import { register as authRegister } from '@/shared/api/auth';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import { toast } from '@/shared/utils/toast';
 import '@/pages/landing/LoginPage.css';
 
@@ -27,7 +28,10 @@ export default function ReceptionistRegisterPage() {
   const [formError, setFormError] = useState('');
 
   const handleChange = (field) => (e) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    const value = field === 'first_name' || field === 'last_name'
+      ? formatPersonName(e.target.value)
+      : e.target.value;
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async (e) => {

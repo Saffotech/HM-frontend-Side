@@ -3,6 +3,7 @@
  */
 
 import { apiStatusToUiStatus } from '@/shared/api/mappers/appointmentMapper';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import { formatVisitDateTime } from '@/features/doctor/utils/patientHistory';
 import { parseEmbeddedClinicalNotes } from '@/features/doctor/utils/clinicalNotesParse';
 import {
@@ -79,7 +80,7 @@ export function apiToUiPatientVisitRow(api) {
     appointmentDbId: resolveVisitAppointmentDbId(api),
     patientUid,
     patientId: patientId != null ? Number(patientId) : null,
-    name: api.patient_name ?? api.patientName ?? '',
+    name: formatPersonName(api.patient_name ?? api.patientName ?? ''),
     age: api.patient_age ?? api.patientAge ?? null,
     dob:
       api.date_of_birth
@@ -243,7 +244,7 @@ export function mapDoctorPatientVisitItem(row) {
     id: row.id ?? row.visit_id,
     patient_id: row.patient_id,
     patient_uid: row.patient_uid ?? null,
-    patient_name: row.patient_name ?? '',
+    patient_name: formatPersonName(row.patient_name ?? ''),
     doctor_id: row.doctor_id,
     doctor_name: row.doctor_name ?? '',
     department_name: row.department_name ?? row.department ?? null,
@@ -271,7 +272,7 @@ export function mapDoctorPatientVisitsResponse(raw) {
   return {
     patient_id: raw.patient_id ?? null,
     patient_uid: raw.patient_uid ?? null,
-    patient_name: raw.patient_name ?? '',
+    patient_name: formatPersonName(raw.patient_name ?? ''),
     visit_date: raw.visit_date ?? null,
     visit_count: raw.visit_count ?? 0,
     visits: (raw.visits ?? []).map(mapDoctorPatientVisitItem).filter(Boolean),
@@ -326,7 +327,7 @@ export function mapDoctorVitalItem(row) {
     appointment_id: row.appointment_id ?? null,
     patient_id: row.patient_id ?? null,
     patient_uid: row.patient_uid ?? null,
-    patient_name: row.patient_name ?? '',
+    patient_name: formatPersonName(row.patient_name ?? ''),
     bed_number: row.bed_number ?? null,
     ward_name: row.ward_name ?? null,
     doctor_id: row.doctor_id ?? null,
@@ -407,7 +408,7 @@ export function mapDoctorNoteItem(row) {
     appointment_id: row.appointment_id ?? null,
     patient_id: row.patient_id ?? null,
     patient_uid: row.patient_uid ?? null,
-    patient_name: row.patient_name ?? '',
+    patient_name: formatPersonName(row.patient_name ?? ''),
     bed_number: row.bed_number ?? null,
     ward_name: row.ward_name ?? null,
     doctor_id: row.doctor_id ?? null,

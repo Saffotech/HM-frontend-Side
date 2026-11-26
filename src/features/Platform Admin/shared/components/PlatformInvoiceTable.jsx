@@ -1,7 +1,9 @@
+import { useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { daysUntil, formatDate } from "../utils/formatDate";
 import { formatCurrency } from "../utils/formatCurrency";
 import { isUnpaid } from "../utils/invoices";
+import Button from "./Button";
 
 function StatusChip({ status }) {
   const tone = { Paid: "paid", Pending: "pending", Overdue: "overdue", Failed: "failed" }[status] || "pending";
@@ -38,15 +40,32 @@ function TableMessage({ columns, children, alert = false }) {
 const LIST_COLUMNS = ["Invoice", "Hospital", "Issued", "Due", "Amount", "Status", "Actions"];
 const RECORD_COLUMNS = ["Invoice", "Hospital", "Issued", "Due", "Amount", "Status", "Method", "Reference", "Paid on", "Recorded by", "Actions"];
 
-export default function PlatformInvoiceTable({ invoices, loading, error, onPay, onPrint, hospitalLink, viewPath, showRecords = false, hideHospital = false }) {
+export default function PlatformInvoiceTable({ invoices, loading, error, onPay, onPrint, onRetry, hospitalLink, viewPath, showRecords = false, hideHospital = false }) {
   const navigate = useNavigate();
+  const retryLock = useRef(false);
   const columns = (showRecords ? RECORD_COLUMNS : LIST_COLUMNS).filter((label) => !(hideHospital && label === "Hospital"));
+  const retry = () => {
+    if (retryLock.current || loading || !onRetry) return;
+    retryLock.current = true;
+    Promise.resolve(onRetry()).finally(() => {
+      retryLock.current = false;
+    });
+  };
 
   let body;
   if (loading) {
     body = <TableMessage columns={columns.length}>Loading invoices from the server.</TableMessage>;
   } else if (error) {
-    body = <TableMessage columns={columns.length} alert>{error}</TableMessage>;
+    body = (
+      <tr>
+        <td colSpan={columns.length}>
+          <p className="panel-copy" role="alert" style={{ margin: "8px 0" }}>{error}</p>
+          {onRetry ? (
+            <Button variant="secondary" size="sm" onClick={retry} disabled={loading}>Retry</Button>
+          ) : null}
+        </td>
+      </tr>
+    );
   } else if (!invoices.length) {
     body = <TableMessage columns={columns.length}>No invoices match this view.</TableMessage>;
   } else {

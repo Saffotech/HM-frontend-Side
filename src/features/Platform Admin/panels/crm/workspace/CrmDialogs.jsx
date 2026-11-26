@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { DateInput } from "@/shared/components/common";
+import { formatPersonName } from "@/shared/utils/formatPersonName";
 import Button from "../../../shared/components/Button";
 import ConfirmDialog from "../../../shared/components/ConfirmDialog";
 import Input from "../../../shared/components/Input";
@@ -95,7 +97,7 @@ export function ContactDialog({ lead, mode, today, onCancel, onSubmit, initialOu
         <Input as="textarea" rows={3} className="crm-span" label="Notes *" value={form.note} error={errors.note} onChange={set("note")} placeholder="What was discussed?" />
         {needsDate && (
           <>
-            <Input type="date" label="Next follow-up *" min={today} value={form.followUpDate} error={errors.followUpDate} onChange={set("followUpDate")} />
+            <DateInput label="Next follow-up *" min={today} value={form.followUpDate} error={errors.followUpDate} onChange={set("followUpDate")} required />
             <Input label="Next action" value={form.nextAction} onChange={set("nextAction")} placeholder="e.g. Share the quotation" />
           </>
         )}
@@ -133,7 +135,7 @@ export function ScheduleDialog({ lead, today, onCancel, onSubmit }) {
     >
       {rescheduling && <p className="crm-callout">Currently due <strong>{dueLabel(lead.followUpDate)}</strong>. The change is recorded in the lead history.</p>}
       <div className="crm-form">
-        <Input type="date" label="Follow-up date *" min={today} value={form.followUpDate} error={error} onChange={(event) => { setForm({ ...form, followUpDate: event.target.value }); setError(""); }} />
+        <DateInput label="Follow-up date *" min={today} value={form.followUpDate} error={error} onChange={(event) => { setForm({ ...form, followUpDate: event.target.value }); setError(""); }} required />
         <Input label="Next action" value={form.nextAction} onChange={(event) => { setForm({ ...form, nextAction: event.target.value }); setError(""); }} placeholder="e.g. Book a demo" />
         <Input as="textarea" rows={2} className="crm-span" label={rescheduling ? "Reason for rescheduling" : "Note"} value={form.note} onChange={(event) => setForm({ ...form, note: event.target.value })} />
       </div>
@@ -233,7 +235,7 @@ export function EditLeadDialog({ lead, planOptions, onCancel, onSubmit }) {
     priority: lead.priority || "Medium",
     source: lead.source || "",
     type: lead.type || "",
-    contactPerson: lead.contactPerson || "",
+    contactPerson: formatPersonName(lead.contactPerson || ""),
     designation: lead.designation || "",
     phoneCode: existingPhone.phoneCode,
     contactPhone: existingPhone.phone,
@@ -246,7 +248,7 @@ export function EditLeadDialog({ lead, planOptions, onCancel, onSubmit }) {
   });
   const [errors, setErrors] = useState({});
   const set = (key) => (event) => {
-    const value = event.target.value;
+    const value = key === "contactPerson" ? formatPersonName(event.target.value) : event.target.value;
     setForm((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: "" }));
   };

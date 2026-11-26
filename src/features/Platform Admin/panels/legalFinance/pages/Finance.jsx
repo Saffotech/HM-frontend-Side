@@ -29,7 +29,6 @@ function FinanceCase({ c }) {
         {c.id ? (
           <div className="lf-case-meta">
             <span className={`bd s-${STATUS_TONE[c.st] || "mu"} lf-case-decision`}>{TONE_ICON[STATUS_TONE[c.st] || "mu"]} Decision: {c.st}</span>
-            <p className="mu">{c.h} · {c.id} · CRM lead {c.lead}</p>
           </div>
         ) : null}
         <span style={{ marginLeft: "auto" }}><CaseSelector /></span>

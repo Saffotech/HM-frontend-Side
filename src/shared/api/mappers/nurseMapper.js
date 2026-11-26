@@ -3,6 +3,8 @@
  * Backend is source of truth; map contracts here only.
  */
 
+import { formatPersonName } from '@/shared/utils/formatPersonName';
+
 const UI_TO_API_QUEUE_STATUS = {
   in_consultation: 'in_progress',
 };
@@ -52,7 +54,7 @@ export function formatPatientIdDisplay(row) {
 /** Combobox label — never exposes internal numeric patient_id. */
 export function formatPatientPickerLabel(row) {
   const uid = formatPatientIdDisplay(row);
-  const name = String(row?.patient_name ?? '').trim() || 'Unknown Patient';
+  const name = formatPersonName(String(row?.patient_name ?? '').trim()) || 'Unknown Patient';
   return uid !== '—' ? `${uid} - ${name}` : name;
 }
 
@@ -72,7 +74,7 @@ export function mergeNursePatientDirectory(...sourceLists) {
       const uid = resolvePatientUid(row);
       const merged = {
         patient_id: id,
-        patient_name: row.patient_name || existing?.patient_name || '',
+        patient_name: formatPersonName(row.patient_name || existing?.patient_name || ''),
         patientUid: uid || existing?.patientUid || '',
         bed_id: row.bed_id ?? existing?.bed_id ?? null,
         bed_number: row.bed_number || existing?.bed_number || '',
@@ -408,7 +410,7 @@ export function mapVitalItem(row) {
     : [buildVitalHistoryEntry(row)];
   return attachPatientUid({
     ...row,
-    patient_name: row.patient_name ?? '',
+    patient_name: formatPersonName(row.patient_name ?? ''),
     bed_number: row.bed_number || '',
     recorded_by: row.recorded_by_name ?? null,
     history,
@@ -441,7 +443,7 @@ export function mapNoteItem(row) {
     }];
   return attachPatientUid({
     ...row,
-    patient_name: row.patient_name ?? '',
+    patient_name: formatPersonName(row.patient_name ?? ''),
     bed_number: row.bed_number || '',
     created_by: createdBy,
     history,
@@ -479,7 +481,7 @@ export function dedupeMedicationPatientsByPatientId(rows = []) {
       bed_number: existing.bed_number || row.bed_number,
       ward_name: existing.ward_name || row.ward_name,
       doctor_name: existing.doctor_name || row.doctor_name,
-      patient_name: existing.patient_name || row.patient_name,
+      patient_name: formatPersonName(existing.patient_name || row.patient_name),
       patient_uid: existing.patient_uid || row.patient_uid,
       patientUid: existing.patientUid || row.patientUid,
     });
@@ -780,7 +782,7 @@ export function mapMedicationHistoryRow(row) {
     route: row.route ?? '',
     timing: row.timing ?? null,
     duration: row.duration ?? null,
-    patient_name: row.patient_name ?? '',
+    patient_name: formatPersonName(row.patient_name ?? ''),
     administered_by_name:
       row.administered_by_name ??
       row.nurse_name ??
@@ -831,7 +833,7 @@ export function mapAlertItem(row) {
   if (!row) return null;
   return attachPatientUid({
     ...row,
-    patient_name: row.patient_name ?? '',
+    patient_name: formatPersonName(row.patient_name ?? ''),
   });
 }
 
@@ -850,7 +852,7 @@ export function mapAlertDetail(raw) {
   if (!raw) return null;
   return attachPatientUid({
     ...raw,
-    patient_name: raw.patient_name ?? '',
+    patient_name: formatPersonName(raw.patient_name ?? ''),
     timeline: raw.timeline ?? [],
   });
 }
@@ -955,7 +957,7 @@ export function mapDoctorVisitItem(row) {
   return attachPatientUid({
     ...row,
     id: row.id ?? row.visit_id,
-    patient_name: row.patient_name ?? '',
+    patient_name: formatPersonName(row.patient_name ?? ''),
     doctor_name: row.doctor_name ?? '',
     recorded_by_name: row.recorded_by_name ?? '',
     updated_by_name: row.updated_by_name ?? '',
@@ -1052,7 +1054,7 @@ export function mapLabReportItem(row) {
     ...row,
     id: reportId,
     report_id: reportId,
-    patient_name: row.patient_name ?? '',
+    patient_name: formatPersonName(row.patient_name ?? ''),
     ward_name: row.ward_name ?? null,
     bed_number: row.bed_number ?? null,
     doctor_name: row.doctor_name ?? null,
@@ -1080,7 +1082,7 @@ export function mapLabReportDetail(row) {
     id: reportId,
     report_id: reportId,
     patient_id: order.patient_id ?? row.patient_id,
-    patient_name: order.patient_name ?? row.patient_name ?? '',
+    patient_name: formatPersonName(order.patient_name ?? row.patient_name ?? ''),
     patient_uid: order.patient_uid ?? row.patient_uid,
     ward_name: order.ward_name ?? row.ward_name ?? null,
     bed_number: order.bed_number ?? row.bed_number ?? null,

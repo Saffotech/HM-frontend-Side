@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { modalOverlay, modalPanel } from '@/shared/motion';
 import './ConfirmDialog.css';
@@ -24,7 +25,7 @@ export default function ConfirmDialog({
     };
   }, [isOpen, onCancel]);
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -66,6 +67,7 @@ export default function ConfirmDialog({
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

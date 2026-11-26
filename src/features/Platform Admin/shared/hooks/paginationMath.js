@@ -1,5 +1,8 @@
-/** Page size used by platform, CRM, and accountant lists. */
+/** Page size used by CRM and accountant lists. */
 export const LIST_PAGE_SIZE = 10;
+
+/** Page size used by platform admin lists. */
+export const PLATFORM_PAGE_SIZE = 8;
 
 /**
  * Client-side page slice. The APIs used by these panels return the full

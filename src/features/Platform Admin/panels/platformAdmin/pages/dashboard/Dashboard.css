@@ -114,9 +114,14 @@
 .dash-page .dash-panel-head {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  gap: 16px;
   margin-bottom: 12px;
+}
+
+.dash-page .dash-panel-head > div:first-child {
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .dash-page .dash-panel-head a {
@@ -127,26 +132,18 @@
 
 .dash-page .dash-table-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex: 0 0 400px;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px 12px;
+  width: 400px;
+  min-width: 400px;
+  max-width: 400px;
 }
 
-.dash-page .dash-updated {
-  color: var(--color-text-secondary);
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.dash-page .dash-result-count {
-  flex: none;
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: var(--color-neutral-bg);
-  color: var(--color-text-secondary);
-  font-size: 12px;
-  font-weight: 600;
+.dash-page .dash-table-actions .search-bar {
+  width: 400px;
+  min-width: 400px;
+  max-width: 400px;
 }
 
 .dash-page .dash-table-wrap {
@@ -254,6 +251,13 @@
 
   .dash-page .dash-panel-head {
     flex-wrap: wrap;
+  }
+
+  .dash-page .dash-table-actions,
+  .dash-page .dash-table-actions .search-bar {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
   }
 }
 

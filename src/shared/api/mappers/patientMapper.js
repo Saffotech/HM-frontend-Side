@@ -2,6 +2,7 @@
  * Patient UI ↔ API field mapping (live HTTP only).
  */
 
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import {
   formatAadhaarDisplay,
   validatePaymentTransactionRef,
@@ -36,10 +37,11 @@ export function apiToUiPatient(apiPatient) {
     id: apiPatient.patient_uid ?? apiPatient.id,
     dbId: apiPatient.id,
     registrationSource,
-    name:
+    name: formatPersonName(
       apiPatient.full_name ??
       `${apiPatient.first_name ?? ''} ${apiPatient.last_name ?? ''}`.trim() ??
       apiPatient.name,
+    ),
     age: apiPatient.age,
     gender: apiPatient.gender,
     phone: apiPatient.phone_number ?? apiPatient.phone,
@@ -62,7 +64,7 @@ export function apiToUiPatient(apiPatient) {
 
 export function uiToApiPatient(uiPatient) {
   if (!uiPatient) return null;
-  const name = (uiPatient.name ?? '').trim();
+  const name = formatPersonName((uiPatient.name ?? '').trim());
   const spaceIdx = name.indexOf(' ');
   const first_name = spaceIdx === -1 ? name : name.slice(0, spaceIdx);
   const last_name = spaceIdx === -1 ? '' : name.slice(spaceIdx + 1).trim();
